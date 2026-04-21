@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-004",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "prompt_template_id": "author_logic_mapper",
+  "prompt_template_version": "",
+  "input_hash": "sha256:67f43609e88dc26cd25258838cece12110c86a1b618fee30103a0ab6b0a5af4c",
+  "response_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3AuthorLogicOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T07:11:21.114134+00:00"
+}

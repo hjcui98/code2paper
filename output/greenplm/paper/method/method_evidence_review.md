@@ -1,0 +1,499 @@
+# Method Evidence Review
+
+- project_id: code
+- author_confirmation_required: true
+- stages: 3
+- frozen_mechanisms: 108
+- claim_contracts: 586
+
+## Author Logic
+
+- proposed: none
+- supported: none
+- unsupported: none
+
+## Review Questions
+
+- RQ-112: Confirm whether 'Module docstring hint: PyTorch Phi-3 model.' can be supported by additional hard evidence.
+- RQ-113: Confirm whether 'Python inline comment hint: x: [bs, num_attention_heads, seq_len, head_size]' can be supported by additional hard evidence.
+- RQ-114: Confirm whether 'Python inline comment hint: upcast attention to fp32' can be supported by additional hard evidence.
+- RQ-115: Confirm whether 'Python inline comment hint: Copied from transformers.models.llama.modeling_llama.LlamaFlashAttention2.__init__' can be supported by additional hard evidence.
+- RQ-116: Confirm whether 'Python inline comment hint: flash_attn<2.1 generates top-left aligned causal mask, while what is needed here is bottom-right alignement, that was made default for flash_attn>=2.1. This attribute is used to handle this difference. Reference: https://github.com/Dao-AILab/flash-attention/releases/tag/v2.1.0.' can be supported by additional hard evidence.
+- RQ-117: Confirm whether 'Python inline comment hint: Phi3FlashAttention2 attention does not support output_attentions' can be supported by additional hard evidence.
+- RQ-118: Confirm whether 'Python inline comment hint: overwrite attention_mask with padding_mask' can be supported by additional hard evidence.
+- RQ-119: Confirm whether 'Python inline comment hint: Flash attention requires the input to have the shape' can be supported by additional hard evidence.
+- RQ-120: Confirm whether 'Python inline comment hint: Reashape to the expected shape for Flash Attention' can be supported by additional hard evidence.
+- RQ-121: Confirm whether 'Python inline comment hint: Copied from transformers.models.mistral.modeling_mistral.MistralFlashAttention2._flash_attention_forward' can be supported by additional hard evidence.
+- RQ-122: Confirm whether 'Python inline comment hint: Copied from transformers.models.mistral.modeling_mistral.MistralFlashAttention2._upad_input' can be supported by additional hard evidence.
+- RQ-123: Confirm whether 'Docstring hint for Phi3RMSNorm.__init__: Phi3RMSNorm is equivalent to T5LayerNorm' can be supported by additional hard evidence.
+- RQ-124: Confirm whether 'Docstring hint for rotate_half: Rotates half the hidden dims of the input.' can be supported by additional hard evidence.
+- RQ-125: Confirm whether 'Docstring hint for repeat_kv: This is the equivalent of torch.repeat_interleave(x, dim=1, repeats=n_rep). The hidden states go from (batch, num_key_value_heads, seqlen, head_dim) to (batch, num_attention_heads, seqlen, head_dim)' can be supported by additional hard evidence.
+- RQ-126: Confirm whether 'Docstring hint for Phi3Attention: Multi-headed attention from 'Attention Is All You Need' paper' can be supported by additional hard evidence.
+- RQ-127: Confirm whether 'Docstring hint for Phi3FlashAttention2: Phi-3 flash attention module. This module inherits from `Phi3Attention` as the weights of the module stays untouched. The only required change would be on the forward pass where it needs to correctly call the public API of flash attention and deal with padding tokens in case the input contains any of them.' can be supported by additional hard evidence.
+- RQ-128: Confirm whether 'Docstring hint for Phi3FlashAttention2._flash_attention_forward: Calls the forward method of Flash Attention - if the input hidden states contain at least one padding token first unpad the input, then computes the attention scores and pad the final attention scores. Args: query_states (`torch.Tensor`): Input query states to be passed to Flash Attention API key_states (`torch.Tensor`): Input key states to be passed to Flash Attention API value_states (`torch.Tensor`): Input value states to be passed to Flash Attention API attention_mask (`torch.Tensor`): The padding mask - corresponds to a tensor of size `(batch_size, seq_len)` where 0 stands for the position of padding tokens and 1 for the position of non-padding tokens. dropout (`float`): Attention dropout softmax_scale (`float`, *optional*): The scaling of QK^T before applying softmax. Default to 1 / sqrt(head_dim) use_sliding_windows (`bool`, *optional*): Whether to activate sliding window attention.' can be supported by additional hard evidence.
+- RQ-129: Confirm whether 'Docstring hint for Phi3SdpaAttention: Phi3 attention module using torch.nn.functional.scaled_dot_product_attention. This module inherits from `Phi3Attention` as the weights of the module stays untouched. The only changes are on the forward pass to adapt to SDPA API.' can be supported by additional hard evidence.
+- RQ-130: Confirm whether 'Docstring hint for Phi3Model: Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`Phi3DecoderLayer`] Args: config: Phi3Config' can be supported by additional hard evidence.
+- RQ-131: Confirm whether 'Docstring hint for Phi3ForCausalLM.forward: Args: labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*): Labels for computing the masked language modeling loss. Indices should either be in `[0, ..., config.vocab_size]` or -100 (see `input_ids` docstring). Tokens with indices set to `-100` are ignored (masked), the loss is only computed for the tokens with labels in `[0, ..., config.vocab_size]`. Returns: Example: ```python >>> from transformers import AutoTokenizer, Phi3ForCausalLM >>> model = Phi3ForCausalLM.from_pretrained("microsoft/phi-3-mini-4k-instruct") >>> tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-3-mini-4k-instruct") >>> prompt = "This is an example script ." >>> inputs = tokenizer(prompt, return_tensors="pt") >>> # Generate >>> generate_ids = model.generate(inputs.input_ids, max_length=30) >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0] 'This is an example script .\n Certainly! Below is a sample script that demonstrates a simple task, such as calculating the sum' ```' can be supported by additional hard evidence.
+- RQ-132: Confirm whether 'Docstring hint for Phi3ForSequenceClassification.forward: labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*): Labels for computing the sequence classification/regression loss. Indices should be in `[0, ..., config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If `config.num_labels > 1` a classification loss is computed (Cross-Entropy).' can be supported by additional hard evidence.
+- RQ-133: Confirm whether 'Docstring hint for Phi3ForTokenClassification.forward: labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*): Labels for computing the sequence classification/regression loss. Indices should be in `[0, ..., config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If `config.num_labels > 1` a classification loss is computed (Cross-Entropy).' can be supported by additional hard evidence.
+- RQ-134: Confirm whether 'Python inline comment hint: try:' can be supported by additional hard evidence.
+- RQ-135: Confirm whether 'Python inline comment hint: from .language_model.llava_llama import LlavaLlamaForCausalLM, LlavaConfig' can be supported by additional hard evidence.
+- RQ-136: Confirm whether 'Python inline comment hint: from .language_model.llava_mpt import LlavaMptForCausalLM, LlavaMptConfig' can be supported by additional hard evidence.
+- RQ-137: Confirm whether 'Python inline comment hint: from .language_model.llava_mistral import LlavaMistralForCausalLM, LlavaMistralConfig' can be supported by additional hard evidence.
+- RQ-138: Confirm whether 'Python inline comment hint: from .language_model.llava_phi3 import LlavaPhiForCausalLM, LlavaPhiConfig' can be supported by additional hard evidence.
+- RQ-139: Confirm whether 'Python inline comment hint: except:' can be supported by additional hard evidence.
+- RQ-140: Confirm whether 'Python inline comment hint: pass' can be supported by additional hard evidence.
+- RQ-141: Confirm whether 'Module docstring hint: Usage: python3 -m fastchat.model.apply_delta --base ~/model_weights/llama-7b --target ~/model_weights/vicuna-7b --delta lmsys/vicuna-7b-delta' can be supported by additional hard evidence.
+- RQ-142: Confirm whether 'Python inline comment hint: Modified from LLaVA: https://github.com/haotian-liu/LLaVA.git' can be supported by additional hard evidence.
+- RQ-143: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-144: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-145: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-146: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-147: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-148: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-149: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-150: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-151: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-152: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-153: Confirm whether 'Python inline comment hint: Load LLaVA model' can be supported by additional hard evidence.
+- RQ-154: Confirm whether 'Module docstring hint: Usage: python3 -m llava.model.consolidate --src ~/model_weights/llava-7b --dst ~/model_weights/llava-7b_consolidate' can be supported by additional hard evidence.
+- RQ-155: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-156: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-157: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-158: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-159: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-160: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-161: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-162: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-163: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-164: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-165: Confirm whether 'Python inline comment hint: Initialize weights and apply final processing' can be supported by additional hard evidence.
+- RQ-166: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-167: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-168: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-169: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-170: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-171: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-172: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-173: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-174: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-175: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-176: Confirm whether 'Python inline comment hint: Initialize weights and apply final processing' can be supported by additional hard evidence.
+- RQ-177: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-178: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-179: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-180: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-181: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-182: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-183: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-184: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-185: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-186: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-187: Confirm whether 'Python inline comment hint: Initialize weights and apply final processing' can be supported by additional hard evidence.
+- RQ-188: Confirm whether 'Python inline comment hint: Modified from LLaVA: https://github.com/haotian-liu/LLaVA.git' can be supported by additional hard evidence.
+- RQ-189: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-190: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-191: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-192: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-193: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-194: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-195: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-196: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-197: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-198: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-199: Confirm whether 'Python inline comment hint: Initialize weights and apply final processing' can be supported by additional hard evidence.
+- RQ-200: Confirm whether 'Python inline comment hint: Copyright 2023 Haotian Liu' can be supported by additional hard evidence.
+- RQ-201: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-202: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-203: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-204: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-205: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-206: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-207: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-208: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-209: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-210: Confirm whether 'Python inline comment hint: 从这初始化的encoder 和 projector' can be supported by additional hard evidence.
+- RQ-211: Confirm whether 'Docstring hint for LlavaMetaModel.random_initialize_model: 随机初始化给定模型的所有参数。 参数: - model (nn.Module): 要初始化的PyTorch模型实例。 - mean (float): 权重初始化的均值，默认为0.0。 - std (float): 权重初始化的标准差，默认为0.02。' can be supported by additional hard evidence.
+- RQ-212: Confirm whether 'Docstring hint for unpad_image: Unpads a PyTorch tensor of a padded and resized image. Args: tensor (torch.Tensor): The image tensor, assumed to be in CxHxW format. original_size (tuple): The original size of PIL image (width, height). Returns: torch.Tensor: The unpadded image tensor.' can be supported by additional hard evidence.
+- RQ-213: Confirm whether 'Module docstring hint: Usage: python3 -m llava.model.make_delta --base ~/model_weights/llama-7b --target ~/model_weights/llava-7b --delta ~/model_weights/llava-7b-delta --hub-repo-id liuhaotian/llava-7b-delta' can be supported by additional hard evidence.
+- RQ-214: Confirm whether 'Python inline comment hint: create transformer blocks for point cloud via timm' can be supported by additional hard evidence.
+- RQ-215: Confirm whether 'Python inline comment hint: create whole point cloud encoder' can be supported by additional hard evidence.
+- RQ-216: Confirm whether 'Python inline comment hint: change resize/crop size in preprocessing to the largest image size in s2_scale' can be supported by additional hard evidence.
+- RQ-217: Confirm whether 'Python inline comment hint: https://github.com/Strawberry-Eat-Mango/PCT_Pytorch/blob/main/util.py' can be supported by additional hard evidence.
+- RQ-218: Confirm whether 'Python inline comment hint: exclude CLS token' can be supported by additional hard evidence.
+- RQ-219: Confirm whether 'Python inline comment hint: if not self.training or self.prob == 0.:' can be supported by additional hard evidence.
+- RQ-220: Confirm whether 'Python inline comment hint: return x' can be supported by additional hard evidence.
+- RQ-221: Confirm whether 'Python inline comment hint: fps the centers out' can be supported by additional hard evidence.
+- RQ-222: Confirm whether 'Python inline comment hint: B G 3' can be supported by additional hard evidence.
+- RQ-223: Confirm whether 'Python inline comment hint: knn to get the neighborhood' can be supported by additional hard evidence.
+- RQ-224: Confirm whether 'Python inline comment hint: _, idx = self.knn(xyz, center) # B G M' can be supported by additional hard evidence.
+- RQ-225: Confirm whether 'Python inline comment hint: B G M' can be supported by additional hard evidence.
+- RQ-226: Confirm whether 'Python inline comment hint: normalize' can be supported by additional hard evidence.
+- RQ-227: Confirm whether 'Python inline comment hint: encoder' can be supported by additional hard evidence.
+- RQ-228: Confirm whether 'Python inline comment hint: ModuleList not support forward' can be supported by additional hard evidence.
+- RQ-229: Confirm whether 'Docstring hint for fps: data B N 3 number int' can be supported by additional hard evidence.
+- RQ-230: Confirm whether 'Docstring hint for index_points: Input: points: input points data, [B, N, C] idx: sample index data, [B, S] Return: new_points:, indexed points data, [B, S, C]' can be supported by additional hard evidence.
+- RQ-231: Confirm whether 'Docstring hint for knn_point: Input: nsample: max sample number in local region xyz: all points, [B, N, C] new_xyz: query points, [B, S, C] Return: group_idx: grouped points index, [B, S, nsample]' can be supported by additional hard evidence.
+- RQ-232: Confirm whether 'Docstring hint for square_distance: Calculate Euclid distance between each two points. src^T * dst = xn * xm + yn * ym + zn * zm; sum(src^2, dim=-1) = xn*xn + yn*yn + zn*zn; sum(dst^2, dim=-1) = xm*xm + ym*ym + zm*zm; dist = (xn - xm)^2 + (yn - ym)^2 + (zn - zm)^2 = sum(src**2,dim=-1)+sum(dst**2,dim=-1)-2*src^T*dst Input: src: source points, [B, N, C] dst: target points, [B, M, C] Output: dist: per-point square distance, [B, N, M]' can be supported by additional hard evidence.
+- RQ-233: Confirm whether 'Docstring hint for PatchDropout: https://arxiv.org/abs/2212.00794' can be supported by additional hard evidence.
+- RQ-234: Confirm whether 'Docstring hint for Group.forward: input: B N 3 --------------------------- output: B G M 3 center : B G 3' can be supported by additional hard evidence.
+- RQ-235: Confirm whether 'Docstring hint for Encoder.forward: point_groups : B G N 3 ----------------- feature_global : B G C' can be supported by additional hard evidence.
+- RQ-236: Confirm whether 'Docstring hint for skeleton_Group.forward: xyz: 所有token的xyz input: B N 3 --------------------------- output: B G M 3 center : B G 3' can be supported by additional hard evidence.
+- RQ-237: Confirm whether 'Python inline comment hint: Set the format of root handlers' can be supported by additional hard evidence.
+- RQ-238: Confirm whether 'Python inline comment hint: Redirect stdout and stderr to loggers' can be supported by additional hard evidence.
+- RQ-239: Confirm whether 'Python inline comment hint: Get logger' can be supported by additional hard evidence.
+- RQ-240: Confirm whether 'Python inline comment hint: Add a file handler for all loggers' can be supported by additional hard evidence.
+- RQ-241: Confirm whether 'Python inline comment hint: From the io.TextIOWrapper docs:' can be supported by additional hard evidence.
+- RQ-242: Confirm whether 'Python inline comment hint: On output, if newline is None, any '\n' characters written' can be supported by additional hard evidence.
+- RQ-243: Confirm whether 'Python inline comment hint: are translated to the system default line separator.' can be supported by additional hard evidence.
+- RQ-244: Confirm whether 'Python inline comment hint: By default sys.stdout.write() expects '\n' newlines and then' can be supported by additional hard evidence.
+- RQ-245: Confirm whether 'Python inline comment hint: translates them so this is still cross platform.' can be supported by additional hard evidence.
+- RQ-246: Confirm whether 'Python inline comment hint: Modified from github.com/openai/CLIP' can be supported by additional hard evidence.
+- RQ-247: Confirm whether 'Docstring hint for StreamToLogger: Fake file-like stream object that redirects writes to a logger instance.' can be supported by additional hard evidence.
+- RQ-248: Confirm whether 'Docstring hint for disable_torch_init: Disable the redundant torch default initialization to accelerate model creation.' can be supported by additional hard evidence.
+- RQ-249: Confirm whether 'Docstring hint for violates_moderation: Check whether the text violates OpenAI moderation API.' can be supported by additional hard evidence.
+- RQ-250: Confirm whether 'Docstring hint for bytes_to_unicode: Returns list of utf-8 byte and a corresponding list of unicode strings. The reversible bpe codes work on unicode strings. This means you need a large # of unicode characters in your vocab if you want to avoid UNKs. When you're at something like a 10B token dataset you end up needing around 5K for decent coverage. This is a signficant percentage of your normal, say, 32K bpe vocab. To avoid that, we want lookup tables between utf-8 bytes and unicode strings. And avoids mapping to whitespace/control characters the bpe code barfs on.' can be supported by additional hard evidence.
+- RQ-251: Confirm whether 'Docstring hint for get_pairs: Return set of symbol pairs in a word. Word is represented as tuple of symbols (symbols being variable-length strings).' can be supported by additional hard evidence.
+- RQ-252: Confirm whether 'Module docstring hint: A model worker executes the model.' can be supported by additional hard evidence.
+- RQ-253: Confirm whether 'Python inline comment hint: stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)' can be supported by additional hard evidence.
+- RQ-254: Confirm whether 'Python inline comment hint: shape: (b, num_heads, s, head_dim)' can be supported by additional hard evidence.
+- RQ-255: Confirm whether 'Python inline comment hint: reuse k, v' can be supported by additional hard evidence.
+- RQ-256: Confirm whether 'Python inline comment hint: repeat k/v heads if n_kv_heads < n_heads' can be supported by additional hard evidence.
+- RQ-257: Confirm whether 'Python inline comment hint: Transform the data into the format required by flash attention' can be supported by additional hard evidence.
+- RQ-258: Confirm whether 'Python inline comment hint: shape: [b, s, 3, num_heads, head_dim]' can be supported by additional hard evidence.
+- RQ-259: Confirm whether 'Python inline comment hint: Disable the transformation of the attention mask in LlamaModel as the flash attention' can be supported by additional hard evidence.
+- RQ-260: Confirm whether 'Python inline comment hint: requires the attention mask to be the same as the key_padding_mask' can be supported by additional hard evidence.
+- RQ-261: Confirm whether 'Python inline comment hint: [bsz, seq_len]' can be supported by additional hard evidence.
+- RQ-262: Confirm whether 'Module docstring hint: Directly copied the code from https://raw.githubusercontent.com/oobabooga/text-generation-webui/main/modules/llama_attn_hijack.py and made some adjustments' can be supported by additional hard evidence.
+- RQ-263: Confirm whether 'Python inline comment hint: pylint: disable=duplicate-code' can be supported by additional hard evidence.
+- RQ-264: Confirm whether 'Python inline comment hint: [bsz, nh, t, hd]' can be supported by additional hard evidence.
+- RQ-265: Confirm whether 'Python inline comment hint: reuse k, v, self_attention' can be supported by additional hard evidence.
+- RQ-266: Confirm whether 'Python inline comment hint: We only apply xformers optimizations if we don't need to output the whole attention matrix' can be supported by additional hard evidence.
+- RQ-267: Confirm whether 'Python inline comment hint: We therefore check if one element in the upper triangular portion is zero. If it is, then the mask is all zeros.' can be supported by additional hard evidence.
+- RQ-268: Confirm whether 'Python inline comment hint: input and output should be of form (bsz, q_len, num_heads, head_dim)' can be supported by additional hard evidence.
+- RQ-269: Confirm whether 'Python inline comment hint: input and output should be of form (bsz, q_len, num_heads, head_dim)' can be supported by additional hard evidence.
+- RQ-270: Confirm whether 'Python inline comment hint: upcast attention to fp32' can be supported by additional hard evidence.
+- RQ-271: Confirm whether 'Python inline comment hint: Borrowed from peft.utils.get_peft_model_state_dict' can be supported by additional hard evidence.
+- RQ-272: Confirm whether 'Python inline comment hint: all samples are in the same modality' can be supported by additional hard evidence.
+- RQ-273: Confirm whether 'Python inline comment hint: Only save Adapter' can be supported by additional hard evidence.
+- RQ-274: Confirm whether 'Python inline comment hint: self.model.save_pretrained(output_dir, state_dict=state_dict)' can be supported by additional hard evidence.
+- RQ-275: Confirm whether 'Docstring hint for split_to_even_chunks: Split a list of indices into `chunks` chunks of roughly equal lengths.' can be supported by additional hard evidence.
+- RQ-276: Confirm whether 'Docstring hint for LengthGroupedSampler: Sampler that samples indices in a way that groups together features of the dataset of roughly the same length while keeping a bit of randomness.' can be supported by additional hard evidence.
+- RQ-277: Confirm whether 'Docstring hint for LLaVATrainer.create_optimizer: Setup the optimizer. We provide a reasonable default that works well. If you want to use something else, you can pass a tuple in the Trainer's init through `optimizers`, or subclass and override this method in a subclass.' can be supported by additional hard evidence.
+- RQ-278: Confirm whether 'Python inline comment hint: Modified from LLaVA: https://github.com/haotian-liu/LLaVA.git' can be supported by additional hard evidence.
+- RQ-279: Confirm whether 'Python inline comment hint: Adopted from https://github.com/lm-sys/FastChat. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-280: Confirm whether 'Python inline comment hint: Adopted from tatsu-lab@stanford_alpaca. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-281: Confirm whether 'Python inline comment hint: Copyright 2023 Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li' can be supported by additional hard evidence.
+- RQ-282: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-283: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-284: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-285: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-286: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-287: Confirm whether 'Python inline comment hint: "CLS": inference of stage 1, 2' can be supported by additional hard evidence.
+- RQ-288: Confirm whether 'Python inline comment hint: "OM_Pooling":  training and inference of  stage 3' can be supported by additional hard evidence.
+- RQ-289: Confirm whether 'Python inline comment hint: stage 2 or stage 3' can be supported by additional hard evidence.
+- RQ-290: Confirm whether 'Docstring hint for pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-291: Confirm whether 'Docstring hint for safe_save_model_for_hf_trainer: Collects the state dict and dump to disk.' can be supported by additional hard evidence.
+- RQ-292: Confirm whether 'Docstring hint for smart_tokenizer_and_embedding_resize: Resize tokenizer and embedding. Note: This is the unoptimized version that may make your embedding size not be divisible by 64.' can be supported by additional hard evidence.
+- RQ-293: Confirm whether 'Docstring hint for _tokenize_fn: Tokenize a list of strings.' can be supported by additional hard evidence.
+- RQ-294: Confirm whether 'Docstring hint for _add_speaker_and_signal: Add speaker and start/end signal on each round.' can be supported by additional hard evidence.
+- RQ-295: Confirm whether 'Docstring hint for preprocess: Given a list of sources, each is a conversation list. This transform: 1. Add signal '### ' at the beginning each sentence, with end signal ' '; 2. Concatenate conversations together; 3. Tokenize the concatenated conversation; 4. Make a deepcopy as the target. Mask human words with IGNORE_INDEX.' can be supported by additional hard evidence.
+- RQ-296: Confirm whether 'Docstring hint for LazySupervisedDataset: Dataset for supervised fine-tuning.' can be supported by additional hard evidence.
+- RQ-297: Confirm whether 'Docstring hint for DataCollatorForSupervisedDataset: Collate examples for supervised fine-tuning.' can be supported by additional hard evidence.
+- RQ-298: Confirm whether 'Docstring hint for make_supervised_data_module: Make dataset and collator for supervised fine-tuning.' can be supported by additional hard evidence.
+- RQ-299: Confirm whether 'Python inline comment hint: Make it more memory efficient by monkey patching the LLaMA model with xformers attention.' can be supported by additional hard evidence.
+- RQ-300: Confirm whether 'Python inline comment hint: Need to call this before importing transformers.' can be supported by additional hard evidence.
+- RQ-301: Confirm whether 'Python inline comment hint: * use the default config file in the same dir' can be supported by additional hard evidence.
+- RQ-302: Confirm whether 'Python inline comment hint: * check data path' can be supported by additional hard evidence.
+- RQ-303: Confirm whether 'Python inline comment hint: * should be 40' can be supported by additional hard evidence.
+- RQ-304: Confirm whether 'Python inline comment hint: "tv_stand" -> "tv stand"' can be supported by additional hard evidence.
+- RQ-305: Confirm whether 'Python inline comment hint: * list of category names' can be supported by additional hard evidence.
+- RQ-306: Confirm whether 'Python inline comment hint: * ndarray of N, C: (8192, 6) (xyz and normals)' can be supported by additional hard evidence.
+- RQ-307: Confirm whether 'Python inline comment hint: * set random seed' can be supported by additional hard evidence.
+- RQ-308: Confirm whether 'Python inline comment hint: * random choose subset_nums' can be supported by additional hard evidence.
+- RQ-309: Confirm whether 'Python inline comment hint: * print len' can be supported by additional hard evidence.
+- RQ-310: Confirm whether 'Python inline comment hint: * random sample' can be supported by additional hard evidence.
+- RQ-311: Confirm whether 'Python inline comment hint: point_set = np.concatenate((point_set, np.zeros_like(point_set)), axis=-1) if self.use_color else point_set' can be supported by additional hard evidence.
+- RQ-312: Confirm whether 'Python inline comment hint: point_set = np.concatenate((point_set, np.ones_like(point_set)*0.4), axis=-1) if self.use_color else point_set' can be supported by additional hard evidence.
+- RQ-313: Confirm whether 'Docstring hint for ModelNet.__init__: Args: data_args: split: train or test' can be supported by additional hard evidence.
+- RQ-314: Confirm whether 'Docstring hint for ModelNet.pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-315: Confirm whether 'Python inline comment hint: * use the default config file in the same dir' can be supported by additional hard evidence.
+- RQ-316: Confirm whether 'Python inline comment hint: * check data path' can be supported by additional hard evidence.
+- RQ-317: Confirm whether 'Python inline comment hint: * should be 40' can be supported by additional hard evidence.
+- RQ-318: Confirm whether 'Python inline comment hint: "tv_stand" -> "tv stand"' can be supported by additional hard evidence.
+- RQ-319: Confirm whether 'Python inline comment hint: * list of category names' can be supported by additional hard evidence.
+- RQ-320: Confirm whether 'Python inline comment hint: * ndarray of N, C: (8192, 6) (xyz and normals)' can be supported by additional hard evidence.
+- RQ-321: Confirm whether 'Python inline comment hint: * set random seed' can be supported by additional hard evidence.
+- RQ-322: Confirm whether 'Python inline comment hint: * random choose subset_nums' can be supported by additional hard evidence.
+- RQ-323: Confirm whether 'Python inline comment hint: * print len' can be supported by additional hard evidence.
+- RQ-324: Confirm whether 'Python inline comment hint: * random sample' can be supported by additional hard evidence.
+- RQ-325: Confirm whether 'Python inline comment hint: * ndarray, int' can be supported by additional hard evidence.
+- RQ-326: Confirm whether 'Python inline comment hint: * random sample' can be supported by additional hard evidence.
+- RQ-327: Confirm whether 'Docstring hint for ModelNet.__init__: Args: data_args: split: train or test' can be supported by additional hard evidence.
+- RQ-328: Confirm whether 'Docstring hint for ModelNet.pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-329: Confirm whether 'Python inline comment hint: from .pointllm import PointLLMLlamaForCausalLM, PointLLMConfig' can be supported by additional hard evidence.
+- RQ-330: Confirm whether 'Python inline comment hint: from .pointbert.point_encoder import PointTransformer' can be supported by additional hard evidence.
+- RQ-331: Confirm whether 'Python inline comment hint: Copyright 2023 Runsen Xu' can be supported by additional hard evidence.
+- RQ-332: Confirm whether 'Python inline comment hint: * add logger' can be supported by additional hard evidence.
+- RQ-333: Confirm whether 'Python inline comment hint: address of config file, in the same dir of this file' can be supported by additional hard evidence.
+- RQ-334: Confirm whether 'Python inline comment hint: * default for v1.1, v1.2 uses PointTransformer_8192point_2layer.yaml' can be supported by additional hard evidence.
+- RQ-335: Confirm whether 'Python inline comment hint: * default is false' can be supported by additional hard evidence.
+- RQ-336: Confirm whether 'Python inline comment hint: * number of output features, with cls token' can be supported by additional hard evidence.
+- RQ-337: Confirm whether 'Python inline comment hint: a list' can be supported by additional hard evidence.
+- RQ-338: Confirm whether 'Python inline comment hint: * print relevant info with projection layers' can be supported by additional hard evidence.
+- RQ-339: Confirm whether 'Python inline comment hint: Add projection layer with linear layers and GELU activation' can be supported by additional hard evidence.
+- RQ-340: Confirm whether 'Python inline comment hint: Single layer' can be supported by additional hard evidence.
+- RQ-341: Confirm whether 'Python inline comment hint: Enable model/pipeline parallelism' can be supported by additional hard evidence.
+- RQ-342: Confirm whether 'Python inline comment hint: * called when stage2 or inference or inference without pre-training, assume tokenizer has point tokens' can be supported by additional hard evidence.
+- RQ-343: Confirm whether 'Python inline comment hint: Adopted from https://github.com/lm-sys/FastChat. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-344: Confirm whether 'Python inline comment hint: * some version is changed to flash_attn_varlen_qkvpacked_func, so need to check' can be supported by additional hard evidence.
+- RQ-345: Confirm whether 'Python inline comment hint: [bsz, q_len, nh, hd]' can be supported by additional hard evidence.
+- RQ-346: Confirm whether 'Python inline comment hint: [bsz, nh, q_len, hd]' can be supported by additional hard evidence.
+- RQ-347: Confirm whether 'Python inline comment hint: [bsz, nh, t, hd]' can be supported by additional hard evidence.
+- RQ-348: Confirm whether 'Python inline comment hint: Flash attention codes from' can be supported by additional hard evidence.
+- RQ-349: Confirm whether 'Python inline comment hint: https://github.com/HazyResearch/flash-attention/blob/main/flash_attn/flash_attention.py' can be supported by additional hard evidence.
+- RQ-350: Confirm whether 'Python inline comment hint: transform the data into the format required by flash attention' can be supported by additional hard evidence.
+- RQ-351: Confirm whether 'Python inline comment hint: We have disabled _prepare_decoder_attention_mask in LlamaModel' can be supported by additional hard evidence.
+- RQ-352: Confirm whether 'Python inline comment hint: the attention_mask should be the same as the key_padding_mask' can be supported by additional hard evidence.
+- RQ-353: Confirm whether 'Python inline comment hint: Disable the transformation of the attention mask in LlamaModel as the flash attention' can be supported by additional hard evidence.
+- RQ-354: Confirm whether 'Python inline comment hint: requires the attention mask to be the same as the key_padding_mask' can be supported by additional hard evidence.
+- RQ-355: Confirm whether 'Docstring hint for forward: Input shape: Batch x Time x Channel attention_mask: [bsz, q_len]' can be supported by additional hard evidence.
+- RQ-356: Confirm whether 'Python inline comment hint: since there could be multiple levels of wrapping, unwrap recursively' can be supported by additional hard evidence.
+- RQ-357: Confirm whether 'Python inline comment hint: Save the model' can be supported by additional hard evidence.
+- RQ-358: Confirm whether 'Python inline comment hint: Only save the model itself if we are using distributed training' can be supported by additional hard evidence.
+- RQ-359: Confirm whether 'Docstring hint for unwrap_model: Recursively unwraps a model from potential containers (as used in distributed training). Args: model (`torch.nn.Module`): The model to unwrap.' can be supported by additional hard evidence.
+- RQ-360: Confirm whether 'Python inline comment hint: Adopted from https://github.com/lm-sys/FastChat. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-361: Confirm whether 'Python inline comment hint: Adopted from tatsu-lab@stanford_alpaca. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-362: Confirm whether 'Python inline comment hint: Copyright 2023 Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li' can be supported by additional hard evidence.
+- RQ-363: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-364: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-365: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-366: Confirm whether 'Python inline comment hint: * for two stage training' can be supported by additional hard evidence.
+- RQ-367: Confirm whether 'Python inline comment hint: * use with torch.inference_mode to control, not requires_grad for fsdp for second stage' can be supported by additional hard evidence.
+- RQ-368: Confirm whether 'Python inline comment hint: * fix pointnet for first stage, need for fsdp in stage2' can be supported by additional hard evidence.
+- RQ-369: Confirm whether 'Python inline comment hint: * we assume in stage2, llm, point_backbone, and projection layer can be loaded from the model checkpoint' can be supported by additional hard evidence.
+- RQ-370: Confirm whether 'Python inline comment hint: * stage2' can be supported by additional hard evidence.
+- RQ-371: Confirm whether 'Python inline comment hint: layer.register_forward_hook(print_layer_output)' can be supported by additional hard evidence.
+- RQ-372: Confirm whether 'Docstring hint for safe_save_model_for_hf_trainer: Collects the state dict and dump to disk.' can be supported by additional hard evidence.
+- RQ-373: Confirm whether 'Python inline comment hint: Adopted from https://github.com/lm-sys/FastChat. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-374: Confirm whether 'Python inline comment hint: Adopted from tatsu-lab@stanford_alpaca. Below is the original copyright:' can be supported by additional hard evidence.
+- RQ-375: Confirm whether 'Python inline comment hint: Make it more memory efficient by monkey patching the LLaMA model with FlashAttn.' can be supported by additional hard evidence.
+- RQ-376: Confirm whether 'Python inline comment hint: Need to call this before importing transformers.' can be supported by additional hard evidence.
+- RQ-377: Confirm whether 'Python inline comment hint: from pointllm.train.llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn' can be supported by additional hard evidence.
+- RQ-378: Confirm whether 'Python inline comment hint: replace_llama_attn_with_flash_attn()' can be supported by additional hard evidence.
+- RQ-379: Confirm whether 'Python inline comment hint: list of (shape_name, shape_txt_file_path) tuple' can be supported by additional hard evidence.
+- RQ-380: Confirm whether 'Docstring hint for PointNet2ClassificationSSG.forward: Forward pass of the network Parameters ---------- pointcloud: Variable(torch.cuda.FloatTensor) (B, N, 3 + input_channels) tensor Point cloud to run predicts on Each point in the point-cloud MUST be formated as (x, y, z, features...)' can be supported by additional hard evidence.
+- RQ-381: Confirm whether 'Docstring hint for PointNet2SemSegSSG.forward: Forward pass of the network Parameters ---------- pointcloud: Variable(torch.cuda.FloatTensor) (B, N, 3 + input_channels) tensor Point cloud to run predicts on Each point in the point-cloud MUST be formated as (x, y, z, features...)' can be supported by additional hard evidence.
+- RQ-382: Confirm whether 'Module docstring hint: Phi-3 model configuration' can be supported by additional hard evidence.
+- RQ-383: Confirm whether 'Python inline comment hint: coding=utf-8' can be supported by additional hard evidence.
+- RQ-384: Confirm whether 'Python inline comment hint: Copyright 2024 Microsoft and the HuggingFace Inc. team. All rights reserved.' can be supported by additional hard evidence.
+- RQ-385: Confirm whether 'Python inline comment hint: Licensed under the Apache License, Version 2.0 (the "License");' can be supported by additional hard evidence.
+- RQ-386: Confirm whether 'Python inline comment hint: you may not use this file except in compliance with the License.' can be supported by additional hard evidence.
+- RQ-387: Confirm whether 'Python inline comment hint: You may obtain a copy of the License at' can be supported by additional hard evidence.
+- RQ-388: Confirm whether 'Python inline comment hint: http://www.apache.org/licenses/LICENSE-2.0' can be supported by additional hard evidence.
+- RQ-389: Confirm whether 'Python inline comment hint: Unless required by applicable law or agreed to in writing, software' can be supported by additional hard evidence.
+- RQ-390: Confirm whether 'Python inline comment hint: distributed under the License is distributed on an "AS IS" BASIS,' can be supported by additional hard evidence.
+- RQ-391: Confirm whether 'Python inline comment hint: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' can be supported by additional hard evidence.
+- RQ-392: Confirm whether 'Python inline comment hint: See the License for the specific language governing permissions and' can be supported by additional hard evidence.
+- RQ-393: Confirm whether 'Python inline comment hint: limitations under the License.' can be supported by additional hard evidence.
+- RQ-394: Confirm whether 'Docstring hint for Phi3Config: This is the configuration class to store the configuration of a [`Phi3Model`]. It is used to instantiate a Phi-3 model according to the specified arguments, defining the model architecture. Instantiating a configuration with the defaults will yield a similar configuration to that of the [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct). Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the documentation from [`PretrainedConfig`] for more information. Args: vocab_size (`int`, *optional*, defaults to 32064): Vocabulary size of the Phi-3 model. Defines the number of different tokens that can be represented by the `inputs_ids` passed when calling [`Phi3Model`]. hidden_size (`int`, *optional*, defaults to 3072): Dimension of the hidden representations. intermediate_size (`int`, *optional*, defaults to 8192): Dimension of the MLP representations. num_hidden_layers (`int`, *optional*, defaults to 32): Number of hidden layers in the Transformer decoder. num_attention_heads (`int`, *optional*, defaults to 32): Number of attention heads for each attention layer in the Transformer decoder. num_key_value_heads (`int`, *optional*): This is the number of key_value heads that should be used to implement Grouped Query Attention. If `num_key_value_heads=num_attention_heads`, the model will use Multi Head Attention (MHA), if `num_key_value_heads=1 the model will use Multi Query Attention (MQA) otherwise GQA is used. When converting a multi-head checkpoint to a GQA checkpoint, each group key and value head should be constructed by meanpooling all the original heads within that group. For more details checkout [this paper](https://arxiv.org/pdf/2305.13245.pdf). If it is not specified, will default to `num_attention_heads`. resid_pdrop (`float`, *optional*, defaults to 0.0): Dropout probability for mlp outputs. embd_pdrop (`int`, *optional*, defaults to 0.0): The dropout ratio for the embeddings. attention_dropout (`float`, *optional*, defaults to 0.0): The dropout ratio after computing the attention scores. hidden_act (`str` or `function`, *optional*, defaults to `"silu"`): The non-linear activation function (function or string) in the decoder. max_position_embeddings (`int`, *optional*, defaults to 4096): The maximum sequence length that this model might ever be used with. original_max_position_embeddings (`int`, *optional*, defaults to 4096): The maximum sequence length that this model was trained with. This is used to determine the size of the original RoPE embeddings when using long scaling. initializer_range (`float`, *optional*, defaults to 0.02): The standard deviation of the truncated_normal_initializer for initializing all weight matrices. rms_norm_eps (`float`, *optional*, defaults to 1e-05): The epsilon value used for the RMSNorm. use_cache (`bool`, *optional*, defaults to `True`): Whether or not the model should return the last key/values attentions (not used by all models). Only relevant if `config.is_decoder=True`. Whether to tie weight embeddings or not. tie_word_embeddings (`bool`, *optional*, defaults to `False`): Whether to tie weight embeddings rope_theta (`float`, *optional*, defaults to 10000.0): The base period of the RoPE embeddings. rope_scaling (`dict`, *optional*): The scaling strategy for the RoPE embeddings. If `None`, no scaling is applied. If a dictionary, it must contain the following keys: `type`, `short_factor` and `long_factor`. The `type` must be either `su` or `yarn` and the `short_factor` and `long_factor` must be lists of numbers with the same length as the hidden size divided by the number of attention heads divided by 2. bos_token_id (`int`, *optional*, defaults to 1): The id of the "beginning-of-sequence" token. eos_token_id (`int`, *optional*, defaults to 32000): The id of the "end-of-sequence" token. pad_token_id (`int`, *optional*, defaults to 32000): The id of the padding token. sliding_window (`int`, *optional*): Sliding window attention window size. If `None`, no sliding window is applied. Example: ```python >>> from transformers import Phi3Model, Phi3Config >>> # Initializing a Phi-3 style configuration >>> configuration = Phi3Config.from_pretrained("microsoft/Phi-3-mini-4k-instruct") >>> # Initializing a model from the configuration >>> model = Phi3Model(configuration) >>> # Accessing the model configuration >>> configuration = model.config ```' can be supported by additional hard evidence.
+- RQ-395: Confirm whether 'Docstring hint for Phi3Config._rope_scaling_validation: Validate the `rope_scaling` configuration.' can be supported by additional hard evidence.
+- RQ-396: Confirm whether 'Python inline comment hint: Hyper-parameters' can be supported by additional hard evidence.
+- RQ-397: Confirm whether 'Python inline comment hint: Log on each process a small summary' can be supported by additional hard evidence.
+- RQ-398: Confirm whether 'Python inline comment hint: Modle Loading' can be supported by additional hard evidence.
+- RQ-399: Confirm whether 'Python inline comment hint: loading the model with flash-attenstion support' can be supported by additional hard evidence.
+- RQ-400: Confirm whether 'Python inline comment hint: use unk rather than eos token to prevent endless generation' can be supported by additional hard evidence.
+- RQ-401: Confirm whether 'Python inline comment hint: Data Processing' can be supported by additional hard evidence.
+- RQ-402: Confirm whether 'Python inline comment hint: Add an empty system message if there is none' can be supported by additional hard evidence.
+- RQ-403: Confirm whether 'Python inline comment hint: Training' can be supported by additional hard evidence.
+- RQ-404: Confirm whether 'Python inline comment hint: Evaluation' can be supported by additional hard evidence.
+- RQ-405: Confirm whether 'Python inline comment hint: ############' can be supported by additional hard evidence.
+- RQ-406: Confirm whether 'Python inline comment hint: Model Constants' can be supported by additional hard evidence.
+- RQ-407: Confirm whether 'Python inline comment hint: Modified from LLaVA: https://github.com/haotian-liu/LLaVA.git' can be supported by additional hard evidence.
+- RQ-408: Confirm whether 'Docstring hint for SeparatorStyle: Different separator style.' can be supported by additional hard evidence.
+- RQ-409: Confirm whether 'Docstring hint for Conversation: A class that keeps all conversation history.' can be supported by additional hard evidence.
+- RQ-410: Confirm whether 'Python inline comment hint: Resize the image' can be supported by additional hard evidence.
+- RQ-411: Confirm whether 'Docstring hint for select_best_resolution: Selects the best resolution from a list of possible resolutions based on the original size. Args: original_size (tuple): The original size of the image in the format (width, height). possible_resolutions (list): A list of possible resolutions in the format [(width1, height1), (width2, height2), ...]. Returns: tuple: The best fit resolution in the format (width, height).' can be supported by additional hard evidence.
+- RQ-412: Confirm whether 'Docstring hint for resize_and_pad_image: Resize and pad an image to a target resolution while maintaining aspect ratio. Args: image (PIL.Image.Image): The input image. target_resolution (tuple): The target resolution (width, height) of the image. Returns: PIL.Image.Image: The resized and padded image.' can be supported by additional hard evidence.
+- RQ-413: Confirm whether 'Docstring hint for divide_to_patches: Divides an image into patches of a specified size. Args: image (PIL.Image.Image): The input image. patch_size (int): The size of each patch. Returns: list: A list of PIL.Image.Image objects representing the patches.' can be supported by additional hard evidence.
+- RQ-414: Confirm whether 'Docstring hint for get_anyres_image_grid_shape: Calculate the shape of the image patch grid after the preprocessing for images of any resolution. Args: image_size (tuple): The size of the input image in the format (width, height). grid_pinpoints (str): A string representation of a list of possible resolutions. patch_size (int): The size of each image patch. Returns: tuple: The shape of the image patch grid in the format (width, height).' can be supported by additional hard evidence.
+- RQ-415: Confirm whether 'Docstring hint for process_anyres_image: Process an image with variable resolutions. Args: image (PIL.Image.Image): The input image to be processed. processor: The image processor object. grid_pinpoints (str): A string representation of a list of possible resolutions. Returns: torch.Tensor: A tensor containing the processed image patches.' can be supported by additional hard evidence.
+- RQ-416: Confirm whether 'Module docstring hint: A controller manages distributed workers. It sends worker addresses to clients.' can be supported by additional hard evidence.
+- RQ-417: Confirm whether 'Python inline comment hint: Dict[str -> WorkerInfo]' can be supported by additional hard evidence.
+- RQ-418: Confirm whether 'Python inline comment hint: Directly return address' can be supported by additional hard evidence.
+- RQ-419: Confirm whether 'Python inline comment hint: Check status before returning' can be supported by additional hard evidence.
+- RQ-420: Confirm whether 'Python inline comment hint: Let the controller act as a worker to achieve hierarchical' can be supported by additional hard evidence.
+- RQ-421: Confirm whether 'Python inline comment hint: management. This can be used to connect isolated sub networks.' can be supported by additional hard evidence.
+- RQ-422: Confirm whether 'Python inline comment hint: Hard cut-off' can be supported by additional hard evidence.
+- RQ-423: Confirm whether 'Python inline comment hint: Hard cut-off for images' can be supported by additional hard evidence.
+- RQ-424: Confirm whether 'Python inline comment hint: text = '<Image><image></Image>' + text' can be supported by additional hard evidence.
+- RQ-425: Confirm whether 'Python inline comment hint: This generate call is skipped due to invalid inputs' can be supported by additional hard evidence.
+- RQ-426: Confirm whether 'Python inline comment hint: First round of conversation' can be supported by additional hard evidence.
+- RQ-427: Confirm whether 'Python inline comment hint: Query worker address' can be supported by additional hard evidence.
+- RQ-428: Confirm whether 'Python inline comment hint: No available worker' can be supported by additional hard evidence.
+- RQ-429: Confirm whether 'Python inline comment hint: Construct prompt' can be supported by additional hard evidence.
+- RQ-430: Confirm whether 'Python inline comment hint: Make requests' can be supported by additional hard evidence.
+- RQ-431: Confirm whether 'Python inline comment hint: Stream output' can be supported by additional hard evidence.
+- RQ-432: Confirm whether 'Python inline comment hint: stop_btn = gr.Button(value="⏹️  Stop Generation", interactive=False)' can be supported by additional hard evidence.
+- RQ-433: Confirm whether 'Python inline comment hint: Register listeners' can be supported by additional hard evidence.
+- RQ-434: Confirm whether 'Module docstring hint: Manually register workers. Usage: python3 -m fastchat.serve.register_worker --controller http://localhost:21001 --worker-name http://localhost:21002' can be supported by additional hard evidence.
+- RQ-435: Confirm whether 'Module docstring hint: A model worker executes the model.' can be supported by additional hard evidence.
+- RQ-436: Confirm whether 'Python inline comment hint: Select backend' can be supported by additional hard evidence.
+- RQ-437: Confirm whether 'Python inline comment hint: replace_token = DEFAULT_IMAGE_TOKEN' can be supported by additional hard evidence.
+- RQ-438: Confirm whether 'Python inline comment hint: if getattr(self.model.config, 'mm_use_im_start_end', False):' can be supported by additional hard evidence.
+- RQ-439: Confirm whether 'Python inline comment hint: replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN' can be supported by additional hard evidence.
+- RQ-440: Confirm whether 'Python inline comment hint: prompt = prompt.replace(DEFAULT_IMAGE_TOKEN, replace_token)' can be supported by additional hard evidence.
+- RQ-441: Confirm whether 'Python inline comment hint: max_context_length = getattr(model.config, 'max_position_embeddings', 2048)' can be supported by additional hard evidence.
+- RQ-442: Confirm whether 'Python inline comment hint: Set the format of root handlers' can be supported by additional hard evidence.
+- RQ-443: Confirm whether 'Python inline comment hint: Redirect stdout and stderr to loggers' can be supported by additional hard evidence.
+- RQ-444: Confirm whether 'Python inline comment hint: Get logger' can be supported by additional hard evidence.
+- RQ-445: Confirm whether 'Python inline comment hint: Add a file handler for all loggers' can be supported by additional hard evidence.
+- RQ-446: Confirm whether 'Python inline comment hint: From the io.TextIOWrapper docs:' can be supported by additional hard evidence.
+- RQ-447: Confirm whether 'Python inline comment hint: On output, if newline is None, any '\n' characters written' can be supported by additional hard evidence.
+- RQ-448: Confirm whether 'Python inline comment hint: are translated to the system default line separator.' can be supported by additional hard evidence.
+- RQ-449: Confirm whether 'Python inline comment hint: By default sys.stdout.write() expects '\n' newlines and then' can be supported by additional hard evidence.
+- RQ-450: Confirm whether 'Python inline comment hint: translates them so this is still cross platform.' can be supported by additional hard evidence.
+- RQ-451: Confirm whether 'Python inline comment hint: Modified from github.com/openai/CLIP' can be supported by additional hard evidence.
+- RQ-452: Confirm whether 'Docstring hint for StreamToLogger: Fake file-like stream object that redirects writes to a logger instance.' can be supported by additional hard evidence.
+- RQ-453: Confirm whether 'Docstring hint for disable_torch_init: Disable the redundant torch default initialization to accelerate model creation.' can be supported by additional hard evidence.
+- RQ-454: Confirm whether 'Docstring hint for violates_moderation: Check whether the text violates OpenAI moderation API.' can be supported by additional hard evidence.
+- RQ-455: Confirm whether 'Docstring hint for bytes_to_unicode: Returns list of utf-8 byte and a corresponding list of unicode strings. The reversible bpe codes work on unicode strings. This means you need a large # of unicode characters in your vocab if you want to avoid UNKs. When you're at something like a 10B token dataset you end up needing around 5K for decent coverage. This is a signficant percentage of your normal, say, 32K bpe vocab. To avoid that, we want lookup tables between utf-8 bytes and unicode strings. And avoids mapping to whitespace/control characters the bpe code barfs on.' can be supported by additional hard evidence.
+- RQ-456: Confirm whether 'Docstring hint for get_pairs: Return set of symbol pairs in a word. Word is represented as tuple of symbols (symbols being variable-length strings).' can be supported by additional hard evidence.
+- RQ-457: Confirm whether 'Python inline comment hint: from .model import PointLLMLlamaForCausalLM' can be supported by additional hard evidence.
+- RQ-458: Confirm whether 'Python inline comment hint: * pop the last message if it's None, this is used for multi-round dialogue' can be supported by additional hard evidence.
+- RQ-459: Confirm whether 'Python inline comment hint: image = image.resize((224, 224))' can be supported by additional hard evidence.
+- RQ-460: Confirm whether 'Python inline comment hint: fastchat' can be supported by additional hard evidence.
+- RQ-461: Confirm whether 'Docstring hint for SeparatorStyle: Different separator style.' can be supported by additional hard evidence.
+- RQ-462: Confirm whether 'Docstring hint for Conversation: A class that keeps all conversation history.' can be supported by additional hard evidence.
+- RQ-463: Confirm whether 'Python inline comment hint: from .scanobjectNN import ScanObjectNN' can be supported by additional hard evidence.
+- RQ-464: Confirm whether 'Python inline comment hint: * make a val dataset' can be supported by additional hard evidence.
+- RQ-465: Confirm whether 'Python inline comment hint: * load train split' can be supported by additional hard evidence.
+- RQ-466: Confirm whether 'Python inline comment hint: * use all data as training data' can be supported by additional hard evidence.
+- RQ-467: Confirm whether 'Python inline comment hint: * default is simple_des, used for stage1 pre-train' can be supported by additional hard evidence.
+- RQ-468: Confirm whether 'Python inline comment hint: Load the data list from JSON' can be supported by additional hard evidence.
+- RQ-469: Confirm whether 'Python inline comment hint: * print the conversations_type' can be supported by additional hard evidence.
+- RQ-470: Confirm whether 'Python inline comment hint: * print before filtering' can be supported by additional hard evidence.
+- RQ-471: Confirm whether 'Python inline comment hint: * iterate the list and filter' can be supported by additional hard evidence.
+- RQ-472: Confirm whether 'Python inline comment hint: * these two ids have corrupted colored point files, so filter them when use_color is True' can be supported by additional hard evidence.
+- RQ-473: Confirm whether 'Python inline comment hint: Iterate the list, filter those "conversation_type" not in self.conversation_types' can be supported by additional hard evidence.
+- RQ-474: Confirm whether 'Python inline comment hint: * print after filtering' can be supported by additional hard evidence.
+- RQ-475: Confirm whether 'Python inline comment hint: * print the size of different conversation_type' can be supported by additional hard evidence.
+- RQ-476: Confirm whether 'Docstring hint for make_object_point_data_module: Make dataset and collator for Joint3Ddataset with text and point cloud data.' can be supported by additional hard evidence.
+- RQ-477: Confirm whether 'Docstring hint for ObjectPointCloudDataset: Dataset utilities for objaverse.' can be supported by additional hard evidence.
+- RQ-478: Confirm whether 'Docstring hint for ObjectPointCloudDataset.__init__: split: only considered when data_args.split_train_val is True. conversation_types: tuple, used to filter the data, default is ('simple_description'), other types is: "detailed_description", "single_round", "multi_round". tokenizer: load point clouds only if None' can be supported by additional hard evidence.
+- RQ-479: Confirm whether 'Docstring hint for ObjectPointCloudDataset.pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-480: Confirm whether 'Docstring hint for ObjectPointCloudDataset.__len__: Return number of utterances.' can be supported by additional hard evidence.
+- RQ-481: Confirm whether 'Python inline comment hint: * Sample Usage:' can be supported by additional hard evidence.
+- RQ-482: Confirm whether 'Python inline comment hint: * from utils import LRUCache' can be supported by additional hard evidence.
+- RQ-483: Confirm whether 'Python inline comment hint: * cache = LRUCache(capacity, max_access_count)' can be supported by additional hard evidence.
+- RQ-484: Confirm whether 'Python inline comment hint: if self.cache is None:' can be supported by additional hard evidence.
+- RQ-485: Confirm whether 'Python inline comment hint: info_data = self.multiview_scannet[info_index]' can be supported by additional hard evidence.
+- RQ-486: Confirm whether 'Python inline comment hint: else:' can be supported by additional hard evidence.
+- RQ-487: Confirm whether 'Python inline comment hint: info_data = self.cache.get(info_index)' can be supported by additional hard evidence.
+- RQ-488: Confirm whether 'Python inline comment hint: if info_data is None or self.cache.get_access_count(info_index) >= self.cache.max_access_count:' can be supported by additional hard evidence.
+- RQ-489: Confirm whether 'Python inline comment hint: # If not in cache, or accessed max_access_count times, load it and put it in cache' can be supported by additional hard evidence.
+- RQ-490: Confirm whether 'Python inline comment hint: info_data = self.multiview_scannet[info_index]' can be supported by additional hard evidence.
+- RQ-491: Confirm whether 'Python inline comment hint: self.cache.put(info_index, info_data)' can be supported by additional hard evidence.
+- RQ-492: Confirm whether 'Python inline comment hint: self.cache.reset_access_count(info_index)' can be supported by additional hard evidence.
+- RQ-493: Confirm whether 'Docstring hint for pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-494: Confirm whether 'Docstring hint for DataCollatorForPointTextDataset: Collate examples for mixed dataset with text and point cloud data.' can be supported by additional hard evidence.
+- RQ-495: Confirm whether 'Docstring hint for farthest_point_sample: Input: xyz: pointcloud data, [N, D] npoint: number of samples Return: centroids: sampled pointcloud index, [npoint, D]' can be supported by additional hard evidence.
+- RQ-496: Confirm whether 'Docstring hint for pc_normalize: pc: Nx3 array This functions normalizes a point cloud to fit within a unit sphere. It first calculates the centroid of the point cloud and then subtracts it from all points before scaling all points to fit within a unit sphere.' can be supported by additional hard evidence.
+- RQ-497: Confirm whether 'Python inline comment hint: * Sample Usage:' can be supported by additional hard evidence.
+- RQ-498: Confirm whether 'Python inline comment hint: * from utils import LRUCache' can be supported by additional hard evidence.
+- RQ-499: Confirm whether 'Python inline comment hint: * cache = LRUCache(capacity, max_access_count)' can be supported by additional hard evidence.
+- RQ-500: Confirm whether 'Python inline comment hint: if self.cache is None:' can be supported by additional hard evidence.
+- RQ-501: Confirm whether 'Python inline comment hint: info_data = self.multiview_scannet[info_index]' can be supported by additional hard evidence.
+- RQ-502: Confirm whether 'Python inline comment hint: else:' can be supported by additional hard evidence.
+- RQ-503: Confirm whether 'Python inline comment hint: info_data = self.cache.get(info_index)' can be supported by additional hard evidence.
+- RQ-504: Confirm whether 'Python inline comment hint: if info_data is None or self.cache.get_access_count(info_index) >= self.cache.max_access_count:' can be supported by additional hard evidence.
+- RQ-505: Confirm whether 'Python inline comment hint: # If not in cache, or accessed max_access_count times, load it and put it in cache' can be supported by additional hard evidence.
+- RQ-506: Confirm whether 'Python inline comment hint: info_data = self.multiview_scannet[info_index]' can be supported by additional hard evidence.
+- RQ-507: Confirm whether 'Python inline comment hint: self.cache.put(info_index, info_data)' can be supported by additional hard evidence.
+- RQ-508: Confirm whether 'Python inline comment hint: self.cache.reset_access_count(info_index)' can be supported by additional hard evidence.
+- RQ-509: Confirm whether 'Docstring hint for pc_norm: pc: NxC, return NxC' can be supported by additional hard evidence.
+- RQ-510: Confirm whether 'Docstring hint for DataCollatorForPointTextDataset: Collate examples for mixed dataset with text and point cloud data.' can be supported by additional hard evidence.
+- RQ-511: Confirm whether 'Docstring hint for farthest_point_sample: Input: xyz: pointcloud data, [N, D] npoint: number of samples Return: centroids: sampled pointcloud index, [npoint, D]' can be supported by additional hard evidence.
+- RQ-512: Confirm whether 'Docstring hint for pc_normalize: pc: Nx3 array This functions normalizes a point cloud to fit within a unit sphere. It first calculates the centroid of the point cloud and then subtracts it from all points before scaling all points to fit within a unit sphere.' can be supported by additional hard evidence.
+- RQ-513: Confirm whether 'Python inline comment hint: Set the format of root handlers' can be supported by additional hard evidence.
+- RQ-514: Confirm whether 'Python inline comment hint: Redirect stdout and stderr to loggers' can be supported by additional hard evidence.
+- RQ-515: Confirm whether 'Python inline comment hint: Get logger' can be supported by additional hard evidence.
+- RQ-516: Confirm whether 'Python inline comment hint: Add a file handler for all loggers' can be supported by additional hard evidence.
+- RQ-517: Confirm whether 'Python inline comment hint: * get the logger_file's directory, and create it if not exist' can be supported by additional hard evidence.
+- RQ-518: Confirm whether 'Python inline comment hint: From the io.TextIOWrapper docs:' can be supported by additional hard evidence.
+- RQ-519: Confirm whether 'Python inline comment hint: On output, if newline is None, any '\n' characters written' can be supported by additional hard evidence.
+- RQ-520: Confirm whether 'Python inline comment hint: are translated to the system default line separator.' can be supported by additional hard evidence.
+- RQ-521: Confirm whether 'Python inline comment hint: By default sys.stdout.write() expects '\n' newlines and then' can be supported by additional hard evidence.
+- RQ-522: Confirm whether 'Python inline comment hint: translates them so this is still cross platform.' can be supported by additional hard evidence.
+- RQ-523: Confirm whether 'Python inline comment hint: url = "https://api.chatanywhere.tech/v1/moderations"' can be supported by additional hard evidence.
+- RQ-524: Confirm whether 'Docstring hint for StreamToLogger: Fake file-like stream object that redirects writes to a logger instance.' can be supported by additional hard evidence.
+- RQ-525: Confirm whether 'Docstring hint for disable_torch_init: Disable the redundant torch default initialization to accelerate model creation.' can be supported by additional hard evidence.
+- RQ-526: Confirm whether 'Docstring hint for violates_moderation: Check whether the text violates OpenAI moderation API.' can be supported by additional hard evidence.
+- RQ-527: Confirm whether 'Python inline comment hint: yapf: disable' can be supported by additional hard evidence.
+- RQ-528: Confirm whether 'Python inline comment hint: yapf: enable' can be supported by additional hard evidence.
+- RQ-529: Confirm whether 'Python inline comment hint: 0~0.875' can be supported by additional hard evidence.
+- RQ-530: Confirm whether 'Python inline comment hint: set to the first point' can be supported by additional hard evidence.
+- RQ-531: Confirm whether 'Docstring hint for angle_axis: Returns a 4x4 rotation matrix that performs a rotation around axis by angle Parameters ---------- angle : float Angle to rotate by axis: np.ndarray Axis to rotate about Returns ------- torch.Tensor 3x3 rotation matrix' can be supported by additional hard evidence.
+- RQ-532: Confirm whether 'Python inline comment hint: (B, C, npoint, nsample)' can be supported by additional hard evidence.
+- RQ-533: Confirm whether 'Python inline comment hint: (B, mlp[-1], npoint, nsample)' can be supported by additional hard evidence.
+- RQ-534: Confirm whether 'Python inline comment hint: (B, mlp[-1], npoint, 1)' can be supported by additional hard evidence.
+- RQ-535: Confirm whether 'Python inline comment hint: (B, mlp[-1], npoint)' can be supported by additional hard evidence.
+- RQ-536: Confirm whether 'Python inline comment hint: (B, C2 + C1, n)' can be supported by additional hard evidence.
+- RQ-537: Confirm whether 'Docstring hint for _PointnetSAModuleBase.forward: Parameters ---------- xyz : torch.Tensor (B, N, 3) tensor of the xyz coordinates of the features features : torch.Tensor (B, C, N) tensor of the descriptors of the the features Returns ------- new_xyz : torch.Tensor (B, npoint, 3) tensor of the new features' xyz new_features : torch.Tensor (B, \sum_k(mlps[k][-1]), npoint) tensor of the new_features descriptors' can be supported by additional hard evidence.
+- RQ-538: Confirm whether 'Docstring hint for PointnetSAModuleMSG: Pointnet set abstrction layer with multiscale grouping Parameters ---------- npoint : int Number of features radii : list of float32 list of radii to group with nsamples : list of int32 Number of samples in each ball query mlps : list of list of int32 Spec of the pointnet before the global max_pool for each scale bn : bool Use batchnorm' can be supported by additional hard evidence.
+- RQ-539: Confirm whether 'Docstring hint for PointnetSAModule: Pointnet set abstrction layer Parameters ---------- npoint : int Number of features radius : float Radius of ball nsample : int Number of samples in the ball query mlp : list Spec of the pointnet before the global max_pool bn : bool Use batchnorm' can be supported by additional hard evidence.
+- RQ-540: Confirm whether 'Docstring hint for PointnetFPModule: Propigates the features of one set to another Parameters ---------- mlp : list Pointnet module parameters bn : bool Use batchnorm' can be supported by additional hard evidence.
+- RQ-541: Confirm whether 'Docstring hint for PointnetFPModule.forward: Parameters ---------- unknown : torch.Tensor (B, n, 3) tensor of the xyz positions of the unknown features known : torch.Tensor (B, m, 3) tensor of the xyz positions of the known features unknow_feats : torch.Tensor (B, C1, n) tensor of the features to be propigated to known_feats : torch.Tensor (B, C2, m) tensor of features to be propigated Returns ------- new_features : torch.Tensor (B, mlp[-1], n) tensor of the features of the unknown features' can be supported by additional hard evidence.
+- RQ-542: Confirm whether 'Python inline comment hint: type(Any, torch.Tensor, torch.Tensor, torch.Tensor) -> Torch.Tensor' can be supported by additional hard evidence.
+- RQ-543: Confirm whether 'Python inline comment hint: (B, 3, npoint, nsample)' can be supported by additional hard evidence.
+- RQ-544: Confirm whether 'Python inline comment hint: (B, C + 3, npoint, nsample)' can be supported by additional hard evidence.
+- RQ-545: Confirm whether 'Python inline comment hint: (B, 3 + C, 1, N)' can be supported by additional hard evidence.
+- RQ-546: Confirm whether 'Docstring hint for FurthestPointSampling.forward: Uses iterative furthest point sampling to select a set of npoint features that have the largest minimum distance Parameters ---------- xyz : torch.Tensor (B, N, 3) tensor where N > npoint npoint : int32 number of features in the sampled set Returns ------- torch.Tensor (B, npoint) tensor containing the set' can be supported by additional hard evidence.
+- RQ-547: Confirm whether 'Docstring hint for GatherOperation.forward: Parameters ---------- features : torch.Tensor (B, C, N) tensor idx : torch.Tensor (B, npoint) tensor of the features to gather Returns ------- torch.Tensor (B, C, npoint) tensor' can be supported by additional hard evidence.
+- RQ-548: Confirm whether 'Docstring hint for ThreeNN.forward: Find the three nearest neighbors of unknown in known Parameters ---------- unknown : torch.Tensor (B, n, 3) tensor of known features known : torch.Tensor (B, m, 3) tensor of unknown features Returns ------- dist : torch.Tensor (B, n, 3) l2 distance to the three nearest neighbors idx : torch.Tensor (B, n, 3) index of 3 nearest neighbors' can be supported by additional hard evidence.
+- RQ-549: Confirm whether 'Docstring hint for ThreeInterpolate.forward: Performs weight linear interpolation on 3 features Parameters ---------- features : torch.Tensor (B, c, m) Features descriptors to be interpolated from idx : torch.Tensor (B, n, 3) three nearest neighbors of the target features in features weight : torch.Tensor (B, n, 3) weights Returns ------- torch.Tensor (B, c, n) tensor of the interpolated features' can be supported by additional hard evidence.
+- RQ-550: Confirm whether 'Docstring hint for ThreeInterpolate.backward: Parameters ---------- grad_out : torch.Tensor (B, c, n) tensor with gradients of ouputs Returns ------- grad_features : torch.Tensor (B, c, m) tensor with gradients of features None None' can be supported by additional hard evidence.
+- RQ-551: Confirm whether 'Docstring hint for GroupingOperation.forward: Parameters ---------- features : torch.Tensor (B, C, N) tensor of features to group idx : torch.Tensor (B, npoint, nsample) tensor containing the indicies of features to group with Returns ------- torch.Tensor (B, C, npoint, nsample) tensor' can be supported by additional hard evidence.
+- RQ-552: Confirm whether 'Docstring hint for GroupingOperation.backward: Parameters ---------- grad_out : torch.Tensor (B, C, npoint, nsample) tensor of the gradients of the output from forward Returns ------- torch.Tensor (B, C, N) gradient of the features None' can be supported by additional hard evidence.
+- RQ-553: Confirm whether 'Docstring hint for BallQuery.forward: Parameters ---------- radius : float radius of the balls nsample : int maximum number of features in the balls xyz : torch.Tensor (B, N, 3) xyz coordinates of the features new_xyz : torch.Tensor (B, npoint, 3) centers of the ball query Returns ------- torch.Tensor (B, npoint, nsample) tensor with the indicies of the features that form the query balls' can be supported by additional hard evidence.
+- RQ-554: Confirm whether 'Docstring hint for QueryAndGroup: Groups with a ball query of radius Parameters --------- radius : float32 Radius of ball nsample : int32 Maximum number of features to gather in the ball' can be supported by additional hard evidence.
+- RQ-555: Confirm whether 'Docstring hint for QueryAndGroup.forward: Parameters ---------- xyz : torch.Tensor xyz coordinates of the features (B, N, 3) new_xyz : torch.Tensor centriods (B, npoint, 3) features : torch.Tensor Descriptors of the features (B, C, N) Returns ------- new_features : torch.Tensor (B, 3 + C, npoint, nsample) tensor' can be supported by additional hard evidence.
+- RQ-556: Confirm whether 'Docstring hint for GroupAll: Groups all features Parameters ---------' can be supported by additional hard evidence.
+- RQ-557: Confirm whether 'Docstring hint for GroupAll.forward: Parameters ---------- xyz : torch.Tensor xyz coordinates of the features (B, N, 3) new_xyz : torch.Tensor Ignored features : torch.Tensor Descriptors of the features (B, C, N) Returns ------- new_features : torch.Tensor (B, C + 3, 1, N) tensor' can be supported by additional hard evidence.
+- RQ-558: Confirm whether 'Python inline comment hint: print(choice_txt)' can be supported by additional hard evidence.
+- RQ-559: Confirm whether 'Python inline comment hint: \\n: GPT-3 can generate the lecture with more tokens.' can be supported by additional hard evidence.
+- RQ-560: Confirm whether 'Python inline comment hint: \\n: GPT-3 can generate the solution with more tokens' can be supported by additional hard evidence.
+- RQ-561: Confirm whether 'Python inline comment hint: Inputs' can be supported by additional hard evidence.
+- RQ-562: Confirm whether 'Python inline comment hint: upper bound experiment' can be supported by additional hard evidence.
+- RQ-563: Confirm whether 'Python inline comment hint: Outputs' can be supported by additional hard evidence.
+- RQ-564: Confirm whether 'Python inline comment hint: Inputs' can be supported by additional hard evidence.
+- RQ-565: Confirm whether 'Python inline comment hint: upper bound experiment' can be supported by additional hard evidence.
+- RQ-566: Confirm whether 'Python inline comment hint: Outputs' can be supported by additional hard evidence.
+- RQ-567: Confirm whether 'Python inline comment hint: Inputs' can be supported by additional hard evidence.
+- RQ-568: Confirm whether 'Python inline comment hint: upper bound experiment' can be supported by additional hard evidence.
+- RQ-569: Confirm whether 'Python inline comment hint: Outputs' can be supported by additional hard evidence.
+- RQ-570: Confirm whether 'Module docstring hint: This is just a utility that I use to extract the projector for quantized models. It is NOT necessary at all to train, or run inference/serve demos. Use this script ONLY if you fully understand its implications.' can be supported by additional hard evidence.
+- RQ-571: Confirm whether 'Python inline comment hint: Smaller models or model checkpoints saved by DeepSpeed.' can be supported by additional hard evidence.
+- RQ-572: Confirm whether 'Module docstring hint: Train script for a single file Need to set the TPU address first: export XRT_TPU_CONFIG="localservice;0;localhost:51011"' can be supported by additional hard evidence.
+- RQ-573: Confirm whether 'Python inline comment hint: First element of model_output contains all token embeddings' can be supported by additional hard evidence.
+- RQ-574: Confirm whether 'Python inline comment hint: Train Loop' can be supported by additional hard evidence.
+- RQ-575: Confirm whether 'Python inline comment hint: Instantiate optimizer' can be supported by additional hard evidence.
+- RQ-576: Confirm whether 'Python inline comment hint: Now we train the model' can be supported by additional hard evidence.
+- RQ-577: Confirm whether 'Python inline comment hint: Get the batch data' can be supported by additional hard evidence.
+- RQ-578: Confirm whether 'Python inline comment hint: print(index, "batch {}x{}".format(len(batch), ",".join([str(len(b)) for b in batch])))' can be supported by additional hard evidence.
+- RQ-579: Confirm whether 'Python inline comment hint: (anchor, positive)' can be supported by additional hard evidence.
+- RQ-580: Confirm whether 'Python inline comment hint: Compute embeddings' can be supported by additional hard evidence.
+- RQ-581: Confirm whether 'Python inline comment hint: Compute cross-entropy loss' can be supported by additional hard evidence.
+- RQ-582: Confirm whether 'Python inline comment hint: Symmetric loss as in CLIP' can be supported by additional hard evidence.
+- RQ-583: Confirm whether 'Python inline comment hint: Compute cross-entropy loss' can be supported by additional hard evidence.
+- RQ-584: Confirm whether 'Python inline comment hint: One-way loss' can be supported by additional hard evidence.
+- RQ-585: Confirm whether 'Docstring hint for RedditDataset: A class that handles the reddit data files' can be supported by additional hard evidence.
+- RQ-586: Confirm whether 'Docstring hint for Dataset: A class that handles one dataset' can be supported by additional hard evidence.
+
+## Negative Scope
+
+- README-only statements cannot enter method prose.
+- Logger, checkpoint, seed, cache, path handling, and distributed setup are infrastructure unless tied to hard method evidence.
+- Comments and author hints are navigation signals, not standalone fact evidence.
+- Do not present these support/utility symbols as method mechanisms: lava-vicuna_2024_4_Phi-3-mini-4k-instruct/modeling_phi3.py::Phi3PreTrainedModel, lava-vicuna_2024_4_Phi-3-mini-4k-instruct/modeling_phi3.py::Phi3PreTrainedModel._init_weights, lava-vicuna_2024_4_Phi-3-mini-4k-instruct/modeling_phi3.py::Phi3PreTrainedModel._init_weights->isinstance, lava-vicuna_2024_4_Phi-3-mini-4k-instruct/modeling_phi3.py::Phi3PreTrainedModel._init_weights->normal_, lava-vicuna_2024_4_Phi-3-mini-4k-instruct/modeling_phi3.py::Phi3PreTrainedModel._init_weights->zero_, llava/model/apply_delta.py::apply_delta->from_pretrained, llava/model/apply_delta.py::apply_delta->save_pretrained, llava/model/builder.py::load_pretrained_model, llava/model/builder.py::load_pretrained_model->BitsAndBytesConfig, llava/model/builder.py::load_pretrained_model->Parameter, llava/model/builder.py::load_pretrained_model->add_tokens, llava/model/builder.py::load_pretrained_model->any, llava/model/builder.py::load_pretrained_model->copyfile, llava/model/builder.py::load_pretrained_model->empty, llava/model/builder.py::load_pretrained_model->exists, llava/model/builder.py::load_pretrained_model->from_pretrained, llava/model/builder.py::load_pretrained_model->getattr, llava/model/builder.py::load_pretrained_model->hasattr, llava/model/builder.py::load_pretrained_model->hf_hub_download, llava/model/builder.py::load_pretrained_model->isfile
+- No author markers were provided; author confirmation is required before claiming method intent.

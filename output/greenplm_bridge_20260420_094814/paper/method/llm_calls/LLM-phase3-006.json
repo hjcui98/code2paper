@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-006",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "negative_scope_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:f05585c210a515cf7729c26149372b9c123704313bc342be73d1051f10d35522",
+  "response_hash": "sha256:da9477987cb143e59bab2f4bf8a640ccfedc7cba25b36926856850597ff53def",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3NegativeScopeOutput",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-20T02:05:48.982932+00:00"
+}

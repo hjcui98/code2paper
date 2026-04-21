@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="260" viewBox="0 0 1080 260">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#58606b"/></marker></defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="52" y="42" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#17202a">Method Overview</text>
+<rect x="52" y="86" width="172" height="92" rx="8" fill="#f8fafc" stroke="#243447" stroke-width="1.5"/>
+<text x="138.0" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Overview</text>
+<path d="M 230 132.0 L 242 132.0" stroke="#58606b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="252" y="86" width="172" height="92" rx="8" fill="#f8fafc" stroke="#243447" stroke-width="1.5"/>
+<text x="338.0" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Evidence Grounded</text>
+<text x="338.0" y="140" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Pipeline</text>
+<path d="M 430 132.0 L 442 132.0" stroke="#58606b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="452" y="86" width="172" height="92" rx="8" fill="#f8fafc" stroke="#243447" stroke-width="1.5"/>
+<text x="538.0" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Core Components</text>
+<path d="M 630 132.0 L 642 132.0" stroke="#58606b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="652" y="86" width="172" height="92" rx="8" fill="#f8fafc" stroke="#243447" stroke-width="1.5"/>
+<text x="738.0" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Code Backed</text>
+<text x="738.0" y="140" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Mechanism Details</text>
+<path d="M 830 132.0 L 842 132.0" stroke="#58606b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="852" y="86" width="172" height="92" rx="8" fill="#f8fafc" stroke="#243447" stroke-width="1.5"/>
+<text x="938.0" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#17202a">Training Procedure</text>
+</svg>

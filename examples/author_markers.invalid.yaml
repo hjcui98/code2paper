@@ -1,0 +1,17 @@
+project_goal: ""
+priority_files: "train.py"
+module_roles:
+  - path: ""
+    role: ""
+    importance: "very-important"
+pipeline_steps:
+  - name: ""
+    purpose: ""
+    highlight_level: "primary"
+innovation_claims:
+  - claim: ""
+    confidence: "certain"
+potential_mismatches:
+  - description: ""
+    severity: "critical"
+

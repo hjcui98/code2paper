@@ -1,0 +1,9 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "schema_validation_failed:ValidationError:1 validation error for TerminologyTable\nterminology_table\n  Extra inputs are not permitted [type=extra_forbidden, input_value=[{'term_id': 'TERM-STAGE-...ts and log artifacts.'}], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/method_authoring_prompt.md",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/llm_calls/LLM-phase4-002.json"
+  ]
+}

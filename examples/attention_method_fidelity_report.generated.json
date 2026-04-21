@@ -1,0 +1,8 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "passed": true,
+  "grounded_paragraphs": 22,
+  "issues": [],
+  "checked_claims": 19,
+  "checked_evidence_items": 91
+}

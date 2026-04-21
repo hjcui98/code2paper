@@ -1,0 +1,9 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "provider_http_error:400:{\"error\":{\"message\":\"Incorrect model ID. Please request to view the model page or you do not have permission to use this model kimi-k2.5 (tid: 2026041909160720152591962733017)\",\"type\":\"Aihubmix_api_error\"}}",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/method_authoring_prompt.md",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/llm_calls/LLM-phase4-002.json"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "project_id": "greenplm",
+  "mode": "blocked",
+  "llm_available": false,
+  "blocked_reason": "schema_validation_failed:ValidationError:43 validation errors for TerminologyTable\nterms.0.definition\n  Extra inputs are not permitted [type=extra_forbidden, input_value='Initial execution stage ...ent computation stages.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nterms.1.definition\n  Extra inputs are not permitted [type=extra_forbidden, input_value='Core execution stage tha... and multimodal inputs.', input_type=str]\n    For further information visit https://errors.pydantic.d",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:9d8ae63fa06ae4dfeda526578747bdab303491e919922c8301bb4440b3ef7009"
+    },
+    "phase4_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/phase4_blocked_report.json",
+      "hash": "sha256:9a7eadb8b41c4c6e2dc3bd533a7a4259cb4ecbf54577563935cffa0afd0d570d"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase4-002.json"
+  ],
+  "validator_reports": []
+}

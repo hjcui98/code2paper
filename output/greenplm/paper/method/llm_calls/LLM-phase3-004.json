@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-004",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "author_logic_mapper",
+  "prompt_template_version": "",
+  "input_hash": "sha256:906e6857d0923f6d30522c11133dd8f8cde3f454846964b68dfc6d149424b84d",
+  "response_hash": "sha256:1f9961b7ff6b5e01c9ecdd1f631f5961e8afa438068a2583de681ccc768c000f",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3AuthorLogicOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-18T16:52:44.859545+00:00"
+}

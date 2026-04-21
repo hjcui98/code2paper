@@ -1,0 +1,19 @@
+{
+  "author_logic_summary": "",
+  "navigation_questions": [],
+  "suspected_core_symbols": [],
+  "suspected_config_behavior_links": [],
+  "claims_to_verify": [
+    "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+    "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+    "Use large text supervision to reduce dependence on scarce point-text pairs.",
+    "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+    "Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost."
+  ],
+  "comment_triage": {
+    "high_priority_comment_ids": [],
+    "medium_priority_comment_ids": [],
+    "low_priority_comment_ids": [],
+    "excluded_comment_ids": []
+  }
+}

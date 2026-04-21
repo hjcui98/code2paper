@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-007",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "targeted_reviser",
+  "prompt_template_version": "",
+  "input_hash": "sha256:0aa4d7c06cb0e0139594195e9afe9e5a3c7d9e5af84fc901bd1a61ba734d0a2c",
+  "response_hash": "sha256:61057646ba0076e067384488aeb6d0cb8dbc3009eaab561e1f8bc71ce7d95787",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "TargetedRevisionOutput",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T14:30:43.566965+00:00"
+}

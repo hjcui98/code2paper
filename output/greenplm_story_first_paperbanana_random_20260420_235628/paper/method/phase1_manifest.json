@@ -1,0 +1,36 @@
+{
+  "project_id": "code",
+  "mode": "story-first-code-intake",
+  "readme_policy": "exclude",
+  "author_input_provided": true,
+  "outputs": {
+    "raw_evidence_pack": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/raw_evidence_pack.json",
+      "hash": "sha256:b4ac71164f8406e985dfc57a97056f0b0b4130bb27306b422c3671960295f1af"
+    },
+    "code_sources": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/code_sources.json",
+      "hash": "sha256:e81e9d6dea6063bcaa767b75feb6d71025858974d59681132267adce2fb8bbad"
+    },
+    "core_snippets": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/core_snippets.json",
+      "hash": "sha256:8ef8e3dd41383bac86c2022f35389bbf374e8a0f8a6743ac171728b79886c6bb"
+    },
+    "code_intake_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/code_intake_report.json",
+      "hash": "sha256:678a0fbba1b04c6c2cc37bf6c66cb8d9d7ecda3873d6e1fbe5205a6d7611fe0b"
+    },
+    "method_code_alignment": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/method_code_alignment.json",
+      "hash": "sha256:0f1c91dad08dda825e8cb5b1e284a848ca946cbff6f295b2830ac5a04b574890"
+    },
+    "author_marker_method_summary": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/author_marker_method_summary.json",
+      "hash": "sha256:60a56be7f776b39a510573a958b90407145c64e3ed0cefe419508aeecd5081d5"
+    },
+    "snippet_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/snippet_evidence_map.json",
+      "hash": "sha256:b55ab17110b4f7cea7100d58ad3a3831ab27b74cdf199476fc26d722855f4d41"
+    }
+  }
+}

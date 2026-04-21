@@ -1,0 +1,69 @@
+project_goal: "Train and evaluate a Transformer model for machine translation."
+paper_method_goal: "Describe the implementation-grounded training pipeline and core Transformer components."
+implementation_scope: "Current attention-is-all-you-need-pytorch codebase only."
+
+# narrative/authoring control layer
+method_mainline: "Data preprocessing -> Transformer computation -> scheduled optimization. Emphasize architecture + optimization interaction."
+paper_story_order:
+  - "Data preprocessing"
+  - "Transformer computation"
+  - "Scheduled optimization"
+deemphasize_details:
+  - "logging and checkpoint path handling"
+  - "dataset download and shell environment setup"
+latex_expression_preference: "balanced"
+
+priority_files:
+  - "train_multi30k_de_en.sh"
+  - "preprocess.py"
+  - "transformer/Layers.py"
+  - "transformer/SubLayers.py"
+  - "transformer/Optim.py"
+ignore_files:
+  - "README.md"
+module_roles:
+  - path: "transformer/Layers.py"
+    symbol: "EncoderLayer"
+    role: "encoder layer"
+    importance: "core"
+    is_novel: false
+    notes: "Implements a central Transformer block used by the model."
+pipeline_steps:
+  - name: "Data preprocessing"
+    purpose: "Prepare tokenized translation data before training."
+    input:
+      - "raw Multi30k files"
+    output:
+      - "serialized training data"
+    related_files:
+      - "preprocess.py"
+    highlight_level: "main"
+    omit_from_main_figure: false
+
+# weak-guidance layer A: author design intent (used as retrieval hints -> must be aligned to code evidence)
+design_intents:
+  - intent: "Learning-rate warmup/schedule is a core method design, not only training boilerplate."
+    rationale: "This controls convergence behavior and is method-relevant in this project."
+    supporting_files:
+      - "transformer/Optim.py"
+    supporting_functions:
+      - "ScheduledOptim"
+    confidence: "high"
+
+# weak-guidance layer B: innovation claims (treated as hypotheses to verify against code evidence)
+innovation_claims:
+  - claim: "The code follows the Transformer training design with scheduled optimization."
+    supporting_files:
+      - "transformer/Optim.py"
+    supporting_functions:
+      - "ScheduledOptim"
+    confidence: "medium"
+    caveats:
+      - "This is an author-provided novelty hint, not an automatic academic novelty judgement."
+
+# weak-guidance layer C: mismatch risks (used to prevent narrative drift / false focus)
+potential_mismatches:
+  - description: "README descriptions should not be treated as main evidence."
+    files:
+      - "README.md"
+    severity: "medium"

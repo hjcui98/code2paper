@@ -1,0 +1,1947 @@
+{
+  "pack_name": "configs",
+  "likely_config_candidates": [
+    ".codeboarding/analysis.json",
+    ".codeboarding/codeboarding_version.json",
+    ".codeboarding/file_coverage.json",
+    ".codeboarding/health/health_config.json",
+    ".codeboarding/health/health_report.json",
+    "cog.yaml",
+    "config.json",
+    "dataset/Objaverse/PointLLM_brief_description_val_200_GT.json",
+    "dataset/Objaverse/PointLLM_complex_50k_brief_40k_all_90k.json",
+    "dataset/T3D/stage_1/brief_1M_caption.json",
+    "dataset/T3D/stage_2/stage_2_data_210k.json",
+    "dataset/T3D/stage_2/stage_2_data_5M.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/added_tokens.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/config.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/generation_config.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/model.safetensors.index.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/special_tokens_map.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer_config.json",
+    "pointllm/data/modelnet_config/ModelNet40.yaml",
+    "pointnet++/Pointnet2_PyTorch/.pre-commit-config.yaml",
+    "pointnet++/Pointnet2_PyTorch/.travis.yml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/config.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/cls.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/semseg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pyproject.toml",
+    "pointnet++/Pointnet2_PyTorch/tox.ini",
+    "pretrained_weight/clip_used_in_Uni3D/open_clip_config.json",
+    "pretrained_weight/clip_used_in_Uni3D/special_tokens_map.json",
+    "pretrained_weight/clip_used_in_Uni3D/tokenizer.json",
+    "pretrained_weight/clip_used_in_Uni3D/tokenizer_config.json",
+    "pretrained_weight/clip_used_in_Uni3D/vocab.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/1_Pooling/config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config_sentence_transformers.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/data_config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/modules.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/sentence_bert_config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/special_tokens_map.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer_config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/special_tokens_map.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/tokenizer_config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/vocab.json",
+    "pyproject.toml",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/adapter_config.json",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/config.json",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/adapter_config.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/config.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+    "release/paper/weight/stage_1/config.json",
+    "release/paper/weight/stage_1/trainer_state.json",
+    "release/paper/weight/stage_2/adapter_config.json",
+    "release/paper/weight/stage_2/config.json",
+    "release/paper/weight/stage_2/trainer_state.json",
+    "release/paper/weight/stage_3/adapter_config.json",
+    "release/paper/weight/stage_3/config.json",
+    "release/paper/weight/stage_3/trainer_state.json",
+    "scripts/zero2.json",
+    "scripts/zero3.json",
+    "scripts/zero3_offload.json",
+    "swark-output/code2paper_run_full/paper/claim_evidence_map.json",
+    "swark-output/code2paper_run_full/paper/method/analysis_navigation_plan.json",
+    "swark-output/code2paper_run_full/paper/method/code2paper_run_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/code2paper_run_report.json",
+    "swark-output/code2paper_run_full/paper/method/code_alignment_ir.json",
+    "swark-output/code2paper_run_full/paper/method/code_method_analysis.json",
+    "swark-output/code2paper_run_full/paper/method/comment_index.json",
+    "swark-output/code2paper_run_full/paper/method/context_map.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/author_hints.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/configs.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/entrypoints.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-002.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-003.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-002.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-003.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-004.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-005.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-006.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-002.json",
+    "swark-output/code2paper_run_full/paper/method/method_evidence.json",
+    "swark-output/code2paper_run_full/paper/method/phase1_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase2_blocked_report.json",
+    "swark-output/code2paper_run_full/paper/method/phase2_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase3_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase4_blocked_report.json",
+    "swark-output/code2paper_run_full/paper/method/phase4_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/raw_context_index.json",
+    "swark-output/code2paper_run_full/paper/method/raw_evidence_pack.json",
+    "swark-output/code2paper_run_full/paper/method/targeted_code_tracing.json"
+  ],
+  "method_affecting_config_keys": [
+    ".codeboarding/analysis.json",
+    ".codeboarding/codeboarding_version.json",
+    ".codeboarding/file_coverage.json",
+    ".codeboarding/health/health_config.json",
+    ".codeboarding/health/health_report.json",
+    "cog.yaml",
+    "config.json",
+    "dataset/Objaverse/PointLLM_brief_description_val_200_GT.json",
+    "dataset/Objaverse/PointLLM_complex_50k_brief_40k_all_90k.json",
+    "dataset/T3D/stage_1/brief_1M_caption.json",
+    "dataset/T3D/stage_2/stage_2_data_210k.json",
+    "dataset/T3D/stage_2/stage_2_data_5M.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/added_tokens.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/config.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/generation_config.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/model.safetensors.index.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/special_tokens_map.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer.json",
+    "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer_config.json",
+    "pointllm/data/modelnet_config/ModelNet40.yaml",
+    "pointnet++/Pointnet2_PyTorch/.pre-commit-config.yaml",
+    "pointnet++/Pointnet2_PyTorch/.travis.yml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/config.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/cls.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/semseg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-msg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-ssg.yaml",
+    "pointnet++/Pointnet2_PyTorch/pyproject.toml",
+    "pointnet++/Pointnet2_PyTorch/tox.ini",
+    "pretrained_weight/clip_used_in_Uni3D/open_clip_config.json",
+    "pretrained_weight/clip_used_in_Uni3D/special_tokens_map.json",
+    "pretrained_weight/clip_used_in_Uni3D/tokenizer.json",
+    "pretrained_weight/clip_used_in_Uni3D/tokenizer_config.json",
+    "pretrained_weight/clip_used_in_Uni3D/vocab.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/1_Pooling/config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config_sentence_transformers.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/data_config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/modules.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/sentence_bert_config.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/special_tokens_map.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer.json",
+    "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer_config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/special_tokens_map.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/tokenizer_config.json",
+    "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/vocab.json",
+    "pyproject.toml",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/adapter_config.json",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/config.json",
+    "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/adapter_config.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/config.json",
+    "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+    "release/paper/weight/stage_1/config.json",
+    "release/paper/weight/stage_1/trainer_state.json",
+    "release/paper/weight/stage_2/adapter_config.json",
+    "release/paper/weight/stage_2/config.json",
+    "release/paper/weight/stage_2/trainer_state.json",
+    "release/paper/weight/stage_3/adapter_config.json",
+    "release/paper/weight/stage_3/config.json",
+    "release/paper/weight/stage_3/trainer_state.json",
+    "scripts/zero2.json",
+    "scripts/zero3.json",
+    "scripts/zero3_offload.json",
+    "swark-output/code2paper_run_full/paper/claim_evidence_map.json",
+    "swark-output/code2paper_run_full/paper/method/analysis_navigation_plan.json",
+    "swark-output/code2paper_run_full/paper/method/code2paper_run_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/code2paper_run_report.json",
+    "swark-output/code2paper_run_full/paper/method/code_alignment_ir.json",
+    "swark-output/code2paper_run_full/paper/method/code_method_analysis.json",
+    "swark-output/code2paper_run_full/paper/method/comment_index.json",
+    "swark-output/code2paper_run_full/paper/method/context_map.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/author_hints.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/configs.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/entrypoints.json",
+    "swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-002.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-003.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-002.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-003.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-004.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-005.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-006.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-001.json",
+    "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-002.json",
+    "swark-output/code2paper_run_full/paper/method/method_evidence.json",
+    "swark-output/code2paper_run_full/paper/method/phase1_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase2_blocked_report.json",
+    "swark-output/code2paper_run_full/paper/method/phase2_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase3_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/phase4_blocked_report.json",
+    "swark-output/code2paper_run_full/paper/method/phase4_manifest.json",
+    "swark-output/code2paper_run_full/paper/method/raw_context_index.json",
+    "swark-output/code2paper_run_full/paper/method/raw_evidence_pack.json",
+    "swark-output/code2paper_run_full/paper/method/targeted_code_tracing.json"
+  ],
+  "evidence_items": [
+    {
+      "evidence_id": "E604",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/model.safetensors.index.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2079",
+      "source_type": "config",
+      "path": "pointllm/data/modelnet_config/ModelNet40.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2204",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/msg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2205",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/model/ssg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2206",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-msg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2207",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/cls-ssg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2208",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-msg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2209",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task_model/semseg-ssg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2385",
+      "source_type": "config",
+      "path": "pretrained_weight/clip_used_in_Uni3D/open_clip_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2386",
+      "source_type": "config",
+      "path": "pretrained_weight/clip_used_in_Uni3D/special_tokens_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2387",
+      "source_type": "config",
+      "path": "pretrained_weight/clip_used_in_Uni3D/tokenizer.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2388",
+      "source_type": "config",
+      "path": "pretrained_weight/clip_used_in_Uni3D/tokenizer_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2389",
+      "source_type": "config",
+      "path": "pretrained_weight/clip_used_in_Uni3D/vocab.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2396",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2397",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2398",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_1/trainer_state.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2399",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_2/trainer_state.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2400",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_3/trainer_state.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2410",
+      "source_type": "config",
+      "path": ".codeboarding/analysis.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 14710,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2411",
+      "source_type": "config",
+      "path": ".codeboarding/codeboarding_version.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 4,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2412",
+      "source_type": "config",
+      "path": ".codeboarding/file_coverage.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 801,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2413",
+      "source_type": "config",
+      "path": ".codeboarding/health/health_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 42,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2414",
+      "source_type": "config",
+      "path": ".codeboarding/health/health_report.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 2080,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2415",
+      "source_type": "config",
+      "path": "cog.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2416",
+      "source_type": "config",
+      "path": "config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2417",
+      "source_type": "config",
+      "path": "dataset/Objaverse/PointLLM_brief_description_val_200_GT.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2418",
+      "source_type": "config",
+      "path": "dataset/Objaverse/PointLLM_complex_50k_brief_40k_all_90k.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2419",
+      "source_type": "config",
+      "path": "dataset/T3D/stage_1/brief_1M_caption.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2420",
+      "source_type": "config",
+      "path": "dataset/T3D/stage_2/stage_2_data_210k.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2421",
+      "source_type": "config",
+      "path": "dataset/T3D/stage_2/stage_2_data_5M.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2425",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/added_tokens.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2426",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2452",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/generation_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2470",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/special_tokens_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2471",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E2472",
+      "source_type": "config",
+      "path": "lava-vicuna_2024_4_Phi-3-mini-4k-instruct/tokenizer_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3193",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/.pre-commit-config.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3194",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/.travis.yml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3195",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/config.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3196",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/cls.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3197",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pointnet2/config/task/semseg.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3432",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/pyproject.toml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3433",
+      "source_type": "config",
+      "path": "pointnet++/Pointnet2_PyTorch/tox.ini",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3434",
+      "source_type": "config",
+      "path": "pyproject.toml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3435",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/adapter_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3436",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3437",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/adapter_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3438",
+      "source_type": "config",
+      "path": "release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3439",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_1/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3440",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_2/adapter_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3441",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_2/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3442",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_3/adapter_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3443",
+      "source_type": "config",
+      "path": "release/paper/weight/stage_3/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3608",
+      "source_type": "config",
+      "path": "scripts/zero2.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3609",
+      "source_type": "config",
+      "path": "scripts/zero3.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3610",
+      "source_type": "config",
+      "path": "scripts/zero3_offload.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3611",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/claim_evidence_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15241,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3612",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/analysis_navigation_plan.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 16354,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3613",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/code2paper_run_manifest.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 135,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3614",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/code2paper_run_report.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 42,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3615",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/code_alignment_ir.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3722,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3616",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/code_method_analysis.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 46748,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3617",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/comment_index.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 24248,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3618",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/context_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1623,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3619",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/context_packs/author_hints.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 5,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3620",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/context_packs/configs.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1320,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3621",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/context_packs/entrypoints.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 6,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3622",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 4785,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3623",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-001.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3624",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-002.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3625",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase2-003.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3626",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-001.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3627",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-002.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3628",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-003.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3629",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-004.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3630",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-005.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3631",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase3-006.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3632",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-001.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3633",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/llm_calls/LLM-phase4-002.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3634",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/method_evidence.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 15394,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3635",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase1_manifest.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 40,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3636",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase2_blocked_report.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 16,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3637",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase2_manifest.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 35,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3638",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase3_manifest.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1099,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3639",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase4_blocked_report.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 9,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3640",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/phase4_manifest.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 21,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3641",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/raw_context_index.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 475,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3642",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/raw_evidence_pack.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 30637,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3643",
+      "source_type": "config",
+      "path": "swark-output/code2paper_run_full/paper/method/targeted_code_tracing.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 30,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3644",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/1_Pooling/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3645",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3646",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/config_sentence_transformers.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3647",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/data_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3648",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/modules.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3649",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/sentence_bert_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3650",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/special_tokens_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3651",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3652",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/all-mpnet-base-v2/tokenizer_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3759",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3760",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/special_tokens_map.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3761",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/tokenizer_config.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    },
+    {
+      "evidence_id": "E3762",
+      "source_type": "config",
+      "path": "pretrained_weight/eval_model_weight/sup-simcse-roberta-large/vocab.json",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c63b49d444b691349c417ca18e3537f2287b0bd4bd3bcc690c255d95d007d931",
+      "evidence_strength": "hard",
+      "confidence": 0.75,
+      "content_summary": "Configuration file that may define runtime, model, data, or experiment settings.",
+      "tags": [
+        "config"
+      ]
+    }
+  ]
+}

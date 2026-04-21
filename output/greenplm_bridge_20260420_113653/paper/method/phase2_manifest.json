@@ -1,0 +1,23 @@
+{
+  "project_id": "greenplm",
+  "llm_required": true,
+  "llm_available": true,
+  "mode": "postergen-agent-llm-bridge",
+  "prompt_template_version": "postergen-agent-llm-bridge-v1",
+  "outputs": {
+    "code_alignment_ir": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/code_alignment_ir.json",
+      "hash": "sha256:47a631ee914be0d57852bc56646e7068a3e983e7b754cf3475aa68bfa0198da9"
+    },
+    "code_method_analysis": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/code_method_analysis.json",
+      "hash": "sha256:6143f30dbe641750283969540abffcbfefc720e7e65d63e8e954e39779b37785"
+    },
+    "code_facts": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/code_facts.json",
+      "hash": "sha256:04c201df76efcce1a862b183d5305d2547c5278775b0e7ee43ca3937dd7a20f8"
+    }
+  },
+  "llm_call_logs": [],
+  "blocked_report": ""
+}

@@ -1,0 +1,12 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "claim_evidence_validation_failed",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/method_authoring_prompt.md",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/llm_calls/LLM-phase4-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/llm_calls/LLM-phase4-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/llm_calls/LLM-phase4-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_103915/paper/method/llm_calls/LLM-phase4-005.json"
+  ]
+}

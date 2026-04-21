@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-004",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "author_logic_mapper",
+  "prompt_template_version": "",
+  "input_hash": "sha256:ba39e59050ed5d8f583932d064cf4dad1ea31b771a285a4bf255ae67c06fdae7",
+  "response_hash": "sha256:578bc543fcb7f5a11afae97d2f25c9eb35cc2b0cd2c90d62ea1397450d632cdd",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3AuthorLogicOutput",
+  "schema_validation_passed": true,
+  "cached": true,
+  "created_at": "2026-04-19T16:51:59.099426+00:00"
+}

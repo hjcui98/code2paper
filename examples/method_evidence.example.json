@@ -1,0 +1,46 @@
+{
+  "project_id": "toy_train_project",
+  "method_name": "Toy Training Pipeline",
+  "method_goal": "Train a simple classifier from configured data and model settings.",
+  "implementation_scope": "current codebase only",
+  "entrypoints": ["train.py:main"],
+  "stages": [
+    {
+      "stage_id": "S1",
+      "name": "Input preparation",
+      "purpose": "Load data according to configuration.",
+      "inputs": ["dataset path", "batch size"],
+      "outputs": ["batched samples"],
+      "modules": [
+        {
+          "path": "data.py",
+          "symbols": ["build_dataloader"],
+          "role": "data",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH1",
+          "description": "The pipeline builds the dataloader from the configured dataset path and batch size.",
+          "support_status": "supported",
+          "evidence_ids": ["E1", "E2"],
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "innovation_candidates": [],
+  "writing_constraints": [
+    "Do not mention README-only information."
+  ],
+  "alignment_notes": [],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "excluded from main evidence chain"
+    }
+  ]
+}
+

@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-002",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "terminology_table_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:ca71092a518daa80aa7866bf4c4db1985f3d2dc8d821c6da43cfba93227a9678",
+  "response_hash": "sha256:1dccd752c544c8efbd6ba03612aadf47080d028c7983b835336f223d233cbb7b",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "TerminologyTable",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T07:43:19.964999+00:00"
+}

@@ -1,0 +1,115 @@
+{
+  "project_id": "code",
+  "author_mode": "enhanced",
+  "author_confirmation_required": false,
+  "entrypoints": [],
+  "execution_stages": [],
+  "method_stages": [],
+  "stage_mappings": [],
+  "config_resolutions": [],
+  "module_roles": [],
+  "role_conflicts": [],
+  "author_alignment": {
+    "matched_steps": [
+      "Stage III: Point-Language Transfer"
+    ],
+    "mismatched_steps": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Runtime and saving behavior"
+    ],
+    "unsupported_claims": [
+      "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+      "Use large text supervision to reduce dependence on scarce point-text pairs.",
+      "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment."
+    ],
+    "author_story_order": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "preferred_method_stage_ids": [],
+    "latex_expression_preference": "balanced",
+    "claim_assessments": [
+      {
+        "claim_text": "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+        "support_status": "partial",
+        "support_level": "file",
+        "supporting_files": [
+          "llava/model/multimodal_encoder/point_encoder.py"
+        ],
+        "supporting_functions": [],
+        "evidence_ids": [
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "caveats": [
+          "Treat parameter-free wording as a hypothesis until all involved operators are checked for learnable parameters."
+        ]
+      },
+      {
+        "claim_text": "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+        "support_status": "unsupported",
+        "support_level": "none",
+        "supporting_files": [],
+        "supporting_functions": [],
+        "evidence_ids": [],
+        "caveats": [
+          "Final trainable subset per stage must be cross-checked with actual launch scripts/arguments."
+        ]
+      },
+      {
+        "claim_text": "Use large text supervision to reduce dependence on scarce point-text pairs.",
+        "support_status": "unsupported",
+        "support_level": "none",
+        "supporting_files": [],
+        "supporting_functions": [],
+        "evidence_ids": [],
+        "caveats": [
+          "Stage behavior in code is controlled by flags (stage_2, tune_mm_mlp_adapter, fix_llm/fix_pointnet), not explicit Stage-I/II/III classes.",
+          "Release scripts should be verified as real content (not LFS pointer) before claiming exact command-level differences.",
+          "The method narrative should explain why text-first alignment lowers 3D data pressure."
+        ]
+      },
+      {
+        "claim_text": "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+        "support_status": "unsupported",
+        "support_level": "none",
+        "supporting_files": [],
+        "supporting_functions": [],
+        "evidence_ids": [],
+        "caveats": [
+          "A shared bridge simplifies modality transfer logic and keeps the method storyline coherent."
+        ]
+      },
+      {
+        "claim_text": "Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost.",
+        "support_status": "partial",
+        "support_level": "file",
+        "supporting_files": [
+          "llava/model/multimodal_encoder/point_encoder.py"
+        ],
+        "supporting_functions": [],
+        "evidence_ids": [
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "caveats": [
+          "Phrase as code-aligned aggregation/routing unless parameter counts are explicitly audited at symbol level.",
+          "Supports the efficiency-plus-information-retention argument without overloading the language model context."
+        ]
+      }
+    ]
+  }
+}

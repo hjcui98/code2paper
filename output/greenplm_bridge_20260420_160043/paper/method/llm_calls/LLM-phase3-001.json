@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-001",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "stage_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:a5e76deaf1be7586479044528cd86fa02d34a8b82035fff634cb621b18f69089",
+  "response_hash": "sha256:4aec4e205c59b0678457e21f602855c9cf63292c4d096cd610601bae322a1dd6",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3StageBuilderOutput",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-20T08:12:13.055016+00:00"
+}

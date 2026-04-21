@@ -1,0 +1,26 @@
+{
+  "pack_name": "author_hints",
+  "author_hint_span_ids": [
+    "E1"
+  ],
+  "evidence_items": [
+    {
+      "evidence_id": "E1",
+      "source_type": "author",
+      "path": "/home/cuihengjia/agent/code2paper_agent/examples/author_markers.story_first.example.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 212,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:876f5c7e6753ddff9eb20a48fd4d8eb17c7742537196afce24748bf9ab533637",
+      "evidence_strength": "semantic_hint",
+      "confidence": 0.7,
+      "content_summary": "Author markers provide semantic hints for priority files, module roles, pipeline steps, claimed novelty, and potential mismatches. Project goal: Enable robust 3D understanding for an LLM while reducing dependence on large-scale 3D paired data.. Paper method goal: Show that the model can use large-scale text-based alignment first, then use limited 3D data to connect point-cloud representations to the language model.. Mainline: Text-first projector alignment -> rich instruction alignment -> point-language transfer via 0M-Pooling and shared projector.",
+      "tags": [
+        "author_markers",
+        "semantic_hint"
+      ]
+    }
+  ]
+}

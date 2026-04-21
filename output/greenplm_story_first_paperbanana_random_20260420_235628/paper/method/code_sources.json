@@ -1,0 +1,754 @@
+{
+  "meta": {
+    "repo_id": "40a30a691d62da12d8e00d583c2fc66009c08685",
+    "root_path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code",
+    "filters": {
+      "excluded_dirs": [
+        ".git",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "hf",
+        "node_modules",
+        "output",
+        "venv"
+      ],
+      "excluded_exts": [
+        ".7z",
+        ".bin",
+        ".ckpt",
+        ".gif",
+        ".gz",
+        ".jpeg",
+        ".jpg",
+        ".mov",
+        ".mp4",
+        ".onnx",
+        ".pdf",
+        ".png",
+        ".pt",
+        ".pth",
+        ".safetensors",
+        ".tar",
+        ".zip"
+      ],
+      "include_exts": [
+        ".c",
+        ".cc",
+        ".cfg",
+        ".cpp",
+        ".go",
+        ".h",
+        ".hpp",
+        ".ini",
+        ".ipynb",
+        ".java",
+        ".js",
+        ".json",
+        ".jsx",
+        ".md",
+        ".py",
+        ".rs",
+        ".sh",
+        ".toml",
+        ".ts",
+        ".tsx",
+        ".yaml",
+        ".yml"
+      ]
+    },
+    "scan_stats": {
+      "max_total_files": 160,
+      "max_total_bytes": 20971520,
+      "max_single_file_bytes": 786432,
+      "scanned_files": 160,
+      "scanned_bytes": 3717822
+    }
+  },
+  "project_files": [
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/.gitattributes",
+      "ext": "",
+      "language": "unknown",
+      "size_bytes": 129,
+      "sha1": "97620de145158b98523bc2f32631a83d463d3deb",
+      "kind": "other"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/envInstall.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 128,
+      "sha1": "044cc1c0d3c70481b8550821a758d7c0d0565635",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/cog.yaml",
+      "ext": ".yaml",
+      "language": "yaml",
+      "size_bytes": 128,
+      "sha1": "3d86fc218780eef093d70b93f5bf6ccfe8a85bd1",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pyproject.toml",
+      "ext": ".toml",
+      "language": "toml",
+      "size_bytes": 129,
+      "sha1": "f92f73ec357758e8d174d3b30bbc1b30a10ba477",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 127,
+      "sha1": "9ec2e4a18ff99ea020b99d4c63a19c33472d58c9",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/LICENSE",
+      "ext": "",
+      "language": "unknown",
+      "size_bytes": 130,
+      "sha1": "1e5d7c3cc332e6a47b45c1ae7ebdcc8436e75a7f",
+      "kind": "other"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_3/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 129,
+      "sha1": "68a3cfc47ee8e2cfb543e762c82bc3fc8b03ed24",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_3/adapter_config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 128,
+      "sha1": "c9da785b35f4abd7851e9f86f4e2d933df4f86e4",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_3/trainer_state.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 132,
+      "sha1": "1624116cff8ecd42f763ff98bd6c910f4c307ec4",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_1/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 129,
+      "sha1": "c36c939fdb53277e777f710b4ca6c191155df00f",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_1/trainer_state.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 133,
+      "sha1": "b67c426c6b0118d476798f4efaf9e3750ea1e8d0",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_2/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 129,
+      "sha1": "0fa3a1d1713ccd335e368e4c6781a10b20f0d344",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_2/adapter_config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 128,
+      "sha1": "bb3415f265ab6d7ca0091716dccc8a2040f0aef5",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_2/trainer_state.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 132,
+      "sha1": "6738e5a1ca049e66ca74d8c4f292a8c2e3e99723",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/scripts/test/release_stage_3.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "f9108c8f7e4dff1cb1a3367ba6b1fc4aa01c821d",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/scripts/test/release_stage_2.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "c2f5ac3198c481f7b53c9461cbbd542fb50d9bb5",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/scripts/train/2.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "c67e269e2ef5f1c34368cc28eb6547d726f13da8",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/scripts/train/1.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "1a36ac8261b7f70c470b9a5848c5a79dbb19c837",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/scripts/train/3.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "5ce6129d1748ae7e0556bd345a80c2d4ac1d6ab5",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 129,
+      "sha1": "68a3cfc47ee8e2cfb543e762c82bc3fc8b03ed24",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/adapter_config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 128,
+      "sha1": "90e14fba489f24e19e7d942d93f4c44ebb697f21",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 132,
+      "sha1": "d438755e314dd202c5710aa7002421158afdaa56",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 129,
+      "sha1": "5342a1e1c01a0aa45b712a3de5c9b2916abc78ce",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/adapter_config.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 128,
+      "sha1": "90e14fba489f24e19e7d942d93f4c44ebb697f21",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 133,
+      "sha1": "5783b8cd8b25a5fbf5912285e8a847efd193dd45",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/scripts/test/release_5M_stage_2.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "fcd341bf0cf14332bd890789dc0a5e61121f18aa",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/scripts/test/release_5M_stage_3_lr_1e5.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "c6bc675ea39878c7ca0c904e7a5ac387815adc0f",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/scripts/train/2.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "73ef1425acbd8b9c69c85fc21a650ed2980c8599",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/scripts/train/3.sh",
+      "ext": ".sh",
+      "language": "shell",
+      "size_bytes": 129,
+      "sha1": "0e92c84309a6e649598d7a75f212761955337872",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/T3D/stage_1/brief_1M_caption.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 134,
+      "sha1": "7e22facc9cee573201239e627a85d32577184b78",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/T3D/stage_2/stage_2_data_210k.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 134,
+      "sha1": "5a7037fa16c4eb2a84bc5ea808921440116554d5",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/T3D/stage_2/stage_2_data_5M.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 135,
+      "sha1": "964d4b85274c4992e35d7717fa7d34432bbbf463",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/Objaverse/PointLLM_complex_50k_brief_40k_all_90k.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 133,
+      "sha1": "480b6c9b0e1129b39e429535c038448714bf8b90",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/Objaverse/PointLLM_brief_description_val_200_GT.json",
+      "ext": ".json",
+      "language": "json",
+      "size_bytes": 130,
+      "sha1": "518a8fe4dd03f904e99d079169fe4d5ff8b5f777",
+      "kind": "config"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/conversation.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 15732,
+      "sha1": "0c037b160d6fae054d4f0032b5502cf3d9b1915a",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/utils.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 9308,
+      "sha1": "c76480c2b3d2fdc5fba71c90a1d7bbd1b9512c24",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/constants.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 364,
+      "sha1": "38fb22f639b0f06c578c1412f13ffff905e06937",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/__init__.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 38,
+      "sha1": "1e721e107993e14b02876aca1249bd48522369a0",
+      "kind": "package_init"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/mm_utils.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 9555,
+      "sha1": "9f4cb6b1fd6113c5249a14211f2e8bcebd99e980",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/utils.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 9308,
+      "sha1": "c76480c2b3d2fdc5fba71c90a1d7bbd1b9512c24",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/make_delta.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 2257,
+      "sha1": "0ecb45d898a1dc326c3639749ac4b4b51c45144d",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/consolidate.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 914,
+      "sha1": "69d70b09257fadb69296f2393c8daef887928620",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/__init__.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 438,
+      "sha1": "6b2fbd777033a5c4537b6cd8fff189fb7f2b94e5",
+      "kind": "package_init"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/apply_delta.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 1956,
+      "sha1": "40b2b86aa9db97e2c30a2ff44be248765b7eeee6",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/builder.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 8822,
+      "sha1": "30de2b7cdfe259623e82f73c6ec0ca19538eba81",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/llava_arch.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 17345,
+      "sha1": "51050e001bae4eb4e507811bc9271980a7483421",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_projector/builder.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 1774,
+      "sha1": "f6ee99ccb4921e525d9e5d33da88a3fa94e2e422",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/language_model/llava_mpt.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 3487,
+      "sha1": "95bb9441dc9bd9688a479eb2a84bb161d5a8c522",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/language_model/llava_llama.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 5378,
+      "sha1": "ed3679e7ceeabb78e00100a6afed3560e2729f88",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/language_model/llava_phi3.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 5437,
+      "sha1": "4b171e1be12243fc699f26d261b2dedcc7ac2e26",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/language_model/llava_mistral.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 5386,
+      "sha1": "6f8dc04c740e60ea74ed0711e7d567b736c1d3f0",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/clip_encoder.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 5775,
+      "sha1": "295d9773fa28296aeb2992cce125806090fdaad6",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/builder.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 1374,
+      "sha1": "161d7ef3dd1ff980430e8ef7fa535e4fa7a48bf4",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 12035,
+      "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/run_llava.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 4443,
+      "sha1": "2a349c030b00c41843deef8823385efa9bed7d6d",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/generate_webpage_data_from_table.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 4088,
+      "sha1": "8bda0ee3adc15f6719669314b01bbb9364d34103",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 6104,
+      "sha1": "3b21c664d98bfbaec97b89f1ece93d6b4f4ccaa9",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 4115,
+      "sha1": "d8a6cdb70f56de97c572025595f6b905cae03f04",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/eval_science_qa.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 3920,
+      "sha1": "026f5c92645ae7334b131502a6ab7322b2581058",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 10265,
+      "sha1": "62e461b87ceb601609952ded8f264e4f68f6c8be",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_science.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 4592,
+      "sha1": "4713c52137ca088bff93c1632e3c9de21439337f",
+      "kind": "source"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/eval_gpt_review.py",
+      "ext": ".py",
+      "language": "python",
+      "size_bytes": 3620,
+      "sha1": "b8c403bf691ddd0dfb22cbc6e7b1a16aaa531cea",
+      "kind": "source"
+    }
+  ],
+  "repo_structure_hints": {
+    "entry_candidates": [
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/train.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_3/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_1/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_2/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/code2paper_run_report.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/code2paper_run_manifest.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/run_llava.py",
+        "reason": "name_signal",
+        "score": 1.0
+      }
+    ],
+    "model_files_candidates": [
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/data/ModelNet40Loader.py",
+        "reason": "name_signal",
+        "score": 1.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+        "reason": "name_signal",
+        "score": 1.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2_ops_lib/pointnet2_ops/pointnet2_modules.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2_ops_lib/pointnet2_ops/pointnet2_utils.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_msg_cls.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_cls.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_sem.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_msg_sem.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/clip_encoder.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_science.py",
+        "reason": "name_signal",
+        "score": 1.0
+      }
+    ],
+    "training_files_candidates": [
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/train.py",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_3/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_1/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/paper/weight/stage_2/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_3/use_stage_5M_data_lr_1e5/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/release/5M_data_seting/weight/stage_2/5M_low_lr_1e5/trainer_state.json",
+        "reason": "name_signal",
+        "score": 1.0
+      }
+    ],
+    "data_pipeline_candidates": [
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/data/ModelNet40Loader.py",
+        "reason": "name_signal",
+        "score": 1.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+        "reason": "name_signal",
+        "score": 1.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/data/Indoor3DSemSegLoader.py",
+        "reason": "name_signal",
+        "score": 0.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/data/data_utils.py",
+        "reason": "name_signal",
+        "score": 0.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/T3D/stage_2/stage_2_data_210k.json",
+        "reason": "name_signal",
+        "score": 0.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/dataset/T3D/stage_2/stage_2_data_5M.json",
+        "reason": "name_signal",
+        "score": 0.8
+      },
+      {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/generate_webpage_data_from_table.py",
+        "reason": "name_signal",
+        "score": 0.8
+      }
+    ]
+  },
+  "errors": [],
+  "warnings": [
+    "oversized_file:/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/raw_evidence_pack.json:988740",
+    "oversized_file:/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/code_method_analysis.json:1356600",
+    "oversized_file:/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/method_authoring_prompt.md:970229",
+    "budget_stop:max_total_files"
+  ]
+}

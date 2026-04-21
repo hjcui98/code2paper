@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-003",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "distinguishing_mechanism_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:f48ad2991d444da1a4661d5e44f76f4c85fbd299c09b052c00405db24e6a439d",
+  "response_hash": "sha256:a468befbc609f025873136dd71b58b388e470777ae4e872054030aa0a8e876f7",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3DistinguishingMechanismOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T16:51:59.092973+00:00"
+}

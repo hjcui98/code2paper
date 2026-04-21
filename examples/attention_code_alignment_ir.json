@@ -1,0 +1,147 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "entrypoints": [
+    {
+      "path": "train.py",
+      "symbol": "main",
+      "called_by": ["train_multi30k_de_en.sh"],
+      "confidence": 0.95,
+      "evidence_ids": ["E1", "E2"]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "main",
+      "called_by": [],
+      "confidence": 0.86,
+      "evidence_ids": ["E4"]
+    }
+  ],
+  "execution_stages": [
+    {
+      "stage_id": "X1",
+      "name": "training_launch",
+      "description": "The shell launcher calls train.py with concrete runtime overrides for data, smoothing, sharing, batch size, warmup, epochs, seed, output directory, and tensorboard.",
+      "related_evidence_ids": ["E1"]
+    },
+    {
+      "stage_id": "X2",
+      "name": "training_setup",
+      "description": "train.py parses arguments, sets reproducibility options, loads data, builds the Transformer, wraps Adam with ScheduledOptim, and starts training.",
+      "related_evidence_ids": ["E2"]
+    },
+    {
+      "stage_id": "X3",
+      "name": "epoch_update",
+      "description": "Each training epoch prepares tensors, forwards the model, computes loss/performance, backpropagates, and updates scheduled learning rate.",
+      "related_evidence_ids": ["E3", "E9"]
+    },
+    {
+      "stage_id": "X4",
+      "name": "preprocess_data",
+      "description": "preprocess.py downloads/merges corpora, learns BPE, encodes files, filters by length, builds vocabulary, and serializes processed data.",
+      "related_evidence_ids": ["E4"]
+    }
+  ],
+  "method_stages": [
+    {
+      "stage_id": "M1",
+      "name": "input_preparation",
+      "purpose": "Prepare tokenized and serialized translation data for training.",
+      "related_evidence_ids": ["E4"]
+    },
+    {
+      "stage_id": "M2",
+      "name": "transformer_computation",
+      "purpose": "Apply encoder/decoder Transformer layers built from attention and position-wise feed-forward sublayers.",
+      "related_evidence_ids": ["E5", "E6", "E7", "E8"]
+    },
+    {
+      "stage_id": "M3",
+      "name": "scheduled_optimization",
+      "purpose": "Optimize the Transformer with label smoothing and warmup learning-rate scheduling.",
+      "related_evidence_ids": ["E1", "E3", "E9"]
+    }
+  ],
+  "stage_mappings": [
+    {
+      "execution_stage_id": "X4",
+      "method_stage_id": "M1",
+      "confidence": 0.9
+    },
+    {
+      "execution_stage_id": "X2",
+      "method_stage_id": "M2",
+      "confidence": 0.87
+    },
+    {
+      "execution_stage_id": "X3",
+      "method_stage_id": "M3",
+      "confidence": 0.9
+    }
+  ],
+  "module_roles": [
+    {
+      "path": "train.py",
+      "symbol": "main",
+      "role": "training orchestration",
+      "category": "experiment-support",
+      "confidence": 0.9,
+      "evidence_ids": ["E2"]
+    },
+    {
+      "path": "train.py",
+      "symbol": "train_epoch",
+      "role": "training update loop",
+      "category": "method-core",
+      "confidence": 0.88,
+      "evidence_ids": ["E3"]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "main",
+      "role": "data preprocessing",
+      "category": "method-core",
+      "confidence": 0.88,
+      "evidence_ids": ["E4"]
+    },
+    {
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "role": "encoder block",
+      "category": "method-core",
+      "confidence": 0.93,
+      "evidence_ids": ["E5"]
+    },
+    {
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "role": "decoder block",
+      "category": "method-core",
+      "confidence": 0.93,
+      "evidence_ids": ["E6"]
+    },
+    {
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "role": "attention sublayer",
+      "category": "method-core",
+      "confidence": 0.94,
+      "evidence_ids": ["E7"]
+    },
+    {
+      "path": "transformer/Optim.py",
+      "symbol": "ScheduledOptim",
+      "role": "warmup optimization",
+      "category": "method-core",
+      "confidence": 0.94,
+      "evidence_ids": ["E9"]
+    }
+  ],
+  "role_conflicts": [],
+  "author_alignment": {
+    "matched_steps": ["Data preprocessing", "Model construction", "Scheduled training"],
+    "mismatched_steps": [],
+    "unsupported_claims": []
+  }
+}
+

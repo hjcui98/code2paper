@@ -1,0 +1,34 @@
+{
+  "project_id": "greenplm",
+  "mode": "full-llm-freeze",
+  "llm_available": true,
+  "blocked_reason": "",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/method_evidence.json",
+      "hash": "sha256:a7f131d65964ba345eaa48f946ad19d570cf86cd8680743768dd0d7d76dc4a49"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/claim_evidence_map.json",
+      "hash": "sha256:c5e15009f8f0871c9d79dc0a47efd276b540306067661511c275d9e6477a55f0"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/method_evidence_review.md",
+      "hash": "sha256:72294b2b8993e460f157c31f91019b2a14d510b8066a30ed4d78f494ba3479b1"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase3-006.json"
+  ],
+  "review_questions": []
+}

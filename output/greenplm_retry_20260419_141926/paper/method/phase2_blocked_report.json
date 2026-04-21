@@ -1,0 +1,16 @@
+{
+  "project_id": "code",
+  "blocked_reason": "schema_validation_failed:ValidationError:1 validation error for TargetedCodeTracing\nverified_claims\n  Extra inputs are not permitted [type=extra_forbidden, input_value=[{'claim_text': 'A compac...ids': ['E441', 'E139']}], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden",
+  "mode": "inspect-only",
+  "required_provider": "openai",
+  "required_model": "qwen3.6-plus",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-003.json"
+  ],
+  "author_review_questions": [
+    "Provide an API provider/model to run full Phase 2 LLM code analysis.",
+    "Review unsupported or partially supported author claims before Phase 3 freeze."
+  ]
+}

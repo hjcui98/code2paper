@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: code2paper-agent
+Version: 0.1.0
+Summary: Implementation-grounded code-to-paper method evidence schemas.
+Requires-Python: >=3.10
+Requires-Dist: pydantic>=2.0
+Requires-Dist: PyYAML>=6.0
+Provides-Extra: figure
+Requires-Dist: CairoSVG>=2.7; extra == "figure"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

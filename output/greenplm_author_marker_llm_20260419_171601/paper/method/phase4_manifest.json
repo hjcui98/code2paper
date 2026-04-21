@@ -1,0 +1,21 @@
+{
+  "project_id": "greenplm",
+  "mode": "blocked",
+  "llm_available": false,
+  "blocked_reason": "provider_http_error:400:{\"error\":{\"message\":\"Incorrect model ID. Please request to view the model page or you do not have permission to use this model kimi-k2.5 (tid: 2026041909160720152591962733017)\",\"type\":\"Aihubmix_api_error\"}}",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:436a7714c21a79abcef174fe007b13e349b28c85da5f6a9967f21d40b103d444"
+    },
+    "phase4_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/phase4_blocked_report.json",
+      "hash": "sha256:97f24e4749ecdf3654083de42eed481b1d89a904a8e4dcba9928ba4ab0c80d6f"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_171601/paper/method/llm_calls/LLM-phase4-002.json"
+  ],
+  "validator_reports": []
+}

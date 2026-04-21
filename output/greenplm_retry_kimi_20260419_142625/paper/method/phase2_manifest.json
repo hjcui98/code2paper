@@ -1,0 +1,35 @@
+{
+  "project_id": "code",
+  "llm_required": true,
+  "llm_available": false,
+  "mode": "inspect-only",
+  "prompt_template_version": "phase1_4_redesign_v1",
+  "outputs": {
+    "analysis_navigation_plan": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/analysis_navigation_plan.json",
+      "hash": "sha256:83ae177a4065bc6530c9e0e91e9ceb60bb69c8be1f806004e743d76a4bdc28b5"
+    },
+    "targeted_code_tracing": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/targeted_code_tracing.json",
+      "hash": "sha256:6d400a5a11b8d61013b4ccc60d76e3552bb6888b3f236d53c9c52c4c2d0c39c4"
+    },
+    "code_alignment_ir": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/code_alignment_ir.json",
+      "hash": "sha256:af906ace3a90e2740491eb3f7272c44426c57308a81e7a8639a8450d2ea1c112"
+    },
+    "code_method_analysis": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/code_method_analysis.json",
+      "hash": "sha256:c36c7691a11c316f38c825a192bc2377825b61017575a998e60a773a57967a30"
+    },
+    "phase2_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/phase2_blocked_report.json",
+      "hash": "sha256:2bfdfce1c7bd69af618b2c9c539274a84ca556ff8affef6986a1afd40ee03ed0"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/llm_calls/LLM-phase2-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/llm_calls/LLM-phase2-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/llm_calls/LLM-phase2-003.json"
+  ],
+  "blocked_report": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_kimi_20260419_142625/paper/method/phase2_blocked_report.json"
+}

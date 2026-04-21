@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-009",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "self_critic",
+  "prompt_template_version": "",
+  "input_hash": "sha256:f2ef5adc070129a807fa27a9928efb02a2964fd6215339ecc3415587e4253ee1",
+  "response_hash": "sha256:fc0dd197c66c441fa25f04f501890632e0f6aef3dbf17ab890a4397acc97df7f",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "SelfCriticReport",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T14:42:33.155535+00:00"
+}

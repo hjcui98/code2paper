@@ -1,0 +1,42 @@
+{
+  "passed": false,
+  "checked_paragraphs": 6,
+  "issues": [
+    {
+      "issue_id": "CE1",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P1"
+    },
+    {
+      "issue_id": "CE2",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P2"
+    },
+    {
+      "issue_id": "CE3",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P3"
+    },
+    {
+      "issue_id": "CE4",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P4"
+    },
+    {
+      "issue_id": "CE5",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P5"
+    },
+    {
+      "issue_id": "CE6",
+      "category": "missing_claim_binding",
+      "message": "Paragraph must bind at least one claim_id.",
+      "paragraph_id": "P6"
+    }
+  ]
+}

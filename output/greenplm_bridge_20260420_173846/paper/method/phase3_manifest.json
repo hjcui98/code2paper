@@ -1,0 +1,32 @@
+{
+  "project_id": "greenplm",
+  "mode": "evidence-freeze",
+  "llm_available": false,
+  "blocked_reason": "",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json",
+    "code_facts": "paper/method/code_facts.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_evidence.json",
+      "hash": "sha256:96c8caa41a7f61c637056c4f65ac828820b5d6d1135cffe15104dfa2e0f7f53e"
+    },
+    "claim_evidence_map": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/claim_evidence_map.json",
+      "hash": "sha256:41556047cddd18521506532a6c1e286bab4f4f66a8d9c3ad4d39da95e1b8ee1b"
+    },
+    "method_evidence_review": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_evidence_review.md",
+      "hash": "sha256:c6027ba4d6e0269190f3754b838fdb18767cb36ec0fc93c046baed9a8d59100a"
+    }
+  },
+  "llm_call_logs": [],
+  "review_questions": [
+    "RQ-9",
+    "RQ-10",
+    "RQ-11"
+  ]
+}

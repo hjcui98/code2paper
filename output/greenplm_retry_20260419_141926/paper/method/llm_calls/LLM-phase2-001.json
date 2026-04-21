@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase2-001",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "navigation_planner",
+  "prompt_template_version": "",
+  "input_hash": "sha256:e0e77d8e7abafe0f40722f85216b13bac3a4fbf3e31007d7b9c312a3131291b6",
+  "response_hash": "sha256:ad5277e19f1c95bf26b2c1e5edb512cd563b5adc6d6a2bb44e51f8626f329d5a",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "AnalysisNavigationPlan",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T06:20:54.948745+00:00"
+}

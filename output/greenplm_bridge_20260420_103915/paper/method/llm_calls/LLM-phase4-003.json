@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-003",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "draft_markdown_writer",
+  "prompt_template_version": "",
+  "input_hash": "sha256:818ba7f2473d4ad50be246cb73dd2b008f7c5ad5d1e38d20444e33fd9622481f",
+  "response_hash": "sha256:e93b42074b49408ca391e5ec28f696bfc5e6f2bb396a127fdd96badb0c706504",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "DraftMarkdownOutput",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-20T03:06:06.912205+00:00"
+}

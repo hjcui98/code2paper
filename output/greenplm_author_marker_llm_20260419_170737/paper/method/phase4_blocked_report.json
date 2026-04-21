@@ -1,0 +1,7 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "blocked_with_insufficient_analysis:phase2=inspect-only,phase3=deterministic-freeze",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_170737/paper/method/method_authoring_prompt.md"
+  ]
+}

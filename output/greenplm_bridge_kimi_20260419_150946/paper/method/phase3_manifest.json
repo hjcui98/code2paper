@@ -1,0 +1,34 @@
+{
+  "project_id": "code",
+  "mode": "deterministic-freeze",
+  "llm_available": false,
+  "blocked_reason": "provider_http_error:400:{\"error\":{\"message\":\"Invalid schema for response_format 'Phase3StageBuilderOutput': In context=(), 'required' is required to be supplied and to be an array including every key in properties. Missing 'confidence'. (tid: 2026041907110181916109172345576)\",\"type\":\"invalid_request_error\",\"param\":\"response_format\",\"code\":null}}",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/method_evidence.json",
+      "hash": "sha256:4f469476f382a1e635b4160061a5db7e932df541584bc6d866fdee2bd9d69e34"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/claim_evidence_map.json",
+      "hash": "sha256:dc8bc63b7082993c9b441be9da4b4421cb10a49432850899c885615d916f352c"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/method_evidence_review.md",
+      "hash": "sha256:90ef2bc14f9932291ca63167782ebf784907a2d8ba7e417b3e84ea5007b3b652"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_150946/paper/method/llm_calls/LLM-phase3-006.json"
+  ],
+  "review_questions": []
+}

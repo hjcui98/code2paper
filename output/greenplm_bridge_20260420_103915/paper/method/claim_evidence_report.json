@@ -1,0 +1,60 @@
+{
+  "passed": false,
+  "checked_paragraphs": 6,
+  "issues": [
+    {
+      "issue_id": "CE1",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P1"
+    },
+    {
+      "issue_id": "CE2",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P2"
+    },
+    {
+      "issue_id": "CE3",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P3"
+    },
+    {
+      "issue_id": "CE4",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P4"
+    },
+    {
+      "issue_id": "CE5",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P5"
+    },
+    {
+      "issue_id": "CE6",
+      "category": "missing_evidence_binding",
+      "message": "Paragraph must bind at least one evidence_span_id.",
+      "paragraph_id": "P6"
+    },
+    {
+      "issue_id": "CE7",
+      "category": "missing_stage_mechanism_paragraph",
+      "message": "No paragraph provides mechanism mapping for stage S1.",
+      "paragraph_id": ""
+    },
+    {
+      "issue_id": "CE8",
+      "category": "missing_stage_mechanism_paragraph",
+      "message": "No paragraph provides mechanism mapping for stage S2.",
+      "paragraph_id": ""
+    },
+    {
+      "issue_id": "CE9",
+      "category": "missing_stage_mechanism_paragraph",
+      "message": "No paragraph provides mechanism mapping for stage S3.",
+      "paragraph_id": ""
+    }
+  ]
+}

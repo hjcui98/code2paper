@@ -1,0 +1,23 @@
+Method
+
+Our approach implements a progressive three-stage alignment pipeline-Stage I: Text-First Interface Warmup, Stage II: Rich Instruction Alignment, and Stage III: Point-Language Transfer-designed to ground a frozen large language model (LLM) in 3D point-cloud understanding while minimizing reliance on scarce 3D-text paired data. A unified projection interface bridges the modality gap throughout all stages, with training orchestration handled by a custom trainer to ensure stable stage transitions and reproducible checkpointing.
+
+Stage I: Text-First Interface Warmup
+
+Stage I establishes the initial coupling between the multimodal projector and the LLM using caption-style text supervision while maintaining both the vision and language backbones in a frozen state. The build_vision_projector module (llava/model/multimodal_projector/builder.py) implements a position-wise feed-forward transformation FFN(x)=(xW_1+b_1)W_2+b_2 with nonlinear activation and layer normalization (via SimpleResBlock and Mlp sub-mechanisms) to map inputs into the LLM's hidden space. By consuming description-style annotations through the ObjectPointCloudDataset loader, this stage yields a stable projector initialization that aligns the token distribution with the language model's embedding space prior to introducing any 3D data.
+
+Stage II: Rich Instruction Alignment
+
+Stage II expands the supervision signal from simple captions to richer instruction-following and multi-turn dialog patterns, preserving the projector's continuity with the text-conditioned interface established in Stage I. The dataset layer provides diverse conversation formats-including detailed_description, single_round, and multi_round exchanges-while the training loop maintains frozen backbone constraints. This progression refines the projector's capacity to handle complex linguistic structures without disrupting the initial alignment, effectively preparing the interface for multimodal inputs while keeping the core LLM parameters static.
+
+Stage III: Point-Language Transfer
+
+Stage III activates the 3D pathway by ingesting point-cloud samples alongside conversational supervision pairs, leveraging compact token aggregation to manage computational costs within the LLM context window. Raw point clouds are processed by the PointcloudEncoder (llava/model/multimodal_encoder/point_encoder.py), which applies position-wise transformations with dropout regularization. The skeleton_Group aggregation module compresses the point set into a compact token sequence via local-to-global neighborhood routing (configured with num_group=32 and group_size=8). These aggregated features are projected through the shared build_vision_projector and injected into the LLM's token stream via PointLLMLlamaModel.forward, enabling the generation of 3D-grounded language responses while the LLM backbone remains frozen.
+
+Mechanism Design
+
+The architectural approach centers on a persistent projection bottleneck that remains consistent across all training stages, ensuring stable modality transfer without requiring backbone fine-tuning. The projector comprises feed-forward blocks with layer normalization, specifically utilizing SimpleResBlock and Mlp components that implement the transformation FFN(x)=(xW_1+b_1)W_2+b_2. For 3D inputs, the method employs parameter-efficient aggregation: the skeleton_Group operator partitions point clouds into 32 local neighborhoods (group size 8) before encoding, significantly compressing the spatial input dimensionality. This compact representation is mapped to the LLM's embedding space through the pre-aligned projector, allowing the frozen language model to interpret 3D structural information through a text-aligned interface.
+
+Runtime and Saving Behavior
+
+Training mechanics are managed by the PointLLMTrainer class, which orchestrates distributed training state, checkpoint serialization, and logging across all stages. The trainer implements custom save logic that collects model state dictionaries and persists them to disk, handling mixed-precision states and FSDP constraints. This infrastructure ensures reproducible stage transitions and reliable artifact generation throughout the progressive alignment pipeline.

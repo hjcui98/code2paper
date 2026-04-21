@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-005",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "claim_contract_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:660c63e9216ccce103a4c3e79f53746e649e68c93c8b4ce147c497fb6fb7561f",
+  "response_hash": "sha256:a949eca44e4b209aebe3d176e77cf6726edbea43e58deb646f7803a167fc7000",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3ClaimContractOutput",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-20T08:20:37.542093+00:00"
+}

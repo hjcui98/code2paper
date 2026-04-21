@@ -1,0 +1,873 @@
+{
+  "meta": {
+    "version": "v2",
+    "producer": "code_analyzer",
+    "total_snippets": 85,
+    "alignment_score": 0.44,
+    "dynamic_roles": [
+      "augmentation",
+      "config",
+      "dataset",
+      "encoder",
+      "evaluation",
+      "forward",
+      "inference",
+      "loss",
+      "model_arch",
+      "other",
+      "training_loop"
+    ]
+  },
+  "overview": {
+    "implementation_summary": "Enable robust 3D understanding for an LLM while reducing dependence on large-scale 3D paired data. The implementation follows Stage I: Text-first interface warmup, Stage II: Rich instruction alignment, Stage III: Point-language transfer, Runtime and saving behavior. Key code modules include TrainingArguments, PointcloudEncoder, PointNet2ClassificationSSG, training_step.",
+    "architecture_summary": "The architecture is centered on TrainingArguments, PointcloudEncoder, PointNet2ClassificationSSG, training_step. End-to-end data flow is organized as Stage I: Text-first interface warmup -> Stage II: Rich instruction alignment -> Stage III: Point-language transfer -> Runtime and saving behavior.",
+    "training_summary": "Detected optimizer: ADAM. Training loop type: standard.",
+    "alignment_summary": "Paper-to-code alignment score is 0.44. Mapped evidence covers 13 modules, 4 pipeline steps, and 0 losses."
+  },
+  "modules": [
+    {
+      "name": "TrainingArguments",
+      "role": "training-stage orchestration via argument combinations",
+      "method_ref": "training-stage orchestration via argument combinations",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn64",
+        "sn16"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "name": "PointcloudEncoder",
+      "role": "inject projected point features into language token stream",
+      "method_ref": "inject projected point features into language token stream",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "skeleton_Group",
+        "encoder",
+        "visual",
+        "cls_pos",
+        "trans2embed",
+        "trans_dim",
+        "embed_dim",
+        "num_group",
+        "patch_dropout",
+        "float_flag"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "pc": "Tensor",
+        "get_pc_tokens_way=None": "Tensor"
+      },
+      "output_spec": {
+        "return": "what was passed in"
+      },
+      "key_logic": "# grouper # define the encoder",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn69",
+        "sn3",
+        "sn66",
+        "sn75",
+        "sn76"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PointNet2ClassificationSSG",
+      "role": "load/filter conversation supervision and point samples",
+      "method_ref": "load/filter conversation supervision and point samples",
+      "inheritance": [
+        "pl.LightningModule"
+      ],
+      "interfaces": [
+        "validation_end",
+        "val_dataloader",
+        "train_dataloader",
+        "_build_model",
+        "configure_optimizers"
+      ],
+      "attributes": [
+        "hparams",
+        "SA_modules",
+        "train_dset",
+        "val_dset",
+        "fc_layer"
+      ],
+      "methods": [
+        "validation_end",
+        "val_dataloader",
+        "train_dataloader",
+        "_build_model",
+        "configure_optimizers",
+        "_build_dataloader",
+        "validation_step",
+        "forward",
+        "__init__",
+        "training_step"
+      ],
+      "input_spec": {
+        "pointcloud": "Tensor"
+      },
+      "output_spec": {
+        "return": "xyz, features"
+      },
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn3",
+        "sn76",
+        "sn41",
+        "sn57",
+        "sn59"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "training_step",
+      "role": "convert point placeholders into multimodal training tokens",
+      "method_ref": "convert point placeholders into multimodal training tokens",
+      "inheritance": [],
+      "interfaces": [
+        "training_step"
+      ],
+      "attributes": [],
+      "methods": [
+        "training_step"
+      ],
+      "input_spec": {},
+      "output_spec": {
+        "return": "dict(loss=loss, log=log, progress_bar=dict(train_acc=acc))"
+      },
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn16",
+        "sn64",
+        "sn3",
+        "sn59",
+        "sn69"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PointNet2ClassificationSSG",
+      "role": "compact point-token aggregation with neighborhood routing",
+      "method_ref": "compact point-token aggregation with neighborhood routing",
+      "inheritance": [
+        "pl.LightningModule"
+      ],
+      "interfaces": [
+        "validation_end",
+        "val_dataloader",
+        "train_dataloader",
+        "_build_model",
+        "configure_optimizers"
+      ],
+      "attributes": [
+        "hparams",
+        "SA_modules",
+        "train_dset",
+        "val_dset",
+        "fc_layer"
+      ],
+      "methods": [
+        "validation_end",
+        "val_dataloader",
+        "train_dataloader",
+        "_build_model",
+        "configure_optimizers",
+        "_build_dataloader",
+        "validation_step",
+        "forward",
+        "__init__",
+        "training_step"
+      ],
+      "input_spec": {
+        "pointcloud": "Tensor"
+      },
+      "output_spec": {
+        "return": "xyz, features"
+      },
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn3",
+        "sn57",
+        "sn59",
+        "sn69",
+        "sn76"
+      ],
+      "confidence": 0.5
+    },
+    {
+      "name": "Encoder",
+      "role": "shared projector from encoder space to LLM hidden space",
+      "method_ref": "shared projector from encoder space to LLM hidden space",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn60",
+        "sn61",
+        "sn68",
+        "sn69",
+        "sn67"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "name": "LLaVATrainer",
+      "role": "trainer-side save/checkpoint behavior",
+      "method_ref": "trainer-side save/checkpoint behavior",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn63"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "name": "BNMomentumScheduler",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "lr_sched.LambdaLR"
+      ],
+      "interfaces": [
+        "__init__",
+        "step",
+        "load_state_dict",
+        "state_dict"
+      ],
+      "attributes": [
+        "last_epoch",
+        "lmbd",
+        "model",
+        "setter"
+      ],
+      "methods": [
+        "__init__",
+        "step",
+        "load_state_dict",
+        "state_dict"
+      ],
+      "input_spec": {},
+      "output_spec": {
+        "return": "dict(last_epoch=self.last_epoch)"
+      },
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn2"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "GroupAll",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "use_xyz"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "xyz": "Tensor",
+        "new_xyz": "Tensor",
+        "features=None": "Tensor"
+      },
+      "output_spec": {
+        "return": "new_features"
+      },
+      "key_logic": "# type: (GroupAll, bool) -> None # type: (GroupAll, torch.Tensor, torch.Tensor, torch.Tensor) -> Tuple[torch.Tensor]",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn42"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PatchDropout",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "prob",
+        "exclude_first_token"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "x": "Tensor"
+      },
+      "output_spec": {
+        "return": "x"
+      },
+      "key_logic": "# if not self.training or self.prob == 0.: #     return x",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn72"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "num_group",
+        "group_size"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "xyz": "Tensor",
+        "color": "Tensor"
+      },
+      "output_spec": {
+        "return": "neighborhood, center, features"
+      },
+      "key_logic": "# fps the centers out # knn to get the neighborhood",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn73"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "skeleton_Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "num_group",
+        "group_size"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "xyz": "Tensor",
+        "token_feat": "Tensor",
+        "num_group=32": "Tensor",
+        "group_size=8": "Tensor"
+      },
+      "output_spec": {
+        "return": "skeleton_token"
+      },
+      "key_logic": "# fps the centers out # knn to get the neighborhood",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn74"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PointnetFPModule",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "mlp"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "unknown": "Tensor",
+        "known": "Tensor",
+        "unknow_feats": "Tensor",
+        "known_feats": "Tensor"
+      },
+      "output_spec": {
+        "return": "new_features.squeeze(-1)"
+      },
+      "key_logic": "# type: (PointnetFPModule, List[int], bool) -> None # type: (PointnetFPModule, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn77"
+      ],
+      "confidence": 0.6
+    }
+  ],
+  "pipeline_steps": [
+    {
+      "step_id": "S1",
+      "name": "Stage I: Text-first interface warmup",
+      "description": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "input_data": [
+        "raw_point_cloud"
+      ],
+      "output_data": [
+        "output_0"
+      ],
+      "involved_modules": [
+        "DataCollatorForPointTextDataset"
+      ],
+      "data_flow": [
+        {
+          "from": "input",
+          "to": "DataCollatorForPointTextDataset",
+          "op": "forward"
+        },
+        {
+          "from": "DataCollatorForPointTextDataset",
+          "to": "output",
+          "op": "output"
+        }
+      ],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn59"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "step_id": "S2",
+      "name": "Stage II: Rich instruction alignment",
+      "description": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "input_data": [
+        "input_1"
+      ],
+      "output_data": [
+        "output_1"
+      ],
+      "involved_modules": [],
+      "data_flow": [],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [],
+      "confidence": 0.3
+    },
+    {
+      "step_id": "S3",
+      "name": "Stage III: Point-language transfer",
+      "description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "input_data": [
+        "input_2"
+      ],
+      "output_data": [
+        "output_2"
+      ],
+      "involved_modules": [
+        "PointcloudEncoder",
+        "ObjectPointCloudDataset",
+        "PointNet2ClassificationSSG"
+      ],
+      "data_flow": [
+        {
+          "from": "input",
+          "to": "PointcloudEncoder",
+          "op": "forward"
+        },
+        {
+          "from": "PointcloudEncoder",
+          "to": "ObjectPointCloudDataset",
+          "op": "forward"
+        },
+        {
+          "from": "ObjectPointCloudDataset",
+          "to": "PointNet2ClassificationSSG",
+          "op": "forward"
+        },
+        {
+          "from": "PointNet2ClassificationSSG",
+          "to": "output",
+          "op": "output"
+        }
+      ],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn69",
+        "sn57",
+        "sn3"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "step_id": "S4",
+      "name": "Runtime and saving behavior",
+      "description": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "input_data": [
+        "input_3"
+      ],
+      "output_data": [
+        "output_3"
+      ],
+      "involved_modules": [
+        "QueryAndGroup",
+        "LLaVATrainer"
+      ],
+      "data_flow": [
+        {
+          "from": "input",
+          "to": "QueryAndGroup",
+          "op": "forward"
+        },
+        {
+          "from": "QueryAndGroup",
+          "to": "LLaVATrainer",
+          "op": "forward"
+        },
+        {
+          "from": "LLaVATrainer",
+          "to": "output",
+          "op": "output"
+        }
+      ],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn41",
+        "sn63"
+      ],
+      "confidence": 0.4
+    }
+  ],
+  "losses": [],
+  "training_detail": {
+    "type": "standard",
+    "optimizer": {
+      "name": "ADAM"
+    },
+    "scheduler": {},
+    "training_loop": {},
+    "epochs": 0,
+    "batch_size": 0,
+    "evidence_refs": [
+      "sn16",
+      "sn17",
+      "sn18",
+      "sn43",
+      "sn44",
+      "sn45",
+      "sn46",
+      "sn47",
+      "sn48",
+      "sn62",
+      "sn63",
+      "sn64"
+    ]
+  },
+  "data_detail": {
+    "datasets": [
+      {
+        "name": "CustomDataset",
+        "type": "custom",
+        "input_format": "image Tensor[B, C, H, W]",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn19"
+        ]
+      },
+      {
+        "name": "CustomDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn49"
+        ]
+      },
+      {
+        "name": "CustomDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn50"
+        ]
+      },
+      {
+        "name": "LazySupervisedDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn51"
+        ]
+      },
+      {
+        "name": "LazySupervisedDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn52"
+        ]
+      },
+      {
+        "name": "DataCollatorForSupervisedDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn53"
+        ]
+      },
+      {
+        "name": "DataCollatorForSupervisedDataset",
+        "type": "custom",
+        "input_format": "Tensor",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn54"
+        ]
+      },
+      {
+        "name": "ModelNet",
+        "type": "custom",
+        "input_format": "point cloud P ∈ R^{N×3}",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn55"
+        ]
+      },
+      {
+        "name": "ModelNet",
+        "type": "custom",
+        "input_format": "point cloud P ∈ R^{N×3}",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn56"
+        ]
+      },
+      {
+        "name": "ObjectPointCloudDataset",
+        "type": "custom",
+        "input_format": "point cloud P ∈ R^{N×3}",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn57"
+        ]
+      },
+      {
+        "name": "ObjectPointCloudDataset",
+        "type": "custom",
+        "input_format": "point cloud P ∈ R^{N×3}",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn58"
+        ]
+      },
+      {
+        "name": "DataCollatorForPointTextDataset",
+        "type": "custom",
+        "input_format": "point cloud P ∈ R^{N×3}",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn59"
+        ]
+      }
+    ],
+    "dataloader": {}
+  },
+  "alignment_validation": {
+    "overall_score": 0.44,
+    "modules_coverage": {
+      "total": 7,
+      "found": 7,
+      "score": 1.0
+    },
+    "pipeline_coverage": {
+      "total": 4,
+      "found": 3,
+      "score": 0.75
+    },
+    "losses_coverage": {
+      "total": 0,
+      "found": 0,
+      "score": 0.0
+    },
+    "discrepancies": [],
+    "missing_implementations": [],
+    "uncertainties": [
+      {
+        "aspect": "Module PointcloudEncoder",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PointNet2ClassificationSSG",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module training_step",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PointNet2ClassificationSSG",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module LLaVATrainer",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module BNMomentumScheduler",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module GroupAll",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PatchDropout",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module Group",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module skeleton_Group",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PointnetFPModule",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      }
+    ]
+  },
+  "key_insights": [],
+  "diagram_hints": {
+    "main_flow": [
+      "LLaVATrainer",
+      "QueryAndGroup",
+      "ObjectPointCloudDataset",
+      "PointcloudEncoder",
+      "DataCollatorForPointTextDataset"
+    ],
+    "generation_flow": [],
+    "training_flow": [],
+    "key_nodes": [
+      "TrainingArguments",
+      "Encoder"
+    ],
+    "key_edges": [
+      {
+        "from": "input",
+        "to": "DataCollatorForPointTextDataset"
+      },
+      {
+        "from": "DataCollatorForPointTextDataset",
+        "to": "output"
+      },
+      {
+        "from": "input",
+        "to": "PointcloudEncoder"
+      },
+      {
+        "from": "PointcloudEncoder",
+        "to": "ObjectPointCloudDataset"
+      },
+      {
+        "from": "input",
+        "to": "QueryAndGroup"
+      }
+    ]
+  }
+}

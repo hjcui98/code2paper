@@ -1,0 +1,89 @@
+{
+  "draft_version": 1,
+  "method_outline_path": "paper/method/method_outline.json",
+  "terminology_table_path": "paper/method/terminology_table.json",
+  "draft_claim_map_path": "paper/method/draft_claim_map.json",
+  "paragraphs": [
+    {
+      "paragraph_id": "P1",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "evidence_span_ids": [
+        "E12",
+        "E5",
+        "E4",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "llm_call_id": "deterministic-authoring",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P2",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C1"
+      ],
+      "evidence_span_ids": [
+        "E12"
+      ],
+      "llm_call_id": "deterministic-authoring",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P3",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C2"
+      ],
+      "evidence_span_ids": [
+        "E12"
+      ],
+      "llm_call_id": "deterministic-authoring",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P4",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C3"
+      ],
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "llm_call_id": "deterministic-authoring",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P5",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C4"
+      ],
+      "evidence_span_ids": [
+        "E12"
+      ],
+      "llm_call_id": "deterministic-authoring",
+      "validator_status": "pending"
+    }
+  ],
+  "revision_history": []
+}

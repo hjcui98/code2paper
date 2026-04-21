@@ -1,0 +1,40 @@
+{
+  "project_id": "greenplm",
+  "mode": "postergen-code-intake",
+  "readme_policy": "exclude",
+  "author_input_provided": true,
+  "outputs": {
+    "raw_evidence_pack": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/raw_evidence_pack.json",
+      "hash": "sha256:c316d1674ace06e887925ff3c64b2b25cf7bf93d6e0fec6f9b0eee4df374800a"
+    },
+    "comment_index": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/comment_index.json",
+      "hash": "sha256:f89ad109aeba26603ff116d7969479981e7e4f1ee695677c0e19445aa0719aa8"
+    },
+    "raw_context_index": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/raw_context_index.json",
+      "hash": "sha256:3566cab20d5811216b56d0703947ce463b99128d1c957040c730ee15316ce0c8"
+    },
+    "context_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/context_map.json",
+      "hash": "sha256:78e86211a1d83bfcb7e969c9e7c92b68b5e71d4cf544c1c958e1cbefddd52cb4"
+    },
+    "context_pack_entrypoints": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/context_packs/entrypoints.json",
+      "hash": "sha256:1f697819575b575498a8ba6a0d7b92ac0a22f7dfb123b21c4a1259d2e66e010b"
+    },
+    "context_pack_configs": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/context_packs/configs.json",
+      "hash": "sha256:85c440560fc84c39e9d706d86e51b97a9aa3b64d5eb29b909f9406b08e734b35"
+    },
+    "context_pack_source_core_candidates": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/context_packs/source_core_candidates.json",
+      "hash": "sha256:c32eff2721f841211aca52deb0ce7b7b48b3c3d25504f0b6417a420b9644045a"
+    },
+    "context_pack_author_hints": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_101147/paper/method/context_packs/author_hints.json",
+      "hash": "sha256:43dd5a95a780d87d54431b55ae2b2d5460867f9234aaf358d67857285722f3b2"
+    }
+  }
+}

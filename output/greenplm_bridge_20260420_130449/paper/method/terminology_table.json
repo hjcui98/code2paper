@@ -1,0 +1,552 @@
+{
+  "terms": [
+    {
+      "term_id": "TERM-STAGE-1",
+      "canonical": "Stage I: Text-First Interface Warmup",
+      "term_type": "stage",
+      "allowed_synonyms": [
+        "Text-First Warmup",
+        "Interface Warmup Stage"
+      ],
+      "forbidden_replacements": [
+        "Pre-training",
+        "Initial Pretraining"
+      ],
+      "source_ids": [
+        "S1",
+        "MECH1",
+        "MECH0101"
+      ],
+      "evidence_span_ids": [
+        "E3622"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-2",
+      "canonical": "Stage II: Rich Instruction Alignment",
+      "term_type": "stage",
+      "allowed_synonyms": [
+        "Instruction Alignment Stage",
+        "Rich Instruction Phase"
+      ],
+      "forbidden_replacements": [
+        "Fine-tuning",
+        "Supervised Fine-tuning"
+      ],
+      "source_ids": [
+        "S2",
+        "MECH2",
+        "MECH0201"
+      ],
+      "evidence_span_ids": [
+        "E2490"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-3",
+      "canonical": "Stage III: Point-Language Transfer",
+      "term_type": "stage",
+      "allowed_synonyms": [
+        "Point-Language Alignment",
+        "3D Transfer Stage"
+      ],
+      "forbidden_replacements": [
+        "Point Cloud Pretraining",
+        "3D Pre-training"
+      ],
+      "source_ids": [
+        "S3",
+        "MECH3",
+        "MECH0301"
+      ],
+      "evidence_span_ids": [
+        "E370",
+        "E371",
+        "E372",
+        "E373",
+        "E374",
+        "E375",
+        "E376",
+        "E377",
+        "E378",
+        "E379",
+        "E380",
+        "E419",
+        "E421",
+        "E422",
+        "E423",
+        "E424",
+        "E425",
+        "E426",
+        "E427",
+        "E428"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-4",
+      "canonical": "Runtime and saving behavior",
+      "term_type": "stage",
+      "allowed_synonyms": [
+        "Runtime Management",
+        "Checkpoint Control"
+      ],
+      "forbidden_replacements": [
+        "Inference Stage",
+        "Deployment Phase"
+      ],
+      "source_ids": [
+        "S4",
+        "MECH4",
+        "MECH0401"
+      ],
+      "evidence_span_ids": [
+        "E3355",
+        "E3356",
+        "E3357",
+        "E3358",
+        "E3359",
+        "E3360",
+        "E3361",
+        "E3362",
+        "E3363",
+        "E3364",
+        "E3365",
+        "E3366",
+        "E3367",
+        "E3368",
+        "E3369",
+        "E3370",
+        "E3371",
+        "E3372",
+        "E3373",
+        "E3374"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-1",
+      "canonical": "exclude_first_token",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E429"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-2",
+      "canonical": "num_group",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E441"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-3",
+      "canonical": "group_size",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E441"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-4",
+      "canonical": "drop",
+      "term_type": "parameter",
+      "allowed_synonyms": [
+        "dropout_rate"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E544"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-5",
+      "canonical": "delay_load",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E547",
+        "E1342",
+        "E1354"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-6",
+      "canonical": "eps",
+      "term_type": "parameter",
+      "allowed_synonyms": [
+        "epsilon"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E710"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-7",
+      "canonical": "max_position_embeddings",
+      "term_type": "parameter",
+      "allowed_synonyms": [
+        "max_seq_length"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E715"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-8",
+      "canonical": "base",
+      "term_type": "parameter",
+      "allowed_synonyms": [
+        "theta_base",
+        "rotary_base"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E715"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-9",
+      "canonical": "unsqueeze_dim",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E726"
+      ]
+    },
+    {
+      "term_id": "TERM-PARAM-12",
+      "canonical": "use_flash_attn",
+      "term_type": "parameter",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "S4"
+      ],
+      "evidence_span_ids": [
+        "E1522"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-1",
+      "canonical": "positionwise_feed_forward",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "FFN",
+        "feed_forward_network"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E136",
+        "E445",
+        "E541",
+        "E544",
+        "E547",
+        "E2270"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-2",
+      "canonical": "dropout",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "regularization_dropout"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E429",
+        "E445",
+        "E544",
+        "E733",
+        "E738",
+        "E745",
+        "E748",
+        "E753",
+        "E777",
+        "E2253",
+        "E2270",
+        "E2350"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-3",
+      "canonical": "layer_normalization",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "layer_norm",
+        "RMSNorm"
+      ],
+      "forbidden_replacements": [
+        "batch_normalization"
+      ],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E541",
+        "E544",
+        "E710",
+        "E738",
+        "E748",
+        "E1417"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-4",
+      "canonical": "sinusoidal_positional_encoding",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "rotary_embedding",
+        "RoPE"
+      ],
+      "forbidden_replacements": [
+        "learned_positional_embedding"
+      ],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E715",
+        "E718",
+        "E721",
+        "E726",
+        "E733",
+        "E738",
+        "E745"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-5",
+      "canonical": "scaled_dot_product_attention",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "dot_product_attention"
+      ],
+      "forbidden_replacements": [
+        "cross_attention"
+      ],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E733"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-6",
+      "canonical": "residual_connection",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "skip_connection",
+        "residual_link"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E748"
+      ]
+    },
+    {
+      "term_id": "TERM-BEH-7",
+      "canonical": "decoder_stack",
+      "term_type": "behavior",
+      "allowed_synonyms": [
+        "transformer_stack",
+        "layer_composition"
+      ],
+      "forbidden_replacements": [
+        "encoder_stack"
+      ],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E753"
+      ]
+    },
+    {
+      "term_id": "TERM-TENSOR-1",
+      "canonical": "point_encoder_input",
+      "term_type": "tensor_role",
+      "allowed_synonyms": [
+        "x",
+        "point_features"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E429"
+      ]
+    },
+    {
+      "term_id": "TERM-TENSOR-9",
+      "canonical": "query_representation",
+      "term_type": "tensor_role",
+      "allowed_synonyms": [
+        "q",
+        "queries"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E726"
+      ]
+    },
+    {
+      "term_id": "TERM-TENSOR-10",
+      "canonical": "key_representation",
+      "term_type": "tensor_role",
+      "allowed_synonyms": [
+        "k",
+        "keys"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E726"
+      ]
+    },
+    {
+      "term_id": "TERM-EQ-1",
+      "canonical": "feed_forward_equation",
+      "term_type": "equation",
+      "allowed_synonyms": [
+        "FFN_formula"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E136",
+        "E445",
+        "E541",
+        "E544",
+        "E547",
+        "E2270"
+      ]
+    },
+    {
+      "term_id": "TERM-EQ-2",
+      "canonical": "positional_encoding_equation",
+      "term_type": "equation",
+      "allowed_synonyms": [
+        "RoPE_formula"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E715",
+        "E718",
+        "E721",
+        "E726",
+        "E733",
+        "E738",
+        "E745"
+      ]
+    },
+    {
+      "term_id": "TERM-EQ-3",
+      "canonical": "attention_equation",
+      "term_type": "equation",
+      "allowed_synonyms": [
+        "attention_formula"
+      ],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1",
+        "MECH2",
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E733"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,372 @@
+{
+  "project_id": "greenplm",
+  "author_mode": "enhanced",
+  "author_confirmation_required": false,
+  "method_name": "Author-Marker Grounded Method Pipeline",
+  "method_goal": "Execution flow from PosterGen CodeAnalyzer output pipeline steps.",
+  "implementation_scope": "current codebase only",
+  "latex_expression_preference": "balanced",
+  "entrypoints": [],
+  "stages": [
+    {
+      "stage_id": "S3",
+      "name": "Stage III: Point-Language Transfer",
+      "purpose": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "inputs": [
+        "point_cloud_tokens"
+      ],
+      "outputs": [
+        "llm_conditioned_features"
+      ],
+      "modules": [
+        {
+          "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "symbols": [
+            "forward",
+            "__init__"
+          ],
+          "role": "inject projected point features into language token stream",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "symbols": [
+            "training_step"
+          ],
+          "role": "convert point placeholders into multimodal training tokens",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "symbols": [
+            "forward",
+            "val_dataloader",
+            "train_dataloader",
+            "training_step",
+            "_build_model",
+            "_break_up_pc"
+          ],
+          "role": "compact point-token aggregation with neighborhood routing",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "symbols": [],
+          "role": "shared projector from encoder space to LLM hidden space",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH3",
+          "description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E5",
+            "E4",
+            "E5",
+            "E6",
+            "E7",
+            "E8",
+            "E9",
+            "E10"
+          ],
+          "confidence": "high",
+          "submechanisms": []
+        }
+      ]
+    }
+  ],
+  "behavior_patterns": [],
+  "equation_candidates": [],
+  "architecture_parameters": [],
+  "tensor_roles": [],
+  "innovation_candidates": [],
+  "writing_constraints": [
+    "Do not mention README-only information.",
+    "Do not claim academic novelty without author confirmation.",
+    "Do not promote comment-only hints into main method claims."
+  ],
+  "alignment_notes": [
+    "Execution stages and method stages are separated; method prose should follow method stages, not raw execution order.",
+    "Author-provided pipeline steps matched: Stage III: Point-Language Transfer.",
+    "Unsupported author claims should remain out of the method draft: Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone., Use large text supervision to reduce dependence on scarce point-text pairs., Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.."
+  ],
+  "excluded_sources": [],
+  "author_logic_priority": true,
+  "frozen_mechanisms": [
+    {
+      "mechanism_id": "MECH3",
+      "mechanism_name": "Stage III: Point-Language Transfer",
+      "mechanism_description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "parent_stage_id": "S3",
+      "inputs": [
+        "['input_2']"
+      ],
+      "outputs": [
+        "['output_2']"
+      ],
+      "implementation_anchor": {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbols": [
+          "forward",
+          "__init__"
+        ]
+      },
+      "distinguishing_level": "none",
+      "author_claim_relation": "supported",
+      "evidence_span_ids": [
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ]
+    },
+    {
+      "mechanism_id": "MECH1",
+      "mechanism_name": "Stage I: Text-First Interface Warmup",
+      "mechanism_description": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "parent_stage_id": "S1",
+      "inputs": [
+        "['raw_point_cloud']"
+      ],
+      "outputs": [
+        "['output_0']"
+      ],
+      "implementation_anchor": {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbols": [
+          "forward",
+          "__init__"
+        ]
+      },
+      "distinguishing_level": "none",
+      "author_claim_relation": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "mechanism_id": "MECH2",
+      "mechanism_name": "Stage II: Rich Instruction Alignment",
+      "mechanism_description": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "parent_stage_id": "S2",
+      "inputs": [
+        "['input_1']"
+      ],
+      "outputs": [
+        "['output_1']"
+      ],
+      "implementation_anchor": {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbols": [
+          "forward",
+          "__init__"
+        ]
+      },
+      "distinguishing_level": "none",
+      "author_claim_relation": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "mechanism_id": "MECH4",
+      "mechanism_name": "Runtime and saving behavior",
+      "mechanism_description": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "parent_stage_id": "S4",
+      "inputs": [
+        "['input_3']"
+      ],
+      "outputs": [
+        "['output_3']"
+      ],
+      "implementation_anchor": {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbols": [
+          "forward",
+          "__init__"
+        ]
+      },
+      "distinguishing_level": "none",
+      "author_claim_relation": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ]
+    }
+  ],
+  "distinguishing_mechanisms": [
+    "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+    "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone."
+  ],
+  "author_logic_mapping": {
+    "author_proposed_flow": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "author_supported_flow": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "author_unsupported_parts": []
+  },
+  "unsupported_author_parts": [
+    "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+    "Use large text supervision to reduce dependence on scarce point-text pairs.",
+    "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment."
+  ],
+  "claim_contracts": [
+    {
+      "claim_id": "C7",
+      "claim_intent": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "allowed_wording_boundary": "Do not add behavior beyond the cited implementation anchors and evidence spans.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C3",
+      "claim_intent": "The method contains a paper-facing stage named Stage III: Point-Language Transfer.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "allowed_wording_boundary": "Describe Stage III: Point-Language Transfer only using its listed evidence-backed inputs, outputs, modules, and mechanisms.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C1",
+      "claim_intent": "The method contains a paper-facing stage named Stage I: Text-First Interface Warmup.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Describe Stage I: Text-First Interface Warmup only using its listed evidence-backed inputs, outputs, modules, and mechanisms.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C2",
+      "claim_intent": "The method contains a paper-facing stage named Stage II: Rich Instruction Alignment.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Describe Stage II: Rich Instruction Alignment only using its listed evidence-backed inputs, outputs, modules, and mechanisms.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C4",
+      "claim_intent": "The method contains a paper-facing stage named Runtime and saving behavior.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Describe Runtime and saving behavior only using its listed evidence-backed inputs, outputs, modules, and mechanisms.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C5",
+      "claim_intent": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Do not add behavior beyond the cited implementation anchors and evidence spans.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C6",
+      "claim_intent": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Do not add behavior beyond the cited implementation anchors and evidence spans.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C8",
+      "claim_intent": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E5"
+      ],
+      "allowed_wording_boundary": "Do not add behavior beyond the cited implementation anchors and evidence spans.",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C10",
+      "claim_intent": "Use large text supervision to reduce dependence on scarce point-text pairs.",
+      "support_status": "unsupported",
+      "evidence_span_ids": [],
+      "allowed_wording_boundary": "Do not include in method prose unless the author supplies hard supporting evidence.",
+      "required_qualifiers": [
+        "unsupported by current code evidence"
+      ],
+      "review_question_id": "RQ-10"
+    },
+    {
+      "claim_id": "C11",
+      "claim_intent": "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+      "support_status": "unsupported",
+      "evidence_span_ids": [],
+      "allowed_wording_boundary": "Do not include in method prose unless the author supplies hard supporting evidence.",
+      "required_qualifiers": [
+        "unsupported by current code evidence"
+      ],
+      "review_question_id": "RQ-11"
+    },
+    {
+      "claim_id": "C9",
+      "claim_intent": "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+      "support_status": "unsupported",
+      "evidence_span_ids": [],
+      "allowed_wording_boundary": "Do not include in method prose unless the author supplies hard supporting evidence.",
+      "required_qualifiers": [
+        "unsupported by current code evidence"
+      ],
+      "review_question_id": "RQ-9"
+    }
+  ],
+  "negative_scope": [
+    "README-only statements cannot enter method prose.",
+    "Logger, checkpoint, seed, cache, path handling, and distributed setup are infrastructure unless tied to hard method evidence.",
+    "Comments and author hints are navigation signals, not standalone fact evidence.",
+    "Unsupported author part: Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+    "Unsupported author part: Use large text supervision to reduce dependence on scarce point-text pairs.",
+    "Unsupported author part: Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment."
+  ]
+}

@@ -1,0 +1,463 @@
+{
+  "modules": [
+    {
+      "method_module": {
+        "module_id": "M1",
+        "name": "shared modality bridge used across text-first and point-first phases",
+        "path": "llava/model/multimodal_projector/builder.py",
+        "symbol": "build_vision_projector",
+        "role": "shared modality bridge used across text-first and point-first phases",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      "pseudo_code_ref": null,
+      "matched_snippets": [
+        {
+          "snippet_id": "sn43",
+          "class_name": "DataCollatorForPointTextDataset",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3764,
+            3804
+          ],
+          "match_type": "implementation",
+          "confidence": 0.9
+        },
+        {
+          "snippet_id": "sn3",
+          "class_name": "PointNet2ClassificationSSG",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_cls.py",
+          "lines": [
+            55,
+            230
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn41",
+          "class_name": "ObjectPointCloudDataset",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3689,
+            3729
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn72",
+          "class_name": "PointcloudEncoder",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            255,
+            346
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn58",
+          "class_name": "QueryAndGroup",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2_ops_lib/pointnet2_ops/pointnet2_utils.py",
+          "lines": [
+            279,
+            333
+          ],
+          "match_type": "partial",
+          "confidence": 0.5
+        }
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": {}
+    },
+    {
+      "method_module": {
+        "module_id": "M2",
+        "name": "token compaction/aggregation path associated with 0M-Pooling style logic",
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbol": "skeleton_Group",
+        "role": "token compaction/aggregation path associated with 0M-Pooling style logic",
+        "importance": "core",
+        "is_novel": true,
+        "io": {}
+      },
+      "pseudo_code_ref": null,
+      "matched_snippets": [
+        {
+          "snippet_id": "sn20",
+          "class_name": "eval_model",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+          "lines": [
+            84,
+            131
+          ],
+          "match_type": "reference",
+          "confidence": 0.3
+        },
+        {
+          "snippet_id": "sn35",
+          "class_name": "LazySupervisedDataset",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3481,
+            3521
+          ],
+          "match_type": "reference",
+          "confidence": 0.3
+        },
+        {
+          "snippet_id": "sn49",
+          "class_name": "LlavaMetaModel",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/llava_arch.py",
+          "lines": [
+            28,
+            116
+          ],
+          "match_type": "reference",
+          "confidence": 0.3
+        },
+        {
+          "snippet_id": "sn73",
+          "class_name": "eval_model",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_science.py",
+          "lines": [
+            29,
+            94
+          ],
+          "match_type": "reference",
+          "confidence": 0.3
+        },
+        {
+          "snippet_id": "sn75",
+          "class_name": "eval_model",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa.py",
+          "lines": [
+            29,
+            84
+          ],
+          "match_type": "reference",
+          "confidence": 0.3
+        }
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": {}
+    },
+    {
+      "method_module": {
+        "module_id": "M3",
+        "name": "inject projected point-side representations into LLM token stream",
+        "path": "pointllm/model/pointllm.py",
+        "symbol": "PointLLMLlamaModel.forward",
+        "role": "inject projected point-side representations into LLM token stream",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      "pseudo_code_ref": null,
+      "matched_snippets": [
+        {
+          "snippet_id": "sn47",
+          "class_name": "PointLLMTrainer",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            4278,
+            4278
+          ],
+          "match_type": "implementation",
+          "confidence": 0.8
+        },
+        {
+          "snippet_id": "sn41",
+          "class_name": "ObjectPointCloudDataset",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3689,
+            3729
+          ],
+          "match_type": "partial",
+          "confidence": 0.5
+        },
+        {
+          "snippet_id": "sn43",
+          "class_name": "DataCollatorForPointTextDataset",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3764,
+            3804
+          ],
+          "match_type": "partial",
+          "confidence": 0.5
+        },
+        {
+          "snippet_id": "sn72",
+          "class_name": "PointcloudEncoder",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            255,
+            346
+          ],
+          "match_type": "partial",
+          "confidence": 0.5
+        },
+        {
+          "snippet_id": "sn3",
+          "class_name": "PointNet2ClassificationSSG",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_cls.py",
+          "lines": [
+            55,
+            230
+          ],
+          "match_type": "partial",
+          "confidence": 0.4
+        }
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": {}
+    },
+    {
+      "method_module": {
+        "module_id": "M4",
+        "name": "controls supervision mixtures (description/dialog style targets)",
+        "path": "pointllm/data/object_point_dataset.py",
+        "symbol": "ObjectPointCloudDataset",
+        "role": "controls supervision mixtures (description/dialog style targets)",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      "pseudo_code_ref": null,
+      "matched_snippets": [],
+      "missing_implementation": true,
+      "implementation_completeness": {}
+    },
+    {
+      "method_module": {
+        "module_id": "M5",
+        "name": "stage orchestration via freezing, adapter settings, and training flags",
+        "path": "pointllm/train/train.py",
+        "symbol": "train",
+        "role": "stage orchestration via freezing, adapter settings, and training flags",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      "pseudo_code_ref": null,
+      "matched_snippets": [
+        {
+          "snippet_id": "sn16",
+          "class_name": "training_step",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_cls.py",
+          "lines": [
+            125,
+            135
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn46",
+          "class_name": "TrainingArguments",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            3056,
+            3056
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn48",
+          "class_name": "TrainingArguments",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+          "lines": [
+            4336,
+            4336
+          ],
+          "match_type": "partial",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn58",
+          "class_name": "QueryAndGroup",
+          "file": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2_ops_lib/pointnet2_ops/pointnet2_utils.py",
+          "lines": [
+            279,
+            333
+          ],
+          "match_type": "partial",
+          "confidence": 0.4
+        }
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": {}
+    }
+  ],
+  "pipeline_steps": [
+    {
+      "method_step": {
+        "step_id": "S1",
+        "name": "Stage I: Text-Projector Bootstrapping",
+        "description": "Use caption-to-brief-description style supervision to make projector outputs usable by the LLM under mostly frozen backbones.",
+        "purpose": "Use caption-to-brief-description style supervision to make projector outputs usable by the LLM under mostly frozen backbones.",
+        "inputs": [
+          "caption-like text + concise target responses"
+        ],
+        "outputs": [
+          "initialized projector-language interface"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "llava/model/multimodal_projector/builder.py",
+          "release/paper/scripts/train/1.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn22",
+          "function": "",
+          "match_type": "pipeline_step",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn23",
+          "function": "",
+          "match_type": "pipeline_step",
+          "confidence": 0.6
+        },
+        {
+          "snippet_id": "sn24",
+          "function": "",
+          "match_type": "pipeline_step",
+          "confidence": 0.6
+        }
+      ]
+    },
+    {
+      "method_step": {
+        "step_id": "S2",
+        "name": "Stage II: Rich Text Alignment with LoRA",
+        "description": "Expand to richer descriptions and dialogue-style supervision so the LLM learns stronger instruction-context grounding before touching much 3D data.",
+        "purpose": "Expand to richer descriptions and dialogue-style supervision so the LLM learns stronger instruction-context grounding before touching much 3D data.",
+        "inputs": [
+          "detailed descriptions",
+          "single-round conversations",
+          "multi-round conversations"
+        ],
+        "outputs": [
+          "text-side multimodal alignment ready for transfer"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "pointllm/data/object_point_dataset.py",
+          "pointllm/data/utils.py",
+          "release/paper/scripts/train/2.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn35",
+          "function": "LazySupervisedDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        },
+        {
+          "snippet_id": "sn41",
+          "function": "ObjectPointCloudDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        },
+        {
+          "snippet_id": "sn43",
+          "function": "DataCollatorForPointTextDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "method_step": {
+        "step_id": "S3",
+        "name": "Stage III: Point-Language Transfer via Shared Projector",
+        "description": "Switch to point-cloud tokens, compress token length (0M-Pooling narrative), and reuse the bridge to produce 3D-grounded responses with limited paired data.",
+        "purpose": "Switch to point-cloud tokens, compress token length (0M-Pooling narrative), and reuse the bridge to produce 3D-grounded responses with limited paired data.",
+        "inputs": [
+          "point cloud + text supervision pairs"
+        ],
+        "outputs": [
+          "3D-conditioned language generation"
+        ],
+        "related_files": [
+          "llava/model/multimodal_encoder/point_encoder.py",
+          "pointllm/model/pointllm.py",
+          "llava/model/multimodal_projector/builder.py",
+          "pointllm/train/train.py",
+          "release/paper/scripts/train/3.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn35",
+          "function": "LazySupervisedDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        },
+        {
+          "snippet_id": "sn41",
+          "function": "ObjectPointCloudDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        },
+        {
+          "snippet_id": "sn42",
+          "function": "ObjectPointCloudDataset",
+          "match_type": "pipeline_step",
+          "confidence": 1.0
+        }
+      ]
+    }
+  ],
+  "losses": [],
+  "pseudo_code_alignment": [],
+  "training_flow": {},
+  "coverage_report": {
+    "modules_coverage": {
+      "total": 5,
+      "found": 4,
+      "score": 0.8
+    },
+    "pipeline_steps_coverage": {
+      "total": 3,
+      "found": 3,
+      "score": 1.0
+    },
+    "losses_coverage": {
+      "total": 0,
+      "found": 0,
+      "score": 0.0
+    },
+    "training_flow_coverage": {
+      "completeness": 0
+    },
+    "overall_score": 0.45
+  },
+  "dynamic_roles_used": [
+    "evaluation",
+    "training_loop",
+    "model_arch",
+    "dataset",
+    "other",
+    "config",
+    "forward",
+    "augmentation",
+    "inference",
+    "loss"
+  ]
+}

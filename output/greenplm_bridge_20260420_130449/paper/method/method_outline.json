@@ -1,0 +1,53 @@
+{
+  "sections": [
+    {
+      "paragraph_id": "P1",
+      "purpose": "Overview of the evidence-backed method.",
+      "stage_ids": [],
+      "mechanism_ids": [],
+      "claim_ids": [],
+      "evidence_span_ids": []
+    },
+    {
+      "paragraph_id": "P2",
+      "purpose": "This section explains how the method establishes projector-language coupling under mostly frozen backbone settings.",
+      "stage_ids": [
+        "S1"
+      ],
+      "mechanism_ids": [],
+      "claim_ids": [],
+      "evidence_span_ids": []
+    },
+    {
+      "paragraph_id": "P3",
+      "purpose": "This section explains how the method expands from simple descriptions to richer instruction and dialog patterns while preserving projector continuity.",
+      "stage_ids": [
+        "S2"
+      ],
+      "mechanism_ids": [],
+      "claim_ids": [],
+      "evidence_span_ids": []
+    },
+    {
+      "paragraph_id": "P4",
+      "purpose": "This section explains how the method uses point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "stage_ids": [
+        "S3"
+      ],
+      "mechanism_ids": [],
+      "claim_ids": [],
+      "evidence_span_ids": []
+    },
+    {
+      "paragraph_id": "P5",
+      "purpose": "This section explains how the method controls runtime mechanics including trainer save behavior, logging, and checkpoint flow.",
+      "stage_ids": [
+        "S4"
+      ],
+      "mechanism_ids": [],
+      "claim_ids": [],
+      "evidence_span_ids": []
+    }
+  ],
+  "author_logic_order": []
+}

@@ -1,0 +1,9 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "schema_validation_failed:ValidationError:43 validation errors for TerminologyTable\nterms.0.definition\n  Extra inputs are not permitted [type=extra_forbidden, input_value='Initial execution stage ...ent computation stages.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nterms.1.definition\n  Extra inputs are not permitted [type=extra_forbidden, input_value='Core execution stage tha... and multimodal inputs.', input_type=str]\n    For further information visit https://errors.pydantic.d",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/method_authoring_prompt.md",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_113653/paper/method/llm_calls/LLM-phase4-002.json"
+  ]
+}

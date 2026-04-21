@@ -1,0 +1,29 @@
+Method
+
+Overview
+
+Author-Marker Grounded Method Pipeline is designed to show that the model can use large-scale text-based alignment first, then use limited 3D data to connect point-cloud representations to the language model. Training loop type: standard. The paper-facing method is organized into 4 evidence-backed stages: Stage I: Text-First Interface Warmup, Stage II: Rich Instruction Alignment, Stage III: Point-Language Transfer, and Runtime and saving behavior.
+
+Evidence-Grounded Pipeline
+
+Stage I: Text-First Interface Warmup. This stage is designed to establish projector-language coupling under mostly frozen backbone settings. It consumes raw point cloud and produces the next stage inputs.
+
+Stage II: Rich Instruction Alignment. This stage is designed to expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity. It consumes the previous stage outputs and produces the next stage inputs.
+
+Stage III: Point-Language Transfer. This stage is designed to use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs. It consumes the previous stage outputs and produces the next stage inputs. The stage uses PointcloudEncoder for injecting projected point features into language token stream. PointcloudEncoder # grouper # define the encoder. The data flow links input to PointcloudEncoder via forward and PointcloudEncoder to output via output.
+
+Runtime and saving behavior. This stage is designed to control runtime mechanics (trainer save behavior/logging/checkpoint flow). It consumes the previous stage outputs and produces the next stage inputs.
+
+Core Components
+
+The core method components support the following paper-facing roles: inject projected point features into language token stream. Utility and experiment-support modules are not treated as method innovations.
+
+Method Procedure
+
+The method procedure follows the paper-level stage order rather than the raw execution order: Stage I: Text-First Interface Warmup -> Stage II: Rich Instruction Alignment -> Stage III: Point-Language Transfer -> Runtime and saving behavior. This ordering keeps orchestration, setup, and utility behavior separate from the method mechanisms.
+
+Implementation Notes and Configurable Behavior
+
+An author-highlighted distinguishing mechanism is retained only as an evidence-backed implementation claim: A compact local-to-global aggregation path is used before point features are conditioned into the LLM.
+
+An author-highlighted distinguishing mechanism is retained only as an evidence-backed implementation claim: Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost.

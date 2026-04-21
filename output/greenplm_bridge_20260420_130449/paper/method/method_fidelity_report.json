@@ -1,0 +1,81 @@
+{
+  "project_id": "greenplm",
+  "passed": false,
+  "grounded_paragraphs": 6,
+  "issues": [
+    {
+      "issue_id": "F1",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH1",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F2",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH2",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F3",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH3",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F4",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH4",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F5",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH1",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F6",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH2",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F7",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH3",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F8",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH4",
+      "evidence_ids": [],
+      "paragraph": ""
+    },
+    {
+      "issue_id": "F9",
+      "severity": "high",
+      "category": "unknown_reference",
+      "message": "unknown mechanism: MECH3",
+      "evidence_ids": [],
+      "paragraph": ""
+    }
+  ],
+  "checked_claims": 31,
+  "checked_evidence_items": 3377
+}

@@ -1,0 +1,244 @@
+{
+  "method": {
+    "task_setting": "Enable robust 3D understanding for an LLM while reducing dependence on large-scale 3D paired data.",
+    "paper_method_goal": "Show that the model can use large-scale text-based alignment first, then use limited 3D data to connect point-cloud representations to the language model.",
+    "mainline": "Text-first projector alignment -> rich instruction alignment -> point-language transfer via 0M-Pooling and shared projector",
+    "story_order": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "modules": [
+      {
+        "module_id": "M1",
+        "name": "training-stage orchestration via argument combinations",
+        "path": "pointllm/train/train.py",
+        "symbol": "train",
+        "role": "training-stage orchestration via argument combinations",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      {
+        "module_id": "M2",
+        "name": "inject projected point features into language token stream",
+        "path": "pointllm/model/pointllm.py",
+        "symbol": "PointLLMLlamaModel.forward",
+        "role": "inject projected point features into language token stream",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      {
+        "module_id": "M3",
+        "name": "load/filter conversation supervision and point samples",
+        "path": "pointllm/data/object_point_dataset.py",
+        "symbol": "ObjectPointCloudDataset",
+        "role": "load/filter conversation supervision and point samples",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      {
+        "module_id": "M4",
+        "name": "convert point placeholders into multimodal training tokens",
+        "path": "pointllm/data/utils.py",
+        "symbol": "preprocess_multimodal_point_cloud",
+        "role": "convert point placeholders into multimodal training tokens",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      {
+        "module_id": "M5",
+        "name": "compact point-token aggregation with neighborhood routing",
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbol": "skeleton_Group",
+        "role": "compact point-token aggregation with neighborhood routing",
+        "importance": "core",
+        "is_novel": true,
+        "io": {}
+      },
+      {
+        "module_id": "M6",
+        "name": "shared projector from encoder space to LLM hidden space",
+        "path": "llava/model/multimodal_projector/builder.py",
+        "symbol": "build_vision_projector",
+        "role": "shared projector from encoder space to LLM hidden space",
+        "importance": "core",
+        "is_novel": false,
+        "io": {}
+      },
+      {
+        "module_id": "M7",
+        "name": "trainer-side save/checkpoint behavior",
+        "path": "pointllm/train/pointllm_trainer.py",
+        "symbol": "PointLLMTrainer",
+        "role": "trainer-side save/checkpoint behavior",
+        "importance": "supporting",
+        "is_novel": false,
+        "io": {}
+      }
+    ],
+    "pipeline_steps": [
+      {
+        "step_id": "S1",
+        "name": "Stage I: Text-First Interface Warmup",
+        "description": "Establish projector-language coupling under mostly frozen backbone settings.",
+        "purpose": "Establish projector-language coupling under mostly frozen backbone settings.",
+        "inputs": [
+          "caption/description-style text supervision"
+        ],
+        "outputs": [
+          "stable projector initialization for language conditioning"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "llava/model/multimodal_projector/builder.py",
+          "release/paper/scripts/train/1.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      {
+        "step_id": "S2",
+        "name": "Stage II: Rich Instruction Alignment",
+        "description": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+        "purpose": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+        "inputs": [
+          "detailed_description",
+          "single_round",
+          "multi_round"
+        ],
+        "outputs": [
+          "improved instruction-following alignment before 3D transfer"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "pointllm/data/object_point_dataset.py",
+          "pointllm/data/utils.py",
+          "release/paper/scripts/train/2.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      {
+        "step_id": "S3",
+        "name": "Stage III: Point-Language Transfer",
+        "description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+        "purpose": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+        "inputs": [
+          "point cloud + conversation supervision pairs"
+        ],
+        "outputs": [
+          "3D-grounded language responses"
+        ],
+        "related_files": [
+          "llava/model/multimodal_encoder/point_encoder.py",
+          "pointllm/model/pointllm.py",
+          "llava/model/multimodal_projector/builder.py",
+          "pointllm/train/train.py",
+          "release/paper/scripts/train/3.sh"
+        ],
+        "highlight_level": "main",
+        "include_in_main_figure": true
+      },
+      {
+        "step_id": "S4",
+        "name": "Runtime and saving behavior",
+        "description": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+        "purpose": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+        "inputs": [
+          "training arguments"
+        ],
+        "outputs": [
+          "checkpoints/log artifacts"
+        ],
+        "related_files": [
+          "pointllm/train/pointllm_trainer.py"
+        ],
+        "highlight_level": "secondary",
+        "include_in_main_figure": false
+      }
+    ],
+    "losses": [],
+    "innovations": [
+      {
+        "what": "A compact local-to-global aggregation path is used before point features are conditioned into the LLM."
+      },
+      {
+        "what": "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone."
+      }
+    ],
+    "design_intents": [
+      {
+        "intent": "Use large text supervision to reduce dependence on scarce point-text pairs.",
+        "supporting_files": [
+          "pointllm/train/train.py",
+          "pointllm/data/object_point_dataset.py"
+        ],
+        "supporting_functions": [
+          "train",
+          "ObjectPointCloudDataset"
+        ]
+      },
+      {
+        "intent": "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+        "supporting_files": [
+          "llava/model/multimodal_projector/builder.py",
+          "pointllm/train/train.py"
+        ],
+        "supporting_functions": [
+          "build_vision_projector",
+          "train"
+        ]
+      },
+      {
+        "intent": "Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost.",
+        "supporting_files": [
+          "llava/model/multimodal_encoder/point_encoder.py",
+          "pointllm/model/pointllm.py"
+        ],
+        "supporting_functions": [
+          "skeleton_Group",
+          "PointLLMLlamaModel.forward"
+        ]
+      }
+    ],
+    "potential_mismatches": [
+      {
+        "description": "Large inherited LLaVA/PointNet++ code regions may look substantial but are not automatically this method's contribution.",
+        "files": [
+          "llava/**",
+          "pointnet++/**"
+        ]
+      },
+      {
+        "description": "Comments and local-path defaults in train.py may be mistaken as method constraints.",
+        "files": [
+          "pointllm/train/train.py"
+        ]
+      },
+      {
+        "description": "If stage scripts are stored as LFS pointers in this checkout, stage-specific command claims are under-evidenced.",
+        "files": [
+          "release/paper/scripts/train/*.sh",
+          "release/5M_data_seting/scripts/train/*.sh"
+        ]
+      },
+      {
+        "description": "Manual requires_grad overrides near the end of train.py can diverge from high-level stage description if script args differ.",
+        "files": [
+          "pointllm/train/train.py"
+        ]
+      }
+    ],
+    "deemphasize_details": [
+      "hardcoded local paths and environment-specific comments",
+      "trainer save plumbing and deployment utilities",
+      "pretrained asset packaging details"
+    ],
+    "latex_expression_preference": "balanced"
+  }
+}

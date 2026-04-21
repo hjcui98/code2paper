@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-005",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "prompt_template_id": "claim_contract_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:f7b70ae4e8a05ebc6a3ed2aae1f4e05d5dea9599037312897125f5f7ef51b8a2",
+  "response_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3ClaimContractOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T07:11:24.557546+00:00"
+}

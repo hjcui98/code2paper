@@ -1,0 +1,129 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "method_name": "Transformer Translation Training Pipeline",
+  "method_goal": "Train a Transformer sequence-to-sequence model from preprocessed German-English translation data with label smoothing and scheduled optimization.",
+  "implementation_scope": "current codebase only",
+  "entrypoints": ["train.py:main", "preprocess.py:main"],
+  "stages": [
+    {
+      "stage_id": "S1",
+      "name": "Input preparation",
+      "purpose": "Prepare serialized translation data from raw corpora.",
+      "inputs": ["raw German-English corpora", "BPE settings", "maximum sequence length"],
+      "outputs": ["serialized data pickle", "vocabulary", "filtered train/validation/test examples"],
+      "modules": [
+        {
+          "path": "preprocess.py",
+          "symbols": ["main", "get_raw_files", "compile_files", "encode_files"],
+          "role": "data preprocessing",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH1",
+          "description": "The preprocessing pipeline downloads and merges translation corpora, learns BPE codes, encodes the splits, filters examples by maximum length, builds vocabulary, and serializes the processed data.",
+          "support_status": "supported",
+          "evidence_ids": ["E4"],
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "stage_id": "S2",
+      "name": "Transformer computation",
+      "purpose": "Encode and decode token sequences through attention and feed-forward sublayers.",
+      "inputs": ["source token sequence", "target prefix sequence", "attention masks"],
+      "outputs": ["decoder predictions", "attention weights"],
+      "modules": [
+        {
+          "path": "transformer/Layers.py",
+          "symbols": ["EncoderLayer", "DecoderLayer"],
+          "role": "Transformer layers",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/SubLayers.py",
+          "symbols": ["MultiHeadAttention", "PositionwiseFeedForward"],
+          "role": "Transformer sublayers",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH2",
+          "description": "Encoder layers apply multi-head self-attention followed by position-wise feed-forward transformation.",
+          "support_status": "supported",
+          "evidence_ids": ["E5", "E7", "E8"],
+          "confidence": "high"
+        },
+        {
+          "mechanism_id": "MECH3",
+          "description": "Decoder layers apply decoder self-attention, encoder-decoder attention, and position-wise feed-forward transformation.",
+          "support_status": "supported",
+          "evidence_ids": ["E6", "E7", "E8"],
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "stage_id": "S3",
+      "name": "Scheduled optimization",
+      "purpose": "Optimize the Transformer with label smoothing and warmup learning-rate scheduling.",
+      "inputs": ["model predictions", "target tokens", "warmup steps", "lr multiplier"],
+      "outputs": ["updated model parameters", "training/validation logs", "checkpoint"],
+      "modules": [
+        {
+          "path": "train.py",
+          "symbols": ["train_epoch", "cal_performance", "cal_loss"],
+          "role": "training update",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Optim.py",
+          "symbols": ["ScheduledOptim"],
+          "role": "learning-rate schedule",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH4",
+          "description": "Each training step forwards source and target tensors through the model, computes performance with optional label smoothing, backpropagates, and applies the scheduled optimizer update.",
+          "support_status": "supported",
+          "evidence_ids": ["E1", "E3"],
+          "confidence": "high"
+        },
+        {
+          "mechanism_id": "MECH5",
+          "description": "ScheduledOptim updates the learning rate using the Transformer warmup formula controlled by d_model, warmup steps, step count, and lr multiplier.",
+          "support_status": "supported",
+          "evidence_ids": ["E1", "E9"],
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "innovation_candidates": [],
+  "writing_constraints": [
+    "Do not mention README-only information.",
+    "Do not claim this implementation is academically novel without author confirmation.",
+    "Treat shell comments about better settings as soft hints unless confirmed by hard evidence or author input."
+  ],
+  "alignment_notes": [
+    "train.py:main is experiment orchestration, while train.py:train_epoch and transformer modules provide method-core evidence.",
+    "train_multi30k_de_en.sh provides concrete runtime settings such as batch size, warmup steps, epochs, label smoothing, and tensorboard."
+  ],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "excluded from main evidence chain"
+    }
+  ]
+}
+

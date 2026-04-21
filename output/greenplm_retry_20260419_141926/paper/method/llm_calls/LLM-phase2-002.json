@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase2-002",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "targeted_tracer",
+  "prompt_template_version": "",
+  "input_hash": "sha256:720509a632cda5ec5dc28bbf654646c6b6de1a4f96f7408f2656f7d315d486fa",
+  "response_hash": "sha256:530803a4f1f7c6f97c7e421e391f64b5827f07f2717a3beeb3b629d372b4d5c6",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "TargetedCodeTracing",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T06:21:39.451492+00:00"
+}

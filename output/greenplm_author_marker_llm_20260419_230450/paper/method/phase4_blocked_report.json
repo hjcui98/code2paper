@@ -1,0 +1,9 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "llm_api_key_missing",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/method/method_authoring_prompt.md",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/method/llm_calls/LLM-phase4-002.json"
+  ]
+}

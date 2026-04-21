@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-001",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "stage_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:483f21acacd3b858cdc0d03331287e3dc1251f1b5dd36639f335777fcf544652",
+  "response_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3StageBuilderOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T09:07:46.748671+00:00"
+}

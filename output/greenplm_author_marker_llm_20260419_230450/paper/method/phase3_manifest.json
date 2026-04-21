@@ -1,0 +1,46 @@
+{
+  "project_id": "greenplm",
+  "mode": "author-marker-freeze",
+  "llm_available": true,
+  "blocked_reason": "",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/method/method_evidence.json",
+      "hash": "sha256:0468484f2faa1f941d036c440a278499693368ef1ac62845de34a2d887faa7b6"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/claim_evidence_map.json",
+      "hash": "sha256:d9062a7cd9150c737e216b6fcb7c62ecf228d39135188cb38e35121ec676e6dc"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_230450/paper/method/method_evidence_review.md",
+      "hash": "sha256:0a46f810f647e643103907891b11c60c60d0c27b8e27f2168157f8f4f2c3ae2f"
+    }
+  },
+  "llm_call_logs": [],
+  "review_questions": [
+    "RQ-9",
+    "RQ-10",
+    "RQ-11",
+    "RQ-12",
+    "RQ-13",
+    "RQ-14",
+    "RQ-15",
+    "RQ-16",
+    "RQ-17",
+    "RQ-18",
+    "RQ-19",
+    "RQ-20",
+    "RQ-21",
+    "RQ-22",
+    "RQ-23",
+    "RQ-24",
+    "RQ-25",
+    "RQ-26"
+  ]
+}

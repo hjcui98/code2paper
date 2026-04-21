@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase2-002",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "prompt_template_id": "targeted_tracer",
+  "prompt_template_version": "",
+  "input_hash": "sha256:d9ce54f5f13c49b66626f2854458d86c51d58f5c97c6117e29f1adb8926cfc06",
+  "response_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "TargetedCodeTracing",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T07:09:58.793413+00:00"
+}

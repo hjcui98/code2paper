@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-001",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "method_outline_planner",
+  "prompt_template_version": "",
+  "input_hash": "sha256:1b04bc641acdcb582774509fe5b39a20a6f941c3e250a94c212e089c36e35f5f",
+  "response_hash": "sha256:f01d19d55e3ff2f3652f0046e954e2e0a890539010538475b8001ac9f93bebe0",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "MethodOutline",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T09:23:16.974569+00:00"
+}

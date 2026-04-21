@@ -1,0 +1,14 @@
+{
+  "total_snippets": 18,
+  "modules_found": 10,
+  "pipeline_steps_found": 4,
+  "losses_found": 0,
+  "alignment_score": 0.44,
+  "training_type": "standard",
+  "datasets_found": 1,
+  "llm_used": false,
+  "llm_tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

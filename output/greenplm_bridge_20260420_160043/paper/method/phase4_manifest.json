@@ -1,0 +1,18 @@
+{
+  "project_id": "greenplm",
+  "mode": "blocked_with_insufficient_analysis",
+  "llm_available": false,
+  "blocked_reason": "blocked_with_insufficient_analysis:phase3=deterministic-freeze",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_160043/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:5bcfee92b123bd3e88c25508a9e4b27228859cbcbac166b25cb837b1216e1e0e"
+    },
+    "phase4_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_160043/paper/method/phase4_blocked_report.json",
+      "hash": "sha256:8f123a60d55a0ec67975489cb55190a1b3cb3e898877e39ae16d0e05a00843e3"
+    }
+  },
+  "llm_call_logs": [],
+  "validator_reports": []
+}

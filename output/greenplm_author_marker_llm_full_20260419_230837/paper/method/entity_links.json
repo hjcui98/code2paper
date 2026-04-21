@@ -1,0 +1,4327 @@
+{
+  "meta": {
+    "version": "entity-links-author-marker-v1"
+  },
+  "links": [
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E76"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E78"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E81"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E82"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E83"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E84"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E75"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E2410"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E228"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E230"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E236"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E234"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E233"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E232"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E237"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E243"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E244"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E245"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E246"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E247"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E248"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E249"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E250"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E251"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E140"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E144"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E147"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E146"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E145"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E143"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E141"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E172"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E173"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "training-stage orchestration via argument combinations",
+      "path": "pointllm/train/train.py",
+      "evidence_id": "E174"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E139"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E136"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E160"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E161"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E162"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E163"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E164"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E165"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E166"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E167"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E168"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E169"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E170"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E144"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E140"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E180"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E181"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E182"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E183"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E184"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E185"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E186"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E187"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E429"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E432"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E468"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E469"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E470"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E471"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E472"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E473"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E474"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E475"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E447"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E445"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E525"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E526"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E527"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E528"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E529"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E530"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E531"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E532"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E533"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E534"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E535"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E435"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "inject projected point features into language token stream",
+      "path": "pointllm/model/pointllm.py",
+      "evidence_id": "E433"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E228"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E230"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E236"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E234"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E233"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E232"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E237"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E243"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E244"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E245"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E246"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E247"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E248"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E249"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E250"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E251"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E226"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E239"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E240"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E241"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E242"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E260"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E261"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E262"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E263"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E264"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E265"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E266"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E267"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E268"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E269"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E252"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E253"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E254"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E255"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E256"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E257"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E258"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E259"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E270"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E2410"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E76"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "load/filter conversation supervision and point samples",
+      "path": "pointllm/data/object_point_dataset.py",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E312"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E344"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E311"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E332"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E333"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E334"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E335"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E336"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E337"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E338"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E339"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E340"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E341"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E342"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E343"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E316"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E318"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E353"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E354"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E355"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E356"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E357"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E358"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E319"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E359"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E360"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E361"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E362"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E363"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E364"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E365"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E321"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E366"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E367"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E368"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E369"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E305"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E308"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E307"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E306"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E323"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E324"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E325"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E326"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E327"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E328"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E329"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "convert point placeholders into multimodal training tokens",
+      "path": "pointllm/data/utils.py",
+      "evidence_id": "E330"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E441"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E443"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E442"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E499"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E500"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E501"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E502"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E503"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E504"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E505"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E506"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E507"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E508"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E509"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E510"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E511"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E445"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E447"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E446"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E513"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E514"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E515"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E516"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E517"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E518"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E519"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E520"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E521"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E522"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E525"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E526"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E527"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E528"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E529"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E530"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E531"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E532"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E533"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E534"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E535"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E433"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E435"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E434"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E476"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E477"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E478"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E479"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "compact point-token aggregation with neighborhood routing",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "evidence_id": "E480"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E547"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E569"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E570"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E571"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E572"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E573"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E537"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E538"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E539"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E540"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E548"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E549"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E544"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E545"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E546"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E558"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E559"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E560"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E561"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E562"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E563"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E564"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E565"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E566"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E567"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E541"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E542"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E543"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E550"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E551"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E552"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E553"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E554"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E555"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E556"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E557"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E568"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E136"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E139"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E137"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E148"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E149"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E150"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E151"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E152"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E153"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E154"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "shared projector from encoder space to LLM hidden space",
+      "path": "llava/model/multimodal_projector/builder.py",
+      "evidence_id": "E155"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E579"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E580"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E583"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E584"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E585"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E586"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E587"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E588"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E589"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E590"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E591"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E592"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E593"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E577"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E581"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E582"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E445"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E447"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E446"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E513"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E514"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E515"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E516"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E517"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E518"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E519"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E520"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E521"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E522"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E525"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E526"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E527"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E528"
+    },
+    {
+      "entity_type": "author_module",
+      "entity_name": "trainer-side save/checkpoint behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E529"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E537"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E538"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E539"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E540"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E548"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E549"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E78"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E81"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E82"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E83"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E84"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E541"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E542"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E543"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E550"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E551"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E552"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E553"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E554"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E555"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E556"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E557"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E544"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E545"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E546"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E558"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E559"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E560"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E561"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E562"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E563"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E564"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E565"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E566"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E567"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E568"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E547"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E569"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E570"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E571"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E572"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E573"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E75"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E76"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E595"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E596"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E597"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E2412"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E228"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E230"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E236"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E234"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E233"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E232"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E237"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E243"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E244"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E245"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E246"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E247"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E248"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E249"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E250"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E251"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E136"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E139"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E137"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E148"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E149"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E150"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E151"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E152"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E153"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E154"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E155"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E156"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E157"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E140"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E144"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E147"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E146"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage I: Text-First Interface Warmup",
+      "path": "pointllm/train/train.py,llava/model/multimodal_projector/builder.py,release/paper/scripts/train/1.sh",
+      "evidence_id": "E145"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E228"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E230"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E236"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E234"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E233"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E232"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E237"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E243"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E244"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E245"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E246"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E247"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E248"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E249"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E250"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E251"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E76"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E311"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E332"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E333"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E334"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E335"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E336"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E337"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E338"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E339"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E340"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E341"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E342"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E343"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E321"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E366"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E367"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E368"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E369"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E260"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E261"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E262"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E263"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E264"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E265"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E266"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E267"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E268"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E269"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E75"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E226"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E239"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E240"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E241"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E242"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E252"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E253"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E254"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E255"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E256"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E257"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E258"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E259"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E78"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E81"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E82"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E83"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E84"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E270"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E305"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E308"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E307"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E306"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E323"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E324"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E325"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E326"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E327"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E328"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E329"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E330"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E309"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E331"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E310"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E312"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage II: Rich Instruction Alignment",
+      "path": "pointllm/train/train.py,pointllm/data/object_point_dataset.py,pointllm/data/utils.py,release/paper/scripts/train/2.sh",
+      "evidence_id": "E344"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E140"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E144"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E147"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E146"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E145"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E143"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E141"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E172"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E173"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E174"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E175"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E176"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E177"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E136"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E139"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E137"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E148"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E149"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E150"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E151"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E152"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E153"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E154"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E155"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E156"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E157"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E160"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E161"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E162"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E163"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E164"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E165"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E166"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E167"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E168"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E169"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E170"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E158"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E180"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E181"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E182"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E183"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E184"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E185"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E186"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E187"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E445"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E447"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E446"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E513"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E514"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E515"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E516"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E517"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E518"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E519"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E520"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E521"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E522"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E525"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E526"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E527"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E528"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E529"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E530"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E531"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E532"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E533"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E534"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E535"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E523"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E188"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E189"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E190"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E191"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E192"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E193"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E194"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E195"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E196"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E197"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Stage III: Point-Language Transfer",
+      "path": "llava/model/multimodal_encoder/point_encoder.py,pointllm/model/pointllm.py,llava/model/multimodal_projector/builder.py,pointllm/train/train.py,release/paper/scripts/train/3.sh",
+      "evidence_id": "E198"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E579"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E580"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E583"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E584"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E585"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E586"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E587"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E588"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E589"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E590"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E591"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E592"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E593"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E577"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E581"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E582"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E80"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E85"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E86"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E87"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E88"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E89"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E90"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E91"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E92"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E93"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E94"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E95"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E96"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E77"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E429"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E432"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E431"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E464"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E465"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E466"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E467"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E468"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E469"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E470"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E471"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E472"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E473"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E136"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E139"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E137"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E148"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E149"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E150"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E151"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E152"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E153"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E154"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E155"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E156"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E157"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E140"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E144"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E147"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E146"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E145"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E143"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E141"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E172"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E173"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E174"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E175"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E176"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E177"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E76"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E78"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E81"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E82"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E83"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E84"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2410"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2617"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2616"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2638"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2639"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2640"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2641"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2619"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2646"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2647"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2648"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2624"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2632"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2669"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E2670"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E474"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E475"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E226"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E239"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E240"
+    },
+    {
+      "entity_type": "author_pipeline_step",
+      "entity_name": "Runtime and saving behavior",
+      "path": "pointllm/train/pointllm_trainer.py",
+      "evidence_id": "E241"
+    }
+  ]
+}

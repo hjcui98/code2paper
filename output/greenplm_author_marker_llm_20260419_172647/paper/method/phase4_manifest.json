@@ -1,0 +1,54 @@
+{
+  "project_id": "greenplm",
+  "mode": "blocked",
+  "llm_available": true,
+  "blocked_reason": "claim_evidence_validation_failed",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:436a7714c21a79abcef174fe007b13e349b28c85da5f6a9967f21d40b103d444"
+    },
+    "phase4_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/phase4_blocked_report.json",
+      "hash": "sha256:a373c09d00d6ef272418c545828b128412b9b8ae26c0aeb16cebd7c1dc0922a1"
+    },
+    "claim_evidence_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/claim_evidence_report.json",
+      "hash": "sha256:4ec2d0d346a935f359e0141802f65f818c5a63b014bf42785d59fa7af8676d22"
+    },
+    "numeric_fact_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/numeric_fact_report.json",
+      "hash": "sha256:a823530bde389662a37ac3696c3038561e45f8a28e362ba5805dc116e9084c02"
+    },
+    "equation_support_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/equation_support_report.json",
+      "hash": "sha256:8533e92e213c5b55277938166437c3d59b2a49c5807200fdaef434b7b69c78f6"
+    },
+    "terminology_consistency_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/terminology_consistency_report.json",
+      "hash": "sha256:c74d4e52b8988a34a2134ecb2bf42f360d88b33f8b5ece73cb8644897a984598"
+    },
+    "latex_smoke_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/latex_smoke_report.json",
+      "hash": "sha256:f14aa4bbf78581302f86bd0871d038d3383a6009a41b534b347eb8e34855c0a3"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-006.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-007.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-008.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/llm_calls/LLM-phase4-009.json"
+  ],
+  "validator_reports": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/claim_evidence_report.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/numeric_fact_report.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/equation_support_report.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/terminology_consistency_report.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172647/paper/method/latex_smoke_report.json"
+  ]
+}

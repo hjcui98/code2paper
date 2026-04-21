@@ -1,0 +1,16 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "provider_http_error:400:{\"error\":{\"message\":\"Incorrect model ID. Please request to view the model page or you do not have permission to use this model qwen3.6-plus (tid: 2026041909073944067279648795848)\",\"type\":\"Aihubmix_api_error\"}}",
+  "mode": "inspect-only",
+  "required_provider": "openai",
+  "required_model": "qwen3.6-plus",
+  "generated_prompt_artifacts": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_170737/paper/method/llm_calls/LLM-phase2-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_170737/paper/method/llm_calls/LLM-phase2-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_170737/paper/method/llm_calls/LLM-phase2-003.json"
+  ],
+  "author_review_questions": [
+    "Provide an API provider/model to run full Phase 2 LLM code analysis.",
+    "Review unsupported or partially supported author claims before Phase 3 freeze."
+  ]
+}

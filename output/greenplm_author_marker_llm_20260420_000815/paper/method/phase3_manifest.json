@@ -1,0 +1,34 @@
+{
+  "project_id": "greenplm",
+  "mode": "deterministic-freeze",
+  "llm_available": false,
+  "blocked_reason": "schema_validation_failed:ValidationError:10 validation errors for Phase3StageBuilderOutput\nstages.0.mechanism_ids\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['MECH1'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nstages.0.evidence_span_ids\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['E3622'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nstages.1.mechanism_ids\n  Extra inputs ",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/method_evidence.json",
+      "hash": "sha256:9b089857241160f89e690b050e08ae05e45b21680aa02a262d94e15ca7c6eb84"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/claim_evidence_map.json",
+      "hash": "sha256:297a0440612744b23f7132e99702314dd559e5933adb69bd13a304244caf7bbf"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/method_evidence_review.md",
+      "hash": "sha256:ab500344e621db22ba7a6f8d16e15482ea0ace6d147bb2ee666e08557264f3e7"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260420_000815/paper/method/llm_calls/LLM-phase3-006.json"
+  ],
+  "review_questions": []
+}

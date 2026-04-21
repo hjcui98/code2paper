@@ -1,0 +1,862 @@
+{
+  "project_id": "attention_transformer_no_author",
+  "author_mode": "none",
+  "author_confirmation_required": true,
+  "entrypoints": [
+    {
+      "path": "train.py",
+      "symbol": "main",
+      "called_by": [
+        "train_multi30k_de_en.sh"
+      ],
+      "confidence": 0.95,
+      "evidence_ids": [
+        "E56",
+        "E52"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "main",
+      "called_by": [],
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E36"
+      ]
+    },
+    {
+      "path": "translate.py",
+      "symbol": "main",
+      "called_by": [],
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E89"
+      ]
+    }
+  ],
+  "execution_stages": [
+    {
+      "stage_id": "X1",
+      "name": "training_launch",
+      "description": "Launch training through shell commands and runtime overrides.",
+      "related_evidence_ids": [
+        "E56"
+      ]
+    },
+    {
+      "stage_id": "X2",
+      "name": "training_setup",
+      "description": "Parse options, prepare data, construct the model, build the optimizer, and start training.",
+      "related_evidence_ids": [
+        "E52"
+      ]
+    },
+    {
+      "stage_id": "X3",
+      "name": "epoch_update",
+      "description": "Run forward, loss computation, backpropagation, and scheduled parameter updates.",
+      "related_evidence_ids": [
+        "E40",
+        "E42",
+        "E46",
+        "E77"
+      ]
+    },
+    {
+      "stage_id": "X4",
+      "name": "preprocess_data",
+      "description": "Prepare raw text data into serialized model-ready training data.",
+      "related_evidence_ids": [
+        "E27",
+        "E28",
+        "E29",
+        "E30",
+        "E31",
+        "E32",
+        "E33",
+        "E34",
+        "E35",
+        "E36",
+        "E37"
+      ]
+    }
+  ],
+  "method_stages": [
+    {
+      "stage_id": "M1",
+      "name": "input_preparation",
+      "purpose": "Prepare tokenized and serialized data for training.",
+      "related_evidence_ids": [
+        "E27",
+        "E28",
+        "E29",
+        "E30",
+        "E31",
+        "E32",
+        "E33",
+        "E34",
+        "E35",
+        "E36",
+        "E37",
+        "E54",
+        "E55"
+      ]
+    },
+    {
+      "stage_id": "M2",
+      "name": "transformer_computation",
+      "purpose": "Compute sequence representations through Transformer layers and sublayers.",
+      "related_evidence_ids": [
+        "E59",
+        "E61",
+        "E64",
+        "E65",
+        "E67",
+        "E68",
+        "E70",
+        "E72",
+        "E74",
+        "E77",
+        "E80",
+        "E82",
+        "E85",
+        "E88"
+      ]
+    },
+    {
+      "stage_id": "M3",
+      "name": "scheduled_optimization",
+      "purpose": "Optimize model parameters with loss computation, optional label smoothing, and learning-rate scheduling.",
+      "related_evidence_ids": [
+        "E56",
+        "E40",
+        "E42",
+        "E46",
+        "E77"
+      ]
+    }
+  ],
+  "stage_mappings": [
+    {
+      "execution_stage_id": "X1",
+      "method_stage_id": "M3",
+      "confidence": 0.78
+    },
+    {
+      "execution_stage_id": "X2",
+      "method_stage_id": "M2",
+      "confidence": 0.88
+    },
+    {
+      "execution_stage_id": "X3",
+      "method_stage_id": "M3",
+      "confidence": 0.88
+    },
+    {
+      "execution_stage_id": "X4",
+      "method_stage_id": "M1",
+      "confidence": 0.88
+    }
+  ],
+  "config_resolutions": [
+    {
+      "resolved_key": "env.CUDA_VISIBLE_DEVICES",
+      "final_value": "${gpu}",
+      "resolution_chain": [
+        {
+          "source": "train_multi30k_de_en.sh CUDA_VISIBLE_DEVICES",
+          "value": "${gpu}",
+          "evidence_id": "E56",
+          "kind": "env_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "data_pkl",
+      "final_value": "multi30k_de_en.pkl",
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": null,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -data_pkl",
+          "value": "multi30k_de_en.pkl",
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "label_smoothing",
+      "final_value": true,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": false,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -label_smoothing",
+          "value": true,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "proj_share_weight",
+      "final_value": true,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": false,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -proj_share_weight",
+          "value": true,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "scale_emb_or_prj",
+      "final_value": "${scale_emb_or_prj}",
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": "prj",
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -scale_emb_or_prj",
+          "value": "${scale_emb_or_prj}",
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "lr_mul",
+      "final_value": "${lr_mul}",
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": 2.0,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -lr_mul",
+          "value": "${lr_mul}",
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "batch_size",
+      "final_value": 256,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": 2048,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -b",
+          "value": 256,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "n_warmup_steps",
+      "final_value": 4000,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": 4000,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -warmup",
+          "value": 4000,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "epoch",
+      "final_value": 200,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": 10,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -epoch",
+          "value": 200,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "seed",
+      "final_value": "1",
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": null,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -seed",
+          "value": "1",
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "output_dir",
+      "final_value": "output/lr_mul_${lr_mul}-scale_${scale_emb_or_prj}",
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": null,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -output_dir",
+          "value": "output/lr_mul_${lr_mul}-scale_${scale_emb_or_prj}",
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    },
+    {
+      "resolved_key": "use_tb",
+      "final_value": true,
+      "resolution_chain": [
+        {
+          "source": "train.py argparse default",
+          "value": false,
+          "evidence_id": "E52",
+          "kind": "argparse_default"
+        },
+        {
+          "source": "train_multi30k_de_en.sh -use_tb",
+          "value": true,
+          "evidence_id": "E56",
+          "kind": "shell_override"
+        }
+      ]
+    }
+  ],
+  "module_roles": [
+    {
+      "path": "apply_bpe.py",
+      "symbol": "BPE",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E2"
+      ]
+    },
+    {
+      "path": "apply_bpe.py",
+      "symbol": "encode",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E3"
+      ]
+    },
+    {
+      "path": "apply_bpe.py",
+      "symbol": "recursive_split",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E5"
+      ]
+    },
+    {
+      "path": "apply_bpe.py",
+      "symbol": "check_vocab_and_split",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E7"
+      ]
+    },
+    {
+      "path": "apply_bpe.py",
+      "symbol": "read_vocabulary",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E9"
+      ]
+    },
+    {
+      "path": "apply_bpe.py",
+      "symbol": "isolate_glossary",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E11"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "update_vocabulary",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E14"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "update_pair_statistics",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E16"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "get_pair_statistics",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E18"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "replace_pair",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E20"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "prune_stats",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E22"
+      ]
+    },
+    {
+      "path": "learn_bpe.py",
+      "symbol": "learn_bpe",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E24"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "TqdmUpTo",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E27"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "file_exist",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E28"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "download_and_extract",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E29"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "_download_file",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E30"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "get_raw_files",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E31"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "mkdir_if_needed",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E32"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "compile_files",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E33"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "encode_file",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E34"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "encode_files",
+      "role": "data preprocessing utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E35"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "main",
+      "role": "entrypoint orchestration",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E36"
+      ]
+    },
+    {
+      "path": "preprocess.py",
+      "symbol": "main_wo_bpe",
+      "role": "data preprocessing utility",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E37"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "cal_performance",
+      "role": "loss and accuracy computation",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E40"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "cal_loss",
+      "role": "loss computation",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E42"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "patch_src",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E44"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "patch_trg",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E45"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "train_epoch",
+      "role": "training update loop",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E46"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "eval_epoch",
+      "role": "evaluation loop",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E48"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "train",
+      "role": "infrastructure utility",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E50"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "main",
+      "role": "entrypoint orchestration",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E52"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "prepare_dataloaders_from_bpe_files",
+      "role": "infrastructure utility",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E54"
+      ]
+    },
+    {
+      "path": "train.py",
+      "symbol": "prepare_dataloaders",
+      "role": "infrastructure utility",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E55"
+      ]
+    },
+    {
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "role": "encoder block",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E59"
+      ]
+    },
+    {
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "role": "decoder block",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E61"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "get_pad_mask",
+      "role": "Transformer implementation component",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E64"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "get_subsequent_mask",
+      "role": "Transformer implementation component",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E65"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "PositionalEncoding",
+      "role": "Transformer implementation component",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E67"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "role": "encoder stack",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E68"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "role": "decoder stack",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E70"
+      ]
+    },
+    {
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "role": "sequence-to-sequence model",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E72"
+      ]
+    },
+    {
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "role": "attention kernel",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E74"
+      ]
+    },
+    {
+      "path": "transformer/Optim.py",
+      "symbol": "ScheduledOptim",
+      "role": "warmup optimization",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E77"
+      ]
+    },
+    {
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "role": "attention sublayer",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E80"
+      ]
+    },
+    {
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "role": "feed-forward sublayer",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E82"
+      ]
+    },
+    {
+      "path": "transformer/Translator.py",
+      "symbol": "Translator",
+      "role": "Transformer implementation component",
+      "category": "method-core",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "E85"
+      ]
+    },
+    {
+      "path": "translate.py",
+      "symbol": "load_model",
+      "role": "infrastructure utility",
+      "category": "infra-utility",
+      "confidence": 0.65,
+      "evidence_ids": [
+        "E88"
+      ]
+    },
+    {
+      "path": "translate.py",
+      "symbol": "main",
+      "role": "entrypoint orchestration",
+      "category": "experiment-support",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "E89"
+      ]
+    }
+  ],
+  "role_conflicts": [],
+  "author_alignment": {
+    "matched_steps": [],
+    "mismatched_steps": [],
+    "unsupported_claims": [],
+    "claim_assessments": []
+  }
+}

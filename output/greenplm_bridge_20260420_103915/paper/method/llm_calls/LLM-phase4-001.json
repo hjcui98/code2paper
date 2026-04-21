@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-001",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "method_outline_planner",
+  "prompt_template_version": "",
+  "input_hash": "sha256:35dd38553967456b111599d9e34ed2c0b53505eec33a23741218f5c326f3bedb",
+  "response_hash": "sha256:36795b3e7a274fda32b54a88de1a274a49063c0ae1324d96e9f7731081356945",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "MethodOutline",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-20T03:01:36.114087+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "project_id": "greenplm",
+  "blocked_reason": "postergen_bridge_failed:exit_code=3",
+  "mode": "postergen-agent-llm-bridge",
+  "required_provider": "none",
+  "required_model": "",
+  "generated_prompt_artifacts": [],
+  "author_review_questions": []
+}

@@ -1,0 +1,68 @@
+{
+  "backend": "paperbanana",
+  "status": "success_with_warnings",
+  "created_at": "2026-04-20T10:51:58.077263+00:00",
+  "input": {
+    "draft_path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/method/method_draft.tex",
+    "method_evidence_path": "",
+    "claim_map_path": "",
+    "paperbanana_root": "/home/cuihengjia/agent/PosterGen/PaperBanana",
+    "content_file": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.paperbanana_input.txt",
+    "clean_tex_to_txt": true
+  },
+  "paperbanana": {
+    "graph_type": "tech_route",
+    "language": "en",
+    "style": "academic",
+    "figure_complex": "easy",
+    "resolution": "2K",
+    "model": "",
+    "image_model": "",
+    "retrieval_setting": "auto",
+    "exp_mode": "demo_full",
+    "aspect_ratio": "16:9",
+    "max_critic_rounds": 3,
+    "num_candidates": 1,
+    "clean_tex_to_txt": true,
+    "skill_run_path": "/home/cuihengjia/agent/PosterGen/PaperBanana/skill/run.py",
+    "args": {
+      "content": "",
+      "content_file": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.paperbanana_input.txt",
+      "pdf_file": "",
+      "pdf_page_range": "1-12",
+      "caption": "Method overview figure generated from an implementation-grounded method draft.",
+      "task": "diagram",
+      "output": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.png",
+      "aspect_ratio": "16:9",
+      "max_critic_rounds": 3,
+      "num_candidates": 1,
+      "retrieval_setting": "auto",
+      "main_model_name": "",
+      "image_gen_model_name": "",
+      "exp_mode": "demo_full"
+    },
+    "stdout": "Initialized AIHubMix Client with API Key\n[Retriever] Running retrieval once for all candidates...\nAIHubMix attempt 1 failed: error code: 400 - {'error': {'message': ' (tid: 2026042010163777720373490627727)', 'type': 'upstream_error', 'param': '400', 'code': 'bad_response_status_code'}}. Retrying in 30s...\nAIHubMix attempt 2 failed: error code: 400 - {'error': {'message': ' (tid: 2026042010175626404263334304863)', 'type': 'upstream_error', 'param': '400', 'code': 'bad_response_status_code'}}. Retrying in 60s...\nAIHubMix attempt 3 failed: error code: 400 - {'error': {'message': ' (tid: 2026042010223085289516468935218)', 'type': 'upstream_error', 'param': '400', 'code': 'bad_response_status_code'}}. Retrying in 60s...\nAIHubMix attempt 4 failed: error code: 400 - {'error': {'message': ' (tid: 2026042010261716728406019027493)', 'type': 'upstream_error', 'param': '400', 'code': 'bad_response_status_code'}}. Retrying in 60s...\nAIHubMix attempt 5 failed: error code: 429 - {'error': {'message': 'model kimi-k2.5 rate limited by provider – contact support to request higher concurrency or try again later. (tid: 2026042010393614205256316962928)', 'type': 'upstream_error', 'param': '429', 'code': 'bad_response_status_code'}}. Retrying in 60s...\nError: All 5 AIHubMix attempts failed.\nWarning: Failed to parse retrieval result: 'str' object has no attribute 'get'\nRaw response: Error...\n[Retriever] Done. Retrieved 0 references.\n[Critic Round 0] Completed iteration. Visualization SUCCESS.\n[Critic Round 1] Completed iteration. Visualization SUCCESS.\n[Critic Round 2] Completed iteration. Visualization SUCCESS.\n/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.png\n",
+    "stderr": "\rProcessing concurrently:   0%|          | 0/1 [00:00<?, ?it/s]\rProcessing concurrently:   0%|          | 0/1 [11:30<?, ?it/s]\rProcessing concurrently: 100%|##########| 1/1 [11:30<00:00, 690.70s/it]\rProcessing concurrently: 100%|##########| 1/1 [11:30<00:00, 690.70s/it]\n"
+  },
+  "outputs": {
+    "svg": "",
+    "png": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.png",
+    "pdf": "",
+    "pptx": "",
+    "drawio": ""
+  },
+  "source_outputs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_221541/paper/figures/generated_phase5_clean_tex_ref/method_overview.png"
+  ],
+  "warnings": [
+    "retrieval_setting=auto produced 0 references; generation continued without retrieved examples.",
+    "PaperBanana failed to parse the retrieval result.",
+    "At least one PaperBanana model-call retry loop exhausted all attempts.",
+    "Provider returned 429 rate limiting during PaperBanana execution.",
+    "Provider returned 400 errors during PaperBanana execution."
+  ],
+  "notes": [
+    "PaperBanana receives the selected content file through --content-file.",
+    "The upstream PaperBanana skill currently emits PNG images; SVG/PDF are not assumed."
+  ]
+}

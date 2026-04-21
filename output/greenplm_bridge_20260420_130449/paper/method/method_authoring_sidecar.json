@@ -1,0 +1,193 @@
+{
+  "draft_version": 1,
+  "method_outline_path": "paper/method/method_outline.json",
+  "terminology_table_path": "paper/method/terminology_table.json",
+  "draft_claim_map_path": "paper/method/draft_claim_map.json",
+  "paragraphs": [
+    {
+      "paragraph_id": "P1",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "evidence_span_ids": [
+        "E3622",
+        "E2490",
+        "E370",
+        "E3355",
+        "E371",
+        "E372",
+        "E373",
+        "E374",
+        "E375",
+        "E376",
+        "E377",
+        "E378",
+        "E379",
+        "E380",
+        "E419",
+        "E421",
+        "E422",
+        "E423",
+        "E424",
+        "E425",
+        "E426",
+        "E427",
+        "E428",
+        "E3356",
+        "E3357",
+        "E3358",
+        "E3359",
+        "E3360",
+        "E3361",
+        "E3362",
+        "E3363",
+        "E3364",
+        "E3365",
+        "E3366",
+        "E3367",
+        "E3368",
+        "E3369",
+        "E3370",
+        "E3371",
+        "E3372",
+        "E3373",
+        "E3374"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P2",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C1",
+        "C5"
+      ],
+      "evidence_span_ids": [
+        "E3622"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P3",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C2",
+        "C6"
+      ],
+      "evidence_span_ids": [
+        "E2490"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P4",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C3",
+        "C7"
+      ],
+      "evidence_span_ids": [
+        "E370",
+        "E371",
+        "E421",
+        "E425",
+        "E372",
+        "E373",
+        "E374",
+        "E375",
+        "E376",
+        "E377",
+        "E378",
+        "E379",
+        "E380",
+        "E419",
+        "E422",
+        "E423",
+        "E424",
+        "E426",
+        "E427",
+        "E428"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P5",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C4",
+        "C8"
+      ],
+      "evidence_span_ids": [
+        "E3355",
+        "E3356",
+        "E3357",
+        "E3358",
+        "E3359",
+        "E3360",
+        "E3361",
+        "E3362",
+        "E3363",
+        "E3364",
+        "E3365",
+        "E3366",
+        "E3367",
+        "E3368",
+        "E3369",
+        "E3370",
+        "E3371",
+        "E3372",
+        "E3373",
+        "E3374"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    },
+    {
+      "paragraph_id": "P6",
+      "markdown_range": "",
+      "latex_range": "",
+      "claim_ids": [
+        "C3",
+        "C7"
+      ],
+      "evidence_span_ids": [
+        "E370",
+        "E371",
+        "E372",
+        "E373",
+        "E374",
+        "E375",
+        "E376",
+        "E377",
+        "E378",
+        "E379",
+        "E380",
+        "E419",
+        "E421",
+        "E422",
+        "E423",
+        "E424",
+        "E425",
+        "E426",
+        "E427",
+        "E428"
+      ],
+      "llm_call_id": "LLM-phase4-005",
+      "validator_status": "pending"
+    }
+  ],
+  "revision_history": []
+}

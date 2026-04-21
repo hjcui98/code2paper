@@ -1,0 +1,488 @@
+{
+  "navigation_questions": [
+    {
+      "question_id": "Q1",
+      "question": "What implementation evidence supports stage 'Stage I: Text-First Interface Warmup'?",
+      "driven_by": [
+        "author",
+        "bridge"
+      ],
+      "seed_span_ids": [],
+      "target_paths_or_symbols": [
+        "pointllm/train/train.py",
+        "llava/model/multimodal_projector/builder.py",
+        "release/paper/scripts/train/1.sh"
+      ],
+      "priority": "high"
+    },
+    {
+      "question_id": "Q2",
+      "question": "What implementation evidence supports stage 'Stage II: Rich Instruction Alignment'?",
+      "driven_by": [
+        "author",
+        "bridge"
+      ],
+      "seed_span_ids": [],
+      "target_paths_or_symbols": [
+        "pointllm/train/train.py",
+        "pointllm/data/object_point_dataset.py",
+        "pointllm/data/utils.py",
+        "release/paper/scripts/train/2.sh"
+      ],
+      "priority": "high"
+    },
+    {
+      "question_id": "Q3",
+      "question": "What implementation evidence supports stage 'Stage III: Point-Language Transfer'?",
+      "driven_by": [
+        "author",
+        "bridge"
+      ],
+      "seed_span_ids": [],
+      "target_paths_or_symbols": [
+        "llava/model/multimodal_encoder/point_encoder.py",
+        "pointllm/model/pointllm.py",
+        "llava/model/multimodal_projector/builder.py",
+        "pointllm/train/train.py",
+        "release/paper/scripts/train/3.sh"
+      ],
+      "priority": "high"
+    },
+    {
+      "question_id": "Q4",
+      "question": "What implementation evidence supports stage 'Runtime and saving behavior'?",
+      "driven_by": [
+        "author",
+        "bridge"
+      ],
+      "seed_span_ids": [],
+      "target_paths_or_symbols": [
+        "pointllm/train/pointllm_trainer.py"
+      ],
+      "priority": "medium"
+    }
+  ],
+  "execution_flows": [
+    {
+      "flow_id": "FLOW-postergen-agent-llm-bridge",
+      "purpose": "Execution flow from PosterGen CodeAnalyzer output pipeline steps.",
+      "ordered_steps": [
+        "Stage I: Text-First Interface Warmup",
+        "Stage II: Rich Instruction Alignment",
+        "Stage III: Point-Language Transfer",
+        "Runtime and saving behavior"
+      ],
+      "entrypoint_span_ids": [],
+      "config_resolution_span_ids": []
+    }
+  ],
+  "method_modules": [
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+      "symbols": [
+        "__init__",
+        "forward"
+      ],
+      "module_class": "method-core",
+      "paper_role": "inject projected point features into language token stream",
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "llm_confidence": "medium"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+      "symbols": [
+        "training_step"
+      ],
+      "module_class": "method-core",
+      "paper_role": "convert point placeholders into multimodal training tokens",
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "llm_confidence": "medium"
+    },
+    {
+      "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+      "symbols": [
+        "forward",
+        "_build_model"
+      ],
+      "module_class": "method-core",
+      "paper_role": "compact point-token aggregation with neighborhood routing",
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10",
+        "E10",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10",
+        "E9",
+        "E4",
+        "E5",
+        "E6"
+      ],
+      "llm_confidence": "medium"
+    },
+    {
+      "path": "unknown.py",
+      "symbols": [],
+      "module_class": "method-core",
+      "paper_role": "shared projector from encoder space to LLM hidden space",
+      "evidence_span_ids": [
+        "E10"
+      ],
+      "llm_confidence": "medium"
+    }
+  ],
+  "candidate_mechanisms": [
+    {
+      "mechanism_id": "MECH1",
+      "name": "Stage I: Text-First Interface Warmup",
+      "description": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "inputs": [
+        "['raw_point_cloud']"
+      ],
+      "outputs": [
+        "['output_0']"
+      ],
+      "supporting_span_ids": [
+        "E10"
+      ],
+      "unsupported_parts": []
+    },
+    {
+      "mechanism_id": "MECH2",
+      "name": "Stage II: Rich Instruction Alignment",
+      "description": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "inputs": [
+        "['input_1']"
+      ],
+      "outputs": [
+        "['output_1']"
+      ],
+      "supporting_span_ids": [
+        "E10"
+      ],
+      "unsupported_parts": []
+    },
+    {
+      "mechanism_id": "MECH3",
+      "name": "Stage III: Point-Language Transfer",
+      "description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "inputs": [
+        "['input_2']"
+      ],
+      "outputs": [
+        "['output_2']"
+      ],
+      "supporting_span_ids": [
+        "E5",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "unsupported_parts": []
+    },
+    {
+      "mechanism_id": "MECH4",
+      "name": "Runtime and saving behavior",
+      "description": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "inputs": [
+        "['input_3']"
+      ],
+      "outputs": [
+        "['output_3']"
+      ],
+      "supporting_span_ids": [
+        "E10"
+      ],
+      "unsupported_parts": []
+    }
+  ],
+  "comment_driven_insights": [],
+  "author_alignment": {
+    "author_proposed_flow": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "author_supported_flow": [
+      "Stage I: Text-First Interface Warmup",
+      "Stage II: Rich Instruction Alignment",
+      "Stage III: Point-Language Transfer",
+      "Runtime and saving behavior"
+    ],
+    "author_unsupported_parts": []
+  },
+  "candidate_distinguishing_mechanisms": [
+    "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+    "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone."
+  ],
+  "evidence_spans": [
+    {
+      "evidence_id": "E1",
+      "source_type": "source",
+      "path": "llava/eval/model_vqa_loader.py",
+      "symbol": null,
+      "line_start": 31,
+      "line_end": 66,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:94794d634afbc3d315ec9a5e19b887c8325287c042e0258c5aae2ab81ce6fdee",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E2",
+      "source_type": "source",
+      "path": "llava/eval/model_vqa_loader.py",
+      "symbol": null,
+      "line_start": 84,
+      "line_end": 131,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:509423d0a871c685f53e17224ae0f757af42c36d605f2082bd933486451af269",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E3",
+      "source_type": "source",
+      "path": "llava/model/llava_arch.py",
+      "symbol": null,
+      "line_start": 28,
+      "line_end": 116,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:0d790e85a7e9814afb09d064fe6d97ef950580cbf3582f27efcf2c7ec84c922e",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E4",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 150,
+      "line_end": 180,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:1b283a721bbebe4b08658b9e76d9222e97c0e9b792942c1b314ab2fa4039b577",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E5",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 255,
+      "line_end": 346,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9a4b5bb6c715f6cd8911187fbc536b8045e6686fd8a5aa899d77fe23379b282f",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E6",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 85,
+      "line_end": 111,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:4051331b70c7f047949b155373197a54e2a4b3327459672d44590ab5c3e15fba",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E7",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 120,
+      "line_end": 148,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f2efe66da73b4a65bb8b3f4bfa6b5f5ae30f67eb64b7a32057be05d488fa4d2a",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E8",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 73,
+      "line_end": 111,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5d7b0b47f83bb2273f29c74ec19b7981b5559000dbf492eac34753c97a0f33c3",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E9",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 114,
+      "line_end": 148,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:8fc29c999d26334d2dce2cc63f1dbfa83e38468c486d362c8776c5d2d7cf0fe3",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E10",
+      "source_type": "source",
+      "path": "llava/model/multimodal_encoder/point_encoder.py",
+      "symbol": null,
+      "line_start": 184,
+      "line_end": 249,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f93f40c146a28f230cf95c5357aaeefad0a4da374f6629f32d478200710a4387",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E11",
+      "source_type": "source",
+      "path": "llava/eval/model_vqa.py",
+      "symbol": null,
+      "line_start": 29,
+      "line_end": 84,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:8216e605e49ad974f9e621b2d67254f9c79db14a8e3c57142e1d1b9a6d6dca89",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E12",
+      "source_type": "source",
+      "path": "llava/eval/model_vqa_science.py",
+      "symbol": null,
+      "line_start": 29,
+      "line_end": 94,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:71063865251764114d43da3eced24a180de7e17c152caac7f674051e0a79f819",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E13",
+      "source_type": "source",
+      "path": "llava/eval/run_llava.py",
+      "symbol": null,
+      "line_start": 50,
+      "line_end": 128,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:8bdf07be97a6d91629b8d7b290aa8a708b8cff837bd717b2b96f89d88e6f9327",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E14",
+      "source_type": "source",
+      "path": "llava/eval/eval_gpt_review.py",
+      "symbol": null,
+      "line_start": 13,
+      "line_end": 36,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c8f95038376937a415cc3704d0bb81458a0672d3e43eac19ae0168a996a7e200",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E15",
+      "source_type": "source",
+      "path": "llava/eval/m4c_evaluator.py",
+      "symbol": null,
+      "line_start": 248,
+      "line_end": 257,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:51a2e3a1c8be6dfba9358a8a088145356b33b90beb59279dd61a6c2244643c4a",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E16",
+      "source_type": "source",
+      "path": "llava/eval/m4c_evaluator.py",
+      "symbol": null,
+      "line_start": 264,
+      "line_end": 273,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5a72fb57af8ee56cf0c132d270df7aa330f51a0bce34c76d87b46032862ff543",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E17",
+      "source_type": "source",
+      "path": "llava/eval/m4c_evaluator.py",
+      "symbol": null,
+      "line_start": 289,
+      "line_end": 298,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:b856f085fb5350bdbfee65abb8f69ff09e76422a40f2a599af9260dcc0d76d54",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    },
+    {
+      "evidence_id": "E18",
+      "source_type": "source",
+      "path": "llava/eval/m4c_evaluator.py",
+      "symbol": null,
+      "line_start": 321,
+      "line_end": 334,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:a5b1d5b8ad71faef767ac2b099c492d0c0792f2e49147da647a6d9072e4d10c6",
+      "evidence_strength": "hard",
+      "confidence": 0.85
+    }
+  ],
+  "gaps": []
+}

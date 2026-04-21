@@ -1,0 +1,14 @@
+{
+  "passed": false,
+  "checked_terms": 27,
+  "issues": [
+    {
+      "issue_id": "TERM1",
+      "severity": "high",
+      "category": "forbidden_replacement_used",
+      "message": "Draft uses forbidden replacement `Pre-training` for canonical term `Stage I: Text-First Interface Warmup`.",
+      "term_id": "TERM-STAGE-1",
+      "term": "Pre-training"
+    }
+  ]
+}

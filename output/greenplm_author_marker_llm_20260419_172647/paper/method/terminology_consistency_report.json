@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "checked_terms": 8,
+  "issues": [
+    {
+      "issue_id": "TERM1",
+      "severity": "medium",
+      "category": "canonical_term_collision",
+      "message": "Terminology table maps one canonical term to multiple term IDs.",
+      "term_id": "TERM-STAGE-4,TERM-MECH-4",
+      "term": "runtime and saving behavior"
+    },
+    {
+      "issue_id": "TERM2",
+      "severity": "medium",
+      "category": "canonical_term_collision",
+      "message": "Terminology table maps one canonical term to multiple term IDs.",
+      "term_id": "TERM-STAGE-1,TERM-MECH-1",
+      "term": "stage i: text-first interface warmup"
+    },
+    {
+      "issue_id": "TERM3",
+      "severity": "medium",
+      "category": "canonical_term_collision",
+      "message": "Terminology table maps one canonical term to multiple term IDs.",
+      "term_id": "TERM-STAGE-2,TERM-MECH-2",
+      "term": "stage ii: rich instruction alignment"
+    },
+    {
+      "issue_id": "TERM4",
+      "severity": "medium",
+      "category": "canonical_term_collision",
+      "message": "Terminology table maps one canonical term to multiple term IDs.",
+      "term_id": "TERM-STAGE-3,TERM-MECH-3",
+      "term": "stage iii: point-language transfer"
+    }
+  ]
+}

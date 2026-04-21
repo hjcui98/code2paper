@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase3-003",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "distinguishing_mechanism_builder",
+  "prompt_template_version": "",
+  "input_hash": "sha256:f98e0236f3ab44c87c3c51d4294bcf93ea740c2f574390993205a2690cfea238",
+  "response_hash": "sha256:5d458ae892b4e022e0485e358b44773a3c750dac4a2b65e65961e7bc5438ad36",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "Phase3DistinguishingMechanismOutput",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-18T16:48:40.066035+00:00"
+}

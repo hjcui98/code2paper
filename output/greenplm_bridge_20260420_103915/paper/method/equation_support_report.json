@@ -1,0 +1,31 @@
+{
+  "project_id": "greenplm",
+  "passed": false,
+  "checked_equations": 8,
+  "issues": [
+    {
+      "issue_id": "EQV1",
+      "severity": "high",
+      "category": "unsupported_equation",
+      "message": "Draft equation is not backed by a Method Evidence equation candidate.",
+      "equation": "\\epsilon=1e-06",
+      "evidence_ids": []
+    },
+    {
+      "issue_id": "EQV2",
+      "severity": "high",
+      "category": "unsupported_equation",
+      "message": "Draft equation is not backed by a Method Evidence equation candidate.",
+      "equation": "\\mathrm{Attention}(Q,K,V) = \\mathrm{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V.",
+      "evidence_ids": []
+    },
+    {
+      "issue_id": "EQV3",
+      "severity": "high",
+      "category": "unsupported_equation",
+      "message": "Draft equation is not backed by a Method Evidence equation candidate.",
+      "equation": "\\mathrm{PE}_{(pos,2i)} &= \\sin(pos/10000^{2i/d}), \\\\\n\\mathrm{PE}_{(pos,2i+1)} &= \\cos(pos/10000^{2i/d}),",
+      "evidence_ids": []
+    }
+  ]
+}

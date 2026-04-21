@@ -1,0 +1,504 @@
+{
+  "meta": {
+    "selection_version": "v2",
+    "selection_budget": {},
+    "selection_rules": {}
+  },
+  "snippets": [
+    {
+      "snippet_id": "sn19",
+      "role": "dataset",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+        "start_line": 31,
+        "end_line": 66,
+        "sha1": "3b21c664d98bfbaec97b89f1ece93d6b4f4ccaa9"
+      },
+      "text": "class CustomDataset(Dataset):\n    def __init__(self, questions, image_folder, tokenizer, image_processor, model_config):\n        self.questions = questions\n        self.image_folder = image_folder\n        self.tokenizer = tokenizer\n        self.image_processor = image_processor\n        self.model_config = model_config\n\n    def __getitem__(self, index):\n        line = self.questions[index]\n        image_file = line[\"image\"]\n        qs = line[\"text\"]\n        if self.model_config.mm_use_im_start_end:\n            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\\n' + qs\n        else:\n            qs = DEFAULT_IMAGE_TOKEN + '\\n' + qs\n\n        conv = conv_templates[args.conv_mode].copy()\n        conv.append_message(conv.roles[0], qs)\n        conv.append_message(conv.roles[1], None)\n        prompt = conv.get_prompt()\n\n        image = Image.open(os.path.join(self.image_folder, image_file)).convert('RGB')\n        image_tensor = process_images([image], self.image_processor, self.model_config)[0]\n\n        input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')\n\n        print(\"input_ids.size():\", input_ids.size())\n        print(\"image_tensor.size():\", image_tensor.size())\n\n        exit()\n\n        return input_ids, image_tensor, image.size\n\n    def __len__(self):\n        return len(self.questions)",
+      "signals": [
+        "dataset",
+        "dataset",
+        "config"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 36,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn20",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+        "start_line": 84,
+        "end_line": 131,
+        "sha1": "3b21c664d98bfbaec97b89f1ece93d6b4f4ccaa9"
+      },
+      "text": "def eval_model(args):\n    # Model\n    disable_torch_init()\n    model_path = os.path.expanduser(args.model_path)\n    model_name = get_model_name_from_path(model_path)\n    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)\n\n    questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), \"r\")]\n    questions = get_chunk(questions, args.num_chunks, args.chunk_idx)\n    answers_file = os.path.expanduser(args.answers_file)\n    os.makedirs(os.path.dirname(answers_file), exist_ok=True)\n    ans_file = open(answers_file, \"w\")\n\n    if 'plain' in model_name and 'finetune' not in model_name.lower() and 'mmtag' not in args.conv_mode:\n        args.conv_mode = args.conv_mode + '_mmtag'\n        print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')\n\n    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config)\n\n    for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):\n        idx = line[\"question_id\"]\n        cur_prompt = line[\"text\"]\n\n        input_ids = input_ids.to(device='cuda', non_blocking=True)\n\n        with torch.inference_mode():\n            output_ids = model.generate(\n                input_ids,\n                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),\n                image_sizes=image_sizes,\n                do_sample=True if args.temperature > 0 else False,\n                temperature=args.temperature,\n                top_p=args.top_p,\n                num_beams=args.num_beams,\n                max_new_tokens=args.max_new_tokens,\n                use_cache=True)\n\n        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()\n\n        ans_id = shortuuid.uuid()\n        ans_file.write(json.dumps({\"question_id\": idx,\n                                   \"prompt\": cur_prompt,\n                                   \"text\": outputs,\n                                   \"answer_id\": ans_id,\n                                   \"model_id\": model_name,\n                                   \"metadata\": {}}) + \"\\n\")\n        # ans_file.flush()\n    ans_file.close()",
+      "signals": [
+        "config",
+        "inference"
+      ],
+      "relevance": {
+        "paper_section_ids": [
+          "token compaction/aggregation path associated with 0M-Pooling style logic"
+        ],
+        "score": 0.3,
+        "reason": "Matched to method module: token compaction/aggregation path associated with 0M-Pooling style logic"
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 48,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn49",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/llava_arch.py",
+        "start_line": 28,
+        "end_line": 116,
+        "sha1": "51050e001bae4eb4e507811bc9271980a7483421"
+      },
+      "text": "class LlavaMetaModel:\n\n    def __init__(self, config):\n        super(LlavaMetaModel, self).__init__(config)\n\n        self.pc_encoder_float_flag =False\n\n\n    def get_vision_tower(self):\n        vision_tower = getattr(self, 'vision_tower', None)\n        if type(vision_tower) is list:\n            vision_tower = vision_tower[0]\n        return vision_tower\n\n    # 从这初始化的encoder 和 projector\n    def initialize_other_modules(self, model_args, fsdp=None):\n        # 测试下mm_vision_tower\n        # vision_tower = model_args.vision_tower\n        pretrain_mm_mlp_adapter = model_args.pretrain_mm_mlp_adapter\n\n        self.model_args = model_args\n        # self.config.mm_vision_tower = vision_tower\n\n        # 借用下vision_tower，\n        # text encoder 和pc encoder 都用这个函数名\n        if model_args.encoder_type == 'text_encoder':\n            print(\"loading text encoder pre-treained weight\")\n            self.vision_tower = build_text_encoder()\n\n        elif model_args.encoder_type == 'pc_encoder':\n            self.vision_tower = build_pc_encoder(model_args)\n\n            checkpoint = torch.load(model_args.pc_ckpt_path, map_location='cpu')\n            sd = checkpoint['module']\n            if next(iter(sd.items()))[0].startswith('module'):\n                sd = {k[len('module'):]: v for k, v in sd.items()}\n\n            base_ckpt = sd\n            for k in list(base_ckpt.keys()):\n                if k.startswith('point_encoder'):\n                    base_ckpt[k[len('point_encoder.'):]] = base_ckpt[k]\n                    del base_ckpt[k]\n\n            self.vision_tower.load_state_dict(base_ckpt, strict=False)\n        else:\n            raise NotImplementedError\n\n        # 初始化 接到LLM的MLP\n        self.mm_projector = build_vision_projector(self.config, self.model_args)\n\n        if pretrain_mm_mlp_adapter is not None:\n            mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')\n\n            def get_w(weights, keyword):\n                return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}\n\n            def get_w_4_query_token(weights, keyword):\n                for k, v in weights.items():\n                    if keyword in k:\n                        return  v\n\n            aa = self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'), strict=False)\n            print(\"projctor\")\n            print(aa)\n\n            aa = self.vision_tower.load_state_dict(get_w(mm_projector_weights, 'vision_tower'), strict=False)\n            print(\"vision_tower.unexpected_keys\")\n            print(aa.unexpected_keys)\n\n        else:\n            self.random_initialize_model(self.mm_projector)\n\n\n    def random_initialize_model(self, model, mean=0.0, std=0.02):\n        \"\"\"\n        随机初始化给定模型的所有参数。\n\n        参数:\n        - model (nn.Module): 要初始化的PyTorch模型实例。\n        - mean (float): 权重初始化的均值，默认为0.0。\n        - std (float): 权重初始化的标准差，默认为0.02。\n        \"\"\"\n        for name, param in model.named_parameters():\n            if 'weight' in name:\n                # 对于权重，使用正态分布进行初始化\n                init.normal_(param.data, mean=mean, std=std)\n            elif 'bias' in name:\n                # 对于偏置项，默认初始化为0，也可以根据需要调整\n                init.constant_(param.data, val=0)",
+      "signals": [
+        "nn.module",
+        "other",
+        "config"
+      ],
+      "relevance": {
+        "paper_section_ids": [
+          "token compaction/aggregation path associated with 0M-Pooling style logic"
+        ],
+        "score": 0.3,
+        "reason": "Matched to method module: token compaction/aggregation path associated with 0M-Pooling style logic"
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 89,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn66",
+      "role": "forward",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 85,
+        "end_line": 111,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "    def forward(self, x):\n        # if not self.training or self.prob == 0.:\n        #     return x\n\n        if self.exclude_first_token:\n            cls_tokens, x = x[:, :1], x[:, 1:]\n        else:\n            cls_tokens = torch.jit.annotate(torch.Tensor, x[:, :1])\n\n        batch = x.size()[0]\n        num_tokens = x.size()[1]\n\n        batch_indices = torch.arange(batch)\n        batch_indices = batch_indices[..., None]\n\n        keep_prob = 1 - self.prob\n        num_patches_keep = max(1, int(num_tokens * keep_prob))\n\n        rand = torch.randn(batch, num_tokens)\n        patch_indices_keep = rand.topk(num_patches_keep, dim=-1).indices\n\n        x = x[batch_indices, patch_indices_keep]\n\n        if self.exclude_first_token:\n            x = torch.cat((cls_tokens, x), dim=1)\n\n        return x",
+      "signals": [
+        "def forward",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 27,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn67",
+      "role": "forward",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 120,
+        "end_line": 148,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "    def forward(self, xyz, color):\n        '''\n            input: B N 3\n            ---------------------------\n            output: B G M 3\n            center : B G 3\n        '''\n        batch_size, num_points, _ = xyz.shape\n        # fps the centers out\n        center = fps(xyz, self.num_group) # B G 3\n        # knn to get the neighborhood\n        # _, idx = self.knn(xyz, center) # B G M\n        idx = knn_point(self.group_size, xyz, center) # B G M\n        assert idx.size(1) == self.num_group\n        assert idx.size(2) == self.group_size\n        idx_base = torch.arange(0, batch_size, device=xyz.device).view(-1, 1, 1) * num_points\n        idx = idx + idx_base\n        idx = idx.view(-1)\n        neighborhood = xyz.view(batch_size * num_points, -1)[idx, :]\n        neighborhood = neighborhood.view(batch_size, self.num_group, self.group_size, 3).contiguous()\n\n        neighborhood_color = color.view(batch_size * num_points, -1)[idx, :]\n        neighborhood_color = neighborhood_color.view(batch_size, self.num_group, self.group_size, 3).contiguous()\n\n        # normalize\n        neighborhood = neighborhood - center.unsqueeze(2)\n\n        features = torch.cat((neighborhood, neighborhood_color), dim=-1)\n        return neighborhood, center, features",
+      "signals": [
+        "def forward",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 29,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn68",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 73,
+        "end_line": 111,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "class PatchDropout(nn.Module):\n    \"\"\"\n    https://arxiv.org/abs/2212.00794\n    \"\"\"\n\n    def __init__(self, prob, exclude_first_token=True):\n        super().__init__()\n        assert 0 <= prob < 1.\n        self.prob = prob\n        self.exclude_first_token = exclude_first_token  # exclude CLS token\n        logging.info(\"patch dropout prob is {}\".format(prob))\n\n    def forward(self, x):\n        # if not self.training or self.prob == 0.:\n        #     return x\n\n        if self.exclude_first_token:\n            cls_tokens, x = x[:, :1], x[:, 1:]\n        else:\n            cls_tokens = torch.jit.annotate(torch.Tensor, x[:, :1])\n\n        batch = x.size()[0]\n        num_tokens = x.size()[1]\n\n        batch_indices = torch.arange(batch)\n        batch_indices = batch_indices[..., None]\n\n        keep_prob = 1 - self.prob\n        num_patches_keep = max(1, int(num_tokens * keep_prob))\n\n        rand = torch.randn(batch, num_tokens)\n        patch_indices_keep = rand.topk(num_patches_keep, dim=-1).indices\n\n        x = x[batch_indices, patch_indices_keep]\n\n        if self.exclude_first_token:\n            x = torch.cat((cls_tokens, x), dim=1)\n\n        return x",
+      "signals": [
+        "def forward",
+        "nn.module",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 39,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn69",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 114,
+        "end_line": 148,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "class Group(nn.Module):\n    def __init__(self, num_group, group_size):\n        super().__init__()\n        self.num_group = num_group\n        self.group_size = group_size\n\n    def forward(self, xyz, color):\n        '''\n            input: B N 3\n            ---------------------------\n            output: B G M 3\n            center : B G 3\n        '''\n        batch_size, num_points, _ = xyz.shape\n        # fps the centers out\n        center = fps(xyz, self.num_group) # B G 3\n        # knn to get the neighborhood\n        # _, idx = self.knn(xyz, center) # B G M\n        idx = knn_point(self.group_size, xyz, center) # B G M\n        assert idx.size(1) == self.num_group\n        assert idx.size(2) == self.group_size\n        idx_base = torch.arange(0, batch_size, device=xyz.device).view(-1, 1, 1) * num_points\n        idx = idx + idx_base\n        idx = idx.view(-1)\n        neighborhood = xyz.view(batch_size * num_points, -1)[idx, :]\n        neighborhood = neighborhood.view(batch_size, self.num_group, self.group_size, 3).contiguous()\n\n        neighborhood_color = color.view(batch_size * num_points, -1)[idx, :]\n        neighborhood_color = neighborhood_color.view(batch_size, self.num_group, self.group_size, 3).contiguous()\n\n        # normalize\n        neighborhood = neighborhood - center.unsqueeze(2)\n\n        features = torch.cat((neighborhood, neighborhood_color), dim=-1)\n        return neighborhood, center, features",
+      "signals": [
+        "def forward",
+        "nn.module",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 35,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn70",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 150,
+        "end_line": 180,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "class Encoder(nn.Module):\n    def __init__(self, encoder_channel):\n        super().__init__()\n        self.encoder_channel = encoder_channel\n        self.first_conv = nn.Sequential(\n            nn.Conv1d(6, 128, 1),\n            nn.BatchNorm1d(128),\n            nn.ReLU(inplace=True),\n            nn.Conv1d(128, 256, 1)\n        )\n        self.second_conv = nn.Sequential(\n            nn.Conv1d(512, 512, 1),\n            nn.BatchNorm1d(512),\n            nn.ReLU(inplace=True),\n            nn.Conv1d(512, self.encoder_channel, 1)\n        )\n    def forward(self, point_groups):\n        '''\n            point_groups : B G N 3\n            -----------------\n            feature_global : B G C\n        '''\n        bs, g, n , _ = point_groups.shape\n        point_groups = point_groups.reshape(bs * g, n, 6)\n        # encoder\n        feature = self.first_conv(point_groups.transpose(2,1))  # BG 256 n\n        feature_global = torch.max(feature,dim=2,keepdim=True)[0]  # BG 256 1\n        feature = torch.cat([feature_global.expand(-1,-1,n), feature], dim=1)# BG 512 n\n        feature = self.second_conv(feature) # BG 1024 n\n        feature_global = torch.max(feature, dim=2, keepdim=False)[0] # BG 1024\n        return feature_global.reshape(bs, g, self.encoder_channel)",
+      "signals": [
+        "def forward",
+        "nn.module",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 31,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn71",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 184,
+        "end_line": 249,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "class skeleton_Group(nn.Module):\n    def __init__(self, num_group=32, group_size=8):\n        super().__init__()\n        self.num_group = num_group\n        self.group_size = group_size\n\n    def forward(self, xyz, token_feat,  num_group=32, group_size=8):\n        '''\n            xyz: 所有token的xyz\n\n            input: B N 3\n            ---------------------------\n            output: B G M 3\n            center : B G 3\n        '''\n        self.num_group = num_group\n        self.group_size = group_size\n\n        batch_size, num_points, _ = xyz.shape\n        _, _, C_ = token_feat.shape\n        # fps the centers out\n        center = fps(xyz, self.num_group) # B G 3\n        # knn to get the neighborhood\n        # _, idx = self.knn(xyz, center) # B G M\n        idx = knn_point(self.group_size, xyz, center) # B G M\n\n        assert idx.size(1) == self.num_group\n        assert idx.size(2) == self.group_size\n        idx_base = torch.arange(0, batch_size, device=xyz.device).view(-1, 1, 1) * num_points\n        idx = idx + idx_base\n        idx = idx.view(-1)\n\n        token_feat = token_feat.contiguous()\n        neighborhood_token_feat = token_feat.view(batch_size * num_points, -1)[idx, :]\n        # T_p: B, 32, 8,384 ->    B, M, K, C\n        neighborhood_token_feat = neighborhood_token_feat.view(batch_size, self.num_group, self.group_size, C_).contiguous()\n\n\n\n        # T_m: # B，32, 384 -> B, M, C\n        center_token, _ = torch.max(neighborhood_token_feat, dim=2)\n\n\n        # #### fix OM——pooling  no resnet, no dim norm\n        # T_m:   B，32,1, 384 -> B, M, 1, C\n        center_token = center_token.unsqueeze(2)\n        # T_m (T):  B，32,384, 1 -> B, M, C, 1\n        center_token = center_token.permute(0, 1, 3, 2)\n\n        neighborhood_token_feat_ = torch.nn.functional.normalize(neighborhood_token_feat, p=2, dim=-1)\n        center_token_ = torch.nn.functional.normalize(center_token, p=2, dim=-2)\n\n        # A: B, 32, 8, 1 ->  B, M, K, 1\n        router_weights = torch.einsum('btnj,btjm->btnm', [neighborhood_token_feat_, center_token_])\n        # A(T): B, 32, 1, 8 ->  B, M, 1, K\n        router_weights = router_weights.permute(0, 1, 3, 2)\n        # A(T): B, 32, 1, 8 ->  B, M, 1, K\n        router_weights = F.softmax(router_weights, dim=-1)\n\n\n        # T^p_pc: B, 32,  1, 384 ->  B, M, 1, C\n        skeleton_token = torch.einsum('bmok, bmkc->bmoc', [router_weights, neighborhood_token_feat])\n        skeleton_token = skeleton_token.squeeze(dim=-2)\n        ####\n\n        return skeleton_token",
+      "signals": [
+        "def forward",
+        "nn.module",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 66,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn72",
+      "role": "model_arch",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+        "start_line": 255,
+        "end_line": 346,
+        "sha1": "689acc5b2c6ccdee15e659ed297465981a9265f4"
+      },
+      "text": "class PointcloudEncoder(nn.Module):\n    def __init__(self, point_transformer, args):\n        super().__init__()\n        from easydict import EasyDict\n        self.trans_dim = args.pc_feat_dim # 768\n        self.embed_dim = args.embed_dim # 512\n        self.group_size = args.group_size # 32\n        self.num_group = args.num_group # 512\n        # grouper\n        self.group_divider = Group(num_group = self.num_group, group_size = self.group_size)\n        self.skeleton_Group  = skeleton_Group()\n        # define the encoder\n        self.encoder_dim =  args.pc_encoder_dim # 256\n        self.encoder = Encoder(encoder_channel = self.encoder_dim)\n       \n        # bridge encoder and transformer\n        self.encoder2trans = nn.Linear(self.encoder_dim,  self.trans_dim)\n        \n        # bridge transformer and clip embedding\n        self.trans2embed = nn.Linear(self.trans_dim,  self.embed_dim)\n        self.cls_token = nn.Parameter(torch.zeros(1, 1, self.trans_dim))\n        self.cls_pos = nn.Parameter(torch.randn(1, 1, self.trans_dim))\n\n        self.pos_embed = nn.Sequential(\n            nn.Linear(3, 128),\n            nn.GELU(),\n            nn.Linear(128, self.trans_dim)\n        )  \n        # setting a patch_dropout of 0. would mean it is disabled and this function would be the identity fn\n        self.patch_dropout = PatchDropout(args.patch_dropout) if args.patch_dropout > 0. else nn.Identity()\n        self.visual = point_transformer\n\n        self.float_flag =False #\n\n\n    def forward(self, pc, get_pc_tokens_way=None):\n\n        pc = pc.to(dtype=torch.float)\n\n        pts = pc[:,:,:3].contiguous()\n        colors = pc[:,:,3:].contiguous()\n\n        # divide the point cloud in the same form. This is important\n        _, center, features = self.group_divider(pts, colors)\n\n\n        # encoder the input cloud patches\n        group_input_tokens = self.encoder(features)  #  B G N\n\n        group_input_tokens = self.encoder2trans(group_input_tokens)\n        # prepare cls\n        cls_tokens = self.cls_token.expand(group_input_tokens.size(0), -1, -1)\n        cls_pos = self.cls_pos.expand(group_input_tokens.size(0), -1, -1)\n        # add pos embedding\n        pos = self.pos_embed(center)\n        # final input\n        x = torch.cat((cls_tokens, group_input_tokens), dim=1)\n        pos = torch.cat((cls_pos, pos), dim=1)\n        # transformer\n        x = x + pos\n        # x = x.half()\n\n        # a patch_dropout of 0. would mean it is disabled and this function would do nothing but return what was passed in\n        x = self.patch_dropout(x)\n\n        x = self.visual.pos_drop(x)\n\n        # ModuleList not support forward\n        block_len = len(self.visual.blocks)\n        for i, blk in enumerate(self.visual.blocks):\n            x = blk(x)\n            if block_len-2 == i:\n                last_sec_x =x\n\n\n        if get_pc_tokens_way==\"CLS\": # CLS\n            x = self.visual.norm(x[:, 0, :])\n            x = self.visual.fc_norm(x)\n            x = self.trans2embed(x)\n            x = x.unsqueeze(1)\n\n        elif get_pc_tokens_way==\"OM_Pooling\":\n\n\n            pc_skeleton = self.skeleton_Group(center,  last_sec_x[:, 1:])\n\n            x = torch.cat([x[:, 0].unsqueeze(1), x[:, 1:].max(1)[0].unsqueeze(1), x[:, 1:].mean(1).unsqueeze(1), torch.sum(x[:, 1:], dim=1).unsqueeze(1), pc_skeleton], dim=-2)\n            x = self.visual.norm(x)\n            x = self.visual.fc_norm(x)\n            x = self.trans2embed(x)\n\n        return x",
+      "signals": [
+        "def forward",
+        "nn.module",
+        "forward"
+      ],
+      "relevance": {
+        "paper_section_ids": [
+          "inject projected point-side representations into LLM token stream"
+        ],
+        "score": 0.5,
+        "reason": "Matched to method module: inject projected point-side representations into LLM token stream"
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 92,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn73",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_science.py",
+        "start_line": 29,
+        "end_line": 94,
+        "sha1": "4713c52137ca088bff93c1632e3c9de21439337f"
+      },
+      "text": "def eval_model(args):\n    # Model\n    disable_torch_init()\n    model_path = os.path.expanduser(args.model_path)\n    model_name = get_model_name_from_path(model_path)\n    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)\n\n    questions = json.load(open(os.path.expanduser(args.question_file), \"r\"))\n    questions = get_chunk(questions, args.num_chunks, args.chunk_idx)\n    answers_file = os.path.expanduser(args.answers_file)\n    os.makedirs(os.path.dirname(answers_file), exist_ok=True)\n    ans_file = open(answers_file, \"w\")\n    for i, line in enumerate(tqdm(questions)):\n        idx = line[\"id\"]\n        question = line['conversations'][0]\n        qs = question['value'].replace('<image>', '').strip()\n        cur_prompt = qs\n\n        if 'image' in line:\n            image_file = line[\"image\"]\n            image = Image.open(os.path.join(args.image_folder, image_file))\n            image_tensor = process_images([image], image_processor, model.config)[0]\n            images = image_tensor.unsqueeze(0).half().cuda()\n            image_sizes = [image.size]\n            if getattr(model.config, 'mm_use_im_start_end', False):\n                qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\\n' + qs\n            else:\n                qs = DEFAULT_IMAGE_TOKEN + '\\n' + qs\n            cur_prompt = '<image>' + '\\n' + cur_prompt\n        else:\n            images = None\n            image_sizes = None\n\n        if args.single_pred_prompt:\n            qs = qs + '\\n' + \"Answer with the option's letter from the given choices directly.\"\n            cur_prompt = cur_prompt + '\\n' + \"Answer with the option's letter from the given choices directly.\"\n\n        conv = conv_templates[args.conv_mode].copy()\n        conv.append_message(conv.roles[0], qs)\n        conv.append_message(conv.roles[1], None)\n        prompt = conv.get_prompt()\n\n        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()\n\n        with torch.inference_mode():\n            output_ids = model.generate(\n                input_ids,\n                images=images,\n                image_sizes=image_sizes,\n                do_sample=True if args.temperature > 0 else False,\n                temperature=args.temperature,\n                max_new_tokens=1024,\n                use_cache=True,\n            )\n\n        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()\n\n        ans_id = shortuuid.uuid()\n        ans_file.write(json.dumps({\"question_id\": idx,\n                                   \"prompt\": cur_prompt,\n                                   \"text\": outputs,\n                                   \"answer_id\": ans_id,\n                                   \"model_id\": model_name,\n                                   \"metadata\": {}}) + \"\\n\")\n        ans_file.flush()\n    ans_file.close()",
+      "signals": [
+        "config",
+        "inference"
+      ],
+      "relevance": {
+        "paper_section_ids": [
+          "token compaction/aggregation path associated with 0M-Pooling style logic"
+        ],
+        "score": 0.3,
+        "reason": "Matched to method module: token compaction/aggregation path associated with 0M-Pooling style logic"
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 66,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn75",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa.py",
+        "start_line": 29,
+        "end_line": 84,
+        "sha1": "d8a6cdb70f56de97c572025595f6b905cae03f04"
+      },
+      "text": "def eval_model(args):\n    # Model\n    disable_torch_init()\n    model_path = os.path.expanduser(args.model_path)\n    model_name = get_model_name_from_path(model_path)\n    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)\n\n    questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), \"r\")]\n    questions = get_chunk(questions, args.num_chunks, args.chunk_idx)\n    answers_file = os.path.expanduser(args.answers_file)\n    os.makedirs(os.path.dirname(answers_file), exist_ok=True)\n    ans_file = open(answers_file, \"w\")\n    for line in tqdm(questions):\n        idx = line[\"question_id\"]\n        image_file = line[\"image\"]\n        qs = line[\"text\"]\n        cur_prompt = qs\n        if model.config.mm_use_im_start_end:\n            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\\n' + qs\n        else:\n            qs = DEFAULT_IMAGE_TOKEN + '\\n' + qs\n\n        conv = conv_templates[args.conv_mode].copy()\n        conv.append_message(conv.roles[0], qs)\n        conv.append_message(conv.roles[1], None)\n        prompt = conv.get_prompt()\n\n        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()\n\n        image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')\n        image_tensor = process_images([image], image_processor, model.config)[0]\n\n        with torch.inference_mode():\n            output_ids = model.generate(\n                input_ids,\n                images=image_tensor.unsqueeze(0).half().cuda(),\n                image_sizes=[image.size],\n                do_sample=True if args.temperature > 0 else False,\n                temperature=args.temperature,\n                top_p=args.top_p,\n                num_beams=args.num_beams,\n                # no_repeat_ngram_size=3,\n                max_new_tokens=1024,\n                use_cache=True)\n\n        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()\n\n        ans_id = shortuuid.uuid()\n        ans_file.write(json.dumps({\"question_id\": idx,\n                                   \"prompt\": cur_prompt,\n                                   \"text\": outputs,\n                                   \"answer_id\": ans_id,\n                                   \"model_id\": model_name,\n                                   \"metadata\": {}}) + \"\\n\")\n        ans_file.flush()\n    ans_file.close()",
+      "signals": [
+        "config",
+        "inference"
+      ],
+      "relevance": {
+        "paper_section_ids": [
+          "token compaction/aggregation path associated with 0M-Pooling style logic"
+        ],
+        "score": 0.3,
+        "reason": "Matched to method module: token compaction/aggregation path associated with 0M-Pooling style logic"
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 56,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn76",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/run_llava.py",
+        "start_line": 50,
+        "end_line": 128,
+        "sha1": "2a349c030b00c41843deef8823385efa9bed7d6d"
+      },
+      "text": "def eval_model(args):\n    # Model\n    disable_torch_init()\n\n    model_name = get_model_name_from_path(args.model_path)\n    tokenizer, model, image_processor, context_len = load_pretrained_model(\n        args.model_path, args.model_base, model_name\n    )\n\n    qs = args.query\n    image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN\n    if IMAGE_PLACEHOLDER in qs:\n        if model.config.mm_use_im_start_end:\n            qs = re.sub(IMAGE_PLACEHOLDER, image_token_se, qs)\n        else:\n            qs = re.sub(IMAGE_PLACEHOLDER, DEFAULT_IMAGE_TOKEN, qs)\n    else:\n        if model.config.mm_use_im_start_end:\n            qs = image_token_se + \"\\n\" + qs\n        else:\n            qs = DEFAULT_IMAGE_TOKEN + \"\\n\" + qs\n\n    if \"llama-2\" in model_name.lower():\n        conv_mode = \"llava_llama_2\"\n    elif \"mistral\" in model_name.lower():\n        conv_mode = \"mistral_instruct\"\n    elif \"v1.6-34b\" in model_name.lower():\n        conv_mode = \"chatml_direct\"\n    elif \"v1\" in model_name.lower():\n        conv_mode = \"llava_v1\"\n    elif \"mpt\" in model_name.lower():\n        conv_mode = \"mpt\"\n    else:\n        conv_mode = \"llava_v0\"\n\n    if args.conv_mode is not None and conv_mode != args.conv_mode:\n        print(\n            \"[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}\".format(\n                conv_mode, args.conv_mode, args.conv_mode\n            )\n        )\n    else:\n        args.conv_mode = conv_mode\n\n    conv = conv_templates[args.conv_mode].copy()\n    conv.append_message(conv.roles[0], qs)\n    conv.append_message(conv.roles[1], None)\n    prompt = conv.get_prompt()\n\n    image_files = image_parser(args)\n    images = load_images(image_files)\n    image_sizes = [x.size for x in images]\n    images_tensor = process_images(\n        images,\n        image_processor,\n        model.config\n    ).to(model.device, dtype=torch.float16)\n\n    input_ids = (\n        tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors=\"pt\")\n        .unsqueeze(0)\n        .cuda()\n    )\n\n    with torch.inference_mode():\n        output_ids = model.generate(\n            input_ids,\n            images=images_tensor,\n            image_sizes=image_sizes,\n            do_sample=True if args.temperature > 0 else False,\n            temperature=args.temperature,\n            top_p=args.top_p,\n            num_beams=args.num_beams,\n            max_new_tokens=args.max_new_tokens,\n            use_cache=True,\n        )\n\n    outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()\n    print(outputs)",
+      "signals": [
+        "config",
+        "inference"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 79,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn77",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/eval_gpt_review.py",
+        "start_line": 13,
+        "end_line": 36,
+        "sha1": "b8c403bf691ddd0dfb22cbc6e7b1a16aaa531cea"
+      },
+      "text": "def get_eval(content: str, max_tokens: int):\n    while True:\n        try:\n            response = openai.ChatCompletion.create(\n                model='gpt-4',\n                messages=[{\n                    'role': 'system',\n                    'content': 'You are a helpful and precise assistant for checking the quality of the answer.'\n                }, {\n                    'role': 'user',\n                    'content': content,\n                }],\n                temperature=0.2,  # TODO: figure out which temperature is best for evaluation\n                max_tokens=max_tokens,\n            )\n            break\n        except openai.error.RateLimitError:\n            pass\n        except Exception as e:\n            print(e)\n        time.sleep(NUM_SECONDS_TO_SLEEP)\n\n    print('success!')\n    return response['choices'][0]['message']['content']",
+      "signals": [
+        "evaluation"
+      ],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 24,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn78",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+        "start_line": 248,
+        "end_line": 257,
+        "sha1": "62e461b87ceb601609952ded8f264e4f68f6c8be"
+      },
+      "text": "    def eval_pred_list(self, pred_list):\n        pred_scores = []\n        for entry in tqdm(pred_list):\n            pred_answer = self.answer_processor(entry[\"pred_answer\"])\n            unique_answer_scores = self._compute_answer_scores(entry[\"gt_answers\"])\n            score = unique_answer_scores.get(pred_answer, 0.0)\n            pred_scores.append(score)\n\n        accuracy = sum(pred_scores) / len(pred_scores)\n        return accuracy",
+      "signals": [],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 10,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn79",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+        "start_line": 264,
+        "end_line": 273,
+        "sha1": "62e461b87ceb601609952ded8f264e4f68f6c8be"
+      },
+      "text": "    def eval_pred_list(self, pred_list):\n        pred_scores = []\n        for entry in pred_list:\n            pred_answer = self.answer_processor(entry[\"pred_answer\"])\n            gts = [self.answer_processor(a) for a in entry[\"gt_answers\"]]\n            score = 1.0 if pred_answer in gts else 0.0\n            pred_scores.append(score)\n\n        accuracy = sum(pred_scores) / len(pred_scores)\n        return accuracy",
+      "signals": [],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 10,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn80",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+        "start_line": 289,
+        "end_line": 298,
+        "sha1": "62e461b87ceb601609952ded8f264e4f68f6c8be"
+      },
+      "text": "    def eval_pred_list(self, pred_list):\n        pred_scores = []\n        for entry in pred_list:\n            anls = max(\n                self.get_anls(entry[\"pred_answer\"], gt) for gt in entry[\"gt_answers\"]\n            )\n            pred_scores.append(anls)\n\n        accuracy = sum(pred_scores) / len(pred_scores)\n        return accuracy",
+      "signals": [],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 10,
+        "has_external_deps": false
+      }
+    },
+    {
+      "snippet_id": "sn81",
+      "role": "evaluation",
+      "source": {
+        "path": "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+        "start_line": 321,
+        "end_line": 334,
+        "sha1": "62e461b87ceb601609952ded8f264e4f68f6c8be"
+      },
+      "text": "    def eval_pred_list(self, pred_list):\n        # Create reference and hypotheses captions.\n        gts = {}\n        res = {}\n        for idx, entry in enumerate(pred_list):\n            gts[idx] = [{\"caption\": a} for a in entry[\"gt_answers\"]]\n            res[idx] = [{\"caption\": entry[\"pred_answer\"]}]\n\n        gts = self.tokenizer.tokenize(gts)\n        res = self.tokenizer.tokenize(res)\n        score, _ = self.scorer.compute_score(gts, res)\n\n        bleu4 = score[3]  # score is (Bleu-1, Bleu-2, Bleu-3, Bleu-4)\n        return bleu4",
+      "signals": [],
+      "relevance": {
+        "paper_section_ids": [],
+        "score": 0.0,
+        "reason": ""
+      },
+      "quality": {
+        "parsable": true,
+        "length_lines": 14,
+        "has_external_deps": false
+      }
+    }
+  ],
+  "coverage": {
+    "roles_covered": [
+      "config",
+      "dataset",
+      "evaluation",
+      "forward",
+      "model_arch",
+      "other",
+      "training_loop"
+    ],
+    "roles_missing": [
+      "augmentation",
+      "inference",
+      "loss"
+    ],
+    "top_files_by_snippet_count": [
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_cls.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/context_packs/source_core_candidates.json",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2_ops_lib/pointnet2_ops/pointnet2_utils.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/swark-output/code2paper_run_full/paper/method/raw_context_index.json",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/multimodal_encoder/point_encoder.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/m4c_evaluator.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_loader.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/pointnet++/Pointnet2_PyTorch/pointnet2/models/pointnet2_ssg_sem.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/model/llava_arch.py",
+      "/home/cuihengjia/agent/PosterGen/data/greenplm/code/llava/eval/model_vqa_science.py"
+    ],
+    "dynamic_roles": [
+      "evaluation",
+      "training_loop",
+      "model_arch",
+      "dataset",
+      "other",
+      "config",
+      "forward",
+      "augmentation",
+      "inference",
+      "loss"
+    ]
+  },
+  "warnings": []
+}

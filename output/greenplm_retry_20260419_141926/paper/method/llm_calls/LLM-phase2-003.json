@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase2-003",
+  "provider": "openai",
+  "model": "qwen3.6-plus",
+  "prompt_template_id": "code_method_aligner",
+  "prompt_template_version": "",
+  "input_hash": "sha256:fc6dd87535864756b6c3d764d272fdbac5322532775cc5ff76792997e7f5630e",
+  "response_hash": "sha256:7cfff6ddf1f0158cfe0804303b92ea75ec2a2ec6b6b1c73232afedaa5345a38d",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "CodeMethodAnalysis",
+  "schema_validation_passed": false,
+  "cached": false,
+  "created_at": "2026-04-19T06:23:07.258610+00:00"
+}

@@ -1,0 +1,29 @@
+You are an expert code intake reviewer.
+Return a JSON object only.
+
+Inputs:
+1) code_sources (index + repo_structure_hints):
+{{ code_sources }}
+
+2) snippet_preview (limited previews):
+{{ snippet_preview }}
+
+3) method keyword bank:
+{{ keyword_bank }}
+
+Tasks:
+- Assess coverage of roles: forward, model_arch, loss, augmentation, dataset, training_loop, config, inference, evaluation
+- Suggest minimal improvements without requesting full repo re-scan unless necessary
+- If a snippet role is clearly wrong, propose a role override
+
+Output JSON schema:
+{
+  "coverage_assessment": {"roles_covered": [], "roles_missing": [], "notes": ""},
+  "snippet_role_overrides": {"sn1": "model_arch"},
+  "high_priority_files_to_rescan": [{"path": "", "reason": ""}],
+  "questions_for_user": []
+}
+
+Rules:
+1) Only use provided inputs; do not invent nonexistent files.
+2) Keep snippet_role_overrides values within the allowed role set.

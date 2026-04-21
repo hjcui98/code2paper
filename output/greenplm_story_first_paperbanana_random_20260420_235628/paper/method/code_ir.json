@@ -1,0 +1,157 @@
+{
+  "nodes": [
+    {
+      "id": "data:CustomDataset",
+      "type": "data",
+      "label": "CustomDataset",
+      "evidence_refs": [
+        "sn19"
+      ]
+    },
+    {
+      "id": "module:TrainingArguments",
+      "type": "module",
+      "label": "TrainingArguments",
+      "role": "training-stage orchestration via argument combinations",
+      "method_ref": "training-stage orchestration via argument combinations",
+      "evidence_refs": [
+        "sn48",
+        "sn50",
+        "sn16"
+      ]
+    },
+    {
+      "id": "module:PointcloudEncoder",
+      "type": "module",
+      "label": "PointcloudEncoder",
+      "role": "inject projected point features into language token stream",
+      "method_ref": "inject projected point features into language token stream",
+      "evidence_refs": [
+        "sn69",
+        "sn3",
+        "sn67",
+        "sn75",
+        "sn76"
+      ]
+    },
+    {
+      "id": "module:PointNet2ClassificationSSG",
+      "type": "module",
+      "label": "PointNet2ClassificationSSG",
+      "role": "load/filter conversation supervision and point samples",
+      "method_ref": "load/filter conversation supervision and point samples",
+      "evidence_refs": [
+        "sn3",
+        "sn76",
+        "sn41",
+        "sn43",
+        "sn59"
+      ]
+    },
+    {
+      "id": "module:training_step",
+      "type": "module",
+      "label": "training_step",
+      "role": "convert point placeholders into multimodal training tokens",
+      "method_ref": "convert point placeholders into multimodal training tokens",
+      "evidence_refs": [
+        "sn16",
+        "sn48",
+        "sn49",
+        "sn50",
+        "sn3"
+      ]
+    },
+    {
+      "id": "module:Encoder",
+      "type": "module",
+      "label": "Encoder",
+      "role": "shared projector from encoder space to LLM hidden space",
+      "method_ref": "shared projector from encoder space to LLM hidden space",
+      "evidence_refs": [
+        "sn44",
+        "sn45",
+        "sn68",
+        "sn69",
+        "sn65"
+      ]
+    },
+    {
+      "id": "module:LLaVATrainer",
+      "type": "module",
+      "label": "LLaVATrainer",
+      "role": "trainer-side save/checkpoint behavior",
+      "method_ref": "trainer-side save/checkpoint behavior",
+      "evidence_refs": [
+        "sn47",
+        "sn49"
+      ]
+    },
+    {
+      "id": "module:PatchDropout",
+      "type": "module",
+      "label": "PatchDropout",
+      "role": "model_arch",
+      "method_ref": "",
+      "evidence_refs": [
+        "sn72"
+      ]
+    },
+    {
+      "id": "module:Group",
+      "type": "module",
+      "label": "Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "evidence_refs": [
+        "sn73"
+      ]
+    },
+    {
+      "id": "module:skeleton_Group",
+      "type": "module",
+      "label": "skeleton_Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "evidence_refs": [
+        "sn74"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "PointcloudEncoder",
+      "label": "forward",
+      "step_id": "S3"
+    },
+    {
+      "from": "PointcloudEncoder",
+      "to": "output",
+      "label": "output",
+      "step_id": "S3"
+    }
+  ],
+  "annotations": [
+    {
+      "target_id": "module:PointcloudEncoder",
+      "note": "# grouper # define the encoder",
+      "type": "description"
+    },
+    {
+      "target_id": "module:PatchDropout",
+      "note": "# if not self.training or self.prob == 0.: #     return x",
+      "type": "description"
+    },
+    {
+      "target_id": "module:Group",
+      "note": "# fps the centers out # knn to get the neighborhood",
+      "type": "description"
+    },
+    {
+      "target_id": "module:skeleton_Group",
+      "note": "# fps the centers out # knn to get the neighborhood",
+      "type": "description"
+    }
+  ]
+}

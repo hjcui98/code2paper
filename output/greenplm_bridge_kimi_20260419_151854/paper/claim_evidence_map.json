@@ -1,0 +1,1319 @@
+{
+  "claims": [
+    {
+      "claim_id": "C1",
+      "claim_text": "The method computes sequence representations with Transformer encoder/decoder components built from attention and position-wise feed-forward sublayers.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E75",
+        "E78",
+        "E135",
+        "E136",
+        "E137",
+        "E138",
+        "E139",
+        "E140",
+        "E141",
+        "E142",
+        "E143",
+        "E144",
+        "E145",
+        "E146",
+        "E147",
+        "E421",
+        "E423",
+        "E425",
+        "E427",
+        "E429",
+        "E431",
+        "E432",
+        "E433",
+        "E434",
+        "E435",
+        "E437",
+        "E438",
+        "E439",
+        "E441",
+        "E442",
+        "E443",
+        "E445",
+        "E446",
+        "E447",
+        "E537",
+        "E538",
+        "E539",
+        "E540",
+        "E541",
+        "E542",
+        "E543",
+        "E544",
+        "E545",
+        "E546",
+        "E547",
+        "E577",
+        "E710",
+        "E711",
+        "E713",
+        "E714",
+        "E715",
+        "E716",
+        "E717",
+        "E718",
+        "E719",
+        "E720",
+        "E721",
+        "E722",
+        "E723",
+        "E724",
+        "E726",
+        "E728",
+        "E729",
+        "E730",
+        "E731",
+        "E733",
+        "E735",
+        "E736",
+        "E737",
+        "E738",
+        "E740",
+        "E741",
+        "E742",
+        "E744",
+        "E745",
+        "E747",
+        "E748",
+        "E749",
+        "E750",
+        "E751",
+        "E752",
+        "E753",
+        "E755",
+        "E756",
+        "E757",
+        "E758",
+        "E759",
+        "E760",
+        "E761",
+        "E762",
+        "E763",
+        "E764",
+        "E765",
+        "E766",
+        "E767",
+        "E769",
+        "E770",
+        "E771",
+        "E772",
+        "E773",
+        "E774",
+        "E775",
+        "E777",
+        "E778",
+        "E779",
+        "E1014",
+        "E1043",
+        "E1057",
+        "E1073",
+        "E1074",
+        "E1075",
+        "E1076",
+        "E1077",
+        "E1078",
+        "E1079",
+        "E1080",
+        "E1081",
+        "E1114",
+        "E1115",
+        "E1116",
+        "E1117",
+        "E1118",
+        "E1119",
+        "E1120",
+        "E1121",
+        "E1122",
+        "E1155",
+        "E1156",
+        "E1157",
+        "E1158",
+        "E1159",
+        "E1160",
+        "E1161",
+        "E1162",
+        "E1163",
+        "E1164",
+        "E1192",
+        "E1193",
+        "E1194",
+        "E1195",
+        "E1196",
+        "E1197",
+        "E1198",
+        "E1199",
+        "E1200",
+        "E1253",
+        "E1254",
+        "E1255",
+        "E1256",
+        "E1257",
+        "E1259",
+        "E1261",
+        "E1262",
+        "E1263",
+        "E1264",
+        "E1265",
+        "E1266",
+        "E1267",
+        "E1325",
+        "E1335",
+        "E1336",
+        "E1342",
+        "E1343",
+        "E1344",
+        "E1345",
+        "E1346",
+        "E1347",
+        "E1348",
+        "E1349",
+        "E1350",
+        "E1351",
+        "E1352",
+        "E1353",
+        "E1354",
+        "E1355",
+        "E1356",
+        "E1357",
+        "E1358",
+        "E1359",
+        "E1410",
+        "E1411",
+        "E1413",
+        "E1414",
+        "E1415",
+        "E1416",
+        "E1417",
+        "E1419",
+        "E1421",
+        "E1422",
+        "E1423",
+        "E1425",
+        "E1427",
+        "E1428",
+        "E1429",
+        "E1430",
+        "E1431",
+        "E1432",
+        "E1433",
+        "E1434",
+        "E1521",
+        "E1522",
+        "E1523",
+        "E1524",
+        "E1525",
+        "E1526",
+        "E1527",
+        "E1528",
+        "E1529",
+        "E1530",
+        "E1531",
+        "E1532",
+        "E1596",
+        "E1800",
+        "E1808",
+        "E2038",
+        "E2039",
+        "E2041",
+        "E2042",
+        "E2043",
+        "E2045",
+        "E2108",
+        "E2109",
+        "E2111",
+        "E2112",
+        "E2113",
+        "E2114",
+        "E2116",
+        "E2160",
+        "E2161",
+        "E2162",
+        "E2184",
+        "E2211",
+        "E2212",
+        "E2213",
+        "E2214",
+        "E2215",
+        "E2216",
+        "E2245",
+        "E2246",
+        "E2253",
+        "E2254",
+        "E2264",
+        "E2265",
+        "E2266",
+        "E2267",
+        "E2268",
+        "E2269",
+        "E2270",
+        "E2271",
+        "E2272",
+        "E2273",
+        "E2274",
+        "E2276",
+        "E2277",
+        "E2278",
+        "E2279",
+        "E2280",
+        "E2281",
+        "E2282",
+        "E2283",
+        "E2350",
+        "E2351",
+        "E2352",
+        "E2354",
+        "E2539",
+        "E2622",
+        "E2630",
+        "E2718",
+        "E2720",
+        "E2805",
+        "E2806",
+        "E2807",
+        "E2808",
+        "E2809",
+        "E2810",
+        "E2811",
+        "E2812",
+        "E2813",
+        "E2905",
+        "E2906",
+        "E3299",
+        "E3310",
+        "E3360",
+        "E3364",
+        "E3368",
+        "E3372",
+        "E3377",
+        "E3382",
+        "E3388",
+        "E3393",
+        "E3695",
+        "E3696",
+        "E3697",
+        "E3698",
+        "E3699",
+        "E3700",
+        "E3701",
+        "E3702",
+        "E3704",
+        "E3705",
+        "E3706",
+        "E3708",
+        "E3709"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "method_mechanism",
+      "caveats": []
+    },
+    {
+      "claim_id": "C2",
+      "claim_text": "PointLLMLlamaModel exposes generic code behaviors: pointwise transformation. Detected implementation patterns include positionwise feed forward.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E136"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH1",
+      "caveats": []
+    },
+    {
+      "claim_id": "C3",
+      "claim_text": "PatchDropout exposes generic code behaviors: regularization. Detected implementation patterns include dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E429"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH2",
+      "caveats": []
+    },
+    {
+      "claim_id": "C4",
+      "claim_text": "PointcloudEncoder exposes generic code behaviors: pointwise transformation, regularization. Detected implementation patterns include positionwise feed forward, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E445"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH3",
+      "caveats": []
+    },
+    {
+      "claim_id": "C5",
+      "claim_text": "SimpleResBlock exposes generic code behaviors: pointwise transformation, normalization. Detected implementation patterns include positionwise feed forward, layer normalization.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E541"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH4",
+      "caveats": []
+    },
+    {
+      "claim_id": "C6",
+      "claim_text": "Mlp exposes generic code behaviors: pointwise transformation, normalization, regularization. Detected implementation patterns include positionwise feed forward, layer normalization, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E544"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH5",
+      "caveats": []
+    },
+    {
+      "claim_id": "C7",
+      "claim_text": "build_vision_projector exposes generic code behaviors: pointwise transformation. Detected implementation patterns include positionwise feed forward.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E547"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH6",
+      "caveats": []
+    },
+    {
+      "claim_id": "C8",
+      "claim_text": "Phi3RMSNorm exposes generic code behaviors: normalization. Detected implementation patterns include layer normalization.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E710"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH7",
+      "caveats": []
+    },
+    {
+      "claim_id": "C9",
+      "claim_text": "Phi3RotaryEmbedding exposes generic code behaviors: representation injection. Detected implementation patterns include sinusoidal positional encoding.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E715"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH8",
+      "caveats": []
+    },
+    {
+      "claim_id": "C10",
+      "claim_text": "Phi3SuScaledRotaryEmbedding exposes generic code behaviors: representation injection. Detected implementation patterns include sinusoidal positional encoding.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E718"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH9",
+      "caveats": []
+    },
+    {
+      "claim_id": "C11",
+      "claim_text": "Phi3YarnScaledRotaryEmbedding exposes generic code behaviors: representation injection. Detected implementation patterns include sinusoidal positional encoding.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E721"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH10",
+      "caveats": []
+    },
+    {
+      "claim_id": "C12",
+      "claim_text": "apply_rotary_pos_emb exposes generic code behaviors: representation injection. Detected implementation patterns include sinusoidal positional encoding.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E726"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH11",
+      "caveats": []
+    },
+    {
+      "claim_id": "C13",
+      "claim_text": "Phi3Attention exposes generic code behaviors: weighted aggregation, representation injection, regularization. Detected implementation patterns include scaled dot product attention, sinusoidal positional encoding, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E733"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH12",
+      "caveats": []
+    },
+    {
+      "claim_id": "C14",
+      "claim_text": "Phi3FlashAttention2 exposes generic code behaviors: normalization, representation injection, regularization. Detected implementation patterns include layer normalization, sinusoidal positional encoding, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E738"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH13",
+      "caveats": []
+    },
+    {
+      "claim_id": "C15",
+      "claim_text": "Phi3SdpaAttention exposes generic code behaviors: representation injection, regularization. Detected implementation patterns include sinusoidal positional encoding, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E745"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH14",
+      "caveats": []
+    },
+    {
+      "claim_id": "C16",
+      "claim_text": "Phi3DecoderLayer exposes generic code behaviors: skip connection, normalization, regularization. Detected implementation patterns include residual connection, layer normalization, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E748"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH15",
+      "caveats": []
+    },
+    {
+      "claim_id": "C17",
+      "claim_text": "Phi3Model exposes generic code behaviors: repeated composition, regularization. Detected implementation patterns include decoder stack, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E753"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH16",
+      "caveats": []
+    },
+    {
+      "claim_id": "C18",
+      "claim_text": "Phi3ForTokenClassification exposes generic code behaviors: regularization. Detected implementation patterns include dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E777"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH17",
+      "caveats": []
+    },
+    {
+      "claim_id": "C19",
+      "claim_text": "disable_torch_init exposes generic code behaviors: normalization. Detected implementation patterns include layer normalization.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E1417"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH18",
+      "caveats": []
+    },
+    {
+      "claim_id": "C20",
+      "claim_text": "PointNet2SemSegMSG exposes generic code behaviors: regularization. Detected implementation patterns include dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E2253"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH19",
+      "caveats": []
+    },
+    {
+      "claim_id": "C21",
+      "claim_text": "PointNet2ClassificationSSG exposes generic code behaviors: pointwise transformation, regularization. Detected implementation patterns include positionwise feed forward, dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E2270"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH20",
+      "caveats": []
+    },
+    {
+      "claim_id": "C22",
+      "claim_text": "PointNet2SemSegSSG exposes generic code behaviors: regularization. Detected implementation patterns include dropout.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E2350"
+      ],
+      "mechanism_ids": [
+        "MECH1"
+      ],
+      "source": "submechanism:SUBMECH21",
+      "caveats": []
+    },
+    {
+      "claim_id": "C23",
+      "claim_text": "The pipeline prepares translation data by converting raw corpora into tokenized, filtered, vocabulary-backed serialized training artifacts.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E311",
+        "E312",
+        "E1817",
+        "E1818",
+        "E1819",
+        "E1820",
+        "E1821",
+        "E1822",
+        "E1823",
+        "E2281",
+        "E2282",
+        "E2283",
+        "E3075",
+        "E3076"
+      ],
+      "mechanism_ids": [
+        "MECH2"
+      ],
+      "source": "method_mechanism",
+      "caveats": []
+    },
+    {
+      "claim_id": "C24",
+      "claim_text": "Training optimizes model parameters by combining forward prediction, loss computation, backpropagation, and the scheduled learning-rate update.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E1657",
+        "E2279"
+      ],
+      "mechanism_ids": [
+        "MECH3"
+      ],
+      "source": "method_mechanism",
+      "caveats": []
+    },
+    {
+      "claim_id": "C25",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E136"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ1",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C26",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E445"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ2",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C27",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E541"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ3",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C28",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E544"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ4",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C29",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E547"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ5",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C30",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E715"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ6",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C31",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E718"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ7",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C32",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E721"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ8",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C33",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E726"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ9",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C34",
+      "claim_text": "Equation candidate Scaled Dot-Product Attention: \\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}(QK^T/\\sqrt{d_k})V",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E733"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ10",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C35",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E733"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ11",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C36",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E738"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ12",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C37",
+      "claim_text": "Equation candidate Periodic Positional Encoding: \\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E745"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ13",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C38",
+      "claim_text": "Equation candidate Point-wise Feed-Forward Transformation: \\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E2270"
+      ],
+      "mechanism_ids": [],
+      "source": "equation_candidate:EQ14",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "claim_id": "C39",
+      "claim_text": "The method contains a paper-facing stage named Transformer Computation.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E75",
+        "E78",
+        "E135",
+        "E136",
+        "E137",
+        "E138",
+        "E139",
+        "E140",
+        "E141",
+        "E142",
+        "E143",
+        "E144",
+        "E145",
+        "E146",
+        "E147",
+        "E421",
+        "E423",
+        "E425",
+        "E427",
+        "E429",
+        "E431",
+        "E432",
+        "E433",
+        "E434",
+        "E435",
+        "E437",
+        "E438",
+        "E439",
+        "E441",
+        "E442",
+        "E443",
+        "E445",
+        "E446",
+        "E447",
+        "E537",
+        "E538",
+        "E539",
+        "E540",
+        "E541",
+        "E542",
+        "E543",
+        "E544",
+        "E545",
+        "E546",
+        "E547",
+        "E577",
+        "E710",
+        "E711",
+        "E713",
+        "E714",
+        "E715",
+        "E716",
+        "E717",
+        "E718",
+        "E719",
+        "E720",
+        "E721",
+        "E722",
+        "E723",
+        "E724",
+        "E726",
+        "E728",
+        "E729",
+        "E730",
+        "E731",
+        "E733",
+        "E735",
+        "E736",
+        "E737",
+        "E738",
+        "E740",
+        "E741",
+        "E742",
+        "E744",
+        "E745",
+        "E747",
+        "E748",
+        "E749",
+        "E750",
+        "E751",
+        "E752",
+        "E753",
+        "E755",
+        "E756",
+        "E757",
+        "E758",
+        "E759",
+        "E760",
+        "E761",
+        "E762",
+        "E763",
+        "E764",
+        "E765",
+        "E766",
+        "E767",
+        "E769",
+        "E770",
+        "E771",
+        "E772",
+        "E773",
+        "E774",
+        "E775",
+        "E777",
+        "E778",
+        "E779",
+        "E1014",
+        "E1043",
+        "E1057",
+        "E1073",
+        "E1074",
+        "E1075",
+        "E1076",
+        "E1077",
+        "E1078",
+        "E1079",
+        "E1080",
+        "E1081",
+        "E1114",
+        "E1115",
+        "E1116",
+        "E1117",
+        "E1118",
+        "E1119",
+        "E1120",
+        "E1121",
+        "E1122",
+        "E1155",
+        "E1156",
+        "E1157",
+        "E1158",
+        "E1159",
+        "E1160",
+        "E1161",
+        "E1162",
+        "E1163",
+        "E1164",
+        "E1192",
+        "E1193",
+        "E1194",
+        "E1195",
+        "E1196",
+        "E1197",
+        "E1198",
+        "E1199",
+        "E1200",
+        "E1253",
+        "E1254",
+        "E1255",
+        "E1256",
+        "E1257",
+        "E1259",
+        "E1261",
+        "E1262",
+        "E1263",
+        "E1264",
+        "E1265",
+        "E1266",
+        "E1267",
+        "E1325",
+        "E1335",
+        "E1336",
+        "E1342",
+        "E1343",
+        "E1344",
+        "E1345",
+        "E1346",
+        "E1347",
+        "E1348",
+        "E1349",
+        "E1350",
+        "E1351",
+        "E1352",
+        "E1353",
+        "E1354",
+        "E1355",
+        "E1356",
+        "E1357",
+        "E1358",
+        "E1359",
+        "E1410",
+        "E1411",
+        "E1413",
+        "E1414",
+        "E1415",
+        "E1416",
+        "E1417",
+        "E1419",
+        "E1421",
+        "E1422",
+        "E1423",
+        "E1425",
+        "E1427",
+        "E1428",
+        "E1429",
+        "E1430",
+        "E1431",
+        "E1432",
+        "E1433",
+        "E1434",
+        "E1521",
+        "E1522",
+        "E1523",
+        "E1524",
+        "E1525",
+        "E1526",
+        "E1527",
+        "E1528",
+        "E1529",
+        "E1530",
+        "E1531",
+        "E1532",
+        "E1596",
+        "E1800",
+        "E1808",
+        "E2038",
+        "E2039",
+        "E2041",
+        "E2042",
+        "E2043",
+        "E2045",
+        "E2108",
+        "E2109",
+        "E2111",
+        "E2112",
+        "E2113",
+        "E2114",
+        "E2116",
+        "E2160",
+        "E2161",
+        "E2162",
+        "E2184",
+        "E2211",
+        "E2212",
+        "E2213",
+        "E2214",
+        "E2215",
+        "E2216",
+        "E2245",
+        "E2246",
+        "E2253",
+        "E2254",
+        "E2264",
+        "E2265",
+        "E2266",
+        "E2267",
+        "E2268",
+        "E2269",
+        "E2270",
+        "E2271",
+        "E2272",
+        "E2273",
+        "E2274",
+        "E2276",
+        "E2277",
+        "E2278",
+        "E2279",
+        "E2280",
+        "E2281",
+        "E2282",
+        "E2283",
+        "E2350",
+        "E2351",
+        "E2352",
+        "E2354",
+        "E2539",
+        "E2622",
+        "E2630",
+        "E2718",
+        "E2720",
+        "E2805",
+        "E2806",
+        "E2807",
+        "E2808",
+        "E2809",
+        "E2810",
+        "E2811",
+        "E2812",
+        "E2813",
+        "E2905",
+        "E2906",
+        "E3299",
+        "E3310",
+        "E3360",
+        "E3364",
+        "E3368",
+        "E3372",
+        "E3377",
+        "E3382",
+        "E3388",
+        "E3393",
+        "E3695",
+        "E3696",
+        "E3697",
+        "E3698",
+        "E3699",
+        "E3700",
+        "E3701",
+        "E3702",
+        "E3704",
+        "E3705",
+        "E3706",
+        "E3708",
+        "E3709"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C1",
+      "caveats": []
+    },
+    {
+      "claim_id": "C40",
+      "claim_text": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E3622"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C4",
+      "caveats": []
+    },
+    {
+      "claim_id": "C41",
+      "claim_text": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E3311"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C5",
+      "caveats": []
+    },
+    {
+      "claim_id": "C42",
+      "claim_text": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E370",
+        "E371",
+        "E372",
+        "E373",
+        "E374",
+        "E375",
+        "E376",
+        "E377",
+        "E378",
+        "E379",
+        "E380",
+        "E419",
+        "E421",
+        "E422",
+        "E423",
+        "E424",
+        "E425",
+        "E426",
+        "E427",
+        "E428"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C6",
+      "caveats": []
+    },
+    {
+      "claim_id": "C43",
+      "claim_text": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E3355",
+        "E3356",
+        "E3357",
+        "E3358",
+        "E3359",
+        "E3360",
+        "E3361",
+        "E3362",
+        "E3363",
+        "E3364",
+        "E3365",
+        "E3366",
+        "E3367",
+        "E3368",
+        "E3369",
+        "E3370",
+        "E3371",
+        "E3372",
+        "E3373",
+        "E3374"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C7",
+      "caveats": []
+    },
+    {
+      "claim_id": "C44",
+      "claim_text": "The method contains a paper-facing stage named Input Preparation.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E311",
+        "E312",
+        "E1817",
+        "E1818",
+        "E1819",
+        "E1820",
+        "E1821",
+        "E1822",
+        "E1823",
+        "E2281",
+        "E2282",
+        "E2283",
+        "E3075",
+        "E3076"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C2",
+      "caveats": []
+    },
+    {
+      "claim_id": "C45",
+      "claim_text": "The method contains a paper-facing stage named Scheduled Optimization.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E1657",
+        "E2279"
+      ],
+      "mechanism_ids": [],
+      "source": "claim_contract:C3",
+      "caveats": []
+    },
+    {
+      "claim_id": "C46",
+      "claim_text": "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E441",
+        "E421",
+        "E425"
+      ],
+      "mechanism_ids": [],
+      "source": "author_claim:symbol",
+      "caveats": [
+        "Treat parameter-free wording as a hypothesis until all involved operators are checked for learnable parameters."
+      ]
+    },
+    {
+      "claim_id": "C47",
+      "claim_text": "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E80",
+        "E136"
+      ],
+      "mechanism_ids": [],
+      "source": "author_claim:symbol",
+      "caveats": [
+        "Final trainable subset per stage must be cross-checked with actual launch scripts/arguments."
+      ]
+    },
+    {
+      "claim_id": "C48",
+      "claim_text": "Use large text supervision to reduce dependence on scarce point-text pairs.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E80",
+        "E228"
+      ],
+      "mechanism_ids": [],
+      "source": "author_claim:symbol",
+      "caveats": [
+        "Stage behavior in code is controlled by flags (stage_2, tune_mm_mlp_adapter, fix_llm/fix_pointnet), not explicit Stage-I/II/III classes.",
+        "Release scripts should be verified as real content (not LFS pointer) before claiming exact command-level differences.",
+        "The method narrative should explain why text-first alignment lowers 3D data pressure."
+      ]
+    },
+    {
+      "claim_id": "C49",
+      "claim_text": "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E547",
+        "E80"
+      ],
+      "mechanism_ids": [],
+      "source": "author_claim:symbol",
+      "caveats": [
+        "A shared bridge simplifies modality transfer logic and keeps the method storyline coherent."
+      ]
+    },
+    {
+      "claim_id": "C50",
+      "claim_text": "Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E441",
+        "E139"
+      ],
+      "mechanism_ids": [],
+      "source": "author_claim:symbol",
+      "caveats": [
+        "Phrase as code-aligned aggregation/routing unless parameter counts are explicitly audited at symbol level.",
+        "Supports the efficiency-plus-information-retention argument without overloading the language model context."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3403 @@
+{
+  "meta": {
+    "version": "author-marker-alignment-v1",
+    "producer": "code2paper.code_report"
+  },
+  "modules": [
+    {
+      "module_id": "AM1",
+      "author_module": {
+        "path": "pointllm/train/train.py",
+        "symbol": "train",
+        "role": "training-stage orchestration via argument combinations",
+        "importance": "core",
+        "is_novel": false,
+        "notes": "Main anchor for stage behavior (freeze/unfreeze and adapter settings)."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn2",
+          "role": "training_loop",
+          "symbol": "DataArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            49,
+            61
+          ],
+          "evidence_ids": [
+            "E76"
+          ]
+        },
+        {
+          "snippet_id": "sn4",
+          "role": "training_loop",
+          "symbol": "safe_save_model_for_hf_trainer",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            102,
+            112
+          ],
+          "evidence_ids": [
+            "E78",
+            "E81",
+            "E82",
+            "E83",
+            "E84"
+          ]
+        },
+        {
+          "snippet_id": "sn1",
+          "role": "training_loop",
+          "symbol": "ModelArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            42,
+            46
+          ],
+          "evidence_ids": [
+            "E75"
+          ]
+        },
+        {
+          "snippet_id": "sn7",
+          "role": "other",
+          "symbol": "patch_FSDP_use_orig_params",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            223,
+            227
+          ],
+          "evidence_ids": [
+            "E80"
+          ]
+        },
+        {
+          "snippet_id": "sn8",
+          "role": "other",
+          "symbol": "wrap_func",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            224,
+            226
+          ],
+          "evidence_ids": [
+            "E80"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E77",
+        "E76",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E75",
+        "E2410",
+        "E228",
+        "E230",
+        "E236",
+        "E234",
+        "E233",
+        "E232",
+        "E237",
+        "E243",
+        "E244",
+        "E245",
+        "E246",
+        "E247",
+        "E248",
+        "E249",
+        "E250",
+        "E251",
+        "E140",
+        "E144",
+        "E147",
+        "E146",
+        "E145",
+        "E143",
+        "E141",
+        "E172",
+        "E173",
+        "E174"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM2",
+      "author_module": {
+        "path": "pointllm/model/pointllm.py",
+        "symbol": "PointLLMLlamaModel.forward",
+        "role": "inject projected point features into language token stream",
+        "importance": "core",
+        "is_novel": false,
+        "notes": "Direct evidence for point-language fusion behavior."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn47",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel.forward",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            91,
+            179
+          ],
+          "evidence_ids": [
+            "E139",
+            "E136",
+            "E160",
+            "E161",
+            "E162",
+            "E163",
+            "E164",
+            "E165",
+            "E166",
+            "E167",
+            "E168",
+            "E169",
+            "E170"
+          ]
+        },
+        {
+          "snippet_id": "sn52",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaForCausalLM.forward",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            207,
+            266
+          ],
+          "evidence_ids": [
+            "E144",
+            "E140",
+            "E180",
+            "E181",
+            "E182",
+            "E183",
+            "E184",
+            "E185",
+            "E186",
+            "E187"
+          ]
+        },
+        {
+          "snippet_id": "sn46",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel.forward",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            91,
+            101
+          ],
+          "evidence_ids": [
+            "E139",
+            "E136",
+            "E160",
+            "E161",
+            "E162",
+            "E163",
+            "E164",
+            "E165",
+            "E166",
+            "E167",
+            "E168",
+            "E169",
+            "E170"
+          ]
+        },
+        {
+          "snippet_id": "sn18",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            85,
+            113
+          ],
+          "evidence_ids": [
+            "E429",
+            "E432",
+            "E468",
+            "E469",
+            "E470",
+            "E471",
+            "E472",
+            "E473",
+            "E474",
+            "E475"
+          ]
+        },
+        {
+          "snippet_id": "sn31",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            290,
+            346
+          ],
+          "evidence_ids": [
+            "E447",
+            "E445",
+            "E525",
+            "E526",
+            "E527",
+            "E528",
+            "E529",
+            "E530",
+            "E531",
+            "E532",
+            "E533",
+            "E534",
+            "E535"
+          ]
+        },
+        {
+          "snippet_id": "sn21",
+          "role": "training_loop",
+          "symbol": "Group.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            120,
+            148
+          ],
+          "evidence_ids": [
+            "E435",
+            "E433",
+            "E478",
+            "E479",
+            "E480",
+            "E481",
+            "E482",
+            "E483",
+            "E484",
+            "E485"
+          ]
+        },
+        {
+          "snippet_id": "sn28",
+          "role": "model_arch",
+          "symbol": "skeleton_Group.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            190,
+            249
+          ],
+          "evidence_ids": [
+            "E443",
+            "E441",
+            "E501",
+            "E502",
+            "E503",
+            "E504",
+            "E505",
+            "E506",
+            "E507",
+            "E508",
+            "E509",
+            "E510",
+            "E511"
+          ]
+        },
+        {
+          "snippet_id": "sn17",
+          "role": "training_loop",
+          "symbol": "PatchDropout.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            85,
+            111
+          ],
+          "evidence_ids": [
+            "E432",
+            "E429",
+            "E468",
+            "E469",
+            "E470",
+            "E471",
+            "E472",
+            "E473",
+            "E474",
+            "E475"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E139",
+        "E136",
+        "E160",
+        "E161",
+        "E162",
+        "E163",
+        "E164",
+        "E165",
+        "E166",
+        "E167",
+        "E168",
+        "E169",
+        "E170",
+        "E144",
+        "E140",
+        "E180",
+        "E181",
+        "E182",
+        "E183",
+        "E184",
+        "E185",
+        "E186",
+        "E187",
+        "E429",
+        "E432",
+        "E468",
+        "E469",
+        "E470",
+        "E471",
+        "E472",
+        "E473",
+        "E474",
+        "E475",
+        "E447",
+        "E445",
+        "E525",
+        "E526",
+        "E527",
+        "E528",
+        "E529",
+        "E530",
+        "E531",
+        "E532",
+        "E533",
+        "E534",
+        "E535",
+        "E435",
+        "E433"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM3",
+      "author_module": {
+        "path": "pointllm/data/object_point_dataset.py",
+        "symbol": "ObjectPointCloudDataset",
+        "role": "load/filter conversation supervision and point samples",
+        "importance": "core",
+        "is_novel": false,
+        "notes": "Shows which supervision types are actually used during training."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn33",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            62,
+            209
+          ],
+          "evidence_ids": [
+            "E228",
+            "E230",
+            "E236",
+            "E234",
+            "E233",
+            "E232",
+            "E237",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248"
+          ]
+        },
+        {
+          "snippet_id": "sn34",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            62,
+            210
+          ],
+          "evidence_ids": [
+            "E228",
+            "E230",
+            "E236",
+            "E234",
+            "E233",
+            "E232",
+            "E237",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248"
+          ]
+        },
+        {
+          "snippet_id": "sn35",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset.__init__",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            64,
+            140
+          ],
+          "evidence_ids": [
+            "E230",
+            "E228",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248",
+            "E249",
+            "E250",
+            "E251"
+          ]
+        },
+        {
+          "snippet_id": "sn32",
+          "role": "training_loop",
+          "symbol": "make_object_point_data_module",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            13,
+            60
+          ],
+          "evidence_ids": [
+            "E226",
+            "E239",
+            "E240",
+            "E241",
+            "E242"
+          ]
+        },
+        {
+          "snippet_id": "sn39",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset.__getitem__",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            167,
+            205
+          ],
+          "evidence_ids": [
+            "E236",
+            "E228",
+            "E260",
+            "E261",
+            "E262",
+            "E263",
+            "E264",
+            "E265",
+            "E266",
+            "E267",
+            "E268",
+            "E269"
+          ]
+        },
+        {
+          "snippet_id": "sn36",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset._load_point_cloud",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            141,
+            143
+          ],
+          "evidence_ids": [
+            "E232",
+            "E228",
+            "E252"
+          ]
+        },
+        {
+          "snippet_id": "sn37",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset._load_objaverse_point_cloud",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            145,
+            152
+          ],
+          "evidence_ids": [
+            "E233",
+            "E228",
+            "E253",
+            "E254"
+          ]
+        },
+        {
+          "snippet_id": "sn38",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset.pc_norm",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            154,
+            165
+          ],
+          "evidence_ids": [
+            "E234",
+            "E228",
+            "E255",
+            "E256",
+            "E257",
+            "E258",
+            "E259"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E228",
+        "E230",
+        "E236",
+        "E234",
+        "E233",
+        "E232",
+        "E237",
+        "E243",
+        "E244",
+        "E245",
+        "E246",
+        "E247",
+        "E248",
+        "E249",
+        "E250",
+        "E251",
+        "E226",
+        "E239",
+        "E240",
+        "E241",
+        "E242",
+        "E260",
+        "E261",
+        "E262",
+        "E263",
+        "E264",
+        "E265",
+        "E266",
+        "E267",
+        "E268",
+        "E269",
+        "E252",
+        "E253",
+        "E254",
+        "E255",
+        "E256",
+        "E257",
+        "E258",
+        "E259",
+        "E270",
+        "E2410",
+        "E76",
+        "E77",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM4",
+      "author_module": {
+        "path": "pointllm/data/utils.py",
+        "symbol": "preprocess_multimodal_point_cloud",
+        "role": "convert point placeholders into multimodal training tokens",
+        "importance": "core",
+        "is_novel": false,
+        "notes": "Bridge between raw conversations and multimodal tokenized inputs."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn78",
+          "role": "preprocess_multimodal_point_cloud",
+          "symbol": "preprocess_multimodal_point_cloud",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            204,
+            207
+          ],
+          "evidence_ids": [
+            "E312",
+            "E344"
+          ]
+        },
+        {
+          "snippet_id": "sn79",
+          "role": "training_loop",
+          "symbol": "preprocess_multimodal_point_cloud",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            204,
+            219
+          ],
+          "evidence_ids": [
+            "E312",
+            "E344"
+          ]
+        },
+        {
+          "snippet_id": "sn77",
+          "role": "training_loop",
+          "symbol": "preprocess_v1",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            59,
+            202
+          ],
+          "evidence_ids": [
+            "E311",
+            "E332",
+            "E333",
+            "E334",
+            "E335",
+            "E336",
+            "E337",
+            "E338",
+            "E339",
+            "E340",
+            "E341",
+            "E342",
+            "E343"
+          ]
+        },
+        {
+          "snippet_id": "sn82",
+          "role": "training_loop",
+          "symbol": "DataCollatorForPointTextDataset",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            247,
+            275
+          ],
+          "evidence_ids": [
+            "E316",
+            "E318",
+            "E353",
+            "E354",
+            "E355",
+            "E356",
+            "E357",
+            "E358"
+          ]
+        },
+        {
+          "snippet_id": "sn83",
+          "role": "training_loop",
+          "symbol": "DataCollatorForPointTextDataset.__call__",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            252,
+            275
+          ],
+          "evidence_ids": [
+            "E318",
+            "E316",
+            "E353",
+            "E354",
+            "E355",
+            "E356",
+            "E357",
+            "E358"
+          ]
+        },
+        {
+          "snippet_id": "sn84",
+          "role": "training_loop",
+          "symbol": "farthest_point_sample",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            277,
+            298
+          ],
+          "evidence_ids": [
+            "E319",
+            "E359",
+            "E360",
+            "E361",
+            "E362",
+            "E363",
+            "E364",
+            "E365"
+          ]
+        },
+        {
+          "snippet_id": "sn85",
+          "role": "training_loop",
+          "symbol": "pc_normalize",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            300,
+            311
+          ],
+          "evidence_ids": [
+            "E321",
+            "E366",
+            "E367",
+            "E368",
+            "E369"
+          ]
+        },
+        {
+          "snippet_id": "sn71",
+          "role": "training_loop",
+          "symbol": "LRUCache",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            27,
+            56
+          ],
+          "evidence_ids": [
+            "E305",
+            "E308",
+            "E307",
+            "E306",
+            "E323",
+            "E324",
+            "E325",
+            "E326",
+            "E327",
+            "E328",
+            "E329",
+            "E330",
+            "E309"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E312",
+        "E344",
+        "E311",
+        "E332",
+        "E333",
+        "E334",
+        "E335",
+        "E336",
+        "E337",
+        "E338",
+        "E339",
+        "E340",
+        "E341",
+        "E342",
+        "E343",
+        "E316",
+        "E318",
+        "E353",
+        "E354",
+        "E355",
+        "E356",
+        "E357",
+        "E358",
+        "E319",
+        "E359",
+        "E360",
+        "E361",
+        "E362",
+        "E363",
+        "E364",
+        "E365",
+        "E321",
+        "E366",
+        "E367",
+        "E368",
+        "E369",
+        "E305",
+        "E308",
+        "E307",
+        "E306",
+        "E323",
+        "E324",
+        "E325",
+        "E326",
+        "E327",
+        "E328",
+        "E329",
+        "E330"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM5",
+      "author_module": {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "symbol": "skeleton_Group",
+        "role": "compact point-token aggregation with neighborhood routing",
+        "importance": "core",
+        "is_novel": true,
+        "notes": "Candidate evidence for parameter-free pooling narrative."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn25",
+          "role": "model_arch",
+          "symbol": "skeleton_Group",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            184,
+            249
+          ],
+          "evidence_ids": [
+            "E441",
+            "E443",
+            "E442",
+            "E499",
+            "E500",
+            "E501",
+            "E502",
+            "E503",
+            "E504",
+            "E505",
+            "E506",
+            "E507",
+            "E508"
+          ]
+        },
+        {
+          "snippet_id": "sn26",
+          "role": "skeleton_group",
+          "symbol": "skeleton_Group",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            184,
+            254
+          ],
+          "evidence_ids": [
+            "E441",
+            "E443",
+            "E442",
+            "E499",
+            "E500",
+            "E501",
+            "E502",
+            "E503",
+            "E504",
+            "E505",
+            "E506",
+            "E507",
+            "E508"
+          ]
+        },
+        {
+          "snippet_id": "sn28",
+          "role": "model_arch",
+          "symbol": "skeleton_Group.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            190,
+            249
+          ],
+          "evidence_ids": [
+            "E443",
+            "E441",
+            "E501",
+            "E502",
+            "E503",
+            "E504",
+            "E505",
+            "E506",
+            "E507",
+            "E508",
+            "E509",
+            "E510",
+            "E511"
+          ]
+        },
+        {
+          "snippet_id": "sn29",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            255,
+            346
+          ],
+          "evidence_ids": [
+            "E445",
+            "E447",
+            "E446",
+            "E513",
+            "E514",
+            "E515",
+            "E516",
+            "E517",
+            "E518",
+            "E519",
+            "E520",
+            "E521",
+            "E522"
+          ]
+        },
+        {
+          "snippet_id": "sn31",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            290,
+            346
+          ],
+          "evidence_ids": [
+            "E447",
+            "E445",
+            "E525",
+            "E526",
+            "E527",
+            "E528",
+            "E529",
+            "E530",
+            "E531",
+            "E532",
+            "E533",
+            "E534",
+            "E535"
+          ]
+        },
+        {
+          "snippet_id": "sn19",
+          "role": "training_loop",
+          "symbol": "Group",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            114,
+            148
+          ],
+          "evidence_ids": [
+            "E433",
+            "E435",
+            "E434",
+            "E476",
+            "E477",
+            "E478",
+            "E479",
+            "E480",
+            "E481",
+            "E482",
+            "E483",
+            "E484",
+            "E485"
+          ]
+        },
+        {
+          "snippet_id": "sn21",
+          "role": "training_loop",
+          "symbol": "Group.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            120,
+            148
+          ],
+          "evidence_ids": [
+            "E435",
+            "E433",
+            "E478",
+            "E479",
+            "E480",
+            "E481",
+            "E482",
+            "E483",
+            "E484",
+            "E485"
+          ]
+        },
+        {
+          "snippet_id": "sn30",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.__init__",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            256,
+            287
+          ],
+          "evidence_ids": [
+            "E446",
+            "E445",
+            "E513",
+            "E514",
+            "E515",
+            "E516",
+            "E517",
+            "E518",
+            "E519",
+            "E520",
+            "E521",
+            "E522",
+            "E523"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E441",
+        "E443",
+        "E442",
+        "E499",
+        "E500",
+        "E501",
+        "E502",
+        "E503",
+        "E504",
+        "E505",
+        "E506",
+        "E507",
+        "E508",
+        "E509",
+        "E510",
+        "E511",
+        "E445",
+        "E447",
+        "E446",
+        "E513",
+        "E514",
+        "E515",
+        "E516",
+        "E517",
+        "E518",
+        "E519",
+        "E520",
+        "E521",
+        "E522",
+        "E525",
+        "E526",
+        "E527",
+        "E528",
+        "E529",
+        "E530",
+        "E531",
+        "E532",
+        "E533",
+        "E534",
+        "E535",
+        "E433",
+        "E435",
+        "E434",
+        "E476",
+        "E477",
+        "E478",
+        "E479",
+        "E480"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM6",
+      "author_module": {
+        "path": "llava/model/multimodal_projector/builder.py",
+        "symbol": "build_vision_projector",
+        "role": "shared projector from encoder space to LLM hidden space",
+        "importance": "core",
+        "is_novel": false,
+        "notes": "Key reusable interface across stages."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn66",
+          "role": "model_arch",
+          "symbol": "build_vision_projector",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            53,
+            63
+          ],
+          "evidence_ids": [
+            "E547",
+            "E569",
+            "E570",
+            "E571",
+            "E572",
+            "E573"
+          ]
+        },
+        {
+          "snippet_id": "sn67",
+          "role": "model_arch",
+          "symbol": "build_vision_projector",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            53,
+            67
+          ],
+          "evidence_ids": [
+            "E547",
+            "E569",
+            "E570",
+            "E571",
+            "E572",
+            "E573"
+          ]
+        },
+        {
+          "snippet_id": "sn56",
+          "role": "training_loop",
+          "symbol": "IdentityMap",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            6,
+            15
+          ],
+          "evidence_ids": [
+            "E537",
+            "E538",
+            "E539",
+            "E540",
+            "E548",
+            "E549"
+          ]
+        },
+        {
+          "snippet_id": "sn59",
+          "role": "other",
+          "symbol": "IdentityMap.config",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            14,
+            15
+          ],
+          "evidence_ids": [
+            "E540",
+            "E537"
+          ]
+        },
+        {
+          "snippet_id": "sn63",
+          "role": "training_loop",
+          "symbol": "Mlp",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            32,
+            51
+          ],
+          "evidence_ids": [
+            "E544",
+            "E545",
+            "E546",
+            "E558",
+            "E559",
+            "E560",
+            "E561",
+            "E562",
+            "E563",
+            "E564",
+            "E565",
+            "E566",
+            "E567"
+          ]
+        },
+        {
+          "snippet_id": "sn64",
+          "role": "model_arch",
+          "symbol": "Mlp.__init__",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            33,
+            42
+          ],
+          "evidence_ids": [
+            "E545",
+            "E544",
+            "E558",
+            "E559",
+            "E560",
+            "E561",
+            "E562",
+            "E563"
+          ]
+        },
+        {
+          "snippet_id": "sn57",
+          "role": "other",
+          "symbol": "IdentityMap.__init__",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            7,
+            8
+          ],
+          "evidence_ids": [
+            "E538",
+            "E537",
+            "E548",
+            "E549"
+          ]
+        },
+        {
+          "snippet_id": "sn58",
+          "role": "training_loop",
+          "symbol": "IdentityMap.forward",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            10,
+            11
+          ],
+          "evidence_ids": [
+            "E539",
+            "E537"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E547",
+        "E569",
+        "E570",
+        "E571",
+        "E572",
+        "E573",
+        "E537",
+        "E538",
+        "E539",
+        "E540",
+        "E548",
+        "E549",
+        "E544",
+        "E545",
+        "E546",
+        "E558",
+        "E559",
+        "E560",
+        "E561",
+        "E562",
+        "E563",
+        "E564",
+        "E565",
+        "E566",
+        "E567",
+        "E541",
+        "E542",
+        "E543",
+        "E550",
+        "E551",
+        "E552",
+        "E553",
+        "E554",
+        "E555",
+        "E556",
+        "E557",
+        "E568",
+        "E136",
+        "E139",
+        "E137",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153",
+        "E154",
+        "E155"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    },
+    {
+      "module_id": "AM7",
+      "author_module": {
+        "path": "pointllm/train/pointllm_trainer.py",
+        "symbol": "PointLLMTrainer",
+        "role": "trainer-side save/checkpoint behavior",
+        "importance": "supporting",
+        "is_novel": false,
+        "notes": "Engineering support, not method centerpiece."
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn69",
+          "role": "training_loop",
+          "symbol": "PointLLMTrainer",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            23,
+            51
+          ],
+          "evidence_ids": [
+            "E579",
+            "E580",
+            "E583",
+            "E584",
+            "E585",
+            "E586",
+            "E587",
+            "E588",
+            "E589",
+            "E590",
+            "E591",
+            "E592",
+            "E593"
+          ]
+        },
+        {
+          "snippet_id": "sn70",
+          "role": "training_loop",
+          "symbol": "PointLLMTrainer._save",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            25,
+            51
+          ],
+          "evidence_ids": [
+            "E580",
+            "E579",
+            "E583",
+            "E584",
+            "E585",
+            "E586",
+            "E587",
+            "E588",
+            "E589",
+            "E590",
+            "E591",
+            "E592",
+            "E593"
+          ]
+        },
+        {
+          "snippet_id": "sn68",
+          "role": "training_loop",
+          "symbol": "unwrap_model",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            9,
+            20
+          ],
+          "evidence_ids": [
+            "E577",
+            "E581",
+            "E582"
+          ]
+        },
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn29",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            255,
+            346
+          ],
+          "evidence_ids": [
+            "E445",
+            "E447",
+            "E446",
+            "E513",
+            "E514",
+            "E515",
+            "E516",
+            "E517",
+            "E518",
+            "E519",
+            "E520",
+            "E521",
+            "E522"
+          ]
+        },
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn31",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            290,
+            346
+          ],
+          "evidence_ids": [
+            "E447",
+            "E445",
+            "E525",
+            "E526",
+            "E527",
+            "E528",
+            "E529",
+            "E530",
+            "E531",
+            "E532",
+            "E533",
+            "E534",
+            "E535"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E579",
+        "E580",
+        "E583",
+        "E584",
+        "E585",
+        "E586",
+        "E587",
+        "E588",
+        "E589",
+        "E590",
+        "E591",
+        "E592",
+        "E593",
+        "E577",
+        "E581",
+        "E582",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E445",
+        "E447",
+        "E446",
+        "E513",
+        "E514",
+        "E515",
+        "E516",
+        "E517",
+        "E518",
+        "E519",
+        "E520",
+        "E521",
+        "E522",
+        "E77",
+        "E525",
+        "E526",
+        "E527",
+        "E528",
+        "E529"
+      ],
+      "missing_implementation": false,
+      "implementation_completeness": "supported"
+    }
+  ],
+  "pipeline_steps": [
+    {
+      "step_id": "AS1",
+      "author_step": {
+        "name": "Stage I: Text-first interface warmup",
+        "purpose": "Establish projector-language coupling under mostly frozen backbone settings.",
+        "input": [
+          "caption/description-style text supervision"
+        ],
+        "output": [
+          "stable projector initialization for language conditioning"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "llava/model/multimodal_projector/builder.py",
+          "release/paper/scripts/train/1.sh"
+        ],
+        "highlight_level": "main",
+        "omit_from_main_figure": false
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn56",
+          "role": "training_loop",
+          "symbol": "IdentityMap",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            6,
+            15
+          ],
+          "evidence_ids": [
+            "E537",
+            "E538",
+            "E539",
+            "E540",
+            "E548",
+            "E549"
+          ]
+        },
+        {
+          "snippet_id": "sn4",
+          "role": "training_loop",
+          "symbol": "safe_save_model_for_hf_trainer",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            102,
+            112
+          ],
+          "evidence_ids": [
+            "E78",
+            "E81",
+            "E82",
+            "E83",
+            "E84"
+          ]
+        },
+        {
+          "snippet_id": "sn58",
+          "role": "training_loop",
+          "symbol": "IdentityMap.forward",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            10,
+            11
+          ],
+          "evidence_ids": [
+            "E539",
+            "E537"
+          ]
+        },
+        {
+          "snippet_id": "sn59",
+          "role": "other",
+          "symbol": "IdentityMap.config",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            14,
+            15
+          ],
+          "evidence_ids": [
+            "E540",
+            "E537"
+          ]
+        },
+        {
+          "snippet_id": "sn60",
+          "role": "training_loop",
+          "symbol": "SimpleResBlock",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            18,
+            30
+          ],
+          "evidence_ids": [
+            "E541",
+            "E542",
+            "E543",
+            "E550",
+            "E551",
+            "E552",
+            "E553",
+            "E554",
+            "E555",
+            "E556",
+            "E557"
+          ]
+        },
+        {
+          "snippet_id": "sn62",
+          "role": "training_loop",
+          "symbol": "SimpleResBlock.forward",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            28,
+            30
+          ],
+          "evidence_ids": [
+            "E543",
+            "E541",
+            "E556",
+            "E557"
+          ]
+        },
+        {
+          "snippet_id": "sn63",
+          "role": "training_loop",
+          "symbol": "Mlp",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            32,
+            51
+          ],
+          "evidence_ids": [
+            "E544",
+            "E545",
+            "E546",
+            "E558",
+            "E559",
+            "E560",
+            "E561",
+            "E562",
+            "E563",
+            "E564",
+            "E565",
+            "E566",
+            "E567"
+          ]
+        },
+        {
+          "snippet_id": "sn65",
+          "role": "training_loop",
+          "symbol": "Mlp.forward",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            44,
+            51
+          ],
+          "evidence_ids": [
+            "E546",
+            "E544",
+            "E564",
+            "E565",
+            "E566",
+            "E567",
+            "E568"
+          ]
+        },
+        {
+          "snippet_id": "sn66",
+          "role": "model_arch",
+          "symbol": "build_vision_projector",
+          "file": "llava/model/multimodal_projector/builder.py",
+          "lines": [
+            53,
+            63
+          ],
+          "evidence_ids": [
+            "E547",
+            "E569",
+            "E570",
+            "E571",
+            "E572",
+            "E573"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E77",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E537",
+        "E538",
+        "E539",
+        "E540",
+        "E548",
+        "E549",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E541",
+        "E542",
+        "E543",
+        "E550",
+        "E551",
+        "E552",
+        "E553",
+        "E554",
+        "E555",
+        "E556",
+        "E557",
+        "E544",
+        "E545",
+        "E546",
+        "E558",
+        "E559",
+        "E560",
+        "E561",
+        "E562",
+        "E563",
+        "E564",
+        "E565",
+        "E566",
+        "E567",
+        "E568",
+        "E547",
+        "E569",
+        "E570",
+        "E571",
+        "E572",
+        "E573",
+        "E75",
+        "E76",
+        "E595",
+        "E596",
+        "E597",
+        "E2412",
+        "E228",
+        "E230",
+        "E236",
+        "E234",
+        "E233",
+        "E232",
+        "E237",
+        "E243",
+        "E244",
+        "E245",
+        "E246",
+        "E247",
+        "E248",
+        "E249",
+        "E250",
+        "E251",
+        "E136",
+        "E139",
+        "E137",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153",
+        "E154",
+        "E155",
+        "E156",
+        "E157",
+        "E140",
+        "E144",
+        "E147",
+        "E146",
+        "E145"
+      ],
+      "missing_implementation": false,
+      "coverage": "supported"
+    },
+    {
+      "step_id": "AS2",
+      "author_step": {
+        "name": "Stage II: Rich instruction alignment",
+        "purpose": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+        "input": [
+          "detailed_description",
+          "single_round",
+          "multi_round"
+        ],
+        "output": [
+          "improved instruction-following alignment before 3D transfer"
+        ],
+        "related_files": [
+          "pointllm/train/train.py",
+          "pointllm/data/object_point_dataset.py",
+          "pointllm/data/utils.py",
+          "release/paper/scripts/train/2.sh"
+        ],
+        "highlight_level": "main",
+        "omit_from_main_figure": false
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn33",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            62,
+            209
+          ],
+          "evidence_ids": [
+            "E228",
+            "E230",
+            "E236",
+            "E234",
+            "E233",
+            "E232",
+            "E237",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248"
+          ]
+        },
+        {
+          "snippet_id": "sn34",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            62,
+            210
+          ],
+          "evidence_ids": [
+            "E228",
+            "E230",
+            "E236",
+            "E234",
+            "E233",
+            "E232",
+            "E237",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248"
+          ]
+        },
+        {
+          "snippet_id": "sn35",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset.__init__",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            64,
+            140
+          ],
+          "evidence_ids": [
+            "E230",
+            "E228",
+            "E243",
+            "E244",
+            "E245",
+            "E246",
+            "E247",
+            "E248",
+            "E249",
+            "E250",
+            "E251"
+          ]
+        },
+        {
+          "snippet_id": "sn2",
+          "role": "training_loop",
+          "symbol": "DataArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            49,
+            61
+          ],
+          "evidence_ids": [
+            "E76"
+          ]
+        },
+        {
+          "snippet_id": "sn77",
+          "role": "training_loop",
+          "symbol": "preprocess_v1",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            59,
+            202
+          ],
+          "evidence_ids": [
+            "E311",
+            "E332",
+            "E333",
+            "E334",
+            "E335",
+            "E336",
+            "E337",
+            "E338",
+            "E339",
+            "E340",
+            "E341",
+            "E342",
+            "E343"
+          ]
+        },
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn85",
+          "role": "training_loop",
+          "symbol": "pc_normalize",
+          "file": "pointllm/data/utils.py",
+          "lines": [
+            300,
+            311
+          ],
+          "evidence_ids": [
+            "E321",
+            "E366",
+            "E367",
+            "E368",
+            "E369"
+          ]
+        },
+        {
+          "snippet_id": "sn39",
+          "role": "dataset",
+          "symbol": "ObjectPointCloudDataset.__getitem__",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            167,
+            205
+          ],
+          "evidence_ids": [
+            "E236",
+            "E228",
+            "E260",
+            "E261",
+            "E262",
+            "E263",
+            "E264",
+            "E265",
+            "E266",
+            "E267",
+            "E268",
+            "E269"
+          ]
+        },
+        {
+          "snippet_id": "sn1",
+          "role": "training_loop",
+          "symbol": "ModelArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            42,
+            46
+          ],
+          "evidence_ids": [
+            "E75"
+          ]
+        },
+        {
+          "snippet_id": "sn32",
+          "role": "training_loop",
+          "symbol": "make_object_point_data_module",
+          "file": "pointllm/data/object_point_dataset.py",
+          "lines": [
+            13,
+            60
+          ],
+          "evidence_ids": [
+            "E226",
+            "E239",
+            "E240",
+            "E241",
+            "E242"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E228",
+        "E230",
+        "E236",
+        "E234",
+        "E233",
+        "E232",
+        "E237",
+        "E243",
+        "E244",
+        "E245",
+        "E246",
+        "E247",
+        "E248",
+        "E249",
+        "E250",
+        "E251",
+        "E76",
+        "E311",
+        "E332",
+        "E333",
+        "E334",
+        "E335",
+        "E336",
+        "E337",
+        "E338",
+        "E339",
+        "E340",
+        "E341",
+        "E342",
+        "E343",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E77",
+        "E321",
+        "E366",
+        "E367",
+        "E368",
+        "E369",
+        "E260",
+        "E261",
+        "E262",
+        "E263",
+        "E264",
+        "E265",
+        "E266",
+        "E267",
+        "E268",
+        "E269",
+        "E75",
+        "E226",
+        "E239",
+        "E240",
+        "E241",
+        "E242",
+        "E252",
+        "E253",
+        "E254",
+        "E255",
+        "E256",
+        "E257",
+        "E258",
+        "E259",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E270",
+        "E305",
+        "E308",
+        "E307",
+        "E306",
+        "E323",
+        "E324",
+        "E325",
+        "E326",
+        "E327",
+        "E328",
+        "E329",
+        "E330",
+        "E309",
+        "E331",
+        "E310",
+        "E312",
+        "E344"
+      ],
+      "missing_implementation": false,
+      "coverage": "supported"
+    },
+    {
+      "step_id": "AS3",
+      "author_step": {
+        "name": "Stage III: Point-language transfer",
+        "purpose": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+        "input": [
+          "point cloud + conversation supervision pairs"
+        ],
+        "output": [
+          "3D-grounded language responses"
+        ],
+        "related_files": [
+          "llava/model/multimodal_encoder/point_encoder.py",
+          "pointllm/model/pointllm.py",
+          "llava/model/multimodal_projector/builder.py",
+          "pointllm/train/train.py",
+          "release/paper/scripts/train/3.sh"
+        ],
+        "highlight_level": "main",
+        "omit_from_main_figure": false
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn48",
+          "role": "training_loop",
+          "symbol": "PointLLMLlamaForCausalLM",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            182,
+            362
+          ],
+          "evidence_ids": [
+            "E140",
+            "E144",
+            "E147",
+            "E146",
+            "E145",
+            "E143",
+            "E141",
+            "E172",
+            "E173",
+            "E174",
+            "E175",
+            "E176",
+            "E177"
+          ]
+        },
+        {
+          "snippet_id": "sn42",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            26,
+            179
+          ],
+          "evidence_ids": [
+            "E136",
+            "E139",
+            "E137",
+            "E148",
+            "E149",
+            "E150",
+            "E151",
+            "E152",
+            "E153",
+            "E154",
+            "E155",
+            "E156",
+            "E157"
+          ]
+        },
+        {
+          "snippet_id": "sn43",
+          "role": "pointllmllamamodel",
+          "symbol": "PointLLMLlamaModel",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            26,
+            181
+          ],
+          "evidence_ids": [
+            "E136",
+            "E139",
+            "E137",
+            "E148",
+            "E149",
+            "E150",
+            "E151",
+            "E152",
+            "E153",
+            "E154",
+            "E155",
+            "E156",
+            "E157"
+          ]
+        },
+        {
+          "snippet_id": "sn47",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel.forward",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            91,
+            179
+          ],
+          "evidence_ids": [
+            "E139",
+            "E136",
+            "E160",
+            "E161",
+            "E162",
+            "E163",
+            "E164",
+            "E165",
+            "E166",
+            "E167",
+            "E168",
+            "E169",
+            "E170"
+          ]
+        },
+        {
+          "snippet_id": "sn44",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel.__init__",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            29,
+            85
+          ],
+          "evidence_ids": [
+            "E137",
+            "E136",
+            "E148",
+            "E149",
+            "E150",
+            "E151",
+            "E152",
+            "E153",
+            "E154",
+            "E155",
+            "E156",
+            "E157",
+            "E158"
+          ]
+        },
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn52",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaForCausalLM.forward",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            207,
+            266
+          ],
+          "evidence_ids": [
+            "E144",
+            "E140",
+            "E180",
+            "E181",
+            "E182",
+            "E183",
+            "E184",
+            "E185",
+            "E186",
+            "E187"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn29",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            255,
+            346
+          ],
+          "evidence_ids": [
+            "E445",
+            "E447",
+            "E446",
+            "E513",
+            "E514",
+            "E515",
+            "E516",
+            "E517",
+            "E518",
+            "E519",
+            "E520",
+            "E521",
+            "E522"
+          ]
+        },
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn31",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.forward",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            290,
+            346
+          ],
+          "evidence_ids": [
+            "E447",
+            "E445",
+            "E525",
+            "E526",
+            "E527",
+            "E528",
+            "E529",
+            "E530",
+            "E531",
+            "E532",
+            "E533",
+            "E534",
+            "E535"
+          ]
+        },
+        {
+          "snippet_id": "sn30",
+          "role": "training_loop",
+          "symbol": "PointcloudEncoder.__init__",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            256,
+            287
+          ],
+          "evidence_ids": [
+            "E446",
+            "E445",
+            "E513",
+            "E514",
+            "E515",
+            "E516",
+            "E517",
+            "E518",
+            "E519",
+            "E520",
+            "E521",
+            "E522",
+            "E523"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E140",
+        "E144",
+        "E147",
+        "E146",
+        "E145",
+        "E143",
+        "E141",
+        "E172",
+        "E173",
+        "E174",
+        "E175",
+        "E176",
+        "E177",
+        "E136",
+        "E139",
+        "E137",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153",
+        "E154",
+        "E155",
+        "E156",
+        "E157",
+        "E160",
+        "E161",
+        "E162",
+        "E163",
+        "E164",
+        "E165",
+        "E166",
+        "E167",
+        "E168",
+        "E169",
+        "E170",
+        "E158",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E180",
+        "E181",
+        "E182",
+        "E183",
+        "E184",
+        "E185",
+        "E186",
+        "E187",
+        "E445",
+        "E447",
+        "E446",
+        "E513",
+        "E514",
+        "E515",
+        "E516",
+        "E517",
+        "E518",
+        "E519",
+        "E520",
+        "E521",
+        "E522",
+        "E77",
+        "E525",
+        "E526",
+        "E527",
+        "E528",
+        "E529",
+        "E530",
+        "E531",
+        "E532",
+        "E533",
+        "E534",
+        "E535",
+        "E523",
+        "E188",
+        "E189",
+        "E190",
+        "E191",
+        "E192",
+        "E193",
+        "E194",
+        "E195",
+        "E196",
+        "E197",
+        "E198"
+      ],
+      "missing_implementation": false,
+      "coverage": "supported"
+    },
+    {
+      "step_id": "AS4",
+      "author_step": {
+        "name": "Runtime and saving behavior",
+        "purpose": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+        "input": [
+          "training arguments"
+        ],
+        "output": [
+          "checkpoints/log artifacts"
+        ],
+        "related_files": [
+          "pointllm/train/pointllm_trainer.py"
+        ],
+        "highlight_level": "secondary",
+        "omit_from_main_figure": true
+      },
+      "matched_snippets": [
+        {
+          "snippet_id": "sn69",
+          "role": "training_loop",
+          "symbol": "PointLLMTrainer",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            23,
+            51
+          ],
+          "evidence_ids": [
+            "E579",
+            "E580",
+            "E583",
+            "E584",
+            "E585",
+            "E586",
+            "E587",
+            "E588",
+            "E589",
+            "E590",
+            "E591",
+            "E592",
+            "E593"
+          ]
+        },
+        {
+          "snippet_id": "sn70",
+          "role": "training_loop",
+          "symbol": "PointLLMTrainer._save",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            25,
+            51
+          ],
+          "evidence_ids": [
+            "E580",
+            "E579",
+            "E583",
+            "E584",
+            "E585",
+            "E586",
+            "E587",
+            "E588",
+            "E589",
+            "E590",
+            "E591",
+            "E592",
+            "E593"
+          ]
+        },
+        {
+          "snippet_id": "sn68",
+          "role": "training_loop",
+          "symbol": "unwrap_model",
+          "file": "pointllm/train/pointllm_trainer.py",
+          "lines": [
+            9,
+            20
+          ],
+          "evidence_ids": [
+            "E577",
+            "E581",
+            "E582"
+          ]
+        },
+        {
+          "snippet_id": "sn5",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            332
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn6",
+          "role": "training_loop",
+          "symbol": "train",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            115,
+            334
+          ],
+          "evidence_ids": [
+            "E80",
+            "E85",
+            "E86",
+            "E87",
+            "E88",
+            "E89",
+            "E90",
+            "E91",
+            "E92",
+            "E93",
+            "E94",
+            "E95",
+            "E96"
+          ]
+        },
+        {
+          "snippet_id": "sn3",
+          "role": "training_loop",
+          "symbol": "TrainingArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            64,
+            99
+          ],
+          "evidence_ids": [
+            "E77"
+          ]
+        },
+        {
+          "snippet_id": "sn15",
+          "role": "training_loop",
+          "symbol": "PatchDropout",
+          "file": "llava/model/multimodal_encoder/point_encoder.py",
+          "lines": [
+            73,
+            111
+          ],
+          "evidence_ids": [
+            "E429",
+            "E432",
+            "E431",
+            "E464",
+            "E465",
+            "E466",
+            "E467",
+            "E468",
+            "E469",
+            "E470",
+            "E471",
+            "E472",
+            "E473"
+          ]
+        },
+        {
+          "snippet_id": "sn42",
+          "role": "model_arch",
+          "symbol": "PointLLMLlamaModel",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            26,
+            179
+          ],
+          "evidence_ids": [
+            "E136",
+            "E139",
+            "E137",
+            "E148",
+            "E149",
+            "E150",
+            "E151",
+            "E152",
+            "E153",
+            "E154",
+            "E155",
+            "E156",
+            "E157"
+          ]
+        },
+        {
+          "snippet_id": "sn43",
+          "role": "pointllmllamamodel",
+          "symbol": "PointLLMLlamaModel",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            26,
+            181
+          ],
+          "evidence_ids": [
+            "E136",
+            "E139",
+            "E137",
+            "E148",
+            "E149",
+            "E150",
+            "E151",
+            "E152",
+            "E153",
+            "E154",
+            "E155",
+            "E156",
+            "E157"
+          ]
+        },
+        {
+          "snippet_id": "sn48",
+          "role": "training_loop",
+          "symbol": "PointLLMLlamaForCausalLM",
+          "file": "pointllm/model/pointllm.py",
+          "lines": [
+            182,
+            362
+          ],
+          "evidence_ids": [
+            "E140",
+            "E144",
+            "E147",
+            "E146",
+            "E145",
+            "E143",
+            "E141",
+            "E172",
+            "E173",
+            "E174",
+            "E175",
+            "E176",
+            "E177"
+          ]
+        },
+        {
+          "snippet_id": "sn2",
+          "role": "training_loop",
+          "symbol": "DataArguments",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            49,
+            61
+          ],
+          "evidence_ids": [
+            "E76"
+          ]
+        },
+        {
+          "snippet_id": "sn4",
+          "role": "training_loop",
+          "symbol": "safe_save_model_for_hf_trainer",
+          "file": "pointllm/train/train.py",
+          "lines": [
+            102,
+            112
+          ],
+          "evidence_ids": [
+            "E78",
+            "E81",
+            "E82",
+            "E83",
+            "E84"
+          ]
+        }
+      ],
+      "evidence_ids": [
+        "E579",
+        "E580",
+        "E583",
+        "E584",
+        "E585",
+        "E586",
+        "E587",
+        "E588",
+        "E589",
+        "E590",
+        "E591",
+        "E592",
+        "E593",
+        "E577",
+        "E581",
+        "E582",
+        "E80",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E95",
+        "E96",
+        "E77",
+        "E429",
+        "E432",
+        "E431",
+        "E464",
+        "E465",
+        "E466",
+        "E467",
+        "E468",
+        "E469",
+        "E470",
+        "E471",
+        "E472",
+        "E473",
+        "E136",
+        "E139",
+        "E137",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153",
+        "E154",
+        "E155",
+        "E156",
+        "E157",
+        "E140",
+        "E144",
+        "E147",
+        "E146",
+        "E145",
+        "E143",
+        "E141",
+        "E172",
+        "E173",
+        "E174",
+        "E175",
+        "E176",
+        "E177",
+        "E76",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E2410",
+        "E2617",
+        "E2616",
+        "E2638",
+        "E2639",
+        "E2640",
+        "E2641",
+        "E2619",
+        "E2646",
+        "E2647",
+        "E2648",
+        "E2624",
+        "E2632",
+        "E2669",
+        "E2670",
+        "E474",
+        "E475",
+        "E226",
+        "E239",
+        "E240",
+        "E241"
+      ],
+      "missing_implementation": false,
+      "coverage": "supported"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "AC1",
+      "kind": "innovation_claim",
+      "text": "A compact local-to-global aggregation path is used before point features are conditioned into the LLM.",
+      "supporting_files": [
+        "llava/model/multimodal_encoder/point_encoder.py"
+      ],
+      "supporting_functions": [
+        "skeleton_Group",
+        "fps",
+        "knn_point"
+      ],
+      "evidence_ids": [
+        "E441",
+        "E421",
+        "E425",
+        "E423",
+        "E427",
+        "E429",
+        "E431",
+        "E432",
+        "E433",
+        "E434",
+        "E435",
+        "E437",
+        "E438",
+        "E439",
+        "E442",
+        "E443",
+        "E445"
+      ],
+      "support_status": "supported",
+      "caveats": [
+        "Treat parameter-free wording as a hypothesis until all involved operators are checked for learnable parameters."
+      ]
+    },
+    {
+      "claim_id": "AC2",
+      "kind": "innovation_claim",
+      "text": "Core novelty emphasis is stage design and modality-transfer strategy rather than replacing the base LLM backbone.",
+      "supporting_files": [
+        "pointllm/train/train.py",
+        "pointllm/model/pointllm.py"
+      ],
+      "supporting_functions": [
+        "train",
+        "PointLLMLlamaModel"
+      ],
+      "evidence_ids": [
+        "E80",
+        "E75",
+        "E76",
+        "E77",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E136",
+        "E135",
+        "E137",
+        "E138",
+        "E139",
+        "E140",
+        "E141",
+        "E142",
+        "E143",
+        "E144",
+        "E145",
+        "E146",
+        "E147",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153"
+      ],
+      "support_status": "supported",
+      "caveats": [
+        "Final trainable subset per stage must be cross-checked with actual launch scripts/arguments."
+      ]
+    },
+    {
+      "claim_id": "AC3",
+      "kind": "design_intent",
+      "text": "Use large text supervision to reduce dependence on scarce point-text pairs.",
+      "supporting_files": [
+        "pointllm/train/train.py",
+        "pointllm/data/object_point_dataset.py"
+      ],
+      "supporting_functions": [
+        "train",
+        "ObjectPointCloudDataset"
+      ],
+      "evidence_ids": [
+        "E80",
+        "E75",
+        "E76",
+        "E77",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94",
+        "E228",
+        "E226",
+        "E230",
+        "E232",
+        "E233",
+        "E234",
+        "E236",
+        "E237",
+        "E239",
+        "E240",
+        "E241",
+        "E242",
+        "E243",
+        "E244",
+        "E245",
+        "E246",
+        "E247",
+        "E248",
+        "E249"
+      ],
+      "support_status": "supported",
+      "caveats": [
+        "Stage behavior in code is controlled by flags (stage_2, tune_mm_mlp_adapter, fix_llm/fix_pointnet), not explicit Stage-I/II/III classes.",
+        "Release scripts should be verified as real content (not LFS pointer) before claiming exact command-level differences."
+      ]
+    },
+    {
+      "claim_id": "AC4",
+      "kind": "design_intent",
+      "text": "Keep one projector interface across stages to stabilize transfer from text-side alignment to point-side alignment.",
+      "supporting_files": [
+        "llava/model/multimodal_projector/builder.py",
+        "pointllm/train/train.py"
+      ],
+      "supporting_functions": [
+        "build_vision_projector",
+        "train"
+      ],
+      "evidence_ids": [
+        "E547",
+        "E537",
+        "E538",
+        "E539",
+        "E540",
+        "E541",
+        "E542",
+        "E543",
+        "E544",
+        "E545",
+        "E546",
+        "E548",
+        "E549",
+        "E550",
+        "E551",
+        "E552",
+        "E553",
+        "E554",
+        "E555",
+        "E80",
+        "E75",
+        "E76",
+        "E77",
+        "E78",
+        "E81",
+        "E82",
+        "E83",
+        "E84",
+        "E85",
+        "E86",
+        "E87",
+        "E88",
+        "E89",
+        "E90",
+        "E91",
+        "E92",
+        "E93",
+        "E94"
+      ],
+      "support_status": "supported",
+      "caveats": []
+    },
+    {
+      "claim_id": "AC5",
+      "kind": "design_intent",
+      "text": "Compress point-token sequences before LLM fusion to keep useful structure with manageable token cost.",
+      "supporting_files": [
+        "llava/model/multimodal_encoder/point_encoder.py",
+        "pointllm/model/pointllm.py"
+      ],
+      "supporting_functions": [
+        "skeleton_Group",
+        "PointLLMLlamaModel.forward"
+      ],
+      "evidence_ids": [
+        "E441",
+        "E421",
+        "E423",
+        "E425",
+        "E427",
+        "E429",
+        "E431",
+        "E432",
+        "E433",
+        "E434",
+        "E435",
+        "E437",
+        "E438",
+        "E439",
+        "E442",
+        "E443",
+        "E445",
+        "E446",
+        "E447",
+        "E139",
+        "E135",
+        "E136",
+        "E137",
+        "E138",
+        "E140",
+        "E141",
+        "E142",
+        "E143",
+        "E144",
+        "E145",
+        "E146",
+        "E147",
+        "E148",
+        "E149",
+        "E150",
+        "E151",
+        "E152",
+        "E153"
+      ],
+      "support_status": "supported",
+      "caveats": [
+        "Phrase as code-aligned aggregation/routing unless parameter counts are explicitly audited at symbol level."
+      ]
+    }
+  ],
+  "coverage_report": {
+    "overall_score": 1.0,
+    "modules_supported": 7,
+    "modules_total": 7,
+    "pipeline_steps_supported": 4,
+    "pipeline_steps_total": 4,
+    "claims_supported": 5,
+    "claims_total": 5,
+    "missing_implementations": []
+  }
+}

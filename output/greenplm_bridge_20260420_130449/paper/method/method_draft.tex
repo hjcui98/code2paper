@@ -1,0 +1,35 @@
+\section{Method}
+
+We present a three-stage alignment pipeline---Stage~I: Text-First Interface Warmup, Stage~II: Rich Instruction Alignment, and Stage~III: Point-Language Transfer---that progressively couples a frozen large language model backbone to multimodal inputs without requiring massive 3D-text paired pre-training. The method first establishes projector-language coupling using text-only supervision, then expands to richer instruction-following patterns while preserving projector continuity, and finally transfers the aligned representation to 3D point clouds via compact token aggregation. A distinct Runtime and saving behavior stage manages checkpoint flow, logging, and trainer state throughout the training process.
+
+\subsection{Stage I: Text-First Interface Warmup}
+
+Stage~I: Text-First Interface Warmup establishes projector-language coupling under mostly frozen backbone settings. This stage initializes the multimodal interface by aligning the projection layer with the language model's embedding space while keeping the core LLM parameters frozen, leveraging large-scale text supervision to reduce dependence on scarce point-text pairs. The training focuses exclusively on text-derived inputs, ensuring the bridge components are properly warmed up before the introduction of geometric modalities.
+
+\subsection{Stage II: Rich Instruction Alignment}
+
+Stage~II: Rich Instruction Alignment expands the model's capabilities from simple descriptions to richer instruction and dialog patterns. The training regimen preserves projector continuity from the warmup phase, maintaining the established text-side alignment while exposing the system to diverse linguistic structures and complex prompting formats. This stage hardens the interface against varied user instructions without altering the frozen backbone parameters, preparing the aligned projector for subsequent 3D conditioning.
+
+\subsection{Stage III: Point-Language Transfer}
+
+Stage~III: Point-Language Transfer utilizes point-cloud token features and compact token aggregation to transfer the prior alignment to 3D inputs. The point encoder processes raw geometric data through a local-to-global aggregation path---parameterized by \texttt{num\_group}$=32$ and \texttt{group\_size}$=8$---and applies \texttt{exclude\_first\_token} filtering to compress sequences before LLM fusion. These aggregated features are projected into the language model via the previously aligned interface, effectively bridging the 3D modality without requiring exhaustive point-text paired pre-training.
+
+\subsection{Runtime and Saving Behavior}
+
+Runtime and saving behavior orchestrates the training mechanics across all stages, controlling checkpoint persistence, logging protocols, and trainer state management. The implementation ensures proper serialization of projector parameters and point encoder states while respecting the frozen backbone constraints, enabling reproducible resumption of the multi-stage alignment workflow and maintaining training continuity throughout the pipeline.
+
+\subsection{Architectural Realization}
+
+The architectural realization of these stages relies on a composition of standard transformer behaviors rather than backbone replacement. The projection layers employ positionwise\_feed\_forward transformations
+\begin{equation}
+\mathrm{FFN}(x)=\sigma(xW_1+b_1)W_2+b_2
+\end{equation}
+and layer\_normalization with dropout regularization. Positional information is injected via sinusoidal\_positional\_encoding
+\begin{equation}
+\mathrm{PE}_{(pos,2i)}=\sin(pos/10000^{2i/d}),\quad \mathrm{PE}_{(pos,2i+1)}=\cos(pos/10000^{2i/d})
+\end{equation}
+while scaled\_dot\_product\_attention
+\begin{equation}
+\mathrm{Attention}(Q,K,V)=\mathrm{softmax}(QK^T/\sqrt{d_k})V
+\end{equation}
+operates over the compressed token sequences. Residual\_connections preserve gradient flow through the decoder\_stack, ensuring stable optimization of the projector parameters while the base LLM remains frozen.

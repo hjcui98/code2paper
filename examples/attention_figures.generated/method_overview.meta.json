@@ -1,0 +1,26 @@
+{
+  "backend": "fallback",
+  "status": "success",
+  "created_at": "2026-04-17T02:32:18.666577+00:00",
+  "input": {
+    "draft_path": "examples/attention_method_draft.generated.md",
+    "method_evidence_path": "examples/attention_method_evidence.generated.json",
+    "claim_map_path": "examples/attention_claim_evidence_map.generated.json"
+  },
+  "nodes": [
+    "Overview",
+    "Evidence-Grounded Pipeline",
+    "Core Components",
+    "Code-Backed Mechanism Details",
+    "Training Procedure"
+  ],
+  "outputs": {
+    "svg": "examples/attention_figures.generated/method_overview.svg",
+    "png": "",
+    "pdf": ""
+  },
+  "notes": [
+    "Fallback SVG is deterministic and draft-derived.",
+    "PNG/PDF are only emitted when CairoSVG is available."
+  ]
+}

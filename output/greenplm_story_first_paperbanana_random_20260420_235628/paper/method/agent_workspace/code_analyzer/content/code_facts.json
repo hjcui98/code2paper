@@ -1,0 +1,486 @@
+{
+  "meta": {
+    "version": "v2",
+    "producer": "code_analyzer",
+    "total_snippets": 18,
+    "alignment_score": 0.44,
+    "dynamic_roles": []
+  },
+  "overview": {
+    "implementation_summary": "Enable robust 3D understanding for an LLM while reducing dependence on large-scale 3D paired data. The implementation follows Stage I: Text-First Interface Warmup, Stage II: Rich Instruction Alignment, Stage III: Point-Language Transfer, Runtime and saving behavior. Key code modules include TrainingArguments, PointcloudEncoder, PointNet2ClassificationSSG, training_step.",
+    "architecture_summary": "The architecture is centered on TrainingArguments, PointcloudEncoder, PointNet2ClassificationSSG, training_step. End-to-end data flow is organized as Stage I: Text-First Interface Warmup -> Stage II: Rich Instruction Alignment -> Stage III: Point-Language Transfer -> Runtime and saving behavior.",
+    "training_summary": "Training loop type: standard.",
+    "alignment_summary": "Paper-to-code alignment score is 0.44. Mapped evidence covers 10 modules, 4 pipeline steps, and 0 losses."
+  },
+  "modules": [
+    {
+      "name": "TrainingArguments",
+      "role": "training-stage orchestration via argument combinations",
+      "method_ref": "training-stage orchestration via argument combinations",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn48",
+        "sn50",
+        "sn16"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "name": "PointcloudEncoder",
+      "role": "inject projected point features into language token stream",
+      "method_ref": "inject projected point features into language token stream",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "cls_pos",
+        "float_flag",
+        "group_divider",
+        "num_group",
+        "encoder_dim",
+        "encoder2trans",
+        "embed_dim",
+        "trans2embed",
+        "pos_embed",
+        "group_size"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "pc": "Tensor",
+        "get_pc_tokens_way=None": "Tensor"
+      },
+      "output_spec": {
+        "return": "what was passed in"
+      },
+      "key_logic": "# grouper # define the encoder",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn69",
+        "sn3",
+        "sn67",
+        "sn75",
+        "sn76"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PointNet2ClassificationSSG",
+      "role": "load/filter conversation supervision and point samples",
+      "method_ref": "load/filter conversation supervision and point samples",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn3",
+        "sn76",
+        "sn41",
+        "sn43",
+        "sn59"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "training_step",
+      "role": "convert point placeholders into multimodal training tokens",
+      "method_ref": "convert point placeholders into multimodal training tokens",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn16",
+        "sn48",
+        "sn49",
+        "sn50",
+        "sn3"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "PointNet2ClassificationSSG",
+      "role": "compact point-token aggregation with neighborhood routing",
+      "method_ref": "compact point-token aggregation with neighborhood routing",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn3",
+        "sn41",
+        "sn43",
+        "sn69",
+        "sn76"
+      ],
+      "confidence": 0.5
+    },
+    {
+      "name": "Encoder",
+      "role": "shared projector from encoder space to LLM hidden space",
+      "method_ref": "shared projector from encoder space to LLM hidden space",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn44",
+        "sn45",
+        "sn68",
+        "sn69",
+        "sn65"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "name": "LLaVATrainer",
+      "role": "trainer-side save/checkpoint behavior",
+      "method_ref": "trainer-side save/checkpoint behavior",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn47",
+        "sn49"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "name": "PatchDropout",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "exclude_first_token",
+        "prob"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "x": "Tensor"
+      },
+      "output_spec": {
+        "return": "x"
+      },
+      "key_logic": "# if not self.training or self.prob == 0.: #     return x",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn72"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "num_group",
+        "group_size"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "xyz": "Tensor",
+        "color": "Tensor"
+      },
+      "output_spec": {
+        "return": "neighborhood, center, features"
+      },
+      "key_logic": "# fps the centers out # knn to get the neighborhood",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn73"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "skeleton_Group",
+      "role": "model_arch",
+      "method_ref": "",
+      "inheritance": [
+        "nn.Module"
+      ],
+      "interfaces": [
+        "forward",
+        "__init__"
+      ],
+      "attributes": [
+        "num_group",
+        "group_size"
+      ],
+      "methods": [
+        "forward",
+        "__init__"
+      ],
+      "input_spec": {
+        "xyz": "Tensor",
+        "token_feat": "Tensor",
+        "num_group=32": "Tensor",
+        "group_size=8": "Tensor"
+      },
+      "output_spec": {
+        "return": "skeleton_token"
+      },
+      "key_logic": "# fps the centers out # knn to get the neighborhood",
+      "pseudo_code_ref": null,
+      "evidence_refs": [
+        "sn74"
+      ],
+      "confidence": 0.6
+    }
+  ],
+  "pipeline_steps": [
+    {
+      "step_id": "S1",
+      "name": "Stage I: Text-First Interface Warmup",
+      "description": "Establish projector-language coupling under mostly frozen backbone settings.",
+      "input_data": [
+        "raw_point_cloud"
+      ],
+      "output_data": [
+        "output_0"
+      ],
+      "involved_modules": [],
+      "data_flow": [],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn43"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "step_id": "S2",
+      "name": "Stage II: Rich Instruction Alignment",
+      "description": "Expand from simple descriptions to richer instruction/dialog patterns while preserving projector continuity.",
+      "input_data": [
+        "input_1"
+      ],
+      "output_data": [
+        "output_1"
+      ],
+      "involved_modules": [],
+      "data_flow": [],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [],
+      "confidence": 0.3
+    },
+    {
+      "step_id": "S3",
+      "name": "Stage III: Point-Language Transfer",
+      "description": "Use point-cloud token features and compact token aggregation to transfer prior alignment to 3D inputs.",
+      "input_data": [
+        "input_2"
+      ],
+      "output_data": [
+        "output_2"
+      ],
+      "involved_modules": [
+        "PointcloudEncoder"
+      ],
+      "data_flow": [
+        {
+          "from": "input",
+          "to": "PointcloudEncoder",
+          "op": "forward"
+        },
+        {
+          "from": "PointcloudEncoder",
+          "to": "output",
+          "op": "output"
+        }
+      ],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn69",
+        "sn41",
+        "sn3"
+      ],
+      "confidence": 1.0
+    },
+    {
+      "step_id": "S4",
+      "name": "Runtime and saving behavior",
+      "description": "Control runtime mechanics (trainer save behavior/logging/checkpoint flow).",
+      "input_data": [
+        "input_3"
+      ],
+      "output_data": [
+        "output_3"
+      ],
+      "involved_modules": [],
+      "data_flow": [],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [
+        "sn47",
+        "sn49",
+        "sn59"
+      ],
+      "confidence": 0.4
+    }
+  ],
+  "losses": [],
+  "training_detail": {
+    "type": "standard",
+    "optimizer": {},
+    "scheduler": {},
+    "training_loop": {},
+    "epochs": 0,
+    "batch_size": 0,
+    "evidence_refs": []
+  },
+  "data_detail": {
+    "datasets": [
+      {
+        "name": "CustomDataset",
+        "type": "custom",
+        "input_format": "image Tensor[B, C, H, W]",
+        "output_format": "Tensor + label",
+        "preprocessing": [],
+        "augmentation": [],
+        "evidence_refs": [
+          "sn19"
+        ]
+      }
+    ],
+    "dataloader": {}
+  },
+  "alignment_validation": {
+    "overall_score": 0.44,
+    "modules_coverage": {
+      "total": 7,
+      "found": 7,
+      "score": 1.0
+    },
+    "pipeline_coverage": {
+      "total": 4,
+      "found": 3,
+      "score": 0.75
+    },
+    "losses_coverage": {
+      "total": 0,
+      "found": 0,
+      "score": 0.0
+    },
+    "discrepancies": [],
+    "missing_implementations": [],
+    "uncertainties": [
+      {
+        "aspect": "Module PointcloudEncoder",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PointNet2ClassificationSSG",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module training_step",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PointNet2ClassificationSSG",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module LLaVATrainer",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module PatchDropout",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module Group",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      },
+      {
+        "aspect": "Module skeleton_Group",
+        "reason": "Low confidence in alignment",
+        "suggestion": "Manual verification recommended"
+      }
+    ]
+  },
+  "key_insights": [],
+  "diagram_hints": {
+    "main_flow": [
+      "PointcloudEncoder"
+    ],
+    "generation_flow": [],
+    "training_flow": [],
+    "key_nodes": [
+      "TrainingArguments",
+      "Encoder"
+    ],
+    "key_edges": [
+      {
+        "from": "input",
+        "to": "PointcloudEncoder"
+      },
+      {
+        "from": "PointcloudEncoder",
+        "to": "output"
+      }
+    ]
+  }
+}

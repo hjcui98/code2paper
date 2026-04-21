@@ -1,0 +1,15 @@
+{
+  "call_id": "LLM-phase4-005",
+  "provider": "openai",
+  "model": "kimi-k2.5",
+  "prompt_template_id": "draft_claim_mapper",
+  "prompt_template_version": "",
+  "input_hash": "sha256:0b380aa7541304550c7098fc7f622d8b9cc1be49be0f16ccbba516dcc8e555e7",
+  "response_hash": "sha256:18f6a24dbd5d1ec385f2b860286e8b652493d1bd5e24546be12170214a903159",
+  "temperature": 0.2,
+  "max_output_tokens": 12000,
+  "schema_name": "DraftClaimMap",
+  "schema_validation_passed": true,
+  "cached": false,
+  "created_at": "2026-04-19T07:50:50.401447+00:00"
+}

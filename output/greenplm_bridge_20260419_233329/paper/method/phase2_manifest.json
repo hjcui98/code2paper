@@ -1,0 +1,10 @@
+{
+  "project_id": "greenplm",
+  "llm_required": true,
+  "llm_available": false,
+  "mode": "postergen-agent-llm-bridge",
+  "prompt_template_version": "postergen-agent-llm-bridge-v1",
+  "outputs": {},
+  "llm_call_logs": [],
+  "blocked_report": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260419_233329/paper/method/phase2_blocked_report.json"
+}

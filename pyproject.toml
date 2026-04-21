@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code2paper-agent"
+version = "0.1.0"
+description = "Implementation-grounded code-to-paper method evidence schemas."
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.0",
+  "PyYAML>=6.0",
+]
+
+[project.scripts]
+code2paper = "code2paper.main_cli:main"
+code2paper-align = "code2paper.align_cli:main"
+code2paper-author-review = "code2paper.author_review_cli:main"
+code2paper-claim-ground = "code2paper.claim_grounder_cli:main"
+code2paper-config-values = "code2paper.config_value_cli:main"
+code2paper-fidelity = "code2paper.fidelity_cli:main"
+code2paper-figure = "code2paper.figure_cli:main"
+code2paper-ingest = "code2paper.cli:main"
+code2paper-method-draft = "code2paper.method_draft_cli:main"
+code2paper-method-evidence = "code2paper.method_evidence_cli:main"
+code2paper-run = "code2paper.run_cli:main"
+
+[project.optional-dependencies]
+figure = [
+  "CairoSVG>=2.7",
+]
+dev = [
+  "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,35 @@
+{
+  "project_id": "code",
+  "llm_required": true,
+  "llm_available": false,
+  "mode": "inspect-only",
+  "prompt_template_version": "phase1_4_redesign_v1",
+  "outputs": {
+    "analysis_navigation_plan": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/analysis_navigation_plan.json",
+      "hash": "sha256:e42c8ebeed91ffdde761cfde167218cbff8da7e252617018963199b88dd0d4d2"
+    },
+    "targeted_code_tracing": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/targeted_code_tracing.json",
+      "hash": "sha256:6d400a5a11b8d61013b4ccc60d76e3552bb6888b3f236d53c9c52c4c2d0c39c4"
+    },
+    "code_alignment_ir": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/code_alignment_ir.json",
+      "hash": "sha256:af906ace3a90e2740491eb3f7272c44426c57308a81e7a8639a8450d2ea1c112"
+    },
+    "code_method_analysis": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/code_method_analysis.json",
+      "hash": "sha256:c36c7691a11c316f38c825a192bc2377825b61017575a998e60a773a57967a30"
+    },
+    "phase2_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/phase2_blocked_report.json",
+      "hash": "sha256:a101dcbce9992e20c7c93e5be9e8dddb0c274a4cb7b5cab68baf7a306351177e"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/llm_calls/LLM-phase2-003.json"
+  ],
+  "blocked_report": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_retry_20260419_141926/paper/method/phase2_blocked_report.json"
+}

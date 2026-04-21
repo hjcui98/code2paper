@@ -1,0 +1,36 @@
+{
+  "project_id": "toy_train_project",
+  "project_root": "tests/fixtures/toy_train_project",
+  "readme_policy": "exclude",
+  "evidence_items": [
+    {
+      "evidence_id": "E1",
+      "source_type": "bash",
+      "path": "scripts/train.sh",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 8,
+      "content_summary": "Launches train.py with config and batch size override.",
+      "tags": ["entrypoint", "train"],
+      "confidence": 0.95
+    },
+    {
+      "evidence_id": "E2",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "main",
+      "line_start": 10,
+      "line_end": 48,
+      "content_summary": "Parses arguments, builds the dataloader and model, then starts training.",
+      "tags": ["entrypoint", "training"],
+      "confidence": 0.9
+    }
+  ],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "excluded from main evidence chain"
+    }
+  ]
+}
+

@@ -1,0 +1,14 @@
+{
+  "passed": false,
+  "checked_terms": 19,
+  "issues": [
+    {
+      "issue_id": "TERM1",
+      "severity": "high",
+      "category": "forbidden_replacement_used",
+      "message": "Draft uses forbidden replacement `Feature Extraction` for canonical term `input_preparation`.",
+      "term_id": "TERM-INPUT-PREP",
+      "term": "Feature Extraction"
+    }
+  ]
+}

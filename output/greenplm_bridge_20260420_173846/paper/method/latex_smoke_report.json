@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "status": "unavailable",
+  "engine": "pdflatex",
+  "issues": [
+    {
+      "issue_id": "LATEX1",
+      "category": "engine_unavailable",
+      "message": "pdflatex was not found on PATH; compile smoke was not run."
+    }
+  ]
+}

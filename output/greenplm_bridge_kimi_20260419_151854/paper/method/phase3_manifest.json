@@ -1,0 +1,34 @@
+{
+  "project_id": "code",
+  "mode": "deterministic-freeze",
+  "llm_available": false,
+  "blocked_reason": "schema_validation_failed:ValidationError:6 validation errors for Phase3StageBuilderOutput\nstages.0.stage_id\n  Value error, method evidence stage_id must start with 'S' [type=value_error, input_value='M1', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error\nstages.0.evidence_ids\n  Extra inputs are not permitted [type=extra_forbidden, input_value=['E311', 'E312', 'E1817',...2283', 'E3075', 'E3076'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_for",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/method_evidence.json",
+      "hash": "sha256:472b5942f9097d53730ac2a87706cf2bc64c22bb1d44b83c4d53d38a5feb20bf"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/claim_evidence_map.json",
+      "hash": "sha256:0f68c566fc5253470cf5768e87dfd621c019426ea1ed1f60129ab2cda1e99105"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/method_evidence_review.md",
+      "hash": "sha256:90ef2bc14f9932291ca63167782ebf784907a2d8ba7e417b3e84ea5007b3b652"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_kimi_20260419_151854/paper/method/llm_calls/LLM-phase3-006.json"
+  ],
+  "review_questions": []
+}

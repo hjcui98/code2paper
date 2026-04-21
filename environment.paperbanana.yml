@@ -1,0 +1,13 @@
+name: code2paper
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - poppler
+  - cairo
+  - pango
+  - pip:
+      - -e .[figure]
+      - -r ../PosterGen/PaperBanana/requirements.txt

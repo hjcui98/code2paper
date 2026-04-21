@@ -1,0 +1,125 @@
+You are an expert code analyzer specializing in paper-to-code alignment.
+Return a JSON object only.
+
+Inputs:
+1) Method-code alignment result:
+{{ method_code_alignment }}
+
+2) Core snippets with roles and relevance:
+{{ core_snippets }}
+
+3) Paper objects (pseudo code, equations, algorithms):
+{{ paper_objects }}
+
+4) Method summary from paper:
+{{ method_summary }}
+
+5) Detailed analysis results:
+{{ detailed_analysis }}
+
+Tasks:
+- Synthesize all information into comprehensive code_facts
+- Validate alignment between paper and code
+- Identify key insights for diagram generation
+- Generate diagram hints for visualization
+
+Output JSON schema:
+{
+  "overview": {
+    "implementation_summary": "",
+    "architecture_summary": "",
+    "training_summary": "",
+    "alignment_summary": ""
+  },
+  "modules": [
+    {
+      "name": "",
+      "role": "",
+      "method_ref": "",
+      "inheritance": [],
+      "interfaces": [],
+      "attributes": [],
+      "methods": [],
+      "input_spec": {},
+      "output_spec": {},
+      "key_logic": "",
+      "pseudo_code_ref": "",
+      "evidence_refs": [],
+      "confidence": 0.0
+    }
+  ],
+  "pipeline_steps": [
+    {
+      "step_id": "",
+      "name": "",
+      "description": "",
+      "input_data": [],
+      "output_data": [],
+      "involved_modules": [],
+      "data_flow": [],
+      "key_operations": [],
+      "algorithm_ref": "",
+      "evidence_refs": [],
+      "confidence": 0.0
+    }
+  ],
+  "losses": [
+    {
+      "name": "",
+      "full_name": "",
+      "formula_ref": "",
+      "formula_text": "",
+      "purpose": "",
+      "inputs": [],
+      "computation_steps": [],
+      "implementation_function": "",
+      "evidence_refs": [],
+      "confidence": 0.0
+    }
+  ],
+  "training_detail": {
+    "type": "",
+    "optimizer": {},
+    "scheduler": {},
+    "training_loop": {},
+    "epochs": 0,
+    "batch_size": 0,
+    "evidence_refs": []
+  },
+  "data_detail": {
+    "datasets": [],
+    "dataloader": {}
+  },
+  "alignment_validation": {
+    "overall_score": 0.0,
+    "discrepancies": [],
+    "missing_implementations": [],
+    "uncertainties": []
+  },
+  "key_insights": [
+    {
+      "insight": "",
+      "evidence_refs": [],
+      "importance": "high"
+    }
+  ],
+  "diagram_hints": {
+    "main_flow": [],
+    "generation_flow": [],
+    "training_flow": [],
+    "key_nodes": [],
+    "key_edges": []
+  }
+}
+
+Rules:
+1) Use evidence_refs to link every claim to specific snippets
+2) confidence must be in range [0, 1]
+3) For discrepancies, explain the impact on functionality
+4) diagram_hints should help visualization generation
+5) key_insights should capture the most important aspects for understanding the method
+6) Extract inheritance, interfaces, attributes, methods from code snippets when available
+7) For each module, describe key_logic in 1-2 sentences
+8) pipeline_steps should describe the complete data flow
+9) `overview` must contain compact but information-dense prose summaries of the implementation, architecture, training logic, and paper-to-code alignment.
+10) Do not under-summarize: include all major evidenced modules, pipeline phases, losses, and training/inference responsibilities that are visible in the snippets or alignment.

@@ -1,0 +1,191 @@
+# Author markers (story-first, GreenPLM intent-oriented draft)
+# Purpose: provide a plausible author-intent scaffold for retrieval/testing,
+# while keeping key component names consistent with the method.
+
+# 1) Task-goal layer
+project_goal: "Build an LLM-centric 3D understanding pipeline that remains effective when paired 3D supervision is limited."
+paper_method_goal: "Present a text-heavy pre-alignment route (T3D + staged tuning) and then transfer that alignment to point-cloud inputs with minimal extra 3D pairing."
+
+# 2) Scope/constraint layer
+implementation_scope: "Use executable evidence under /home/cuihengjia/agent/PosterGen/data/greenplm/code; treat this file as author intent hints rather than final factual claims."
+priority_files:
+  - "pointllm/train/train.py"
+  - "pointllm/model/pointllm.py"
+  - "pointllm/data/object_point_dataset.py"
+  - "pointllm/data/utils.py"
+  - "llava/model/multimodal_encoder/point_encoder.py"
+  - "llava/model/multimodal_projector/builder.py"
+  - "release/paper/scripts/train/1.sh"
+  - "release/paper/scripts/train/2.sh"
+  - "release/paper/scripts/train/3.sh"
+ignore_files:
+  - "README.md"
+  - "media/*"
+  - "pretrained_weight/**"
+  - "swark-output/**"
+  - "pointnet++/**"
+  - "__pycache__/**"
+
+module_roles:
+  - path: "llava/model/multimodal_projector/builder.py"
+    symbol: "build_vision_projector"
+    role: "shared modality bridge used across text-first and point-first phases"
+    importance: "core"
+    is_novel: false
+    notes: "Narratively central because projector continuity ties the 3 stages together."
+  - path: "llava/model/multimodal_encoder/point_encoder.py"
+    symbol: "skeleton_Group"
+    role: "token compaction/aggregation path associated with 0M-Pooling style logic"
+    importance: "core"
+    is_novel: true
+    notes: "Key evidence target for the claimed efficient token reduction behavior."
+  - path: "pointllm/model/pointllm.py"
+    symbol: "PointLLMLlamaModel.forward"
+    role: "inject projected point-side representations into LLM token stream"
+    importance: "core"
+    is_novel: false
+    notes: "Confirms where cross-modal fusion actually happens at runtime."
+  - path: "pointllm/data/object_point_dataset.py"
+    symbol: "ObjectPointCloudDataset"
+    role: "controls supervision mixtures (description/dialog style targets)"
+    importance: "core"
+    is_novel: false
+    notes: "Useful for checking whether stage-specific data claims are executable."
+  - path: "pointllm/train/train.py"
+    symbol: "train"
+    role: "stage orchestration via freezing, adapter settings, and training flags"
+    importance: "core"
+    is_novel: false
+    notes: "Primary source for verifying which modules are trainable in each phase."
+
+pipeline_steps:
+  - name: "Stage I: Text-Projector Bootstrapping"
+    purpose: "Use caption-to-brief-description style supervision to make projector outputs usable by the LLM under mostly frozen backbones."
+    input:
+      - "caption-like text + concise target responses"
+    output:
+      - "initialized projector-language interface"
+    related_files:
+      - "pointllm/train/train.py"
+      - "llava/model/multimodal_projector/builder.py"
+      - "release/paper/scripts/train/1.sh"
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Stage II: Rich Text Alignment with LoRA"
+    purpose: "Expand to richer descriptions and dialogue-style supervision so the LLM learns stronger instruction-context grounding before touching much 3D data."
+    input:
+      - "detailed descriptions"
+      - "single-round conversations"
+      - "multi-round conversations"
+    output:
+      - "text-side multimodal alignment ready for transfer"
+    related_files:
+      - "pointllm/train/train.py"
+      - "pointllm/data/object_point_dataset.py"
+      - "pointllm/data/utils.py"
+      - "release/paper/scripts/train/2.sh"
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Stage III: Point-Language Transfer via Shared Projector"
+    purpose: "Switch to point-cloud tokens, compress token length (0M-Pooling narrative), and reuse the bridge to produce 3D-grounded responses with limited paired data."
+    input:
+      - "point cloud + text supervision pairs"
+    output:
+      - "3D-conditioned language generation"
+    related_files:
+      - "llava/model/multimodal_encoder/point_encoder.py"
+      - "pointllm/model/pointllm.py"
+      - "llava/model/multimodal_projector/builder.py"
+      - "pointllm/train/train.py"
+      - "release/paper/scripts/train/3.sh"
+    highlight_level: "main"
+    omit_from_main_figure: false
+
+# 3) Story/authoring control layer
+method_mainline: "T3D text-heavy alignment -> 3-stage transfer recipe -> 0M-Pooling-enabled efficient point-token use"
+paper_story_order:
+  - "Method Overview"
+  - "T3D Data Construction and Usage"
+  - "Stage I: Text-Projector Bootstrapping"
+  - "Stage II: Rich Text Alignment with LoRA"
+  - "Stage III: Point-Language Transfer via Shared Projector"
+  - "0M-Pooling: Efficient Point-Token Compression"
+  - "Training Objective (Causal LM Loss)"
+deemphasize_details:
+  - "local path defaults and environment comments"
+  - "checkpoint save plumbing"
+  - "dataset generation prompt wording"
+latex_expression_preference: "balanced"  # implementation-faithful | balanced | paper-abstract
+
+# 4) Weak-guidance judgement layer (to be validated by code evidence)
+design_intents:
+  - intent: "Use million-scale synthetic text supervision (T3D) to front-load alignment and reduce dependence on expensive 3D point-text pairs."
+    rationale: "Author story centers on shifting data burden from scarce 3D annotations toward abundant text generation."
+    supporting_files:
+      - "pointllm/train/train.py"
+      - "pointllm/data/object_point_dataset.py"
+    supporting_functions:
+      - "train"
+      - "ObjectPointCloudDataset"
+    confidence: "high"
+    caveats:
+      - "Exact T3D subtype ratios are narrative hints unless dataset config files explicitly encode them."
+  - intent: "Keep the same projector path through all stages so text-side alignment can be reused for point-side grounding."
+    rationale: "A shared interface is the transfer mechanism that links Stage I/II and Stage III."
+    supporting_files:
+      - "llava/model/multimodal_projector/builder.py"
+      - "pointllm/train/train.py"
+    supporting_functions:
+      - "build_vision_projector"
+      - "train"
+    confidence: "high"
+    caveats: []
+  - intent: "Retain rich point-token information while controlling context cost through 0M-Pooling style compression."
+    rationale: "Method framing emphasizes efficiency without discarding global/local point cues."
+    supporting_files:
+      - "llava/model/multimodal_encoder/point_encoder.py"
+      - "pointllm/model/pointllm.py"
+    supporting_functions:
+      - "skeleton_Group"
+      - "PointLLMLlamaModel.forward"
+    confidence: "medium"
+    caveats:
+      - "Treat strictly parameter-free wording as provisional until every involved operator is audited."
+
+innovation_claims:
+  - claim: "0M-Pooling combines sampling, neighborhood aggregation, and cross-token interaction to shrink point tokens (e.g., from long sequences to compact sets) before language fusion."
+    supporting_files:
+      - "llava/model/multimodal_encoder/point_encoder.py"
+    supporting_functions:
+      - "skeleton_Group"
+      - "fps"
+      - "knn_point"
+    confidence: "medium"
+    caveats:
+      - "Numeric token counts should be verified against runtime configs/checkpoints."
+  - claim: "Main novelty emphasis is staged alignment strategy plus data curriculum, not redesign of the base LLM architecture."
+    supporting_files:
+      - "pointllm/train/train.py"
+      - "pointllm/model/pointllm.py"
+    supporting_functions:
+      - "train"
+      - "PointLLMLlamaModel"
+    confidence: "medium"
+    caveats:
+      - "Need to verify final trainable parameter subsets for each stage from launch flags."
+
+potential_mismatches:
+  - description: "Large inherited framework code (e.g., LLaVA/PointNet++ regions) may be mistaken as this method's own contribution."
+    files:
+      - "llava/**"
+      - "pointnet++/**"
+    severity: "high"
+  - description: "Stage narratives can drift if command scripts and runtime flags do not match the intended Stage I/II/III partition."
+    files:
+      - "release/paper/scripts/train/*.sh"
+      - "pointllm/train/train.py"
+    severity: "high"
+  - description: "Dataset-construction storyline (Qwen prompts, source category pools) may be over-asserted if not represented in this code snapshot."
+    files:
+      - "pointllm/data/**"
+    severity: "medium"

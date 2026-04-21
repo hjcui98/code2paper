@@ -1,0 +1,21 @@
+{
+  "project_id": "greenplm",
+  "mode": "blocked",
+  "llm_available": false,
+  "blocked_reason": "schema_validation_failed:ValidationError:1 validation error for TerminologyTable\nterminology_table\n  Extra inputs are not permitted [type=extra_forbidden, input_value=[{'term_id': 'TERM-STAGE-...ts and log artifacts.'}], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:436a7714c21a79abcef174fe007b13e349b28c85da5f6a9967f21d40b103d444"
+    },
+    "phase4_blocked_report": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/phase4_blocked_report.json",
+      "hash": "sha256:d5b7215f612d63f496c326d9a4146e08aa1560443d1ec7adac4cde2d01dd2dd9"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/llm_calls/LLM-phase4-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_author_marker_llm_20260419_172206/paper/method/llm_calls/LLM-phase4-002.json"
+  ],
+  "validator_reports": []
+}

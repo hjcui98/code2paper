@@ -1,0 +1,121 @@
+{
+  "terms": [
+    {
+      "term_id": "TERM-STAGE-1",
+      "canonical": "Stage I: Text-First Interface Warmup",
+      "term_type": "stage",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "S1"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-2",
+      "canonical": "Stage II: Rich Instruction Alignment",
+      "term_type": "stage",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "S2"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-3",
+      "canonical": "Stage III: Point-Language Transfer",
+      "term_type": "stage",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "S3"
+      ],
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ]
+    },
+    {
+      "term_id": "TERM-STAGE-4",
+      "canonical": "Runtime and saving behavior",
+      "term_type": "stage",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "S4"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "term_id": "TERM-MECH-1",
+      "canonical": "Stage I: Text-First Interface Warmup",
+      "term_type": "mechanism",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH1"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "term_id": "TERM-MECH-2",
+      "canonical": "Stage II: Rich Instruction Alignment",
+      "term_type": "mechanism",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH2"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    },
+    {
+      "term_id": "TERM-MECH-3",
+      "canonical": "Stage III: Point-Language Transfer",
+      "term_type": "mechanism",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH3"
+      ],
+      "evidence_span_ids": [
+        "E5",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ]
+    },
+    {
+      "term_id": "TERM-MECH-4",
+      "canonical": "Runtime and saving behavior",
+      "term_type": "mechanism",
+      "allowed_synonyms": [],
+      "forbidden_replacements": [],
+      "source_ids": [
+        "MECH4"
+      ],
+      "evidence_span_ids": [
+        "E5"
+      ]
+    }
+  ]
+}

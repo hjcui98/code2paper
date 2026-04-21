@@ -1,0 +1,38 @@
+{
+  "project_id": "greenplm",
+  "mode": "deterministic-freeze",
+  "llm_available": false,
+  "blocked_reason": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/method_evidence.json",
+      "hash": "sha256:3ea2d7caf9994be17ce20408c78d72091deaafe93ebf15b31b70d1b61eba70d3"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/claim_evidence_map.json",
+      "hash": "sha256:dd4295bfa09c327e4390c6e568bcc31f578861abc3c2f16a9e5a425d9029e27e"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/method_evidence_review.md",
+      "hash": "sha256:21c9bfb92fdc2dcae28ed4ad4d4837e0cb58146b9c5012f7533075fd21253650"
+    }
+  },
+  "llm_call_logs": [
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-001.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-002.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-003.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-004.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-005.json",
+    "/home/cuihengjia/agent/code2paper_agent/output/greenplm_bridge_20260420_170841/paper/method/llm_calls/LLM-phase3-006.json"
+  ],
+  "review_questions": [
+    "RQ-9",
+    "RQ-10",
+    "RQ-11"
+  ]
+}

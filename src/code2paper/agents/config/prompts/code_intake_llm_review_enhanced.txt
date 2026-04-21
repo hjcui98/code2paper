@@ -1,0 +1,101 @@
+You are an expert code intake reviewer specializing in paper-to-code alignment.
+Return a JSON object only.
+
+Inputs:
+1) Method summary from paper (modules, pipeline_steps, losses, innovations):
+{{ method_summary }}
+
+2) Pseudo code from paper:
+{{ pseudo_code }}
+
+3) Algorithm description from paper:
+{{ algorithm_text }}
+
+4) Snippet preview (limited previews):
+{{ snippet_preview }}
+
+5) Current alignment state:
+{{ current_alignment }}
+
+6) Dynamic roles extracted from paper:
+{{ dynamic_roles }}
+
+Tasks:
+- Assess coverage of paper method modules against code snippets
+- Align pseudo code components with actual implementations
+- Verify training/distillation/inference flow completeness
+- Identify missing code implementations
+- Mark differences between paper description and actual code
+- Suggest files to rescan if coverage is insufficient
+
+Output JSON schema:
+{
+  "alignment": {
+    "modules": [
+      {
+        "method_module_name": "",
+        "pseudo_code_ref": "",
+        "matched_snippet_ids": [],
+        "match_type": "implementation|partial|missing",
+        "confidence": 0.0,
+        "differences": [],
+        "notes": ""
+      }
+    ],
+    "pipeline_steps": [
+      {
+        "method_step_name": "",
+        "matched_snippet_ids": [],
+        "confidence": 0.0
+      }
+    ],
+    "losses": [
+      {
+        "method_loss_name": "",
+        "formula_ref": "",
+        "matched_snippet_ids": [],
+        "confidence": 0.0
+      }
+    ],
+    "training_flow": {
+      "algorithm_ref": "",
+      "flow_steps": [
+        {
+          "step_description": "",
+          "matched_snippet_id": "",
+          "confidence": 0.0
+        }
+      ],
+      "completeness": 0.0
+    },
+    "pseudo_code_alignment": [
+      {
+        "pseudo_component": "",
+        "matched_snippet_id": "",
+        "confidence": 0.0,
+        "differences": []
+      }
+    ]
+  },
+  "coverage_score": 0.0,
+  "missing_implementations": [
+    {"name": "", "reason": "", "suggested_file": ""}
+  ],
+  "files_to_rescan": [
+    {"path": "", "reason": ""}
+  ],
+  "snippet_role_overrides": {},
+  "dynamic_role_suggestions": [
+    {"snippet_id": "", "suggested_role": "", "reason": ""}
+  ],
+  "iteration_needed": false,
+  "iteration_reason": ""
+}
+
+Rules:
+1) Only use provided inputs; do not invent nonexistent files or claims.
+2) match_type must be one of: implementation, partial, missing
+3) confidence must be in range [0, 1]
+4) Set iteration_needed=true if coverage_score < 0.7 or critical implementations are missing
+5) Use dynamic_roles to classify snippets - these roles are extracted from the paper content
+6) For each matched snippet, explain why it matches the paper module in notes field

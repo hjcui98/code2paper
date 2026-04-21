@@ -1,0 +1,258 @@
+{
+  "status": "warn",
+  "blocking_reasons": [],
+  "coverage_check": {
+    "roles_covered": [
+      "config",
+      "dataset",
+      "evaluation",
+      "forward",
+      "model_arch",
+      "other",
+      "training_loop"
+    ],
+    "roles_missing": [
+      "augmentation",
+      "inference",
+      "loss"
+    ],
+    "notes": "",
+    "dynamic_roles": [
+      "evaluation",
+      "training_loop",
+      "model_arch",
+      "dataset",
+      "other",
+      "config",
+      "forward",
+      "augmentation",
+      "inference",
+      "loss"
+    ]
+  },
+  "quality_check": {
+    "oversized_files": [],
+    "low_signal_files": [],
+    "unparsable_snippets": []
+  },
+  "consistency_check": {
+    "method_keyword_hit_rate": 0.0,
+    "suspicious_mismatch": false
+  },
+  "budgets": {
+    "files": 160,
+    "bytes": 3717822,
+    "snippet_lines": 2425
+  },
+  "recommended_actions": [],
+  "budget_used": {
+    "files": 160,
+    "bytes": 3717822,
+    "snippet_lines": 2425
+  },
+  "method_code_alignment": {
+    "coverage_score": 0.45,
+    "iterations": 1,
+    "dynamic_roles": [
+      "evaluation",
+      "training_loop",
+      "model_arch",
+      "dataset",
+      "other",
+      "config",
+      "forward",
+      "augmentation",
+      "inference",
+      "loss"
+    ]
+  },
+  "code_intake_llm_review": {
+    "alignment": {
+      "modules": [
+        {
+          "method_module_name": "shared modality bridge (build_vision_projector)",
+          "pseudo_code_ref": "multimodal projector construction",
+          "matched_snippet_ids": [],
+          "match_type": "missing",
+          "confidence": 0.0,
+          "differences": [],
+          "notes": "No implementation found in provided snippets. Expected in llava/model/multimodal_projector/builder.py but not present in current scan."
+        },
+        {
+          "method_module_name": "token compaction/aggregation (skeleton_Group / 0M-Pooling)",
+          "pseudo_code_ref": "0M-Pooling logic",
+          "matched_snippet_ids": [],
+          "match_type": "missing",
+          "confidence": 0.0,
+          "differences": [],
+          "notes": "No implementation found. Expected novel 0M-Pooling module in llava/model/multimodal_encoder/point_encoder.py for efficient point-token compression."
+        },
+        {
+          "method_module_name": "inject projected point-side representations (PointLLMLlamaModel.forward)",
+          "pseudo_code_ref": "LLM forward with point tokens",
+          "matched_snippet_ids": [],
+          "match_type": "missing",
+          "confidence": 0.0,
+          "differences": [],
+          "notes": "Provided snippets show PointNet2ClassificationSSG.forward (standard classification), not PointLLM's LLM injection mechanism. Expected in pointllm/model/pointllm.py."
+        },
+        {
+          "method_module_name": "controls supervision mixtures (ObjectPointCloudDataset)",
+          "pseudo_code_ref": "dataset with description/dialog targets",
+          "matched_snippet_ids": [],
+          "match_type": "missing",
+          "confidence": 0.0,
+          "differences": [],
+          "notes": "No dataset implementation found. Expected in pointllm/data/object_point_dataset.py handling T3D text data and point cloud pairs."
+        },
+        {
+          "method_module_name": "stage orchestration (train)",
+          "pseudo_code_ref": "3-stage training coordinator",
+          "matched_snippet_ids": [],
+          "match_type": "missing",
+          "confidence": 0.0,
+          "differences": [],
+          "notes": "No training orchestration found. Expected in pointllm/train/train.py with freezing/adapters for Stage I/II/III."
+        }
+      ],
+      "pipeline_steps": [
+        {
+          "method_step_name": "Stage I: Text-Projector Bootstrapping",
+          "matched_snippet_ids": [],
+          "confidence": 0.0
+        },
+        {
+          "method_step_name": "Stage II: Rich Text Alignment with LoRA",
+          "matched_snippet_ids": [],
+          "confidence": 0.0
+        },
+        {
+          "method_step_name": "Stage III: Point-Language Transfer via Shared Projector",
+          "matched_snippet_ids": [],
+          "confidence": 0.0
+        }
+      ],
+      "losses": [
+        {
+          "method_loss_name": "Causal LM Loss",
+          "formula_ref": "standard autoregressive language modeling loss",
+          "matched_snippet_ids": [],
+          "confidence": 0.0
+        }
+      ],
+      "training_flow": {
+        "algorithm_ref": "3-stage transfer learning with text-heavy pre-alignment",
+        "flow_steps": [
+          {
+            "step_description": "Text-Projector Bootstrapping with frozen backbones",
+            "matched_snippet_id": "",
+            "confidence": 0.0
+          },
+          {
+            "step_description": "Rich Text Alignment with LoRA adapters",
+            "matched_snippet_id": "",
+            "confidence": 0.0
+          },
+          {
+            "step_description": "Point-Language Transfer with 0M-Pooling compression",
+            "matched_snippet_id": "",
+            "confidence": 0.0
+          }
+        ],
+        "completeness": 0.0
+      },
+      "pseudo_code_alignment": []
+    },
+    "coverage_score": 0.05,
+    "missing_implementations": [
+      {
+        "name": "build_vision_projector (multimodal projector)",
+        "reason": "Core component for bridging point encoder and LLM; required for both text and point phases",
+        "suggested_file": "llava/model/multimodal_projector/builder.py"
+      },
+      {
+        "name": "skeleton_Group / 0M-Pooling",
+        "reason": "Novel contribution for efficient point-token compression; explicitly mentioned as core innovation",
+        "suggested_file": "llava/model/multimodal_encoder/point_encoder.py"
+      },
+      {
+        "name": "PointLLMLlamaModel",
+        "reason": "Main model architecture integrating point tokens into LLM forward pass",
+        "suggested_file": "pointllm/model/pointllm.py"
+      },
+      {
+        "name": "ObjectPointCloudDataset with T3D support",
+        "reason": "Required for handling text-heavy supervision mixtures (description/dialog)",
+        "suggested_file": "pointllm/data/object_point_dataset.py"
+      },
+      {
+        "name": "3-stage training orchestration",
+        "reason": "Critical for the transfer learning recipe (Stage I/II/III freezing and adapter logic)",
+        "suggested_file": "pointllm/train/train.py"
+      },
+      {
+        "name": "Point encoder integration",
+        "reason": "Current snippets show standalone PointNet++ classification; missing integration with LLM",
+        "suggested_file": "pointllm/model/point_encoder.py or similar"
+      }
+    ],
+    "files_to_rescan": [
+      {
+        "path": "llava/model/multimodal_projector/builder.py",
+        "reason": "Contains M1 (shared modality bridge) critical for paper method"
+      },
+      {
+        "path": "llava/model/multimodal_encoder/point_encoder.py",
+        "reason": "Contains M2 (0M-Pooling/skeleton_Group) novel token compaction mechanism"
+      },
+      {
+        "path": "pointllm/model/pointllm.py",
+        "reason": "Contains M3 (PointLLMLlamaModel) for point token injection into LLM"
+      },
+      {
+        "path": "pointllm/data/object_point_dataset.py",
+        "reason": "Contains M4 (dataset with T3D supervision mixtures)"
+      },
+      {
+        "path": "pointllm/train/train.py",
+        "reason": "Contains M5 (stage orchestration for 3-stage transfer)"
+      },
+      {
+        "path": "release/paper/scripts/train/1.sh",
+        "reason": "Stage I training script reference"
+      },
+      {
+        "path": "release/paper/scripts/train/2.sh",
+        "reason": "Stage II training script reference"
+      }
+    ],
+    "snippet_role_overrides": {
+      "sn1": "forward",
+      "sn3": "model_arch"
+    },
+    "dynamic_role_suggestions": [
+      {
+        "snippet_id": "sn1",
+        "suggested_role": "forward",
+        "reason": "Standard PointNet++ forward pass for point cloud encoding - likely used as backbone but not the main contribution"
+      },
+      {
+        "snippet_id": "sn2",
+        "suggested_role": "training_loop",
+        "reason": "Batch normalization momentum scheduler - training utility"
+      },
+      {
+        "snippet_id": "sn3",
+        "suggested_role": "model_arch",
+        "reason": "PointNet++ classification architecture - potential backbone but not the PointLLM architecture described in paper"
+      },
+      {
+        "snippet_id": "sn4",
+        "suggested_role": "other",
+        "reason": "Utility function for BN momentum"
+      }
+    ],
+    "iteration_needed": true,
+    "iteration_reason": "Current snippets only contain standard PointNet++ classification code (pointnet2_ssg_cls.py), which appears to be a dependency or baseline backbone. None of the core PointLLM modules (multimodal projector, 0M-Pooling, LLM integration, 3-stage training) are present. Coverage score 0.05 << 0.7 threshold. Critical missing implementations include: shared modality bridge, 0M-Pooling mechanism, PointLLM forward pass, T3D dataset handling, and stage-wise training orchestration."
+  }
+}

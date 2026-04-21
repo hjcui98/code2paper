@@ -1,0 +1,384 @@
+{
+  "meta": {
+    "version": "v2",
+    "producer": "code_analyzer"
+  },
+  "links": [
+    {
+      "source_type": "paper_method",
+      "source_id": "training-stage orchestration via argument combinations",
+      "target_type": "code_module",
+      "target_id": "TrainingArguments",
+      "confidence": 1.0,
+      "note": "Module TrainingArguments implements training-stage orchestration via argument combinations"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "TrainingArguments",
+      "target_type": "snippet",
+      "target_id": "sn48",
+      "confidence": 0.8,
+      "note": "Module TrainingArguments defined in sn48"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "TrainingArguments",
+      "target_type": "snippet",
+      "target_id": "sn50",
+      "confidence": 0.8,
+      "note": "Module TrainingArguments defined in sn50"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "TrainingArguments",
+      "target_type": "snippet",
+      "target_id": "sn16",
+      "confidence": 0.8,
+      "note": "Module TrainingArguments defined in sn16"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "inject projected point features into language token stream",
+      "target_type": "code_module",
+      "target_id": "PointcloudEncoder",
+      "confidence": 0.6,
+      "note": "Module PointcloudEncoder implements inject projected point features into language token stream"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointcloudEncoder",
+      "target_type": "snippet",
+      "target_id": "sn69",
+      "confidence": 0.8,
+      "note": "Module PointcloudEncoder defined in sn69"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointcloudEncoder",
+      "target_type": "snippet",
+      "target_id": "sn3",
+      "confidence": 0.8,
+      "note": "Module PointcloudEncoder defined in sn3"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointcloudEncoder",
+      "target_type": "snippet",
+      "target_id": "sn67",
+      "confidence": 0.8,
+      "note": "Module PointcloudEncoder defined in sn67"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointcloudEncoder",
+      "target_type": "snippet",
+      "target_id": "sn75",
+      "confidence": 0.8,
+      "note": "Module PointcloudEncoder defined in sn75"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointcloudEncoder",
+      "target_type": "snippet",
+      "target_id": "sn76",
+      "confidence": 0.8,
+      "note": "Module PointcloudEncoder defined in sn76"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "load/filter conversation supervision and point samples",
+      "target_type": "code_module",
+      "target_id": "PointNet2ClassificationSSG",
+      "confidence": 0.6,
+      "note": "Module PointNet2ClassificationSSG implements load/filter conversation supervision and point samples"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn3",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn3"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn76",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn76"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn41",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn41"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn43",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn43"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn59",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn59"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "convert point placeholders into multimodal training tokens",
+      "target_type": "code_module",
+      "target_id": "training_step",
+      "confidence": 0.6,
+      "note": "Module training_step implements convert point placeholders into multimodal training tokens"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "training_step",
+      "target_type": "snippet",
+      "target_id": "sn16",
+      "confidence": 0.8,
+      "note": "Module training_step defined in sn16"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "training_step",
+      "target_type": "snippet",
+      "target_id": "sn48",
+      "confidence": 0.8,
+      "note": "Module training_step defined in sn48"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "training_step",
+      "target_type": "snippet",
+      "target_id": "sn49",
+      "confidence": 0.8,
+      "note": "Module training_step defined in sn49"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "training_step",
+      "target_type": "snippet",
+      "target_id": "sn50",
+      "confidence": 0.8,
+      "note": "Module training_step defined in sn50"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "training_step",
+      "target_type": "snippet",
+      "target_id": "sn3",
+      "confidence": 0.8,
+      "note": "Module training_step defined in sn3"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "compact point-token aggregation with neighborhood routing",
+      "target_type": "code_module",
+      "target_id": "PointNet2ClassificationSSG",
+      "confidence": 0.5,
+      "note": "Module PointNet2ClassificationSSG implements compact point-token aggregation with neighborhood routing"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn3",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn3"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn41",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn41"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn43",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn43"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn69",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn69"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PointNet2ClassificationSSG",
+      "target_type": "snippet",
+      "target_id": "sn76",
+      "confidence": 0.8,
+      "note": "Module PointNet2ClassificationSSG defined in sn76"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "shared projector from encoder space to LLM hidden space",
+      "target_type": "code_module",
+      "target_id": "Encoder",
+      "confidence": 1.0,
+      "note": "Module Encoder implements shared projector from encoder space to LLM hidden space"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Encoder",
+      "target_type": "snippet",
+      "target_id": "sn44",
+      "confidence": 0.8,
+      "note": "Module Encoder defined in sn44"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Encoder",
+      "target_type": "snippet",
+      "target_id": "sn45",
+      "confidence": 0.8,
+      "note": "Module Encoder defined in sn45"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Encoder",
+      "target_type": "snippet",
+      "target_id": "sn68",
+      "confidence": 0.8,
+      "note": "Module Encoder defined in sn68"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Encoder",
+      "target_type": "snippet",
+      "target_id": "sn69",
+      "confidence": 0.8,
+      "note": "Module Encoder defined in sn69"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Encoder",
+      "target_type": "snippet",
+      "target_id": "sn65",
+      "confidence": 0.8,
+      "note": "Module Encoder defined in sn65"
+    },
+    {
+      "source_type": "paper_method",
+      "source_id": "trainer-side save/checkpoint behavior",
+      "target_type": "code_module",
+      "target_id": "LLaVATrainer",
+      "confidence": 0.4,
+      "note": "Module LLaVATrainer implements trainer-side save/checkpoint behavior"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "LLaVATrainer",
+      "target_type": "snippet",
+      "target_id": "sn47",
+      "confidence": 0.8,
+      "note": "Module LLaVATrainer defined in sn47"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "LLaVATrainer",
+      "target_type": "snippet",
+      "target_id": "sn49",
+      "confidence": 0.8,
+      "note": "Module LLaVATrainer defined in sn49"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "PatchDropout",
+      "target_type": "snippet",
+      "target_id": "sn72",
+      "confidence": 0.8,
+      "note": "Module PatchDropout defined in sn72"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "Group",
+      "target_type": "snippet",
+      "target_id": "sn73",
+      "confidence": 0.8,
+      "note": "Module Group defined in sn73"
+    },
+    {
+      "source_type": "code_module",
+      "source_id": "skeleton_Group",
+      "target_type": "snippet",
+      "target_id": "sn74",
+      "confidence": 0.8,
+      "note": "Module skeleton_Group defined in sn74"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S1",
+      "target_type": "snippet",
+      "target_id": "sn43",
+      "confidence": 0.7,
+      "note": "Step Stage I: Text-First Interface Warmup implemented in sn43"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S3",
+      "target_type": "snippet",
+      "target_id": "sn69",
+      "confidence": 0.7,
+      "note": "Step Stage III: Point-Language Transfer implemented in sn69"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S3",
+      "target_type": "snippet",
+      "target_id": "sn41",
+      "confidence": 0.7,
+      "note": "Step Stage III: Point-Language Transfer implemented in sn41"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S3",
+      "target_type": "snippet",
+      "target_id": "sn3",
+      "confidence": 0.7,
+      "note": "Step Stage III: Point-Language Transfer implemented in sn3"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S4",
+      "target_type": "snippet",
+      "target_id": "sn47",
+      "confidence": 0.7,
+      "note": "Step Runtime and saving behavior implemented in sn47"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S4",
+      "target_type": "snippet",
+      "target_id": "sn49",
+      "confidence": 0.7,
+      "note": "Step Runtime and saving behavior implemented in sn49"
+    },
+    {
+      "source_type": "pipeline_step",
+      "source_id": "S4",
+      "target_type": "snippet",
+      "target_id": "sn59",
+      "confidence": 0.7,
+      "note": "Step Runtime and saving behavior implemented in sn59"
+    }
+  ]
+}

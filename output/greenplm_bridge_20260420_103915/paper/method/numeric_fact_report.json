@@ -1,0 +1,17 @@
+{
+  "project_id": "greenplm",
+  "passed": false,
+  "checked_values": 3,
+  "issues": [
+    {
+      "issue_id": "CV1",
+      "severity": "high",
+      "category": "unknown_quantitative_key",
+      "message": "Draft writes `epsilon=1e-06$` on line 19, but no matching architecture parameter or resolved config key was found.",
+      "key": "epsilon",
+      "written_value": "1e-06$",
+      "expected_values": [],
+      "evidence_ids": []
+    }
+  ]
+}

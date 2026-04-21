@@ -1,0 +1,52 @@
+{
+  "project_id": "toy_train_project",
+  "entrypoints": [
+    {
+      "path": "train.py",
+      "symbol": "main",
+      "called_by": ["scripts/train.sh"],
+      "confidence": 0.95,
+      "evidence_ids": ["E1", "E2"]
+    }
+  ],
+  "execution_stages": [
+    {
+      "stage_id": "X1",
+      "name": "training_launch",
+      "description": "Parse config and launch training.",
+      "related_evidence_ids": ["E1", "E2"]
+    }
+  ],
+  "method_stages": [
+    {
+      "stage_id": "M1",
+      "name": "model_training",
+      "purpose": "Optimize the model on the dataset.",
+      "related_evidence_ids": ["E2"]
+    }
+  ],
+  "stage_mappings": [
+    {
+      "execution_stage_id": "X1",
+      "method_stage_id": "M1",
+      "confidence": 0.88
+    }
+  ],
+  "module_roles": [
+    {
+      "path": "model.py",
+      "symbol": "ToyModel",
+      "role": "model",
+      "category": "method-core",
+      "confidence": 0.91,
+      "evidence_ids": ["E2"]
+    }
+  ],
+  "role_conflicts": [],
+  "author_alignment": {
+    "matched_steps": [],
+    "mismatched_steps": [],
+    "unsupported_claims": []
+  }
+}
+

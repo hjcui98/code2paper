@@ -1,0 +1,43 @@
+{
+  "status": "pass",
+  "blocking_reasons": [],
+  "coverage_check": {
+    "roles_covered": [
+      "config",
+      "dataset",
+      "evaluation",
+      "fps",
+      "knn_point",
+      "model_arch",
+      "other",
+      "pointllmllamamodel",
+      "preprocess_multimodal_point_cloud",
+      "runtime_and_saving_behavior",
+      "skeleton_group",
+      "training_loop"
+    ],
+    "roles_missing": [
+      "augmentation",
+      "forward",
+      "inference",
+      "loss"
+    ],
+    "author_alignment_score": 1.0
+  },
+  "quality_check": {
+    "oversized_files": [],
+    "low_signal_files": [],
+    "unparsable_snippets": []
+  },
+  "consistency_check": {
+    "method_input": "author_markers.yaml",
+    "suspicious_mismatch": false
+  },
+  "budget_used": {
+    "files": 162,
+    "bytes": 1342090,
+    "snippet_lines": 3683,
+    "max_total_snippet_lines": 4200
+  },
+  "recommended_actions": []
+}

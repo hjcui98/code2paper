@@ -1,0 +1,72 @@
+{
+  "status": "warn",
+  "blocking_reasons": [],
+  "coverage_check": {
+    "roles_covered": [
+      "config",
+      "dataset",
+      "encoder",
+      "evaluation",
+      "forward",
+      "model_arch",
+      "other",
+      "training_loop"
+    ],
+    "roles_missing": [
+      "augmentation",
+      "inference",
+      "loss"
+    ],
+    "notes": "",
+    "dynamic_roles": [
+      "augmentation",
+      "forward",
+      "training_loop",
+      "dataset",
+      "config",
+      "inference",
+      "loss",
+      "other",
+      "evaluation",
+      "encoder",
+      "model_arch"
+    ]
+  },
+  "quality_check": {
+    "oversized_files": [],
+    "low_signal_files": [],
+    "unparsable_snippets": []
+  },
+  "consistency_check": {
+    "method_keyword_hit_rate": 0.0,
+    "suspicious_mismatch": false
+  },
+  "budgets": {
+    "files": 160,
+    "bytes": 3717822,
+    "snippet_lines": 2527
+  },
+  "recommended_actions": [],
+  "budget_used": {
+    "files": 160,
+    "bytes": 3717822,
+    "snippet_lines": 2527
+  },
+  "method_code_alignment": {
+    "coverage_score": 0.44,
+    "iterations": 1,
+    "dynamic_roles": [
+      "augmentation",
+      "forward",
+      "training_loop",
+      "dataset",
+      "config",
+      "inference",
+      "loss",
+      "other",
+      "evaluation",
+      "encoder",
+      "model_arch"
+    ]
+  }
+}

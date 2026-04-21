@@ -1,0 +1,68 @@
+{
+  "project_id": "greenplm",
+  "mode": "deterministic-authoring",
+  "llm_available": false,
+  "blocked_reason": "",
+  "outputs": {
+    "method_authoring_prompt": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_authoring_prompt.md",
+      "hash": "sha256:368e724010117a28bed057a09172d37e1d88e44cd31e9c1f264edb23c84a5a48"
+    },
+    "method_outline": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_outline.json",
+      "hash": "sha256:2e47168219dbfbe3020a83ee57b1c314ec145deee83864913a04f198411c498f"
+    },
+    "terminology_table": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/terminology_table.json",
+      "hash": "sha256:d68cb6dca99a7e3e11e37c5ab1d6d6876ea69a0bdca8d3603c29f4e45a2ba05f"
+    },
+    "method_draft_md": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_draft.md",
+      "hash": "sha256:c0ae972cbf2a43d97b3b03f2d5bbf9134c4d31647dc2f88d002d429718620db6"
+    },
+    "method_draft_tex": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_draft.tex",
+      "hash": "sha256:21e4d1302c2451faed2b382b53d019e3a089cf0a19ea355c900583e97957d76e"
+    },
+    "draft_claim_map": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/draft_claim_map.json",
+      "hash": "sha256:b3a4a5834f87fc6f96bf7031d832756d90cca12a8d1646b684efd2e7754a2c27"
+    },
+    "method_authoring_sidecar": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/method_authoring_sidecar.json",
+      "hash": "sha256:9c2cb7916c99ce931e3581d7b8f21f8ff3d1bc6a04ec3120c5d74dd6ecc8d3e5"
+    },
+    "self_critic_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/self_critic_report.json",
+      "hash": "sha256:8783ac5790c938aa7ea683df5f7b30e6f1faa364fd145dbe8ab26985d07a6bfc"
+    },
+    "claim_evidence_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/claim_evidence_report.json",
+      "hash": "sha256:0fa6c450ed1fe1685b0025de5d57a6004cfda3dc9d8b5db5aaa8e5127149b077"
+    },
+    "numeric_fact_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/numeric_fact_report.json",
+      "hash": "sha256:aee994ec811afbdc8046dc4fe6c50ab16ebe501ddcd32a8d3721043429f72fd6"
+    },
+    "equation_support_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/equation_support_report.json",
+      "hash": "sha256:64f0217443cf6868af37dbd8192c526d71666e25fce2764b780c6ddfdc883bb9"
+    },
+    "terminology_consistency_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/terminology_consistency_report.json",
+      "hash": "sha256:c74d4e52b8988a34a2134ecb2bf42f360d88b33f8b5ece73cb8644897a984598"
+    },
+    "latex_smoke_report": {
+      "path": "output/greenplm_bridge_20260420_173846/paper/method/latex_smoke_report.json",
+      "hash": "sha256:f14aa4bbf78581302f86bd0871d038d3383a6009a41b534b347eb8e34855c0a3"
+    }
+  },
+  "llm_call_logs": [],
+  "validator_reports": [
+    "output/greenplm_bridge_20260420_173846/paper/method/claim_evidence_report.json",
+    "output/greenplm_bridge_20260420_173846/paper/method/numeric_fact_report.json",
+    "output/greenplm_bridge_20260420_173846/paper/method/equation_support_report.json",
+    "output/greenplm_bridge_20260420_173846/paper/method/terminology_consistency_report.json",
+    "output/greenplm_bridge_20260420_173846/paper/method/latex_smoke_report.json"
+  ]
+}

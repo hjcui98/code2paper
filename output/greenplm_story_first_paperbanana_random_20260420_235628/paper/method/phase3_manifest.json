@@ -1,0 +1,32 @@
+{
+  "project_id": "code",
+  "mode": "evidence-freeze",
+  "llm_available": false,
+  "blocked_reason": "",
+  "inputs": {
+    "raw_evidence_pack": "paper/method/raw_evidence_pack.json",
+    "code_alignment_ir": "paper/method/code_alignment_ir.json",
+    "code_method_analysis": "paper/method/code_method_analysis.json",
+    "code_facts": "paper/method/code_facts.json"
+  },
+  "outputs": {
+    "method_evidence": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/method_evidence.json",
+      "hash": "sha256:ff8161ba85c4f2f5f47c5353fc6fb397fca473d772a35b88cf8ec413648d926c"
+    },
+    "claim_evidence_map": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/claim_evidence_map.json",
+      "hash": "sha256:a23ea43f4de00e1acc05edbe701b6bf0be741b961c77aa4e720f1491d19b74f7"
+    },
+    "method_evidence_review": {
+      "path": "/home/cuihengjia/agent/code2paper_agent/output/greenplm_story_first_paperbanana_random_20260420_235628/paper/method/method_evidence_review.md",
+      "hash": "sha256:c488a2d0a18e7e692b3d15b907eff3c2d63114574ce04c9c255689cc4b4f062e"
+    }
+  },
+  "llm_call_logs": [],
+  "review_questions": [
+    "RQ-9",
+    "RQ-10",
+    "RQ-11"
+  ]
+}

@@ -1,0 +1,1736 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "project_root": "/home/cuihengjia/agent/PosterGen/data/attention/attention-is-all-you-need-pytorch",
+  "author_mode": "enhanced",
+  "author_confirmation_required": false,
+  "readme_policy": "exclude",
+  "evidence_items": [
+    {
+      "evidence_id": "E1",
+      "source_type": "author",
+      "path": "/home/cuihengjia/agent/code2paper_agent/examples/attention_author_markers.yaml",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 101,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:6414eeb7b030bb23eabdacbf952bf0a8784c9252c2fc2fd12fbc5c704c8217cf",
+      "evidence_strength": "semantic_hint",
+      "confidence": 0.7,
+      "content_summary": "Author markers provide semantic hints for priority files, module roles, pipeline steps, claimed novelty, and potential mismatches.",
+      "tags": [
+        "author_markers",
+        "semantic_hint"
+      ]
+    },
+    {
+      "evidence_id": "E2",
+      "source_type": "bash",
+      "path": "train_multi30k_de_en.sh",
+      "symbol": null,
+      "line_start": 5,
+      "line_end": 16,
+      "config_key": null,
+      "shell_command_segment": "CUDA_VISIBLE_DEVICES=${gpu} python train.py -data_pkl multi30k_de_en.pkl -label_smoothing -proj_share_weight -scale_emb_or_prj ${scale_emb_or_prj} -lr_mul ${lr_mul} -b 256 -warmup 4000 -epoch 200 -seed 1 -output_dir output/lr_mul_${lr_mul}-scale_${scale_emb_or_prj} -use_tb",
+      "excerpt_hash": "sha256:b624aab349165c395f98573d01467962023c740ac378c6506aa88e474f8c07aa",
+      "evidence_strength": "hard",
+      "confidence": 0.9,
+      "content_summary": "Shell command: CUDA_VISIBLE_DEVICES=${gpu} python train.py -data_pkl multi30k_de_en.pkl -label_smoothing -proj_share_weight -scale_emb_or_prj ${scale_emb_or_prj} -lr_mul ${lr_mul} -b 256 -warmup 4000 -epoch 200 -seed 1 -output_dir o...",
+      "tags": [
+        "bash",
+        "entrypoint",
+        "train",
+        "shell_override"
+      ]
+    },
+    {
+      "evidence_id": "E3",
+      "source_type": "comment",
+      "path": "train_multi30k_de_en.sh",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 4,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:649ea0b004e69a745c4294c014161f7ef4a56d253f541b89414ac1b8b1133ac1",
+      "evidence_strength": "soft",
+      "confidence": 0.45,
+      "content_summary": "Shell comment hint: Example: gpu=0 lr_mul=2 scale_emb_or_prj=prj bash train_multi30k_de_en.sh The better setting is: gpu=0 lr_mul=0.5 scale_emb_or_prj=emb bash train_multi30k_de_en.sh",
+      "tags": [
+        "comment",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E4",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 3,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f51040daeeb1166d961e2afdd5fed7672eace3b5c8bb7fb2716eb26a84652daa",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: This script handles the training process.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E5",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "cal_performance",
+      "line_start": 26,
+      "line_end": 37,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:3e8abdd9b18544e7e52f23ea2ae9e256c840ed0c725c38495dd76f3864eac5e6",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function cal_performance.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E6",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "cal_performance",
+      "line_start": 26,
+      "line_end": 29,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:af3b8788cabd1035b0de2c930dbaadba8149454284e9244484d3267adfda824a",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for cal_performance: Apply label smoothing if needed",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E7",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "cal_loss",
+      "line_start": 40,
+      "line_end": 58,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:4b98f7473350d396bf7b70cc9daea7197a1de0ee6e838c99afbf1eb06e3ee5ef",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function cal_loss.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E8",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "cal_loss",
+      "line_start": 40,
+      "line_end": 43,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:15660be7fa1b7eeb653201d5c10b315e552a8b2b5352f9c313f0efa002d7c429",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for cal_loss: Calculate cross entropy loss, apply label smoothing if needed.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E9",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "patch_src",
+      "line_start": 61,
+      "line_end": 63,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:fe008be3ee35fbefbc8a78871bbb316813e497dd186077850ef46042d130489e",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function patch_src.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E10",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "patch_trg",
+      "line_start": 66,
+      "line_end": 69,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f6e44961c278611965c80c463968091925a0e1825212cd3c8cbf2818f342e233",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function patch_trg.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E11",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "train_epoch",
+      "line_start": 72,
+      "line_end": 102,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:d5cec2d4758691a50b401378c8cb73f783eb1ba84f59a0ee0eacc8f6d0fc85b1",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function train_epoch.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E12",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "train_epoch",
+      "line_start": 72,
+      "line_end": 75,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:2637723d6eaaa283107ae1c15b9a5e483fff77d4a4676b670a625f9e89714954",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for train_epoch: Epoch operation in training phase",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E13",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "eval_epoch",
+      "line_start": 105,
+      "line_end": 131,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:998da374f507263f3795403fddfa6d01e55d2e26f08d44982e674eb1f3d724c8",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function eval_epoch.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E14",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "eval_epoch",
+      "line_start": 105,
+      "line_end": 108,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:332548560c3ed0552e55e5059b15bdab60cbc67a0b4bb9a94c28fae83f40869e",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for eval_epoch: Epoch operation in evaluation phase",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E15",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "train",
+      "line_start": 134,
+      "line_end": 201,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:b96ec5c62da9b5cf4e1eb266058ebd540f083f6f4191395b93ab51dc32e8ccd4",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function train.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E16",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "train",
+      "line_start": 134,
+      "line_end": 137,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:ea37f6d08de1dcd3b5f79c35de40d95451b796ec9453c09203379c75da68bdd8",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for train: Start training",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E17",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "main",
+      "line_start": 203,
+      "line_end": 302,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5fd0ed592e3bf28f8892a42941972fe594a4d8285bc210947545656912ac6321",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function main.",
+      "tags": [
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E18",
+      "source_type": "comment",
+      "path": "train.py",
+      "symbol": "main",
+      "line_start": 203,
+      "line_end": 206,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:682f82be080ba3736adbf099f486a8aa7ed36ebae44ffee18ce6774c031522a7",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for main: Usage: python train.py -data_pkl m30k_deen_shr.pkl -log m30k_deen_shr -embs_share_weight -proj_share_weight -label_smoothing -output_dir output -b 256 -warmup 128000",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E19",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "prepare_dataloaders_from_bpe_files",
+      "line_start": 305,
+      "line_end": 336,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:7cf9754839bc6ed1e868d4e347facd07373a36e0497a9ddffb2e6b64df09d5f9",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function prepare_dataloaders_from_bpe_files.",
+      "tags": [
+        "data",
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E20",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "prepare_dataloaders",
+      "line_start": 339,
+      "line_end": 363,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:67860bc18d8797a07580562340df3b1d2598393e77a0cbf8cf08027edd187875",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function prepare_dataloaders.",
+      "tags": [
+        "data",
+        "function",
+        "source",
+        "train"
+      ]
+    },
+    {
+      "evidence_id": "E21",
+      "source_type": "comment",
+      "path": "preprocess.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:e444284c209bad61bd3b9cfce44fe637a5320725778a73155c7f3668cebf1e5b",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Handling the data io",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E22",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "TqdmUpTo",
+      "line_start": 49,
+      "line_end": 53,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:91ca60122a283a18657e4dda2613d471205d6823c70cbb9ce5ea75aad75252cc",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class TqdmUpTo inheriting from tqdm.",
+      "tags": [
+        "class",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E23",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "file_exist",
+      "line_start": 56,
+      "line_end": 60,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:3106f5cc2dfb555d3921f1430a0562751368a6ba3f96485f967f283f92e684e4",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function file_exist.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E24",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "download_and_extract",
+      "line_start": 63,
+      "line_end": 83,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:cd1d5db37b1fc4bf562f45aba70d587c4bcbc021bb5b200e05fb7aaca4d8715f",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function download_and_extract.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E25",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "_download_file",
+      "line_start": 86,
+      "line_end": 94,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:93af4cfcda79bad95c1f611aa08ffc769e80a7ad37241f28a165ef2ae35704e4",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function _download_file.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E26",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "get_raw_files",
+      "line_start": 97,
+      "line_end": 103,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:469ac9008d76bcf1c2b646bb1bd0e643eb88cf505b94950c487c2ea01cfb121d",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function get_raw_files.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E27",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "mkdir_if_needed",
+      "line_start": 106,
+      "line_end": 108,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5ff7700334746cf9fc772a9f63993096c092e91bf884aada1fbc913b595cdae5",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function mkdir_if_needed.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E28",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "compile_files",
+      "line_start": 111,
+      "line_end": 135,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:1750ff71c1b7120cea93edcda93380ddfdd0365ed47609c202326f2d648abf51",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function compile_files.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E29",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "encode_file",
+      "line_start": 138,
+      "line_end": 145,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:d821c5605148d86a18e5e51ba59131233b83e3be009013fbcd60a74a2a612420",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function encode_file.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E30",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "encode_files",
+      "line_start": 148,
+      "line_end": 157,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:606b8d6235f3e7cb33b39a174bc9e28600b2bfc1c0b5cad3cb405d9e15249dfc",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function encode_files.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E31",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "main",
+      "line_start": 160,
+      "line_end": 240,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5fd0ed592e3bf28f8892a42941972fe594a4d8285bc210947545656912ac6321",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function main.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E32",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "main_wo_bpe",
+      "line_start": 244,
+      "line_end": 331,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:826262974112d480e086598f08340922b7eaee2bea53e6c2bd78b20d95abe52c",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function main_wo_bpe.",
+      "tags": [
+        "function",
+        "preprocess",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E33",
+      "source_type": "comment",
+      "path": "preprocess.py",
+      "symbol": "main_wo_bpe",
+      "line_start": 244,
+      "line_end": 247,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:32121dbc84b37591d08f36e362c4d84eb4366f15e30f13222c8a1bfd2a845753",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for main_wo_bpe: Usage: python preprocess.py -lang_src de -lang_trg en -save_data multi30k_de_en.pkl -share_vocab",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E34",
+      "source_type": "comment",
+      "path": "transformer/Layers.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9c3309699398d2bceea370d8ff885c3355c127a6f618c12bf7a272ea701320fb",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Define the Layers",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E35",
+      "source_type": "source",
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "line_start": 10,
+      "line_end": 22,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9dd386d7f7bc41c5dafaf478b4aefb36584c37089ef9289078361d8f61abbcf2",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class EncoderLayer inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E36",
+      "source_type": "comment",
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "line_start": 10,
+      "line_end": 13,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9ed2e1696f56dfed5d3d27d042e12a4c6eb7a8265f6fcb8ac5b9e19c838a65c0",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for EncoderLayer: Compose with two layers",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E37",
+      "source_type": "source",
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "line_start": 25,
+      "line_end": 42,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9b2e18e1d4ca83e16bca38f468a8d2550ee1a6a343f04bc3ba62bdd51e8a84b3",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class DecoderLayer inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E38",
+      "source_type": "comment",
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "line_start": 25,
+      "line_end": 28,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5591cb7ddb8692731863acf0e7d3fc650db627edf65bc40da3f868bd40985fec",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for DecoderLayer: Compose with three layers",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E39",
+      "source_type": "comment",
+      "path": "transformer/SubLayers.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:605f41d16e233578cf2571a02e738d1cf7e61f4970438f385dbbd9fab0c9b7a2",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Define the sublayers in encoder/decoder layer",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E40",
+      "source_type": "source",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "line_start": 9,
+      "line_end": 59,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5aa13ead79d2e8dcea8a5402f6bca7b80fefd1dc7a1871c00d63df74a6795db5",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class MultiHeadAttention inheriting from Module.",
+      "tags": [
+        "attention",
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E41",
+      "source_type": "comment",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "line_start": 9,
+      "line_end": 12,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:7d4ef7ff756edaa492bb031c1fc8608537da09d15758fa67c400913c0b46e8af",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for MultiHeadAttention: Multi-Head Attention module",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E42",
+      "source_type": "source",
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "line_start": 62,
+      "line_end": 82,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:7fb216940f358ccd3d6a727ddf3f534881886adce473e075838c238919ddae45",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class PositionwiseFeedForward inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E43",
+      "source_type": "comment",
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "line_start": 62,
+      "line_end": 65,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:371101e65cc112441105821a8025b113f94c0a62e73304e2e9e2cec08fa06882",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for PositionwiseFeedForward: A two-feed-forward-layer module",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E44",
+      "source_type": "comment",
+      "path": "transformer/Optim.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:397bf633b5afead4def92cb802c17bf243c724cc76c5dd3633f9c12bc4974371",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: A wrapper class for scheduled optimizer",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E45",
+      "source_type": "source",
+      "path": "transformer/Optim.py",
+      "symbol": "ScheduledOptim",
+      "line_start": 4,
+      "line_end": 39,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:91641a2b6c9091275bd880474e083147618da2999bbcac04dadb0081e8d19ab8",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class ScheduledOptim.",
+      "tags": [
+        "class",
+        "optimization",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E46",
+      "source_type": "comment",
+      "path": "transformer/Optim.py",
+      "symbol": "ScheduledOptim",
+      "line_start": 4,
+      "line_end": 7,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:607cae1495c913e6eabad78c9879ec7d8f225d36d6d7312765d805a032eadd6a",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for ScheduledOptim: A simple wrapper class for learning rate scheduling",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E47",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 12,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:728fac1d0ec4eeb5df9464f0720d93ea2c7233d040d01baae586e3cc05eeb7cf",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Use operations learned with learn_bpe.py to encode a new text. The text will not be smaller, but use only a fixed vocabulary, with rare words encoded as variable-length sequences of subword units. Reference: Rico Sennrich, Barry Haddow and Alexandra Birch (2015). Neural Machine Translation of Rare Words with Subword Units. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL 2016). Berlin, Germany.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E48",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "BPE",
+      "line_start": 26,
+      "line_end": 116,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c5227056dfbfe8fefeb0db843eee496eec9ecef81f0f2f89fdb3b4e7cf9007ed",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class BPE inheriting from object.",
+      "tags": [
+        "class",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E49",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "encode",
+      "line_start": 118,
+      "line_end": 177,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:fbea8f6ae06c087ca4d8b211e235aefcdbacd3b9f93f53ea37b48a6aa5dea484",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function encode.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E50",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": "encode",
+      "line_start": 118,
+      "line_end": 121,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:fe8670190c5ea97c1466bcfef5c756c43e6e212a122002acac2777cbbcce1028",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for encode: Encode word based on list of BPE merge operations, which are applied consecutively",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E51",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "recursive_split",
+      "line_start": 179,
+      "line_end": 204,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:830be3c15ebb1e269d436ac984215e195745b02f0a296a2c343a229d6bc21d5b",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function recursive_split.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E52",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": "recursive_split",
+      "line_start": 179,
+      "line_end": 182,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:6e194223c0f575c86045b28c2a78677673ef1242ca423d318b9daac444e2e925",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for recursive_split: Recursively split segment into smaller units (by reversing BPE merges) until all units are either in-vocabulary, or cannot be split futher.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E53",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "check_vocab_and_split",
+      "line_start": 206,
+      "line_end": 228,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:edd0da6695c537f837834da0f7035f57da06ab1bcdcfe1dab1bfcf60bcbaa4fc",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function check_vocab_and_split.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E54",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": "check_vocab_and_split",
+      "line_start": 206,
+      "line_end": 209,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:685d6c64e804d88635e8d13b7817e785d2d7f9bd1d7bdfc40ba0fdd551019e4f",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for check_vocab_and_split: Check for each segment in word if it is in-vocabulary, and segment OOV segments into smaller units by reversing the BPE merge operations",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E55",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "read_vocabulary",
+      "line_start": 231,
+      "line_end": 243,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:3b0ddd310c67d5c3a9dd1269517c82f76826590f2f1ca90f1b57b82274364ebf",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function read_vocabulary.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E56",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": "read_vocabulary",
+      "line_start": 231,
+      "line_end": 234,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:049526e6f15f9591bb9f9757d8228c85155bae5e8626a939de74eec974c368eb",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for read_vocabulary: read vocabulary file produced by get_vocab.py, and filter according to frequency threshold.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E57",
+      "source_type": "source",
+      "path": "apply_bpe.py",
+      "symbol": "isolate_glossary",
+      "line_start": 245,
+      "line_end": 261,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:da8f8396886d45f1b5127337a3bf736bd9894a07babd424efb9261ff926d518a",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function isolate_glossary.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E58",
+      "source_type": "comment",
+      "path": "apply_bpe.py",
+      "symbol": "isolate_glossary",
+      "line_start": 245,
+      "line_end": 248,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:b2e0c9b0bdbd922b5f2bd5669f93eb4a9515397363885eaf2a80d327c015e66a",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for isolate_glossary: Isolate a glossary present inside a word. Returns a list of subwords. In which all 'glossary' glossaries are isolated For example, if 'USA' is the glossary and '1934USABUSA' the word, the return value is: ['1934', 'USA', 'B', 'USA']",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E59",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 12,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:973e71f41217a86b277a86daf2017fc98a2e851141e8a3d0d4aeecf0d9bec917",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Use byte pair encoding (BPE) to learn a variable-length encoding of the vocabulary in a text. Unlike the original BPE, it does not compress the plain text, but can be used to reduce the vocabulary of a text to a configurable number of symbols, with only a small increase in the number of tokens. Reference: Rico Sennrich, Barry Haddow and Alexandra Birch (2016). Neural Machine Translation of Rare Words with Subword Units. Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL 2016). Berlin, Germany.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E60",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "update_vocabulary",
+      "line_start": 26,
+      "line_end": 44,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:b245f12e0ad54317f93bd72964c83d7ac0d7334bfeb2d229ccd245388c5e76b1",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function update_vocabulary.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E61",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "update_vocabulary",
+      "line_start": 26,
+      "line_end": 29,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:6e9686077e657cd213a743a894a97ba48aa2ca9f7dcc3e432aeb24d94fb3c3d7",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for update_vocabulary: Read text and return dictionary that encodes vocabulary",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E62",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "update_pair_statistics",
+      "line_start": 47,
+      "line_end": 103,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:7cd71d404f8858a6e469f1aeb4e2300f2f725ef36fef14d5cfc861ea5541450c",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function update_pair_statistics.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E63",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "update_pair_statistics",
+      "line_start": 47,
+      "line_end": 50,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:ba21aad8a88c278f1125e9657911fb356896fe0610663135bf0e45baec48dd18",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for update_pair_statistics: Minimally update the indices and frequency of symbol pairs if we merge a pair of symbols, only pairs that overlap with occurrences of this pair are affected, and need to be updated.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E64",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "get_pair_statistics",
+      "line_start": 106,
+      "line_end": 122,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:3a84c1210810e89f2764aa97823eb6d415f5007b1ccd4a57f24b3f2f559d4320",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function get_pair_statistics.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E65",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "get_pair_statistics",
+      "line_start": 106,
+      "line_end": 109,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:8b3cf3d2ecb2fd400ef8c1f23f2c2f0ca533854f69728f284f9be8dd777618d5",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for get_pair_statistics: Count frequency of all symbol pairs, and create index",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E66",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "replace_pair",
+      "line_start": 125,
+      "line_end": 147,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f22909451dad13b48cc648f880385f051fe0b7e06cde4b05b94ff775c7b409d8",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function replace_pair.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E67",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "replace_pair",
+      "line_start": 125,
+      "line_end": 128,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:1cf9cecc63aa29b89acbaf200a5d2c6ef5b1b5e4be1de2e99b659adbf9ec8dfc",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for replace_pair: Replace all occurrences of a symbol pair ('A', 'B') with a new symbol 'AB'",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E68",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "prune_stats",
+      "line_start": 149,
+      "line_end": 162,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:a9c145162dd850a10fc52e0ecbc562284dc523ed801f6db33e4511d9052cfeca",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function prune_stats.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E69",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "prune_stats",
+      "line_start": 149,
+      "line_end": 152,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:080e4fcf9c3da697df1c546e79f2618cbaa44ce64c052b2731a8ef54c95f8765",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for prune_stats: Prune statistics dict for efficiency of max() The frequency of a symbol pair never increases, so pruning is generally safe (until we the most frequent pair is less frequent than a pair we previously pruned) big_stats keeps full statistics for when we need to access pruned items",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E70",
+      "source_type": "source",
+      "path": "learn_bpe.py",
+      "symbol": "learn_bpe",
+      "line_start": 165,
+      "line_end": 230,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:743b8829a3fcf24eba432ec3f1940808f6e651f61f54f9ed6fbbd5ed640911f4",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function learn_bpe.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E71",
+      "source_type": "comment",
+      "path": "learn_bpe.py",
+      "symbol": "learn_bpe",
+      "line_start": 165,
+      "line_end": 168,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:2e28ee2be334634f2c76bde064ee7ad9da2f3cba90c672de0979d911bf315812",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for learn_bpe: Learn num_symbols BPE operations from vocabulary, and write to outfile.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E72",
+      "source_type": "comment",
+      "path": "transformer/Models.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:bedea7b38ac8f80fe8051047e4b2871d1d8f2130049b329bce18a940ac7fc508",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Define the Transformer model",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E73",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "get_pad_mask",
+      "line_start": 11,
+      "line_end": 12,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:20e5962430ebf22d28830201a88a59096812fc46c9f3f5dabfc6a900650683d6",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function get_pad_mask.",
+      "tags": [
+        "function",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E74",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "get_subsequent_mask",
+      "line_start": 15,
+      "line_end": 20,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:60f497942d2c46c1d14d49a4fc06303960a6f3e56f2c54c3b29c8a46c18bd0f3",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function get_subsequent_mask.",
+      "tags": [
+        "function",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E75",
+      "source_type": "comment",
+      "path": "transformer/Models.py",
+      "symbol": "get_subsequent_mask",
+      "line_start": 15,
+      "line_end": 18,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:ec2ccebd6da83e70c171516e3edcc40bca806960ba69870174d62bdaecdbce7f",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for get_subsequent_mask: For masking out the subsequent info.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E76",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "PositionalEncoding",
+      "line_start": 23,
+      "line_end": 45,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:83a74ba15af8e4e90b7bc3a5132c3e597329209815bec5019c4f82ebafb43448",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class PositionalEncoding inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E77",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "line_start": 48,
+      "line_end": 84,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:6075a6f555b1d87b28ddfe44e6a07235b7e62c77a7f748d33d238aa3e6b6d51b",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class Encoder inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E78",
+      "source_type": "comment",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "line_start": 48,
+      "line_end": 51,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f3161de4f78a31983fc009bf0e04101aed7c5a93a9d57816bb679c6b7b0c81ea",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for Encoder: A encoder model with self attention mechanism.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E79",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "line_start": 87,
+      "line_end": 125,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:9fa3def71ff2acf80e793d7e7972f0db03f1c3ee8b90c4bc6db9bc92fe3a6769",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class Decoder inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E80",
+      "source_type": "comment",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "line_start": 87,
+      "line_end": 90,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c2bdcfa566a101704399f6bfbe85ab7065a657b2a3fe71a794ff5ce70c8b40be",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for Decoder: A decoder model with self attention mechanism.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E81",
+      "source_type": "source",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "line_start": 128,
+      "line_end": 198,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:ffa790ae5e3a31a30bc76768a7e99fb24755d79a6a88a723bdd6a42426aaa80f",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class Transformer inheriting from Module.",
+      "tags": [
+        "class",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E82",
+      "source_type": "comment",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "line_start": 128,
+      "line_end": 131,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:413e727449bbc2c90042e3f6cbaed4a7faade8247ccb6778e5d7d77c354107ab",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for Transformer: A sequence to sequence model with attention mechanism.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E83",
+      "source_type": "source",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "line_start": 7,
+      "line_end": 25,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:429512bf7463625290c747b0a035d3298fd4947ad4e2ebd24d9818b57e15a5a5",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class ScaledDotProductAttention inheriting from Module.",
+      "tags": [
+        "attention",
+        "class",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E84",
+      "source_type": "comment",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "line_start": 7,
+      "line_end": 10,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:84257462a5a904fa3a87e56373563c65f794f337cefa15b05d8ec6f03ad4208c",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for ScaledDotProductAttention: Scaled Dot-Product Attention",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E85",
+      "source_type": "comment",
+      "path": "transformer/Translator.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:f4f63ee45542ace363d182709448f14b5bdd6468fd0af0ddb8070b9610c56fda",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: This module will handle the text generation with beam search.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E86",
+      "source_type": "source",
+      "path": "transformer/Translator.py",
+      "symbol": "Translator",
+      "line_start": 9,
+      "line_end": 114,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:a8d6ed55b381434d07e5cf885933ba3283ee86c5d316625bc6233c9de5120bac",
+      "evidence_strength": "hard",
+      "confidence": 0.82,
+      "content_summary": "Defines class Translator inheriting from Module.",
+      "tags": [
+        "class",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E87",
+      "source_type": "comment",
+      "path": "transformer/Translator.py",
+      "symbol": "Translator",
+      "line_start": 9,
+      "line_end": 12,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:c76513971207610fc7389c49d3b8b3fc1b0578f08e69e478a9988d6f908cce1b",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for Translator: Load a trained model and translate in beam search fashion.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E88",
+      "source_type": "comment",
+      "path": "translate.py",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 1,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:61170f6653282d4f7fb604ad34ab958d1eb0098f4864ffd76276c4e81caebb0e",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Module docstring hint: Translate input text with trained model.",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    },
+    {
+      "evidence_id": "E89",
+      "source_type": "source",
+      "path": "translate.py",
+      "symbol": "load_model",
+      "line_start": 14,
+      "line_end": 39,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:4e8bac5b0c3e14a7dabb11072d43c3c3862c1a050a6b8de26d55c7ca42d893a6",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function load_model.",
+      "tags": [
+        "function",
+        "model",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E90",
+      "source_type": "source",
+      "path": "translate.py",
+      "symbol": "main",
+      "line_start": 42,
+      "line_end": 103,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:5fd0ed592e3bf28f8892a42941972fe594a4d8285bc210947545656912ac6321",
+      "evidence_strength": "hard",
+      "confidence": 0.78,
+      "content_summary": "Defines function main.",
+      "tags": [
+        "function",
+        "source"
+      ]
+    },
+    {
+      "evidence_id": "E91",
+      "source_type": "comment",
+      "path": "translate.py",
+      "symbol": "main",
+      "line_start": 42,
+      "line_end": 45,
+      "config_key": null,
+      "shell_command_segment": null,
+      "excerpt_hash": "sha256:b5042ccffdcfd5ca407261b1e6bb9ad4b49a66514ec9efff5cc0a285e8600049",
+      "evidence_strength": "soft",
+      "confidence": 0.55,
+      "content_summary": "Docstring hint for main: Main Function",
+      "tags": [
+        "comment",
+        "docstring",
+        "soft_hint"
+      ]
+    }
+  ],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "ignored by author markers"
+    },
+    {
+      "path": "LICENSE",
+      "reason": "ignored by author markers"
+    }
+  ]
+}
