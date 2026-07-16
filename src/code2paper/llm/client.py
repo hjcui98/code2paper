@@ -12,6 +12,7 @@ import http.client
 import json
 import os
 import socket
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -84,12 +85,15 @@ class LLMClient:
                 blocked_reason="dry_run",
             )
         if self.config.cache:
-            cached_text = _read_cache(self.config, request)
-            if cached_text is not None:
+            cached_result = _read_cache(self.config, request, self.capability_profile)
+            if cached_result is not None:
                 return LLMResponse(
-                    text=cached_text,
-                    response_hash=hash_text(cached_text),
+                    text=cached_result.text,
+                    response_hash=hash_text(cached_result.text),
                     cached=True,
+                    response_mode=cached_result.response_mode,
+                    finish_reason=cached_result.finish_reason,
+                    token_usage=cached_result.token_usage,
                 )
         if self.config.provider.value == "none":
             return LLMResponse(
@@ -112,7 +116,7 @@ class LLMClient:
         except ProviderRuntimeError as exc:
             return LLMResponse(text="", response_hash=hash_text(""), blocked_reason=str(exc))
         if self.config.cache:
-            _write_cache(self.config, request, result.text)
+            _write_cache(self.config, request, self.capability_profile, result)
         return LLMResponse(
             text=result.text,
             response_hash=hash_text(result.text),
@@ -396,7 +400,11 @@ def _retry_policy(config: LLMConfig) -> RetryPolicy:
     )
 
 
-def _cache_key(config: LLMConfig, request: LLMRequest) -> str:
+def _cache_key(
+    config: LLMConfig,
+    request: LLMRequest,
+    capability_profile: LLMCapabilityProfile,
+) -> str:
     return hash_text(
         json.dumps(
             {
@@ -404,6 +412,8 @@ def _cache_key(config: LLMConfig, request: LLMRequest) -> str:
                 "model": config.model,
                 "temperature": config.temperature,
                 "max_output_tokens": config.max_output_tokens,
+                "prompt_template_version": config.prompt_template_version,
+                "capability_profile": capability_profile.model_dump(mode="json"),
                 "request_input_hash": request.input_hash,
             },
             sort_keys=True,
@@ -416,8 +426,12 @@ def _cache_dir() -> Path:
     return Path(root)
 
 
-def _read_cache(config: LLMConfig, request: LLMRequest) -> str | None:
-    path = _cache_dir() / f"{_cache_key(config, request)}.json"
+def _read_cache(
+    config: LLMConfig,
+    request: LLMRequest,
+    capability_profile: LLMCapabilityProfile,
+) -> _ProviderResult | None:
+    path = _cache_dir() / f"{_cache_key(config, request, capability_profile)}.json"
     if not path.exists():
         return None
     try:
@@ -427,23 +441,45 @@ def _read_cache(config: LLMConfig, request: LLMRequest) -> str | None:
     text = payload.get("text")
     if not isinstance(text, str):
         return None
-    return text
+    return _ProviderResult(
+        text=text,
+        response_mode=str(payload.get("response_mode") or ""),
+        finish_reason=str(payload.get("finish_reason") or ""),
+        token_usage=_normalized_usage(payload.get("token_usage")),
+    )
 
 
-def _write_cache(config: LLMConfig, request: LLMRequest, text: str) -> None:
-    path = _cache_dir() / f"{_cache_key(config, request)}.json"
+def _write_cache(
+    config: LLMConfig,
+    request: LLMRequest,
+    capability_profile: LLMCapabilityProfile,
+    result: _ProviderResult,
+) -> None:
+    path = _cache_dir() / f"{_cache_key(config, request, capability_profile)}.json"
+    temporary = ""
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            _json_dumps(
-                {
-                    "provider": config.provider.value,
-                    "model": config.model,
-                    "request_input_hash": request.input_hash,
-                    "text": text,
-                }
-            ),
-            encoding="utf-8",
-        )
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(_json_dumps({
+                "cache_schema_version": "2.0",
+                "provider": config.provider.value,
+                "model": config.model,
+                "prompt_template_version": config.prompt_template_version,
+                "capability_profile": capability_profile.model_dump(mode="json"),
+                "request_input_hash": request.input_hash,
+                "text": result.text,
+                "response_mode": result.response_mode,
+                "finish_reason": result.finish_reason,
+                "token_usage": result.token_usage or {},
+            }))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
     except OSError:
+        if temporary:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
         return

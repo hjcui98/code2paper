@@ -40,6 +40,7 @@ class LLMSemanticEvidenceVerifier:
             "response_mode": response.response_mode,
             "finish_reason": response.finish_reason,
             "token_usage": response.token_usage or {},
+            "cached": response.cached,
             "blocked_reason": response.blocked_reason,
             "parse_error": error or "",
             "schema_validation_passed": parsed is not None,

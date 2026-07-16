@@ -84,6 +84,7 @@ def main() -> int:
 
 
 def _prepare_artifacts(source: Path, work: Path) -> dict[str, str]:
+    work.mkdir(parents=True, exist_ok=True)
     names = {
         "repo_snapshot": "repo_snapshot.json",
         "evidence_snapshot_v2": "evidence_snapshot_v2.json",

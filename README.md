@@ -151,6 +151,10 @@ Resume fails closed if the state/graph contract is incompatible, source code
 has drifted, or a completed trust artifact no longer matches its frozen input.
 The model only proposes tools from a deterministic readiness allowlist; it is
 never exposed to unrestricted filesystem, shell, renderer, or finalize access.
+LLM cache identities bind the prompt/schema, prompt-template version, model,
+capability profile, generation configuration, and request input digest. Cache
+writes are atomic, and cache-hit traces retain response mode, finish reason,
+token usage, and the explicit `cached` flag for checkpoint audits.
 
 ## Tests
 

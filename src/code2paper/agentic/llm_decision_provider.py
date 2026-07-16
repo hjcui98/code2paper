@@ -78,6 +78,7 @@ def build_llm_decision_provider(llm_config: LLMConfig | None) -> DecisionProvide
             "response_mode": response.response_mode,
             "finish_reason": response.finish_reason,
             "token_usage": response.token_usage or {},
+            "cached": response.cached,
             "blocked_reason": response.blocked_reason,
             "schema_name": request.schema_name,
             "max_output_tokens": node_config.max_output_tokens,

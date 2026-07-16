@@ -1,10 +1,10 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.5
+版本：1.6
 
 日期：2026-07-17
 
-状态：M0、P0、P1、P2 已完成并通过阶段门禁；P3 工程实现与 FastGS SQLite replay 已通过，fresh Gemma 4 中断恢复因本地服务不可用而待验收
+状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；下一执行阶段为 P4 benchmark、cutover 与 legacy 降级
 
 执行负责人：Codex
 
@@ -1714,17 +1714,21 @@ cache key 至少包含：
 已落地：9 个 P0-P2 trust-plane `StructuredTool` 及完整工具契约、`AgenticRunStateV2`
 reducers、V1→V2 migration、memory/SQLite checkpointer、CLI run identity/resume、恢复前
 repo/artifact freshness fail-closed 校验、受限 tool proposal policy、原子写入和幂等 cache。
-全量测试当前为 `384 passed, 2 skipped, 6 subtests passed`。
+全量测试当前为 `385 passed, 2 skipped, 6 subtests passed`。
 
 FastGS 冻结快照（1613 files）已完成 evidence freeze、final text validation、structured render
 三处 SQLite 中断恢复 replay；三次恢复均跳过已完成节点、重新通过 freshness、保留预算/loop
 counters，并与 uninterrupted control 得到相同最终 digest。报告：
 `tests/baselines/agentic/p3_checkpoint_validation_report.json`。
 
-本轮核验时 `http://127.0.0.1:8000/health` 无法连接，宿主环境亦无法访问 NVIDIA driver，
-因此上述结果不得表述为 fresh P3 Gemma 4 调用。报告仅复用了 P2 已审计 FastGS Gemma 4
-decision trace 的 digest；P3 仍需在服务恢复后以同一 run ID 重跑三处中断，核对模型调用数和
-cache hit，完成后方可标记 P3 complete 并进入 P4。
+随后通过获批的宿主 loopback 访问完成 fresh Gemma 4 验收：`/health=200`，served model 为
+`gemma4-31b-nvfp4`，vLLM 进程和 MTP config 均现场可见。FastGS control 产生 1 次真实网络
+语义验证调用；evidence、final text validation、structured render 三处 SQLite 中断恢复的最终
+digest 均为 `sha256:3554a640...eafd6`，freshness 全部通过，已完成节点均未重跑，预算和 loop
+counters 与 control 一致。final text gate 之后的两次恢复均新增 0 次模型调用。禁用 cache 后
+连续 3 次真实调用都得到 `passed / supported / E1` 的相同 trust signature。完整模型 trace、
+token usage、cache hit 和 MTP preflight 位于
+`tests/baselines/agentic/p3_gemma4_checkpoint_validation_report.json`。P3 退出门槛据此通过。
 
 ## 12. P4：Benchmark、cutover 与 legacy 降级
 
@@ -2114,7 +2118,7 @@ Batch A 不改 authoring/figure 的可信度算法。
 - [x] freshness 在 resume 时重检
 - [x] tool selection 不可越权
 - [x] cache/预算/调用可审计
-- [ ] fresh Gemma 4 三处中断恢复与 uninterrupted control 等价
+- [x] fresh Gemma 4 三处中断恢复与 uninterrupted control 等价
 
 ### P4
 

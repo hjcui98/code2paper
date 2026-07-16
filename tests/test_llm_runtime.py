@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
 from code2paper.export.run_manifest import hash_text
-from code2paper.llm.client import LLMClient, LLMRequest
+from code2paper.llm.client import LLMClient, LLMRequest, _ProviderResult
 from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode
 from code2paper.llm.providers import has_provider_api_key
 from code2paper.llm.response_schemas import parse_structured_response
@@ -40,6 +41,47 @@ class _FakeHTTPResponse:
 
 
 class LLMRuntimeTests(unittest.TestCase):
+    def test_cache_binds_prompt_and_capability_and_preserves_response_metadata(self) -> None:
+        request = LLMRequest(prompt_template_id="cache-unit", prompt="Return JSON.", input_payload={"x": 1})
+        base = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model="local-model",
+            prompt_template_version="v1",
+            retry_max_attempts=1,
+            cache=True,
+        )
+        native = LLMCapabilityProfile(profile_name="native", response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA)
+        prompt_only = LLMCapabilityProfile(profile_name="prompt", response_mode=StructuredResponseMode.PROMPT_ONLY)
+        calls = {"count": 0}
+
+        def complete_provider(_client, _request):
+            calls["count"] += 1
+            return _ProviderResult(
+                text='{"ok": true}', response_mode="native_json_schema", finish_reason="stop",
+                token_usage={"completion_tokens": 4},
+            )
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.dict(
+            os.environ,
+            {"CODE2PAPER_LLM_CACHE_DIR": tmpdir, "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8000/v1"},
+            clear=True,
+        ), patch.object(LLMClient, "_complete_provider", complete_provider):
+            first = LLMClient(base, capability_profile=native).complete(request)
+            cached = LLMClient(base, capability_profile=native).complete(request)
+            changed_prompt = LLMClient(
+                base.model_copy(update={"prompt_template_version": "v2"}), capability_profile=native
+            ).complete(request)
+            changed_capability = LLMClient(base, capability_profile=prompt_only).complete(request)
+
+        self.assertFalse(first.cached)
+        self.assertTrue(cached.cached)
+        self.assertEqual(cached.response_mode, "native_json_schema")
+        self.assertEqual(cached.finish_reason, "stop")
+        self.assertEqual(cached.token_usage, {"completion_tokens": 4})
+        self.assertFalse(changed_prompt.cached)
+        self.assertFalse(changed_capability.cached)
+        self.assertEqual(calls["count"], 3)
+
     def test_openai_compatible_runtime_sends_json_schema_request(self) -> None:
         captured = {}
 
