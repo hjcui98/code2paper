@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "profile": "gemma4_mtp_vllm",
+  "verified_at": "2026-07-17T00:11:40+08:00",
+  "verification_scope": "host_read_only_preflight_two_raw_api_requests_and_code2paper_coverage_critic_l1",
+  "endpoint": {
+    "api_root": "http://127.0.0.1:8000",
+    "openai_base_url": "http://127.0.0.1:8000/v1",
+    "loopback": true,
+    "health_passed": true
+  },
+  "server": {
+    "implementation": "vllm",
+    "system_fingerprint": "vllm-0.1.dev1+g978de8335.d20260703-tp2-3758d845",
+    "observed_pid": 343158
+  },
+  "model": {
+    "served_model_id": "gemma4-31b-nvfp4",
+    "root": "/data1/users/cuihengjia/models/Gemma-4-31B-IT-NVFP4",
+    "max_model_len": 131072
+  },
+  "deployment": {
+    "device_ids": [0, 1],
+    "tensor_parallel_size": 2,
+    "inference_mode": "mtp",
+    "mtp_assistant": "/data1/users/cuihengjia/models/Gemma-4-31B-it-assistant",
+    "num_speculative_tokens": 1,
+    "draft_tensor_parallel_size": 2
+  },
+  "structured_output": {
+    "normal_chat_completion_passed": true,
+    "normal_prompt_json_was_markdown_fenced": true,
+    "native_json_schema_passed": true,
+    "preferred_mode": "native_json_schema"
+  },
+  "code2paper_integration": {
+    "coverage_critic_proposal_passed": true,
+    "coverage_critic_max_output_tokens": 512,
+    "coverage_critic_timeout_seconds": 60,
+    "coverage_critic_retry_attempts": 1,
+    "synthetic_two_field_schema_whitespace_saturation_observed": true,
+    "synthetic_schema_invalid_at_output_token_caps": [64, 256],
+    "global_default_12000_request_interrupted_after_more_than_90_seconds": true,
+    "required_follow_up": "node_specific_output_token_budgets_and_finish_reason_logging"
+  },
+  "deployment_benchmark_reported_by_user": {
+    "request_completion_tokens": 128,
+    "baseline_tokens_per_second": 15.04,
+    "mtp_tokens_per_second": 29.95,
+    "speedup": 1.99,
+    "draft_accepted": 80,
+    "draft_proposed": 80,
+    "draft_acceptance_rate": 1.0,
+    "gpu_0_memory_gb_approx": 30.9,
+    "gpu_1_memory_gb_approx": 30.0,
+    "independently_rebenchmarked_in_this_preflight": false
+  },
+  "client_contract": {
+    "provider": "openai",
+    "api_key_policy": "dummy_key_allowed_only_for_unauthenticated_loopback_service",
+    "mtp_is_server_side": true,
+    "send_speculative_config_in_chat_payload": false
+  }
+}

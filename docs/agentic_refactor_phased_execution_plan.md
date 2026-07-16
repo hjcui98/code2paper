@@ -1,10 +1,10 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.1
+版本：1.2
 
-日期：2026-07-16
+日期：2026-07-17
 
-状态：Git 文档基线已建立，M0 待执行
+状态：Git 文档基线已建立；Gemma 4 MTP live infrastructure preflight 已通过；M0 代码任务待执行
 
 执行负责人：Codex
 
@@ -115,17 +115,49 @@
 - 该问题必须在 M0 修复，不能把后续阶段的测试结果建立在“只运行部分测试”上；
 - 工作树已有大量历史/用户改动，执行时必须只修改当前任务涉及的文件，不清理或覆盖无关变化。
 
-### 2.4 本地 Gemma 4 基线
+### 2.4 本地 Gemma 4 MTP 基线
 
-仓库已有一次本地真实运行记录，显示当时服务为 OpenAI-compatible vLLM：
+从 2026-07-17 起，Code2Paper 的默认真实模型测试 profile 固定为本地 MTP-enabled Gemma 4，而不是历史上的非 MTP profile。本次从宿主环境直接核验：
 
-- 地址：`http://127.0.0.1:8000/v1`；
-- 模型 ID：`gemma4-31b-nvfp4`；
-- 服务报告的最大上下文：131072；
-- Code2Paper 通过 `--llm-provider openai`、`CODE2PAPER_OPENAI_BASE_URL` 和占位 `OPENAI_API_KEY` 接入；
-- FastGS 单次完整运行约 13 分钟。
+- API root：`http://127.0.0.1:8000`；
+- OpenAI-compatible base URL：`http://127.0.0.1:8000/v1`；
+- served model ID：`gemma4-31b-nvfp4`；
+- main model：`/data1/users/cuihengjia/models/Gemma-4-31B-IT-NVFP4`；
+- MTP assistant：`/data1/users/cuihengjia/models/Gemma-4-31B-it-assistant`；
+- 进程：PID 343158，vLLM active；
+- GPU：0、1；tensor parallel size = 2；
+- speculative method：`mtp`；
+- `num_speculative_tokens=1`；
+- `draft_tensor_parallel_size=2`；
+- max model length：131072；
+- vLLM fingerprint：`vllm-0.1.dev1+g978de8335.d20260703-tp2-3758d845`；
+- native `response_format=json_schema` 实测通过。
+- 当前 Code2Paper `coverage_critic` 真实 proposal schema 以 512-token 上限调用、解析通过。
 
-这些值是历史基线，不是永久配置。每次 live test 必须先读取 `/v1/models` 重新确认，不能假设端口、模型 ID、上下文或服务端能力未变化。
+启动脚本为：
+
+```text
+/data1/users/cuihengjia/models/Gemma-4-31B-IT-NVFP4/serve_2x5090_qwen36_env.sh
+```
+
+其中 `GEMMA4_MTP_NUM_SPECULATIVE_TOKENS` 的稳定默认值在脚本第 21 行，实际 `--speculative-config` 在第 115–119 行构建。运行进程参数已确认包含：
+
+```json
+{
+  "method": "mtp",
+  "model": "/data1/users/cuihengjia/models/Gemma-4-31B-it-assistant",
+  "num_speculative_tokens": 1,
+  "draft_tensor_parallel_size": 2
+}
+```
+
+部署方提供的同一 128-token 请求基准为：原始 15.04 token/s，MTP 29.95 token/s，约 1.99×；draft 接受率 80/80；GPU 0 约 30.9 GB，GPU 1 约 30.0 GB。上述吞吐、接受率和显存是部署基准，本次 Code2Paper preflight 没有重复压测；本次独立确认的是服务身份、进程 speculative config、普通 completion 和 strict JSON Schema 能力。
+
+MTP 对 Code2Paper 客户端是服务端透明的：客户端仍请求 `gemma4-31b-nvfp4`，不在 chat payload 中发送 `num_speculative_tokens` 或 assistant 路径。run manifest/profile 记录 MTP 元数据用于复现和审计，vLLM 启动配置决定推理是否实际启用 MTP。
+
+本次还发现一个必须进入 M0 的兼容性风险：合成的双字段 strict schema 在某些 prompt/property-order 下会生成一个字段后持续输出合法空白，直到 `max_tokens` 才结束，最终 JSON 截断。64/256-token 两次合成测试均复现；使用仓库全局默认 12000 时请求等待超过 90 秒后被人工中止。实际 `coverage_critic` schema 在 512-token 上限下通过，因此这不是“Code2Paper 完全不可用”，也不能仅凭现有证据归因于 MTP；它证明所有节点共用 12000 输出上限不安全。M0 必须配置 node-specific output token budgets、记录 `finish_reason`，并让 schema 截断快速进入一次有界 repair 或 deterministic fallback。
+
+这些值是当前验证基线，不是永久假设。每次 live suite 仍必须重新检查 `/health`、`/v1/models`；在同一宿主机上还要核对进程参数中的 `--speculative-config`，避免服务重启后误连到非 MTP 实例。
 
 ### 2.5 T007 回归基线
 
@@ -545,11 +577,11 @@ git status --short
 
 ### 6.2 本地 profile
 
-本地真实测试使用不含 secret 的 profile 元数据。建议新增：
+本地真实测试使用不含 secret 的 MTP profile 元数据。当前默认 profile 为：
 
 ```text
-tests/live/profiles/gemma4_vllm.example.env
-tests/live/profiles/gemma4_vllm_capabilities.json
+tests/live/profiles/gemma4_mtp_vllm.example.env
+tests/live/profiles/gemma4_mtp_vllm_capabilities.json
 ```
 
 示例环境：
@@ -558,28 +590,55 @@ tests/live/profiles/gemma4_vllm_capabilities.json
 export CODE2PAPER_LLM_PROVIDER=openai
 export CODE2PAPER_OPENAI_BASE_URL=http://127.0.0.1:8000/v1
 export CODE2PAPER_LLM_MODEL=gemma4-31b-nvfp4
+export CODE2PAPER_DEFAULT_LLM_MODEL=gemma4-31b-nvfp4
 export OPENAI_API_KEY=dummy-local-vllm
 export CODE2PAPER_LLM_CACHE=0
 export CODE2PAPER_LLM_TEMPERATURE=0
+export CODE2PAPER_LLM_MAX_OUTPUT_TOKENS=4096
 export CODE2PAPER_LLM_TIMEOUT_SECONDS=300
 export CODE2PAPER_LLM_RETRY_MAX_ATTEMPTS=2
+export CODE2PAPER_RUN_LIVE_LLM=1
+export CODE2PAPER_LIVE_PROFILE=gemma4_mtp_vllm
 ```
 
 `dummy-local-vllm` 只适用于无需真实鉴权的 loopback 服务。若本地服务启用鉴权，真实 key 只能存在于用户环境，不得写入 profile、artifact、日志或测试快照。
 
-### 6.3 服务预检
-
-每次 live suite 前执行三层预检。
-
-第一层：服务与模型身份。
+加载 profile：
 
 ```bash
+source tests/live/profiles/gemma4_mtp_vllm.example.env
+```
+
+4096 是当前全局兼容上限，不是所有节点的目标输出长度。L0/L1 decision smoke 应显式使用 256–512；正文写作按独立 writer budget 配置。M0 完成 node-specific budget 后，profile 不再用一个全局值替代节点预算。
+
+profile 还记录以下 deployment expectations，供 live harness 在同宿主机核验：`inference_mode=mtp`、TP=2、speculative tokens=1、draft TP=2 和 MTP assistant 路径。这些 expectation 当前不是 `LLMClient` 请求字段；M0 adapter/harness 实现后才自动检查。正式测试在自动检查上线前使用 `/v1/models` + process args 的人工/命令式 preflight。
+
+除非专门进行 MTP on/off 性能对照，M0-P4 所有 `agentic_gemma4` 真实测试均指这个 `gemma4_mtp_vllm` profile。不得在同一 benchmark variant 内途中特意关闭 MTP 或调整 speculative tokens。
+
+### 6.3 服务预检
+
+每次 live suite 前执行四层预检。
+
+第一层：服务健康和模型身份。
+
+```bash
+curl --fail --silent http://127.0.0.1:8000/health
 curl --fail --silent http://127.0.0.1:8000/v1/models
 ```
 
 记录：endpoint、model ID、max context、服务类型/版本（若接口提供）、检查时间。不得只检查端口是否打开。
 
-第二层：普通 chat completion。
+第二层：MTP deployment identity。若测试与服务在同一宿主机，读取 vLLM process args，确认同时存在：
+
+```text
+--tensor-parallel-size 2
+--device-ids 0,1
+--speculative-config {"method":"mtp",...,"num_speculative_tokens":1,"draft_tensor_parallel_size":2}
+```
+
+如果测试端只能访问远程 API，则 deployment identity 必须由受控服务 manifest 提供；`/v1/models` 本身不能证明 speculative decoding 已启用。
+
+第三层：普通 chat completion。
 
 ```bash
 curl --fail --silent http://127.0.0.1:8000/v1/chat/completions \
@@ -596,7 +655,7 @@ curl --fail --silent http://127.0.0.1:8000/v1/chat/completions \
   }'
 ```
 
-第三层：当前客户端实际使用的 strict JSON schema。
+第四层：当前客户端实际使用的 strict JSON schema。
 
 ```bash
 curl --fail --silent http://127.0.0.1:8000/v1/chat/completions \
@@ -635,6 +694,10 @@ curl --fail --silent http://127.0.0.1:8000/v1/chat/completions \
 
 当前 `LLMClient` 无条件为带 schema 的请求发送 `response_format=json_schema`。M0 必须根据 capability profile 选择请求策略，不能因本地服务不支持该字段就假装模型不可用，也不能去掉本地 schema 验证。
 
+2026-07-17 的当前 MTP 实例结果为：`native_json_schema=true`。普通 prompt-only JSON 返回了带 Markdown fence 的 JSON，而 native JSON Schema 返回裸、合法且满足 schema 的 JSON。因此当前 profile 优先使用 native JSON Schema；prompt-only 仍只作为经过本地提取和 Pydantic 验证的降级路径。
+
+Code2Paper L1 追加结果：真实 `CoverageCriticProposal` 在 512 tokens、60 秒 timeout、单次 attempt 下成功，返回 `proceed_to_analysis`，Pydantic 解析通过。合成 schema 的 whitespace saturation 作为单独 regression 保留；它不能被一个成功 schema 掩盖，也不能被错误表述为整个服务不支持 JSON Schema。
+
 ### 6.4 结构化输出降级策略
 
 支持顺序固定为：
@@ -647,11 +710,15 @@ curl --fail --silent http://127.0.0.1:8000/v1/chat/completions \
 
 降级不能接受缺字段、额外越权字段或类型错误。每次降级必须写入 call trace：`requested_mode`、`effective_mode`、`parse_attempts`、`schema_errors` 和最终状态。
 
+当前 MTP profile 已验证第 1 级可用。保留后续降级不是为了当前服务，而是防止 vLLM 升级、启动参数变化或更换 provider 后失去结构化输出兼容性。
+
 ### 6.5 模型调用留痕
 
 每个真实调用至少记录：
 
 - provider、base URL 的脱敏 origin、model ID；
+- inference mode（当前为 `mtp`）、TP size、speculative token count、draft TP size；
+- MTP assistant identifier/path 和可获得的 config digest；
 - capability profile digest；
 - prompt template ID/version/hash；
 - input artifact digests；
@@ -668,9 +735,12 @@ run manifest 必须能够回答“这次正文由哪个模型、哪个 prompt、
 
 #### L0：服务 smoke
 
+- `/health` 通过；
 - `/v1/models` 可读；
+- 当前模型 ID 和 max context 与 profile 一致；
+- process/service manifest 证明 `method=mtp`、TP=2、speculative tokens=1；
 - 普通 completion 可用；
-- schema capability 已探测；
+- native strict JSON Schema 可用；
 - 不运行 Code2Paper pipeline。
 
 #### L1：单节点 contract
@@ -881,6 +951,8 @@ CI 一律使用 `--fail-on-blocked`，交互式本地调试可不使用。
 7. endpoint 或 model ID 不写死为 Gemma 4；
 8. 测试模拟 vLLM 支持/不支持 strict schema 的两种响应。
 9. 审计 `code2paper.schemas` 与 `code2paper.core.schemas` 中重复的 `LLMConfig/LLMProvider`；新 agentic 路径使用一个权威定义，旧导入采用兼容 re-export 或等价收敛方式，避免两个 schema 漂移。
+10. 引入 node-specific `max_output_tokens`：router/critic 使用小预算，authoring/claim extraction 使用独立预算；不再把全局 12000 直接用于所有 schema。
+11. 记录 provider `finish_reason`/token usage；JSON 截断、空白填充到 cap 或超时只能执行一次有界 repair，随后 deterministic fallback/block。
 
 安全要求：provider capability 只影响“怎样获得结构化 proposal”，不能改变 evidence policy 或 gate 结果。
 
@@ -936,6 +1008,7 @@ CODE2PAPER_RUN_LIVE_LLM=1 python3 -m pytest -m live_llm -q
 - 两个 agentic console script 可运行；
 - 五项预算进入 CLI/state/manifest/trace；
 - Gemma 4 L0、L1 通过，toy L2 至少完成一次真实模型路径并产生可审计 proposal/merge trace；若 toy 因已知旧 trust gate block，必须准确分类，不能回退成 deterministic 后冒充 live pass；
+- L0/L1 使用 `gemma4_mtp_vllm`，且 run/profile 证明实际连接的是 MTP-enabled TP=2 实例；
 - capability profile 和 call trace 不包含 secret；
 - deterministic path 不依赖 Gemma 4 服务；
 - 当前 fixed/agentic 行为没有因 M0 被悄然放宽。
@@ -1679,9 +1752,10 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 - `fixed_legacy`：当前固定路线；
 - `agentic_deterministic`：LangGraph + 无模型 proposal；
-- `agentic_gemma4`：LangGraph + Gemma 4 proposal/writer/verifier；
-- 可选 `agentic_gemma4_no_revision`：消融 repair loops；
-- 可选 `agentic_gemma4_no_intent`：消融 author intent priority，但保留 trust plane。
+- `agentic_gemma4_mtp`：LangGraph + 当前 MTP-enabled Gemma 4 proposal/writer/verifier；
+- 可选 `agentic_gemma4_mtp_no_revision`：消融 repair loops；
+- 可选 `agentic_gemma4_mtp_no_intent`：消融 author intent priority，但保留 trust plane；
+- 可选 `agentic_gemma4_no_mtp_perf_control`：仅用于受控性能对照，不参与可信度策略排名。
 
 所有 variant 使用同一 repo snapshot、author input、evidence/validator policy 和 gold set。不能给 agentic variant 更宽松 gate。
 
@@ -1710,11 +1784,12 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.5 P4-04：Gemma 4 重复运行
 
-每个 `agentic_gemma4` case 至少运行三次，cache disabled。每次使用独立 out root 和 run ID，但固定：
+每个 `agentic_gemma4_mtp` case 至少运行三次，cache disabled。每次使用独立 out root 和 run ID，但固定：
 
 - repo snapshot；
 - intent/author input；
 - model ID/capability profile；
+- inference mode、MTP assistant、TP size 和 speculative tokens；
 - prompt version；
 - budgets；
 - temperature；
