@@ -1865,7 +1865,7 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.9 2026-07-17 实施状态
 
-P4 已从 clean tracked commit `de29ac0c25742f95fcbc41e1cccc6ddf0244c8bf`
+P4 已从 clean tracked commit `ed136cae71b3a29eff8d4f89d6e131ece279f2e3`
 重新冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
 agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。当前 5 个
 deterministic run 全部正常结束并达到 `success`、`completion=complete` 与
