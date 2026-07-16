@@ -33,6 +33,7 @@ _DISCOURSE_PREFIXES = (
     "in summary",
     "overall",
     "we now describe",
+    "we describe our approach",
 )
 
 
@@ -56,7 +57,12 @@ def extract_final_text_claims(text: str, projection: AuthoringInputProjection) -
             risks = _risk_markers(sentence)
             discourse = _is_discourse(sentence, risks)
             unit_kind = "discourse" if discourse else kind
-            factual = kind != "heading" and not discourse and (bool(risks) or bool(_FACTUAL_HINT.search(sentence)))
+            # Fail closed for substantive sentences: arbitrary scientific verbs
+            # cannot be exhaustively enumerated. Short nominal section labels stay
+            # non-factual unless they carry a known factual/risk signal.
+            factual = kind != "heading" and not discourse and (
+                bool(risks) or bool(_FACTUAL_HINT.search(sentence)) or len(_tokens(sentence)) > 5
+            )
             unit_id = f"FTU{unit_number}"
             unit_number += 1
             absolute_start = line_start + max(line.find(clean), 0) + local_start

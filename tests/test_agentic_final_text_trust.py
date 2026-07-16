@@ -108,6 +108,17 @@ def test_paraphrased_unsupported_numeric_claim_is_rejected() -> None:
     assert "no_semantically_matching_projected_claim" in report.verdicts[0].deterministic_failures
 
 
+def test_unsupported_scientific_verb_cannot_bypass_factual_extraction() -> None:
+    text = "Hard mining closes the optical-SAR modality gap."
+    projection = _projection()
+    extracted = extract_final_text_claims(text, projection)
+    report = validate_text_evidence(final_claims=extracted, projection=projection, raw_evidence=_raw())
+
+    assert extracted.units[0].factual
+    assert len(extracted.atomic_claims) == 1
+    assert report.status == "failed"
+
+
 def test_stronger_causal_wording_cannot_cross_projection_boundary() -> None:
     text = "The encoder reads configured features and guarantees improved accuracy."
     projection = _projection()
