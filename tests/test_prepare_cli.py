@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+import code2paper.draft_markers as draft_markers
 from code2paper.cli.prepare import run_prepare
 from code2paper.core.output_names import method_output
 from tests.tempdir_support import workspace_tempdir
@@ -18,6 +19,12 @@ TOY_TRAIN_PROJECT = FIXTURES / "toy_train_project"
 
 
 class PrepareCliTests(unittest.TestCase):
+    def test_draft_markers_is_packaged_without_external_source_loader(self) -> None:
+        source = Path(draft_markers.__file__).read_text(encoding="utf-8")
+
+        self.assertNotIn("CODE2PAPER_SHARED_DRAFT_MARKERS", source)
+        self.assertNotIn("code2paper_agent/src/code2paper/draft_markers.py", source)
+
     def test_prepare_writes_seed_refined_and_bootstrap_outputs(self) -> None:
         with workspace_tempdir() as tmpdir:
             tmp = Path(tmpdir)
