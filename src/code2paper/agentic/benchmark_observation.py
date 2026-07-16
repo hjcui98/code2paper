@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -70,8 +71,21 @@ class BenchmarkRunReviewV2(ReviewModel):
 
     @model_validator(mode="after")
     def _review_is_attributable(self) -> "BenchmarkRunReviewV2":
-        if not self.reviewer.strip() or not self.reviewed_at.strip():
+        reviewer = self.reviewer.strip()
+        reviewed_at = self.reviewed_at.strip()
+        if (
+            not reviewer
+            or reviewer == "__REQUIRED_NAMED_HUMAN__"
+            or not reviewed_at
+            or reviewed_at == "__REQUIRED_ISO8601__"
+        ):
             raise ValueError("benchmark review requires reviewer and reviewed_at")
+        try:
+            timestamp = datetime.fromisoformat(reviewed_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError("benchmark reviewed_at must be ISO-8601") from exc
+        if timestamp.tzinfo is None:
+            raise ValueError("benchmark reviewed_at must include a timezone")
         if self.variant != "fixed_legacy" and any(not item.atomic_claim_id for item in self.claims):
             raise ValueError("agentic claim adjudications require atomic_claim_id")
         return self

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import hashlib
 import json
+import pytest
 
 from code2paper.agentic.benchmark_v2 import (
     BenchmarkObservationV2,
@@ -20,7 +21,11 @@ from code2paper.agentic.benchmark_observation import (
     MutationTrialAdjudicationV2,
     extract_benchmark_observation_v2,
 )
-from code2paper.agentic.benchmark_protocol import build_benchmark_protocol_v2
+from code2paper.agentic.benchmark_protocol import (
+    benchmark_spec_digest,
+    build_benchmark_protocol_v2,
+    validate_protocol_observations_v2,
+)
 from code2paper.agentic.adversarial_campaign import run_adversarial_campaign_v2
 from code2paper.agentic.legacy_v2_audit import audit_legacy_run_against_gold_v2
 
@@ -80,12 +85,11 @@ def _perfect_observation(case, variant: str, repeat: int = 1, intent_id: str = "
 def _complete_runs(dataset):
     runs = []
     for case in dataset.cases:
-        default_intent = case.intents[0].intent_id if case.intents else ""
-        for variant in ("fixed_legacy", "agentic_deterministic"):
-            observation = _perfect_observation(case, variant, intent_id=default_intent)
-            runs.append(evaluate_observation(case, observation))
         for intent in case.intents or [None]:
             intent_id = intent.intent_id if intent else ""
+            for variant in ("fixed_legacy", "agentic_deterministic"):
+                observation = _perfect_observation(case, variant, intent_id=intent_id)
+                runs.append(evaluate_observation(case, observation))
             for repeat in (1, 2, 3):
                 observation = _perfect_observation(case, "agentic_gemma4_mtp", repeat, intent_id)
                 runs.append(evaluate_observation(case, observation))
@@ -127,6 +131,26 @@ def test_observation_metrics_detect_unsupported_paraphrase_and_high_risk_leakage
     assert evaluated.metrics.high_risk_false_supported_rate > 0
 
 
+def test_named_review_schema_rejects_queue_placeholders_and_naive_timestamps() -> None:
+    base = {
+        "case_id": "toy_train",
+        "variant": "fixed_legacy",
+        "run_summary_path": "/tmp/run.json",
+        "run_summary_digest": "sha256:test",
+        "reviewer": "__REQUIRED_NAMED_HUMAN__",
+        "reviewed_at": "__REQUIRED_ISO8601__",
+    }
+
+    with pytest.raises(ValueError, match="requires reviewer"):
+        BenchmarkRunReviewV2.model_validate(base)
+    with pytest.raises(ValueError, match="include a timezone"):
+        BenchmarkRunReviewV2.model_validate({
+            **base,
+            "reviewer": "Ada Reviewer",
+            "reviewed_at": "2026-07-17T12:00:00",
+        })
+
+
 def test_cutover_fails_closed_when_repeats_or_rollout_evidence_are_missing() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     runs = _complete_runs(dataset)
@@ -143,6 +167,46 @@ def test_cutover_fails_closed_when_repeats_or_rollout_evidence_are_missing() -> 
     assert decision.default_mode == "legacy"
     assert "gemma_repeats_below_three:fastgs:rendering_flow" in decision.failures
     assert "team_false_block_threshold_unset" in decision.failures
+
+
+def test_cutover_requires_fixed_and_deterministic_runs_for_every_intent() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    runs = [
+        item for item in _complete_runs(dataset)
+        if not (
+            item.observation.case_id == "fastgs"
+            and item.observation.variant == "agentic_deterministic"
+            and item.observation.intent_id == "rendering_flow"
+        )
+    ]
+
+    decision = decide_cutover(
+        dataset,
+        runs,
+        RolloutEvidenceV2(protocol_validated=True, team_false_block_threshold=0.0),
+    )
+
+    assert "missing_matrix_run:fastgs:agentic_deterministic:rendering_flow:1" in decision.failures
+    assert decision.status == "hold"
+
+
+def test_cutover_rejects_duplicate_or_unexpected_matrix_records() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    runs = _complete_runs(dataset)
+    duplicate = runs[0]
+    unexpected = runs[1].model_copy(update={
+        "observation": runs[1].observation.model_copy(update={"repeat_index": 2}),
+    })
+
+    decision = decide_cutover(
+        dataset,
+        [*runs, duplicate, unexpected],
+        RolloutEvidenceV2(protocol_validated=True, team_false_block_threshold=0.0),
+    )
+
+    assert "duplicate_matrix_run_identity" in decision.failures
+    assert any(item.startswith("unexpected_matrix_run:") for item in decision.failures)
+    assert decision.status == "hold"
 
 
 def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
@@ -248,6 +312,14 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
     fastgs_training = [item for item in protocol.specs if item.case_id == "fastgs" and item.intent_id == "training_mechanics"]
     assert len({item.repo_snapshot_id for item in fastgs_training}) == 1
     assert {item.repeat_index for item in fastgs_training if item.variant == "agentic_gemma4_mtp"} == {1, 2, 3}
+
+    observations = [item.observation for item in _complete_runs(dataset)]
+    for observation, spec in zip(observations, protocol.specs, strict=True):
+        observation.provenance["protocol_spec_digest"] = benchmark_spec_digest(spec)
+        observation.provenance["repo_snapshot_id"] = spec.repo_snapshot_id
+    failures = validate_protocol_observations_v2(protocol, [*observations, observations[0]])
+
+    assert "observations_contain_duplicate_run_identity" in failures
 
 
 def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_path: Path) -> None:

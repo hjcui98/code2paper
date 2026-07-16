@@ -159,6 +159,10 @@ def validate_protocol_observations_v2(
     failures: list[str] = []
     expected = {(s.case_id, s.variant, s.intent_id, s.repeat_index): s for s in protocol.specs}
     actual = {(o.case_id, o.variant, o.intent_id, o.repeat_index): o for o in observations}
+    if len(expected) != len(protocol.specs):
+        failures.append("protocol_contains_duplicate_run_identity")
+    if len(actual) != len(observations):
+        failures.append("observations_contain_duplicate_run_identity")
     if set(actual) != set(expected):
         failures.append("protocol_observation_matrix_mismatch")
     for key in sorted(set(expected) & set(actual)):

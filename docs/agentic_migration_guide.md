@@ -108,6 +108,7 @@ final-text validator and post-hoc trace. Aggregate those reviews with:
 ```bash
 code2paper-agentic-benchmark \
   --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
   --review /path/to/run-review-1.json \
   --review /path/to/run-review-2.json \
   --observations-out /path/to/extracted-observations.json \

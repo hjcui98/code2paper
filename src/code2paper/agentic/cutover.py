@@ -77,6 +77,40 @@ def decide_cutover(
     for required in ("fixed_legacy", "agentic_deterministic", "agentic_gemma4_mtp"):
         if required not in variants:
             failures.append(f"missing_variant:{required}")
+    identity_list = [
+        (
+            item.observation.case_id,
+            item.observation.variant,
+            item.observation.intent_id,
+            item.observation.repeat_index,
+        )
+        for item in runs
+    ]
+    actual_identities = set(identity_list)
+    if len(identity_list) != len(actual_identities):
+        failures.append("duplicate_matrix_run_identity")
+    expected_identities: set[tuple[str, str, str, int]] = set()
+    for case in dataset.cases:
+        intent_ids = [item.intent_id for item in case.intents] or [""]
+        for intent_id in intent_ids:
+            for variant, repeats_required in (
+                ("fixed_legacy", (1,)),
+                ("agentic_deterministic", (1,)),
+                ("agentic_gemma4_mtp", (1, 2, 3)),
+            ):
+                for repeat_index in repeats_required:
+                    identity = (case.case_id, variant, intent_id, repeat_index)
+                    expected_identities.add(identity)
+                    if identity not in actual_identities:
+                        failures.append(
+                            "missing_matrix_run:"
+                            f"{case.case_id}:{variant}:{intent_id or 'default'}:{repeat_index}"
+                        )
+    for case_id, variant, intent_id, repeat_index in sorted(actual_identities - expected_identities):
+        failures.append(
+            "unexpected_matrix_run:"
+            f"{case_id}:{variant}:{intent_id or 'default'}:{repeat_index}"
+        )
     repeats: dict[tuple[str, str], set[int]] = defaultdict(set)
     for item in runs:
         if item.observation.variant == "agentic_gemma4_mtp":
