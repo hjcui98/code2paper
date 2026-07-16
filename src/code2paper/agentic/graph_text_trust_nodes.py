@@ -77,6 +77,10 @@ def text_evidence_validator_node(
         ).model_dump(mode="json")
     verifier_calls_used = int(state.loop_counters.get("semantic_verifier") or 0)
     verifier_calls_remaining = max(0, state.max_semantic_verifier_calls - verifier_calls_used)
+    provider = str(getattr(state.llm_provider, "value", state.llm_provider) or "").strip().lower()
+    verifier_required = state.max_semantic_verifier_calls > 0 and (
+        semantic_verifier is not None or provider not in {"", "none"}
+    )
     report = validate_text_evidence(
         final_claims=final_claims,
         projection=projection,
@@ -84,7 +88,7 @@ def text_evidence_validator_node(
         evidence_snapshot_v2=evidence_snapshot_v2,
         semantic_verifier=semantic_verifier,
         max_semantic_verifier_calls=verifier_calls_remaining,
-        require_semantic_verifier=state.max_semantic_verifier_calls > 0,
+        require_semantic_verifier=verifier_required,
     )
     output = artifact_dir(state.method_root, "07_validation") / "agentic_text_evidence_validation.json"
     write_text_evidence_validation(output, report)

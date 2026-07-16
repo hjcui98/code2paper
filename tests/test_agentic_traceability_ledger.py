@@ -161,6 +161,35 @@ class AgenticTraceabilityLedgerTests(unittest.TestCase):
         self.assertTrue(any("unknown evidence ids: E404" in note for note in node_entry.notes))
         self.assertTrue(any("excluded or unsupported claim ids: C2" in note for note in node_entry.notes))
 
+    def test_forbidden_claim_inventory_is_nonblocking_when_final_trace_does_not_use_it(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state = AgenticRunState(
+                project_root=Path("."), out_root=root,
+                artifacts={
+                    "evidence": _write_json(root / "evidence.json", {"stages": [{"mechanisms": [{"evidence_ids": ["E1"]}]}]}),
+                    "claims": _write_json(root / "claims.json", {"claims": [
+                        {"claim_id": "C1", "support_status": "supported", "evidence_ids": ["E1"]},
+                        {"claim_id": "C2", "support_status": "supported", "evidence_ids": ["E1"]},
+                    ]}),
+                    "claim_verification": _write_json(root / "verification.json", {"claims": [
+                        {"claim_id": "C1", "support_status": "supported"},
+                        {"claim_id": "C2", "support_status": "unsupported"},
+                    ]}),
+                    "authoring_constraints": _write_json(root / "constraints.json", {"excluded_claim_ids": []}),
+                    "final_text_trace": _write_json(root / "trace.json", {"entries": [{
+                        "atomic_claim_id": "FAC1", "projection_claim_ids": ["C1"],
+                        "direct_evidence_ids": ["E1"], "verdict_status": "supported",
+                    }]}),
+                },
+            )
+            ledger = build_traceability_ledger(state)
+
+        self.assertTrue(ledger.hard_gate_passed)
+        inventory = next(item for item in ledger.entries if item.entry_id == "claim:C2")
+        self.assertEqual(inventory.trace_status, "excluded_claim")
+        self.assertEqual(ledger.entries_with_forbidden_claims, 0)
+
     def test_ledger_round_trips_to_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

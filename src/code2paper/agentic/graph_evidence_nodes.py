@@ -28,6 +28,7 @@ from code2paper.agentic.figure_planner import figure_plan_trace, write_figure_pl
 from code2paper.agentic.graph_routes import FROZEN_EVIDENCE_KEYS
 from code2paper.agentic.graph_state_io import claim_verification_path, read_json
 from code2paper.agentic.routing import load_symbol_index, write_router_decision
+from code2paper.agentic.traceability_artifacts import unsupported_claim_ids
 from code2paper.core.output_names import artifact_dir, final_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence, RawEvidencePack
 
@@ -256,6 +257,7 @@ def figure_planner_node(*, decision_provider: DecisionProvider | None = None):
             author_intent_summary=author_intent_summary_from_state(state),
             decision_provider=decision_provider,
             evidence_relations=relations,
+            forbidden_claim_ids=unsupported_claim_ids(state),
         )
         figure_root = final_dir(state.method_root, "figures")
         figure_plan_path = figure_root / "method_overview.intent.json"

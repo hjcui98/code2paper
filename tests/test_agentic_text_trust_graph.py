@@ -119,3 +119,14 @@ def test_semantic_verifier_budget_is_global_and_exhaustion_blocks(tmp_path: Path
     assert result.loop_counters["semantic_verifier"] == 1
     assert report["status"] == "failed"
     assert "semantic_verifier_budget_exhausted" in report["verdicts"][1]["deterministic_failures"]
+
+
+def test_deterministic_provider_does_not_require_unavailable_model_verifier(tmp_path: Path) -> None:
+    state = _write_inputs(tmp_path, evidence_summary="The encoder reads configured features from configuration.")
+    state = state.model_copy(update={"llm_provider": "none", "max_semantic_verifier_calls": 3})
+    extracted = final_text_claim_extractor_node(state.model_dump(mode="json"))
+    validated = text_evidence_validator_node(extracted, semantic_verifier=None)
+    report = json.loads(Path(AgenticRunState.model_validate(validated).artifacts["text_evidence_validation"]).read_text())
+
+    assert report["status"] == "passed"
+    assert report["semantic_verifier_calls"] == 0

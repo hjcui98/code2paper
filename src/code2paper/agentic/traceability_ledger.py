@@ -162,8 +162,8 @@ def _check_entry(
     known_claim_ids: set[str],
     forbidden_claim_ids: set[str],
 ) -> TraceabilityLedgerEntry:
-    if entry.kind == "claim" and entry.support_status == "unsupported":
-        notes = dedupe([*entry.notes, "unsupported claim is recorded for exclusion from text and figures"])
+    if entry.kind == "claim" and entry.claim_ids and any(item in forbidden_claim_ids for item in entry.claim_ids):
+        notes = dedupe([*entry.notes, "forbidden claim is retained only as excluded inventory"])
         return entry.model_copy(update={"trace_status": "excluded_claim", "notes": notes})
     missing_evidence = [evidence_id for evidence_id in entry.evidence_ids if evidence_id not in known_evidence_ids]
     unknown_claims = [claim_id for claim_id in entry.claim_ids if claim_id not in known_claim_ids]

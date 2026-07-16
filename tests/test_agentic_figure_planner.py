@@ -138,6 +138,16 @@ class AgenticFigurePlannerTests(unittest.TestCase):
         self.assertIn("evidence=E1", brief)
         self.assertIn("Omit unverified claim ids", brief)
 
+    def test_v2_forbidden_claim_is_omitted_even_when_legacy_verifier_supports_it(self) -> None:
+        plan = build_evidence_backed_figure_plan(
+            method_evidence=_method_evidence(),
+            claim_map=_claim_map(),
+            forbidden_claim_ids={"C1"},
+        )
+
+        self.assertIn("C1", plan.omitted_claim_ids)
+        self.assertTrue(all("C1" not in node.claim_ids for node in plan.nodes))
+
     def test_figure_plan_round_trips_to_json(self) -> None:
         plan = build_evidence_backed_figure_plan(method_evidence=_method_evidence(), claim_map=_claim_map())
 

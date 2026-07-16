@@ -101,12 +101,14 @@ def build_evidence_backed_figure_plan(
     claim_map: ClaimEvidenceMap,
     claim_verification: ClaimVerificationReport | None = None,
     evidence_relations: EvidenceRelationSetV2 | None = None,
+    forbidden_claim_ids: set[str] | None = None,
 ) -> EvidenceBackedFigurePlan:
     """Select only evidence-backed method elements for the overview figure."""
 
     verification = claim_verification or build_claim_verification_report(method_evidence, claim_map)
     verified_claims = {claim.claim_id: claim for claim in verification.claims}
-    claim_ids_by_mechanism = _claim_ids_by_mechanism(claim_map, verified_claims)
+    forbidden_claim_ids = forbidden_claim_ids or set()
+    claim_ids_by_mechanism = _claim_ids_by_mechanism(claim_map, verified_claims, forbidden_claim_ids)
     known_evidence_ids = _known_evidence_ids(method_evidence)
 
     nodes: list[FigurePlanNode] = []
@@ -155,7 +157,11 @@ def build_evidence_backed_figure_plan(
     omitted_claims = [
         claim.claim_id
         for claim in verification.claims
-        if claim.support_status == SupportStatus.UNSUPPORTED or claim.recommended_action != "allow_in_prose"
+        if (
+            claim.claim_id in forbidden_claim_ids
+            or claim.support_status == SupportStatus.UNSUPPORTED
+            or claim.recommended_action != "allow_in_prose"
+        )
     ]
     hard_gate_passed = bool(nodes) and all(node.evidence_ids for node in nodes) and all(edge.evidence_ids for edge in edges)
     actions = _recommended_actions(nodes=nodes, edges=edges, omitted_claims=omitted_claims, omitted_mechanisms=omitted_mechanisms)
@@ -177,6 +183,7 @@ def figure_plan_trace(
     author_intent_summary: AuthorIntentSummary | None = None,
     decision_provider: DecisionProvider | None = None,
     evidence_relations: EvidenceRelationSetV2 | None = None,
+    forbidden_claim_ids: set[str] | None = None,
 ) -> tuple[EvidenceBackedFigurePlan, AgenticDecisionTrace]:
     """Build a safe figure plan plus an auditable model/fallback trace."""
 
@@ -186,6 +193,7 @@ def figure_plan_trace(
         claim_map=claim_map,
         claim_verification=verification,
         evidence_relations=evidence_relations,
+        forbidden_claim_ids=forbidden_claim_ids,
     )
     prompt = AgenticDecisionPrompt(
         node="figure_planner",
@@ -450,9 +458,12 @@ def _normalize_node_ref(value: str, aliases: dict[str, str], final_node_ids: set
 def _claim_ids_by_mechanism(
     claim_map: ClaimEvidenceMap,
     verified_claims: dict[str, object],
+    forbidden_claim_ids: set[str],
 ) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {}
     for claim in claim_map.claims:
+        if claim.claim_id in forbidden_claim_ids:
+            continue
         verified = verified_claims.get(claim.claim_id)
         status = getattr(verified, "support_status", claim.support_status)
         action = getattr(verified, "recommended_action", "")

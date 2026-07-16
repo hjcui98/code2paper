@@ -15,7 +15,10 @@ def write_phase6_validation_manifest(
     method_root: Path,
     fidelity_passed: bool,
     validation_skipped_reason: str = "",
+    authoritative_passed_reports: set[str] | None = None,
+    validation_basis: str = "legacy-inline-grounding",
 ) -> dict[str, Any]:
+    authoritative_passed_reports = authoritative_passed_reports or set()
     paths = {
         "method_plan_quality": method_output(method_root, "method_plan_quality"),
         "semantic_issues": method_output(method_root, "semantic_issues"),
@@ -32,18 +35,25 @@ def write_phase6_validation_manifest(
     failed = [
         name
         for name, report in reports.items()
-        if report.get("passed") is False and _is_blocking_report_failure(name, report)
+        if (
+            report.get("passed") is False
+            and name not in authoritative_passed_reports
+            and _is_blocking_report_failure(name, report)
+        )
     ]
     advisory_failed = [
         name
         for name, report in reports.items()
-        if report.get("passed") is False and not _is_blocking_report_failure(name, report)
+        if report.get("passed") is False
+        and (name in authoritative_passed_reports or not _is_blocking_report_failure(name, report))
     ]
     manifest = {
         "mode": "method-validation",
         "status": "skipped" if validation_skipped_reason else ("failed" if failed or not fidelity_passed else "passed"),
         "skipped_reason": validation_skipped_reason,
         "fidelity_passed": bool(fidelity_passed),
+        "validation_basis": validation_basis,
+        "authoritative_passed_reports": sorted(authoritative_passed_reports),
         "failed_reports": failed,
         "advisory_failed_reports": advisory_failed,
         "reports": reports,

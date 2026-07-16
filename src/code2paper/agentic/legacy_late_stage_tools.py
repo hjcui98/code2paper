@@ -11,7 +11,11 @@ from code2paper.agentic.decision_core import write_decision_trace
 from code2paper.agentic.figure_planner import figure_plan_trace, load_figure_plan, write_figure_plan
 from code2paper.agentic.render_authorization import check_pre_render_authorization, pre_render_blocked_result
 from code2paper.agentic.figure_scene import load_figure_scene_graph
+from code2paper.agentic.final_text_claims import text_digest
 from code2paper.agentic.post_render_audit import audit_rendered_svg, write_post_render_audit
+from code2paper.agentic.traceability_artifacts import (
+    artifact_json, as_list, as_string_list, known_evidence_ids, unsupported_claim_ids,
+)
 from code2paper.rendering.scene_svg import render_scene_svg
 from code2paper.rendering.figure_manifest import build_figure_manifest, write_figure_manifest
 from code2paper.core.output_names import artifact_dir, final_dir, method_output
@@ -47,8 +51,21 @@ def run_validation(state: AgenticRunState) -> StageToolResult:
     )
     fidelity_path = method_output(state.method_root, "fidelity")
     fidelity_path.write_text(json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    manifest = write_phase6_validation_manifest(method_root=state.method_root, fidelity_passed=report.passed)
-    validation_passed = bool(report.passed) and str(manifest.get("status") or "").lower() in {"passed", "success", "ok"}
+    final_text_gate_passed, gate_failures = _authoritative_final_text_gate(state, text_path)
+    authoritative_reports = {"semantic_issues", "qa_claims", "fidelity"} if final_text_gate_passed else set()
+    effective_fidelity_passed = bool(report.passed) or final_text_gate_passed
+    manifest = write_phase6_validation_manifest(
+        method_root=state.method_root,
+        fidelity_passed=effective_fidelity_passed,
+        authoritative_passed_reports=authoritative_reports,
+        validation_basis="agentic-final-text-trace-v1" if final_text_gate_passed else "legacy-inline-grounding",
+    )
+    manifest["legacy_fidelity_passed"] = bool(report.passed)
+    manifest["final_text_gate_failures"] = gate_failures
+    method_output(state.method_root, "phase6_manifest").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    validation_passed = effective_fidelity_passed and str(manifest.get("status") or "").lower() in {"passed", "success", "ok"}
     return StageToolResult(
         stage="validation",
         status=StageStatus.SUCCESS if validation_passed else StageStatus.BLOCKED,
@@ -57,9 +74,87 @@ def run_validation(state: AgenticRunState) -> StageToolResult:
             "validation_manifest": str(method_output(state.method_root, "phase6_manifest")),
         },
         blocked_reason="" if validation_passed else "validation_manifest_failed",
-        summary=f"fidelity_passed={report.passed}; validation_status={manifest.get('status')}",
-        metrics={"fidelity_passed": report.passed, "validation_passed": validation_passed},
+        summary=(
+            f"fidelity_passed={effective_fidelity_passed}; legacy_fidelity_passed={report.passed}; "
+            f"validation_basis={manifest.get('validation_basis')}; validation_status={manifest.get('status')}"
+        ),
+        metrics={
+            "fidelity_passed": effective_fidelity_passed,
+            "legacy_fidelity_passed": bool(report.passed),
+            "final_text_gate_passed": final_text_gate_passed,
+            "validation_passed": validation_passed,
+        },
     )
+
+
+def _authoritative_final_text_gate(state: AgenticRunState, text_path: Path) -> tuple[bool, list[str]]:
+    """Recheck the V2 final-text contract before superseding legacy marker checks.
+
+    Legacy fidelity and claim reports inspect hidden paragraph metadata. Agentic V2
+    instead binds the exact visible text to atomic verdicts and direct code spans.
+    The legacy reports remain in the manifest as advisory evidence; this adapter is
+    only active when the complete V2 contract independently revalidates.
+    """
+
+    if not artifact_json(state, "repo_snapshot"):
+        return False, ["formal_v2_repo_snapshot_missing"]
+    projection = artifact_json(state, "authoring_projection")
+    claims = artifact_json(state, "final_text_claims")
+    validation = artifact_json(state, "text_evidence_validation")
+    trace = artifact_json(state, "final_text_trace")
+    if not all((projection, claims, validation, trace)):
+        return False, ["authoritative_final_text_artifact_missing"]
+    failures: list[str] = []
+    candidate_ref = state.artifacts.get("final_text_candidate", "")
+    candidate_path = Path(candidate_ref) if candidate_ref else text_path
+    if not candidate_path.exists():
+        return False, ["final_text_candidate_missing"]
+    current_digest = text_digest(candidate_path.read_text(encoding="utf-8"))
+    if {
+        str(claims.get("input_text_digest") or ""),
+        str(validation.get("input_text_digest") or ""),
+        str(trace.get("input_text_digest") or ""),
+    } != {current_digest}:
+        failures.append("final_text_digest_mismatch")
+    projection_digest = str(projection.get("projection_digest") or "")
+    if not projection_digest or {
+        str(validation.get("projection_digest") or ""),
+        str(trace.get("projection_digest") or ""),
+    } != {projection_digest}:
+        failures.append("projection_digest_mismatch")
+    if validation.get("status") != "passed" or not trace.get("hard_gate_passed"):
+        failures.append("final_text_trust_status_not_passed")
+    if not claims.get("deterministic_completeness_passed"):
+        failures.append("claim_extraction_incomplete")
+    atomic_ids = {
+        str(item.get("atomic_claim_id") or "")
+        for item in as_list(claims.get("atomic_claims"))
+        if isinstance(item, dict)
+    }
+    verdicts = [item for item in as_list(validation.get("verdicts")) if isinstance(item, dict)]
+    entries = [item for item in as_list(trace.get("entries")) if isinstance(item, dict)]
+    verdict_ids = {str(item.get("atomic_claim_id") or "") for item in verdicts}
+    trace_ids = {str(item.get("atomic_claim_id") or "") for item in entries}
+    if not atomic_ids or verdict_ids != atomic_ids or trace_ids != atomic_ids:
+        failures.append("atomic_claim_coverage_mismatch")
+    if any(str(item.get("status") or "") not in {"supported", "caveated"} for item in verdicts):
+        failures.append("nonpassing_atomic_verdict")
+    known_evidence = known_evidence_ids(state)
+    if any(
+        not as_string_list(item.get("direct_evidence_ids"))
+        or not set(as_string_list(item.get("direct_evidence_ids"))).issubset(known_evidence)
+        for item in entries
+    ):
+        failures.append("trace_direct_evidence_missing_or_unknown")
+    snapshot_fields = ("repo_snapshot_id", "project_tree_hash", "evidence_snapshot_id", "evidence_snapshot_digest")
+    if any(
+        not str(projection.get(field) or "")
+        or str(validation.get(field) or "") != str(projection.get(field) or "")
+        or str(trace.get(field) or "") != str(projection.get(field) or "")
+        for field in snapshot_fields
+    ):
+        failures.append("snapshot_binding_mismatch")
+    return not failures, list(dict.fromkeys(failures))
 
 
 def run_rendering(state: AgenticRunState) -> StageToolResult:
@@ -148,6 +243,7 @@ def run_rendering(state: AgenticRunState) -> StageToolResult:
             claim_map=claim_map,
             claim_verification=verification,
             author_intent_summary=author_intent_summary_from_state(state),
+            forbidden_claim_ids=unsupported_claim_ids(state),
         )
         write_figure_plan(figure_plan_path, figure_plan)
         trace_path = figure_root / "method_overview.intent.decision_trace.json"

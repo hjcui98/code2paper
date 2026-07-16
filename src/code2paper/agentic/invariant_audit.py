@@ -980,6 +980,15 @@ def _claim_ids_from_context(claims: list[Any]) -> set[str]:
 
 
 def _known_evidence_ids(state: AgenticRunState) -> set[str]:
+    evidence_snapshot = _artifact_json(state, "evidence_snapshot_v2")
+    if evidence_snapshot:
+        return {
+            str(span.get("evidence_id") or "")
+            for span in _as_list(evidence_snapshot.get("spans"))
+            if isinstance(span, dict)
+            and span.get("status") == "valid"
+            and str(span.get("evidence_id") or "")
+        }
     evidence_payload = _artifact_json(state, "evidence")
     claim_payload = _artifact_json(state, "claims")
     ids = _collect_evidence_ids(evidence_payload)
