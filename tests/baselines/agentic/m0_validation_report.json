@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "phase": "M0",
+  "contract_version": "agentic-m0-baseline-v1",
+  "validated_commit": "5319c65f235c4ffc4629a33b23d54803ce0d1dad",
+  "validated_on": "2026-07-17",
+  "branch": "codex/agentic-m0-baseline",
+  "scope": "agentic product source, compatibility source, tests, packaging, documentation, and sanitized baseline indexes",
+  "test_matrix": {
+    "collection": "346 tests collected",
+    "llm_runtime_and_provider": "18 passed",
+    "agentic_cli_and_runner": "12 passed",
+    "main_and_fixed_cli": "8 passed",
+    "full": "344 passed, 2 live_llm skipped, 6 subtests passed",
+    "live_llm": "2 passed, 344 deselected",
+    "warnings": 0
+  },
+  "packaging": {
+    "editable_install": "passed: python3 -m pip install -e '.[agentic,dev]'",
+    "agentic_run_help": "passed",
+    "agentic_benchmark_help": "passed",
+    "verified_versions": {
+      "python": "3.13.9",
+      "langgraph": "1.2.8",
+      "langchain_core": "1.4.9"
+    }
+  },
+  "budgets": {
+    "max_retrieval_rounds": 0,
+    "max_evidence_revision_rounds": 0,
+    "max_authoring_revision_rounds": 0,
+    "max_figure_revision_rounds": 0,
+    "max_semantic_verifier_calls": 0,
+    "manifest_verified": true,
+    "node_output_budgets_verified": true
+  },
+  "gemma4": {
+    "profile_path": "tests/baselines/agentic/gemma4_mtp_vllm.profile.json",
+    "profile_digest": "sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7",
+    "live_run_index": "tests/baselines/agentic/m0_live_run_index.json",
+    "levels": {
+      "L0": "passed: model identity returned by local OpenAI-compatible /v1/models",
+      "L1": "passed: prompt_only response validated by Pydantic and safety-merged",
+      "L2": "passed with correct block: three live model proposals merged, failed validation terminated by deterministic budget gate"
+    },
+    "deployment_verified": {
+      "inference_mode": "mtp",
+      "tensor_parallel_size": 2,
+      "speculative_tokens": 1,
+      "draft_tensor_parallel_size": 2
+    },
+    "observed_variance": "One earlier L1 sample returned provider_no_decision; bounded three-attempt smoke subsequently passed. Safety fallback remained deterministic.",
+    "secrets_in_profile_or_trace": false
+  },
+  "trust_gate_regressions_fixed": [
+    "authoring revision budget cannot be reopened by a model proposal",
+    "revision context is rebuilt after every validation pass",
+    "evidence-related failures route to analysis before claim-text repair",
+    "failed validation manifest blocks even when the fidelity sub-report passes",
+    "pre-render invariant audit checks validation status rather than file existence",
+    "cross-schema enum values are normalized before serialization"
+  ],
+  "live_outcome": {
+    "status": "blocked",
+    "blocked_reason": "validation_manifest_failed",
+    "classification": "correct scientific-trust block",
+    "fail_on_blocked_exit_code": 1,
+    "unsafe_render_or_final_package": false
+  },
+  "git_hygiene": {
+    "phase_commit_scoped": true,
+    "generated_outputs_tracked": false,
+    "live_raw_artifacts_tracked": false,
+    "credentials_tracked": false,
+    "preserved_non_phase_worktree_changes": true
+  },
+  "known_limits": [
+    "The historical T007 /tmp artifact root is unavailable; the primary-artifact index remains explicitly blocked pending reproduction.",
+    "M0 validates protocol, packaging, bounded decisions, and trust-gate behavior; it does not claim end-to-end paper success.",
+    "The duplicate code2paper.schemas and code2paper.core.schemas surface is compatibility-tolerant but not fully eliminated; new agentic code uses core schemas and boundary normalization."
+  ],
+  "gate_result": "passed"
+}
