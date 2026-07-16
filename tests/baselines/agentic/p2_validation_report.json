@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "phase": "P2",
+  "branch": "codex/agentic-p2-figure-trust",
+  "commit": "7503eb370754da5e4a996d92c68f5b3236fc60c0",
+  "parent_phase_tag": "agentic-p1-evidence-v2-v1",
+  "contract_version": "agentic-figure-trust-v2",
+  "tests": {
+    "full_pytest": {
+      "command": "pytest -q",
+      "passed": 377,
+      "skipped_live_opt_in": 2,
+      "subtests_passed": 6,
+      "status": "passed"
+    },
+    "adversarial_cases": [
+      "node evidence union cannot support an edge",
+      "model relabel to a new mechanism is restored",
+      "missing or extra SVG element fails",
+      "extra label or arrow outside scene groups fails",
+      "edge endpoint change fails",
+      "scene metadata digest change fails",
+      "asset digest mismatch fails"
+    ]
+  },
+  "gates": {
+    "evidence_relation_v2_direct_binding": "passed",
+    "no_zip_or_node_union_edge_fallback": "passed",
+    "scene_graph_visible_text_boundaries": "passed",
+    "model_scene_safety_merge": "passed",
+    "deterministic_structured_svg": "passed",
+    "pre_render_relation_audit": "passed",
+    "post_render_real_asset_audit": "passed",
+    "final_invariant_before_finalize": "passed",
+    "completion_requires_real_asset": "passed",
+    "paperbanana_or_stylist_drift_cannot_replace_svg": "passed"
+  },
+  "metrics": {
+    "toy_direct_edge_evidence_rate": 1.0,
+    "toy_element_semantic_precision": 1.0,
+    "fastgs_unsupported_visible_edges": 0,
+    "rendered_element_drift": 0,
+    "deterministic_svg_reproducible": true
+  },
+  "live_gemma4": {
+    "toy_scene": "model proposal merged; final relation-backed scene safe",
+    "fastgs_scene": "model proposal merged; no direct relation evidence, therefore zero arrows",
+    "adversarial_scene": "model explicitly rejected unsupported causal/numeric/E404 request; deterministic merge preserved only the E3-backed forward relation"
+  },
+  "compatibility_boundary": "Legacy composite rendering remains available only for states without RepoSnapshot. Formal P2 runs require EvidenceSnapshotV2, EvidenceRelationV2, FigureSceneGraph, deterministic SVG, manifest, and passed post-render audit.",
+  "known_limits": [
+    "Static relation extraction is intentionally conservative and can omit true runtime relations when code lacks a directly attributable static or shell span.",
+    "The structured SVG is authoritative; optional generative raster styling is not accepted as the sole trusted figure asset.",
+    "Compact toy end-to-end runs can still be blocked before P2 by legacy publication-quality text QA; P2 was validated as an isolated trust slice over passed P1 artifacts."
+  ],
+  "artifact_indexes": [
+    "tests/baselines/agentic/p2_live_run_index.json"
+  ],
+  "phase_gate": "passed"
+}

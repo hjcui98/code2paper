@@ -1,14 +1,14 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.3
+版本：1.4
 
 日期：2026-07-17
 
-状态：M0、P0、P1 已完成并通过阶段门禁；下一执行阶段为 P2 方法图证据与真实渲染闭环
+状态：M0、P0、P1、P2 已完成并通过阶段门禁；下一执行阶段为 P3 工具细化与可恢复编排
 
 执行负责人：Codex
 
-当前实施分支：`codex/agentic-p1-evidence-v2`（P1 收口；随后切换 `codex/agentic-p2-figure-trust`）
+当前实施分支：`codex/agentic-p2-figure-trust`（P2 收口；随后切换 `codex/agentic-p3-tools-checkpoint`）
 
 上位设计：[agentic_refactor_final_design.md](./agentic_refactor_final_design.md)
 

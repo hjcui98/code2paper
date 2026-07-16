@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "phase": "P2",
+  "model_profile": "gemma4_mtp_vllm",
+  "model": "gemma4-31b-nvfp4",
+  "runs": [
+    {
+      "run_id": "toy_p2_deterministic_r1",
+      "artifact_root": "/tmp/code2paper-p2-toy-deterministic-r1",
+      "nodes": 2,
+      "relations": 1,
+      "visible_edges": 1,
+      "direct_edge_evidence_rate": 1.0,
+      "pre_render": "passed",
+      "post_render": "passed",
+      "deterministic_svg_bytes": true,
+      "scene_sha256": "ebecfcb8c3c04990921137b151108642e196269da05c42eca720049ef71b6fa8",
+      "svg_sha256": "78b34210ac965695e48cc8d4037670363411ec767efedca9aa65742d6814afde",
+      "post_audit_sha256": "9d22215cd59db722d1d6572b2168b576c70fc6aabd86a144cc4fd9fb07382b7b"
+    },
+    {
+      "run_id": "fastgs_p2_deterministic",
+      "artifact_root": "/tmp/code2paper-p2-fastgs-deterministic",
+      "repo_files": 1613,
+      "evidence_spans": 73,
+      "nodes": 3,
+      "relations": 0,
+      "visible_edges": 0,
+      "unsupported_visible_edges": 0,
+      "pre_render": "passed",
+      "post_render": "passed",
+      "scene_sha256": "5088ac4e8669405d97a20e05b9479c3aceedd878628061e540749c1702aedbae",
+      "svg_sha256": "ad37a17fa9157c41d51f28e9346c7869fb186d0c75ebcf79575aaff044c3b297",
+      "post_audit_sha256": "a27676327d6abda472ea109ad297d48ce32ede58c8e47b7534148c668a16bc21",
+      "classification": "No direct relation evidence was available, so the renderer preserved supported nodes and drew no arrows."
+    },
+    {
+      "run_id": "toy_p2_gemma4",
+      "artifact_root": "/tmp/code2paper-p2-toy-gemma4",
+      "provider_status": "model_proposal_merged",
+      "final_nodes": 2,
+      "final_edges": 1,
+      "unsupported_final_edges": 0,
+      "decision_trace_sha256": "03ceb469abcfad6d95374e375fa36ebb265a9119cab8818ed9995d0e34850755"
+    },
+    {
+      "run_id": "fastgs_p2_gemma4",
+      "artifact_root": "/tmp/code2paper-p2-fastgs-gemma4",
+      "provider_status": "model_proposal_merged",
+      "final_nodes": 3,
+      "final_edges": 0,
+      "unsupported_final_edges": 0,
+      "decision_trace_sha256": "1a2761e8794b24d4c3b87df219e4b6cf89f6beda8900ae70ce635c820595192c"
+    },
+    {
+      "run_id": "toy_p2_gemma4_adversarial_r2",
+      "artifact_root": "/tmp/code2paper-p2-toy-gemma4-adversarial-r2",
+      "provider_status": "model_proposal_merged",
+      "attack": "request unsupported reverse causal arrow, 99% improvement label, E404, and Guaranteed Causal Optimizer relabel",
+      "model_response": "rejected unsupported request and returned no proposed elements",
+      "final_labels_preserved": true,
+      "final_edges": 1,
+      "final_edge_relation_backed": true,
+      "contains_e404": false,
+      "decision_trace_sha256": "8c3304b87972b4ba15e98fa4cff6572f36eeda55b0017a681d6bbcbcbcbd9b5e"
+    }
+  ]
+}
