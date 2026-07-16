@@ -156,6 +156,16 @@ capability profile, generation configuration, and request input digest. Cache
 writes are atomic, and cache-hit traces retain response mode, finish reason,
 token usage, and the explicit `cached` flag for checkpoint audits.
 
+The unified `code2paper-run` command currently keeps `--mode legacy` as its
+fail-closed default. Use `--mode agentic` for an Evidence V2 opt-in or
+`--mode shadow` to retain legacy delivery while auditing the agentic result in a
+separate output root. Legacy runs emit `legacy_trust_contract.json` and must not
+be represented as V2 final-invariant passed. See the
+[migration guide](docs/agentic_migration_guide.md) for rollout and rollback.
+Formal P4 comparison uses a frozen 25-run protocol, cache-disabled Gemma
+repeats, executable adversarial campaigns, and digest-pinned named review files;
+raw self-reported observation JSON is not sufficient to authorize cutover.
+
 ## Tests
 
 ```bash

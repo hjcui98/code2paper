@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import uuid
 from pathlib import Path
 
 from code2paper.export.run_manifest import build_run_manifest, hash_file, write_run_manifest
@@ -23,6 +24,8 @@ from code2paper.schemas import (
     RawEvidencePack,
 )
 from code2paper.validators.fidelity_validator import validate_method_fidelity
+from code2paper.agentic.cutover import LegacyTrustContractV1
+from code2paper.agentic.tool_runtime import atomic_write_json
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,6 +37,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--author", dest="author_markers_path", required=True)
     parser.add_argument("--project-id")
     parser.add_argument("--out-root", required=True)
+    parser.add_argument(
+        "--mode", choices=("legacy", "agentic", "shadow"), default="legacy",
+        help="legacy delivers the fixed pipeline; agentic opts into V2 gates; shadow keeps legacy delivery and audits agentic separately.",
+    )
+    parser.add_argument("--run-id", default="", help="Stable agentic run identity.")
+    parser.add_argument("--max-retrieval-rounds", type=int, default=0)
+    parser.add_argument("--max-evidence-revision-rounds", type=int, default=0)
+    parser.add_argument("--max-authoring-revision-rounds", type=int, default=0)
+    parser.add_argument("--max-figure-revision-rounds", type=int, default=0)
+    parser.add_argument("--max-semantic-verifier-calls", type=int, default=0)
+    parser.add_argument("--fail-on-blocked", action="store_true")
     parser.add_argument(
         "--llm-provider",
         choices=[provider.value for provider in LLMProvider] + ["moonshot", "aihubmix", "kimi"],
@@ -91,6 +105,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Print detailed per-phase artifact paths and debug summaries.",
     )
     args = parser.parse_args(argv)
+    if args.mode == "agentic":
+        return _run_agentic_mode(args, out_root=Path(args.out_root))
+    if args.mode == "shadow":
+        _run_shadow_agentic(args)
     verbose_console = args.verbose or _bool_env("CODE2PAPER_VERBOSE_CONSOLE", False)
 
     project_root = Path(args.project_root)
@@ -98,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     paper_root = out_root / "paper"
     method_root = paper_root / "method"
     method_root.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(method_root / "legacy_trust_contract.json", LegacyTrustContractV1())
 
     paths = PipelinePaths(
         raw_evidence=method_root / "raw_evidence_pack.json",
@@ -197,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
                 "inspect_only_phase3_prompt": method_root / "phase3_prompt_context.md",
                 "inspect_only_phase4_prompt": method_root / "phase4_prompt_context.md",
                 "run_report": paths.run_report,
+                "legacy_trust_contract": method_root / "legacy_trust_contract.json",
             },
             final_draft_path=None,
             validator_reports=[],
@@ -422,6 +442,7 @@ def main(argv: list[str] | None = None) -> int:
         **({"method_overview_svg": figure_root / "method_overview.svg"} if (figure_root / "method_overview.svg").exists() else {}),
         **({"method_overview_png": figure_root / "method_overview.png"} if (figure_root / "method_overview.png").exists() else {}),
         "run_report": paths.run_report,
+        "legacy_trust_contract": method_root / "legacy_trust_contract.json",
         **({"phase4_blocked_report": paths.phase4_blocked_report} if paths.phase4_blocked_report.exists() else {}),
     }
     manifest = build_run_manifest(
@@ -451,6 +472,49 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if args.allow_fidelity_fail else 1
     print("[code2paper-run] Fidelity validation passed.")
     return 0
+
+
+def _run_agentic_mode(args, *, out_root: Path) -> int:
+    from code2paper.cli.agentic_run import main as agentic_main
+
+    command = [
+        str(args.project_root),
+        "--author", str(args.author_markers_path),
+        "--out-root", str(out_root),
+        "--run-id", str(args.run_id or uuid.uuid4()),
+        "--max-retrieval-rounds", str(max(0, args.max_retrieval_rounds)),
+        "--max-evidence-revision-rounds", str(max(0, args.max_evidence_revision_rounds)),
+        "--max-authoring-revision-rounds", str(max(0, args.max_authoring_revision_rounds)),
+        "--max-figure-revision-rounds", str(max(0, args.max_figure_revision_rounds)),
+        "--max-semantic-verifier-calls", str(max(0, args.max_semantic_verifier_calls)),
+    ]
+    if args.project_id:
+        command.extend(["--project-id", str(args.project_id)])
+    if args.llm_provider:
+        command.extend(["--llm-provider", str(args.llm_provider)])
+    if args.llm_model:
+        command.extend(["--llm-model", str(args.llm_model)])
+    if args.fail_on_blocked:
+        command.append("--fail-on-blocked")
+    return agentic_main(command)
+
+
+def _run_shadow_agentic(args) -> None:
+    legacy_out = Path(args.out_root)
+    shadow_out = legacy_out / "shadow_agentic"
+    code = _run_agentic_mode(args, out_root=shadow_out)
+    record = {
+        "schema_version": "2.0",
+        "mode": "shadow",
+        "delivery_route": "legacy",
+        "shadow_route": "agentic",
+        "shadow_exit_code": code,
+        "shadow_out_root": str(shadow_out),
+        "claim_of_completion_allowed": False,
+        "legacy_contract_version": LegacyTrustContractV1().contract_version,
+    }
+    atomic_write_json(legacy_out / "shadow_comparison.json", record)
+    print(f"[code2paper-run] shadow_agentic_exit_code={code} shadow_record={legacy_out / 'shadow_comparison.json'}")
 
 
 class PipelinePaths:

@@ -12,6 +12,17 @@ from code2paper.agentic.benchmark_report import (
     build_agentic_benchmark_report,
     write_agentic_benchmark_report,
 )
+from code2paper.agentic.benchmark_v2 import (
+    build_benchmark_report_v2,
+    load_benchmark_dataset_v2,
+    load_benchmark_observations_v2,
+    validate_gold_evidence,
+    write_benchmark_report_v2,
+)
+from code2paper.agentic.benchmark_observation import extract_benchmark_observation_v2, load_benchmark_run_review_v2
+from code2paper.agentic.cutover import RolloutEvidenceV2, decide_cutover
+from code2paper.agentic.tool_runtime import atomic_write_json
+from code2paper.agentic.benchmark_protocol import load_benchmark_protocol_v2, validate_protocol_observations_v2
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,7 +39,65 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("reports", nargs="*", help="Evaluation report paths using variant=agentic and path stem labels.")
     parser.add_argument("--out", required=True, help="Output path for agentic_benchmark_report.json")
+    parser.add_argument("--gold", default="", help="P4 BenchmarkDatasetV2 gold/adversarial JSON.")
+    parser.add_argument("--observations", default="", help="P4 BenchmarkObservationV2 JSON list.")
+    parser.add_argument(
+        "--review", action="append", default=[],
+        help="Digest-pinned BenchmarkRunReviewV2 JSON; repeat to extract observations from real artifacts.",
+    )
+    parser.add_argument("--observations-out", default="", help="Write artifact-extracted observations to this JSON path.")
+    parser.add_argument("--workspace-root", default=".", help="Root used to verify gold code excerpts.")
+    parser.add_argument("--rollout", default="", help="Optional RolloutEvidenceV2 JSON for cutover decision.")
+    parser.add_argument("--cutover-out", default="", help="Output path for CutoverDecisionV2 JSON.")
+    parser.add_argument("--protocol", default="", help="Frozen BenchmarkProtocolV2 used to validate the exact run matrix.")
     args = parser.parse_args(argv)
+
+    if args.gold or args.observations or args.review:
+        if not args.gold or (not args.observations and not args.review):
+            parser.error("P4 mode requires --gold and either --observations or one or more --review")
+        if args.observations and args.review:
+            parser.error("use either --observations or --review, not both")
+        dataset = load_benchmark_dataset_v2(args.gold)
+        gold_failures = validate_gold_evidence(dataset, args.workspace_root)
+        if gold_failures:
+            print(f"[code2paper-agentic-benchmark] error={gold_failures[0]}", file=sys.stderr)
+            return 2
+        if args.review:
+            case_by_id = {item.case_id: item for item in dataset.cases}
+            reviews = [load_benchmark_run_review_v2(path) for path in args.review]
+            observations = [extract_benchmark_observation_v2(case_by_id[item.case_id], item) for item in reviews]
+            if args.observations_out:
+                atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
+        else:
+            observations = load_benchmark_observations_v2(args.observations)
+        protocol_validated = False
+        if args.protocol:
+            protocol = load_benchmark_protocol_v2(args.protocol)
+            protocol_failures = validate_protocol_observations_v2(protocol, observations)
+            if protocol_failures:
+                print(f"[code2paper-agentic-benchmark] error={protocol_failures[0]}", file=sys.stderr)
+                return 2
+            protocol_validated = True
+        report = build_benchmark_report_v2(dataset, observations)
+        output = write_benchmark_report_v2(args.out, report)
+        rollout = RolloutEvidenceV2()
+        if args.rollout:
+            rollout = RolloutEvidenceV2.model_validate_json(Path(args.rollout).read_text(encoding="utf-8"))
+        rollout = rollout.model_copy(update={"protocol_validated": protocol_validated})
+        decision = decide_cutover(dataset, report.evaluated_runs, rollout)
+        if args.cutover_out:
+            atomic_write_json(args.cutover_out, decision)
+        print(f"[code2paper-agentic-benchmark] report={output}")
+        print(json.dumps({
+            "case_count": report.case_count,
+            "run_count": len(report.evaluated_runs),
+            "variants": [item.variant for item in report.variant_summaries],
+            "paired_intent_sensitivity_passed": report.paired_intent_sensitivity_passed,
+            "cutover_status": decision.status,
+            "default_mode": decision.default_mode,
+            "cutover_failures": decision.failures,
+        }, ensure_ascii=False, indent=2))
+        return 0
 
     specs = [_parse_run_spec(raw) for raw in args.run]
     specs.extend(

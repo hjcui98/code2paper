@@ -11,6 +11,41 @@ from code2paper.cli.agentic_benchmark import main as agentic_benchmark_main
 
 
 class AgenticBenchmarkCliTests(unittest.TestCase):
+    def test_cli_builds_p4_v2_report_and_fail_closed_cutover(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            observations = root / "observations.json"
+            observations.write_text(json.dumps([{
+                "case_id": "toy_train",
+                "variant": "agentic_deterministic",
+                "repeat_index": 1,
+                "run_status": "blocked",
+                "blocked_reason": "gold_scope_smoke",
+                "claims": [],
+                "figure_elements": [],
+                "detected_mutation_ids": ["TM1", "TM2", "TM3"],
+                "stale_trials": 1,
+                "stale_detected": 1,
+                "false_block_human_reviewed": True
+            }]), encoding="utf-8")
+            output = root / "benchmark_v2.json"
+            cutover = root / "cutover.json"
+            code = agentic_benchmark_main([
+                "--gold", str(Path("tests/fixtures/benchmark_v2/gold_adversarial_v1.json").resolve()),
+                "--observations", str(observations),
+                "--workspace-root", str(Path.cwd()),
+                "--out", str(output),
+                "--cutover-out", str(cutover),
+            ])
+            report_payload = json.loads(output.read_text(encoding="utf-8"))
+            cutover_payload = json.loads(cutover.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(report_payload["schema_version"], "2.0")
+        self.assertEqual(report_payload["case_count"], 4)
+        self.assertEqual(cutover_payload["status"], "hold")
+        self.assertEqual(cutover_payload["default_mode"], "legacy")
+
     def test_cli_writes_benchmark_report_from_variant_specs(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -53,6 +54,11 @@ class RunCliTests(unittest.TestCase):
             ]
             for path in expected:
                 self.assertTrue(path.exists(), path)
+            legacy_contract = json.loads(
+                (out_root / "paper/method/legacy_trust_contract.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(legacy_contract["contract_version"], "legacy-v1-weaker-trust")
+            self.assertFalse(legacy_contract["authoritative_v2_final_invariant"])
 
             report = json.loads((out_root / "paper/method/code2paper_run_report.json").read_text(encoding="utf-8"))
             self.assertIn("fidelity_passed", report)
@@ -68,6 +74,52 @@ class RunCliTests(unittest.TestCase):
             self.assertIn("phase3_manifest", manifest["phase_outputs"])
             self.assertIn("method_draft_md", manifest["phase_outputs"])
             self.assertEqual(manifest["llm"]["provider"], "none")
+
+    def test_run_cli_agentic_mode_dispatches_to_v2_runner(self) -> None:
+        captured = {}
+
+        def fake_agentic(argv):
+            captured["argv"] = argv
+            return 7
+
+        with TemporaryDirectory() as tmpdir, patch("code2paper.cli.agentic_run.main", side_effect=fake_agentic):
+            code = run_main([
+                str(Path(tmpdir)),
+                "--author", str(AUTHOR_MARKERS),
+                "--out-root", str(Path(tmpdir) / "agentic"),
+                "--mode", "agentic",
+                "--run-id", "mode-agentic-1",
+                "--max-semantic-verifier-calls", "3",
+                "--fail-on-blocked",
+            ])
+
+        self.assertEqual(code, 7)
+        self.assertIn("--run-id", captured["argv"])
+        self.assertIn("mode-agentic-1", captured["argv"])
+        self.assertIn("--max-semantic-verifier-calls", captured["argv"])
+        self.assertIn("3", captured["argv"])
+        self.assertIn("--fail-on-blocked", captured["argv"])
+
+    def test_shadow_mode_keeps_legacy_delivery_and_marks_agentic_non_delivery(self) -> None:
+        with TemporaryDirectory() as tmpdir, patch("code2paper.cli.agentic_run.main", return_value=0):
+            project = Path(tmpdir) / "repo"
+            project.mkdir()
+            (project / "train.py").write_text("def main():\n    pass\n", encoding="utf-8")
+            out = Path(tmpdir) / "shadow"
+            code = run_main([
+                str(project),
+                "--author", str(AUTHOR_MARKERS),
+                "--out-root", str(out),
+                "--mode", "shadow",
+                "--inspect-only",
+            ])
+            record = json.loads((out / "shadow_comparison.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(record["delivery_route"], "legacy")
+        self.assertEqual(record["shadow_route"], "agentic")
+        self.assertFalse(record["claim_of_completion_allowed"])
+        self.assertEqual(record["legacy_contract_version"], "legacy-v1-weaker-trust")
 
 
 if __name__ == "__main__":
