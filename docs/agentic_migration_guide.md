@@ -64,6 +64,7 @@ code2paper-agentic-benchmark-protocol \
   --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
   --protocol /tmp/code2paper-p4-protocol.json \
   --workspace-root . \
+  --code-root /tmp/code2paper-p4-clean-worktree \
   --out-root /tmp/code2paper-p4-matrix \
   --out /tmp/code2paper-p4-protocol.json \
   --model-id gemma4-31b-nvfp4 \

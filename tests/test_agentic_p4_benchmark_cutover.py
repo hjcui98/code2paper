@@ -201,6 +201,7 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
 
     protocol = build_benchmark_protocol_v2(
         dataset, workspace_root=ROOT, out_root=tmp_path, author_markers=authors,
+        code_root=ROOT,
         workspace_commit="abc123", model_id="gemma4-31b-nvfp4",
         capability_profile_digest="sha256:profile",
     )

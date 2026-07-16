@@ -28,6 +28,7 @@ code2paper-agentic-run = "code2paper.cli.agentic_run:main"
 code2paper-agentic-benchmark = "code2paper.cli.agentic_benchmark:main"
 code2paper-agentic-benchmark-protocol = "code2paper.cli.agentic_benchmark_protocol:main"
 code2paper-agentic-adversarial-campaign = "code2paper.cli.agentic_adversarial_campaign:main"
+code2paper-agentic-benchmark-run = "code2paper.cli.agentic_benchmark_run:main"
 
 [project.optional-dependencies]
 figure = [

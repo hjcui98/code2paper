@@ -40,6 +40,7 @@ class BenchmarkProtocolV2(ProtocolModel):
     schema_version: str = "2.0"
     producer_version: str = "code2paper-agentic-p4"
     gold_digest: str
+    code_root: str
     workspace_commit: str
     clean_tracked_commit_required: bool = True
     scoped_dirty_exceptions: list[str] = Field(default_factory=list)
@@ -72,6 +73,7 @@ def build_benchmark_protocol_v2(
     dataset: BenchmarkDatasetV2,
     *,
     workspace_root: str | Path,
+    code_root: str | Path | None = None,
     out_root: str | Path,
     author_markers: dict[tuple[str, str], str | Path],
     workspace_commit: str,
@@ -80,6 +82,7 @@ def build_benchmark_protocol_v2(
     budgets: dict[str, int] | None = None,
 ) -> BenchmarkProtocolV2:
     root = Path(workspace_root).resolve()
+    clean_code_root = Path(code_root or workspace_root).resolve()
     destination = Path(out_root).resolve()
     effective_budgets = budgets or {
         "retrieval": 1, "evidence_revision": 1, "authoring_revision": 1,
@@ -115,15 +118,19 @@ def build_benchmark_protocol_v2(
                         run_id=run_id,
                         repo_snapshot_id=snapshot.snapshot_id,
                         repo_tree_hash=snapshot.project_tree_hash,
-                        model_id=model_id if variant == "agentic_gemma4_mtp" else "",
-                        capability_profile_digest=capability_profile_digest if variant == "agentic_gemma4_mtp" else "",
+                        model_id=model_id if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
+                        capability_profile_digest=capability_profile_digest if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         budgets=effective_budgets,
-                        environment={"CODE2PAPER_LLM_CACHE": "0"},
+                        environment={
+                            "CODE2PAPER_LLM_CACHE": "0",
+                            "PYTHONPATH": str(clean_code_root / "src"),
+                        },
                         command=command,
                     ))
     gold_payload = dataset.model_dump_json(exclude_none=False)
     return BenchmarkProtocolV2(
         gold_digest="sha256:" + hashlib.sha256(gold_payload.encode("utf-8")).hexdigest(),
+        code_root=str(clean_code_root),
         workspace_commit=workspace_commit,
         specs=specs,
     )
@@ -176,7 +183,10 @@ def _command(*, variant: str, repo: Path, author: Path, output: Path, run_id: st
         "--out-root", str(output), "--run-id", run_id,
     ]
     if variant == "fixed_legacy":
-        return [*base, "--mode", "legacy", "--figure-backend", "fallback", "--allow-fidelity-fail"]
+        return [
+            *base, "--mode", "legacy", "--llm-provider", "openai", "--llm-model", model_id,
+            "--figure-backend", "fallback", "--allow-fidelity-fail",
+        ]
     provider = "none" if variant == "agentic_deterministic" else "openai"
     command = [
         *base, "--mode", "agentic", "--llm-provider", provider,

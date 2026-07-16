@@ -16,6 +16,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--gold", required=True)
     parser.add_argument("--workspace-root", default=".")
+    parser.add_argument(
+        "--code-root", default="",
+        help="Clean tracked worktree containing the benchmark implementation; defaults to workspace root.",
+    )
     parser.add_argument("--out-root", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument(
@@ -30,13 +34,21 @@ def main(argv: list[str] | None = None) -> int:
     if failures:
         parser.error(failures[0])
     authors = _parse_authors(args.author)
+    code_root = Path(args.code_root or args.workspace_root).resolve()
     commit = subprocess.run(
-        ["git", "-C", str(Path(args.workspace_root).resolve()), "rev-parse", "HEAD"],
+        ["git", "-C", str(code_root), "rev-parse", "HEAD"],
         check=True, capture_output=True, text=True,
     ).stdout.strip()
+    dirty = subprocess.run(
+        ["git", "-C", str(code_root), "status", "--porcelain", "--untracked-files=no"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    if dirty:
+        parser.error("--code-root has tracked changes; formal P4 protocols require a clean commit")
     protocol = build_benchmark_protocol_v2(
         dataset,
         workspace_root=args.workspace_root,
+        code_root=code_root,
         out_root=args.out_root,
         author_markers=authors,
         workspace_commit=commit,
