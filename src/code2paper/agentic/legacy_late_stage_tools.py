@@ -12,6 +12,7 @@ from code2paper.agentic.figure_planner import figure_plan_trace, load_figure_pla
 from code2paper.agentic.render_authorization import check_pre_render_authorization, pre_render_blocked_result
 from code2paper.agentic.figure_scene import load_figure_scene_graph
 from code2paper.agentic.final_text_claims import text_digest
+from code2paper.agentic.invariant_audit import check_final_package_traceability
 from code2paper.agentic.post_render_audit import audit_rendered_svg, write_post_render_audit
 from code2paper.agentic.traceability_artifacts import (
     artifact_json, as_list, as_string_list, known_evidence_ids, unsupported_claim_ids,
@@ -326,6 +327,19 @@ def run_finalize(state: AgenticRunState) -> StageToolResult:
             summary="Finalize requires validated method TeX.",
         )
     figure_root = final_dir(state.method_root, "figures")
+    method_markdown_path = _method_markdown_path(state)
+    lineage_keys = (
+        "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+        "final_text_claims", "text_evidence_validation", "final_text_trace",
+        "validation_manifest", "traceability_ledger", "figure_scene",
+        "figure_relation_validation", "pre_render_audit", "method_overview_svg",
+        "rendering_manifest", "post_render_audit",
+    )
+    lineage_artifacts = {
+        key: Path(state.artifacts[key])
+        for key in lineage_keys
+        if state.artifacts.get(key)
+    }
     report = write_phase8_artifacts(
         method_root=state.method_root,
         method_tex_path=text_path,
@@ -340,6 +354,8 @@ def run_finalize(state: AgenticRunState) -> StageToolResult:
         timeout_seconds=300,
         figure_caption="Evidence-backed method overview.",
         figure_asset_basename="method_framework",
+        method_markdown_path=method_markdown_path,
+        lineage_artifacts=lineage_artifacts,
     )
     artifacts = _existing_paths(
         {
@@ -347,8 +363,33 @@ def run_finalize(state: AgenticRunState) -> StageToolResult:
             "final_pdf": method_output(state.method_root, "final_pdf"),
             "final_pdf_report": method_output(state.method_root, "final_pdf_report"),
             "finalize_manifest": method_output(state.method_root, "phase8_manifest"),
+            "package_manifest": method_output(state.method_root, "package_manifest"),
+            "root_method_md": method_output(state.method_root, "root_method_md"),
+            "root_method_tex": method_output(state.method_root, "root_method_tex"),
         }
     )
+    source_key = "text_clean_tex" if text_path == method_output(state.method_root, "text_clean_tex") else "text_tex"
+    verification_artifacts = {**state.artifacts, source_key: str(text_path), **artifacts}
+    package_check = check_final_package_traceability(
+        state.model_copy(update={"artifacts": verification_artifacts})
+    )
+    if not package_check.passed:
+        return StageToolResult(
+            stage="finalize",
+            status=StageStatus.BLOCKED,
+            artifacts=artifacts,
+            blocked_reason="final_package_lineage_invalid",
+            summary=package_check.message,
+            decisions=[
+                AgentDecision(
+                    node="finalize_packager",
+                    decision="blocked",
+                    rationale=package_check.message,
+                    artifact_keys=package_check.artifact_keys,
+                )
+            ],
+            metrics={"finalize_status": str(report.get("status") or "unknown")},
+        )
     return StageToolResult(
         stage="finalize",
         status=StageStatus.SUCCESS,
@@ -359,7 +400,7 @@ def run_finalize(state: AgenticRunState) -> StageToolResult:
                 node="finalize_packager",
                 decision=str(report.get("status") or "unknown"),
                 rationale=str(report.get("reason") or "Final package artifacts written."),
-                artifact_keys=["final_tex", "final_pdf", "final_pdf_report", "finalize_manifest"],
+                artifact_keys=["final_tex", "final_pdf", "final_pdf_report", "finalize_manifest", "package_manifest"],
             )
         ],
         metrics={"finalize_status": str(report.get("status") or "unknown")},
@@ -387,3 +428,19 @@ def _method_text_path(state: AgenticRunState) -> Path | None:
         if path.exists():
             return path
     return None
+
+
+def _method_markdown_path(state: AgenticRunState) -> Path | None:
+    candidate = _artifact_path_if_exists(state.artifacts.get("final_text_candidate", ""))
+    if candidate is not None and candidate.suffix.lower() in {".md", ".markdown"}:
+        return candidate
+    for key in ("text_clean_md", "text_md"):
+        path = method_output(state.method_root, key)
+        if path.exists():
+            return path
+    return None
+
+
+def _artifact_path_if_exists(value: str) -> Path | None:
+    path = Path(value) if value else None
+    return path if path is not None and path.exists() else None

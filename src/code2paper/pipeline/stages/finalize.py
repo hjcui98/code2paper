@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 from typing import Any
 
 from code2paper.export.run_manifest import hash_file
@@ -23,6 +24,8 @@ def write_phase8_artifacts(
     timeout_seconds: int = 300,
     figure_caption: str = "",
     figure_asset_basename: str = "method_framework",
+    method_markdown_path: Path | None = None,
+    lineage_artifacts: dict[str, Path] | None = None,
 ) -> dict[str, Any]:
     method_root.mkdir(parents=True, exist_ok=True)
     extra_tex_blocks = _load_optional_blocks(equations_tex_path, symbols_tex_path)
@@ -44,25 +47,45 @@ def write_phase8_artifacts(
     final_tex_path = method_output(method_root, "final_tex")
     if standalone_tex_path.exists():
         final_tex_path.write_text(standalone_tex_path.read_text(encoding="utf-8"), encoding="utf-8")
+    root_method_tex = method_output(method_root, "root_method_tex")
+    if final_tex_path.exists():
+        shutil.copyfile(final_tex_path, root_method_tex)
+    root_method_md = method_output(method_root, "root_method_md")
+    if method_markdown_path and method_markdown_path.exists():
+        shutil.copyfile(method_markdown_path, root_method_md)
     report_path = method_output(method_root, "final_pdf_report")
     _write_json(report_path, report)
     manifest_path = method_output(method_root, "phase8_manifest")
+    package_manifest_path = method_output(method_root, "package_manifest")
+    lineage = {"source_text_tex": _artifact(method_tex_path)}
+    lineage.update(
+        {
+            name: _artifact(path)
+            for name, path in sorted((lineage_artifacts or {}).items())
+        }
+    )
     manifest = {
+        "schema_version": "2.0",
         "mode": "final-method-package",
         "status": report.get("status", "unknown"),
         "reason": report.get("reason", ""),
+        "lineage_complete": all(bool(item.get("hash")) for item in lineage.values()),
         "outputs": {
             "final_tex": _artifact(method_output(method_root, "final_tex")),
             "final_pdf": _artifact(method_output(method_root, "final_pdf")),
             "final_pdf_report": _artifact(report_path),
+            "method_md": _artifact(root_method_md),
+            "method_tex": _artifact(root_method_tex),
         },
         "inputs": {
             "text_tex": str(method_tex_path),
             "equations_tex": str(equations_tex_path) if equations_tex_path and equations_tex_path.exists() else "",
             "symbols_tex": str(symbols_tex_path) if symbols_tex_path and symbols_tex_path.exists() else "",
         },
+        "lineage": lineage,
     }
     _write_json(manifest_path, manifest)
+    _write_json(package_manifest_path, manifest)
     return report
 
 

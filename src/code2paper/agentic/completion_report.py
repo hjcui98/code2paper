@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.contracts import AgenticRunState
+from code2paper.agentic.invariant_audit import check_final_package_traceability
 from code2paper.agentic.readiness_io import artifact_exists, artifact_json, has_any_artifact
 
 
@@ -165,14 +166,24 @@ def _check_traceability(state: AgenticRunState) -> CompletionCheck:
 def _check_final_package(state: AgenticRunState) -> CompletionCheck:
     has_final_tex = artifact_exists(state, "final_tex")
     has_manifest = artifact_json(state, "finalize_manifest")
+    lineage_check = check_final_package_traceability(state)
+    requires_formal_lineage = artifact_exists(state, "repo_snapshot")
+    has_package_manifest = bool(artifact_json(state, "package_manifest"))
+    passed = has_final_tex and bool(has_manifest) and (
+        not requires_formal_lineage or (has_package_manifest and lineage_check.passed)
+    )
     return CompletionCheck(
         name="final_package",
-        passed=has_final_tex and bool(has_manifest),
+        passed=passed,
         deliverable="final_package",
-        message="Final TeX package and finalize manifest are present."
-        if has_final_tex and has_manifest
-        else "Final package requires final_tex and finalize_manifest.",
-        artifact_keys=["final_tex", "final_pdf", "finalize_manifest"],
+        message="Final text, figure, PDF, and audit lineage hashes are bound by the package manifest."
+        if passed
+        else (
+            lineage_check.message
+            if requires_formal_lineage
+            else "Final package requires final_tex and finalize_manifest."
+        ),
+        artifact_keys=["final_tex", "final_pdf", "finalize_manifest", "package_manifest"],
     )
 
 

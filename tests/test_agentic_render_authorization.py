@@ -95,6 +95,8 @@ class AgenticRenderAuthorizationTests(unittest.TestCase):
         self.assertIn("final_tex", result.artifacts)
         self.assertIn("final_pdf_report", result.artifacts)
         self.assertIn("finalize_manifest", result.artifacts)
+        self.assertIn("package_manifest", result.artifacts)
+        self.assertIn("root_method_tex", result.artifacts)
         self.assertEqual(result.decisions[0].node, "finalize_packager")
 
     def test_rendering_and_finalize_specs_require_pre_render_authorization(self) -> None:

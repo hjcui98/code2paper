@@ -75,6 +75,38 @@ class Phase8FinalizeTests(unittest.TestCase):
         self.assertIn("\\subsection*{Code-Grounded Equations}", final_body)
         self.assertIn("\\subsection*{Code-Grounded Symbols}", final_body)
 
+    def test_phase8_writes_delivery_files_and_hash_bound_package_manifest(self) -> None:
+        with workspace_tempdir() as tmpdir:
+            method_root = Path(tmpdir) / "paper" / "method"
+            method_root.mkdir(parents=True, exist_ok=True)
+            text_tex = method_root / "method_clean.tex"
+            text_md = method_root / "method_clean.md"
+            trace = method_root / "final_text_trace.json"
+            text_tex.write_text("\\subsection{Overview}\nGrounded method.\n", encoding="utf-8")
+            text_md.write_text("## Overview\n\nGrounded method.\n", encoding="utf-8")
+            trace.write_text('{"hard_gate_passed": true}\n', encoding="utf-8")
+
+            write_phase8_artifacts(
+                method_root=method_root,
+                method_tex_path=text_tex,
+                figure_candidates=[],
+                method_markdown_path=text_md,
+                lineage_artifacts={"final_text_trace": trace},
+                compiler=None,
+                timeout_seconds=30,
+            )
+
+            finalize_manifest = json.loads(method_output(method_root, "finalize_manifest").read_text(encoding="utf-8"))
+            package_manifest = json.loads(method_output(method_root, "package_manifest").read_text(encoding="utf-8"))
+
+        self.assertEqual(package_manifest, finalize_manifest)
+        self.assertEqual(package_manifest["schema_version"], "2.0")
+        self.assertTrue(package_manifest["lineage_complete"])
+        self.assertTrue(package_manifest["lineage"]["source_text_tex"]["hash"])
+        self.assertTrue(package_manifest["lineage"]["final_text_trace"]["hash"])
+        self.assertTrue(package_manifest["outputs"]["method_md"]["hash"])
+        self.assertTrue(package_manifest["outputs"]["method_tex"]["hash"])
+
 
 if __name__ == "__main__":
     unittest.main()

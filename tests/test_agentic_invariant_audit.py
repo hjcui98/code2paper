@@ -7,7 +7,13 @@ import unittest
 from pathlib import Path
 
 from code2paper.agentic.contracts import AgenticRunState
-from code2paper.agentic.invariant_audit import build_invariant_audit, load_invariant_audit, write_invariant_audit
+from code2paper.agentic.invariant_audit import (
+    build_invariant_audit,
+    check_final_package_traceability,
+    load_invariant_audit,
+    write_invariant_audit,
+)
+from code2paper.export.run_manifest import hash_file
 
 
 def _write_json(path: Path, payload: dict) -> str:
@@ -760,6 +766,65 @@ class AgenticInvariantAuditTests(unittest.TestCase):
         self.assertFalse(final_check.passed)
         self.assertIn("not a registered audited authoring artifact", final_check.message)
 
+    def test_formal_package_lineage_detects_post_package_figure_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source_body = "\\subsection{Overview}\nEvidence-backed text."
+            artifacts = {
+                "text_clean_tex": _write_text(root / "method_clean.tex", source_body),
+                "final_tex": _write_text(root / "final_method.tex", "\\begin{document}\n" + source_body + "\n\\end{document}\n"),
+            }
+            for key in (
+                "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+                "final_text_claims", "text_evidence_validation", "final_text_trace",
+                "validation_manifest", "traceability_ledger", "figure_scene",
+                "figure_relation_validation", "pre_render_audit", "method_overview_svg",
+                "rendering_manifest", "post_render_audit", "final_pdf_report",
+                "root_method_md", "root_method_tex", "final_pdf",
+            ):
+                artifacts[key] = _write_text(root / key, f"artifact:{key}\n")
+
+            lineage_key_map = {
+                "source_text_tex": "text_clean_tex",
+                **{
+                    key: key
+                    for key in (
+                        "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+                        "final_text_claims", "text_evidence_validation", "final_text_trace",
+                        "validation_manifest", "traceability_ledger", "figure_scene",
+                        "figure_relation_validation", "pre_render_audit", "method_overview_svg",
+                        "rendering_manifest", "post_render_audit",
+                    )
+                },
+            }
+            manifest = {
+                "schema_version": "2.0",
+                "lineage_complete": True,
+                "inputs": {"text_tex": artifacts["text_clean_tex"]},
+                "lineage": {
+                    manifest_key: _artifact_record(Path(artifacts[state_key]))
+                    for manifest_key, state_key in lineage_key_map.items()
+                },
+                "outputs": {
+                    manifest_key: _artifact_record(Path(artifacts[state_key]))
+                    for manifest_key, state_key in {
+                        "final_tex": "final_tex", "final_pdf": "final_pdf",
+                        "final_pdf_report": "final_pdf_report", "method_md": "root_method_md",
+                        "method_tex": "root_method_tex",
+                    }.items()
+                },
+            }
+            artifacts["finalize_manifest"] = _write_json(root / "finalize_manifest.json", manifest)
+            artifacts["package_manifest"] = _write_json(root / "package_manifest.json", manifest)
+            state = AgenticRunState(project_root=root, out_root=root, artifacts=artifacts)
+
+            self.assertTrue(check_final_package_traceability(state).passed)
+            Path(artifacts["method_overview_svg"]).write_text("tampered\n", encoding="utf-8")
+            check = check_final_package_traceability(state)
+
+        self.assertFalse(check.passed)
+        self.assertIn("lineage.method_overview_svg hash does not match", check.message)
+
     def test_audit_round_trips_to_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -770,6 +835,10 @@ class AgenticInvariantAuditTests(unittest.TestCase):
             loaded = load_invariant_audit(path)
 
         self.assertEqual(loaded.blocking_failures, audit.blocking_failures)
+
+
+def _artifact_record(path: Path) -> dict[str, str]:
+    return {"path": str(path), "hash": hash_file(path)}
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.evaluation_extractors import validation_passed
 from code2paper.agentic.final_text_claims import text_digest
 from code2paper.agentic.traceability_ledger import build_traceability_ledger
+from code2paper.export.run_manifest import hash_file
 
 
 class InvariantCheck(BaseModel):
@@ -47,7 +48,7 @@ def build_invariant_audit(state: AgenticRunState) -> AgenticInvariantAudit:
         _check_text_claim_traceability(state),
         _check_traceability_ledger(state),
         _check_validation_after_text(state),
-        _check_final_package_traceability(state),
+        check_final_package_traceability(state),
         _check_figure_plan(state),
         _check_rendered_figure(state),
     ]
@@ -706,7 +707,7 @@ def _check_rendered_figure(state: AgenticRunState) -> InvariantCheck:
     )
 
 
-def _check_final_package_traceability(state: AgenticRunState) -> InvariantCheck:
+def check_final_package_traceability(state: AgenticRunState) -> InvariantCheck:
     has_final_package = any(
         _artifact_exists(state, key)
         for key in ("final_tex", "final_pdf", "final_pdf_report", "finalize_manifest")
@@ -767,12 +768,96 @@ def _check_final_package_traceability(state: AgenticRunState) -> InvariantCheck:
             message="Final TeX does not contain the audited source Method TeX body.",
             artifact_keys=["final_tex", registered_source_key, "finalize_manifest"],
         )
+    if _artifact_exists(state, "repo_snapshot"):
+        problems = _formal_package_lineage_problems(state, manifest, registered_source_key)
+        if problems:
+            return InvariantCheck(
+                name="final_package_traceability",
+                passed=False,
+                message="Final package lineage is invalid: " + "; ".join(problems),
+                artifact_keys=[
+                    "final_tex", "final_pdf", "finalize_manifest", "package_manifest",
+                    "final_text_candidate", "final_text_trace", "method_overview_svg",
+                    "rendering_manifest", "post_render_audit",
+                ],
+            )
     return InvariantCheck(
         name="final_package_traceability",
         passed=True,
         message=f"Final TeX preserves audited source Method TeX from {registered_source_key}.",
         artifact_keys=["final_tex", registered_source_key, "finalize_manifest"],
     )
+
+
+def _formal_package_lineage_problems(
+    state: AgenticRunState,
+    manifest: dict[str, Any],
+    registered_source_key: str,
+) -> list[str]:
+    problems: list[str] = []
+    package_manifest = _artifact_json(state, "package_manifest")
+    if not package_manifest:
+        problems.append("final/package_manifest.json is missing or unreadable")
+    elif package_manifest != manifest:
+        problems.append("package_manifest does not match finalize_manifest")
+    if str(manifest.get("schema_version") or "") != "2.0":
+        problems.append("package manifest schema_version is not 2.0")
+    if not manifest.get("lineage_complete"):
+        problems.append("package manifest lineage_complete is false")
+
+    required_lineage = {
+        "source_text_tex": registered_source_key,
+        "repo_snapshot": "repo_snapshot",
+        "evidence_snapshot_v2": "evidence_snapshot_v2",
+        "final_text_candidate": "final_text_candidate",
+        "final_text_claims": "final_text_claims",
+        "text_evidence_validation": "text_evidence_validation",
+        "final_text_trace": "final_text_trace",
+        "validation_manifest": "validation_manifest",
+        "traceability_ledger": "traceability_ledger",
+        "figure_scene": "figure_scene",
+        "figure_relation_validation": "figure_relation_validation",
+        "pre_render_audit": "pre_render_audit",
+        "method_overview_svg": "method_overview_svg",
+        "rendering_manifest": "rendering_manifest",
+        "post_render_audit": "post_render_audit",
+    }
+    lineage = manifest.get("lineage") if isinstance(manifest.get("lineage"), dict) else {}
+    for manifest_key, state_key in required_lineage.items():
+        problem = _artifact_record_problem(state, lineage.get(manifest_key), state_key)
+        if problem:
+            problems.append(f"lineage.{manifest_key} {problem}")
+
+    outputs = manifest.get("outputs") if isinstance(manifest.get("outputs"), dict) else {}
+    for manifest_key, state_key in {
+        "final_tex": "final_tex",
+        "final_pdf": "final_pdf",
+        "final_pdf_report": "final_pdf_report",
+        "method_md": "root_method_md",
+        "method_tex": "root_method_tex",
+    }.items():
+        problem = _artifact_record_problem(state, outputs.get(manifest_key), state_key)
+        if problem:
+            problems.append(f"outputs.{manifest_key} {problem}")
+    return problems
+
+
+def _artifact_record_problem(state: AgenticRunState, record: object, state_key: str) -> str:
+    if not isinstance(record, dict):
+        return "record is missing"
+    recorded_path = _resolve_existing_path(str(record.get("path") or ""))
+    registered_path = _resolve_existing_path(state.artifacts.get(state_key, ""))
+    if recorded_path is None:
+        return "path is missing or unreadable"
+    if registered_path is None:
+        return f"registered artifact {state_key} is missing"
+    if recorded_path != registered_path:
+        return f"path does not match registered artifact {state_key}"
+    recorded_hash = str(record.get("hash") or "")
+    current_hash = hash_file(recorded_path)
+    if not recorded_hash or recorded_hash != current_hash:
+        return "hash does not match current file"
+    return ""
 
 
 def _decision_trace_plan_mismatch(

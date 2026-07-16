@@ -78,6 +78,7 @@ def check_traceability_ledger_contract(state: AgenticRunState) -> ReadinessCheck
         "final_tex",
         "final_pdf",
         "finalize_manifest",
+        "package_manifest",
     )
     ledger = artifact_json(state, "traceability_ledger")
     if not public_output and not ledger:

@@ -73,6 +73,7 @@ METHOD_OUTPUTS = {
     "final_pdf": "final/final_method.pdf",
     "final_pdf_report": "artifacts/09_finalize/final_pdf_report.json",
     "finalize_manifest": "artifacts/09_finalize/finalize_manifest.json",
+    "package_manifest": "final/package_manifest.json",
     "run_report": "artifacts/10_run/run_report.json",
     "run_manifest": "artifacts/10_run/run_manifest.json",
     "run_report_md": "final/run_report.md",
