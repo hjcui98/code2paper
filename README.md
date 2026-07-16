@@ -126,6 +126,32 @@ scene, real SVG elements, visible labels, edge endpoints, and asset digests.
 Optional raster stylists may be used only as non-authoritative derivatives;
 they cannot replace the audited SVG or introduce scene elements.
 
+The graph state is typed and reducer-backed. For durable interruption/resume,
+use the same run ID, output root, repository snapshot, and SQLite database:
+
+```bash
+code2paper-agentic-run tests/fixtures/toy_train_project \
+  --author tests/fixtures/toy_train_project_author_markers.yaml \
+  --out-root /tmp/code2paper-agentic-resumable \
+  --run-id toy-resumable-1 \
+  --checkpoint-backend sqlite \
+  --checkpoint-db /tmp/code2paper-agentic-resumable/checkpoints.sqlite
+
+# Resume after an interruption:
+code2paper-agentic-run tests/fixtures/toy_train_project \
+  --author tests/fixtures/toy_train_project_author_markers.yaml \
+  --out-root /tmp/code2paper-agentic-resumable \
+  --run-id toy-resumable-1 \
+  --checkpoint-backend sqlite \
+  --checkpoint-db /tmp/code2paper-agentic-resumable/checkpoints.sqlite \
+  --resume
+```
+
+Resume fails closed if the state/graph contract is incompatible, source code
+has drifted, or a completed trust artifact no longer matches its frozen input.
+The model only proposes tools from a deterministic readiness allowlist; it is
+never exposed to unrestricted filesystem, shell, renderer, or finalize access.
+
 ## Tests
 
 ```bash

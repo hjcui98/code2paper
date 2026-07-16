@@ -60,6 +60,7 @@ from code2paper.agentic.graph_state_io import (
 )
 from code2paper.agentic.tools import Code2PaperStageTool
 from code2paper.agentic.text_evidence_validator import SemanticVerifier
+from code2paper.agentic.state_v2 import AgenticRunStateV2
 
 
 RouteFn = Callable[[dict[str, Any]], str]
@@ -70,6 +71,9 @@ def build_code2paper_graph(
     *,
     decision_provider: DecisionProvider | None = None,
     semantic_verifier: SemanticVerifier | None = None,
+    checkpointer: Any | None = None,
+    interrupt_before: list[str] | None = None,
+    interrupt_after: list[str] | None = None,
 ):
     """Build a LangGraph app from registered Code2Paper tools.
 
@@ -86,7 +90,7 @@ def build_code2paper_graph(
             "pip install -e .[agentic]"
         ) from exc
 
-    graph = StateGraph(dict)
+    graph = StateGraph(AgenticRunStateV2)
     for stage in STAGE_NODE_NAMES:
         graph.add_node(stage, _stage_node(stage, tool_registry))
     graph.add_node("coverage_critic", _coverage_critic_node(decision_provider=decision_provider))
@@ -113,7 +117,11 @@ def build_code2paper_graph(
         graph.add_conditional_edges(route.source, routers[route.router], dict(route.routes))
     for edge in TERMINAL_EDGE_SPECS:
         graph.add_edge(edge.source, END)
-    return graph.compile()
+    return graph.compile(
+        checkpointer=checkpointer,
+        interrupt_before=interrupt_before,
+        interrupt_after=interrupt_after,
+    )
 
 
 def _route_functions() -> dict[str, RouteFn]:

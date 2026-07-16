@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "phase": "P3",
+  "run_id": "fastgs-p3-checkpoint",
+  "repo_snapshot_id": "repo:b3b4e9e90c32530eb7f042c31f00086974edd48b8564de57bacf61dc552143cc",
+  "repo_files": 1613,
+  "graph_contract_version": "agentic-graph-v3",
+  "checkpoint_backend": "sqlite",
+  "control": {
+    "interrupt_after": "none",
+    "resumed": false,
+    "node_calls": {
+      "evidence_freeze": 1,
+      "final_text_validation": 1,
+      "structured_render": 1,
+      "finalize": 1
+    },
+    "skipped_completed_nodes": [],
+    "freshness_status": "passed",
+    "final_loop_counters": {
+      "authoring": 2
+    },
+    "final_digest": "sha256:fff7284b991ae764ae424869da950bd16757f95d45db6481e5ebe215025de9a4"
+  },
+  "interruptions": [
+    {
+      "interrupt_after": "evidence_freeze",
+      "resumed": true,
+      "node_calls": {
+        "evidence_freeze": 1,
+        "final_text_validation": 1,
+        "structured_render": 1,
+        "finalize": 1
+      },
+      "skipped_completed_nodes": [
+        "evidence_freeze"
+      ],
+      "freshness_status": "passed",
+      "final_loop_counters": {
+        "authoring": 2
+      },
+      "final_digest": "sha256:fff7284b991ae764ae424869da950bd16757f95d45db6481e5ebe215025de9a4"
+    },
+    {
+      "interrupt_after": "final_text_validation",
+      "resumed": true,
+      "node_calls": {
+        "evidence_freeze": 1,
+        "final_text_validation": 1,
+        "structured_render": 1,
+        "finalize": 1
+      },
+      "skipped_completed_nodes": [
+        "evidence_freeze",
+        "final_text_validation"
+      ],
+      "freshness_status": "passed",
+      "final_loop_counters": {
+        "authoring": 2
+      },
+      "final_digest": "sha256:fff7284b991ae764ae424869da950bd16757f95d45db6481e5ebe215025de9a4"
+    },
+    {
+      "interrupt_after": "structured_render",
+      "resumed": true,
+      "node_calls": {
+        "evidence_freeze": 1,
+        "final_text_validation": 1,
+        "structured_render": 1,
+        "finalize": 1
+      },
+      "skipped_completed_nodes": [
+        "evidence_freeze",
+        "final_text_validation",
+        "structured_render"
+      ],
+      "freshness_status": "passed",
+      "final_loop_counters": {
+        "authoring": 2
+      },
+      "final_digest": "sha256:fff7284b991ae764ae424869da950bd16757f95d45db6481e5ebe215025de9a4"
+    }
+  ],
+  "all_resume_digests_match_control": true,
+  "all_freshness_gates_passed": true,
+  "budgets_preserved": true,
+  "model_calls_during_checkpoint_replay": 0,
+  "prior_fastgs_gemma4_decision_trace": "/tmp/code2paper-p2-fastgs-gemma4/figure_plan_decision_trace.json",
+  "prior_fastgs_gemma4_decision_trace_sha256": "sha256:1a2761e8794b24d4c3b87df219e4b6cf89f6beda8900ae70ce635c820595192c",
+  "live_model_status": "unavailable_http_127_0_0_1_8000_on_2026_07_17",
+  "classification": "Real frozen FastGS artifact replay with durable SQLite interruptions. It proves resume/freshness/digest equivalence and reuses an audited prior Gemma 4 decision trace, but is not a fresh P3 Gemma invocation; the fresh-live exit gate remains pending until the local service is available."
+}

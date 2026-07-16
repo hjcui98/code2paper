@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 
 from code2paper.agentic.completion_report import AgenticRunCompletionReport, load_run_completion_report
 from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.runner import AgenticRunResult, run_agentic_code2paper
+from code2paper.agentic.checkpointing import build_memory_checkpointer, open_sqlite_checkpointer
 from code2paper.core.output_paths import resolve_out_root, resolve_project_id
 from code2paper.core.schemas import LLMProvider
 
@@ -46,12 +48,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-semantic-verifier-calls", type=int, default=0)
     parser.add_argument("--llm-provider", choices=_LLM_PROVIDER_CHOICES, default=None)
     parser.add_argument("--llm-model", default=None)
+    parser.add_argument("--run-id", default="", help="Stable run identity used by durable checkpoints.")
+    parser.add_argument("--checkpoint-db", default="", help="SQLite checkpoint database path.")
+    parser.add_argument(
+        "--checkpoint-backend", choices=("none", "memory", "sqlite"), default="none",
+        help="Checkpoint backend; --checkpoint-db implies sqlite.",
+    )
+    parser.add_argument("--resume", action="store_true", help="Resume the matching run/snapshot checkpoint.")
     parser.add_argument(
         "--fail-on-blocked",
         action="store_true",
         help="Return exit code 1 when the agentic graph ends with blocked_reason.",
     )
     args = parser.parse_args(argv)
+    checkpoint_backend = "sqlite" if args.checkpoint_db and args.checkpoint_backend == "none" else args.checkpoint_backend
+    if checkpoint_backend == "sqlite" and not args.checkpoint_db:
+        parser.error("--checkpoint-backend sqlite requires --checkpoint-db")
+    if args.resume and (checkpoint_backend != "sqlite" or not args.run_id):
+        parser.error("--resume requires both --checkpoint-db and --run-id")
 
     project_root = Path(args.project_root).expanduser().resolve()
     if not project_root.is_dir():
@@ -66,6 +80,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root=project_root,
         out_root=out_root,
         project_id=project_id,
+        run_id=args.run_id or str(uuid.uuid4()),
         author_markers_path=author_markers_path,
         intent_path=intent_path,
         llm_provider=args.llm_provider,
@@ -81,8 +96,23 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"[code2paper-agentic-run] out_root={out_root}")
     try:
-        result = run_agentic_code2paper(state)
-    except RuntimeError as exc:
+        if checkpoint_backend == "sqlite":
+            with open_sqlite_checkpointer(Path(args.checkpoint_db).expanduser().resolve()) as checkpointer:
+                result = run_agentic_code2paper(
+                    state,
+                    checkpointer=checkpointer,
+                    resume=bool(args.resume),
+                    checkpoint_backend="sqlite",
+                )
+        elif checkpoint_backend == "memory":
+            result = run_agentic_code2paper(
+                state,
+                checkpointer=build_memory_checkpointer(),
+                checkpoint_backend="memory",
+            )
+        else:
+            result = run_agentic_code2paper(state)
+    except (RuntimeError, ValueError) as exc:
         print(f"[code2paper-agentic-run] error={exc}")
         return 2
 

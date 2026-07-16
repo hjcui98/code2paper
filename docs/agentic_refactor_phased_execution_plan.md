@@ -1,14 +1,14 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.4
+版本：1.5
 
 日期：2026-07-17
 
-状态：M0、P0、P1、P2 已完成并通过阶段门禁；下一执行阶段为 P3 工具细化与可恢复编排
+状态：M0、P0、P1、P2 已完成并通过阶段门禁；P3 工程实现与 FastGS SQLite replay 已通过，fresh Gemma 4 中断恢复因本地服务不可用而待验收
 
 执行负责人：Codex
 
-当前实施分支：`codex/agentic-p2-figure-trust`（P2 收口；随后切换 `codex/agentic-p3-tools-checkpoint`）
+当前实施分支：`codex/agentic-p3-tools-checkpoint`
 
 上位设计：[agentic_refactor_final_design.md](./agentic_refactor_final_design.md)
 
@@ -1709,6 +1709,23 @@ cache key 至少包含：
 - Gemma 4 中断恢复实测与 uninterrupted control 等价；
 - 模型调用、缓存和预算均可审计。
 
+### 11.10 2026-07-17 实施状态
+
+已落地：9 个 P0-P2 trust-plane `StructuredTool` 及完整工具契约、`AgenticRunStateV2`
+reducers、V1→V2 migration、memory/SQLite checkpointer、CLI run identity/resume、恢复前
+repo/artifact freshness fail-closed 校验、受限 tool proposal policy、原子写入和幂等 cache。
+全量测试当前为 `384 passed, 2 skipped, 6 subtests passed`。
+
+FastGS 冻结快照（1613 files）已完成 evidence freeze、final text validation、structured render
+三处 SQLite 中断恢复 replay；三次恢复均跳过已完成节点、重新通过 freshness、保留预算/loop
+counters，并与 uninterrupted control 得到相同最终 digest。报告：
+`tests/baselines/agentic/p3_checkpoint_validation_report.json`。
+
+本轮核验时 `http://127.0.0.1:8000/health` 无法连接，宿主环境亦无法访问 NVIDIA driver，
+因此上述结果不得表述为 fresh P3 Gemma 4 调用。报告仅复用了 P2 已审计 FastGS Gemma 4
+decision trace 的 digest；P3 仍需在服务恢复后以同一 run ID 重跑三处中断，核对模型调用数和
+cache hit，完成后方可标记 P3 complete 并进入 P4。
+
 ## 12. P4：Benchmark、cutover 与 legacy 降级
 
 ### 12.1 阶段目标
@@ -2091,12 +2108,13 @@ Batch A 不改 authoring/figure 的可信度算法。
 
 ### P3
 
-- [ ] 细粒度工具契约完整
-- [ ] typed state + reducers
-- [ ] durable checkpoint/resume
-- [ ] freshness 在 resume 时重检
-- [ ] tool selection 不可越权
-- [ ] cache/预算/调用可审计
+- [x] 细粒度工具契约完整
+- [x] typed state + reducers
+- [x] durable checkpoint/resume
+- [x] freshness 在 resume 时重检
+- [x] tool selection 不可越权
+- [x] cache/预算/调用可审计
+- [ ] fresh Gemma 4 三处中断恢复与 uninterrupted control 等价
 
 ### P4
 

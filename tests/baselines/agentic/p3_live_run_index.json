@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "phase": "P3",
+  "runs": [
+    {
+      "run_id": "fastgs-p3-checkpoint",
+      "artifact_root": "/tmp/code2paper-p3-fastgs-checkpoint-r2",
+      "kind": "fastgs_frozen_trust_artifact_sqlite_replay",
+      "repo_files": 1613,
+      "interruptions": [
+        "evidence_freeze",
+        "final_text_validation",
+        "structured_render"
+      ],
+      "resume_digest_matches_control": true,
+      "freshness_passed": true,
+      "budgets_preserved": true,
+      "model_calls": 0,
+      "validation_report_sha256": "63a936fa2cb317861f0dcffbf2bf20fbcb5ac7d5b554a32cb54f028f245ffdb6",
+      "classification": "Real FastGS replay, not a fresh Gemma 4 call."
+    },
+    {
+      "run_id": "toy-p3-sqlite-r1",
+      "artifact_root": "/tmp/code2paper-p3-toy-sqlite-r1",
+      "kind": "full_agentic_graph_sqlite_run_and_resume",
+      "initial_status": "blocked",
+      "resumed_status": "blocked",
+      "blocked_reason": "validation_manifest_failed",
+      "freshness_status": "passed",
+      "source_drift": false,
+      "stale_artifact_keys": [],
+      "stage_logs_on_resume": 0,
+      "decisions": 18,
+      "summary_sha256": "0f0e4f46e1825bb0ebe4970642fc19184ef046ecaad80f3c8c6add82895d49db",
+      "freshness_report_sha256": "81e7f34c352629e7fd6b2959bcf4776215ae5d636cd1b52f3468ba4987b4d5bc",
+      "checkpoint_sqlite_sha256_after_resume": "3903b1bb0423f7fc18ed7740b986df3ca3cced06c4f3177e58cc1ca93af2db4e",
+      "classification": "The full production graph resumed without re-running stage tools and preserved its evidence-based explanatory block."
+    }
+  ],
+  "fresh_gemma4_status": "pending_service_unavailable"
+}

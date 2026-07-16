@@ -30,9 +30,11 @@ def build_agentic_architecture_manifest() -> AgenticArchitectureManifest:
         ],
         hard_invariants=[
             "code_evidence_must_be_frozen_before_authoring",
-            "claims_must_reference_known_evidence_ids",
-            "method_text_must_follow_authoring_context_and_plan",
-            "method_figures_must_use_frozen_evidence_ids",
+            "final_atomic_claims_must_be_semantically_supported_by_exact_evidence_spans",
+            "final_text_trace_must_bind_postprocessed_text_to_validation_and_projection_digests",
+            "figure_edges_require_direct_relation_evidence",
+            "rendered_svg_must_match_the_locked_scene_contract",
+            "checkpoint_resume_must_revalidate_repo_and_artifact_freshness",
         ],
         evidence_gates=[
             "frozen_evidence_gate",
@@ -40,6 +42,10 @@ def build_agentic_architecture_manifest() -> AgenticArchitectureManifest:
             "evidence_sufficiency_gate",
             "traceability_ledger",
             "figure_evidence_plan",
+            "final_text_semantic_validation",
+            "pre_render_relation_audit",
+            "post_render_asset_audit",
+            "resume_freshness_gate",
         ],
         authoring_contracts=[
             "author_intent_guides_section_plan",
@@ -56,6 +62,7 @@ def build_agentic_architecture_manifest() -> AgenticArchitectureManifest:
             "agentic_graph_catalog",
             "agentic_tool_catalog",
             "agentic_langchain_tool_manifest",
+            "agentic_trust_tool_manifest",
             "agentic_contract_audit",
             "agentic_invariant_audit",
         ],

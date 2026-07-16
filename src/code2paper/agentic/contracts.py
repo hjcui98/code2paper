@@ -87,11 +87,17 @@ class AgenticRunState(BaseModel):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
+    state_schema_version: str = "2.0"
+    graph_contract_version: str = "agentic-graph-v3"
+    run_id: str = ""
     project_root: Path
     out_root: Path
     project_id: str = ""
     author_markers_path: str = ""
     intent_path: str = ""
+    intent_ref: str = ""
+    repo_snapshot_ref: str = ""
+    model_profile_ref: str = ""
     llm_provider: str | None = None
     llm_model: str | None = None
     core_top_k: int = 12
@@ -105,6 +111,9 @@ class AgenticRunState(BaseModel):
     artifacts: dict[str, str] = Field(default_factory=dict)
     decisions: list[AgentDecision] = Field(default_factory=list)
     validation: dict[str, Any] = Field(default_factory=dict)
+    phase_statuses: dict[str, str] = Field(default_factory=dict)
+    pending_gaps: list[str] = Field(default_factory=list)
+    checkpoint_metadata: dict[str, Any] = Field(default_factory=dict)
     blocked_reason: str = ""
     next_node: str = ""
 
@@ -142,9 +151,12 @@ class AgenticRunState(BaseModel):
     def with_result(self, result: StageToolResult) -> "AgenticRunState":
         artifacts = dict(self.artifacts)
         artifacts.update(result.artifacts)
+        phase_statuses = {**self.phase_statuses, result.stage: result.status.value}
         return self.model_copy(
             update={
                 "artifacts": artifacts,
+                "repo_snapshot_ref": artifacts.get("repo_snapshot", self.repo_snapshot_ref),
+                "phase_statuses": phase_statuses,
                 "decisions": [*self.decisions, *result.decisions],
                 "blocked_reason": result.blocked_reason if result.status == StageStatus.BLOCKED else "",
             }

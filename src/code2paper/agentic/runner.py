@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -13,10 +14,16 @@ from code2paper.agentic.architecture_manifest import (
 )
 from code2paper.agentic.artifact_freshness import check_artifact_freshness, write_artifact_freshness_report
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
-from code2paper.agentic.repo_snapshot import load_repo_snapshot
+from code2paper.agentic.repo_snapshot import build_repo_snapshot, load_repo_snapshot
 from code2paper.agentic.completion_report import build_run_completion_report, write_run_completion_report
 from code2paper.agentic.contract_audit import build_agentic_contract_audit, write_agentic_contract_audit
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
+from code2paper.agentic.checkpointing import (
+    CheckpointMetadataV2,
+    checkpoint_config,
+    checkpoint_thread_id,
+    validate_resume_state,
+)
 from code2paper.agentic.decision_core import DecisionProvider
 from code2paper.agentic.decision_policy import build_agentic_decision_policy, write_agentic_decision_policy
 from code2paper.agentic.evaluation_report import build_run_evaluation_report, write_run_evaluation_report
@@ -31,6 +38,7 @@ from code2paper.agentic.text_evidence_validator import SemanticVerifier
 from code2paper.agentic.readiness_report import build_run_readiness_report, write_run_readiness_report
 from code2paper.agentic.tools import Code2PaperStageTool, build_tool_catalog, write_tool_catalog
 from code2paper.agentic.traceability_ledger import build_traceability_ledger, write_traceability_ledger
+from code2paper.agentic.trust_tools import write_trust_tool_manifest
 from code2paper.core.output_names import artifact_dir
 from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.export.run_manifest import build_run_manifest, hash_file, write_run_manifest
@@ -80,18 +88,40 @@ def run_agentic_code2paper(
     graph_app: Any | None = None,
     decision_provider: DecisionProvider | None = None,
     semantic_verifier: SemanticVerifier | None = None,
+    checkpointer: Any | None = None,
+    resume: bool = False,
+    checkpoint_backend: str = "",
 ) -> AgenticRunResult:
     """Run Code2Paper through the agentic graph and persist a decision summary."""
 
     state = initial_state if isinstance(initial_state, AgenticRunState) else AgenticRunState.model_validate(initial_state)
+    graph_config: dict[str, Any] | None = None
+    if checkpointer is not None:
+        state, graph_config = _prepare_checkpoint_execution(
+            state,
+            graph_app=graph_app,
+            resume=resume,
+            checkpoint_backend=checkpoint_backend or type(checkpointer).__name__,
+        )
     app = graph_app
     active_registry: Mapping[str, Code2PaperStageTool] | None = None
     if app is None:
         active_registry = tool_registry or build_legacy_stage_tool_registry()
         provider = decision_provider or _default_decision_provider(state)
         verifier = semantic_verifier or _default_semantic_verifier(state)
-        app = build_code2paper_graph(active_registry, decision_provider=provider, semantic_verifier=verifier)
-    final_payload = _invoke_graph(app, state.model_dump(mode="json"))
+        app = build_code2paper_graph(
+            active_registry,
+            decision_provider=provider,
+            semantic_verifier=verifier,
+            checkpointer=checkpointer,
+        )
+    if checkpointer is not None and resume:
+        checkpoint_state = app.get_state(graph_config).values
+        state, metadata = validate_resume_state(checkpoint_state)
+        state = state.model_copy(update={"checkpoint_metadata": metadata.model_dump(mode="json")})
+        final_payload = _invoke_graph(app, None, config=graph_config)
+    else:
+        final_payload = _invoke_graph(app, state.model_dump(mode="json"), config=graph_config)
     final_state = AgenticRunState.model_validate(final_payload)
     final_state = _persist_freshness_report(final_state)
     policy = build_agentic_decision_policy()
@@ -122,6 +152,11 @@ def run_agentic_code2paper(
                 "agentic_langchain_tool_manifest": str(langchain_tool_manifest_path),
             }
         }
+    )
+    trust_tool_manifest_path = artifact_dir(final_state.method_root, "10_run") / "agentic_trust_tool_manifest.json"
+    write_trust_tool_manifest(trust_tool_manifest_path)
+    final_state = final_state.model_copy(
+        update={"artifacts": {**final_state.artifacts, "agentic_trust_tool_manifest": str(trust_tool_manifest_path)}}
     )
     architecture_manifest_path = artifact_dir(final_state.method_root, "10_run") / "agentic_architecture_manifest.json"
     write_agentic_architecture_manifest(architecture_manifest_path, build_agentic_architecture_manifest())
@@ -467,14 +502,51 @@ def _first_existing_artifact(state: AgenticRunState, *keys: str) -> str | None:
     return None
 
 
-def _invoke_graph(graph_app: Any, payload: dict[str, Any]) -> dict[str, Any]:
+def _invoke_graph(
+    graph_app: Any,
+    payload: dict[str, Any] | None,
+    *,
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if hasattr(graph_app, "invoke"):
-        result = graph_app.invoke(payload)
+        result = graph_app.invoke(payload, config=config) if config else graph_app.invoke(payload)
     else:
         result = graph_app(payload)
     if not isinstance(result, dict):
         raise TypeError("agentic graph must return a state dict")
     return result
+
+
+def _prepare_checkpoint_execution(
+    state: AgenticRunState,
+    *,
+    graph_app: Any | None,
+    resume: bool,
+    checkpoint_backend: str,
+) -> tuple[AgenticRunState, dict[str, Any]]:
+    run_id = state.run_id.strip() or str(uuid.uuid4())
+    frozen_path = state.repo_snapshot_ref or state.artifacts.get("repo_snapshot", "")
+    if resume and not frozen_path:
+        candidate = artifact_dir(state.method_root, "01_input") / "repo_snapshot.json"
+        frozen_path = str(candidate) if candidate.exists() else ""
+    repo_snapshot_id = (
+        load_repo_snapshot(frozen_path).snapshot_id
+        if frozen_path and Path(frozen_path).exists()
+        else build_repo_snapshot(state.project_root).snapshot_id
+    )
+    thread_id = checkpoint_thread_id(run_id=run_id, repo_snapshot_id=repo_snapshot_id)
+    metadata = CheckpointMetadataV2(
+        run_id=run_id,
+        repo_snapshot_id=repo_snapshot_id,
+        thread_id=thread_id,
+        checkpoint_backend=checkpoint_backend,
+        resumed=resume,
+    )
+    if resume and graph_app is not None and not hasattr(graph_app, "get_state"):
+        raise TypeError("resume requires a compiled LangGraph app with get_state")
+    return state.model_copy(
+        update={"run_id": run_id, "checkpoint_metadata": metadata.model_dump(mode="json")}
+    ), checkpoint_config(thread_id)
 
 
 def _default_decision_provider(state: AgenticRunState) -> DecisionProvider | None:
