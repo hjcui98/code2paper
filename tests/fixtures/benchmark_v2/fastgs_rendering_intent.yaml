@@ -1,0 +1,32 @@
+project_goal: "Describe only code-backed FastGS rendering flow."
+paper_method_goal: "Prioritize render_fastgs outputs, view-space visibility, and image-space L1/SSIM supervision."
+implementation_scope: "Current FastGS code only; do not infer performance or causality."
+priority_files:
+  - "train.py"
+  - "gaussian_renderer/__init__.py"
+ignore_files:
+  - "submodules/**"
+module_roles:
+  - path: "train.py"
+    symbol: "training"
+    role: "rendering call and image-space supervision"
+    importance: "core"
+    is_novel: false
+    notes: "Emphasize render package outputs before initialization details."
+pipeline_steps:
+  - name: "Differentiable rendering"
+    purpose: "Call render_fastgs and unpack rendered image and view-space outputs."
+    input: ["viewpoint", "Gaussian state"]
+    output: ["rendered image", "visibility and radii"]
+    related_files: ["train.py", "gaussian_renderer/__init__.py"]
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Image-space supervision"
+    purpose: "Combine L1 and SSIM terms and backpropagate."
+    input: ["rendered image", "ground-truth image"]
+    output: ["training gradient"]
+    related_files: ["train.py"]
+    highlight_level: "main"
+    omit_from_main_figure: false
+innovation_claims: []
+potential_mismatches: []

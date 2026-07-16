@@ -1,0 +1,28 @@
+project_goal: "Describe the implemented spatial pretext data transformations."
+paper_method_goal: "Explain the 2-by-2 flipped-patch construction and preserve visible implementation caveats."
+implementation_scope: "Current Spatial-SSRL code only; do not claim downstream gains."
+priority_files:
+  - "data_process/Flip.py"
+ignore_files:
+  - "training/SFT-coldstart/**"
+  - "training/GRPO/**"
+module_roles:
+  - path: "data_process/Flip.py"
+    symbol: "split_and_flip_one_patch"
+    role: "flipped patch preprocessing"
+    importance: "core"
+    is_novel: false
+    notes: "Retain the undeclared direction caveat."
+pipeline_steps:
+  - name: "Patch splitting and flipping"
+    purpose: "Split the image into four patches and flip the selected patch."
+    input: ["input image", "patch index"]
+    output: ["composed transformed image"]
+    related_files: ["data_process/Flip.py"]
+    highlight_level: "main"
+    omit_from_main_figure: false
+innovation_claims: []
+potential_mismatches:
+  - description: "direction is referenced but not declared as a function parameter in the shown definition."
+    files: ["data_process/Flip.py"]
+    severity: "high"

@@ -1,0 +1,31 @@
+project_goal: "Describe the implemented metric-learning utilities in MOS."
+paper_method_goal: "Explain feature normalization and hard-example triplet loss without inferring modality-gap improvements."
+implementation_scope: "Current MOS code only; no experimental claims."
+priority_files:
+  - "loss/triplet_loss.py"
+ignore_files:
+  - "logs/**"
+module_roles:
+  - path: "loss/triplet_loss.py"
+    symbol: "TripletLoss"
+    role: "hard-example metric-learning loss"
+    importance: "core"
+    is_novel: false
+    notes: "Normalization is conditional on normalize_feature."
+pipeline_steps:
+  - name: "Optional feature normalization"
+    purpose: "Normalize features only when the option is enabled."
+    input: ["global features"]
+    output: ["possibly normalized features"]
+    related_files: ["loss/triplet_loss.py"]
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Hard-example triplet ranking"
+    purpose: "Compute distances, mine hard positives and negatives, and apply ranking loss."
+    input: ["features", "labels"]
+    output: ["triplet loss"]
+    related_files: ["loss/triplet_loss.py"]
+    highlight_level: "main"
+    omit_from_main_figure: false
+innovation_claims: []
+potential_mismatches: []

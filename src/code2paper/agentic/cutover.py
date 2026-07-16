@@ -1,0 +1,190 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from code2paper.agentic.benchmark_v2 import BenchmarkDatasetV2, EvaluatedBenchmarkRunV2
+
+
+class CutoverModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class TrustThresholdsV2(CutoverModel):
+    semantic_precision_min: float = 1.0
+    unsupported_leakage_max: float = 0.0
+    paraphrased_leakage_max: float = 0.0
+    high_risk_false_supported_max: float = 0.0
+    qualifier_preservation_min: float = 1.0
+    text_trace_exactness_min: float = 1.0
+    figure_element_precision_min: float = 1.0
+    direct_edge_evidence_min: float = 1.0
+    rendered_drift_max: float = 0.0
+    stale_detection_min: float = 1.0
+
+
+class RolloutEvidenceV2(CutoverModel):
+    protocol_validated: bool = False
+    shadow_cases: int = 0
+    shadow_reviewed: bool = False
+    opt_in_cases: int = 0
+    canary_cases: int = 0
+    canary_incidents: int = 0
+    team_false_block_threshold: float | None = None
+    migration_guide_complete: bool = False
+    legacy_contract_marked: bool = False
+
+
+class CutoverDecisionV2(CutoverModel):
+    schema_version: str = "2.0"
+    status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"]
+    default_mode: Literal["legacy", "agentic"]
+    hard_gates_passed: bool
+    worst_case_metrics: dict[str, float] = Field(default_factory=dict)
+    failures: list[str] = Field(default_factory=list)
+    next_actions: list[str] = Field(default_factory=list)
+
+
+class LegacyTrustContractV1(CutoverModel):
+    contract_version: str = "legacy-v1-weaker-trust"
+    authoritative_v2_final_invariant: bool = False
+    limitations: list[str] = Field(default_factory=lambda: [
+        "no_authoritative_final_atomic_claim_semantic_gate",
+        "no_direct_relation_evidence_requirement_for_every_figure_edge",
+        "no_repo_snapshot_bound_post_render_lineage",
+    ])
+    warning: str = "Legacy output must not be represented as Evidence V2 final-invariant passed."
+
+
+def decide_cutover(
+    dataset: BenchmarkDatasetV2,
+    runs: list[EvaluatedBenchmarkRunV2],
+    rollout: RolloutEvidenceV2,
+    thresholds: TrustThresholdsV2 | None = None,
+) -> CutoverDecisionV2:
+    policy = thresholds or TrustThresholdsV2()
+    failures: list[str] = []
+    agentic = [item for item in runs if item.observation.variant in {"agentic_deterministic", "agentic_gemma4_mtp"}]
+    variants = {item.observation.variant for item in runs}
+    covered_cases = {item.observation.case_id for item in runs}
+    if covered_cases != {item.case_id for item in dataset.cases}:
+        failures.append("benchmark_case_coverage_incomplete")
+    if not rollout.protocol_validated:
+        failures.append("frozen_benchmark_protocol_not_validated")
+    for required in ("fixed_legacy", "agentic_deterministic", "agentic_gemma4_mtp"):
+        if required not in variants:
+            failures.append(f"missing_variant:{required}")
+    repeats: dict[tuple[str, str], set[int]] = defaultdict(set)
+    for item in runs:
+        if item.observation.variant == "agentic_gemma4_mtp":
+            repeats[(item.observation.case_id, item.observation.intent_id)].add(item.observation.repeat_index)
+    for case in dataset.cases:
+        intent_ids = [item.intent_id for item in case.intents] or [""]
+        for intent_id in intent_ids:
+            if len(repeats[(case.case_id, intent_id)]) < 3:
+                failures.append(f"gemma_repeats_below_three:{case.case_id}:{intent_id or 'default'}")
+    if not agentic:
+        failures.append("no_agentic_runs")
+    worst = _worst_metrics(agentic)
+    checks = {
+        "atomic_claim_semantic_precision": (">=", policy.semantic_precision_min),
+        "unsupported_leakage_rate": ("<=", policy.unsupported_leakage_max),
+        "paraphrased_unsupported_leakage_rate": ("<=", policy.paraphrased_leakage_max),
+        "high_risk_false_supported_rate": ("<=", policy.high_risk_false_supported_max),
+        "qualifier_preservation_rate": (">=", policy.qualifier_preservation_min),
+        "text_trace_exactness": (">=", policy.text_trace_exactness_min),
+        "figure_element_semantic_precision": (">=", policy.figure_element_precision_min),
+        "direct_edge_evidence_rate": (">=", policy.direct_edge_evidence_min),
+        "rendered_element_drift_rate": ("<=", policy.rendered_drift_max),
+        "stale_detection_rate": (">=", policy.stale_detection_min),
+    }
+    for name, (operator, threshold) in checks.items():
+        value = worst.get(name)
+        if value is None or (operator == ">=" and value < threshold) or (operator == "<=" and value > threshold):
+            failures.append(f"hard_threshold_failed:{name}")
+    if any(item.failures for item in agentic):
+        failures.append("run_contract_failures_present")
+    if any(item.observation.scope != "full_pipeline" for item in runs):
+        failures.append("full_pipeline_observations_required")
+    case_by_id = {item.case_id: item for item in dataset.cases}
+    for item in runs:
+        provenance = item.observation.provenance
+        if not provenance.get("reviewer") or not provenance.get("reviewed_at"):
+            failures.append("digest_pinned_named_review_required")
+        for mutation in case_by_id[item.observation.case_id].mutations:
+            if not provenance.get(f"mutation_trial:{mutation.mutation_id}"):
+                failures.append(f"missing_mutation_trial_provenance:{item.observation.case_id}:{mutation.mutation_id}")
+    if any(item.observation.run_status == "success" and not item.observation.final_invariant_passed for item in agentic):
+        failures.append("success_without_final_invariant")
+    if any(item.observation.completion_complete and not item.observation.asset_lineage_complete for item in agentic):
+        failures.append("complete_without_asset_lineage")
+    if any(item.observation.run_status == "blocked" and not item.observation.blocked_run_human_reviewed for item in runs):
+        failures.append("blocked_runs_require_human_review")
+    legacy = [item for item in runs if item.observation.variant == "fixed_legacy"]
+    if legacy and agentic:
+        legacy_completion = sum(item.observation.usable_completion for item in legacy) / len(legacy)
+        agentic_completion = sum(item.observation.usable_completion for item in agentic) / len(agentic)
+        if agentic_completion < legacy_completion:
+            failures.append("agentic_usable_completion_below_legacy_requires_false_success_evidence")
+    paired = [case for case in dataset.cases if len(case.intents) >= 2]
+    for case in paired:
+        signatures = {
+            item.observation.intent_id: item.observation.support_verdict_signature
+            for item in agentic if item.observation.case_id == case.case_id and item.observation.variant == "agentic_gemma4_mtp"
+        }
+        if len(set(value for value in signatures.values() if value)) > 1:
+            failures.append(f"paired_intent_changed_support_verdict:{case.case_id}")
+    if rollout.team_false_block_threshold is None:
+        failures.append("team_false_block_threshold_unset")
+    elif worst.get("false_block_rate", 1.0) > rollout.team_false_block_threshold:
+        failures.append("false_block_rate_above_team_threshold")
+    hard_passed = not failures
+    status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"] = "hold"
+    if hard_passed:
+        status = "shadow_ready"
+        if rollout.shadow_cases >= len(dataset.cases) and rollout.shadow_reviewed:
+            status = "opt_in_ready"
+        if status == "opt_in_ready" and rollout.opt_in_cases >= len(dataset.cases):
+            status = "canary_ready"
+        if (
+            status == "canary_ready" and rollout.canary_cases >= len(dataset.cases)
+            and rollout.canary_incidents == 0 and rollout.migration_guide_complete and rollout.legacy_contract_marked
+        ):
+            status = "default_ready"
+    actions = _actions(failures, status, len(dataset.cases))
+    return CutoverDecisionV2(
+        status=status,
+        default_mode="agentic" if status == "default_ready" else "legacy",
+        hard_gates_passed=hard_passed,
+        worst_case_metrics=worst,
+        failures=list(dict.fromkeys(failures)),
+        next_actions=actions,
+    )
+
+
+def _worst_metrics(runs: list[EvaluatedBenchmarkRunV2]) -> dict[str, float]:
+    if not runs:
+        return {}
+    names = type(runs[0].metrics).model_fields
+    lower_is_better = {
+        "unsupported_leakage_rate", "paraphrased_unsupported_leakage_rate", "high_risk_false_supported_rate",
+        "rendered_element_drift_rate", "false_block_rate",
+    }
+    return {
+        name: (max if name in lower_is_better else min)(getattr(item.metrics, name) for item in runs)
+        for name in names
+    }
+
+
+def _actions(failures: list[str], status: str, case_count: int) -> list[str]:
+    if failures:
+        return ["repair_benchmark_or_trust_failures", "keep_legacy_default", *failures]
+    if status == "shadow_ready":
+        return [f"run_and_review_{case_count}_shadow_cases"]
+    if status == "opt_in_ready":
+        return [f"run_{case_count}_opt_in_cases"]
+    if status == "canary_ready":
+        return [f"run_{case_count}_canary_cases_and_complete_migration_guide"]
+    return ["agentic_default_authorized_with_explicit_legacy_fallback"]

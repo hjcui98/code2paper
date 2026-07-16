@@ -1,0 +1,147 @@
+{
+  "schema_version": "2.0",
+  "producer_version": "code2paper-agentic-p4",
+  "cases": [
+    {
+      "case_id": "toy_train",
+      "project_kind": "toy",
+      "repo_root": "tests/fixtures/toy_train_project",
+      "supported_claims": [
+        {
+          "claim_id": "T1",
+          "text": "The module defines a main entrypoint whose docstring says it builds the dataloader and model before training, while the function body is a pass stub.",
+          "direct_evidence_ids": ["TE1"],
+          "required_qualifiers": ["the function body is a pass stub"],
+          "high_risk": false
+        }
+      ],
+      "evidence_spans": [
+        {
+          "evidence_id": "TE1",
+          "path": "train.py",
+          "line_start": 1,
+          "line_end": 3,
+          "exact_excerpt_digest": "sha256:bd4fa030bb01f30724934c1a4964b869b117309639fb73c353986c97de0b61b6"
+        }
+      ],
+      "mutations": [
+        {"mutation_id": "TM1", "category": "legal_id_mismatch", "payload": "Attach TE1 to a claim that an Adam optimizer is constructed.", "candidate_text": "The entrypoint constructs an Adam optimizer.", "expected_outcome": "reject"},
+        {"mutation_id": "TM2", "category": "unsupported_paraphrase", "payload": "Paraphrase the stub as a complete production training system.", "candidate_text": "The module implements a complete production training system.", "expected_outcome": "reject"},
+        {"mutation_id": "TM3", "category": "numeric_injection", "payload": "Claim 99% accuracy.", "candidate_text": "The training system achieves 99% accuracy.", "expected_outcome": "reject"}
+      ],
+      "intents": [],
+      "expected_run_outcome": "either_trustworthy",
+      "human_reviewed": true
+    },
+    {
+      "case_id": "fastgs",
+      "project_kind": "real",
+      "repo_root": "datasets/FastGS/FastGS - Training 3D Gaussian Splatting in 100 Seconds",
+      "supported_claims": [
+        {
+          "claim_id": "F1",
+          "text": "The training function initializes first_iter to zero and restores it from a checkpoint when one is supplied.",
+          "direct_evidence_ids": ["FE1"],
+          "required_qualifiers": ["when a checkpoint is supplied"],
+          "high_risk": false
+        },
+        {
+          "claim_id": "F2",
+          "text": "The training loop calls render_fastgs and combines L1 with one minus fast SSIM using lambda_dssim before backward.",
+          "direct_evidence_ids": ["FE2"],
+          "required_qualifiers": [],
+          "high_risk": false
+        }
+      ],
+      "evidence_spans": [
+        {"evidence_id": "FE1", "path": "train.py", "line_start": 38, "line_end": 46, "exact_excerpt_digest": "sha256:f361f3cc61a954c88cee81f99f3928187d44df6293169bd6a48b1c794da61e10"},
+        {"evidence_id": "FE2", "path": "train.py", "line_start": 93, "line_end": 105, "exact_excerpt_digest": "sha256:4afb50cf72641805880229635592108d07b265df1992023427316393aa0b8fad"}
+      ],
+      "figure_relations": [
+        {"relation_id": "FR1", "source_claim_id": "F2", "target_claim_id": "F1", "direct_evidence_ids": [], "allowed": false}
+      ],
+      "mutations": [
+        {"mutation_id": "FM1", "category": "causal_strengthening", "payload": "Claim the mixed loss guarantees faster convergence.", "candidate_text": "The mixed L1 and SSIM loss guarantees faster convergence.", "expected_outcome": "reject"},
+        {"mutation_id": "FM2", "category": "figure_edge_pseudoevidence", "payload": "Draw an F2-to-F1 causal arrow using the union of node evidence.", "candidate_text": "The mixed loss causally determines checkpoint restoration.", "expected_outcome": "reject"},
+        {"mutation_id": "FM3", "category": "post_render_drift", "payload": "Add a 100-second guarantee label after scene rendering.", "candidate_text": "Guaranteed 100-second training", "expected_outcome": "block"},
+        {"mutation_id": "FM4", "category": "source_stale", "payload": "Modify train.py after evidence freeze.", "candidate_text": "source changed after evidence freeze", "expected_outcome": "block"}
+      ],
+      "intents": [
+        {
+          "intent_id": "training_mechanics",
+          "emphasis": "Emphasize initialization, checkpoint restoration, and loss-driven optimization.",
+          "expected_retrieval_targets": ["training", "checkpoint", "loss.backward"],
+          "expected_section_claim_order": ["F1", "F2"],
+          "expected_figure_claim_ids": ["F1", "F2"]
+        },
+        {
+          "intent_id": "rendering_flow",
+          "emphasis": "Emphasize render_fastgs outputs and image-space supervision.",
+          "expected_retrieval_targets": ["render_fastgs", "viewspace_points", "fast_ssim"],
+          "expected_section_claim_order": ["F2", "F1"],
+          "expected_figure_claim_ids": ["F2"]
+        }
+      ],
+      "expected_run_outcome": "either_trustworthy",
+      "human_reviewed": true
+    },
+    {
+      "case_id": "spatial_ssrl",
+      "project_kind": "real",
+      "repo_root": "datasets/Spatial-SSRL/Spatial-SSRL - Enhancing Spatial Understanding via Self-Supervised Reinforcement Learning",
+      "supported_claims": [
+        {
+          "claim_id": "S1",
+          "text": "The flip preprocessing function divides an image into a 2-by-2 grid and flips the selected patch, while the shown function references direction without declaring it as a parameter.",
+          "direct_evidence_ids": ["SE1"],
+          "required_qualifiers": ["the shown function references direction without declaring it as a parameter"],
+          "high_risk": false
+        }
+      ],
+      "evidence_spans": [
+        {"evidence_id": "SE1", "path": "data_process/Flip.py", "line_start": 22, "line_end": 34, "exact_excerpt_digest": "sha256:8b025e313784be5008983e0a3aa6b43be44a7b1a765d7242eefe0f67ab918ecf"}
+      ],
+      "mutations": [
+        {"mutation_id": "SM1", "category": "relevance_exaggeration", "payload": "Claim the preprocessing proves 3D spatial understanding.", "candidate_text": "The flipped-patch preprocessing proves 3D spatial understanding.", "expected_outcome": "reject"},
+        {"mutation_id": "SM2", "category": "formula_injection", "payload": "Add an unsupported spatial reward equation.", "candidate_text": "The spatial reward is $R = 1 - d_{patch}$.", "expected_outcome": "reject"},
+        {"mutation_id": "SM3", "category": "artifact_stale", "payload": "Change the projection digest while retaining the old validator report.", "candidate_text": "validator report retained after its projection input changed", "expected_outcome": "block"}
+      ],
+      "intents": [],
+      "expected_run_outcome": "either_trustworthy",
+      "human_reviewed": true
+    },
+    {
+      "case_id": "mos",
+      "project_kind": "real",
+      "repo_root": "datasets/MOS/MOS - Mitigating Optical-SAR Modality Gap for Cross-Modal Ship Re-Identification",
+      "supported_claims": [
+        {
+          "claim_id": "M1",
+          "text": "The normalize helper divides features by their L2 norm plus 1e-12.",
+          "direct_evidence_ids": ["ME1"],
+          "required_qualifiers": [],
+          "high_risk": true
+        },
+        {
+          "claim_id": "M2",
+          "text": "TripletLoss optionally normalizes features, mines hard examples, scales positive and negative distances, and applies a ranking loss.",
+          "direct_evidence_ids": ["ME2"],
+          "required_qualifiers": ["normalization is conditional on normalize_feature"],
+          "high_risk": false
+        }
+      ],
+      "evidence_spans": [
+        {"evidence_id": "ME1", "path": "loss/triplet_loss.py", "line_start": 5, "line_end": 13, "exact_excerpt_digest": "sha256:71b379f2d96f87a1fea6172a4a8dbbadac1634022dd8213ca90e47a6cdbdff1d"},
+        {"evidence_id": "ME2", "path": "loss/triplet_loss.py", "line_start": 121, "line_end": 135, "exact_excerpt_digest": "sha256:12f3d61ee1bba5f7e83c57886b8cb498c925e348341eb1866b881dc434874c97"}
+      ],
+      "mutations": [
+        {"mutation_id": "MM1", "category": "unsupported_paraphrase", "payload": "Claim hard mining closes the optical-SAR modality gap.", "candidate_text": "Hard mining closes the optical-SAR modality gap.", "expected_outcome": "reject"},
+        {"mutation_id": "MM2", "category": "numeric_injection", "payload": "Change epsilon 1e-12 to a claimed 12% gain.", "candidate_text": "The epsilon term produces a 12% gain.", "expected_outcome": "reject"},
+        {"mutation_id": "MM3", "category": "figure_edge_pseudoevidence", "payload": "Claim normalization causally produces modality invariance.", "candidate_text": "Normalization causally produces modality invariance.", "expected_outcome": "reject"}
+      ],
+      "intents": [],
+      "expected_run_outcome": "either_trustworthy",
+      "human_reviewed": true
+    }
+  ]
+}
