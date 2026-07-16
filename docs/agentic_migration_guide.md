@@ -105,3 +105,32 @@ code2paper-agentic-benchmark \
 
 No route becomes default merely because this command succeeds. The generated
 cutover decision is the authoritative rollout recommendation.
+
+Before completing those reviews, audit each fixed legacy output against the
+same curated V2 slice and generate the review queue:
+
+```bash
+code2paper-agentic-legacy-v2-audit \
+  --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --case fastgs --workspace-root . \
+  --legacy-out-root /path/to/fixed-fastgs-output \
+  --scratch-root /tmp/code2paper-p4-legacy-audit-scratch \
+  --out /tmp/code2paper-p4-legacy-audits/fastgs-training_mechanics.json
+
+code2paper-agentic-benchmark-review-queue \
+  --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
+  --run-index /tmp/deterministic-index.json \
+  --run-index /tmp/fixed-index.json \
+  --run-index /tmp/gemma-index.json \
+  --mutation-root toy_train=/tmp/adversarial-toy \
+  --mutation-root fastgs=/tmp/adversarial-fastgs \
+  --mutation-root spatial_ssrl=/tmp/adversarial-spatial \
+  --mutation-root mos=/tmp/adversarial-mos \
+  --legacy-audit-root /tmp/code2paper-p4-legacy-audits \
+  --out /tmp/code2paper-p4-human-review-queue.json
+```
+
+`legacy_false_success_candidate` is an audit prompt, not an automatic verdict.
+Only a named reviewer may confirm it or classify an agentic block as correct or
+false. Until all 25 review entries are complete, cutover remains `hold`.

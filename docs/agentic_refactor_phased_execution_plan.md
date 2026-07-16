@@ -4,7 +4,7 @@
 
 日期：2026-07-17
 
-状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；下一执行阶段为 P4 benchmark、cutover 与 legacy 降级
+状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 真实矩阵已完成，named human review、cutover 与 rollout 仍在进行
 
 执行负责人：Codex
 
@@ -1862,6 +1862,29 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 - shadow/canary 结果支持切换默认路线；
 - legacy fallback 明确标注 contract version；
 - 最终 Definition of Done 的 12 项全部满足。
+
+### 12.9 2026-07-17 实施状态
+
+P4 已从 clean tracked commit `29504b177ccceea74346641e1a111deb6ced7f3d`
+冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
+agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。三类 variant
+分别完成 5、5、15 次正常 runner 结束；Gemma semantic verifier 共 42 次真实调用、
+0 cache hit。完整 digest、延迟、blocked reason 和 adversarial 摘要记录在
+`tests/baselines/agentic/p4_live_matrix_status.json`。
+
+13 个 curated mutation 已全部执行并被对应 text/figure/post-render/freshness
+validator 检出。该 campaign 同时发现并修复了一个旧的 claim-extraction 绕过：
+不在 factual hint 白名单中的实质性科研陈述曾可能不进入 atomic claim gate。
+
+当前 20 个 agentic full-pipeline run 均为解释性 block，没有 success 绕过 final
+invariant；5 个 legacy run 均在 V1 下报告 fidelity success。Legacy V2 audit 将
+这 5 个结果全部标记为 `legacy_false_success_candidate`，原因是 curated V2 text
+gate 未通过且图缺少 V2 relation lineage/post-render audit；该标签仍要求 named
+human review，不能由自动 audit 自行定案。
+
+25-entry review queue 已生成，但 named human review 尚未完成。因此 P4 状态仍是
+`human_review_required`，cutover 必须 `hold`，`code2paper-run` 默认仍为 legacy。
+不得在 review、shadow、opt-in 和 canary 证据齐备前把默认切换为 agentic。
 
 ## 13. 代码落点总表
 

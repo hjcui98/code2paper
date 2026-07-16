@@ -66,6 +66,7 @@ class BenchmarkRunReviewV2(ReviewModel):
     section_claim_order: list[str] = Field(default_factory=list)
     figure_claim_ids: list[str] = Field(default_factory=list)
     usable_completion: bool = False
+    latency_seconds: float = 0.0
 
     @model_validator(mode="after")
     def _review_is_attributable(self) -> "BenchmarkRunReviewV2":
@@ -141,6 +142,10 @@ def _agentic_observation(
     completion_complete = bool(completion.get("complete"))
     asset_lineage = _completion_asset_lineage(completion)
     loops = summary.get("loop_counters", {})
+    semantic_trace, semantic_trace_digest = _artifact_json(
+        artifacts, "semantic_verifier_call_trace", required=False,
+    )
+    model_calls = semantic_trace.get("calls", [])
     provenance = {
         "run_summary": _digest_file(summary_path),
         "final_text_claims": claims_digest,
@@ -152,6 +157,7 @@ def _agentic_observation(
         "repo_snapshot": repo_snapshot_digest,
         "repo_snapshot_id": repo_snapshot.get("snapshot_id", ""),
         "protocol_spec_digest": review.protocol_spec_digest,
+        "semantic_verifier_call_trace": semantic_trace_digest,
         "reviewer": review.reviewer,
         "reviewed_at": review.reviewed_at,
         **trial_provenance,
@@ -179,6 +185,11 @@ def _agentic_observation(
         section_claim_order=review.section_claim_order,
         figure_claim_ids=review.figure_claim_ids,
         support_verdict_signature=_support_signature(observed_claims),
+        model_calls=len(model_calls),
+        latency_seconds=review.latency_seconds,
+        input_tokens=sum(item.get("token_usage", {}).get("prompt_tokens", 0) for item in model_calls),
+        output_tokens=sum(item.get("token_usage", {}).get("completion_tokens", 0) for item in model_calls),
+        cache_hits=sum(bool(item.get("cached")) for item in model_calls),
         retrieval_loops=int(evaluation.get("retrieval_loops", loops.get("retrieval", 0)) or 0),
         evidence_revision_loops=int(evaluation.get("evidence_revision_loops", loops.get("evidence_revision", 0)) or 0),
         authoring_revision_loops=int(evaluation.get("revision_loops", loops.get("authoring_revision", 0)) or 0),
@@ -222,6 +233,7 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
         section_claim_order=review.section_claim_order,
         figure_claim_ids=review.figure_claim_ids,
         support_verdict_signature=_support_signature(observed),
+        latency_seconds=review.latency_seconds,
         provenance={
             "run_summary": _digest_file(summary_path), "reviewer": review.reviewer,
             "reviewed_at": review.reviewed_at, "protocol_spec_digest": review.protocol_spec_digest,

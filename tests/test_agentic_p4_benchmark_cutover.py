@@ -22,6 +22,7 @@ from code2paper.agentic.benchmark_observation import (
 )
 from code2paper.agentic.benchmark_protocol import build_benchmark_protocol_v2
 from code2paper.agentic.adversarial_campaign import run_adversarial_campaign_v2
+from code2paper.agentic.legacy_v2_audit import audit_legacy_run_against_gold_v2
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -314,3 +315,26 @@ def test_curated_adversarial_campaign_executes_every_mutation(tmp_path: Path) ->
         total += len(paths)
 
     assert total == 13
+
+
+def test_legacy_v2_audit_marks_v1_fidelity_success_as_review_candidate(tmp_path: Path) -> None:
+    case = load_benchmark_dataset_v2(DATASET_PATH).cases[0]
+    legacy = tmp_path / "legacy"
+    method = legacy / "paper/method"
+    figure = legacy / "paper/figures/method_overview"
+    method.mkdir(parents=True)
+    figure.mkdir(parents=True)
+    (method / "code2paper_run_report.json").write_text('{"fidelity_passed":true}', encoding="utf-8")
+    (method / "method_draft.md").write_text(
+        "# Method\nThe module implements a complete production training system.\n", encoding="utf-8",
+    )
+    (figure / "method_overview.svg").write_text("<svg></svg>", encoding="utf-8")
+
+    report = audit_legacy_run_against_gold_v2(
+        case, workspace_root=ROOT, legacy_out_root=legacy, scratch_root=tmp_path / "scratch",
+    )
+
+    assert report.legacy_fidelity_passed
+    assert not report.text_v2_gate_passed
+    assert report.legacy_false_success_candidate
+    assert report.requires_named_human_review

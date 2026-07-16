@@ -1,0 +1,83 @@
+{
+  "schema_version": "2.0",
+  "phase": "P4",
+  "status": "human_review_required",
+  "workspace_commit": "29504b177ccceea74346641e1a111deb6ced7f3d",
+  "gold_digest": "sha256:c88d55e9ffdbd5f68772634ff672ffce8044446b9a855ba35676201d2f2913e9",
+  "protocol": {
+    "run_count": 25,
+    "digest": "sha256:49a3ced37a690329b382d6507135f2614b35515fd55a412b12cfe1ceac961561",
+    "clean_tracked_commit": true,
+    "gemma_cache_enabled": false,
+    "gemma_profile_digest": "sha256:a10c7f83c898605535a1df8f54fdd9aba29effb069831ed46fed71c4a434be5f"
+  },
+  "variants": {
+    "agentic_deterministic": {
+      "runs": 5,
+      "normal_finishes": 5,
+      "successes": 0,
+      "explanatory_blocks": 5,
+      "total_latency_seconds": 10.002,
+      "average_latency_seconds": 2.0,
+      "worst_latency_seconds": 3.12,
+      "index_digest": "sha256:eb3aa004a20d273514be61f685790fef5f5c4008f9637a018f6db653b3bf2b70"
+    },
+    "fixed_legacy": {
+      "runs": 5,
+      "normal_finishes": 5,
+      "legacy_fidelity_passes": 5,
+      "v2_usable_completions_before_review": 0,
+      "legacy_false_success_candidates": 5,
+      "total_latency_seconds": 628.298,
+      "average_latency_seconds": 125.66,
+      "worst_latency_seconds": 160.679,
+      "index_digest": "sha256:13259692eae7b3fb31f3d48a71d4b9f50b6fff16b1761c7590f791ba44bcf06a"
+    },
+    "agentic_gemma4_mtp": {
+      "runs": 15,
+      "normal_finishes": 15,
+      "successes": 0,
+      "explanatory_blocks": 15,
+      "semantic_verifier_calls": 42,
+      "cache_hits": 0,
+      "prompt_tokens": 202495,
+      "completion_tokens": 1442,
+      "total_latency_seconds": 2448.858,
+      "average_latency_seconds": 163.257,
+      "worst_latency_seconds": 281.785,
+      "index_digest": "sha256:15213cc0f7ce5cdb68d1cd12c8947a2b6847cb77cd194809bb975bffe20d6eed"
+    }
+  },
+  "blocked_reasons": {
+    "agentic_deterministic": {
+      "text_claim_authoring_revision_budget_exhausted": 3,
+      "authoring_plan_failed_evidence_gate": 1,
+      "text_claim_direct_evidence_missing_budget_exhausted": 1
+    },
+    "agentic_gemma4_mtp": {
+      "text_claim_authoring_revision_budget_exhausted": 10,
+      "validation_manifest_failed": 3,
+      "text_claim_direct_evidence_missing_budget_exhausted": 2
+    }
+  },
+  "adversarial_campaign": {
+    "trials": 13,
+    "detected": 13,
+    "case_digests": {
+      "toy_train": "sha256:b5fb4b433cae819cc198ba594ab57af75c47c7dde8884559f3749d2a436b445f",
+      "fastgs": "sha256:9a56360552362fd067de96ef9e63889a300cc908977bd56677cc41ad155e4bbe",
+      "spatial_ssrl": "sha256:50e611cabe747561c132fbaaa70d80f645acb61b59ab0ef9c8c47f0504947338",
+      "mos": "sha256:5c627564b25ca3c65a9a19568005ac99a98853fbe630ce02f90fd3722b0f26f2"
+    }
+  },
+  "review_queue": {
+    "entries": 25,
+    "completed_named_human_reviews": 0,
+    "digest": "sha256:b04cd1168bd645de2ad511140b538d9cb092030f468aafce5d22a6eb27dd1b15"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "named human blocked/false-block and legacy V2 audits are pending"
+  }
+}
