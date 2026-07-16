@@ -326,7 +326,7 @@ def _build_code_method_analysis_payload(
     raw_pack: RawEvidencePack | None,
 ) -> dict[str, Any]:
     path_to_ids = _build_path_to_evidence_ids(raw_pack)
-    all_evidence_ids: list[str] = list({eid for ids in path_to_ids.values() for eid in ids})
+    all_evidence_ids: list[str] = list(dict.fromkeys(eid for ids in path_to_ids.values() for eid in ids))
     fallback_evidence = all_evidence_ids[:1]
 
     snippet_by_id: dict[str, dict[str, Any]] = {
@@ -400,6 +400,11 @@ def _build_code_method_analysis_payload(
 
     candidate_mechanisms: list[dict[str, Any]] = []
     mech_index = 1
+    author_steps_by_name = {
+        " ".join(str(step.name or "").lower().replace("_", " ").split()): step
+        for step in author_markers.pipeline_steps
+        if str(step.name or "").strip()
+    }
     for step in code_facts.get("pipeline_steps", [])[:120]:
         if not isinstance(step, dict):
             continue
@@ -415,6 +420,19 @@ def _build_code_method_analysis_payload(
             source = snippet.get("source") if isinstance(snippet.get("source"), dict) else {}
             path = str(source.get("path") or "")
             support_ids.extend(_lookup_evidence_ids(path_to_ids, path))
+        # A directed rescan may replace snippet ids after code_facts were
+        # produced. Rebind author-named stages to their explicitly scoped files
+        # before any fallback, preventing unrelated evidence from being chosen.
+        normalized_name = " ".join(str(step.get("name") or "").lower().replace("_", " ").split())
+        author_step = author_steps_by_name.get(normalized_name)
+        if author_step is not None:
+            scoped_ids = [
+                evidence_id
+                for path in author_step.related_files
+                for evidence_id in _lookup_evidence_ids(path_to_ids, path)
+            ]
+            support_ids = [*scoped_ids, *support_ids]
+        support_ids = list(dict.fromkeys(support_ids))
         if not support_ids:
             support_ids = list(fallback_evidence)
         if not support_ids:

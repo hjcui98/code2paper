@@ -106,9 +106,29 @@ def build_authoring_projection(
         }
         projected.append(ProjectedClaim(**claim_payload, input_digest=_digest(claim_payload)))
 
+    stage_packets, dropped = _project_stage_packets(method_evidence.stage_packets, projected)
+    if stage_packets:
+        author_scoped_ids = {
+            str(claim_id)
+            for packet in stage_packets
+            for claim_id in packet.get("claim_ids", [])
+            if str(claim_id)
+        }
+        out_of_scope = [claim for claim in projected if claim.claim_id not in author_scoped_ids]
+        projected = [claim for claim in projected if claim.claim_id in author_scoped_ids]
+        forbidden.extend(
+            ForbiddenClaim(
+                claim_id=claim.claim_id,
+                reason="outside_author_scoped_method_stages",
+                source=claim.source,
+                repair_metadata={"recommended_action": "omit_from_current_author_intent"},
+            )
+            for claim in out_of_scope
+        )
+        stage_packets, stage_dropped = _project_stage_packets(method_evidence.stage_packets, projected)
+        dropped.extend(stage_dropped)
     allowed_ids = {claim.claim_id for claim in projected}
     allowed_evidence = {item for claim in projected for item in claim.direct_evidence_ids}
-    stage_packets, dropped = _project_stage_packets(method_evidence.stage_packets, projected)
     safe_equations = _filter_evidence_objects(method_evidence.equation_candidates, allowed_evidence)
     safe_numeric = _filter_evidence_objects(method_evidence.architecture_parameters, allowed_evidence)
     safe_aliases = _filter_evidence_objects(method_evidence.paper_module_aliases, allowed_evidence)
@@ -136,6 +156,7 @@ def build_authoring_projection(
         "writing_rules": [
             "The projection is the writer's only positive method-fact input.",
             "Use only projected_claims and their direct_evidence_ids.",
+            "When author-scoped stage packets exist, omit otherwise supported claims outside those stages.",
             "Partial claims must preserve every required qualifier.",
             "Forbidden claim records contain no reusable claim wording.",
         ],
