@@ -13,6 +13,7 @@ class CutoverModel(BaseModel):
 
 
 class TrustThresholdsV2(CutoverModel):
+    author_intent_adherence_min: float = 1.0
     semantic_precision_min: float = 1.0
     unsupported_leakage_max: float = 0.0
     paraphrased_leakage_max: float = 0.0
@@ -89,6 +90,7 @@ def decide_cutover(
         failures.append("no_agentic_runs")
     worst = _worst_metrics(agentic)
     checks = {
+        "author_intent_adherence": (">=", policy.author_intent_adherence_min),
         "atomic_claim_semantic_precision": (">=", policy.semantic_precision_min),
         "unsupported_leakage_rate": ("<=", policy.unsupported_leakage_max),
         "paraphrased_unsupported_leakage_rate": ("<=", policy.paraphrased_leakage_max),
@@ -128,14 +130,7 @@ def decide_cutover(
         agentic_completion = sum(item.observation.usable_completion for item in agentic) / len(agentic)
         if agentic_completion < legacy_completion:
             failures.append("agentic_usable_completion_below_legacy_requires_false_success_evidence")
-    paired = [case for case in dataset.cases if len(case.intents) >= 2]
-    for case in paired:
-        signatures = {
-            item.observation.intent_id: item.observation.support_verdict_signature
-            for item in agentic if item.observation.case_id == case.case_id and item.observation.variant == "agentic_gemma4_mtp"
-        }
-        if len(set(value for value in signatures.values() if value)) > 1:
-            failures.append(f"paired_intent_changed_support_verdict:{case.case_id}")
+    failures.extend(_paired_intent_cutover_failures(dataset, agentic))
     if rollout.team_false_block_threshold is None:
         failures.append("team_false_block_threshold_unset")
     elif worst.get("false_block_rate", 1.0) > rollout.team_false_block_threshold:
@@ -162,6 +157,35 @@ def decide_cutover(
         failures=list(dict.fromkeys(failures)),
         next_actions=actions,
     )
+
+
+def _paired_intent_cutover_failures(
+    dataset: BenchmarkDatasetV2,
+    agentic: list[EvaluatedBenchmarkRunV2],
+) -> list[str]:
+    failures: list[str] = []
+    for case in [item for item in dataset.cases if len(item.intents) >= 2]:
+        candidates = [
+            item.observation for item in agentic
+            if item.observation.case_id == case.case_id
+            and item.observation.variant == "agentic_gemma4_mtp"
+        ]
+        expected_intents = {item.intent_id for item in case.intents}
+        for repeat in (1, 2, 3):
+            paired = [item for item in candidates if item.repeat_index == repeat]
+            if {item.intent_id for item in paired} != expected_intents:
+                failures.append(f"paired_intent_missing:{case.case_id}:repeat_{repeat}")
+                continue
+            signatures = {item.support_verdict_signature for item in paired}
+            organizations = {
+                (tuple(item.section_claim_order), tuple(item.figure_claim_ids))
+                for item in paired
+            }
+            if len(signatures) != 1 or "" in signatures:
+                failures.append(f"paired_intent_support_changed:{case.case_id}:repeat_{repeat}")
+            if len(organizations) < 2:
+                failures.append(f"paired_intent_organization_unchanged:{case.case_id}:repeat_{repeat}")
+    return failures
 
 
 def _worst_metrics(runs: list[EvaluatedBenchmarkRunV2]) -> dict[str, float]:

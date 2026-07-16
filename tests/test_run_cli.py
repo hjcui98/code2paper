@@ -118,8 +118,71 @@ class RunCliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(record["delivery_route"], "legacy")
         self.assertEqual(record["shadow_route"], "agentic")
+        self.assertEqual(record["status"], "completed")
         self.assertFalse(record["claim_of_completion_allowed"])
         self.assertEqual(record["legacy_contract_version"], "legacy-v1-weaker-trust")
+        self.assertFalse(record["comparison_ready_for_named_review"])
+        self.assertTrue(record["artifacts"]["legacy_run_report"]["hash"])
+        self.assertTrue(record["artifacts"]["legacy_run_manifest"]["hash"])
+        self.assertTrue(record["artifacts"]["legacy_trust_contract"]["hash"])
+
+    def test_default_ready_cutover_decision_activates_implicit_agentic_default(self) -> None:
+        with TemporaryDirectory() as tmpdir, patch("code2paper.cli.agentic_run.main", return_value=0) as agentic:
+            root = Path(tmpdir)
+            decision = root / "cutover.json"
+            decision.write_text(json.dumps({
+                "schema_version": "2.0",
+                "status": "default_ready",
+                "default_mode": "agentic",
+                "hard_gates_passed": True,
+                "worst_case_metrics": {},
+                "failures": [],
+                "next_actions": [],
+            }), encoding="utf-8")
+            out = root / "run"
+
+            code = run_main([
+                str(root), "--author", str(AUTHOR_MARKERS), "--out-root", str(out),
+                "--cutover-decision", str(decision),
+            ])
+            activation = json.loads((out / "cutover_activation.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        agentic.assert_called_once()
+        self.assertTrue(activation["authorized"])
+        self.assertEqual(activation["resolved_mode"], "agentic")
+        self.assertTrue(activation["decision_digest"].startswith("sha256:"))
+
+    def test_non_ready_cutover_decision_fails_closed_to_legacy(self) -> None:
+        with TemporaryDirectory() as tmpdir, patch("code2paper.cli.agentic_run.main") as agentic:
+            root = Path(tmpdir)
+            project = root / "repo"
+            project.mkdir()
+            (project / "train.py").write_text("def main():\n    pass\n", encoding="utf-8")
+            decision = root / "cutover.json"
+            decision.write_text(json.dumps({
+                "schema_version": "2.0",
+                "status": "hold",
+                "default_mode": "legacy",
+                "hard_gates_passed": False,
+                "worst_case_metrics": {},
+                "failures": ["named_review_missing"],
+                "next_actions": ["keep_legacy_default"],
+            }), encoding="utf-8")
+            out = root / "run"
+
+            code = run_main([
+                str(project), "--author", str(AUTHOR_MARKERS), "--out-root", str(out),
+                "--cutover-decision", str(decision), "--inspect-only",
+            ])
+            activation = json.loads((out / "cutover_activation.json").read_text(encoding="utf-8"))
+            legacy_contract_exists = (out / "paper/method/legacy_trust_contract.json").exists()
+
+        self.assertEqual(code, 0)
+        agentic.assert_not_called()
+        self.assertFalse(activation["authorized"])
+        self.assertEqual(activation["resolved_mode"], "legacy")
+        self.assertTrue(legacy_contract_exists)
 
 
 if __name__ == "__main__":

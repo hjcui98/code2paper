@@ -168,6 +168,42 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
     assert default.status == "default_ready" and default.default_mode == "agentic"
 
 
+def test_cutover_requires_author_intent_adherence_and_paired_organization_change() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    runs = _complete_runs(dataset)
+    fastgs_training = next(
+        item for item in runs
+        if item.observation.case_id == "fastgs"
+        and item.observation.variant == "agentic_gemma4_mtp"
+        and item.observation.intent_id == "training_mechanics"
+        and item.observation.repeat_index == 1
+    )
+    broken_observation = fastgs_training.observation.model_copy(update={
+        "expected_retrieval_targets_observed": [],
+        "section_claim_order": ["F2", "F1"],
+        "figure_claim_ids": ["F2"],
+    })
+    replacement = evaluate_observation(
+        next(item for item in dataset.cases if item.case_id == "fastgs"),
+        broken_observation,
+    )
+    runs[runs.index(fastgs_training)] = replacement
+    rollout = RolloutEvidenceV2(
+        protocol_validated=True,
+        team_false_block_threshold=0.0,
+        legacy_contract_marked=True,
+        migration_guide_complete=True,
+    )
+
+    decision = decide_cutover(dataset, runs, rollout)
+
+    failures = set(decision.failures)
+    assert "hard_threshold_failed:author_intent_adherence" in failures
+    assert "paired_intent_organization_unchanged:fastgs:repeat_1" in failures
+    assert decision.status == "hold"
+    assert decision.default_mode == "legacy"
+
+
 def test_v2_report_uses_worst_case_and_checks_paired_intent_sensitivity() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     observations = [item.observation for item in _complete_runs(dataset)]

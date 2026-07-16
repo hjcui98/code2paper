@@ -162,6 +162,9 @@ fail-closed default. Use `--mode agentic` for an Evidence V2 opt-in or
 separate output root. Legacy runs emit `legacy_trust_contract.json` and must not
 be represented as V2 final-invariant passed. See the
 [migration guide](docs/agentic_migration_guide.md) for rollout and rollback.
+Once the reviewed cutover policy reaches `default_ready`, pass its JSON through
+`--cutover-decision`; the CLI records its digest in `cutover_activation.json`
+and otherwise fails closed to legacy.
 Formal P4 comparison uses a frozen 25-run protocol, cache-disabled Gemma
 repeats, executable adversarial campaigns, and digest-pinned named review files;
 raw self-reported observation JSON is not sufficient to authorize cutover.

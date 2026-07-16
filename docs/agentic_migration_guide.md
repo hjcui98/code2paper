@@ -38,6 +38,21 @@ intent checks, human false-block review, or a hard trust metric are missing.
 Default activation additionally requires reviewed shadow cases, opt-in cases,
 incident-free canaries, this migration guide, and the legacy contract marker.
 
+After those gates produce a `default_ready` decision, activate the audited
+implicit default by passing the exact decision file:
+
+```bash
+code2paper-run REPO \
+  --author author_markers.yaml \
+  --out-root /tmp/code2paper-default \
+  --cutover-decision /path/to/cutover_decision.json
+```
+
+The CLI writes `cutover_activation.json` with the decision digest and resolved
+route. Missing, invalid, `hold`, `shadow_ready`, `opt_in_ready`, or
+`canary_ready` decisions all fail closed to legacy. An explicit `--mode` remains
+an operator override for legacy rollback, agentic opt-in, or shadow execution.
+
 ## Compatibility and rollback
 
 Agentic and legacy output roots must remain separate. A rollback changes routing
@@ -62,7 +77,6 @@ bound to the same repository snapshot:
 ```bash
 code2paper-agentic-benchmark-protocol \
   --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
-  --protocol /tmp/code2paper-p4-protocol.json \
   --workspace-root . \
   --code-root /tmp/code2paper-p4-clean-worktree \
   --out-root /tmp/code2paper-p4-matrix \

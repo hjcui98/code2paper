@@ -24,7 +24,7 @@ from code2paper.schemas import (
     RawEvidencePack,
 )
 from code2paper.validators.fidelity_validator import validate_method_fidelity
-from code2paper.agentic.cutover import LegacyTrustContractV1
+from code2paper.agentic.cutover import CutoverDecisionV2, LegacyTrustContractV1
 from code2paper.agentic.tool_runtime import atomic_write_json
 
 
@@ -38,8 +38,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project-id")
     parser.add_argument("--out-root", required=True)
     parser.add_argument(
-        "--mode", choices=("legacy", "agentic", "shadow"), default="legacy",
-        help="legacy delivers the fixed pipeline; agentic opts into V2 gates; shadow keeps legacy delivery and audits agentic separately.",
+        "--mode", choices=("legacy", "agentic", "shadow"), default=None,
+        help="Explicit route override. Without this flag, legacy remains the default unless an authorized --cutover-decision activates agentic.",
+    )
+    parser.add_argument(
+        "--cutover-decision", default="",
+        help="CutoverDecisionV2 JSON. Only a clean default_ready decision may change the implicit default to agentic.",
     )
     parser.add_argument("--run-id", default="", help="Stable agentic run identity.")
     parser.add_argument("--max-retrieval-rounds", type=int, default=0)
@@ -105,6 +109,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Print detailed per-phase artifact paths and debug summaries.",
     )
     args = parser.parse_args(argv)
+    args.mode, activation = _resolve_mode(args.mode, args.cutover_decision)
+    if activation:
+        atomic_write_json(Path(args.out_root) / "cutover_activation.json", activation)
     if args.mode == "agentic":
         return _run_agentic_mode(args, out_root=Path(args.out_root))
     if args.mode == "shadow":
@@ -235,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
             verbose=verbose_console,
         )
         print(f"[code2paper-run] run_manifest={paths.run_manifest}")
-        return 0
+        return _finish_shadow_record(args, 0)
 
     print("[code2paper-run] Phase 2 story-first code analyzer")
     alignment, _phase2_paths = run_stage2_code_analyze(
@@ -466,12 +473,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[code2paper-run] run_manifest={paths.run_manifest}")
     if markdown is None:
         print("[code2paper-run] Phase 4 authoring blocked. Inspect phase4_blocked_report.json.")
-        return 0
+        return _finish_shadow_record(args, 0)
     if not fidelity_passed:
         print("[code2paper-run] Fidelity validation failed. Inspect method_fidelity_report.json.")
-        return 0 if args.allow_fidelity_fail else 1
+        return _finish_shadow_record(args, 0 if args.allow_fidelity_fail else 1)
     print("[code2paper-run] Fidelity validation passed.")
-    return 0
+    return _finish_shadow_record(args, 0)
 
 
 def _run_agentic_mode(args, *, out_root: Path) -> int:
@@ -506,15 +513,86 @@ def _run_shadow_agentic(args) -> None:
     record = {
         "schema_version": "2.0",
         "mode": "shadow",
+        "status": "legacy_pending",
         "delivery_route": "legacy",
         "shadow_route": "agentic",
         "shadow_exit_code": code,
         "shadow_out_root": str(shadow_out),
         "claim_of_completion_allowed": False,
         "legacy_contract_version": LegacyTrustContractV1().contract_version,
+        "artifacts": {},
+        "comparison_ready_for_named_review": False,
     }
     atomic_write_json(legacy_out / "shadow_comparison.json", record)
     print(f"[code2paper-run] shadow_agentic_exit_code={code} shadow_record={legacy_out / 'shadow_comparison.json'}")
+
+
+def _finish_shadow_record(args, legacy_exit_code: int) -> int:
+    if args.mode != "shadow":
+        return legacy_exit_code
+    out_root = Path(args.out_root)
+    record_path = out_root / "shadow_comparison.json"
+    record = _read_json_if_exists(record_path)
+    agentic_root = out_root / "shadow_agentic"
+    candidates = {
+        "legacy_run_report": out_root / "paper/method/code2paper_run_report.json",
+        "legacy_run_manifest": out_root / "paper/method/code2paper_run_manifest.json",
+        "legacy_trust_contract": out_root / "paper/method/legacy_trust_contract.json",
+        "agentic_run_summary": agentic_root / "artifacts/10_run/agentic_run_summary.json",
+        "agentic_completion_report": agentic_root / "artifacts/10_run/agentic_run_completion_report.json",
+        "agentic_package_manifest": agentic_root / "final/package_manifest.json",
+    }
+    artifacts = {
+        key: {"path": str(path), "hash": hash_file(path)}
+        for key, path in candidates.items()
+        if path.is_file()
+    }
+    required = set(candidates)
+    record.update({
+        "status": "completed",
+        "legacy_exit_code": legacy_exit_code,
+        "artifacts": artifacts,
+        "comparison_ready_for_named_review": (
+            legacy_exit_code == 0
+            and int(record.get("shadow_exit_code", 1)) == 0
+            and required.issubset(artifacts)
+        ),
+    })
+    atomic_write_json(record_path, record)
+    return legacy_exit_code
+
+
+def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, dict[str, object]]:
+    if explicit_mode:
+        return explicit_mode, {}
+    if not decision_path:
+        return "legacy", {}
+    path = Path(decision_path).expanduser().resolve()
+    activation: dict[str, object] = {
+        "schema_version": "2.0",
+        "decision_path": str(path),
+        "decision_digest": hash_file(path) if path.is_file() else "",
+        "authorized": False,
+        "resolved_mode": "legacy",
+        "reason": "cutover_decision_missing_or_invalid",
+    }
+    try:
+        decision = CutoverDecisionV2.model_validate_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "legacy", activation
+    authorized = (
+        decision.status == "default_ready"
+        and decision.default_mode == "agentic"
+        and decision.hard_gates_passed
+        and not decision.failures
+    )
+    activation.update({
+        "decision_status": decision.status,
+        "authorized": authorized,
+        "resolved_mode": "agentic" if authorized else "legacy",
+        "reason": "default_ready_cutover_authorized" if authorized else "cutover_decision_not_default_ready",
+    })
+    return ("agentic" if authorized else "legacy"), activation
 
 
 class PipelinePaths:
