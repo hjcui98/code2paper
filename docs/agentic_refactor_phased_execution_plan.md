@@ -1,14 +1,14 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.2
+版本：1.3
 
 日期：2026-07-17
 
-状态：Git 文档基线已建立；Gemma 4 MTP live infrastructure preflight 已通过；M0 代码任务待执行
+状态：M0、P0、P1 已完成并通过阶段门禁；下一执行阶段为 P2 方法图证据与真实渲染闭环
 
 执行负责人：Codex
 
-当前规划分支：`codex/agentic-refactor-plan`
+当前实施分支：`codex/agentic-p1-evidence-v2`（P1 收口；随后切换 `codex/agentic-p2-figure-trust`）
 
 上位设计：[agentic_refactor_final_design.md](./agentic_refactor_final_design.md)
 

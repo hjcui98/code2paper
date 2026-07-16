@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "phase": "P1",
+  "branch": "codex/agentic-p1-evidence-v2",
+  "commit": "b6ece8d9e3043985c935f402ba19d46072ef3bc0",
+  "parent_phase_tag": "agentic-p0-text-trust-v1",
+  "contract_version": "agentic-evidence-v2",
+  "tests": {
+    "full_pytest": {
+      "command": "pytest -q",
+      "passed": 371,
+      "skipped_live_opt_in": 2,
+      "subtests_passed": 6,
+      "status": "passed"
+    },
+    "p1_targeted_tests": 12,
+    "live_gemma4_preflight": "2 passed",
+    "large_repository_snapshot": {
+      "included_files": 5051,
+      "elapsed_seconds": 0.653,
+      "git_metadata_files": 0,
+      "pyc_files": 0,
+      "output_paths": 0
+    }
+  },
+  "gates": {
+    "repo_snapshot_identity_and_policy": "passed",
+    "exact_excerpt_and_file_digest_round_trip": "passed",
+    "atomic_claim_v2_explicit_reverification": "passed",
+    "claim_verification_snapshot_binding": "passed",
+    "artifact_dependency_freshness": "passed",
+    "langchain_freshness_hard_gate_tool": "passed",
+    "source_drift_blocks_before_model_or_cache": "passed",
+    "immutable_parent_child_repair_lineage": "passed",
+    "final_text_four_way_snapshot_binding": "passed",
+    "formal_v1_only_gate_bypass": "rejected"
+  },
+  "live_result": {
+    "run_id": "toy_p1_gemma4_r2",
+    "model": "gemma4-31b-nvfp4",
+    "text_validation": "passed",
+    "semantic_verifier_calls": 4,
+    "supported_atomic_claims": 4,
+    "final_trace_gate": "passed",
+    "freshness": "passed",
+    "source_drift": false,
+    "identity_binding": "repo_snapshot_id + project_tree_hash + evidence_snapshot_id + evidence_snapshot_digest all equal across projection, validator, and final trace",
+    "terminal_classification": "P1 trust gates passed; compact toy remains blocked later by legacy publication QA"
+  },
+  "drift_and_resume_result": {
+    "mutated_referenced_excerpt": "train.py:main",
+    "old_artifacts_marked_stale": 8,
+    "recommended_route": "intake",
+    "same_run_continue": "blocked:source_drift",
+    "model_or_cache_calls_before_block": 0,
+    "restored_tree_matches": true,
+    "new_snapshot_version": 2,
+    "parent_lineage_verified": true,
+    "new_snapshot_identity_verified": true,
+    "round_trip_failures": 0
+  },
+  "compatibility_boundary": "Legacy V1 artifacts remain side-by-side for composite legacy stages, but any formal run carrying repo_snapshot requires EvidenceSnapshotV2, AtomicClaimSetV2, and a passed freshness report at graph, invariant, readiness, ledger, and completion gates.",
+  "known_limits": [
+    "Static exact excerpts and semantic validators do not formally prove runtime behavior or performance claims.",
+    "Legacy publication-quality QA can block the compact toy after all P1 trust gates pass.",
+    "Figure relation evidence, deterministic SVG, and post-render audit remain P2 work."
+  ],
+  "artifact_indexes": [
+    "tests/baselines/agentic/p1_live_run_index.json"
+  ],
+  "phase_gate": "passed"
+}

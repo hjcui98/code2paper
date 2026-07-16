@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "phase": "P1",
+  "model_profile": "gemma4_mtp_vllm",
+  "model": "gemma4-31b-nvfp4",
+  "runs": [
+    {
+      "run_id": "toy_p1_deterministic_r2",
+      "artifact_root": "/tmp/code2paper-p1-toy-deterministic-r2",
+      "text_gate": "passed",
+      "freshness_status": "passed",
+      "source_drift": false,
+      "terminal_status": "blocked_after_p1_gates",
+      "terminal_reason": "validation_manifest_failed",
+      "freshness_sha256": "9f44572561fc68216d55ff71a50410c3038cddcf5b0f6d73f61c2f5c8f1db849",
+      "text_validation_sha256": "6494fd00eeb9ecc206649951c863ed6537567a10119635f6c16a4685bf3e9a75",
+      "final_trace_sha256": "ffb6a0ff95f38c0bf72e2f41a25e092d0c8573422d85ad4daf6fda75c4c33487"
+    },
+    {
+      "run_id": "toy_p1_gemma4_r2",
+      "artifact_root": "/tmp/code2paper-p1-toy-gemma4-r2",
+      "text_gate": "passed",
+      "semantic_verifier_calls": 4,
+      "supported_atomic_claims": 4,
+      "final_trace_gate": "passed",
+      "freshness_status": "passed",
+      "source_drift": false,
+      "claim_verification_snapshot_bound": true,
+      "terminal_status": "blocked_after_p1_gates",
+      "terminal_reason": "validation_manifest_failed",
+      "summary_sha256": "26dddcd79dd204b2ad240999e5c31c2f43b0c18024b243141d40d09becf388fe",
+      "semantic_call_trace_sha256": "8588f2b797fddce2461c0fee2fad0535a1659e0eff75ae90d3db0b0c9987a875"
+    },
+    {
+      "run_id": "toy_p1_gemma4_r2_source_drift",
+      "artifact_root": "/tmp/code2paper-p1-toy-gemma4-r2",
+      "freshness_status": "failed",
+      "source_drift": true,
+      "recommended_route": "intake",
+      "stale_artifact_count": 8,
+      "continue_status": "blocked",
+      "continue_reason": "source_drift",
+      "model_or_cache_calls_before_block": 0,
+      "drift_report_sha256": "7b525d391d15e02f368fe8d6bd9ad30bfd4ba7b1dc45129c6c6d6e14e40695be"
+    },
+    {
+      "run_id": "toy_p1_gemma4_r2_restored_lineage",
+      "artifact_root": "/tmp/code2paper-p1-toy-gemma4-r2",
+      "restored_tree_matches": true,
+      "snapshot_version": 2,
+      "parent_matches": true,
+      "snapshot_identity_changed": true,
+      "content_digest_same": true,
+      "round_trip_failures": 0,
+      "child_snapshot_id": "evidence:608f921860a31043cbb22ebaacc67557191884e6cda3b47c2d19d52ef2af852b",
+      "child_snapshot_sha256": "a8b993aa32b36d4259ea75759c5f4142f37b981b98609741bd4055ec9fceb341"
+    }
+  ]
+}
