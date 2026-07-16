@@ -24,10 +24,16 @@ code2paper-ingest = "code2paper.cli:main"
 code2paper-method-draft = "code2paper.method_draft_cli:main"
 code2paper-method-evidence = "code2paper.method_evidence_cli:main"
 code2paper-run = "code2paper.run_cli:main"
+code2paper-agentic-run = "code2paper.cli.agentic_run:main"
+code2paper-agentic-benchmark = "code2paper.cli.agentic_benchmark:main"
 
 [project.optional-dependencies]
 figure = [
   "CairoSVG>=2.7",
+]
+agentic = [
+  "langgraph>=1.2.8,<1.3",
+  "langchain-core>=1.4.9,<1.5",
 ]
 dev = [
   "pytest",
@@ -39,3 +45,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+  "live_llm: opt-in tests that call a configured live LLM endpoint",
+]

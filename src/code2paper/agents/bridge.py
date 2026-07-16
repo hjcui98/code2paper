@@ -251,17 +251,26 @@ def _build_raw_pack_from_snippets(
         except (TypeError, ValueError):
             parsed_confidence = 0.85
         parsed_confidence = max(0.0, min(1.0, parsed_confidence))
+        source_type = _infer_source_type(rel_path)
+        role = str(snippet.get("role") or "")
+        tags = (
+            ["agentic_rescan", "symbol_index", f"snippet_id:{snippet_id}"]
+            if role == "agentic_rescan_symbol_index"
+            else ["postergen_bridge", "snippet", f"snippet_id:{snippet_id}"]
+        )
         item = EvidenceItem(
             evidence_id=evidence_id,
-            source_type=_infer_source_type(rel_path),
+            source_type=source_type,
             path=rel_path,
             symbol=symbol,
             line_start=start_line,
             line_end=end_line,
             content_summary=_snippet_summary(snippet, rel_path, snippet_id),
-            tags=["postergen_bridge", "snippet", f"snippet_id:{snippet_id}"],
+            tags=tags,
             confidence=parsed_confidence,
             excerpt_hash=_snippet_hash(snippet),
+            config_key=symbol if getattr(source_type, "value", str(source_type)) == "config" else None,
+            shell_command_segment=symbol if getattr(source_type, "value", str(source_type)) == "bash" else None,
         )
         evidence_items.append(item)
         snippet_to_evidence[snippet_id] = evidence_id

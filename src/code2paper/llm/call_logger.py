@@ -17,6 +17,8 @@ def build_call_log(
     request: LLMRequest,
     response: LLMResponse,
     schema_validation_passed: bool = False,
+    parse_error: str = "",
+    repair_attempts: int = 0,
 ) -> LLMCallLog:
     return LLMCallLog(
         call_id=call_id,
@@ -32,6 +34,11 @@ def build_call_log(
         schema_validation_passed=schema_validation_passed,
         blocked_reason=response.blocked_reason,
         cached=response.cached,
+        response_mode=response.response_mode,
+        finish_reason=response.finish_reason,
+        token_usage=response.token_usage or {},
+        parse_error=parse_error,
+        repair_attempts=repair_attempts,
         created_at=datetime.now(timezone.utc).isoformat(),
     )
 

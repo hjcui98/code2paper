@@ -116,6 +116,65 @@ def extract_snippets(
     return snippets
 
 
+def extract_symbol_snippets(
+    paths: List[Dict[str, Any]],
+    symbol_targets: List[Dict[str, Any]],
+    budgets: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Extract exact code spans for requested file/symbol pairs."""
+    max_lines = int((budgets or {}).get("max_single_snippet_lines", 300))
+    snippets: List[Dict[str, Any]] = []
+    for file_info in paths:
+        path = str(file_info.get("path") or "")
+        lines = read_file_lines(path) if path else []
+        if not lines:
+            continue
+        normalized = str(Path(path)).replace("\\", "/")
+        try:
+            tree = ast.parse("\n".join(lines))
+        except SyntaxError:
+            tree = None
+        for target in symbol_targets:
+            hint = str(target.get("path") or "").replace("\\", "/")
+            symbol = str(target.get("symbol") or "")
+            if not hint or not symbol or not (normalized.endswith(hint) or hint.endswith(normalized)):
+                continue
+            wanted = symbol.split(".")[-1]
+            span = None
+            if tree is not None:
+                for node in ast.walk(tree):
+                    if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and node.name == wanted:
+                        span = (node.lineno, getattr(node, "end_lineno", node.lineno))
+                        break
+                    if isinstance(node, ast.ClassDef) and symbol.startswith(node.name + "."):
+                        for child in node.body:
+                            if isinstance(child, ast.FunctionDef) and child.name == wanted:
+                                span = (child.lineno, getattr(child, "end_lineno", child.lineno))
+                                break
+            if span is None:
+                continue
+            start, end = span
+            end = min(end, start + max_lines - 1)
+            snippets.append(
+                {
+                    "snippet_id": f"sym{len(snippets) + 1}",
+                    "role": str(target.get("role") or "author_symbol"),
+                    "source": {
+                        "path": path,
+                        "start_line": start,
+                        "end_line": end,
+                        "sha1": file_info.get("sha1", ""),
+                        "symbol": symbol,
+                    },
+                    "text": "\n".join(lines[start - 1 : end]),
+                    "signals": ["author_symbol_target", symbol],
+                    "relevance": {"paper_section_ids": [], "score": 1.0, "reason": f"Exact symbol {symbol}"},
+                    "quality": {"parsable": True, "length_lines": end - start + 1, "has_external_deps": False},
+                }
+            )
+    return snippets
+
+
 def _map_to_base_role(role: str, dynamic_roles: Optional[Set[str]]) -> str:
     """将动态角色映射到基础角色"""
     if not dynamic_roles or role in BASE_ROLES:

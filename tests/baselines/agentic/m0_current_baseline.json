@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "captured_on": "2026-07-17",
+  "git": {
+    "commit": "b22d2f4c8dc54854f5dfc4122cb1cf865f66c9e2",
+    "branch": "codex/agentic-refactor-plan",
+    "plan_tag": "agentic-plan-v1.2",
+    "dirty": true,
+    "note": "Historical user changes and untracked product sources were preserved."
+  },
+  "runtime": {
+    "python": "3.13.9",
+    "langgraph": "1.2.8",
+    "langchain_core": "1.4.9"
+  },
+  "tests_before_m0": {
+    "collection": "failed",
+    "blocking_error": "DEFAULT_FIGURE_IMAGE_MODEL import missing"
+  },
+  "tests_after_m0": {
+    "collection_count": 346,
+    "result": "344 passed, 2 skipped, 6 subtests passed",
+    "warnings": 0,
+    "skipped": "2 opt-in live_llm tests"
+  },
+  "design_document_digests": {
+    "agentic_refactor_final_design.md": "sha256:5bd450e951cd0e49193ea3446e71d844ab269d3b7d991f4253c497539c8cd39e",
+    "agentic_refactor_phased_execution_plan.md": "sha256:908973dd076139c35445fb4c78db382ede80b814083dc0f9f27b5373aabf6e4b"
+  }
+}

@@ -7,7 +7,8 @@ from code2paper.agents.template import Template
 
 from code2paper.agents.state.poster_state import PosterState
 from code2paper.agents.utils.code_scan import scan_repo, select_candidate_files
-from code2paper.agents.utils.snippet_extract import apply_role_overrides, build_method_keyword_bank, extract_snippets
+from code2paper.agents.utils.snippet_extract import apply_role_overrides, build_method_keyword_bank, extract_snippets, extract_symbol_snippets
+from code2paper.agents.utils.retrieval_strategy import derive_orchestrator_symbol_targets
 from code2paper.agents.utils.method_code_alignment import (
     align_method_to_code,
     extract_dynamic_roles,
@@ -23,6 +24,7 @@ from code2paper.agents.logging_utils import log_agent_error, log_agent_info, log
 class CodeIntakeAgent:
     def __init__(self):
         self.name = "code_intake"
+        self.llm_retrieval_plan_prompt = load_prompt("config/prompts/code_intake_retrieval_plan.txt")
         self.llm_review_prompt = load_prompt("config/prompts/code_intake_llm_review.txt")
         self.llm_review_enhanced_prompt = load_prompt("config/prompts/code_intake_llm_review_enhanced.txt")
 
@@ -107,10 +109,36 @@ class CodeIntakeAgent:
             dynamic_roles = extract_dynamic_roles(method_summary)
             keyword_bank, role_keywords_map = build_method_keyword_bank_enhanced(structured_sections, method_summary)
 
-            candidate_files = select_candidate_files(file_index, keyword_bank, top_k=120)
+            retrieval_hints = method_summary.get("retrieval_hints", {}) if isinstance(method_summary, dict) else {}
+            priority_paths = [str(x) for x in retrieval_hints.get("priority_paths", []) if str(x).strip()] if isinstance(retrieval_hints, dict) else []
+            symbol_targets = list(retrieval_hints.get("symbol_targets", [])) if isinstance(retrieval_hints, dict) and isinstance(retrieval_hints.get("symbol_targets"), list) else []
+            orchestrator_targets = derive_orchestrator_symbol_targets(file_index, priority_paths)
+            symbol_targets.extend(orchestrator_targets)
 
             config = state.get("config", {}) or {}
             code_intake_config = config.get("code_intake", {}) if isinstance(config, dict) else {}
+            enable_plan = state.get("enable_code_intake_llm_retrieval_planning", state.get("enable_code_intake_llm_review", True))
+            llm_plan = None
+            plan_in = plan_out = 0
+            if enable_plan:
+                llm_plan, plan_in, plan_out = self._llm_retrieval_plan(
+                    code_sources=code_sources,
+                    method_summary=method_summary,
+                    structured_sections=structured_sections,
+                    keyword_bank=keyword_bank,
+                    state=state,
+                )
+                if llm_plan and llm_plan.get("status") != "blocked":
+                    priority_paths.extend(str(x) for x in llm_plan.get("priority_files", []) if str(x).strip())
+                    symbol_targets.extend(item for item in llm_plan.get("symbol_targets", []) if isinstance(item, dict))
+                    keyword_bank.extend(str(x) for x in llm_plan.get("search_keywords", []) if str(x).strip())
+
+            candidate_files = select_candidate_files(file_index, keyword_bank, top_k=120)
+            priority_candidates = [
+                item for item in file_index
+                if any(str(item.get("path") or "").replace("\\", "/").endswith(path.replace("\\", "/")) for path in priority_paths)
+            ]
+            candidate_files = _dedupe_candidate_files(priority_candidates + candidate_files)
             snippet_budget = code_intake_config.get("snippet_budget", {}) if isinstance(code_intake_config, dict) else {}
             llm_review_config = code_intake_config.get("llm_review", {}) if isinstance(code_intake_config, dict) else {}
             alignment_config = code_intake_config.get("method_alignment", {}) if isinstance(code_intake_config, dict) else {}
@@ -130,6 +158,12 @@ class CodeIntakeAgent:
                 dynamic_roles=dynamic_roles,
                 role_keywords_map=role_keywords_map,
             )
+            symbol_snippets = extract_symbol_snippets(
+                file_index,
+                symbol_targets,
+                budgets={"max_single_snippet_lines": max_single_lines},
+            )
+            snippets = _merge_snippets(symbol_snippets, snippets)
             core_snippets = build_core_snippets(snippets, dynamic_roles)
 
             budgets_used = {
@@ -206,6 +240,20 @@ class CodeIntakeAgent:
                 "iterations": iteration_count,
                 "dynamic_roles": list(dynamic_roles),
             }
+            report["author_guided_retrieval"] = {
+                "priority_paths": list(dict.fromkeys(priority_paths)),
+                "symbol_targets_requested": len(symbol_targets),
+                "symbol_snippets_found": len(symbol_snippets),
+                "orchestrator_symbol_targets_added": len(orchestrator_targets),
+            }
+            report["llm_retrieval_planning"] = {
+                "enabled": bool(enable_plan),
+                "llm_used": bool(llm_plan and llm_plan.get("status") != "blocked"),
+                "status": str((llm_plan or {}).get("status") or ("disabled" if not enable_plan else "blocked")),
+                "input_tokens": plan_in,
+                "output_tokens": plan_out,
+                "symbol_targets_added": len((llm_plan or {}).get("symbol_targets", [])),
+            }
 
             review_overrides = {}
             llm_review = None
@@ -247,6 +295,41 @@ class CodeIntakeAgent:
             log_agent_error(self.name, f"failed: {e}")
             state["errors"].append(f"{self.name}: {e}")
             return state
+
+    def _llm_retrieval_plan(
+        self,
+        *,
+        code_sources: Dict[str, Any],
+        method_summary: Dict[str, Any],
+        structured_sections: Dict[str, Any],
+        keyword_bank: List[str],
+        state: PosterState,
+    ) -> Tuple[Optional[Dict[str, Any]], int, int]:
+        if not self.llm_retrieval_plan_prompt:
+            return None, 0, 0
+        agent = LangGraphAgent("evidence retrieval planner", state["text_model"], state, "code_intake_retrieval")
+        prompt = Template(self.llm_retrieval_plan_prompt).render(
+            retrieval_goal="Find direct implementation evidence only.",
+            method_summary=json.dumps(method_summary, ensure_ascii=False)[:12000],
+            structured_sections=json.dumps(structured_sections, ensure_ascii=False)[:8000],
+            repo_structure=json.dumps(code_sources.get("repo_structure_hints") or {}, ensure_ascii=False)[:6000],
+            file_preview=json.dumps(code_sources.get("project_files", [])[:220], ensure_ascii=False)[:14000],
+            existing_keyword_bank=json.dumps(keyword_bank[:120], ensure_ascii=False),
+        )
+        for _attempt in range(3):
+            try:
+                agent.reset()
+                response = agent.step(prompt)
+                result = extract_json(response.content)
+                if isinstance(result, dict):
+                    result.setdefault("status", "ok")
+                    result.setdefault("priority_files", [])
+                    result.setdefault("symbol_targets", [])
+                    return result, response.input_tokens, response.output_tokens
+            except Exception as exc:
+                last_error = exc
+        log_agent_warning(self.name, f"llm_retrieval_plan failed: {last_error}")
+        return {"status": "blocked", "blocked_reason": str(last_error)}, 0, 0
 
     def _llm_review(
         self, code_sources: Dict[str, Any], core_snippets: Dict[str, Any], keyword_bank: List[str], state: PosterState
@@ -352,16 +435,18 @@ class CodeIntakeAgent:
             current_alignment=json.dumps(current_alignment, ensure_ascii=False),
             dynamic_roles=json.dumps(sorted(list(dynamic_roles)), ensure_ascii=False),
         )
-        try:
-            agent.reset()
-            response = agent.step(prompt)
-            result = extract_json(response.content)
-            if isinstance(result, dict):
-                return result, response.input_tokens, response.output_tokens
-            return None, response.input_tokens, response.output_tokens
-        except Exception as e:
-            log_agent_warning(self.name, f"llm_review_enhanced failed: {e}")
-            return None, 0, 0
+        last_error: Exception | None = None
+        for _attempt in range(3):
+            try:
+                agent.reset()
+                response = agent.step(prompt)
+                result = extract_json(response.content)
+                if isinstance(result, dict):
+                    return result, response.input_tokens, response.output_tokens
+            except Exception as exc:
+                last_error = exc
+        log_agent_warning(self.name, f"llm_review_enhanced failed: {last_error}")
+        return None, 0, 0
 
 
 def build_core_snippets(snippets: List[Dict[str, Any]], dynamic_roles: Optional[Set[str]] = None) -> Dict[str, Any]:
@@ -421,6 +506,18 @@ def _merge_snippets(base: List[Dict[str, Any]], extra: List[Dict[str, Any]]) -> 
         seen.add(key)
         merged.append(sn)
     return merged
+
+
+def _dedupe_candidate_files(files: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    seen: Set[str] = set()
+    result: List[Dict[str, Any]] = []
+    for item in files:
+        path = str(item.get("path") or "") if isinstance(item, dict) else ""
+        if not path or path in seen:
+            continue
+        seen.add(path)
+        result.append(item)
+    return result
 
 
 def _build_report(

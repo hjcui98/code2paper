@@ -13,6 +13,7 @@ ANALYSIS_NAVIGATION_PLAN_SCHEMA = "analysis_navigation_plan"
 TARGETED_CODE_TRACING_SCHEMA = "targeted_code_tracing"
 CODE_METHOD_ANALYSIS_SCHEMA = "code_method_analysis"
 METHOD_OUTLINE_SCHEMA = "method_outline"
+METHOD_PLAN_SCHEMA = "method_plan"
 METHOD_DRAFT_SCHEMA = "method_draft"
 
 T = TypeVar("T", bound=BaseModel)

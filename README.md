@@ -4,6 +4,10 @@ Story-first code-to-paper pipeline with embedded `CodeIntakeAgent` and
 `CodeAnalyzerAgent`, deterministic Method authoring, and Phase 5 PaperBanana
 figure generation.
 
+The new agentic route keeps author intent and code evidence deliberately
+separate: intent controls what the graph investigates and emphasizes, while
+frozen code evidence and validators control what may be written or drawn.
+
 ## Overview
 
 Current end-to-end flow:
@@ -65,10 +69,48 @@ Subcommands:
 - `author`: Phase 4 only
 - `validate`: fidelity check only
 
+## Agentic LangGraph route
+
+Install the optional orchestration dependencies and run the deterministic
+safe path:
+
+```bash
+python3 -m pip install -e '.[agentic,dev]'
+code2paper-agentic-run tests/fixtures/toy_train_project \
+  --author tests/fixtures/toy_train_project_author_markers.yaml \
+  --out-root /tmp/code2paper-agentic-toy \
+  --llm-provider none \
+  --fail-on-blocked
+```
+
+For a local OpenAI-compatible model (including vLLM), set the endpoint and
+model in the environment, then choose `--llm-provider openai`. A loopback
+endpoint may use the non-secret placeholder `dummy-local-vllm`; never commit a
+real API key or `.env` file.
+
+```bash
+export CODE2PAPER_OPENAI_BASE_URL=http://127.0.0.1:8000/v1
+export CODE2PAPER_LLM_MODEL=gemma4-31b-nvfp4
+export OPENAI_API_KEY=dummy-local-vllm
+code2paper-agentic-run tests/fixtures/toy_train_project \
+  --author tests/fixtures/toy_train_project_author_markers.yaml \
+  --out-root /tmp/code2paper-agentic-toy-live \
+  --llm-provider openai \
+  --llm-model gemma4-31b-nvfp4 \
+  --fail-on-blocked
+```
+
+Exit code `1` means the graph ended in an evidence-preserving explanatory
+block when `--fail-on-blocked` was requested. Exit code `2` is a CLI,
+dependency, configuration, or infrastructure error. Run artifacts and the
+decision/audit summaries are under `<out-root>/artifacts/10_run/`. Live model
+tests are opt-in (`CODE2PAPER_RUN_LIVE_LLM=1`) so the default suite never
+contacts a service unexpectedly.
+
 ## Tests
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -v
+python3 -m pytest -q
 ```
 
 ## Key Paths

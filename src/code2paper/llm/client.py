@@ -24,6 +24,7 @@ from code2paper.llm.providers import (
     provider_api_key_env,
     provider_api_key_env_candidates,
 )
+from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode, is_loopback_url, load_capability_profile
 from code2paper.llm.retry_policy import RetryPolicy
 from code2paper.schemas import LLMConfig, LLMProvider
 
@@ -55,11 +56,25 @@ class LLMResponse:
     response_hash: str
     blocked_reason: str = ""
     cached: bool = False
+    response_mode: str = ""
+    finish_reason: str = ""
+    token_usage: dict[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class _ProviderResult:
+    text: str
+    response_mode: str = ""
+    finish_reason: str = ""
+    token_usage: dict[str, int] | None = None
 
 
 class LLMClient:
-    def __init__(self, config: LLMConfig) -> None:
+    def __init__(self, config: LLMConfig, capability_profile: LLMCapabilityProfile | None = None) -> None:
         self.config = config
+        self.capability_profile = capability_profile or load_capability_profile(
+            provider=getattr(config.provider, "value", str(config.provider)), model=config.model
+        )
 
     def complete(self, request: LLMRequest, *, dry_run: bool = False) -> LLMResponse:
         if dry_run:
@@ -89,7 +104,7 @@ class LLMClient:
                 blocked_reason="llm_api_key_missing",
             )
         try:
-            text = self._complete_provider_with_semantic_retry(request)
+            result = self._complete_provider_with_semantic_retry(request)
         except ProviderTimeoutError as exc:
             if self.config.fail_on_timeout:
                 raise
@@ -97,18 +112,24 @@ class LLMClient:
         except ProviderRuntimeError as exc:
             return LLMResponse(text="", response_hash=hash_text(""), blocked_reason=str(exc))
         if self.config.cache:
-            _write_cache(self.config, request, text)
-        return LLMResponse(text=text, response_hash=hash_text(text))
+            _write_cache(self.config, request, result.text)
+        return LLMResponse(
+            text=result.text,
+            response_hash=hash_text(result.text),
+            response_mode=result.response_mode,
+            finish_reason=result.finish_reason,
+            token_usage=result.token_usage,
+        )
 
-    def _complete_provider_with_semantic_retry(self, request: LLMRequest) -> str:
+    def _complete_provider_with_semantic_retry(self, request: LLMRequest) -> _ProviderResult:
         retry_policy = _retry_policy(self.config)
         delay_seconds = max(0.0, retry_policy.initial_delay_seconds)
         attempts = max(1, retry_policy.max_attempts)
         last_error: ProviderRuntimeError | None = None
         for attempt in range(1, attempts + 1):
-            text = self._complete_provider(request)
-            if text.strip():
-                return text
+            result = self._complete_provider(request)
+            if result.text.strip():
+                return result
             last_error = ProviderRuntimeError("provider_response_empty_content")
             if attempt < attempts and delay_seconds > 0:
                 time.sleep(delay_seconds)
@@ -117,16 +138,17 @@ class LLMClient:
             raise last_error
         raise ProviderRuntimeError("provider_response_empty_content")
 
-    def _complete_provider(self, request: LLMRequest) -> str:
-        if self.config.provider in {LLMProvider.OPENAI, LLMProvider.OPENROUTER}:
+    def _complete_provider(self, request: LLMRequest) -> _ProviderResult:
+        provider_value = getattr(self.config.provider, "value", str(self.config.provider))
+        if provider_value in {"openai", "openrouter"}:
             return self._complete_openai_compatible(request)
-        if self.config.provider == LLMProvider.ANTHROPIC:
+        if provider_value == "anthropic":
             return self._complete_anthropic(request)
-        if self.config.provider == LLMProvider.GOOGLE:
+        if provider_value == "google":
             return self._complete_google(request)
-        raise ProviderRuntimeError(f"unsupported_provider:{self.config.provider.value}")
+        raise ProviderRuntimeError(f"unsupported_provider:{provider_value}")
 
-    def _complete_openai_compatible(self, request: LLMRequest) -> str:
+    def _complete_openai_compatible(self, request: LLMRequest) -> _ProviderResult:
         base_url = openai_compatible_base_url(self.config)
         payload = {
             "model": self.config.model,
@@ -137,7 +159,8 @@ class LLMClient:
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_output_tokens,
         }
-        if request.response_json_schema:
+        response_mode = self.capability_profile.response_mode
+        if request.response_json_schema and response_mode == StructuredResponseMode.NATIVE_JSON_SCHEMA:
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
@@ -146,6 +169,11 @@ class LLMClient:
                     "strict": True,
                 },
             }
+        elif request.response_json_schema and response_mode == StructuredResponseMode.JSON_OBJECT:
+            payload["response_format"] = {"type": "json_object"}
+            payload["messages"][0]["content"] += "\nReturn JSON matching this schema:\n" + _json_dumps(request.response_json_schema)
+        elif request.response_json_schema:
+            payload["messages"][0]["content"] += "\nReturn only JSON matching this schema:\n" + _json_dumps(request.response_json_schema)
         response = _post_json(
             base_url,
             payload,
@@ -154,11 +182,17 @@ class LLMClient:
             retry_policy=_retry_policy(self.config),
         )
         try:
-            return response["choices"][0]["message"]["content"]
+            choice = response["choices"][0]
+            return _ProviderResult(
+                text=choice["message"]["content"],
+                response_mode=response_mode.value,
+                finish_reason=str(choice.get("finish_reason", "")),
+                token_usage=_normalized_usage(response.get("usage")),
+            )
         except (KeyError, IndexError, TypeError) as exc:
             raise ProviderRuntimeError("provider_response_missing_content") from exc
 
-    def _complete_anthropic(self, request: LLMRequest) -> str:
+    def _complete_anthropic(self, request: LLMRequest) -> _ProviderResult:
         response_schema_note = ""
         if request.response_json_schema:
             response_schema_note = "\nReturn only JSON matching this schema:\n" + _json_dumps(
@@ -183,11 +217,16 @@ class LLMClient:
         )
         try:
             blocks = response["content"]
-            return "".join(block.get("text", "") for block in blocks if block.get("type") == "text")
+            return _ProviderResult(
+                text="".join(block.get("text", "") for block in blocks if block.get("type") == "text"),
+                response_mode=StructuredResponseMode.PROMPT_ONLY.value,
+                finish_reason=str(response.get("stop_reason", "")),
+                token_usage=_normalized_usage(response.get("usage")),
+            )
         except (KeyError, TypeError) as exc:
             raise ProviderRuntimeError("provider_response_missing_content") from exc
 
-    def _complete_google(self, request: LLMRequest) -> str:
+    def _complete_google(self, request: LLMRequest) -> _ProviderResult:
         api_key = _api_key(self.config.provider, self.config)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.config.model}:generateContent?key={api_key}"
         generation_config = {
@@ -211,7 +250,13 @@ class LLMClient:
         )
         try:
             parts = response["candidates"][0]["content"]["parts"]
-            return "".join(part.get("text", "") for part in parts)
+            candidate = response["candidates"][0]
+            return _ProviderResult(
+                text="".join(part.get("text", "") for part in parts),
+                response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA.value if request.response_json_schema else "",
+                finish_reason=str(candidate.get("finishReason", "")),
+                token_usage=_normalized_usage(response.get("usageMetadata")),
+            )
         except (KeyError, IndexError, TypeError) as exc:
             raise ProviderRuntimeError("provider_response_missing_content") from exc
 
@@ -301,9 +346,10 @@ def _post_json(
 
 
 def _auth_headers(provider: LLMProvider, config: LLMConfig) -> dict[str, str]:
-    if provider in {LLMProvider.OPENAI, LLMProvider.OPENROUTER}:
+    provider_value = getattr(provider, "value", str(provider))
+    if provider_value in {"openai", "openrouter"}:
         return {"Authorization": f"Bearer {_api_key(provider, config)}"}
-    if provider == LLMProvider.ANTHROPIC:
+    if provider_value == "anthropic":
         return {"x-api-key": _api_key(provider, config)}
     return {}
 
@@ -318,7 +364,19 @@ def _api_key(provider: LLMProvider, config: LLMConfig) -> str:
     value = os.environ.get(env_name, "")
     if value:
         return value
+    if getattr(provider, "value", str(provider)) == "openai" and is_loopback_url(openai_compatible_base_url(config)):
+        return "dummy-local-vllm"
     raise ProviderRuntimeError("llm_api_key_missing")
+
+
+def _normalized_usage(value: object) -> dict[str, int] | None:
+    if not isinstance(value, dict):
+        return None
+    normalized: dict[str, int] = {}
+    for key, item in value.items():
+        if isinstance(item, int) and not isinstance(item, bool):
+            normalized[str(key)] = item
+    return normalized or None
 
 
 def _schema_name(request: LLMRequest) -> str:

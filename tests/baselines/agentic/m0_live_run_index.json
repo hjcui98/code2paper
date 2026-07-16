@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "captured_on": "2026-07-17",
+  "run_id": "m0-gemma4-local-r7",
+  "artifact_root": "/tmp/code2paper-m0-toy-gemma4-r7",
+  "artifact_root_tracked": false,
+  "model_profile": "tests/baselines/agentic/gemma4_mtp_vllm.profile.json",
+  "result": {
+    "process_exit_code": 1,
+    "expected_exit_semantics": "--fail-on-blocked",
+    "graph_status": "blocked",
+    "blocked_reason": "validation_manifest_failed",
+    "classification": "correct trust-gate block",
+    "rendering_reached": false,
+    "final_package_created": false
+  },
+  "live_decisions": {
+    "coverage_critic": "model_proposal_merged",
+    "analysis_repair_router": "model_proposal_merged",
+    "evidence_sufficiency": "model_proposal_merged",
+    "revision_router": "deterministic_terminal_gate"
+  },
+  "response_contract": {
+    "response_mode": "prompt_only",
+    "finish_reason": "stop",
+    "schema_validation_passed": true,
+    "token_usage_recorded": true,
+    "secret_fields_recorded": false
+  },
+  "digests": {
+    "coverage_critic_decision_trace.json": "sha256:98176d6b0fc7ad87430b896e45a6d65c7a46385358762332ad8fdd2661ad8404",
+    "analysis_repair_router_decision_trace.json": "sha256:69aa4486528c091c2fc46c6863d447098af8dce04b621f2cc9ab367bb18ba800",
+    "evidence_sufficiency_decision_trace.json": "sha256:fc7a56f4cfa1e491277fa5335bf6873797276b8a5ba99e969f37803a811fc7be",
+    "revision_router_decision_trace.json": "sha256:b14b29a5089682b57b04ea428e7e26cdb4b78b4c94ad9950154369c85e7436fc",
+    "validation_manifest.json": "sha256:7be20123b4eb8c47a7fe17986e76bcca4ead34116677331c1ce0055ed5987df2",
+    "agentic_run_summary.json": "sha256:c5ce4732292ec5004c07dca578f276d8d963513aaa673d18b829319f78f22023",
+    "run_manifest.json": "sha256:a7bb20be0b42717108c6c9f1af06ee4c852f0f4276f9aa1e65edde7d86594346"
+  }
+}

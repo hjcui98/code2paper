@@ -1,0 +1,123 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "project_root": "tests/fixtures/attention_story_first/repo_snapshot",
+  "readme_policy": "exclude",
+  "evidence_items": [
+    {
+      "evidence_id": "E1",
+      "source_type": "bash",
+      "path": "train_multi30k_de_en.sh",
+      "symbol": null,
+      "line_start": 5,
+      "line_end": 16,
+      "content_summary": "Launches train.py with Multi30k data, label smoothing, projection weight sharing, batch size 256, warmup 4000, 200 epochs, seed 1, tensorboard, and shell-provided lr/scale overrides.",
+      "tags": ["entrypoint", "train", "shell_override"],
+      "confidence": 0.96
+    },
+    {
+      "evidence_id": "E2",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "main",
+      "line_start": 203,
+      "line_end": 302,
+      "content_summary": "Parses training arguments, sets reproducibility options, loads data, instantiates Transformer, wraps Adam with ScheduledOptim, and calls train().",
+      "tags": ["entrypoint", "training_orchestration"],
+      "confidence": 0.94
+    },
+    {
+      "evidence_id": "E3",
+      "source_type": "source",
+      "path": "train.py",
+      "symbol": "train_epoch",
+      "line_start": 72,
+      "line_end": 102,
+      "content_summary": "Runs one training epoch by preparing source/target tensors, forwarding through the model, computing label-smoothed performance, backpropagating, and updating the scheduled optimizer.",
+      "tags": ["training_loop", "label_smoothing", "optimization"],
+      "confidence": 0.93
+    },
+    {
+      "evidence_id": "E4",
+      "source_type": "source",
+      "path": "preprocess.py",
+      "symbol": "main",
+      "line_start": 160,
+      "line_end": 240,
+      "content_summary": "Downloads raw corpora, merges train/validation/test files, learns BPE codes, encodes text, filters examples by max length, builds vocabulary, and serializes processed data.",
+      "tags": ["preprocess", "bpe", "data"],
+      "confidence": 0.92
+    },
+    {
+      "evidence_id": "E5",
+      "source_type": "source",
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "line_start": 10,
+      "line_end": 22,
+      "content_summary": "Defines an encoder layer composed of self-attention followed by a position-wise feed-forward sublayer.",
+      "tags": ["model", "encoder"],
+      "confidence": 0.93
+    },
+    {
+      "evidence_id": "E6",
+      "source_type": "source",
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "line_start": 25,
+      "line_end": 42,
+      "content_summary": "Defines a decoder layer composed of decoder self-attention, encoder-decoder attention, and position-wise feed-forward sublayers.",
+      "tags": ["model", "decoder"],
+      "confidence": 0.93
+    },
+    {
+      "evidence_id": "E7",
+      "source_type": "source",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "line_start": 9,
+      "line_end": 59,
+      "content_summary": "Projects queries, keys, and values into multiple heads, applies scaled dot-product attention, concatenates heads, then applies residual connection and layer normalization.",
+      "tags": ["model", "attention"],
+      "confidence": 0.94
+    },
+    {
+      "evidence_id": "E8",
+      "source_type": "source",
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "line_start": 62,
+      "line_end": 82,
+      "content_summary": "Defines the position-wise feed-forward sublayer with two linear projections, ReLU, dropout, residual connection, and layer normalization.",
+      "tags": ["model", "feed_forward"],
+      "confidence": 0.92
+    },
+    {
+      "evidence_id": "E9",
+      "source_type": "source",
+      "path": "transformer/Optim.py",
+      "symbol": "ScheduledOptim",
+      "line_start": 4,
+      "line_end": 40,
+      "content_summary": "Wraps an optimizer and updates the learning rate each step using the Transformer warmup schedule based on d_model, step count, warmup steps, and lr multiplier.",
+      "tags": ["optimization", "warmup_schedule"],
+      "confidence": 0.94
+    },
+    {
+      "evidence_id": "E10",
+      "source_type": "comment",
+      "path": "train_multi30k_de_en.sh",
+      "symbol": null,
+      "line_start": 1,
+      "line_end": 4,
+      "content_summary": "Comment suggests better shell settings for lr_mul and scale_emb_or_prj; this is a soft hint only.",
+      "tags": ["soft_hint", "comment"],
+      "confidence": 0.55
+    }
+  ],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "excluded from main evidence chain"
+    }
+  ]
+}

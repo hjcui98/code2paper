@@ -1,0 +1,100 @@
+project_goal: "Train a Transformer sequence-to-sequence model for German-English machine translation."
+paper_method_goal: "Describe the implementation-grounded preprocessing, Transformer architecture, and scheduled training pipeline."
+implementation_scope: "tests/fixtures/attention_story_first/repo_snapshot current codebase only."
+priority_files:
+  - "train_multi30k_de_en.sh"
+  - "train.py"
+  - "preprocess.py"
+  - "transformer/Layers.py"
+  - "transformer/SubLayers.py"
+  - "transformer/Optim.py"
+ignore_files:
+  - "README.md"
+  - "LICENSE"
+module_roles:
+  - path: "train.py"
+    symbol: "main"
+    role: "training orchestration"
+    importance: "core"
+    is_novel: false
+    notes: "Parses training options, builds data loaders, creates the Transformer, wraps Adam with ScheduledOptim, and starts training."
+  - path: "transformer/Layers.py"
+    symbol: "EncoderLayer"
+    role: "encoder block"
+    importance: "core"
+    is_novel: false
+    notes: "Composes self-attention and position-wise feed-forward layers."
+  - path: "transformer/Layers.py"
+    symbol: "DecoderLayer"
+    role: "decoder block"
+    importance: "core"
+    is_novel: false
+    notes: "Composes decoder self-attention, encoder-decoder attention, and position-wise feed-forward layers."
+  - path: "transformer/SubLayers.py"
+    symbol: "MultiHeadAttention"
+    role: "attention sublayer"
+    importance: "core"
+    is_novel: false
+    notes: "Projects Q/K/V across heads, applies scaled dot-product attention, then residual/layer normalization."
+  - path: "transformer/Optim.py"
+    symbol: "ScheduledOptim"
+    role: "scheduled optimization"
+    importance: "core"
+    is_novel: false
+    notes: "Updates Adam learning rate using the Transformer warmup schedule."
+pipeline_steps:
+  - name: "Data preprocessing"
+    purpose: "Download, merge, BPE-encode, filter, build vocabulary, and serialize translation data."
+    input:
+      - "raw German-English corpora"
+    output:
+      - "multi30k_de_en.pkl"
+    related_files:
+      - "preprocess.py"
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Model construction"
+    purpose: "Instantiate the Transformer architecture from command-line hyperparameters."
+    input:
+      - "vocabulary sizes"
+      - "padding indices"
+      - "model depth and attention dimensions"
+    output:
+      - "Transformer model"
+    related_files:
+      - "train.py"
+      - "transformer/Layers.py"
+      - "transformer/SubLayers.py"
+    highlight_level: "main"
+    omit_from_main_figure: false
+  - name: "Scheduled training"
+    purpose: "Train with label smoothing and the warmup learning-rate schedule."
+    input:
+      - "training batches"
+      - "Transformer model"
+    output:
+      - "checkpoint and logs"
+    related_files:
+      - "train.py"
+      - "transformer/Optim.py"
+    highlight_level: "main"
+    omit_from_main_figure: false
+innovation_claims:
+  - claim: "The implementation follows the Transformer architecture and warmup optimization schedule."
+    supporting_files:
+      - "transformer/Layers.py"
+      - "transformer/SubLayers.py"
+      - "transformer/Optim.py"
+    supporting_functions:
+      - "EncoderLayer"
+      - "DecoderLayer"
+      - "MultiHeadAttention"
+      - "ScheduledOptim"
+    confidence: "medium"
+    caveats:
+      - "This is a distinguishing implementation mechanism, not an automatic academic novelty claim."
+potential_mismatches:
+  - description: "README content is excluded from the main evidence chain."
+    files:
+      - "README.md"
+    severity: "medium"

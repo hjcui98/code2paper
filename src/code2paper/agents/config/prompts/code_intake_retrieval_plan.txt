@@ -1,0 +1,66 @@
+You are an expert code retrieval planner for a code-to-paper method extraction pipeline.
+Return a JSON object only.
+
+Retrieval goal:
+{{ retrieval_goal }}
+
+Author-marker-derived method_experiment_structured_summary:
+{{ method_summary }}
+
+Structured author sections:
+{{ structured_sections }}
+
+Repository structure summary:
+{{ repo_structure }}
+
+Available file preview:
+{{ file_preview }}
+
+Existing keyword bank:
+{{ existing_keyword_bank }}
+
+Task:
+- Convert the author markers and method summary into targeted code retrieval suggestions.
+- Focus on files and symbols that can verify method stages, mechanisms, training objectives, data construction, configuration, and claims.
+- Suggest a small number of high-value files first; prefer concrete implementation files over broad directories.
+- Suggest symbol targets only when a likely file path is visible in the file preview.
+- Suggest ignore_files only for files that are unlikely to support method claims, such as generated outputs, docs-only files, caches, checkpoints, or unrelated scripts.
+- Suggest search_keywords and role_keywords that should be added to deterministic retrieval.
+
+Output JSON schema:
+{
+  "status": "ok",
+  "priority_files": [
+    "relative/or/absolute/path.py"
+  ],
+  "claim_support_files": [
+    "relative/or/absolute/path.py"
+  ],
+  "ignore_files": [
+    "glob/or/path"
+  ],
+  "symbol_targets": [
+    {
+      "path": "relative/or/absolute/path.py",
+      "symbol": "ClassName.forward",
+      "role": "model_arch",
+      "reason": "why this symbol verifies a method claim"
+    }
+  ],
+  "search_keywords": [
+    "projector",
+    "pooling"
+  ],
+  "role_keywords": {
+    "model_arch": ["projector", "encoder"],
+    "training_loop": ["optimizer", "loss.backward"]
+  },
+  "rationale": "brief explanation of the retrieval strategy"
+}
+
+Rules:
+1) Return valid JSON only, no markdown.
+2) Do not invent evidence or final method claims. These are retrieval hints only.
+3) Prefer paths that appear in file_preview. If only a directory-level clue is visible, place it in search_keywords rather than inventing a file.
+4) Keep the plan concise: at most 20 priority_files, 20 claim_support_files, 30 symbol_targets, 40 search_keywords.
+5) Avoid suggesting README, paper drafts, generated outputs, checkpoints, or images as primary method evidence unless author markers explicitly require them.

@@ -1,0 +1,1549 @@
+{
+  "project_id": "attention_transformer_pytorch",
+  "author_mode": "enhanced",
+  "author_confirmation_required": false,
+  "method_name": "Transformer Translation Training Pipeline",
+  "method_goal": "Train a Transformer sequence-to-sequence model from prepared translation data with architecture-level attention components and scheduled optimization.",
+  "implementation_scope": "current codebase only",
+  "entrypoints": [
+    "train.py:main",
+    "preprocess.py:main"
+  ],
+  "stages": [
+    {
+      "stage_id": "S1",
+      "name": "Input Preparation",
+      "purpose": "Prepare tokenized and serialized data for training.",
+      "inputs": [
+        "raw corpus files",
+        "BPE settings",
+        "maximum sequence length"
+      ],
+      "outputs": [
+        "serialized data",
+        "vocabulary",
+        "filtered train and validation examples"
+      ],
+      "modules": [
+        {
+          "path": "preprocess.py",
+          "symbols": [
+            "compile_files"
+          ],
+          "role": "data preprocessing utility",
+          "category": "infra-utility",
+          "is_novel": false
+        },
+        {
+          "path": "preprocess.py",
+          "symbols": [
+            "encode_file"
+          ],
+          "role": "data preprocessing utility",
+          "category": "infra-utility",
+          "is_novel": false
+        },
+        {
+          "path": "preprocess.py",
+          "symbols": [
+            "encode_files"
+          ],
+          "role": "data preprocessing utility",
+          "category": "infra-utility",
+          "is_novel": false
+        },
+        {
+          "path": "preprocess.py",
+          "symbols": [
+            "main"
+          ],
+          "role": "entrypoint orchestration",
+          "category": "experiment-support",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH1",
+          "description": "The pipeline prepares translation data by converting raw corpora into tokenized, filtered, vocabulary-backed serialized training artifacts.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E19",
+            "E20",
+            "E22",
+            "E23",
+            "E24",
+            "E25",
+            "E26",
+            "E27",
+            "E28",
+            "E29",
+            "E30",
+            "E31",
+            "E32"
+          ],
+          "confidence": "high",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "S2",
+      "name": "Transformer Computation",
+      "purpose": "Compute sequence representations through Transformer layers and sublayers.",
+      "inputs": [
+        "source token sequence",
+        "target prefix sequence",
+        "model hyperparameters"
+      ],
+      "outputs": [
+        "decoder predictions",
+        "attention representations"
+      ],
+      "modules": [
+        {
+          "path": "transformer/Layers.py",
+          "symbols": [
+            "EncoderLayer"
+          ],
+          "role": "encoder block",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Layers.py",
+          "symbols": [
+            "DecoderLayer"
+          ],
+          "role": "decoder block",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/SubLayers.py",
+          "symbols": [
+            "MultiHeadAttention"
+          ],
+          "role": "attention sublayer",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/SubLayers.py",
+          "symbols": [
+            "PositionwiseFeedForward"
+          ],
+          "role": "feed-forward sublayer",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "get_pad_mask"
+          ],
+          "role": "Transformer implementation component",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "get_subsequent_mask"
+          ],
+          "role": "Transformer implementation component",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "PositionalEncoding"
+          ],
+          "role": "Transformer implementation component",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "Encoder"
+          ],
+          "role": "encoder stack",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "Decoder"
+          ],
+          "role": "decoder stack",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Models.py",
+          "symbols": [
+            "Transformer"
+          ],
+          "role": "sequence-to-sequence model",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Modules.py",
+          "symbols": [
+            "ScaledDotProductAttention"
+          ],
+          "role": "attention kernel",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Translator.py",
+          "symbols": [
+            "Translator"
+          ],
+          "role": "Transformer implementation component",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH2",
+          "description": "The method computes sequence representations with Transformer encoder/decoder components built from attention and position-wise feed-forward sublayers.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E35",
+            "E37",
+            "E40",
+            "E42",
+            "E45",
+            "E73",
+            "E74",
+            "E76",
+            "E77",
+            "E79",
+            "E81",
+            "E83",
+            "E86",
+            "E89"
+          ],
+          "confidence": "high",
+          "submechanisms": [
+            {
+              "submechanism_id": "SUBMECH2",
+              "description": "EncoderLayer exposes generic code behaviors: sequential composition, regularization. Detected implementation patterns include encoder layer composition, dropout.",
+              "behavior_ids": [
+                "BEH2",
+                "BEH3"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM3"
+              ],
+              "tensor_ids": [],
+              "evidence_ids": [
+                "E35"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH3",
+              "description": "DecoderLayer exposes generic code behaviors: sequential composition, regularization. Detected implementation patterns include decoder layer composition, dropout.",
+              "behavior_ids": [
+                "BEH4",
+                "BEH5"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM4"
+              ],
+              "tensor_ids": [
+                "TENSOR1"
+              ],
+              "evidence_ids": [
+                "E37"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH4",
+              "description": "MultiHeadAttention exposes generic code behaviors: parallel projection, skip connection, normalization, regularization. Detected implementation patterns include multi head projection, residual connection, layer normalization, dropout.",
+              "behavior_ids": [
+                "BEH6",
+                "BEH7",
+                "BEH8",
+                "BEH9"
+              ],
+              "equation_ids": [
+                "EQ1"
+              ],
+              "parameter_ids": [
+                "PARAM5"
+              ],
+              "tensor_ids": [
+                "TENSOR2",
+                "TENSOR3",
+                "TENSOR4",
+                "TENSOR5"
+              ],
+              "evidence_ids": [
+                "E40"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH5",
+              "description": "PositionwiseFeedForward exposes generic code behaviors: pointwise transformation, skip connection, normalization, regularization. Detected implementation patterns include positionwise feed forward, residual connection, layer normalization, dropout.",
+              "behavior_ids": [
+                "BEH10",
+                "BEH11",
+                "BEH12",
+                "BEH13"
+              ],
+              "equation_ids": [
+                "EQ2"
+              ],
+              "parameter_ids": [
+                "PARAM6"
+              ],
+              "tensor_ids": [
+                "TENSOR6"
+              ],
+              "evidence_ids": [
+                "E42"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH6",
+              "description": "get_subsequent_mask exposes generic code behaviors: constraint application. Detected implementation patterns include autoregressive subsequent mask.",
+              "behavior_ids": [
+                "BEH14"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [],
+              "tensor_ids": [],
+              "evidence_ids": [
+                "E74"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH7",
+              "description": "PositionalEncoding exposes generic code behaviors: representation injection. Detected implementation patterns include sinusoidal positional encoding.",
+              "behavior_ids": [
+                "BEH15"
+              ],
+              "equation_ids": [
+                "EQ3"
+              ],
+              "parameter_ids": [
+                "PARAM7"
+              ],
+              "tensor_ids": [
+                "TENSOR7"
+              ],
+              "evidence_ids": [
+                "E76"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH8",
+              "description": "Encoder exposes generic code behaviors: repeated composition, normalization, regularization. Detected implementation patterns include encoder stack, layer normalization, dropout.",
+              "behavior_ids": [
+                "BEH16",
+                "BEH17",
+                "BEH18"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM8",
+                "PARAM9",
+                "PARAM10"
+              ],
+              "tensor_ids": [
+                "TENSOR8",
+                "TENSOR9"
+              ],
+              "evidence_ids": [
+                "E77"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH9",
+              "description": "Decoder exposes generic code behaviors: repeated composition, normalization, regularization. Detected implementation patterns include decoder stack, layer normalization, dropout.",
+              "behavior_ids": [
+                "BEH19",
+                "BEH20",
+                "BEH21"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM11",
+                "PARAM12",
+                "PARAM13"
+              ],
+              "tensor_ids": [
+                "TENSOR10",
+                "TENSOR11",
+                "TENSOR12",
+                "TENSOR13"
+              ],
+              "evidence_ids": [
+                "E79"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH10",
+              "description": "Transformer exposes generic code behaviors: parameter sharing, regularization. Detected implementation patterns include embedding projection weight sharing, dropout.",
+              "behavior_ids": [
+                "BEH22",
+                "BEH23"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM14",
+                "PARAM15",
+                "PARAM16",
+                "PARAM17",
+                "PARAM18",
+                "PARAM19",
+                "PARAM20",
+                "PARAM21",
+                "PARAM22",
+                "PARAM23",
+                "PARAM24",
+                "PARAM25"
+              ],
+              "tensor_ids": [
+                "TENSOR14",
+                "TENSOR15"
+              ],
+              "evidence_ids": [
+                "E81"
+              ],
+              "confidence": "high"
+            },
+            {
+              "submechanism_id": "SUBMECH11",
+              "description": "ScaledDotProductAttention exposes generic code behaviors: weighted aggregation, regularization. Detected implementation patterns include scaled dot product attention, dropout.",
+              "behavior_ids": [
+                "BEH24",
+                "BEH25"
+              ],
+              "equation_ids": [
+                "EQ4"
+              ],
+              "parameter_ids": [
+                "PARAM26"
+              ],
+              "tensor_ids": [
+                "TENSOR16",
+                "TENSOR17",
+                "TENSOR18",
+                "TENSOR19"
+              ],
+              "evidence_ids": [
+                "E83"
+              ],
+              "confidence": "high"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stage_id": "S3",
+      "name": "Scheduled Optimization",
+      "purpose": "Optimize model parameters with loss computation, optional label smoothing, and learning-rate scheduling.",
+      "inputs": [
+        "model predictions",
+        "target tokens",
+        "optimizer settings",
+        "warmup steps"
+      ],
+      "outputs": [
+        "updated parameters",
+        "training metrics",
+        "validation metrics",
+        "checkpoints"
+      ],
+      "modules": [
+        {
+          "path": "train.py",
+          "symbols": [
+            "cal_performance"
+          ],
+          "role": "loss and accuracy computation",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "train.py",
+          "symbols": [
+            "cal_loss"
+          ],
+          "role": "loss computation",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "train.py",
+          "symbols": [
+            "train_epoch"
+          ],
+          "role": "training update loop",
+          "category": "method-core",
+          "is_novel": false
+        },
+        {
+          "path": "transformer/Optim.py",
+          "symbols": [
+            "ScheduledOptim"
+          ],
+          "role": "warmup optimization",
+          "category": "method-core",
+          "is_novel": false
+        }
+      ],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH3",
+          "description": "Training optimizes model parameters by combining forward prediction, loss computation, backpropagation, and the scheduled learning-rate update.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E2",
+            "E5",
+            "E7",
+            "E11",
+            "E45"
+          ],
+          "confidence": "high",
+          "submechanisms": [
+            {
+              "submechanism_id": "SUBMECH1",
+              "description": "cal_loss exposes generic code behaviors: objective shaping. Detected implementation patterns include label smoothing loss.",
+              "behavior_ids": [
+                "BEH1"
+              ],
+              "equation_ids": [],
+              "parameter_ids": [
+                "PARAM2"
+              ],
+              "tensor_ids": [],
+              "evidence_ids": [
+                "E7"
+              ],
+              "confidence": "high"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "behavior_patterns": [
+    {
+      "behavior_id": "BEH1",
+      "behavior_type": "objective_shaping",
+      "detected_pattern": "label_smoothing_loss",
+      "description": "Computes smoothed target distributions for a shaped loss objective.",
+      "operations": [
+        "smooth_target",
+        "compute_loss"
+      ],
+      "path": "train.py",
+      "symbol": "cal_loss",
+      "evidence_ids": [
+        "E7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH2",
+      "behavior_type": "sequential_composition",
+      "detected_pattern": "encoder_layer_composition",
+      "description": "Composes a block from a self-transformation sublayer followed by a point-wise transformation sublayer.",
+      "operations": [
+        "apply",
+        "apply"
+      ],
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "evidence_ids": [
+        "E35"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH3",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "evidence_ids": [
+        "E35"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH4",
+      "behavior_type": "sequential_composition",
+      "detected_pattern": "decoder_layer_composition",
+      "description": "Composes a block from self-transformation, cross-context transformation, and point-wise transformation sublayers.",
+      "operations": [
+        "apply",
+        "apply",
+        "apply"
+      ],
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "evidence_ids": [
+        "E37"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH5",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "evidence_ids": [
+        "E37"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH6",
+      "behavior_type": "parallel_projection",
+      "detected_pattern": "multi_head_projection",
+      "description": "Projects inputs into multiple parallel branches, applies a transformation in parallel, and merges the branches.",
+      "operations": [
+        "project",
+        "split",
+        "parallel_apply",
+        "concat",
+        "project"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH7",
+      "behavior_type": "skip_connection",
+      "detected_pattern": "residual_connection",
+      "description": "Adds a residual connection around a sub-computation.",
+      "operations": [
+        "preserve",
+        "add"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH8",
+      "behavior_type": "normalization",
+      "detected_pattern": "layer_normalization",
+      "description": "Applies layer normalization around module computation.",
+      "operations": [
+        "normalize"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH9",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH10",
+      "behavior_type": "pointwise_transformation",
+      "detected_pattern": "positionwise_feed_forward",
+      "description": "Applies two point-wise linear transformations with a nonlinear activation between them.",
+      "operations": [
+        "linear",
+        "activation",
+        "linear"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH11",
+      "behavior_type": "skip_connection",
+      "detected_pattern": "residual_connection",
+      "description": "Adds a residual connection around a sub-computation.",
+      "operations": [
+        "preserve",
+        "add"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH12",
+      "behavior_type": "normalization",
+      "detected_pattern": "layer_normalization",
+      "description": "Applies layer normalization around module computation.",
+      "operations": [
+        "normalize"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH13",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH14",
+      "behavior_type": "constraint_application",
+      "detected_pattern": "autoregressive_subsequent_mask",
+      "description": "Builds a structural mask to block disallowed future-position access.",
+      "operations": [
+        "construct_mask",
+        "apply_constraint"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "get_subsequent_mask",
+      "evidence_ids": [
+        "E74"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH15",
+      "behavior_type": "representation_injection",
+      "detected_pattern": "sinusoidal_positional_encoding",
+      "description": "Constructs periodic position encodings and injects them into learned representations.",
+      "operations": [
+        "construct_encoding",
+        "add"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "PositionalEncoding",
+      "evidence_ids": [
+        "E76"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH16",
+      "behavior_type": "repeated_composition",
+      "detected_pattern": "encoder_stack",
+      "description": "Builds a representation stack from repeated encoder-like layers.",
+      "operations": [
+        "repeat",
+        "compose"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH17",
+      "behavior_type": "normalization",
+      "detected_pattern": "layer_normalization",
+      "description": "Applies layer normalization around module computation.",
+      "operations": [
+        "normalize"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH18",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH19",
+      "behavior_type": "repeated_composition",
+      "detected_pattern": "decoder_stack",
+      "description": "Builds a representation stack from repeated decoder-like layers.",
+      "operations": [
+        "repeat",
+        "compose"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH20",
+      "behavior_type": "normalization",
+      "detected_pattern": "layer_normalization",
+      "description": "Applies layer normalization around module computation.",
+      "operations": [
+        "normalize"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH21",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH22",
+      "behavior_type": "parameter_sharing",
+      "detected_pattern": "embedding_projection_weight_sharing",
+      "description": "Shares parameters between representation and projection components when configured.",
+      "operations": [
+        "tie_parameter"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH23",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "behavior_id": "BEH24",
+      "behavior_type": "weighted_aggregation",
+      "detected_pattern": "scaled_dot_product_attention",
+      "description": "Computes attention weights from scaled query-key compatibility scores and applies them to values.",
+      "operations": [
+        "scale",
+        "similarity",
+        "softmax",
+        "weighted_sum"
+      ],
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "high"
+    },
+    {
+      "behavior_id": "BEH25",
+      "behavior_type": "regularization",
+      "detected_pattern": "dropout",
+      "description": "Applies dropout inside module computation.",
+      "operations": [
+        "drop"
+      ],
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "equation_candidates": [
+    {
+      "equation_id": "EQ1",
+      "name": "Multi-Branch Projection",
+      "latex": "\\mathrm{MultiBranch}(X)=\\mathrm{Merge}(f_1(XW_1),\\ldots,f_h(XW_h))W^O",
+      "source": "code_pattern",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "equation_id": "EQ2",
+      "name": "Point-wise Feed-Forward Transformation",
+      "latex": "\\mathrm{FFN}(x)=\\sigma(xW_1+b_1)W_2+b_2",
+      "source": "code_pattern",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "equation_id": "EQ3",
+      "name": "Periodic Positional Encoding",
+      "latex": "\\mathrm{PE}_{(pos,2i)}=\\sin(pos/10000^{2i/d}),\\quad \\mathrm{PE}_{(pos,2i+1)}=\\cos(pos/10000^{2i/d})",
+      "source": "code_pattern",
+      "evidence_ids": [
+        "E76"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    },
+    {
+      "equation_id": "EQ4",
+      "name": "Scaled Dot-Product Attention",
+      "latex": "\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}(QK^T/\\sqrt{d_k})V",
+      "source": "code_pattern",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "Generated from a recognized code pattern; verify notation before paper submission."
+      ]
+    }
+  ],
+  "architecture_parameters": [
+    {
+      "parameter_id": "PARAM1",
+      "name": "smoothing",
+      "value": false,
+      "source": "constructor_default",
+      "path": "train.py",
+      "symbol": "cal_performance",
+      "evidence_ids": [
+        "E5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM2",
+      "name": "smoothing",
+      "value": false,
+      "source": "constructor_default",
+      "path": "train.py",
+      "symbol": "cal_loss",
+      "evidence_ids": [
+        "E7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM3",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Layers.py",
+      "symbol": "EncoderLayer",
+      "evidence_ids": [
+        "E35"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM4",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "evidence_ids": [
+        "E37"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM5",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM6",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM7",
+      "name": "n_position",
+      "value": 200,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "PositionalEncoding",
+      "evidence_ids": [
+        "E76"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM8",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM9",
+      "name": "n_position",
+      "value": 200,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM10",
+      "name": "scale_emb",
+      "value": false,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM11",
+      "name": "n_position",
+      "value": 200,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM12",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM13",
+      "name": "scale_emb",
+      "value": false,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM14",
+      "name": "d_word_vec",
+      "value": 512,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM15",
+      "name": "d_model",
+      "value": 512,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM16",
+      "name": "d_inner",
+      "value": 2048,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM17",
+      "name": "n_layers",
+      "value": 6,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM18",
+      "name": "n_head",
+      "value": 8,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM19",
+      "name": "d_k",
+      "value": 64,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM20",
+      "name": "d_v",
+      "value": 64,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM21",
+      "name": "dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM22",
+      "name": "n_position",
+      "value": 200,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM23",
+      "name": "trg_emb_prj_weight_sharing",
+      "value": true,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM24",
+      "name": "emb_src_trg_weight_sharing",
+      "value": true,
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM25",
+      "name": "scale_emb_or_prj",
+      "value": "prj",
+      "source": "constructor_default",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "high"
+    },
+    {
+      "parameter_id": "PARAM26",
+      "name": "attn_dropout",
+      "value": 0.1,
+      "source": "constructor_default",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "tensor_roles": [
+    {
+      "tensor_id": "TENSOR1",
+      "name": "enc_output",
+      "role": "encoder output representation",
+      "path": "transformer/Layers.py",
+      "symbol": "DecoderLayer",
+      "evidence_ids": [
+        "E37"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR2",
+      "name": "q",
+      "role": "query representation",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR3",
+      "name": "k",
+      "role": "key representation",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR4",
+      "name": "v",
+      "role": "value representation",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR5",
+      "name": "mask",
+      "role": "attention or validity mask",
+      "path": "transformer/SubLayers.py",
+      "symbol": "MultiHeadAttention",
+      "evidence_ids": [
+        "E40"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR6",
+      "name": "x",
+      "role": "layer input representation",
+      "path": "transformer/SubLayers.py",
+      "symbol": "PositionwiseFeedForward",
+      "evidence_ids": [
+        "E42"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR7",
+      "name": "x",
+      "role": "layer input representation",
+      "path": "transformer/Models.py",
+      "symbol": "PositionalEncoding",
+      "evidence_ids": [
+        "E76"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR8",
+      "name": "src_seq",
+      "role": "source token sequence",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR9",
+      "name": "src_mask",
+      "role": "source padding mask",
+      "path": "transformer/Models.py",
+      "symbol": "Encoder",
+      "evidence_ids": [
+        "E77"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR10",
+      "name": "trg_seq",
+      "role": "target token sequence",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR11",
+      "name": "trg_mask",
+      "role": "target autoregressive/padding mask",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR12",
+      "name": "enc_output",
+      "role": "encoder output representation",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR13",
+      "name": "src_mask",
+      "role": "source padding mask",
+      "path": "transformer/Models.py",
+      "symbol": "Decoder",
+      "evidence_ids": [
+        "E79"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR14",
+      "name": "src_seq",
+      "role": "source token sequence",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR15",
+      "name": "trg_seq",
+      "role": "target token sequence",
+      "path": "transformer/Models.py",
+      "symbol": "Transformer",
+      "evidence_ids": [
+        "E81"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR16",
+      "name": "q",
+      "role": "query representation",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR17",
+      "name": "k",
+      "role": "key representation",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR18",
+      "name": "v",
+      "role": "value representation",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "tensor_id": "TENSOR19",
+      "name": "mask",
+      "role": "attention or validity mask",
+      "path": "transformer/Modules.py",
+      "symbol": "ScaledDotProductAttention",
+      "evidence_ids": [
+        "E83"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "innovation_candidates": [],
+  "writing_constraints": [
+    "Do not mention README-only information.",
+    "Do not claim academic novelty without author confirmation.",
+    "Do not promote comment-only hints into main method claims.",
+    "Excluded source: README.md (ignored by author markers).",
+    "Excluded source: LICENSE (ignored by author markers)."
+  ],
+  "alignment_notes": [
+    "Execution stages and method stages are separated; method prose should follow method stages, not raw execution order.",
+    "Stage mappings connect implementation execution steps to paper-facing method stages.",
+    "Author-provided pipeline steps matched: Data preprocessing, Model construction, Scheduled training."
+  ],
+  "excluded_sources": [
+    {
+      "path": "README.md",
+      "reason": "ignored by author markers"
+    },
+    {
+      "path": "LICENSE",
+      "reason": "ignored by author markers"
+    }
+  ]
+}

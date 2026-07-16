@@ -5,10 +5,16 @@ from __future__ import annotations
 import os
 
 from code2paper.schemas import LLMConfig, LLMProvider
+from code2paper.llm.capabilities import is_loopback_url
+
+
+# Public defaults live here so every CLI resolves presets from one authority.
+DEFAULT_TEXT_MODEL = "gpt-4.1-mini"
+DEFAULT_FIGURE_IMAGE_MODEL = "aihubmix/chat-image-2.0"
 
 
 _STRICT_JSON_DEFAULT_MODEL_BY_PROVIDER: dict[LLMProvider, str] = {
-    LLMProvider.OPENAI: "gpt-4.1-mini",
+    LLMProvider.OPENAI: DEFAULT_TEXT_MODEL,
 }
 
 
@@ -50,34 +56,46 @@ def load_llm_config_from_env(
     )
 
 
+def with_node_output_budget(config: LLMConfig, node: str, default: int) -> LLMConfig:
+    """Clamp a call family to its own audited output-token budget."""
+    env_name = "CODE2PAPER_" + node.upper().replace("-", "_") + "_MAX_OUTPUT_TOKENS"
+    requested = _int_env(env_name, default)
+    return config.model_copy(update={"max_output_tokens": max(1, min(config.max_output_tokens, requested))})
+
+
 def provider_api_key_env(provider: LLMProvider) -> str:
     envs = provider_api_key_env_candidates(provider)
     return envs[0] if envs else ""
 
 
 def provider_api_key_env_candidates(provider: LLMProvider) -> list[str]:
-    if provider == LLMProvider.OPENAI:
+    provider_value = getattr(provider, "value", str(provider))
+    if provider_value == "openai":
         # AIHUBMIX is OpenAI-compatible; many setups use AIHUBMIX_API_KEY.
         return ["OPENAI_API_KEY", "AIHUBMIX_API_KEY"]
-    if provider == LLMProvider.ANTHROPIC:
+    if provider_value == "anthropic":
         return ["ANTHROPIC_API_KEY"]
-    if provider == LLMProvider.GOOGLE:
+    if provider_value == "google":
         return ["GOOGLE_API_KEY"]
-    if provider == LLMProvider.OPENROUTER:
+    if provider_value == "openrouter":
         return ["OPENROUTER_API_KEY"]
     return []
 
 
 def has_provider_api_key(config: LLMConfig) -> bool:
     env_names = provider_api_key_env_candidates(config.provider)
-    return any(os.environ.get(env_name) for env_name in env_names)
+    if any(os.environ.get(env_name) for env_name in env_names):
+        return True
+    provider_value = getattr(config.provider, "value", str(config.provider))
+    return provider_value == "openai" and is_loopback_url(openai_compatible_base_url(config))
 
 
 def openai_compatible_base_url(config: LLMConfig) -> str:
-    if config.provider == LLMProvider.OPENROUTER:
+    provider_value = getattr(config.provider, "value", str(config.provider))
+    if provider_value == "openrouter":
         raw = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions")
         return _normalize_openai_chat_completions_url(raw)
-    if config.provider == LLMProvider.OPENAI:
+    if provider_value == "openai":
         raw = (
             os.environ.get("AIHUBMIX_BASE_URL")
             or os.environ.get("CODE2PAPER_OPENAI_BASE_URL")

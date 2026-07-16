@@ -389,6 +389,7 @@ def build_code_facts(
     """
     modules = analyze_modules(core_snippets, method_code_alignment)
     pipeline_steps = analyze_pipeline_steps(core_snippets, method_code_alignment, modules)
+    modules, pipeline_steps = _supplement_agentic_scan_facts(core_snippets, modules, pipeline_steps)
     losses = analyze_losses(core_snippets, method_code_alignment, paper_objects)
     training_detail = analyze_training(core_snippets)
     data_detail = analyze_data(core_snippets)
@@ -425,6 +426,76 @@ def build_code_facts(
         "key_insights": key_insights,
         "diagram_hints": diagram_hints,
     }
+
+
+def _supplement_agentic_scan_facts(
+    core_snippets: Dict[str, Any],
+    modules: List[Dict[str, Any]],
+    pipeline_steps: List[Dict[str, Any]],
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Recover code-backed agent modules when author alignment is sparse."""
+
+    snippets = [item for item in core_snippets.get("snippets", []) if isinstance(item, dict)]
+    orchestrator_order: List[str] = []
+    for snippet in snippets:
+        text = str(snippet.get("text") or "")
+        discovered = re.findall(r"\b([A-Z][A-Za-z0-9_]*(?:Agent|Processor))\s*\(", text)
+        discovered.sort(key=lambda name: (not name.endswith("Agent"), text.find(name + "(")))
+        for name in discovered:
+            if name not in orchestrator_order:
+                orchestrator_order.append(name)
+
+    by_name = {str(item.get("name") or ""): item for item in modules if isinstance(item, dict)}
+    class_snippets: Dict[str, Dict[str, Any]] = {}
+    for snippet in snippets:
+        text = str(snippet.get("text") or "")
+        match = re.search(r"\bclass\s+([A-Z][A-Za-z0-9_]*)", text)
+        if match:
+            class_snippets[match.group(1)] = snippet
+
+    for name in orchestrator_order:
+        snippet = class_snippets.get(name)
+        evidence_id = str((snippet or {}).get("snippet_id") or "")
+        if name in by_name:
+            if evidence_id:
+                by_name[name]["evidence_refs"] = [evidence_id]
+            continue
+        by_name[name] = {
+            "name": name,
+            "role": "method_agent",
+            "method_ref": "",
+            "inheritance": [],
+            "interfaces": [],
+            "attributes": [],
+            "methods": [],
+            "input_spec": {},
+            "output_spec": {},
+            "key_logic": f"{name} participates in the code-backed orchestration flow.",
+            "pseudo_code_ref": None,
+            "evidence_refs": [evidence_id] if evidence_id else [],
+            "confidence": 0.8 if evidence_id else 0.6,
+        }
+
+    ordered_modules = [by_name[name] for name in orchestrator_order if name in by_name]
+    ordered_modules.extend(item for name, item in by_name.items() if name not in orchestrator_order)
+    if not pipeline_steps and orchestrator_order:
+        pipeline_steps = [
+            {
+                "step_id": str(index),
+                "name": name,
+                "description": f"Execute {name}.",
+                "input_data": [],
+                "output_data": [],
+                "involved_modules": [name],
+                "data_flow": [],
+                "key_operations": [],
+                "algorithm_ref": "",
+                "evidence_refs": list(by_name[name].get("evidence_refs", [])),
+                "confidence": by_name[name].get("confidence", 0.6),
+            }
+            for index, name in enumerate(orchestrator_order, start=1)
+        ]
+    return ordered_modules, pipeline_steps
 
 
 def build_code_overview(

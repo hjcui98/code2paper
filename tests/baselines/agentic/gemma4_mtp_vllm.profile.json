@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "profile_name": "gemma4_mtp_vllm",
+  "provider": "openai",
+  "model": "gemma4-31b-nvfp4",
+  "response_mode": "prompt_only",
+  "deployment_expectations": {
+    "inference_mode": "mtp",
+    "tensor_parallel_size": 2,
+    "speculative_tokens": 1,
+    "draft_tensor_parallel_size": 2,
+    "mtp_assistant_model_name": "Gemma-4-31B-it-assistant",
+    "max_model_len": 131072
+  },
+  "security": {
+    "endpoint_omitted": true,
+    "credentials_omitted": true
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "captured_on": "2026-07-17",
+  "tracked_files_at_plan_baseline": 1103,
+  "pre_m0_status_counts": {
+    "changed_tracked": 67,
+    "untracked": 1065
+  },
+  "categories": {
+    "product_source": ["src/code2paper", "src/code2flow"],
+    "tests": ["tests"],
+    "design_and_docs": ["docs", "README.md"],
+    "generated_or_local_only": ["outputs", "output", "logs", "checkpoints", ".cache", "*.sqlite*"],
+    "datasets_or_external_backends": ["datasets", "paperbanana_single_shot"],
+    "coordination_metadata": [".agent-team", ".omo"]
+  },
+  "policy": "Only explicit product, test, documentation, and baseline paths may be staged. Generated outputs, secrets, caches, checkpoints, datasets, and coordination metadata remain excluded."
+}

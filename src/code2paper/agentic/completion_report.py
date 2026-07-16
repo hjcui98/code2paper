@@ -1,0 +1,170 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from code2paper.agentic.contracts import AgenticRunState
+from code2paper.agentic.readiness_io import artifact_exists, artifact_json, has_any_artifact
+
+
+class CompletionCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    passed: bool
+    deliverable: str
+    message: str = ""
+    artifact_keys: list[str] = Field(default_factory=list)
+
+
+class AgenticRunCompletionReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: str = "agentic-run-completion-report"
+    status: str
+    complete: bool
+    blocked_reason: str = ""
+    missing_deliverables: list[str] = Field(default_factory=list)
+    checks: list[CompletionCheck] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
+
+
+def build_run_completion_report(state: AgenticRunState) -> AgenticRunCompletionReport:
+    checks = [
+        _check_evidence_base(state),
+        _check_method_text(state),
+        _check_method_figure(state),
+        _check_validation(state),
+        _check_traceability(state),
+        _check_final_package(state),
+    ]
+    missing = [check.deliverable for check in checks if not check.passed]
+    complete = not missing and not state.blocked_reason
+    status = "blocked" if state.blocked_reason else "complete" if complete else "incomplete"
+    return AgenticRunCompletionReport(
+        status=status,
+        complete=complete,
+        blocked_reason=state.blocked_reason,
+        missing_deliverables=missing,
+        checks=checks,
+        recommended_actions=_recommended_actions(missing, state.blocked_reason),
+    )
+
+
+def write_run_completion_report(path: str | Path, report: AgenticRunCompletionReport) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return output
+
+
+def load_run_completion_report(path: str | Path) -> AgenticRunCompletionReport:
+    return AgenticRunCompletionReport.model_validate(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def _check_evidence_base(state: AgenticRunState) -> CompletionCheck:
+    required = ["evidence", "claims", "claim_verification"]
+    missing = [key for key in required if not artifact_exists(state, key)]
+    return CompletionCheck(
+        name="evidence_base",
+        passed=not missing,
+        deliverable="evidence_base",
+        message="Frozen evidence, claim map, and claim verification are present."
+        if not missing
+        else "Missing frozen evidence artifacts: " + ", ".join(missing),
+        artifact_keys=required,
+    )
+
+
+def _check_method_text(state: AgenticRunState) -> CompletionCheck:
+    has_text = has_any_artifact(state, "text_md", "text_clean_md", "text_tex", "text_clean_tex")
+    has_trace = artifact_exists(state, "text_claims")
+    return CompletionCheck(
+        name="method_text",
+        passed=has_text and has_trace,
+        deliverable="method_text",
+        message="Method text and paragraph-level claim/evidence trace are present."
+        if has_text and has_trace
+        else "Method text requires text_md/text_tex and text_claims.",
+        artifact_keys=["text_md", "text_clean_md", "text_tex", "text_clean_tex", "text_claims"],
+    )
+
+
+def _check_method_figure(state: AgenticRunState) -> CompletionCheck:
+    plan = artifact_json(state, "figure_plan")
+    has_trace = artifact_exists(state, "figure_plan_decision_trace")
+    passed = bool(plan) and bool(plan.get("hard_gate_passed")) and has_trace
+    return CompletionCheck(
+        name="method_figure",
+        passed=passed,
+        deliverable="method_figure",
+        message="Method figure plan is present, traceable, and hard-gate passed."
+        if passed
+        else "Method figure requires figure_plan hard_gate_passed=true and figure_plan_decision_trace.",
+        artifact_keys=["figure_plan", "figure_plan_decision_trace", "method_overview_png", "method_overview_meta"],
+    )
+
+
+def _check_validation(state: AgenticRunState) -> CompletionCheck:
+    validation = artifact_json(state, "validation_manifest")
+    passed = _status_passed(validation)
+    return CompletionCheck(
+        name="validation",
+        passed=passed,
+        deliverable="validation",
+        message="Validation manifest passed." if passed else "Validation manifest is missing or not passed.",
+        artifact_keys=["validation_manifest", "fidelity", "qa_claims", "qa_numbers", "qa_equations", "qa_terms", "qa_latex"],
+    )
+
+
+def _check_traceability(state: AgenticRunState) -> CompletionCheck:
+    ledger = artifact_json(state, "traceability_ledger")
+    audit = artifact_json(state, "agentic_invariant_audit")
+    readiness = artifact_json(state, "agentic_run_readiness_report")
+    passed = bool(ledger.get("hard_gate_passed")) and bool(audit.get("passed")) and bool(readiness.get("passed"))
+    return CompletionCheck(
+        name="traceability",
+        passed=passed,
+        deliverable="traceability",
+        message="Traceability ledger, invariant audit, and readiness report passed."
+        if passed
+        else "Traceability requires passing ledger, invariant audit, and readiness report.",
+        artifact_keys=["traceability_ledger", "agentic_invariant_audit", "agentic_run_readiness_report"],
+    )
+
+
+def _check_final_package(state: AgenticRunState) -> CompletionCheck:
+    has_final_tex = artifact_exists(state, "final_tex")
+    has_manifest = artifact_json(state, "finalize_manifest")
+    return CompletionCheck(
+        name="final_package",
+        passed=has_final_tex and bool(has_manifest),
+        deliverable="final_package",
+        message="Final TeX package and finalize manifest are present."
+        if has_final_tex and has_manifest
+        else "Final package requires final_tex and finalize_manifest.",
+        artifact_keys=["final_tex", "final_pdf", "finalize_manifest"],
+    )
+
+
+def _status_passed(payload: dict[str, object]) -> bool:
+    status = str(payload.get("status") or payload.get("overall_status") or "").strip().lower()
+    if status in {"success", "passed", "ok"}:
+        return True
+    return bool(payload.get("passed"))
+
+
+def _recommended_actions(missing: list[str], blocked_reason: str) -> list[str]:
+    if blocked_reason:
+        return ["inspect_blocked_reason_and_router_trace"]
+    actions = {
+        "evidence_base": "produce_frozen_code_evidence_and_claim_verification",
+        "method_text": "produce_evidence_backed_method_text",
+        "method_figure": "produce_evidence_backed_method_figure_plan",
+        "validation": "run_method_validation",
+        "traceability": "pass_traceability_and_invariant_readiness_gates",
+        "final_package": "assemble_final_method_package",
+    }
+    return [actions[item] for item in missing] or ["agentic_run_completion_ready"]

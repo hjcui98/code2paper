@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "baseline_id": "T007-fastgs",
+  "original_artifact_root": "/tmp/code2paper-agentic-real-T007",
+  "original_artifacts_available": false,
+  "status": "blocked_pending_artifact_reproduction",
+  "reason": "The ephemeral /tmp artifact directory no longer exists; secondary summaries are not substituted for primary artifacts.",
+  "preserved_external_records": {
+    "evidence": {
+      "path": ".agent-team/evidence/T007-external-real-llm-traceability-verifier.md",
+      "digest": "sha256:86c0676be8d858343d12d181b6a3f14d119a387a636c76433ec8bbec1e0da54e"
+    },
+    "handoff": {
+      "path": ".agent-team/handoffs/T007-external-real-llm-traceability-verifier.md",
+      "digest": "sha256:ce687a1457477f7cb6434c4a75a9be54a7377c954d2c7341bcd8e8639bdb51a7"
+    }
+  },
+  "required_reproduction_artifacts": [
+    "agentic_claim_verification.json",
+    "agentic_authoring_constraints.json",
+    "method_claim_map.json",
+    "agentic_traceability_ledger.json",
+    "agentic_invariant_audit.json",
+    "final_method_text"
+  ]
+}

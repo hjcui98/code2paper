@@ -59,6 +59,7 @@ def build_run_manifest(
     output_paths: dict[str, str | Path] | None = None,
     final_draft_path: str | Path | None = None,
     validator_reports: list[str] | None = None,
+    agentic_budgets: dict[str, int] | None = None,
 ) -> Code2PaperRunManifest:
     outputs = {
         name: ArtifactHash(path=str(path), hash=hash_file(path))
@@ -81,6 +82,7 @@ def build_run_manifest(
         phase_outputs=outputs,
         final_draft_hash=final_draft_hash,
         validator_reports=validator_reports or [],
+        agentic_budgets=agentic_budgets or {},
     )
 
 
@@ -121,4 +123,3 @@ def _is_ignored_path(path: Path) -> bool:
     if parts & ignored_dirs:
         return True
     return path.suffix in {".pyc", ".pyo", ".pt", ".pth", ".ckpt", ".bin"}
-

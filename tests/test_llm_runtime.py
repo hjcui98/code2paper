@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 from code2paper.export.run_manifest import hash_text
 from code2paper.llm.client import LLMClient, LLMRequest
+from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode
+from code2paper.llm.providers import has_provider_api_key
 from code2paper.llm.response_schemas import parse_structured_response
 from code2paper.schemas import (
     AnalysisNavigationPlan,
@@ -45,7 +47,12 @@ class LLMRuntimeTests(unittest.TestCase):
             captured["url"] = request.full_url
             captured["payload"] = json.loads(request.data.decode("utf-8"))
             captured["authorization"] = request.headers.get("Authorization")
-            return _FakeHTTPResponse({"choices": [{"message": {"content": '{"ok": true}'}}]})
+            return _FakeHTTPResponse(
+                {
+                    "choices": [{"message": {"content": '{"ok": true}'}, "finish_reason": "stop"}],
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 4},
+                }
+            )
 
         config = LLMConfig(provider=LLMProvider.OPENAI, model="gpt-test", max_output_tokens=100, cache=False)
         request = LLMRequest(
@@ -66,6 +73,44 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertEqual(captured["url"], "https://api.openai.com/v1/chat/completions")
         self.assertIn("json_schema", captured["payload"]["response_format"])
         self.assertEqual(captured["authorization"], "Bearer test-key")
+        self.assertEqual(response.response_mode, "native_json_schema")
+        self.assertEqual(response.finish_reason, "stop")
+        self.assertEqual(response.token_usage, {"prompt_tokens": 10, "completion_tokens": 4})
+
+    def test_openai_compatible_runtime_downgrades_to_json_object_mode(self) -> None:
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeHTTPResponse({"choices": [{"message": {"content": '{"ok": true}'}}]})
+
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", cache=False)
+        profile = LLMCapabilityProfile(response_mode=StructuredResponseMode.JSON_OBJECT)
+        request = LLMRequest(
+            prompt_template_id="unit",
+            prompt="Return JSON.",
+            input_payload={},
+            response_json_schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
+        )
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            response = LLMClient(config, capability_profile=profile).complete(request)
+
+        self.assertEqual(captured["payload"]["response_format"], {"type": "json_object"})
+        self.assertIn("Return JSON matching this schema", captured["payload"]["messages"][0]["content"])
+        self.assertEqual(response.response_mode, "json_object")
+
+    def test_loopback_openai_endpoint_allows_nonsecret_dummy_key(self) -> None:
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", cache=False)
+
+        with patch.dict(
+            os.environ,
+            {"CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8000/v1"},
+            clear=True,
+        ):
+            self.assertTrue(has_provider_api_key(config))
 
     def test_openai_compatible_runtime_retries_empty_content(self) -> None:
         calls = {"count": 0}

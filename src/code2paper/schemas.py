@@ -148,6 +148,11 @@ class AuthorModuleRole(StrictModel):
     importance: Importance = Importance.CORE
     is_novel: bool = False
     notes: str = ""
+    supporting_files: list[str] = Field(default_factory=list)
+    supporting_symbols: list[str] = Field(default_factory=list)
+    support_confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
+    caveats: list[str] = Field(default_factory=list)
+    risky_details: list[str] = Field(default_factory=list)
 
     @field_validator("path", "role")
     @classmethod
@@ -163,8 +168,14 @@ class AuthorPipelineStep(StrictModel):
     input: list[str] = Field(default_factory=list)
     output: list[str] = Field(default_factory=list)
     related_files: list[str] = Field(default_factory=list)
+    related_components: list[str] = Field(default_factory=list)
     highlight_level: HighlightLevel = HighlightLevel.MAIN
     omit_from_main_figure: bool = False
+    supporting_files: list[str] = Field(default_factory=list)
+    supporting_symbols: list[str] = Field(default_factory=list)
+    support_confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
+    caveats: list[str] = Field(default_factory=list)
+    risky_details: list[str] = Field(default_factory=list)
 
     @field_validator("name", "purpose")
     @classmethod
@@ -218,6 +229,38 @@ class AuthorPotentialMismatch(StrictModel):
         return value
 
 
+class AuthorKeyBuildingBlock(StrictModel):
+    """A named building block of the method as described by the author."""
+
+    name: str
+    role: str = ""
+    emphasis: str = "medium"
+    keep_name: bool = True
+
+    @field_validator("name")
+    @classmethod
+    def _required_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("name must not be empty")
+        return value
+
+    @field_validator("emphasis")
+    @classmethod
+    def _valid_emphasis(cls, value: str) -> str:
+        allowed = {"high", "medium", "low"}
+        if value.strip().lower() not in allowed:
+            raise ValueError(f"emphasis must be one of {sorted(allowed)}, got {value!r}")
+        return value.strip().lower()
+
+
+class AuthorScopeConstraints(StrictModel):
+    """Author-declared scope constraints that limit what the method section may claim."""
+
+    use_current_codebase_only: bool = False
+    avoid_readme_only_claims: bool = False
+    avoid_paper_only_novelty_claims: bool = False
+
+
 class AuthorMarkers(StrictModel):
     project_goal: str
     paper_method_goal: str = ""
@@ -233,6 +276,22 @@ class AuthorMarkers(StrictModel):
     design_intents: list[AuthorDesignIntent] = Field(default_factory=list)
     innovation_claims: list[AuthorInnovationClaim] = Field(default_factory=list)
     potential_mismatches: list[AuthorPotentialMismatch] = Field(default_factory=list)
+    key_building_blocks: list[AuthorKeyBuildingBlock] = Field(default_factory=list)
+    possible_distinguishing_points: list[str] = Field(default_factory=list)
+    scope_constraints: AuthorScopeConstraints = Field(default_factory=AuthorScopeConstraints)
+
+    @field_validator("method_mainline", mode="before")
+    @classmethod
+    def _normalize_method_mainline(cls, value: Any) -> str:
+        """Accept both str and list[str] for method_mainline.
+
+        When the author provides a list of steps (as in the FastGS YAML),
+        join them with newlines to produce a single string that downstream
+        consumers can use unchanged.
+        """
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return value
 
     @field_validator("project_goal")
     @classmethod
@@ -1031,6 +1090,11 @@ class LLMCallLog(StrictModel):
     schema_validation_passed: bool = False
     blocked_reason: str = ""
     cached: bool = False
+    response_mode: str = ""
+    finish_reason: str = ""
+    token_usage: dict[str, int] = Field(default_factory=dict)
+    parse_error: str = ""
+    repair_attempts: int = 0
     created_at: str = ""
 
     @field_validator("call_id")
@@ -1177,6 +1241,7 @@ class Code2PaperRunManifest(StrictModel):
     phase_outputs: dict[str, ArtifactHash] = Field(default_factory=dict)
     final_draft_hash: str = ""
     validator_reports: list[str] = Field(default_factory=list)
+    agentic_budgets: dict[str, int] = Field(default_factory=dict)
 
     @field_validator("run_id", "created_at", "project_root", "project_hash")
     @classmethod

@@ -195,16 +195,18 @@ class CodeAnalyzerAgent:
             detailed_analysis=json.dumps(detailed_analysis, ensure_ascii=False),
         )
 
-        try:
-            agent.reset()
-            response = agent.step(prompt)
-            result = extract_json(response.content)
-            if isinstance(result, dict):
-                return result, response.input_tokens, response.output_tokens
-            return None, response.input_tokens, response.output_tokens
-        except Exception as e:
-            log_agent_warning(self.name, f"LLM synthesis failed: {e}")
-            return None, 0, 0
+        last_error: Exception | None = None
+        for _attempt in range(3):
+            try:
+                agent.reset()
+                response = agent.step(prompt)
+                result = extract_json(response.content)
+                if isinstance(result, dict):
+                    return result, response.input_tokens, response.output_tokens
+            except Exception as exc:
+                last_error = exc
+        log_agent_warning(self.name, f"LLM synthesis failed: {last_error}")
+        return None, 0, 0
 
 
 def _build_empty_code_facts() -> Dict[str, Any]:

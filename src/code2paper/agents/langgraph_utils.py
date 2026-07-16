@@ -55,17 +55,35 @@ def extract_json(response: str) -> dict[str, Any]:
     match = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
     if match:
         text = match.group(1).strip()
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError:
-        start = text.find("{")
-        end = text.rfind("}")
-        if start == -1 or end <= start:
-            raise
-        parsed = json.loads(text[start : end + 1])
+    candidates = [text]
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        candidates.append(text[start : end + 1])
+    parsed = None
+    last_error: Exception | None = None
+    for candidate in candidates:
+        for attempt in (candidate, _repair_common_json(candidate)):
+            try:
+                parsed = json.loads(attempt)
+                break
+            except json.JSONDecodeError as exc:
+                last_error = exc
+        if parsed is not None:
+            break
+    if parsed is None:
+        raise last_error or ValueError("no JSON object found")
     if not isinstance(parsed, dict):
         raise ValueError("expected JSON object")
     return parsed
+
+
+def _repair_common_json(text: str) -> str:
+    repaired = text.replace("\u201c", '"').replace("\u201d", '"')
+    repaired = re.sub(r",(\s*[}\]])", r"\1", repaired)
+    # Insert the comma commonly omitted between a completed value and the
+    # following quoted property. Local schema validation remains authoritative.
+    return re.sub(r'([}\]"0-9])([ \t\r\n]+)("(?:[^"\\]|\\.)+"\s*:)', r"\1,\2\3", repaired)
 
 
 def load_prompt(path: str) -> str:
@@ -101,4 +119,3 @@ def _provider(value: str) -> LLMProvider:
     if lowered == "openai":
         return LLMProvider.OPENAI
     return LLMProvider.NONE
-
