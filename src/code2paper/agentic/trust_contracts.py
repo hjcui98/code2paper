@@ -52,6 +52,10 @@ class AuthoringInputProjection(TrustModel):
     writing_rules: list[str] = Field(default_factory=list)
     dropped_positive_fields: list[str] = Field(default_factory=list)
     source_digests: dict[str, str] = Field(default_factory=dict)
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    evidence_snapshot_id: str = ""
+    evidence_snapshot_digest: str = ""
     projection_digest: str
     hard_gate_passed: bool = True
 
@@ -112,6 +116,10 @@ class TextEvidenceValidationReport(TrustModel):
     status: Literal["passed", "failed", "blocked"]
     input_text_digest: str
     projection_digest: str
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    evidence_snapshot_id: str = ""
+    evidence_snapshot_digest: str = ""
     checked_factual_claims: int = 0
     supported_claims: int = 0
     caveated_claims: int = 0
@@ -139,6 +147,10 @@ class FinalTextTrace(TrustModel):
     input_text_digest: str
     projection_digest: str
     validation_report_digest: str
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    evidence_snapshot_id: str = ""
+    evidence_snapshot_digest: str = ""
     entries: list[TextTraceEntry] = Field(default_factory=list)
     hard_gate_passed: bool
     failures: list[str] = Field(default_factory=list)

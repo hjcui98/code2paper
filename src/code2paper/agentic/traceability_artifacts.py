@@ -39,6 +39,11 @@ def known_claim_ids(state: AgenticRunState) -> set[str]:
         for claim in as_list(artifact_json(state, "claim_verification").get("claims"))
         if isinstance(claim, dict)
     )
+    ids.update(
+        str(claim.get("claim_id") or "")
+        for claim in as_list(artifact_json(state, "atomic_claims_v2").get("claims"))
+        if isinstance(claim, dict)
+    )
     return {claim_id for claim_id in ids if claim_id}
 
 
@@ -53,10 +58,22 @@ def unsupported_claim_ids(state: AgenticRunState) -> set[str]:
         for claim in as_list(artifact_json(state, "claim_verification").get("claims"))
         if isinstance(claim, dict) and str(claim.get("support_status") or "") == "unsupported"
     )
+    unsupported.update(
+        str(claim.get("claim_id") or "")
+        for claim in as_list(artifact_json(state, "atomic_claims_v2").get("claims"))
+        if isinstance(claim, dict) and str(claim.get("verdict_status") or "") in {"unsupported", "unverified"}
+    )
     return {claim_id for claim_id in unsupported if claim_id}
 
 
 def known_evidence_ids(state: AgenticRunState) -> set[str]:
+    evidence_v2 = artifact_json(state, "evidence_snapshot_v2")
+    if evidence_v2:
+        return {
+            str(span.get("evidence_id") or "")
+            for span in as_list(evidence_v2.get("spans"))
+            if isinstance(span, dict) and span.get("status") == "valid" and str(span.get("evidence_id") or "")
+        }
     ids = collect_evidence_ids(artifact_json(state, "evidence"))
     ids.update(collect_evidence_ids(artifact_json(state, "claims")))
     return ids

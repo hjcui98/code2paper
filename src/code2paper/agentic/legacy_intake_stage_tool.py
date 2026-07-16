@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageStatus, StageToolResult
+from code2paper.agentic.repo_snapshot import build_repo_snapshot, load_repo_snapshot, write_repo_snapshot
 from code2paper.agentic.legacy_retrieval_focus import (
     analysis_repair_tasks_payload,
     apply_rescan_focus,
@@ -39,6 +40,24 @@ from code2paper.pipeline.stages.intake import run_phase1_intake
 
 def run_intake(state: AgenticRunState) -> StageToolResult:
     author_path = _require_author_markers(state)
+    current_snapshot = build_repo_snapshot(state.project_root)
+    existing_snapshot_path = state.artifacts.get("repo_snapshot", "")
+    if existing_snapshot_path and Path(existing_snapshot_path).exists():
+        frozen_snapshot = load_repo_snapshot(existing_snapshot_path)
+        if frozen_snapshot.project_tree_hash != current_snapshot.project_tree_hash:
+            return StageToolResult(
+                stage="intake",
+                status=StageStatus.BLOCKED,
+                artifacts={"repo_snapshot": existing_snapshot_path},
+                blocked_reason="source_drift",
+                summary="Repository changed after the run snapshot was frozen; start a new snapshot lineage.",
+            )
+        repo_snapshot = frozen_snapshot
+        snapshot_path = Path(existing_snapshot_path)
+    else:
+        repo_snapshot = current_snapshot
+        snapshot_path = artifact_dir(state.method_root, "01_input") / "repo_snapshot.json"
+        write_repo_snapshot(snapshot_path, repo_snapshot)
     llm_config = load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model)
     plan = build_agentic_retrieval_plan(author_markers_path=author_path, llm_config=llm_config)
     rescan_focus = rescan_focus_from_state(state)
@@ -125,6 +144,7 @@ def run_intake(state: AgenticRunState) -> StageToolResult:
     artifacts = _existing_paths(paths)
     artifacts.update(
         {
+            "repo_snapshot": str(snapshot_path),
             "retrieval_plan": str(plan_path),
             "symbol_index": str(symbol_index_path),
             "retrieval_coverage": str(coverage_path),
@@ -153,6 +173,7 @@ def run_intake(state: AgenticRunState) -> StageToolResult:
                     f"focused_paths={len(rescan_focus.get('priority_paths', [])) if rescan_focus else 0}"
                 ),
                 artifact_keys=[
+                    "repo_snapshot",
                     "retrieval_plan",
                     *(["rescan_focus"] if rescan_focus else []),
                     "symbol_index",

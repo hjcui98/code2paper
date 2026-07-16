@@ -88,14 +88,37 @@ def _check_orchestration_catalogs(state: AgenticRunState) -> ReadinessCheck:
 
 
 def _check_frozen_evidence_contract(state: AgenticRunState) -> ReadinessCheck:
+    formal_v2 = artifact_exists(state, "repo_snapshot")
     required = ["evidence", "claims", "claim_verification"]
+    if formal_v2:
+        required.extend(["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
     missing = [key for key in required if not artifact_json(state, key)]
+    problems: list[str] = []
+    if missing:
+        problems.append("missing or unreadable artifacts: " + ", ".join(missing))
+    if formal_v2 and not missing:
+        repo = artifact_json(state, "repo_snapshot")
+        evidence = artifact_json(state, "evidence_snapshot_v2")
+        atomic = artifact_json(state, "atomic_claims_v2")
+        freshness = artifact_json(state, "artifact_freshness")
+        if evidence.get("repo_snapshot_id") != repo.get("snapshot_id"):
+            problems.append("EvidenceSnapshotV2 repo_snapshot_id mismatch")
+        if evidence.get("project_tree_hash") != repo.get("project_tree_hash"):
+            problems.append("EvidenceSnapshotV2 project_tree_hash mismatch")
+        if atomic.get("evidence_snapshot_id") != evidence.get("evidence_snapshot_id"):
+            problems.append("AtomicClaimSetV2 evidence_snapshot_id mismatch")
+        if atomic.get("evidence_snapshot_digest") != evidence.get("content_digest"):
+            problems.append("AtomicClaimSetV2 evidence_snapshot_digest mismatch")
+        if freshness.get("status") != "passed" or freshness.get("source_drift"):
+            problems.append("artifact freshness did not pass or source drift was detected")
     return ReadinessCheck(
         name="frozen_evidence_contract",
-        passed=not missing,
-        message="Frozen code evidence, claim map, and claim verification are present."
-        if not missing
-        else "Missing or unreadable frozen evidence artifacts: " + ", ".join(missing),
+        passed=not problems,
+        message="Frozen repo snapshot, exact EvidenceSnapshotV2, verified AtomicClaimSetV2, and freshness gate are consistent."
+        if formal_v2 and not problems
+        else "Frozen code evidence, claim map, and claim verification are present."
+        if not problems
+        else "; ".join(problems),
         artifact_keys=required,
     )
 

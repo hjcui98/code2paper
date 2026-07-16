@@ -5,6 +5,7 @@ from typing import Any
 import json
 
 from code2paper.agentic.authoring_projection import load_authoring_projection
+from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.final_text_claims import extract_final_text_claims, load_final_text_claims, write_final_text_claims
 from code2paper.agentic.text_evidence_validator import (
@@ -57,10 +58,19 @@ def text_evidence_validator_node(
     semantic_verifier: SemanticVerifier | None = None,
 ) -> dict[str, Any]:
     state = AgenticRunState.model_validate(raw_state)
+    if state.artifacts.get("repo_snapshot") and not state.artifacts.get("evidence_snapshot_v2"):
+        return state.model_copy(
+            update={"blocked_reason": "formal_evidence_v2_required_for_text_validation", "next_node": "blocked"}
+        ).model_dump(mode="json")
     try:
         final_claims = load_final_text_claims(state.artifacts["final_text_claims"])
         projection = load_authoring_projection(state.artifacts["authoring_projection"])
         raw_evidence = RawEvidencePack.model_validate_json(Path(state.artifacts["evidence_raw"]).read_text(encoding="utf-8"))
+        evidence_snapshot_v2 = (
+            load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"])
+            if state.artifacts.get("evidence_snapshot_v2")
+            else None
+        )
     except (KeyError, OSError, ValueError):
         return state.model_copy(
             update={"blocked_reason": "text_evidence_validator_inputs_missing", "next_node": "blocked"}
@@ -71,6 +81,7 @@ def text_evidence_validator_node(
         final_claims=final_claims,
         projection=projection,
         raw_evidence=raw_evidence,
+        evidence_snapshot_v2=evidence_snapshot_v2,
         semantic_verifier=semantic_verifier,
         max_semantic_verifier_calls=verifier_calls_remaining,
         require_semantic_verifier=state.max_semantic_verifier_calls > 0,

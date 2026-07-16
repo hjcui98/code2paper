@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
+from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
 from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
 from code2paper.core.schemas import (
     AuthorLogicMapping,
@@ -26,21 +28,35 @@ def build_authoring_projection(
     claim_map: ClaimEvidenceMap,
     verification: ClaimVerificationReport,
     raw_evidence: RawEvidencePack | None = None,
+    evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
+    atomic_claims_v2: AtomicClaimSetV2 | None = None,
 ) -> AuthoringInputProjection:
     claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
     contract_by_id = {contract.claim_id: contract for contract in method_evidence.claim_contracts}
     projected: list[ProjectedClaim] = []
     forbidden: list[ForbiddenClaim] = []
     known_direct_evidence = _known_direct_evidence(method_evidence)
+    v2_span_by_id = {
+        span.evidence_id: span
+        for span in (evidence_snapshot_v2.spans if evidence_snapshot_v2 else [])
+        if span.status == "valid"
+    }
+    v2_claim_by_id = {claim.claim_id: claim for claim in (atomic_claims_v2.claims if atomic_claims_v2 else [])}
     for verified in verification.claims:
         source_claim = claim_by_id.get(verified.claim_id)
         contract = contract_by_id.get(verified.claim_id)
         direct_ids = [item for item in _dedupe(verified.evidence_ids) if item in known_direct_evidence]
+        if evidence_snapshot_v2 is not None:
+            direct_ids = [item for item in direct_ids if item in v2_span_by_id]
         status = _enum_value(verified.support_status)
+        v2_claim = v2_claim_by_id.get(verified.claim_id)
+        if atomic_claims_v2 is not None and (v2_claim is None or v2_claim.verdict_status not in {"supported", "partial"}):
+            status = SupportStatus.UNSUPPORTED.value
         evidence_semantically_related = _direct_evidence_semantically_related(
             verified.claim_text,
             direct_ids,
             raw_evidence,
+            evidence_snapshot_v2=evidence_snapshot_v2,
         )
         if (
             status not in {SupportStatus.SUPPORTED.value, SupportStatus.PARTIAL.value}
@@ -101,6 +117,10 @@ def build_authoring_projection(
         "claim_map": _digest(claim_map.model_dump(mode="json")),
         "claim_verification": _digest(verification.model_dump(mode="json")),
     }
+    if evidence_snapshot_v2 is not None:
+        source_digests["evidence_snapshot_v2"] = evidence_snapshot_v2.content_digest
+    if atomic_claims_v2 is not None:
+        source_digests["atomic_claims_v2"] = atomic_claims_v2.content_digest
     payload = {
         "project_id": method_evidence.project_id,
         "method_name": method_evidence.method_name,
@@ -121,6 +141,10 @@ def build_authoring_projection(
         ],
         "dropped_positive_fields": _dedupe(dropped),
         "source_digests": source_digests,
+        "repo_snapshot_id": evidence_snapshot_v2.repo_snapshot_id if evidence_snapshot_v2 else "",
+        "project_tree_hash": evidence_snapshot_v2.project_tree_hash if evidence_snapshot_v2 else "",
+        "evidence_snapshot_id": evidence_snapshot_v2.evidence_snapshot_id if evidence_snapshot_v2 else "",
+        "evidence_snapshot_digest": evidence_snapshot_v2.content_digest if evidence_snapshot_v2 else "",
         "hard_gate_passed": bool(projected),
     }
     return AuthoringInputProjection(**payload, projection_digest=_digest(payload))
@@ -305,7 +329,18 @@ def _direct_evidence_semantically_related(
     claim_text: str,
     direct_ids: list[str],
     raw_evidence: RawEvidencePack | None,
+    evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
 ) -> bool:
+    if evidence_snapshot_v2 is not None:
+        span_by_id = {span.evidence_id: span for span in evidence_snapshot_v2.spans if span.status == "valid"}
+        evidence_text = " ".join(span_by_id[item].exact_excerpt for item in direct_ids if item in span_by_id)
+        claim_tokens = _semantic_tokens(claim_text)
+        evidence_tokens = _semantic_tokens(evidence_text)
+        overlap = claim_tokens & evidence_tokens
+        return bool(claim_tokens) and (
+            len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45
+            or len(overlap) >= 2
+        )
     if raw_evidence is None:
         return True
     evidence_by_id = {item.evidence_id: item for item in raw_evidence.evidence_items}

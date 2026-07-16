@@ -20,6 +20,11 @@ class EvidenceTraceabilityLedger(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mode: str = "agentic-evidence-traceability-ledger"
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    evidence_snapshot_id: str = ""
+    evidence_snapshot_digest: str = ""
+    freshness_status: str = ""
     known_evidence_ids: list[str] = Field(default_factory=list)
     known_claim_ids: list[str] = Field(default_factory=list)
     excluded_claim_ids: list[str] = Field(default_factory=list)

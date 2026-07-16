@@ -107,6 +107,16 @@ decision/audit summaries are under `<out-root>/artifacts/10_run/`. Live model
 tests are opt-in (`CODE2PAPER_RUN_LIVE_LLM=1`) so the default suite never
 contacts a service unexpectedly.
 
+Every formal agentic run freezes `repo_snapshot.json` before analysis and
+emits `evidence_snapshot_v2.json`, `atomic_claims_v2.json`, and
+`agentic_artifact_freshness_report.json`. Evidence V2 stores the exact source
+excerpt plus file/tree digests; the authoring projection, final-text validator,
+traceability ledger, readiness report, and completion report are bound to that
+same snapshot. If source code changes while a run is in progress, continuation
+blocks with `source_drift` before model or response-cache reuse. Evidence repair
+creates a versioned child snapshot with `parent_evidence_snapshot_id` instead
+of editing the frozen parent in place.
+
 ## Tests
 
 ```bash

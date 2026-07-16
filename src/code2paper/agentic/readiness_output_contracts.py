@@ -52,6 +52,11 @@ def check_authoring_context_contract(state: AgenticRunState) -> ReadinessCheck:
         projection_digest = projection.get("projection_digest")
         if not projection_digest or validation.get("projection_digest") != projection_digest or trace.get("projection_digest") != projection_digest:
             problems.append("authoring projection digest is stale or mismatched")
+        identity_fields = ("repo_snapshot_id", "project_tree_hash", "evidence_snapshot_id", "evidence_snapshot_digest")
+        for field in identity_fields:
+            expected = projection.get(field)
+            if expected and (validation.get(field) != expected or trace.get(field) != expected):
+                problems.append(f"final text trust artifact {field} is stale or mismatched")
     return ReadinessCheck(
         name="authoring_context_contract",
         passed=not problems,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,6 +31,12 @@ class ClaimVerificationReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mode: str = "claim-verification"
+    schema_version: str = "2.0"
+    producer_version: str = "code2paper-agentic-p1"
+    repo_snapshot_id: str = ""
+    evidence_snapshot_id: str = ""
+    evidence_snapshot_digest: str = ""
+    verifier_input_digest: str = ""
     checked_claims: int = 0
     supported_claims: int = 0
     partial_claims: int = 0
@@ -100,6 +107,30 @@ def write_claim_verification_report(path: str | Path, report: ClaimVerificationR
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     return output
+
+
+def bind_claim_verification_to_evidence_v2(
+    report: ClaimVerificationReport,
+    *,
+    repo_snapshot_id: str,
+    evidence_snapshot_id: str,
+    evidence_snapshot_digest: str,
+) -> ClaimVerificationReport:
+    payload = {
+        "repo_snapshot_id": repo_snapshot_id,
+        "evidence_snapshot_id": evidence_snapshot_id,
+        "evidence_snapshot_digest": evidence_snapshot_digest,
+        "claims": [claim.model_dump(mode="json") for claim in report.claims],
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return report.model_copy(
+        update={
+            "repo_snapshot_id": repo_snapshot_id,
+            "evidence_snapshot_id": evidence_snapshot_id,
+            "evidence_snapshot_digest": evidence_snapshot_digest,
+            "verifier_input_digest": "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        }
+    )
 
 
 def _claim_action(

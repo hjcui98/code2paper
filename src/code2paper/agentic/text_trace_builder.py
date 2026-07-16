@@ -28,6 +28,14 @@ def build_final_text_trace(
         failures.append("validator_text_digest_mismatch")
     if validation.projection_digest != projection.projection_digest:
         failures.append("validator_projection_digest_mismatch")
+    if validation.repo_snapshot_id != projection.repo_snapshot_id:
+        failures.append("validator_repo_snapshot_id_mismatch")
+    if validation.project_tree_hash != projection.project_tree_hash:
+        failures.append("validator_project_tree_hash_mismatch")
+    if validation.evidence_snapshot_id != projection.evidence_snapshot_id:
+        failures.append("validator_evidence_snapshot_id_mismatch")
+    if validation.evidence_snapshot_digest != projection.evidence_snapshot_digest:
+        failures.append("validator_evidence_snapshot_digest_mismatch")
     claim_by_id = {claim.atomic_claim_id: claim for claim in final_claims.atomic_claims}
     entries: list[TextTraceEntry] = []
     for verdict in validation.verdicts:
@@ -60,6 +68,10 @@ def build_final_text_trace(
         input_text_digest=final_claims.input_text_digest,
         projection_digest=projection.projection_digest,
         validation_report_digest=report_digest(validation),
+        repo_snapshot_id=projection.repo_snapshot_id,
+        project_tree_hash=projection.project_tree_hash,
+        evidence_snapshot_id=projection.evidence_snapshot_id,
+        evidence_snapshot_digest=projection.evidence_snapshot_digest,
         entries=entries,
         hard_gate_passed=not failures,
         failures=list(dict.fromkeys(failures)),

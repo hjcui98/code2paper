@@ -8,6 +8,8 @@ from code2paper.agentic.authoring_context import build_authoring_context, write_
 from code2paper.agentic.authoring_plan import write_authoring_plan
 from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
 from code2paper.agentic.authoring_projection import build_authoring_projection, write_authoring_projection
+from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
+from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.claim_verifier import build_claim_verification_report, load_claim_verification_report, write_claim_verification_report
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.decision_core import DecisionProvider, write_decision_trace
@@ -34,6 +36,15 @@ def evidence_sufficiency_node(*, decision_provider: DecisionProvider | None = No
             return state.model_copy(
                 update={
                     "blocked_reason": state.blocked_reason or "frozen_evidence_required_for_evidence_sufficiency",
+                    "next_node": "blocked",
+                }
+            ).model_dump(mode="json")
+        if state.artifacts.get("repo_snapshot") and not {
+            "evidence_snapshot_v2", "atomic_claims_v2"
+        }.issubset(set(state.artifacts)):
+            return state.model_copy(
+                update={
+                    "blocked_reason": "formal_evidence_v2_required_for_evidence_sufficiency",
                     "next_node": "blocked",
                 }
             ).model_dump(mode="json")
@@ -108,6 +119,15 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
                     "next_node": "blocked",
                 }
             ).model_dump(mode="json")
+        if state.artifacts.get("repo_snapshot") and not {
+            "evidence_snapshot_v2", "atomic_claims_v2"
+        }.issubset(set(state.artifacts)):
+            return state.model_copy(
+                update={
+                    "blocked_reason": "formal_evidence_v2_required_for_authoring_planner",
+                    "next_node": "blocked",
+                }
+            ).model_dump(mode="json")
         method_evidence = MethodEvidence.model_validate(read_json(method_output(state.method_root, "evidence")))
         claim_map = ClaimEvidenceMap.model_validate(read_json(method_output(state.method_root, "claims")))
         verification_path = claim_verification_path(state)
@@ -140,6 +160,16 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
             raw_evidence=(
                 RawEvidencePack.model_validate(read_json(state.artifacts["evidence_raw"]))
                 if state.artifacts.get("evidence_raw")
+                else None
+            ),
+            evidence_snapshot_v2=(
+                load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"])
+                if state.artifacts.get("evidence_snapshot_v2")
+                else None
+            ),
+            atomic_claims_v2=(
+                load_atomic_claims_v2(state.artifacts["atomic_claims_v2"])
+                if state.artifacts.get("atomic_claims_v2")
                 else None
             ),
         )

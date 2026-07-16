@@ -4,8 +4,19 @@ import json
 from pathlib import Path
 from typing import Any
 
-from code2paper.agentic.claim_verifier import build_claim_verification_report, write_claim_verification_report
+from code2paper.agentic.claim_verifier import (
+    bind_claim_verification_to_evidence_v2,
+    build_claim_verification_report,
+    write_claim_verification_report,
+)
+from code2paper.agentic.atomic_claim_v2 import convert_claims_to_v2, verify_atomic_claims_v2, write_atomic_claims_v2
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageStatus, StageToolResult
+from code2paper.agentic.evidence_v2 import (
+    build_evidence_snapshot_v2,
+    load_evidence_snapshot_v2,
+    write_evidence_snapshot_v2,
+)
+from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.core.output_names import artifact_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, CodeMethodAnalysis, MethodEvidence, RawEvidencePack
 from code2paper.llm.providers import load_llm_config_from_env
@@ -33,8 +44,55 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
     verification = build_claim_verification_report(method_evidence, claim_map)
     verification_path = artifact_dir(state.method_root, "04_evidence") / "agentic_claim_verification.json"
     write_claim_verification_report(verification_path, verification)
+    repo_snapshot_path = state.artifacts.get("repo_snapshot", "")
+    if not repo_snapshot_path or not Path(repo_snapshot_path).exists():
+        return StageToolResult(
+            stage="evidence",
+            status=StageStatus.BLOCKED,
+            blocked_reason="repo_snapshot_required_for_evidence_v2",
+            summary="Evidence V2 requires a frozen repository snapshot.",
+        )
+    repo_snapshot = load_repo_snapshot(repo_snapshot_path)
+    parent_path = state.artifacts.get("evidence_snapshot_v2", "") or state.artifacts.get(
+        "parent_evidence_snapshot_v2", ""
+    )
+    parent = (
+        load_evidence_snapshot_v2(parent_path)
+        if parent_path and Path(parent_path).exists()
+        else None
+    )
+    evidence_v2 = build_evidence_snapshot_v2(
+        raw_pack,
+        repo_snapshot,
+        parent=parent,
+        repair_reason="bounded_evidence_repair" if parent else "initial_v1_compatibility_conversion",
+    )
+    verification = bind_claim_verification_to_evidence_v2(
+        verification,
+        repo_snapshot_id=repo_snapshot.snapshot_id,
+        evidence_snapshot_id=evidence_v2.evidence_snapshot_id,
+        evidence_snapshot_digest=evidence_v2.content_digest,
+    )
+    write_claim_verification_report(verification_path, verification)
+    version_suffix = f"_r{evidence_v2.snapshot_version}" if parent else ""
+    evidence_v2_path = artifact_dir(state.method_root, "04_evidence") / f"evidence_snapshot_v2{version_suffix}.json"
+    write_evidence_snapshot_v2(evidence_v2_path, evidence_v2)
+    atomic_claims_v2_unverified = convert_claims_to_v2(claim_map, verification, evidence_v2)
+    atomic_claims_v2_unverified_path = (
+        artifact_dir(state.method_root, "04_evidence")
+        / f"atomic_claims_v2_unverified{version_suffix}.json"
+    )
+    write_atomic_claims_v2(atomic_claims_v2_unverified_path, atomic_claims_v2_unverified)
+    atomic_claims_v2 = verify_atomic_claims_v2(atomic_claims_v2_unverified, evidence_v2)
+    atomic_claims_v2_path = artifact_dir(state.method_root, "04_evidence") / f"atomic_claims_v2{version_suffix}.json"
+    write_atomic_claims_v2(atomic_claims_v2_path, atomic_claims_v2)
     artifacts = _existing_paths(paths)
     artifacts["claim_verification"] = str(verification_path)
+    artifacts["evidence_snapshot_v2"] = str(evidence_v2_path)
+    artifacts["atomic_claims_v2"] = str(atomic_claims_v2_path)
+    artifacts["atomic_claims_v2_unverified"] = str(atomic_claims_v2_unverified_path)
+    if parent_path:
+        artifacts["previous_evidence_snapshot_v2"] = str(parent_path)
     decision = "claims_verified" if verification.hard_gate_passed else "claims_need_caveats_or_more_evidence"
     return StageToolResult(
         stage="evidence",
@@ -46,7 +104,7 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                 node="claim_verifier",
                 decision=decision,
                 rationale="; ".join(verification.recommended_actions),
-                artifact_keys=["claim_verification", "claims", "evidence"],
+                artifact_keys=["claim_verification", "evidence_snapshot_v2", "atomic_claims_v2", "claims", "evidence"],
             )
         ],
         metrics={

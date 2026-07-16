@@ -11,6 +11,9 @@ from code2paper.agentic.architecture_manifest import (
     build_agentic_architecture_manifest,
     write_agentic_architecture_manifest,
 )
+from code2paper.agentic.artifact_freshness import check_artifact_freshness, write_artifact_freshness_report
+from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
+from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.agentic.completion_report import build_run_completion_report, write_run_completion_report
 from code2paper.agentic.contract_audit import build_agentic_contract_audit, write_agentic_contract_audit
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
@@ -90,6 +93,7 @@ def run_agentic_code2paper(
         app = build_code2paper_graph(active_registry, decision_provider=provider, semantic_verifier=verifier)
     final_payload = _invoke_graph(app, state.model_dump(mode="json"))
     final_state = AgenticRunState.model_validate(final_payload)
+    final_state = _persist_freshness_report(final_state)
     policy = build_agentic_decision_policy()
     policy_path = artifact_dir(final_state.method_root, "10_run") / "agentic_decision_policy.json"
     write_agentic_decision_policy(policy_path, policy)
@@ -271,11 +275,15 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
             "evidence_repair_focus",
             "analysis_repair_tasks",
         ),
-        "evidence": _artifact_values(state, "evidence_raw", "alignment", "analysis", "facts"),
-        "grounding": _artifact_values(state, "evidence", "claims"),
+        "evidence": _artifact_values(
+            state, "repo_snapshot", "evidence_raw", "alignment", "analysis", "facts", "evidence_snapshot_v2"
+        ),
+        "grounding": _artifact_values(state, "evidence_snapshot_v2", "evidence", "atomic_claims_v2", "claims"),
         "evidence_sufficiency": _artifact_values(
             state,
             "evidence",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
             "claims",
             "claim_verification",
             "evidence_sufficiency_report",
@@ -284,6 +292,9 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
         "authoring": _artifact_values(
             state,
             "evidence",
+            "repo_snapshot",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
             "claims",
             "claim_verification",
             "authoring_context",
@@ -291,10 +302,26 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
             "authoring_plan_decision_trace",
             "grounding_context",
         ),
-        "validation": _artifact_values(state, "text_clean_md", "text_md", "evidence", "claims"),
+        "validation": _artifact_values(
+            state,
+            "text_clean_md",
+            "text_md",
+            "repo_snapshot",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
+            "authoring_projection",
+            "authoring_plan",
+            "final_text_claims",
+            "text_evidence_validation",
+            "final_text_trace",
+        ),
         "figure_planner": _artifact_values(
             state,
             "evidence",
+            "repo_snapshot",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
+            "artifact_freshness",
             "claims",
             "claim_verification",
             "figure_plan",
@@ -302,6 +329,10 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
         ),
         "invariant_audit": _artifact_values(
             state,
+            "repo_snapshot",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
+            "artifact_freshness",
             "evidence",
             "claims",
             "claim_verification",
@@ -311,6 +342,10 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
         ),
         "traceability_ledger": _artifact_values(
             state,
+            "repo_snapshot",
+            "evidence_snapshot_v2",
+            "atomic_claims_v2",
+            "artifact_freshness",
             "evidence",
             "claims",
             "claim_verification",
@@ -447,6 +482,29 @@ def _default_decision_provider(state: AgenticRunState) -> DecisionProvider | Non
         return None
     config = load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model)
     return build_llm_decision_provider(config)
+
+
+def _persist_freshness_report(state: AgenticRunState) -> AgenticRunState:
+    repo_path = state.artifacts.get("repo_snapshot", "")
+    evidence_path = state.artifacts.get("evidence_snapshot_v2", "")
+    if not repo_path or not evidence_path or not Path(repo_path).exists() or not Path(evidence_path).exists():
+        return state
+    report = check_artifact_freshness(
+        repo_snapshot=load_repo_snapshot(repo_path),
+        evidence_snapshot=load_evidence_snapshot_v2(evidence_path),
+        artifacts=state.artifacts,
+    )
+    path = artifact_dir(state.method_root, "10_run") / "agentic_artifact_freshness_report.json"
+    write_artifact_freshness_report(path, report)
+    blocked_reason = state.blocked_reason
+    if report.status == "failed" and (not blocked_reason or report.source_drift):
+        blocked_reason = "source_drift" if report.source_drift else "stale_artifact"
+    return state.model_copy(
+        update={
+            "artifacts": {**state.artifacts, "artifact_freshness": str(path)},
+            "blocked_reason": blocked_reason,
+        }
+    )
 
 
 def _default_semantic_verifier(state: AgenticRunState):

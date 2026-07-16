@@ -40,6 +40,17 @@ def build_traceability_ledger(state: AgenticRunState) -> EvidenceTraceabilityLed
     missing_evidence = sum(1 for entry in checked_entries if _has_missing_evidence_problem(entry))
     unknown_claims = sum(1 for entry in checked_entries if _has_unknown_claim_problem(entry))
     forbidden_claims = sum(1 for entry in checked_entries if _has_forbidden_claim_problem(entry))
+    repo_snapshot = artifact_json(state, "repo_snapshot")
+    evidence_snapshot = artifact_json(state, "evidence_snapshot_v2")
+    freshness = artifact_json(state, "artifact_freshness")
+    formal_v2 = bool(repo_snapshot)
+    source_integrity_passed = not formal_v2 or (
+        bool(evidence_snapshot)
+        and evidence_snapshot.get("repo_snapshot_id") == repo_snapshot.get("snapshot_id")
+        and evidence_snapshot.get("project_tree_hash") == repo_snapshot.get("project_tree_hash")
+        and freshness.get("status") == "passed"
+        and not freshness.get("source_drift")
+    )
     actions = _recommended_actions(
         entries=checked_entries,
         missing_evidence=missing_evidence,
@@ -47,6 +58,11 @@ def build_traceability_ledger(state: AgenticRunState) -> EvidenceTraceabilityLed
         forbidden_claims=forbidden_claims,
     )
     return EvidenceTraceabilityLedger(
+        repo_snapshot_id=str(repo_snapshot.get("snapshot_id") or ""),
+        project_tree_hash=str(repo_snapshot.get("project_tree_hash") or ""),
+        evidence_snapshot_id=str(evidence_snapshot.get("evidence_snapshot_id") or ""),
+        evidence_snapshot_digest=str(evidence_snapshot.get("content_digest") or ""),
+        freshness_status=str(freshness.get("status") or ""),
         known_evidence_ids=sorted(known_evidence_ids),
         known_claim_ids=sorted(known_claim_ids),
         excluded_claim_ids=sorted(excluded_claim_ids),
@@ -55,7 +71,12 @@ def build_traceability_ledger(state: AgenticRunState) -> EvidenceTraceabilityLed
         entries_with_missing_evidence=missing_evidence,
         entries_with_unknown_claims=unknown_claims,
         entries_with_forbidden_claims=forbidden_claims,
-        hard_gate_passed=missing_evidence == 0 and unknown_claims == 0 and forbidden_claims == 0,
+        hard_gate_passed=(
+            missing_evidence == 0
+            and unknown_claims == 0
+            and forbidden_claims == 0
+            and source_integrity_passed
+        ),
         recommended_actions=actions,
     )
 

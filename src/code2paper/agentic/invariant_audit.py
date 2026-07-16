@@ -36,6 +36,7 @@ class AgenticInvariantAudit(BaseModel):
 
 def build_invariant_audit(state: AgenticRunState) -> AgenticInvariantAudit:
     checks = [
+        _check_source_integrity(state),
         _check_frozen_evidence_present(state),
         _check_claim_verification(state),
         _check_evidence_sufficiency(state),
@@ -71,6 +72,8 @@ def load_invariant_audit(path: str | Path) -> AgenticInvariantAudit:
 
 def _check_frozen_evidence_present(state: AgenticRunState) -> InvariantCheck:
     required = ["evidence", "claims", "claim_verification"]
+    if _artifact_exists(state, "repo_snapshot"):
+        required = ["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", *required]
     missing = [key for key in required if not _artifact_exists(state, key)]
     return InvariantCheck(
         name="frozen_evidence_gate",
@@ -79,6 +82,43 @@ def _check_frozen_evidence_present(state: AgenticRunState) -> InvariantCheck:
         if not missing
         else "Missing frozen evidence artifacts: " + ", ".join(missing),
         artifact_keys=required,
+    )
+
+
+def _check_source_integrity(state: AgenticRunState) -> InvariantCheck:
+    freshness = _artifact_json(state, "artifact_freshness")
+    has_v2 = _artifact_exists(state, "evidence_snapshot_v2")
+    if not has_v2:
+        return InvariantCheck(
+            name="source_integrity_gate",
+            passed=not _artifact_exists(state, "repo_snapshot"),
+            blocking=_artifact_exists(state, "repo_snapshot"),
+            message=(
+                "Legacy compatibility state has no RepoSnapshot; source integrity is advisory only."
+                if not _artifact_exists(state, "repo_snapshot")
+                else "Formal agentic trust requires RepoSnapshot and EvidenceSnapshotV2 freshness."
+            ),
+            artifact_keys=["repo_snapshot", "evidence_snapshot_v2", "artifact_freshness"],
+        )
+    if not freshness:
+        return InvariantCheck(
+            name="source_integrity_gate",
+            passed=False,
+            message="EvidenceSnapshotV2 exists but artifact freshness report is missing.",
+            artifact_keys=["repo_snapshot", "evidence_snapshot_v2", "artifact_freshness"],
+        )
+    failures: list[str] = []
+    if freshness.get("status") != "passed":
+        failures.append("freshness_status_not_passed")
+    if freshness.get("source_drift"):
+        failures.append("source_drift")
+    failures.extend(str(item) for item in freshness.get("evidence_round_trip_failures", []) if str(item))
+    return InvariantCheck(
+        name="source_integrity_gate",
+        passed=not failures,
+        message="Repo snapshot, exact evidence excerpts, and downstream freshness are current."
+        if not failures else "; ".join(failures),
+        artifact_keys=["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"],
     )
 
 

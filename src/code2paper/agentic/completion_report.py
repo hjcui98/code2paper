@@ -66,14 +66,20 @@ def load_run_completion_report(path: str | Path) -> AgenticRunCompletionReport:
 
 def _check_evidence_base(state: AgenticRunState) -> CompletionCheck:
     required = ["evidence", "claims", "claim_verification"]
+    if artifact_exists(state, "repo_snapshot"):
+        required.extend(["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
     missing = [key for key in required if not artifact_exists(state, key)]
+    freshness = artifact_json(state, "artifact_freshness")
+    stale = "artifact_freshness" in required and (
+        freshness.get("status") != "passed" or bool(freshness.get("source_drift"))
+    )
     return CompletionCheck(
         name="evidence_base",
-        passed=not missing,
+        passed=not missing and not stale,
         deliverable="evidence_base",
-        message="Frozen evidence, claim map, and claim verification are present."
-        if not missing
-        else "Missing frozen evidence artifacts: " + ", ".join(missing),
+        message="Frozen evidence, claim map, claim verification, and source freshness are present."
+        if not missing and not stale
+        else "Evidence base is missing or stale: " + ", ".join(missing or ["artifact_freshness"]),
         artifact_keys=required,
     )
 

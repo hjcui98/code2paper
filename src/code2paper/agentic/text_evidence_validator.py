@@ -13,6 +13,7 @@ from code2paper.agentic.trust_contracts import (
     TextClaimEvidenceVerdict,
     TextEvidenceValidationReport,
 )
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
 from code2paper.core.schemas import RawEvidencePack, SourceType
 
 
@@ -25,11 +26,17 @@ def validate_text_evidence(
     final_claims: FinalTextClaims,
     projection: AuthoringInputProjection,
     raw_evidence: RawEvidencePack,
+    evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
     semantic_verifier: SemanticVerifier | None = None,
     max_semantic_verifier_calls: int = 0,
     require_semantic_verifier: bool | None = None,
 ) -> TextEvidenceValidationReport:
     evidence_by_id = {item.evidence_id: item for item in raw_evidence.evidence_items}
+    v2_by_id = {
+        span.evidence_id: span
+        for span in (evidence_snapshot_v2.spans if evidence_snapshot_v2 else [])
+        if span.status == "valid"
+    }
     projection_by_id = {claim.claim_id: claim for claim in projection.projected_claims}
     verdicts: list[TextClaimEvidenceVerdict] = []
     verifier_calls = 0
@@ -39,14 +46,20 @@ def validate_text_evidence(
         if not matches:
             failures.append("no_semantically_matching_projected_claim")
         direct_ids = _dedupe([evidence_id for item in matches for evidence_id in item.direct_evidence_ids])
-        missing_ids = [item for item in direct_ids if item not in evidence_by_id]
+        missing_ids = [
+            item for item in direct_ids
+            if item not in (v2_by_id if evidence_snapshot_v2 is not None else evidence_by_id)
+        ]
         if missing_ids or not direct_ids:
             failures.append("direct_evidence_missing")
-        evidence_text = "\n".join(
-            _evidence_text(evidence_by_id[item], project_root=raw_evidence.project_root)
-            for item in direct_ids
-            if item in evidence_by_id
-        )
+        if evidence_snapshot_v2 is not None:
+            evidence_text = "\n".join(v2_by_id[item].exact_excerpt for item in direct_ids if item in v2_by_id)
+        else:
+            evidence_text = "\n".join(
+                _evidence_text(evidence_by_id[item], project_root=raw_evidence.project_root)
+                for item in direct_ids
+                if item in evidence_by_id
+            )
         if matches and not _relevant_to_evidence(claim.text, evidence_text, matches):
             failures.append("direct_evidence_semantically_unrelated")
         required_qualifiers = _dedupe([qualifier for item in matches for qualifier in item.required_qualifiers])
@@ -58,7 +71,7 @@ def validate_text_evidence(
             failures.append("numeric_token_not_in_direct_evidence")
         if "formula" in claim.high_risk_markers and not _formula_tokens_supported(claim.text, evidence_text, projection):
             failures.append("formula_not_in_direct_evidence")
-        if direct_ids and any(
+        if evidence_snapshot_v2 is None and direct_ids and any(
             evidence_by_id[item].source_type == SourceType.AUTHOR for item in direct_ids if item in evidence_by_id
         ):
             failures.append("author_context_cannot_be_direct_code_evidence")
@@ -125,6 +138,10 @@ def validate_text_evidence(
         status=status,
         input_text_digest=final_claims.input_text_digest,
         projection_digest=projection.projection_digest,
+        repo_snapshot_id=projection.repo_snapshot_id,
+        project_tree_hash=projection.project_tree_hash,
+        evidence_snapshot_id=projection.evidence_snapshot_id,
+        evidence_snapshot_digest=projection.evidence_snapshot_digest,
         checked_factual_claims=len(verdicts),
         supported_claims=sum(item.status == "supported" for item in verdicts),
         caveated_claims=sum(item.status == "caveated" for item in verdicts),

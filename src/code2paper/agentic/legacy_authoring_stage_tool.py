@@ -19,6 +19,8 @@ from code2paper.agentic.authoring_projection import (
     projection_writer_brief,
     write_authoring_projection,
 )
+from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
+from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.claim_verifier import (
     build_claim_verification_report,
     load_claim_verification_report,
@@ -63,6 +65,16 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
         raw_evidence=(
             RawEvidencePack.model_validate(_read_json(Path(state.artifacts["evidence_raw"])))
             if state.artifacts.get("evidence_raw") and Path(state.artifacts["evidence_raw"]).exists()
+            else None
+        ),
+        evidence_snapshot_v2=(
+            load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"])
+            if state.artifacts.get("evidence_snapshot_v2") and Path(state.artifacts["evidence_snapshot_v2"]).exists()
+            else None
+        ),
+        atomic_claims_v2=(
+            load_atomic_claims_v2(state.artifacts["atomic_claims_v2"])
+            if state.artifacts.get("atomic_claims_v2") and Path(state.artifacts["atomic_claims_v2"]).exists()
             else None
         ),
     )
