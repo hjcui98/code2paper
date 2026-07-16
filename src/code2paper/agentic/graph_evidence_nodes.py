@@ -10,6 +10,11 @@ from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
 from code2paper.agentic.authoring_projection import build_authoring_projection, write_authoring_projection
 from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
+from code2paper.agentic.evidence_relations_v2 import build_evidence_relations_v2, write_evidence_relations_v2
+from code2paper.agentic.figure_scene import build_figure_scene_graph, write_figure_scene_graph
+from code2paper.agentic.figure_relation_validator import validate_figure_relations, write_figure_relation_validation
+from code2paper.agentic.artifact_freshness import check_artifact_freshness, write_artifact_freshness_report
+from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.agentic.claim_verifier import build_claim_verification_report, load_claim_verification_report, write_claim_verification_report
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.decision_core import DecisionProvider, write_decision_trace
@@ -231,6 +236,12 @@ def figure_planner_node(*, decision_provider: DecisionProvider | None = None):
             ).model_dump(mode="json")
         method_evidence = MethodEvidence.model_validate(read_json(method_output(state.method_root, "evidence")))
         claim_map = ClaimEvidenceMap.model_validate(read_json(method_output(state.method_root, "claims")))
+        formal_p2 = bool(state.artifacts.get("repo_snapshot"))
+        if formal_p2 and not state.artifacts.get("evidence_snapshot_v2"):
+            return state.model_copy(update={"blocked_reason": "evidence_v2_required_for_figure_scene", "next_node": "blocked"}).model_dump(mode="json")
+        evidence_v2 = load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"]) if formal_p2 else None
+        code_graph = read_json(state.artifacts["code_graph"]) if state.artifacts.get("code_graph") else {}
+        relations = build_evidence_relations_v2(method_evidence, evidence_v2, code_graph=code_graph) if evidence_v2 else None
         verification_path = claim_verification_path(state)
         if verification_path:
             verification = load_claim_verification_report(verification_path)
@@ -244,6 +255,7 @@ def figure_planner_node(*, decision_provider: DecisionProvider | None = None):
             claim_verification=verification,
             author_intent_summary=author_intent_summary_from_state(state),
             decision_provider=decision_provider,
+            evidence_relations=relations,
         )
         figure_root = final_dir(state.method_root, "figures")
         figure_plan_path = figure_root / "method_overview.intent.json"
@@ -256,6 +268,33 @@ def figure_planner_node(*, decision_provider: DecisionProvider | None = None):
             "figure_plan": str(figure_plan_path),
             "figure_plan_decision_trace": str(trace_path),
         }
+        relation_gate_passed = True
+        if relations is not None and evidence_v2 is not None:
+            relations_path = figure_root / "agentic_evidence_relations_v2.json"
+            write_evidence_relations_v2(relations_path, relations)
+            scene = build_figure_scene_graph(figure_plan, relations)
+            scene_path = figure_root / "agentic_figure_scene_graph.json"
+            write_figure_scene_graph(scene_path, scene)
+            relation_validation = validate_figure_relations(scene, relations, evidence_v2)
+            relation_validation_path = figure_root / "agentic_figure_relation_validation.json"
+            write_figure_relation_validation(relation_validation_path, relation_validation)
+            pre_render_path = figure_root / "agentic_pre_render_audit.json"
+            write_figure_relation_validation(pre_render_path, relation_validation)
+            artifacts.update({
+                "evidence_relations_v2": str(relations_path), "figure_scene": str(scene_path),
+                "figure_relation_validation": str(relation_validation_path), "pre_render_audit": str(pre_render_path),
+            })
+            relation_gate_passed = relation_validation.hard_gate_passed
+            freshness = check_artifact_freshness(
+                repo_snapshot=load_repo_snapshot(state.artifacts["repo_snapshot"]),
+                evidence_snapshot=evidence_v2,
+                artifacts=artifacts,
+            )
+            freshness_path = artifact_dir(state.method_root, "10_run") / "agentic_artifact_freshness_report.json"
+            write_artifact_freshness_report(freshness_path, freshness)
+            artifacts["artifact_freshness"] = str(freshness_path)
+            if freshness.status != "passed":
+                relation_gate_passed = False
         decision = AgentDecision(
             node="figure_planner",
             decision="figure_plan_ready" if figure_plan.hard_gate_passed else "figure_plan_blocked",
@@ -266,10 +305,10 @@ def figure_planner_node(*, decision_provider: DecisionProvider | None = None):
         updates = {
             "artifacts": artifacts,
             "decisions": [*state.decisions, decision],
-            "next_node": "invariant_audit" if figure_plan.hard_gate_passed else "blocked",
+            "next_node": "invariant_audit" if figure_plan.hard_gate_passed and relation_gate_passed else "blocked",
         }
-        if not figure_plan.hard_gate_passed:
-            updates["blocked_reason"] = state.blocked_reason or "figure_plan_missing_supported_evidence"
+        if not figure_plan.hard_gate_passed or not relation_gate_passed:
+            updates["blocked_reason"] = state.blocked_reason or "figure_scene_relation_gate_failed"
         return state.model_copy(update=updates).model_dump(mode="json")
 
     return _run

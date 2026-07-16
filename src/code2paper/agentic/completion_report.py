@@ -109,16 +109,28 @@ def _check_method_text(state: AgenticRunState) -> CompletionCheck:
 
 def _check_method_figure(state: AgenticRunState) -> CompletionCheck:
     plan = artifact_json(state, "figure_plan")
+    scene = artifact_json(state, "figure_scene")
+    relation_validation = artifact_json(state, "figure_relation_validation")
+    manifest = artifact_json(state, "rendering_manifest")
+    post_audit = artifact_json(state, "post_render_audit")
     has_trace = artifact_exists(state, "figure_plan_decision_trace")
-    passed = bool(plan) and bool(plan.get("hard_gate_passed")) and has_trace
+    formal_p2 = artifact_exists(state, "repo_snapshot")
+    passed = (
+        bool(plan) and bool(plan.get("hard_gate_passed")) and has_trace
+        and bool(scene.get("hard_gate_passed")) and bool(relation_validation.get("hard_gate_passed"))
+        and artifact_exists(state, "method_overview_svg") and bool(manifest)
+        and bool(post_audit.get("hard_gate_passed"))
+    )
+    if not formal_p2:
+        passed = bool(plan) and bool(plan.get("hard_gate_passed")) and has_trace
     return CompletionCheck(
         name="method_figure",
         passed=passed,
         deliverable="method_figure",
-        message="Method figure plan is present, traceable, and hard-gate passed."
+        message="Method figure has a relation-backed scene, real SVG asset, manifest, and passed post-render audit."
         if passed
-        else "Method figure requires figure_plan hard_gate_passed=true and figure_plan_decision_trace.",
-        artifact_keys=["figure_plan", "figure_plan_decision_trace", "method_overview_png", "method_overview_meta"],
+        else "Method figure requires a passed scene/relation gate plus real SVG, manifest, and post-render audit.",
+        artifact_keys=["figure_plan", "figure_plan_decision_trace", "figure_scene", "figure_relation_validation", "method_overview_svg", "rendering_manifest", "post_render_audit"],
     )
 
 

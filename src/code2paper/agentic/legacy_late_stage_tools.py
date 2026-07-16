@@ -10,6 +10,10 @@ from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageSt
 from code2paper.agentic.decision_core import write_decision_trace
 from code2paper.agentic.figure_planner import figure_plan_trace, load_figure_plan, write_figure_plan
 from code2paper.agentic.render_authorization import check_pre_render_authorization, pre_render_blocked_result
+from code2paper.agentic.figure_scene import load_figure_scene_graph
+from code2paper.agentic.post_render_audit import audit_rendered_svg, write_post_render_audit
+from code2paper.rendering.scene_svg import render_scene_svg
+from code2paper.rendering.figure_manifest import build_figure_manifest, write_figure_manifest
 from code2paper.core.output_names import artifact_dir, final_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence, RawEvidencePack
 from code2paper.pipeline.stages.finalize import write_phase8_artifacts
@@ -69,6 +73,57 @@ def run_rendering(state: AgenticRunState) -> StageToolResult:
             status=StageStatus.BLOCKED,
             blocked_reason="method_text_required_for_rendering",
             summary="Rendering requires validated method text.",
+        )
+    formal_p2 = bool(state.artifacts.get("repo_snapshot"))
+    scene_path = state.artifacts.get("figure_scene", "")
+    pre_audit = state.artifacts.get("pre_render_audit", "")
+    if formal_p2 and (not scene_path or not Path(scene_path).exists() or not pre_audit or not Path(pre_audit).exists()):
+        return StageToolResult(
+            stage="rendering", status=StageStatus.BLOCKED,
+            blocked_reason="figure_scene_and_pre_render_audit_required",
+            summary="Structured rendering requires a passed FigureSceneGraph pre-render contract.",
+        )
+    pre_payload = _read_json(Path(pre_audit)) if pre_audit and Path(pre_audit).exists() else {}
+    if formal_p2 and not pre_payload.get("hard_gate_passed"):
+        return StageToolResult(
+            stage="rendering", status=StageStatus.BLOCKED,
+            blocked_reason="pre_render_audit_failed", summary="Pre-render relation/scene audit failed.",
+        )
+    if formal_p2:
+        scene = load_figure_scene_graph(scene_path)
+    else:
+        scene = None
+    if formal_p2 and scene is not None:
+        figure_root = final_dir(state.method_root, "figures")
+        svg_path = figure_root / "method_overview.svg"
+        render_scene_svg(scene, svg_path)
+        manifest = build_figure_manifest(scene_digest=scene.content_digest, asset_path=svg_path)
+        manifest_path = figure_root / "agentic_rendering_manifest.json"
+        write_figure_manifest(manifest_path, manifest)
+        post_audit = audit_rendered_svg(scene, manifest)
+        post_audit_path = figure_root / "agentic_post_render_audit.json"
+        write_post_render_audit(post_audit_path, post_audit)
+        artifacts = {
+            "figure_plan": state.artifacts.get("figure_plan", ""),
+            "figure_plan_decision_trace": state.artifacts.get("figure_plan_decision_trace", ""),
+            "method_overview_svg": str(svg_path), "method_overview_meta": str(manifest_path),
+            "rendering_manifest": str(manifest_path), "post_render_audit": str(post_audit_path),
+        }
+        if not post_audit.hard_gate_passed:
+            return StageToolResult(
+                stage="rendering", status=StageStatus.BLOCKED, artifacts=artifacts,
+                blocked_reason="post_render_audit_failed",
+                summary="Rendered SVG drifted from the locked FigureSceneGraph.",
+            )
+        return StageToolResult(
+            stage="rendering", status=StageStatus.SUCCESS, artifacts=artifacts,
+            summary="Rendered and post-audited deterministic evidence-backed SVG.",
+            decisions=[AgentDecision(
+                node="structured_renderer", decision="post_render_passed",
+                rationale="Every rendered scene element, label, endpoint, and digest matches the locked scene.",
+                artifact_keys=["figure_scene", "method_overview_svg", "rendering_manifest", "post_render_audit"],
+            )],
+            metrics={"rendered_elements": post_audit.rendered_elements, "rendered_element_drift": 0},
         )
     method_evidence = MethodEvidence.model_validate(_read_json(method_output(state.method_root, "evidence")))
     claim_map = ClaimEvidenceMap.model_validate(_read_json(method_output(state.method_root, "claims")))
@@ -154,6 +209,13 @@ def run_rendering(state: AgenticRunState) -> StageToolResult:
 
 
 def run_finalize(state: AgenticRunState) -> StageToolResult:
+    final_audit_path = state.artifacts.get("final_invariant_audit", "")
+    if state.artifacts.get("repo_snapshot") and (not final_audit_path or not Path(final_audit_path).exists() or not _read_json(Path(final_audit_path)).get("passed")):
+        return StageToolResult(
+            stage="finalize", status=StageStatus.BLOCKED,
+            blocked_reason="final_invariant_audit_required",
+            summary="Finalize requires a passed post-render final invariant audit.",
+        )
     authorization = check_pre_render_authorization(state)
     if not authorization.passed:
         return pre_render_blocked_result("finalize", authorization)

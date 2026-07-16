@@ -12,6 +12,7 @@ from code2paper.agentic.decision_core import AgenticDecisionPrompt, AgenticDecis
 from code2paper.agentic.decision_policy import hard_rule_texts
 from code2paper.agentic.decision_tool_guidance import stage_tool_guidance_for_decision
 from code2paper.agentic.figure_attention import figure_evidence_attention
+from code2paper.agentic.evidence_relations_v2 import EvidenceRelationSetV2
 from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence, SupportStatus
 
 
@@ -99,6 +100,7 @@ def build_evidence_backed_figure_plan(
     method_evidence: MethodEvidence,
     claim_map: ClaimEvidenceMap,
     claim_verification: ClaimVerificationReport | None = None,
+    evidence_relations: EvidenceRelationSetV2 | None = None,
 ) -> EvidenceBackedFigurePlan:
     """Select only evidence-backed method elements for the overview figure."""
 
@@ -137,18 +139,18 @@ def build_evidence_backed_figure_plan(
                 )
             )
 
+    node_by_stage = {node.stage_id: node for node in nodes}
     edges: list[FigurePlanEdge] = []
-    for index, (source, target) in enumerate(zip(nodes, nodes[1:]), start=1):
-        edge_evidence = _unique([*source.evidence_ids[:2], *target.evidence_ids[:2]])
-        edges.append(
-            FigurePlanEdge(
-                edge_id=f"FE{index}",
-                source_node_id=source.node_id,
-                target_node_id=target.node_id,
-                evidence_ids=edge_evidence,
-                rationale="Sequential relation follows the frozen method stage order.",
-            )
-        )
+    for relation in evidence_relations.relations if evidence_relations else []:
+        source = node_by_stage.get(relation.source_entity_id)
+        target = node_by_stage.get(relation.target_entity_id)
+        if relation.support_status != "supported" or not relation.direct_evidence_ids or not source or not target:
+            continue
+        edges.append(FigurePlanEdge(
+            edge_id=f"FE{len(edges) + 1}", source_node_id=source.node_id, target_node_id=target.node_id,
+            label=relation.semantic_statement, evidence_ids=relation.direct_evidence_ids,
+            rationale=f"Direct EvidenceRelationV2 {relation.relation_id}.",
+        ))
 
     omitted_claims = [
         claim.claim_id
@@ -174,6 +176,7 @@ def figure_plan_trace(
     claim_verification: ClaimVerificationReport | None = None,
     author_intent_summary: AuthorIntentSummary | None = None,
     decision_provider: DecisionProvider | None = None,
+    evidence_relations: EvidenceRelationSetV2 | None = None,
 ) -> tuple[EvidenceBackedFigurePlan, AgenticDecisionTrace]:
     """Build a safe figure plan plus an auditable model/fallback trace."""
 
@@ -182,6 +185,7 @@ def figure_plan_trace(
         method_evidence=method_evidence,
         claim_map=claim_map,
         claim_verification=verification,
+        evidence_relations=evidence_relations,
     )
     prompt = AgenticDecisionPrompt(
         node="figure_planner",
@@ -295,9 +299,13 @@ def _merge_figure_plan(
             evidence_ids = fallback_node.evidence_ids
         if not claim_ids and fallback_node.claim_ids:
             claim_ids = fallback_node.claim_ids
+        proposed_label = _short_label(proposed.label or fallback_node.label)
+        safe_label = proposed_label if _label_within_boundary(proposed_label, fallback_node.label) else fallback_node.label
+        if safe_label != proposed_label:
+            rewritten_node_claims = True
         final_node = FigurePlanNode(
             node_id=fallback_node.node_id,
-            label=_short_label(proposed.label or fallback_node.label),
+            label=safe_label,
             kind=_short_label(proposed.kind or fallback_node.kind, limit=32),
             stage_id=fallback_node.stage_id,
             mechanism_ids=fallback_node.mechanism_ids,
@@ -334,19 +342,16 @@ def _merge_figure_plan(
         if not source or not target or source == target:
             dropped_edges += 1
             continue
-        allowed_evidence = _unique(
-            [
-                *final_node_by_id[source].evidence_ids,
-                *final_node_by_id[target].evidence_ids,
-                *fallback_edges_by_pair.get((source, target), FigurePlanEdge(edge_id="", source_node_id="", target_node_id="")).evidence_ids,
-            ]
-        )
+        fallback_edge = fallback_edges_by_pair.get((source, target))
+        if fallback_edge is None:
+            dropped_edges += 1
+            continue
+        allowed_evidence = list(fallback_edge.evidence_ids)
         evidence_ids = [item for item in _unique(proposed.evidence_ids) if item in set(allowed_evidence)]
         if evidence_ids != _unique(proposed.evidence_ids):
             rewritten_edge_evidence = True
         if not evidence_ids:
-            fallback_edge = fallback_edges_by_pair.get((source, target))
-            evidence_ids = fallback_edge.evidence_ids if fallback_edge else allowed_evidence
+            evidence_ids = fallback_edge.evidence_ids
         if not evidence_ids:
             dropped_edges += 1
             continue
@@ -356,10 +361,10 @@ def _merge_figure_plan(
                 edge_id=f"FE{len(final_edges) + 1}",
                 source_node_id=source,
                 target_node_id=target,
-                label=_short_label(proposed.label or "then", limit=64),
+                label=fallback_edge.label,
                 evidence_ids=evidence_ids,
                 rationale=proposed.rationale.strip()
-                or fallback_edges_by_pair.get((source, target), FigurePlanEdge(edge_id="", source_node_id="", target_node_id="")).rationale,
+                or fallback_edge.rationale,
             )
         )
 
@@ -504,6 +509,14 @@ def _short_label(value: str, *, limit: int = 52) -> str:
     if len(text) <= limit:
         return text
     return text[: limit - 1].rstrip() + "."
+
+
+def _label_within_boundary(proposed: str, boundary: str) -> bool:
+    def tokens(value: str) -> set[str]:
+        return {item.lower() for item in value.replace("_", " ").split() if len(item) > 2}
+    proposed_tokens = tokens(proposed)
+    boundary_tokens = tokens(boundary)
+    return bool(proposed_tokens) and proposed_tokens.issubset(boundary_tokens)
 
 
 def _unique(values: list[str]) -> list[str]:

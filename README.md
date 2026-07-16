@@ -117,6 +117,15 @@ blocks with `source_drift` before model or response-cache reuse. Evidence repair
 creates a versioned child snapshot with `parent_evidence_snapshot_id` instead
 of editing the frozen parent in place.
 
+Formal method figures follow the same trust chain. The figure planner emits
+`EvidenceRelationV2` and a locked `FigureSceneGraph`; node evidence alone never
+creates an arrow. The authoritative renderer produces a deterministic,
+text-preserving `method_overview.svg` with stable scene/claim/relation IDs.
+`agentic_pre_render_audit.json` and `agentic_post_render_audit.json` compare the
+scene, real SVG elements, visible labels, edge endpoints, and asset digests.
+Optional raster stylists may be used only as non-authoritative derivatives;
+they cannot replace the audited SVG or introduce scene elements.
+
 ## Tests
 
 ```bash

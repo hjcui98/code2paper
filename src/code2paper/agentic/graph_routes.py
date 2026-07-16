@@ -90,4 +90,9 @@ def route_after_invariant_audit(raw_state: dict) -> str:
 
 def route_after_rendering(raw_state: dict) -> str:
     state = AgenticRunState.model_validate(raw_state)
-    return "blocked" if state.blocked_reason else "finalize"
+    return "blocked" if state.blocked_reason else "final_invariant_audit"
+
+
+def route_after_final_invariant_audit(raw_state: dict) -> str:
+    state = AgenticRunState.model_validate(raw_state)
+    return state.next_node if state.next_node in {"finalize", "blocked"} else "blocked"

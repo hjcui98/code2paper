@@ -49,6 +49,7 @@ def build_invariant_audit(state: AgenticRunState) -> AgenticInvariantAudit:
         _check_validation_after_text(state),
         _check_final_package_traceability(state),
         _check_figure_plan(state),
+        _check_rendered_figure(state),
     ]
     blocking_failures = sum(1 for check in checks if check.blocking and not check.passed)
     return AgenticInvariantAudit(
@@ -630,6 +631,9 @@ def _check_figure_plan(state: AgenticRunState) -> InvariantCheck:
         isinstance(edge, dict) and bool(_as_list(edge.get("evidence_ids"))) for edge in edges
     )
     hard_gate_passed = bool(plan.get("hard_gate_passed"))
+    scene = _artifact_json(state, "figure_scene")
+    relation_validation = _artifact_json(state, "figure_relation_validation")
+    pre_render = _artifact_json(state, "pre_render_audit")
     known_evidence_ids = _known_evidence_ids(state)
     known_claim_ids = _known_claim_ids(state)
     excluded_claim_ids = set(_as_list(_artifact_json(state, "authoring_constraints").get("excluded_claim_ids")))
@@ -658,6 +662,12 @@ def _check_figure_plan(state: AgenticRunState) -> InvariantCheck:
         problems.append(trace_problem)
     if not nodes_have_evidence or not edges_have_evidence or not hard_gate_passed:
         problems.append("missing node/edge evidence or hard_gate_passed=false")
+    if _artifact_exists(state, "repo_snapshot") and (
+        not scene.get("hard_gate_passed")
+        or not relation_validation.get("hard_gate_passed")
+        or not pre_render.get("hard_gate_passed")
+    ):
+        problems.append("formal figure scene/relation/pre-render gate missing or failed")
     if unknown_evidence_ids:
         problems.append("unknown figure evidence ids: " + ", ".join(_dedupe(unknown_evidence_ids)[:8]))
     if unknown_claim_ids:
@@ -677,7 +687,22 @@ def _check_figure_plan(state: AgenticRunState) -> InvariantCheck:
             "evidence",
             "authoring_constraints",
             "claim_verification",
+            "evidence_relations_v2", "figure_scene", "figure_relation_validation", "pre_render_audit",
         ],
+    )
+
+
+def _check_rendered_figure(state: AgenticRunState) -> InvariantCheck:
+    has_render = any(_artifact_exists(state, key) for key in ("rendering_manifest", "method_overview_svg", "post_render_audit"))
+    if not has_render:
+        return InvariantCheck(name="post_render_figure_gate", passed=True, blocking=False, message="No render attempted yet; post-render gate is not applicable.", artifact_keys=["method_overview_svg", "rendering_manifest", "post_render_audit"])
+    manifest = _artifact_json(state, "rendering_manifest")
+    post = _artifact_json(state, "post_render_audit")
+    passed = _artifact_exists(state, "method_overview_svg") and bool(manifest) and bool(post.get("hard_gate_passed"))
+    return InvariantCheck(
+        name="post_render_figure_gate", passed=passed,
+        message="Rendered SVG exists and matches its locked scene and manifest." if passed else "Rendered figure asset/manifest is missing or post-render audit failed.",
+        artifact_keys=["figure_scene", "method_overview_svg", "rendering_manifest", "post_render_audit"],
     )
 
 

@@ -54,7 +54,8 @@ class CheckArtifactFreshnessInput(FreshnessModel):
 TRUST_DEPENDENCY_ORDER = (
     "evidence_snapshot_v2", "atomic_claims_v2", "claim_verification", "authoring_projection",
     "authoring_plan", "final_text_claims", "text_evidence_validation", "final_text_trace",
-    "figure_scene", "rendering_manifest", "post_render_audit", "final_package",
+    "evidence_relations_v2", "figure_scene", "figure_relation_validation", "pre_render_audit",
+    "rendering_manifest", "post_render_audit", "final_package",
 )
 
 
@@ -231,6 +232,46 @@ def _artifact_contract_failures(
             failures.append("evidence_snapshot_id_mismatch")
         if payload.get("evidence_snapshot_digest") != evidence.content_digest:
             failures.append("evidence_snapshot_digest_mismatch")
+    elif key == "evidence_relations_v2":
+        if payload.get("repo_snapshot_id") != repo.snapshot_id: failures.append("repo_snapshot_id_mismatch")
+        if payload.get("evidence_snapshot_id") != evidence.evidence_snapshot_id: failures.append("evidence_snapshot_id_mismatch")
+        if payload.get("evidence_snapshot_digest") != evidence.content_digest: failures.append("evidence_snapshot_digest_mismatch")
+        if payload.get("content_digest") != _digest_json(payload.get("relations", [])): failures.append("content_digest_mismatch")
+    elif key == "figure_scene":
+        if payload.get("repo_snapshot_id") != repo.snapshot_id: failures.append("repo_snapshot_id_mismatch")
+        if payload.get("evidence_snapshot_id") != evidence.evidence_snapshot_id: failures.append("evidence_snapshot_id_mismatch")
+        if payload.get("evidence_snapshot_digest") != evidence.content_digest: failures.append("evidence_snapshot_digest_mismatch")
+        try:
+            from code2paper.agentic.figure_scene import FigureSceneGraph, figure_scene_content_digest
+            scene = FigureSceneGraph.model_validate(payload)
+            actual_scene_digest = figure_scene_content_digest(
+                nodes=scene.nodes, edges=scene.edges, annotations=scene.annotations, groups=scene.groups,
+                omitted_elements=scene.omitted_elements, layout=scene.layout,
+            )
+            if scene.content_digest != actual_scene_digest: failures.append("content_digest_mismatch")
+        except ValueError:
+            failures.append("unsupported_schema")
+        relations = _read_artifact_json(artifacts, "evidence_relations_v2")
+        if relations and payload.get("relation_set_digest") != relations.get("content_digest"): failures.append("relation_set_digest_mismatch")
+        if not payload.get("hard_gate_passed"): failures.append("scene_gate_failed")
+    elif key in {"figure_relation_validation", "pre_render_audit"}:
+        scene = _read_artifact_json(artifacts, "figure_scene")
+        relations = _read_artifact_json(artifacts, "evidence_relations_v2")
+        if not payload.get("hard_gate_passed"): failures.append("figure_relation_gate_failed")
+        if scene and payload.get("scene_digest") != scene.get("content_digest"): failures.append("scene_digest_mismatch")
+        if relations and payload.get("relation_set_digest") != relations.get("content_digest"): failures.append("relation_set_digest_mismatch")
+    elif key == "rendering_manifest":
+        scene = _read_artifact_json(artifacts, "figure_scene")
+        if scene and payload.get("scene_digest") != scene.get("content_digest"): failures.append("scene_digest_mismatch")
+        asset = str(payload.get("asset_path") or "")
+        if not asset or not Path(asset).exists(): failures.append("rendered_asset_missing")
+        elif payload.get("asset_digest") != artifact_content_digest(asset): failures.append("asset_digest_mismatch")
+    elif key == "post_render_audit":
+        scene = _read_artifact_json(artifacts, "figure_scene")
+        manifest = _read_artifact_json(artifacts, "rendering_manifest")
+        if not payload.get("hard_gate_passed"): failures.append("post_render_gate_failed")
+        if scene and payload.get("scene_digest") != scene.get("content_digest"): failures.append("scene_digest_mismatch")
+        if manifest and payload.get("asset_digest") != manifest.get("asset_digest"): failures.append("asset_digest_mismatch")
     return failures
 
 
@@ -247,7 +288,10 @@ def _repair_route(stale_keys: list[str]) -> str:
         return "authoring_planner"
     if any(key in stale_keys for key in ("final_text_claims", "text_evidence_validation", "final_text_trace")):
         return "authoring"
-    if any(key in stale_keys for key in ("figure_scene", "rendering_manifest", "post_render_audit")):
+    if any(key in stale_keys for key in (
+        "evidence_relations_v2", "figure_scene", "figure_relation_validation", "pre_render_audit",
+        "rendering_manifest", "post_render_audit",
+    )):
         return "figure_planner"
     if "final_package" in stale_keys:
         return "finalize"

@@ -271,8 +271,37 @@ from code2paper.agentic.artifact_freshness import (
     freshness_cache_key,
     write_artifact_freshness_report,
 )
+from code2paper.agentic.evidence_relations_v2 import (
+    EvidenceRelationSetV2, EvidenceRelationV2, build_evidence_relations_v2,
+    load_evidence_relations_v2, write_evidence_relations_v2,
+)
+from code2paper.agentic.figure_scene import (
+    FigureSceneEdge, FigureSceneGraph, FigureSceneNode, build_figure_scene_graph,
+    load_figure_scene_graph, write_figure_scene_graph,
+)
+from code2paper.agentic.figure_relation_validator import (
+    FigureRelationValidation, validate_figure_relations, write_figure_relation_validation,
+)
+from code2paper.agentic.post_render_audit import PostRenderAudit, audit_rendered_svg, write_post_render_audit
 
 __all__ = [
+    "EvidenceRelationSetV2",
+    "EvidenceRelationV2",
+    "FigureRelationValidation",
+    "FigureSceneEdge",
+    "FigureSceneGraph",
+    "FigureSceneNode",
+    "PostRenderAudit",
+    "audit_rendered_svg",
+    "build_evidence_relations_v2",
+    "build_figure_scene_graph",
+    "load_evidence_relations_v2",
+    "load_figure_scene_graph",
+    "validate_figure_relations",
+    "write_evidence_relations_v2",
+    "write_figure_relation_validation",
+    "write_figure_scene_graph",
+    "write_post_render_audit",
     "AgentDecision",
     "ArtifactFreshnessReport",
     "ArtifactFreshnessVerdict",

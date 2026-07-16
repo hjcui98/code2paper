@@ -96,3 +96,21 @@ def invariant_audit_node(raw_state: dict[str, Any]) -> dict[str, Any]:
             "next_node": "rendering",
         }
     ).model_dump(mode="json")
+
+
+def final_invariant_audit_node(raw_state: dict[str, Any]) -> dict[str, Any]:
+    state = AgenticRunState.model_validate(raw_state)
+    audit = build_invariant_audit(state)
+    path = artifact_dir(state.method_root, "10_run") / "agentic_final_invariant_audit.json"
+    write_invariant_audit(path, audit)
+    artifacts = {**state.artifacts, "final_invariant_audit": str(path)}
+    return state.model_copy(update={
+        "artifacts": artifacts,
+        "blocked_reason": state.blocked_reason or ("final_invariant_audit_failed" if not audit.passed else ""),
+        "next_node": "blocked" if not audit.passed else "finalize",
+        "decisions": [*state.decisions, AgentDecision(
+            node="final_invariant_auditor", decision="passed" if audit.passed else "blocked",
+            rationale="Post-render final invariant audit passed." if audit.passed else "; ".join(audit.recommended_actions),
+            artifact_keys=["final_invariant_audit", "post_render_audit", "rendering_manifest", "method_overview_svg"],
+        )],
+    }).model_dump(mode="json")

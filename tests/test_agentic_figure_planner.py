@@ -108,7 +108,7 @@ def _claim_map() -> ClaimEvidenceMap:
 
 
 class AgenticFigurePlannerTests(unittest.TestCase):
-    def test_figure_plan_keeps_only_evidence_backed_nodes_and_edges(self) -> None:
+    def test_figure_plan_does_not_infer_edges_from_node_order(self) -> None:
         method_evidence = _method_evidence()
         claim_map = _claim_map()
         verification = build_claim_verification_report(method_evidence, claim_map)
@@ -121,12 +121,10 @@ class AgenticFigurePlannerTests(unittest.TestCase):
 
         self.assertTrue(plan.hard_gate_passed)
         self.assertEqual([node.stage_id for node in plan.nodes], ["S1", "S2"])
-        self.assertEqual(plan.edges[0].source_node_id, "N1")
-        self.assertEqual(plan.edges[0].target_node_id, "N2")
+        self.assertEqual(plan.edges, [])
         self.assertEqual(plan.omitted_mechanism_ids, ["MECH3"])
         self.assertIn("C3", plan.omitted_claim_ids)
         self.assertTrue(all(node.evidence_ids for node in plan.nodes))
-        self.assertTrue(all(edge.evidence_ids for edge in plan.edges))
 
     def test_figure_plan_brief_is_natural_language_contract(self) -> None:
         plan = build_evidence_backed_figure_plan(
@@ -149,7 +147,7 @@ class AgenticFigurePlannerTests(unittest.TestCase):
             loaded = load_figure_plan(output)
 
         self.assertEqual(loaded.nodes[0].node_id, "N1")
-        self.assertEqual(loaded.edges[0].edge_id, "FE1")
+        self.assertEqual(loaded.edges, [])
 
     def test_figure_plan_trace_safety_merges_model_proposal(self) -> None:
         prompts = []
@@ -195,7 +193,7 @@ class AgenticFigurePlannerTests(unittest.TestCase):
         self.assertEqual(plan.nodes[0].claim_ids, ["C2"])
         self.assertEqual(plan.nodes[0].evidence_ids, ["E2"])
         self.assertNotIn("N404", [node.node_id for node in plan.nodes])
-        self.assertTrue(any(edge.source_node_id == "N1" and edge.target_node_id == "N2" for edge in plan.edges))
+        self.assertEqual(plan.edges, [])
         self.assertEqual(trace.node, "figure_planner")
         self.assertEqual(trace.provider_status, "model_proposal_merged")
         self.assertTrue(any("Dropped" in note for note in trace.safety_notes))
@@ -209,13 +207,12 @@ class AgenticFigurePlannerTests(unittest.TestCase):
 
         attention = trace.prompt.inputs["figure_evidence_attention"]
         self.assertEqual(attention["allowed_node_count"], 2)
-        self.assertEqual(attention["allowed_edge_count"], 1)
+        self.assertEqual(attention["allowed_edge_count"], 0)
         self.assertEqual(attention["omitted_claim_ids"], ["C3"])
         self.assertEqual(attention["nodes"][0]["node_id"], "N1")
         self.assertEqual(attention["nodes"][0]["stage_id"], "S1")
         self.assertEqual(attention["nodes"][0]["evidence_ids"], ["E1"])
-        self.assertEqual(attention["edges"][0]["source_node_id"], "N1")
-        self.assertEqual(attention["edges"][0]["target_node_id"], "N2")
+        self.assertEqual(attention["edges"], [])
 
     def test_paperbanana_content_file_includes_evidence_backed_visual_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

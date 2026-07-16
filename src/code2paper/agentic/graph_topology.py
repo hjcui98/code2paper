@@ -139,8 +139,14 @@ CONDITIONAL_ROUTE_SPECS: Final[tuple[ConditionalRouteSpec, ...]] = (
     ConditionalRouteSpec(
         source="rendering",
         router="_route_after_rendering",
+        routes=(("final_invariant_audit", "final_invariant_audit"), ("blocked", "blocked")),
+        safety_note="Rendered assets must pass post-render audit before the final invariant audit.",
+    ),
+    ConditionalRouteSpec(
+        source="final_invariant_audit",
+        router="_route_after_final_invariant_audit",
         routes=(("finalize", "finalize"), ("blocked", "blocked")),
-        safety_note="Final packaging is reachable only when rendering does not set a blocked reason.",
+        safety_note="Final packaging is reachable only after post-render invariants pass.",
     ),
 )
 EVIDENCE_GATE_SPECS: Final[tuple[EvidenceGateSpec, ...]] = (

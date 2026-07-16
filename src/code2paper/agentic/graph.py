@@ -28,6 +28,7 @@ from code2paper.agentic.graph_routes import (
     route_after_figure_planner as _route_after_figure_planner,
     route_after_invariant_audit as _route_after_invariant_audit,
     route_after_rendering as _route_after_rendering,
+    route_after_final_invariant_audit as _route_after_final_invariant_audit,
     route_after_revision_router as _route_after_revision_router,
     route_after_text_trace_builder as _route_after_text_trace_builder,
     validation_router,
@@ -35,6 +36,7 @@ from code2paper.agentic.graph_routes import (
 from code2paper.agentic.graph_stage_nodes import (
     blocked_node as _blocked_node,
     invariant_audit_node as _invariant_audit_node,
+    final_invariant_audit_node as _final_invariant_audit_node,
     stage_node as _stage_node,
 )
 from code2paper.agentic.graph_text_trust_nodes import (
@@ -100,6 +102,7 @@ def build_code2paper_graph(
     graph.add_node("text_trace_builder", _text_trace_builder_node)
     graph.add_node("figure_planner", _figure_planner_node(decision_provider=decision_provider))
     graph.add_node("invariant_audit", _invariant_audit_node)
+    graph.add_node("final_invariant_audit", _final_invariant_audit_node)
     graph.add_node("blocked", _blocked_node)
 
     graph.set_entry_point(ENTRY_POINT)
@@ -124,4 +127,5 @@ def _route_functions() -> dict[str, RouteFn]:
         "_route_after_figure_planner": _route_after_figure_planner,
         "_route_after_invariant_audit": _route_after_invariant_audit,
         "_route_after_rendering": _route_after_rendering,
+        "_route_after_final_invariant_audit": _route_after_final_invariant_audit,
     }

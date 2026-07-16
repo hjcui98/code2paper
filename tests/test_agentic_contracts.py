@@ -77,6 +77,8 @@ class AgenticContractsTests(unittest.TestCase):
         self.assertIn("claim_verification", specs["rendering"].input_artifacts)
         self.assertIn("figure_plan", specs["rendering"].output_artifacts)
         self.assertIn("figure_plan", specs["rendering"].required_output_artifacts)
+        self.assertIn("method_overview_svg", specs["rendering"].output_artifacts)
+        self.assertIn("post_render_audit", specs["rendering"].output_artifacts)
         self.assertIn("figure_plan_decision_trace", specs["rendering"].output_artifacts)
         self.assertIn("finalize", specs)
         self.assertIn("final_tex", specs["finalize"].output_artifacts)
@@ -1014,11 +1016,11 @@ class AgenticContractsTests(unittest.TestCase):
         self.assertEqual(_route_after_invariant_audit(updated.model_dump(mode="json")), "rendering")
         self.assertEqual(updated.decisions[-1].decision, "passed")
 
-    def test_rendering_routes_to_finalize_unless_blocked(self) -> None:
+    def test_rendering_routes_to_final_invariant_audit_unless_blocked(self) -> None:
         ready = AgenticRunState(project_root=Path("."), out_root=Path("/tmp/code2paper-agentic-test"))
         blocked = ready.model_copy(update={"blocked_reason": "figure_plan_missing_supported_evidence"})
 
-        self.assertEqual(_route_after_rendering(ready.model_dump(mode="json")), "finalize")
+        self.assertEqual(_route_after_rendering(ready.model_dump(mode="json")), "final_invariant_audit")
         self.assertEqual(_route_after_rendering(blocked.model_dump(mode="json")), "blocked")
 
 if __name__ == "__main__":
