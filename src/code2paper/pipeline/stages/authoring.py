@@ -137,6 +137,38 @@ def write_phase5_artifacts(
     _write_json(paths["terms"], terminology.model_dump(mode="json"))
     _write_json(paths["text_claims"], claim_map_output.model_dump(mode="json"))
 
+    if _is_projection_writer_input(method_evidence):
+        # The graph-level authoring planner already decides claim order/grouping.
+        # Keep the compatibility writer deterministic so legacy free-text
+        # expansion cannot reopen a positive-fact channel outside projection.
+        method_plan = _method_plan_scaffold(method_evidence, equations_tex=equations_tex)
+        _write_json(paths["method_plan"], method_plan.model_dump(mode="json"))
+        _write_json(paths["method_plan_quality"], _method_plan_quality_report(method_plan))
+        markdown = build_method_draft_markdown(
+            method_evidence=method_evidence,
+            claim_map=claim_map,
+            supplemental_equations_tex=equations_tex,
+        )
+        latex = format_method_draft_tex(markdown)
+        _write_phase5_success_outputs(
+            paths=paths,
+            method_evidence=method_evidence,
+            claim_map=claim_map,
+            alignment=alignment,
+            outline=outline,
+            terminology=terminology,
+            claim_map_output=claim_map_output,
+            markdown=markdown,
+            latex=latex,
+            llm_call_id="",
+            manifest_mode="projection-constrained-deterministic-writer",
+            llm_available=llm_config.provider != LLMProvider.NONE,
+            llm_call_logs=[],
+            supplemental_equations_tex=equations_tex,
+            method_plan=method_plan,
+        )
+        return markdown, latex, paths
+
     if llm_config.provider == LLMProvider.NONE:
         method_plan = _method_plan_scaffold(method_evidence, equations_tex=equations_tex)
         _write_json(paths["method_plan"], method_plan.model_dump(mode="json"))
@@ -146,13 +178,14 @@ def write_phase5_artifacts(
             claim_map=claim_map,
             supplemental_equations_tex=equations_tex,
         )
-        markdown = _maybe_compact_display_equations(markdown)
-        markdown = _paper_prose_postprocess(markdown, method_evidence, equations_tex=equations_tex)
-        markdown = _repair_structural_readiness_if_needed(
-            markdown=markdown,
-            method_evidence=method_evidence,
-            equations_tex=equations_tex,
-        )
+        if not _is_projection_writer_input(method_evidence):
+            markdown = _maybe_compact_display_equations(markdown)
+            markdown = _paper_prose_postprocess(markdown, method_evidence, equations_tex=equations_tex)
+            markdown = _repair_structural_readiness_if_needed(
+                markdown=markdown,
+                method_evidence=method_evidence,
+                equations_tex=equations_tex,
+            )
         readiness_report = validate_paper_readiness(markdown)
         if _paper_readiness_blocks(readiness_report):
             _write_json(paths["self_check"], _readiness_to_self_critic(readiness_report).model_dump(mode="json"))
@@ -2120,6 +2153,10 @@ def _paper_readiness_blocks(report: dict[str, object]) -> bool:
     return high_count > 0 or score < 82
 
 
+def _is_projection_writer_input(method_evidence: MethodEvidence) -> bool:
+    return "The projection is the writer's only positive method-fact input." in method_evidence.writing_constraints
+
+
 def _paper_readiness_block_reason(report: dict[str, object]) -> str:
     metrics = report.get("metrics", {}) if isinstance(report.get("metrics"), dict) else {}
     issues = report.get("issues", []) if isinstance(report.get("issues"), list) else []
@@ -2548,7 +2585,7 @@ def _normalize_draft_claim_map(
         contract.claim_id
         for contract in contracts
         if contract.claim_id in known_claim_ids and contract.support_status.value != "unsupported"
-    ] or [contract.claim_id for contract in contracts if contract.claim_id in known_claim_ids]
+    ]
     known_mechanism_ids = {
         mechanism.mechanism_id
         for mechanism in method_evidence.frozen_mechanisms
@@ -2685,8 +2722,6 @@ def _normalize_draft_claim_map(
             if not claim_candidates and outline_paragraph:
                 for stage_id in outline_paragraph.stage_ids:
                     claim_candidates.extend(claim_ids_by_stage.get(stage_id, []))
-            if not claim_candidates and supported_claim_ids:
-                claim_candidates.append(supported_claim_ids[0])
             claim_ids = _dedupe(claim_candidates)[:max_claim_ids_per_paragraph]
 
         if not mechanism_ids:
@@ -2719,8 +2754,6 @@ def _normalize_draft_claim_map(
                 evidence_ids = _dedupe(
                     [evidence_id for mechanism_id in mechanism_ids for evidence_id in mechanism_evidence.get(mechanism_id, [])]
                 )[:max_evidence_ids_per_paragraph]
-            if not evidence_ids and known_evidence_ids:
-                evidence_ids = [next(iter(sorted(known_evidence_ids)))]
 
         normalized_paragraphs.append(
             {
@@ -2736,7 +2769,6 @@ def _normalize_draft_claim_map(
             continue
         fallback_claim_ids = _dedupe(
             [claim_id for claim_id in outline_paragraph.claim_ids if claim_id in known_claim_ids]
-            or supported_claim_ids[:1]
         )[:max_claim_ids_per_paragraph]
         fallback_mechanism_ids = _dedupe(
             [
@@ -2763,8 +2795,6 @@ def _normalize_draft_claim_map(
             or [evidence_id for claim_id in fallback_claim_ids for evidence_id in claim_to_evidence.get(claim_id, [])]
             or [evidence_id for mechanism_id in fallback_mechanism_ids for evidence_id in mechanism_evidence.get(mechanism_id, [])]
         )[:max_evidence_ids_per_paragraph]
-        if not fallback_evidence_ids and known_evidence_ids:
-            fallback_evidence_ids = [next(iter(sorted(known_evidence_ids)))]
         normalized_paragraphs.append(
             {
                 "paragraph_id": outline_paragraph.paragraph_id,
@@ -2790,13 +2820,11 @@ def _normalize_draft_claim_map(
         )[:max_mechanism_ids_per_paragraph]
         if not stage_mechanism_ids:
             continue
-        fallback_claim_ids = _dedupe(claim_ids_by_stage.get(stage.stage_id, []) or supported_claim_ids[:1])[:max_claim_ids_per_paragraph]
+        fallback_claim_ids = _dedupe(claim_ids_by_stage.get(stage.stage_id, []))[:max_claim_ids_per_paragraph]
         fallback_evidence_ids = _dedupe(
             [evidence_id for mechanism_id in stage_mechanism_ids for evidence_id in mechanism_evidence.get(mechanism_id, [])]
             or [evidence_id for claim_id in fallback_claim_ids for evidence_id in claim_to_evidence.get(claim_id, [])]
         )[:max_evidence_ids_per_paragraph]
-        if not fallback_evidence_ids and known_evidence_ids:
-            fallback_evidence_ids = [next(iter(sorted(known_evidence_ids)))]
         paragraph_id = f"P{next_paragraph_index}"
         while paragraph_id in existing_paragraph_ids:
             next_paragraph_index += 1
@@ -2957,6 +2985,20 @@ def _stage_authoring_packets(method_evidence: MethodEvidence) -> list[dict]:
             [evidence_id for mechanism in stage_mechanisms for evidence_id in mechanism.evidence_ids]
             + [evidence_id for mechanism in frozen_mechanisms for evidence_id in mechanism.evidence_span_ids]
         )
+        if "The projection is the writer's only positive method-fact input." in method_evidence.writing_constraints:
+            authorized_evidence_ids = {
+                evidence_id
+                for contract in method_evidence.claim_contracts
+                for evidence_id in contract.evidence_span_ids
+            }
+            primary_evidence_ids = _dedupe(
+                primary_evidence_ids
+                + [
+                    str(evidence_id)
+                    for evidence_id in raw_packet.get("primary_evidence_ids", [])
+                    if str(evidence_id) in authorized_evidence_ids
+                ]
+            )
         primary_mechanism_ids = _dedupe(
             [mechanism.mechanism_id for mechanism in frozen_mechanisms if mechanism.mechanism_id]
             + [mechanism.mechanism_id for mechanism in stage_mechanisms if mechanism.mechanism_id]

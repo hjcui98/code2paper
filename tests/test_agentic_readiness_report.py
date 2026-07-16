@@ -209,7 +209,7 @@ class AgenticReadinessReportTests(unittest.TestCase):
         check = _check(report, "authoring_context_contract")
         self.assertFalse(report.passed)
         self.assertFalse(check.passed)
-        self.assertIn("authoring_context", check.message)
+        self.assertIn("authoring_projection", check.message)
 
     def test_report_requires_text_claims_to_follow_authoring_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -232,6 +232,42 @@ class AgenticReadinessReportTests(unittest.TestCase):
                 root,
                 "text_claims.json",
                 {"paragraphs": [{"paragraph_id": "P1", "claim_ids": ["C2"], "evidence_span_ids": ["E2"]}]},
+            )
+            artifacts["authoring_projection"] = _write_json(
+                root,
+                "authoring_projection.json",
+                {"projection_digest": "sha256:projection"},
+            )
+            artifacts["final_text_claims"] = _write_json(
+                root,
+                "final_text_claims.json",
+                {"input_text_digest": "sha256:text", "atomic_claims": [{"atomic_claim_id": "FAC1"}]},
+            )
+            artifacts["text_evidence_validation"] = _write_json(
+                root,
+                "text_evidence_validation.json",
+                {
+                    "status": "passed",
+                    "input_text_digest": "sha256:text",
+                    "projection_digest": "sha256:projection",
+                    "verdicts": [{"atomic_claim_id": "FAC1", "status": "supported"}],
+                },
+            )
+            artifacts["final_text_trace"] = _write_json(
+                root,
+                "final_text_trace.json",
+                {
+                    "hard_gate_passed": True,
+                    "input_text_digest": "sha256:text",
+                    "projection_digest": "sha256:projection",
+                    "entries": [
+                        {
+                            "atomic_claim_id": "FAC1",
+                            "projection_claim_ids": ["C2"],
+                            "direct_evidence_ids": ["E2"],
+                        }
+                    ],
+                },
             )
             state = AgenticRunState(project_root=root, out_root=root / "out", artifacts=artifacts)
 

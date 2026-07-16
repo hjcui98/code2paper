@@ -1,5 +1,5 @@
 project_goal: "Train a toy model from config-driven inputs."
-paper_method_goal: "Describe the config-driven toy training pipeline implemented in this fixture project."
+paper_method_goal: "Describe the code-backed configuration fields and training entrypoint in this fixture project."
 implementation_scope: "tests/fixtures/toy_train_project current codebase only."
 priority_files:
   - "train.py"
@@ -16,7 +16,7 @@ module_roles:
     notes: "Builds the dataloader and model, then runs training."
 pipeline_steps:
   - name: "Configuration loading"
-    purpose: "Resolve training settings from the base config and launcher overrides."
+    purpose: "The base configuration specifies dataset and trainer settings."
     input:
       - "base config"
       - "CLI overrides"
@@ -29,7 +29,7 @@ pipeline_steps:
     highlight_level: "main"
     omit_from_main_figure: false
   - name: "Training execution"
-    purpose: "Launch the toy training entrypoint with the resolved configuration."
+    purpose: "The training entrypoint defines main."
     input:
       - "resolved training configuration"
     output:

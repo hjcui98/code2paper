@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.evaluation_extractors import validation_passed
+from code2paper.agentic.final_text_claims import text_digest
 from code2paper.agentic.traceability_ledger import build_traceability_ledger
 
 
@@ -41,6 +42,7 @@ def build_invariant_audit(state: AgenticRunState) -> AgenticInvariantAudit:
         _check_authoring_constraints(state),
         _check_authoring_context(state),
         _check_authoring_plan(state),
+        _check_final_text_evidence_gate(state),
         _check_text_claim_traceability(state),
         _check_traceability_ledger(state),
         _check_validation_after_text(state),
@@ -371,6 +373,64 @@ def _check_validation_after_text(state: AgenticRunState) -> InvariantCheck:
     )
 
 
+def _check_final_text_evidence_gate(state: AgenticRunState) -> InvariantCheck:
+    has_text = any(_artifact_exists(state, key) for key in ("text_md", "text_clean_md", "text_tex", "text_clean_tex"))
+    required = ["authoring_projection", "final_text_claims", "text_evidence_validation", "final_text_trace"]
+    if not has_text:
+        return InvariantCheck(
+            name="final_text_evidence_gate",
+            passed=True,
+            blocking=False,
+            message="No method text was produced; the final text evidence gate is not required yet.",
+            artifact_keys=required,
+        )
+    missing = [key for key in required if not _artifact_exists(state, key)]
+    if missing:
+        return InvariantCheck(
+            name="final_text_evidence_gate",
+            passed=False,
+            message="Final method text is missing authoritative post-hoc trust artifacts: " + ", ".join(missing),
+            artifact_keys=required,
+        )
+    projection = _artifact_json(state, "authoring_projection")
+    claims = _artifact_json(state, "final_text_claims")
+    validation = _artifact_json(state, "text_evidence_validation")
+    trace = _artifact_json(state, "final_text_trace")
+    text_path = _artifact_path(state, "final_text_candidate") or _artifact_path(state, "text_clean_md") or _artifact_path(state, "text_md")
+    current_digest = text_digest(text_path.read_text(encoding="utf-8")) if text_path and text_path.exists() else ""
+    problems: list[str] = []
+    if str(validation.get("status") or "") != "passed":
+        problems.append("text evidence validation status is not passed")
+    if not bool(trace.get("hard_gate_passed")):
+        problems.append("final text trace hard gate did not pass")
+    bound_digests = {
+        str(claims.get("input_text_digest") or ""),
+        str(validation.get("input_text_digest") or ""),
+        str(trace.get("input_text_digest") or ""),
+    }
+    if not current_digest or bound_digests != {current_digest}:
+        problems.append("final text digest does not match extractor, validator, and trace")
+    projection_digest = str(projection.get("projection_digest") or "")
+    if not projection_digest or {
+        str(validation.get("projection_digest") or ""),
+        str(trace.get("projection_digest") or ""),
+    } != {projection_digest}:
+        problems.append("projection digest mismatch")
+    factual_count = len(claims.get("atomic_claims") or [])
+    verdicts = validation.get("verdicts") if isinstance(validation.get("verdicts"), list) else []
+    entries = trace.get("entries") if isinstance(trace.get("entries"), list) else []
+    if len(verdicts) != factual_count or len(entries) != factual_count:
+        problems.append("not every factual atomic claim has a verdict and authoritative trace entry")
+    return InvariantCheck(
+        name="final_text_evidence_gate",
+        passed=not problems,
+        message="Exact final text is bound to passed atomic-claim verdicts and direct-evidence trace."
+        if not problems
+        else "; ".join(problems),
+        artifact_keys=[*required, "final_text_candidate"],
+    )
+
+
 def _check_traceability_ledger(state: AgenticRunState) -> InvariantCheck:
     ledger = _artifact_json(state, "traceability_ledger")
     if not ledger:
@@ -407,6 +467,14 @@ def _check_traceability_ledger(state: AgenticRunState) -> InvariantCheck:
 
 
 def _check_text_claim_traceability(state: AgenticRunState) -> InvariantCheck:
+    if _artifact_exists(state, "final_text_trace"):
+        return InvariantCheck(
+            name="text_claim_traceability",
+            passed=True,
+            blocking=False,
+            message="Legacy paragraph scaffold is non-authoritative; final_text_evidence_gate owns text trust.",
+            artifact_keys=["final_text_trace", "text_claims"],
+        )
     has_text = any(_artifact_exists(state, key) for key in ("text_md", "text_clean_md", "text_tex", "text_clean_tex"))
     if not has_text:
         return InvariantCheck(
@@ -730,6 +798,8 @@ def _recommended_actions(checks: list[InvariantCheck]) -> list[str]:
             actions.append("rebuild_authoring_context_from_verified_claim_constraints")
         elif check.name == "authoring_plan_gate":
             actions.append("rebuild_authoring_plan_from_evidence_bound_authoring_context")
+        elif check.name == "final_text_evidence_gate":
+            actions.append("rebuild_final_text_claims_validation_and_posthoc_trace")
         elif check.name == "text_claim_traceability":
             actions.append("rebuild_text_claims_from_frozen_evidence_before_validation")
         elif check.name == "traceability_ledger":
@@ -746,6 +816,12 @@ def _recommended_actions(checks: list[InvariantCheck]) -> list[str]:
 def _artifact_exists(state: AgenticRunState, key: str) -> bool:
     path = state.artifacts.get(key, "")
     return bool(path and Path(path).exists())
+
+
+def _artifact_path(state: AgenticRunState, key: str) -> Path | None:
+    path = state.artifacts.get(key, "")
+    candidate = Path(path) if path else None
+    return candidate if candidate is not None and candidate.exists() else None
 
 
 def _artifact_json(state: AgenticRunState, key: str) -> dict[str, Any]:

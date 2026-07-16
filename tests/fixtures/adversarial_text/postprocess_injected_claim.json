@@ -1,0 +1,5 @@
+{
+  "before": "The encoder reads configured features.",
+  "after": "The encoder reads configured features and guarantees 99% faster training.",
+  "expected": "unsupported"
+}

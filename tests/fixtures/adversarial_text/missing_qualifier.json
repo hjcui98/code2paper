@@ -1,0 +1,6 @@
+{
+  "claim": "The encoder supports every feature path.",
+  "supported_fragment": "The encoder supports the configured feature path.",
+  "required_qualifier": "Only the configured feature path is implemented.",
+  "expected": "unsupported"
+}

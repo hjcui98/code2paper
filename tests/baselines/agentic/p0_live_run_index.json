@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "phase": "P0",
+  "model_profile": "gemma4_mtp_vllm",
+  "model": "gemma4-31b-nvfp4",
+  "runs": [
+    {
+      "run_id": "toy_p0_deterministic_r7",
+      "artifact_root": "/tmp/code2paper-p0-toy-deterministic-r7",
+      "text_gate": "passed",
+      "terminal_status": "blocked",
+      "terminal_reason": "validation_manifest_failed",
+      "validation_sha256": "e9b618ff9c310f2cdc7c2e11ba757cf1ccf7275a285f21aa1cbd6102be791798",
+      "trace_sha256": "5645d29b612604d57e0ebb03ce7fc551c3af7be3c483e9e7e137ae375039e819",
+      "note": "P0 text trust passed; legacy publication-quality validation correctly remained blocked for the compact toy output."
+    },
+    {
+      "run_id": "toy_p0_gemma4_r5",
+      "artifact_root": "/tmp/code2paper-p0-toy-gemma4-r5",
+      "text_gate": "passed",
+      "terminal_status": "blocked",
+      "terminal_reason": "validation_manifest_failed",
+      "semantic_verifier_calls": 4,
+      "supported_atomic_claims": 4,
+      "validation_sha256": "d096d946b8e4f4d110e0a97ee644b666143aa20f70a134a69174d8f9a2a0cfd8",
+      "trace_sha256": "ab2c7b58604ab874cd9f6c10fe88104231c4e5c263655b4957b493b5d6e3b4dd",
+      "semantic_call_trace_sha256": "bf4b364b7a6d3073fd1fb9d9a12ff44fe4afa992914d88bc14b4c74d1b0d280e"
+    },
+    {
+      "run_id": "FastGS_P0_Gemma4",
+      "artifact_root": "/tmp/code2paper-p0-fastgs-gemma4",
+      "text_gate": "not_reached",
+      "terminal_status": "blocked",
+      "terminal_reason": "authoring_plan_failed_evidence_gate",
+      "retrieval_rounds": 1,
+      "evidence_revision_rounds": 1,
+      "projected_claims": 0,
+      "forbidden_claims": 20,
+      "projection_sha256": "cf9ba598b38b70b8da518b02a75e4bfc305601e5d94b58fbfae4630e90d11adb",
+      "plan_sha256": "aa8e34985ab7465bff9d8f9cb24b639e3e2a30dbd33b6a71ed0580c57c840409",
+      "summary_sha256": "4a8f14499a9b856080dfac6eaec8395569fdd57f55d593835027e9d0135279a3",
+      "note": "Correct conservative block before prose; no legacy scaffold or fabricated text trace satisfied the gate."
+    }
+  ]
+}

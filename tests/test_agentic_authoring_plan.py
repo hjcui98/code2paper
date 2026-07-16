@@ -144,6 +144,45 @@ class AgenticAuthoringPlanTests(unittest.TestCase):
         self.assertIn("C3", trace.provider_payload["sections"][0]["claim_ids"])
         self.assertTrue(any("Appended fallback sections" in note for note in trace.safety_notes))
 
+    def test_model_free_text_cannot_reintroduce_forbidden_claim_wording(self) -> None:
+        forbidden = "guarantees impossible speedups"
+        context = EvidenceBoundAuthoringContext(
+            method_name="Demo",
+            allowed_claims=[
+                EvidenceBoundAuthoringClaim(
+                    claim_id="C1",
+                    claim_text="The encoder reads features.",
+                    support_status="supported",
+                    evidence_ids=["E1"],
+                    writing_boundary="safe_to_write",
+                )
+            ],
+            excluded_claims=[
+                EvidenceBoundAuthoringClaim(
+                    claim_id="C2",
+                    claim_text="",
+                    support_status="unsupported",
+                    writing_boundary="do_not_write_as_method_claim",
+                )
+            ],
+        )
+        plan, trace = authoring_plan_trace(
+            context,
+            decision_provider=lambda _prompt: {
+                "sections": [{
+                    "heading": forbidden,
+                    "purpose": forbidden,
+                    "claim_ids": ["C1"],
+                    "evidence_ids": ["E1"],
+                    "writing_instructions": [forbidden],
+                }]
+            },
+        )
+
+        serialized = plan.model_dump_json()
+        self.assertNotIn(forbidden, serialized)
+        self.assertIn(forbidden, trace.provider_payload["sections"][0]["heading"])
+
     def test_authoring_plan_prompt_exposes_evidence_attention(self) -> None:
         context = EvidenceBoundAuthoringContext(
             method_name="Demo",

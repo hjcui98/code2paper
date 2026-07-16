@@ -28,6 +28,9 @@ def build_method_draft_markdown(
 ) -> str:
     """Generate an evidence-grounded Markdown method draft."""
 
+    if _is_authoring_projection_input(method_evidence):
+        return _build_projection_only_draft(method_evidence, claim_map or ClaimEvidenceMap())
+
     lines: list[str] = ["# Method", ""]
     sections = {section.key: section for section in plan_method_sections(method_evidence)}
     all_mechanisms = [mechanism for stage in method_evidence.stages for mechanism in stage.mechanisms]
@@ -170,6 +173,53 @@ def build_method_draft_markdown(
                 ]
             )
 
+    return normalize_markdown(lines)
+
+
+def _is_authoring_projection_input(method_evidence: MethodEvidence) -> bool:
+    return "The projection is the writer's only positive method-fact input." in method_evidence.writing_constraints
+
+
+def _build_projection_only_draft(method_evidence: MethodEvidence, claim_map: ClaimEvidenceMap) -> str:
+    """Conservative fallback whose factual sentences are exactly projected claims."""
+
+    claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
+    emitted: set[str] = set()
+    lines: list[str] = ["# Method", ""]
+    for packet in method_evidence.stage_packets:
+        claim_ids = [str(item) for item in packet.get("claim_ids", []) if str(item) in claim_by_id]
+        claim_ids = [claim_id for claim_id in claim_ids if claim_id not in emitted]
+        if not claim_ids:
+            continue
+        lines.extend([f"## {str(packet.get('name') or 'Method stage')}"])
+        for claim_id in claim_ids:
+            claim = claim_by_id[claim_id]
+            sentence = claim.claim_text.strip().rstrip(".")
+            if claim.caveats:
+                sentence += "; " + "; ".join(item.strip().rstrip(".") for item in claim.caveats if item.strip())
+            lines.extend(
+                [
+                    grounding_comment(
+                        stage_id=str(packet.get("stage_id") or "ALL"),
+                        mechanism_ids=[],
+                        evidence_ids=claim.evidence_ids,
+                        confidence="high",
+                    ),
+                    sentence + ".",
+                    "",
+                ]
+            )
+            emitted.add(claim_id)
+    remaining = [claim for claim in claim_map.claims if claim.claim_id not in emitted]
+    if remaining:
+        lines.extend(["## Additional supported behavior"])
+        for claim in remaining:
+            sentence = claim.claim_text.strip().rstrip(".")
+            if claim.caveats:
+                sentence += "; " + "; ".join(item.strip().rstrip(".") for item in claim.caveats if item.strip())
+            lines.extend(
+                [grounding_comment(stage_id="ALL", mechanism_ids=[], evidence_ids=claim.evidence_ids, confidence="high"), sentence + ".", ""]
+            )
     return normalize_markdown(lines)
 
 

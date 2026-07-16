@@ -1179,6 +1179,7 @@ class DraftClaimMapParagraph(StrictModel):
 
 
 class DraftClaimMap(StrictModel):
+    mode: str = "legacy_scaffold"
     paragraphs: list[DraftClaimMapParagraph] = Field(default_factory=list)
 
 

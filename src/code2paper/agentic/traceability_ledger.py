@@ -101,6 +101,23 @@ def _claim_entries(state: AgenticRunState) -> list[TraceabilityLedgerEntry]:
 
 def _text_entries(state: AgenticRunState) -> list[TraceabilityLedgerEntry]:
     entries: list[TraceabilityLedgerEntry] = []
+    final_trace = artifact_json(state, "final_text_trace")
+    if final_trace:
+        for index, trace in enumerate(as_list(final_trace.get("entries")), start=1):
+            if not isinstance(trace, dict):
+                continue
+            atomic_claim_id = str(trace.get("atomic_claim_id") or f"FAC{index}")
+            entries.append(
+                TraceabilityLedgerEntry(
+                    entry_id=f"text:{atomic_claim_id}",
+                    kind="text_atomic_claim",
+                    source_artifact="final_text_trace",
+                    claim_ids=as_string_list(trace.get("projection_claim_ids")),
+                    evidence_ids=as_string_list(trace.get("direct_evidence_ids")),
+                    support_status=str(trace.get("verdict_status") or ""),
+                )
+            )
+        return entries
     for index, paragraph in enumerate(as_list(artifact_json(state, "text_claims").get("paragraphs")), start=1):
         if not isinstance(paragraph, dict):
             continue
@@ -132,7 +149,7 @@ def _check_entry(
     forbidden_claims = [claim_id for claim_id in entry.claim_ids if claim_id in forbidden_claim_ids]
     notes = list(entry.notes)
     statuses: list[str] = []
-    if missing_evidence or (entry.kind in {"claim", "text_paragraph", "figure_node", "figure_edge"} and not entry.evidence_ids):
+    if missing_evidence or (entry.kind in {"claim", "text_paragraph", "text_atomic_claim", "figure_node", "figure_edge"} and not entry.evidence_ids):
         statuses.append("missing_evidence")
         if missing_evidence:
             notes.append("unknown evidence ids: " + ", ".join(missing_evidence[:8]))

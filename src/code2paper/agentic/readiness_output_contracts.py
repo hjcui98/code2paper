@@ -15,24 +15,47 @@ def check_authoring_context_contract(state: AgenticRunState) -> ReadinessCheck:
             passed=True,
             blocking=False,
             message="No Method text was produced; evidence-bound authoring context is not required.",
-            artifact_keys=["authoring_context", "authoring_plan", "authoring_plan_decision_trace", "authoring_constraints", "text_claims"],
+            artifact_keys=["authoring_projection", "authoring_plan", "authoring_plan_decision_trace", "final_text_claims", "text_evidence_validation", "final_text_trace"],
         )
-    required = ["authoring_context", "authoring_plan", "authoring_plan_decision_trace", "authoring_constraints", "text_claims"]
+    required = [
+        "authoring_projection",
+        "authoring_plan",
+        "authoring_plan_decision_trace",
+        "final_text_claims",
+        "text_evidence_validation",
+        "final_text_trace",
+    ]
     missing = [key for key in required if not artifact_json(state, key)]
     problems: list[str] = []
     if missing:
         problems.append("Method text exists but authoring trace artifacts are missing or unreadable: " + ", ".join(missing))
     else:
+        validation = artifact_json(state, "text_evidence_validation")
+        trace = artifact_json(state, "final_text_trace")
+        claims = artifact_json(state, "final_text_claims")
+        projection = artifact_json(state, "authoring_projection")
         mismatch = _text_trace_authoring_plan_mismatch(
-            text_claims=artifact_json(state, "text_claims"),
+            final_text_trace=trace,
             authoring_plan=artifact_json(state, "authoring_plan"),
         )
         if mismatch:
             problems.append(mismatch)
+        if str(validation.get("status") or "") != "passed" or not bool(trace.get("hard_gate_passed")):
+            problems.append("final text evidence validation or trace gate did not pass")
+        text_digests = {
+            str(claims.get("input_text_digest") or ""),
+            str(validation.get("input_text_digest") or ""),
+            str(trace.get("input_text_digest") or ""),
+        }
+        if "" in text_digests or len(text_digests) != 1:
+            problems.append("final text trust artifact digests do not match")
+        projection_digest = projection.get("projection_digest")
+        if not projection_digest or validation.get("projection_digest") != projection_digest or trace.get("projection_digest") != projection_digest:
+            problems.append("authoring projection digest is stale or mismatched")
     return ReadinessCheck(
         name="authoring_context_contract",
         passed=not problems,
-        message="Method text has evidence-bound authoring context, section plan, constraints, and paragraph trace records."
+        message="Method text has a projection-bound plan, passed atomic-claim validation, and authoritative post-hoc trace."
         if not problems
         else "; ".join(problems),
         artifact_keys=[*required, "text_md", "text_clean_md", "text_tex", "text_clean_tex"],
@@ -67,7 +90,7 @@ def check_traceability_ledger_contract(state: AgenticRunState) -> ReadinessCheck
         message="Traceability ledger is present and hard-gate passed."
         if passed
         else "Paper-facing output exists but traceability ledger is missing, unreadable, or hard_gate_passed=false.",
-        artifact_keys=["traceability_ledger", "text_claims", "figure_plan", "figure_plan_decision_trace"],
+        artifact_keys=["traceability_ledger", "final_text_trace", "figure_plan", "figure_plan_decision_trace"],
     )
 
 
@@ -82,7 +105,7 @@ def check_invariant_audit_contract(state: AgenticRunState) -> ReadinessCheck:
     )
 
 
-def _text_trace_authoring_plan_mismatch(*, text_claims: dict[str, Any], authoring_plan: dict[str, Any]) -> str:
+def _text_trace_authoring_plan_mismatch(*, final_text_trace: dict[str, Any], authoring_plan: dict[str, Any]) -> str:
     planned_claim_ids: set[str] = set()
     planned_evidence_ids: set[str] = set()
     for section in list_value(authoring_plan.get("sections")):
@@ -92,11 +115,11 @@ def _text_trace_authoring_plan_mismatch(*, text_claims: dict[str, Any], authorin
         planned_evidence_ids.update(string_list(section.get("evidence_ids")))
     unplanned_claim_ids: list[str] = []
     unplanned_evidence_ids: list[str] = []
-    for paragraph in list_value(text_claims.get("paragraphs")):
-        if not isinstance(paragraph, dict):
+    for entry in list_value(final_text_trace.get("entries")):
+        if not isinstance(entry, dict):
             continue
-        claim_ids = string_list(paragraph.get("claim_ids"))
-        evidence_ids = string_list(paragraph.get("evidence_span_ids"))
+        claim_ids = string_list(entry.get("projection_claim_ids"))
+        evidence_ids = string_list(entry.get("direct_evidence_ids"))
         if planned_claim_ids:
             unplanned_claim_ids.extend([claim_id for claim_id in claim_ids if claim_id not in planned_claim_ids])
         if planned_evidence_ids:

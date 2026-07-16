@@ -63,7 +63,7 @@ def build_authoring_context(
         for claim_id in constraints.caveated_claim_ids
     ]
     excluded = [
-        _context_claim(claim_id, claim_source=claim_source, verification=verification, writing_boundary="do_not_write_as_method_claim")
+        _forbidden_context_claim(claim_id, verification=verification)
         for claim_id in constraints.excluded_claim_ids
     ]
     evidence_ids = _dedupe([evidence_id for claim in [*allowed, *caveated] for evidence_id in claim.evidence_ids])
@@ -116,9 +116,7 @@ def authoring_context_brief(context: EvidenceBoundAuthoringContext) -> str:
             caveat = "; ".join(claim.caveats[:3]) or "must be qualified"
             lines.append(f"  - {claim.claim_id}: {claim.claim_text}; evidence={', '.join(claim.evidence_ids) or 'none'}; caveat={caveat}.")
     if context.excluded_claims:
-        lines.append("- Excluded claims:")
-        for claim in context.excluded_claims[:20]:
-            lines.append(f"  - {claim.claim_id}: {claim.claim_text}.")
+        lines.append("- Excluded claim ids (wording intentionally withheld): " + ", ".join(claim.claim_id for claim in context.excluded_claims[:20]) + ".")
     if context.negative_scope:
         lines.append("- Negative scope: " + "; ".join(context.negative_scope[:12]) + ".")
     if context.unsupported_author_parts:
@@ -164,6 +162,25 @@ def _context_claim(
         caveats=caveats,
         source=str(getattr(source_claim, "source", getattr(verified, "source", "")) or ""),
         writing_boundary=writing_boundary,
+    )
+
+
+def _forbidden_context_claim(
+    claim_id: str,
+    *,
+    verification: ClaimVerificationReport,
+) -> EvidenceBoundAuthoringClaim:
+    """Keep exclusion metadata without retaining reusable unsupported wording."""
+
+    verified = {claim.claim_id: claim for claim in verification.claims}.get(claim_id)
+    return EvidenceBoundAuthoringClaim(
+        claim_id=claim_id,
+        claim_text="",
+        support_status=_enum_text(getattr(verified, "support_status", "unsupported")),
+        evidence_ids=[],
+        caveats=[],
+        source=str(getattr(verified, "source", "") or ""),
+        writing_boundary="do_not_write_as_method_claim",
     )
 
 

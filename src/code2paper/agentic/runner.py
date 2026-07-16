@@ -23,6 +23,8 @@ from code2paper.agentic.invariant_audit import AgenticInvariantAudit, build_inva
 from code2paper.agentic.langchain_tools import build_langchain_stage_tool_manifest, write_langchain_stage_tool_manifest
 from code2paper.agentic.legacy_stage_tools import build_legacy_stage_tool_registry
 from code2paper.agentic.llm_decision_provider import build_llm_decision_provider
+from code2paper.agentic.semantic_verifier_provider import build_llm_semantic_verifier
+from code2paper.agentic.text_evidence_validator import SemanticVerifier
 from code2paper.agentic.readiness_report import build_run_readiness_report, write_run_readiness_report
 from code2paper.agentic.tools import Code2PaperStageTool, build_tool_catalog, write_tool_catalog
 from code2paper.agentic.traceability_ledger import build_traceability_ledger, write_traceability_ledger
@@ -74,6 +76,7 @@ def run_agentic_code2paper(
     tool_registry: Mapping[str, Code2PaperStageTool] | None = None,
     graph_app: Any | None = None,
     decision_provider: DecisionProvider | None = None,
+    semantic_verifier: SemanticVerifier | None = None,
 ) -> AgenticRunResult:
     """Run Code2Paper through the agentic graph and persist a decision summary."""
 
@@ -83,7 +86,8 @@ def run_agentic_code2paper(
     if app is None:
         active_registry = tool_registry or build_legacy_stage_tool_registry()
         provider = decision_provider or _default_decision_provider(state)
-        app = build_code2paper_graph(active_registry, decision_provider=provider)
+        verifier = semantic_verifier or _default_semantic_verifier(state)
+        app = build_code2paper_graph(active_registry, decision_provider=provider, semantic_verifier=verifier)
     final_payload = _invoke_graph(app, state.model_dump(mode="json"))
     final_state = AgenticRunState.model_validate(final_payload)
     policy = build_agentic_decision_policy()
@@ -443,6 +447,13 @@ def _default_decision_provider(state: AgenticRunState) -> DecisionProvider | Non
         return None
     config = load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model)
     return build_llm_decision_provider(config)
+
+
+def _default_semantic_verifier(state: AgenticRunState):
+    if state.max_semantic_verifier_calls <= 0 or not _agentic_llm_decision_enabled(state):
+        return None
+    config = load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model)
+    return build_llm_semantic_verifier(config)
 
 
 def _agentic_llm_decision_enabled(state: AgenticRunState) -> bool:

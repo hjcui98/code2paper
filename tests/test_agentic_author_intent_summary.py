@@ -97,9 +97,9 @@ class AgenticAuthorIntentSummaryTests(unittest.TestCase):
             _coverage_critic_node(decision_provider=lambda prompt: prompts.append(prompt) or {})(state.model_dump(mode="json"))
 
         summary = prompts[0].inputs["author_intent_summary"]
-        self.assertEqual(summary["method_goal"], "Describe the config-driven toy training pipeline implemented in this fixture project.")
+        self.assertEqual(summary["method_goal"], "Describe the code-backed configuration fields and training entrypoint in this fixture project.")
         self.assertEqual(summary["priority_files"][:2], ["train.py", "configs/base.yaml"])
-        self.assertEqual(summary["pipeline_steps"][0], "Configuration loading: Resolve training settings from the base config and launcher overrides.")
+        self.assertEqual(summary["pipeline_steps"][0], "Configuration loading: The base configuration specifies dataset and trainer settings.")
 
     def test_late_decision_prompts_expose_author_intent_summary(self) -> None:
         summary = AuthorIntentSummary(

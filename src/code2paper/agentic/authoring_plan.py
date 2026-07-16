@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.authoring_context import EvidenceBoundAuthoringClaim, EvidenceBoundAuthoringContext
+from code2paper.agentic.trust_contracts import AuthoringInputProjection
 
 
 class EvidenceBoundAuthoringSection(BaseModel):
@@ -19,6 +20,7 @@ class EvidenceBoundAuthoringSection(BaseModel):
     claim_ids: list[str] = Field(default_factory=list)
     evidence_ids: list[str] = Field(default_factory=list)
     caveat_required: bool = False
+    qualifier_template: list[str] = Field(default_factory=list)
     writing_instructions: list[str] = Field(default_factory=list)
 
 
@@ -30,6 +32,7 @@ class EvidenceBoundAuthoringPlan(BaseModel):
     mode: str = "evidence-bound-authoring-plan"
     method_name: str = ""
     author_goal: str = ""
+    projection_digest: str = ""
     sections: list[EvidenceBoundAuthoringSection] = Field(default_factory=list)
     excluded_claim_ids: list[str] = Field(default_factory=list)
     excluded_evidence_ids: list[str] = Field(default_factory=list)
@@ -37,9 +40,14 @@ class EvidenceBoundAuthoringPlan(BaseModel):
     recommended_actions: list[str] = Field(default_factory=list)
 
 
-def build_authoring_plan(context: EvidenceBoundAuthoringContext) -> EvidenceBoundAuthoringPlan:
+def build_authoring_plan(
+    context: EvidenceBoundAuthoringContext,
+    projection: AuthoringInputProjection | None = None,
+) -> EvidenceBoundAuthoringPlan:
     """Create a section-level writing plan without admitting unsupported claims."""
 
+    if projection is not None:
+        context = context_from_projection(projection)
     safe_claims = [*context.allowed_claims, *context.caveated_claims]
     sections = [_section_for_claim(index, claim) for index, claim in enumerate(safe_claims, start=1)]
     excluded_claim_ids = [claim.claim_id for claim in context.excluded_claims]
@@ -58,6 +66,7 @@ def build_authoring_plan(context: EvidenceBoundAuthoringContext) -> EvidenceBoun
     return EvidenceBoundAuthoringPlan(
         method_name=context.method_name,
         author_goal=context.author_goal,
+        projection_digest=projection.projection_digest if projection is not None else "",
         sections=sections,
         excluded_claim_ids=excluded_claim_ids,
         excluded_evidence_ids=excluded_evidence_ids,
@@ -66,7 +75,7 @@ def build_authoring_plan(context: EvidenceBoundAuthoringContext) -> EvidenceBoun
     )
 
 
-def authoring_plan_brief(plan: EvidenceBoundAuthoringPlan) -> str:
+def authoring_plan_brief(plan: EvidenceBoundAuthoringPlan, *, include_exclusions: bool = True) -> str:
     lines = [
         "Evidence-bound Method writing plan:",
         f"- Method: {plan.method_name or 'unspecified'}.",
@@ -81,9 +90,49 @@ def authoring_plan_brief(plan: EvidenceBoundAuthoringPlan) -> str:
         )
         for instruction in section.writing_instructions[:3]:
             lines.append(f"  - {instruction}")
-    if plan.excluded_claim_ids:
-        lines.append("- Excluded claim ids not allowed in prose: " + ", ".join(plan.excluded_claim_ids) + ".")
+        if section.qualifier_template:
+            lines.append("  - Required qualifier template: " + "; ".join(section.qualifier_template))
+    if include_exclusions and plan.excluded_claim_ids:
+        lines.append("- Excluded claim ids not allowed: " + ", ".join(plan.excluded_claim_ids) + ".")
     return "\n".join(lines)
+
+
+def context_from_projection(projection: AuthoringInputProjection) -> EvidenceBoundAuthoringContext:
+    """Compatibility view containing only projection-authorized positive facts."""
+
+    allowed: list[EvidenceBoundAuthoringClaim] = []
+    caveated: list[EvidenceBoundAuthoringClaim] = []
+    for claim in projection.projected_claims:
+        item = EvidenceBoundAuthoringClaim(
+            claim_id=claim.claim_id,
+            claim_text=claim.supported_fragment,
+            support_status=claim.support_status,
+            evidence_ids=claim.direct_evidence_ids,
+            caveats=claim.required_qualifiers,
+            source="authoring_projection",
+            writing_boundary=("write_only_with_caveats" if claim.support_status == "partial" else "safe_to_write"),
+        )
+        (caveated if claim.support_status == "partial" else allowed).append(item)
+    excluded = [
+        EvidenceBoundAuthoringClaim(
+            claim_id=claim.claim_id,
+            claim_text="",
+            support_status="forbidden",
+            writing_boundary="do_not_write_as_method_claim",
+        )
+        for claim in projection.forbidden_claims
+    ]
+    return EvidenceBoundAuthoringContext(
+        method_name=projection.method_name,
+        author_goal=projection.author_goal,
+        implementation_scope=projection.implementation_scope,
+        writing_rules=projection.writing_rules,
+        allowed_claims=allowed,
+        caveated_claims=caveated,
+        excluded_claims=excluded,
+        evidence_ids=_dedupe([item for claim in projection.projected_claims for item in claim.direct_evidence_ids]),
+        hard_gate_passed=projection.hard_gate_passed,
+    )
 
 
 def write_authoring_plan(path: str | Path, plan: EvidenceBoundAuthoringPlan) -> Path:
@@ -113,6 +162,7 @@ def _section_for_claim(index: int, claim: EvidenceBoundAuthoringClaim) -> Eviden
         claim_ids=[claim.claim_id],
         evidence_ids=claim.evidence_ids,
         caveat_required=caveat_required,
+        qualifier_template=claim.caveats if caveat_required else [],
         writing_instructions=instructions,
     )
 

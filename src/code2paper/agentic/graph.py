@@ -29,12 +29,18 @@ from code2paper.agentic.graph_routes import (
     route_after_invariant_audit as _route_after_invariant_audit,
     route_after_rendering as _route_after_rendering,
     route_after_revision_router as _route_after_revision_router,
+    route_after_text_trace_builder as _route_after_text_trace_builder,
     validation_router,
 )
 from code2paper.agentic.graph_stage_nodes import (
     blocked_node as _blocked_node,
     invariant_audit_node as _invariant_audit_node,
     stage_node as _stage_node,
+)
+from code2paper.agentic.graph_text_trust_nodes import (
+    final_text_claim_extractor_node as _final_text_claim_extractor_node,
+    text_evidence_validator_node as _text_evidence_validator_node,
+    text_trace_builder_node as _text_trace_builder_node,
 )
 from code2paper.agentic.graph_topology import (
     CONDITIONAL_ROUTE_SPECS,
@@ -51,6 +57,7 @@ from code2paper.agentic.graph_state_io import (
     string_mapping as _string_mapping,
 )
 from code2paper.agentic.tools import Code2PaperStageTool
+from code2paper.agentic.text_evidence_validator import SemanticVerifier
 
 
 RouteFn = Callable[[dict[str, Any]], str]
@@ -60,6 +67,7 @@ def build_code2paper_graph(
     tool_registry: Mapping[str, Code2PaperStageTool],
     *,
     decision_provider: DecisionProvider | None = None,
+    semantic_verifier: SemanticVerifier | None = None,
 ):
     """Build a LangGraph app from registered Code2Paper tools.
 
@@ -84,6 +92,12 @@ def build_code2paper_graph(
     graph.add_node("evidence_sufficiency", _evidence_sufficiency_node(decision_provider=decision_provider))
     graph.add_node("authoring_planner", _authoring_planner_node(decision_provider=decision_provider))
     graph.add_node("revision_router", _revision_router_node(decision_provider=decision_provider))
+    graph.add_node("final_text_claim_extractor", _final_text_claim_extractor_node)
+    graph.add_node(
+        "text_evidence_validator",
+        lambda state: _text_evidence_validator_node(state, semantic_verifier=semantic_verifier),
+    )
+    graph.add_node("text_trace_builder", _text_trace_builder_node)
     graph.add_node("figure_planner", _figure_planner_node(decision_provider=decision_provider))
     graph.add_node("invariant_audit", _invariant_audit_node)
     graph.add_node("blocked", _blocked_node)
@@ -106,6 +120,7 @@ def _route_functions() -> dict[str, RouteFn]:
         "_route_after_evidence_sufficiency": _route_after_evidence_sufficiency,
         "_route_after_authoring_planner": _route_after_authoring_planner,
         "_route_after_revision_router": _route_after_revision_router,
+        "_route_after_text_trace_builder": _route_after_text_trace_builder,
         "_route_after_figure_planner": _route_after_figure_planner,
         "_route_after_invariant_audit": _route_after_invariant_audit,
         "_route_after_rendering": _route_after_rendering,

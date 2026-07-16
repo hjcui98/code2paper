@@ -39,6 +39,11 @@ STAGE_NODE_NAMES: Final[tuple[str, ...]] = (
     "rendering",
     "finalize",
 )
+TEXT_TRUST_NODE_NAMES: Final[tuple[str, ...]] = (
+    "final_text_claim_extractor",
+    "text_evidence_validator",
+    "text_trace_builder",
+)
 TERMINAL_NODE_NAMES: Final[tuple[str, ...]] = ("finalize", "blocked")
 DIRECT_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
     DirectEdgeSpec(source="input_resolution", target="intake"),
@@ -46,7 +51,9 @@ DIRECT_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
     DirectEdgeSpec(source="analysis", target="analysis_repair_router"),
     DirectEdgeSpec(source="evidence", target="evidence_sufficiency"),
     DirectEdgeSpec(source="grounding", target="authoring_planner"),
-    DirectEdgeSpec(source="authoring", target="validation"),
+    DirectEdgeSpec(source="authoring", target="final_text_claim_extractor"),
+    DirectEdgeSpec(source="final_text_claim_extractor", target="text_evidence_validator"),
+    DirectEdgeSpec(source="text_evidence_validator", target="text_trace_builder"),
     DirectEdgeSpec(source="validation", target="revision_router"),
 )
 TERMINAL_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
@@ -92,6 +99,12 @@ CONDITIONAL_ROUTE_SPECS: Final[tuple[ConditionalRouteSpec, ...]] = (
             "Authoring starts only after the section plan hard gate passes; model-proposed sections are "
             "filtered to verified claim ids and frozen evidence ids."
         ),
+    ),
+    ConditionalRouteSpec(
+        source="text_trace_builder",
+        router="_route_after_text_trace_builder",
+        routes=(("validation", "validation"), ("authoring", "authoring"), ("analysis", "analysis"), ("blocked", "blocked")),
+        safety_note="Final text reaches quality validation only after post-hoc atomic claim extraction, direct-evidence validation, and trace construction; repairs consume bounded revision budgets.",
     ),
     ConditionalRouteSpec(
         source="revision_router",
@@ -151,6 +164,12 @@ EVIDENCE_GATE_SPECS: Final[tuple[EvidenceGateSpec, ...]] = (
             "Analysis repair rescans or evidence-freeze decisions must keep an auditable model/fallback "
             "merge trace when repair tasks exist."
         ),
+    ),
+    EvidenceGateSpec(
+        name="final_text_evidence_gate",
+        node="text_trace_builder",
+        required_artifacts=("authoring_projection", "final_text_claims", "text_evidence_validation", "final_text_trace"),
+        rationale="Every factual atomic claim in the exact final text must be validated against projected direct code evidence before quality validation.",
     ),
     EvidenceGateSpec(
         name="validation_gate",

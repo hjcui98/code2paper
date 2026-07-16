@@ -49,6 +49,17 @@ class AgenticCompletionReportTests(unittest.TestCase):
                     "claim_verification": _write_json(root, "claim_verification.json", {"claims": []}),
                     "text_md": _write_text(root, "method.md", "method"),
                     "text_claims": _write_json(root, "text_claims.json", {"paragraphs": []}),
+                    "final_text_claims": _write_json(root, "final_text_claims.json", {"input_text_digest": "sha256:text"}),
+                    "text_evidence_validation": _write_json(
+                        root,
+                        "text_evidence_validation.json",
+                        {"status": "passed", "input_text_digest": "sha256:text"},
+                    ),
+                    "final_text_trace": _write_json(
+                        root,
+                        "final_text_trace.json",
+                        {"hard_gate_passed": True, "input_text_digest": "sha256:text"},
+                    ),
                     "figure_plan": _write_json(root, "figure_plan.json", {"hard_gate_passed": True, "nodes": []}),
                     "figure_plan_decision_trace": _write_json(root, "figure_trace.json", {"node": "figure_planner"}),
                     "validation_manifest": _write_json(root, "validation.json", {"status": "passed"}),

@@ -73,6 +73,11 @@ def route_after_authoring_planner(raw_state: dict) -> str:
     return state.next_node if state.next_node in {"authoring", "blocked"} else "blocked"
 
 
+def route_after_text_trace_builder(raw_state: dict) -> str:
+    state = AgenticRunState.model_validate(raw_state)
+    return state.next_node if state.next_node in {"validation", "authoring", "analysis", "blocked"} else "blocked"
+
+
 def route_after_figure_planner(raw_state: dict) -> str:
     state = AgenticRunState.model_validate(raw_state)
     return state.next_node if state.next_node in {"invariant_audit", "blocked"} else "blocked"

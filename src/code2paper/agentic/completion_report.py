@@ -80,15 +80,24 @@ def _check_evidence_base(state: AgenticRunState) -> CompletionCheck:
 
 def _check_method_text(state: AgenticRunState) -> CompletionCheck:
     has_text = has_any_artifact(state, "text_md", "text_clean_md", "text_tex", "text_clean_tex")
-    has_trace = artifact_exists(state, "text_claims")
+    final_claims = artifact_json(state, "final_text_claims")
+    validation = artifact_json(state, "text_evidence_validation")
+    final_trace = artifact_json(state, "final_text_trace")
+    has_trace = (
+        bool(final_claims)
+        and str(validation.get("status") or "") == "passed"
+        and bool(final_trace.get("hard_gate_passed"))
+        and bool(final_claims.get("input_text_digest"))
+        and final_claims.get("input_text_digest") == validation.get("input_text_digest") == final_trace.get("input_text_digest")
+    )
     return CompletionCheck(
         name="method_text",
         passed=has_text and has_trace,
         deliverable="method_text",
-        message="Method text and paragraph-level claim/evidence trace are present."
+        message="Method text passed final atomic-claim evidence validation and post-hoc trace."
         if has_text and has_trace
-        else "Method text requires text_md/text_tex and text_claims.",
-        artifact_keys=["text_md", "text_clean_md", "text_tex", "text_clean_tex", "text_claims"],
+        else "Method text requires final_text_claims, passed text_evidence_validation, and a digest-matched final_text_trace.",
+        artifact_keys=["text_md", "text_clean_md", "text_tex", "text_clean_tex", "final_text_claims", "text_evidence_validation", "final_text_trace"],
     )
 
 

@@ -8,7 +8,10 @@ from code2paper.agentic.authoring_plan import (
     EvidenceBoundAuthoringPlan,
     EvidenceBoundAuthoringSection,
     build_authoring_plan,
+    context_from_projection,
 )
+from code2paper.agentic.authoring_projection import projection_writer_payload
+from code2paper.agentic.trust_contracts import AuthoringInputProjection
 from code2paper.agentic.decision_core import (
     AgenticDecisionPrompt,
     AgenticDecisionTrace,
@@ -23,12 +26,15 @@ from code2paper.agentic.decision_tool_guidance import stage_tool_guidance_for_de
 def authoring_plan_trace(
     context: EvidenceBoundAuthoringContext,
     *,
+    projection: AuthoringInputProjection | None = None,
     author_intent_summary: AuthorIntentSummary | None = None,
     decision_provider: DecisionProvider | None = None,
 ) -> tuple[EvidenceBoundAuthoringPlan, AgenticDecisionTrace]:
     """Build a safe authoring plan plus an auditable model/fallback trace."""
 
-    fallback = build_authoring_plan(context)
+    if projection is not None:
+        context = context_from_projection(projection)
+    fallback = build_authoring_plan(context, projection=projection)
     prompt = AgenticDecisionPrompt(
         node="authoring_planner",
         objective=(
@@ -37,8 +43,13 @@ def authoring_plan_trace(
         ),
         hard_rules=_authoring_plan_rules(),
         inputs={
-            "authoring_context": context.model_dump(mode="json"),
-            "author_intent_summary": author_intent_summary.model_dump(mode="json") if author_intent_summary else None,
+            "authoring_projection": projection_writer_payload(projection) if projection is not None else None,
+            "authoring_context": context.model_dump(mode="json") if projection is None else None,
+            "author_intent_summary": (
+                author_intent_summary.model_dump(mode="json")
+                if author_intent_summary and projection is None
+                else None
+            ),
             "authoring_evidence_attention": _authoring_evidence_attention(context),
             "allowed_claim_ids": [claim.claim_id for claim in context.allowed_claims],
             "caveated_claim_ids": [claim.claim_id for claim in context.caveated_claims],
@@ -67,7 +78,12 @@ def authoring_plan_trace(
             final_plan=fallback,
             safety_notes=["Provider proposal was unavailable or invalid; deterministic authoring plan was used."],
         )
-    final_plan, safety_notes = _merge_authoring_plan(context=context, fallback=fallback, proposal=proposal)
+    final_plan, safety_notes = _merge_authoring_plan(
+        context=context,
+        fallback=fallback,
+        proposal=proposal,
+        projection_digest=projection.projection_digest if projection is not None else "",
+    )
     return final_plan, _trace(
         prompt=prompt,
         provider_status=provider_status,
@@ -83,6 +99,7 @@ def _merge_authoring_plan(
     context: EvidenceBoundAuthoringContext,
     fallback: EvidenceBoundAuthoringPlan,
     proposal: AuthoringPlanProposal,
+    projection_digest: str = "",
 ) -> tuple[EvidenceBoundAuthoringPlan, list[str]]:
     claim_by_id = {claim.claim_id: claim for claim in [*context.allowed_claims, *context.caveated_claims]}
     fallback_by_claim = {claim_id: section for section in fallback.sections for claim_id in section.claim_ids}
@@ -110,12 +127,15 @@ def _merge_authoring_plan(
         sections.append(
             EvidenceBoundAuthoringSection(
                 section_id=f"AP-S{section_index}",
-                heading=_section_heading(proposed.heading, claims, fallback_by_claim),
-                purpose=proposed.purpose.strip() or "; ".join(claim.claim_text for claim in claims),
+                # Model free text is not trusted as a positive-fact channel. It may
+                # choose grouping/order only; wording comes from projected claims.
+                heading=_section_heading("", claims, fallback_by_claim),
+                purpose="; ".join(claim.claim_text for claim in claims),
                 claim_ids=claim_ids,
                 evidence_ids=evidence_ids,
                 caveat_required=proposed.caveat_required or any(_requires_caveat(claim) for claim in claims),
-                writing_instructions=_section_instructions(proposed.writing_instructions, claims),
+                qualifier_template=_claim_qualifiers(claims),
+                writing_instructions=_section_instructions([], claims),
             )
         )
 
@@ -132,6 +152,7 @@ def _merge_authoring_plan(
     final_plan = EvidenceBoundAuthoringPlan(
         method_name=context.method_name,
         author_goal=context.author_goal,
+        projection_digest=projection_digest,
         sections=sections,
         excluded_claim_ids=fallback.excluded_claim_ids,
         excluded_evidence_ids=fallback.excluded_evidence_ids,
@@ -225,6 +246,10 @@ def _section_instructions(proposed: list[str], claims: list[EvidenceBoundAuthori
         if _requires_caveat(claim) and claim.caveats
     ]
     return _dedupe([*proposed[:4], *base, *caveats])
+
+
+def _claim_qualifiers(claims: list[EvidenceBoundAuthoringClaim]) -> list[str]:
+    return _dedupe([qualifier for claim in claims if _requires_caveat(claim) for qualifier in claim.caveats])
 
 
 def _claim_evidence_ids(claims: list[EvidenceBoundAuthoringClaim]) -> list[str]:

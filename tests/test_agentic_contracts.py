@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import tempfile
 import types
@@ -950,6 +951,38 @@ class AgenticContractsTests(unittest.TestCase):
                 encoding="utf-8",
             )
             validation.write_text(json.dumps({"status": "success"}), encoding="utf-8")
+            text_digest = "sha256:" + hashlib.sha256(text.read_bytes()).hexdigest()
+            projection = root / "authoring_projection.json"
+            final_claims = root / "final_text_claims.json"
+            text_evidence_validation = root / "text_evidence_validation.json"
+            final_text_trace = root / "final_text_trace.json"
+            projection.write_text(json.dumps({"projection_digest": "sha256:projection"}), encoding="utf-8")
+            final_claims.write_text(
+                json.dumps({"input_text_digest": text_digest, "atomic_claims": [{"atomic_claim_id": "FAC1"}]}),
+                encoding="utf-8",
+            )
+            text_evidence_validation.write_text(
+                json.dumps(
+                    {
+                        "status": "passed",
+                        "input_text_digest": text_digest,
+                        "projection_digest": "sha256:projection",
+                        "verdicts": [{"atomic_claim_id": "FAC1", "status": "supported"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            final_text_trace.write_text(
+                json.dumps(
+                    {
+                        "hard_gate_passed": True,
+                        "input_text_digest": text_digest,
+                        "projection_digest": "sha256:projection",
+                        "entries": [{"atomic_claim_id": "FAC1", "projection_claim_ids": ["C1"], "direct_evidence_ids": ["E1"]}],
+                    }
+                ),
+                encoding="utf-8",
+            )
             state = AgenticRunState(
                 project_root=Path("."),
                 out_root=root,
@@ -965,6 +998,11 @@ class AgenticContractsTests(unittest.TestCase):
                     "authoring_plan_decision_trace": str(plan_trace),
                     "text_md": str(text),
                     "text_claims": str(text_claims),
+                    "final_text_candidate": str(text),
+                    "authoring_projection": str(projection),
+                    "final_text_claims": str(final_claims),
+                    "text_evidence_validation": str(text_evidence_validation),
+                    "final_text_trace": str(final_text_trace),
                     "validation_manifest": str(validation),
                 },
             )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,6 +20,44 @@ def _write_text(path: Path, text: str) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return str(path)
+
+
+def _final_text_gate_artifacts(root: Path, text_path: str, *, claim_id: str = "C1", evidence_id: str = "E1") -> dict[str, str]:
+    text = Path(text_path).read_text(encoding="utf-8")
+    digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+    projection_digest = "sha256:projection"
+    return {
+        "final_text_candidate": text_path,
+        "authoring_projection": _write_json(root / "authoring_projection.json", {"projection_digest": projection_digest}),
+        "final_text_claims": _write_json(
+            root / "final_text_claims.json",
+            {"input_text_digest": digest, "atomic_claims": [{"atomic_claim_id": "FAC1"}]},
+        ),
+        "text_evidence_validation": _write_json(
+            root / "text_evidence_validation.json",
+            {
+                "status": "passed",
+                "input_text_digest": digest,
+                "projection_digest": projection_digest,
+                "verdicts": [{"atomic_claim_id": "FAC1", "status": "supported"}],
+            },
+        ),
+        "final_text_trace": _write_json(
+            root / "final_text_trace.json",
+            {
+                "hard_gate_passed": True,
+                "input_text_digest": digest,
+                "projection_digest": projection_digest,
+                "entries": [
+                    {
+                        "atomic_claim_id": "FAC1",
+                        "projection_claim_ids": [claim_id],
+                        "direct_evidence_ids": [evidence_id],
+                    }
+                ],
+            },
+        ),
+    }
 
 
 def _authoring_context(*, excluded: list[str] | None = None, allowed: list[str] | None = None) -> dict:
@@ -213,6 +252,7 @@ class AgenticInvariantAuditTests(unittest.TestCase):
                     _figure_plan_trace(figure_plan),
                 ),
             }
+            artifacts.update(_final_text_gate_artifacts(root, artifacts["text_md"]))
             state = AgenticRunState(project_root=Path("."), out_root=root, artifacts=artifacts)
 
             audit = build_invariant_audit(state)
@@ -646,6 +686,7 @@ class AgenticInvariantAuditTests(unittest.TestCase):
                 "final_tex": _write_text(final_tex, "\\begin{document}\n" + source_body + "\n\\end{document}\n"),
                 "finalize_manifest": _write_json(root / "finalize_manifest.json", {"inputs": {"text_tex": str(source_tex)}}),
             }
+            artifacts.update(_final_text_gate_artifacts(root, artifacts["text_clean_tex"]))
             state = AgenticRunState(project_root=Path("."), out_root=root, artifacts=artifacts)
 
             audit = build_invariant_audit(state)

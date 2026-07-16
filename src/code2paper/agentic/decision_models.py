@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -57,3 +59,14 @@ class AuthoringPlanProposal(BaseModel):
 
     rationale: str = ""
     sections: list[AuthoringPlanSectionProposal] = Field(default_factory=list)
+
+
+class SemanticEvidenceProposal(BaseModel):
+    """Model proposal only; deterministic evidence rules remain authoritative."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["supported", "caveated", "unsupported", "unverified"]
+    supported_fragment: str = ""
+    unsupported_fragment: str = ""
+    rationale: str = ""

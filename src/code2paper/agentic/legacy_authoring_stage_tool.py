@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from code2paper.agentic.author_intent_summary import author_intent_summary_from_state
 from code2paper.agentic.authoring_constraints import apply_authoring_constraints, write_authoring_constraints
 from code2paper.agentic.authoring_authorization import check_pre_authoring_authorization, pre_authoring_blocked_result
 from code2paper.agentic.authoring_context import (
@@ -14,6 +13,12 @@ from code2paper.agentic.authoring_context import (
 )
 from code2paper.agentic.authoring_plan import authoring_plan_brief, load_authoring_plan, write_authoring_plan
 from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
+from code2paper.agentic.authoring_projection import (
+    build_authoring_projection,
+    projected_writer_inputs,
+    projection_writer_brief,
+    write_authoring_projection,
+)
 from code2paper.agentic.claim_verifier import (
     build_claim_verification_report,
     load_claim_verification_report,
@@ -22,7 +27,7 @@ from code2paper.agentic.claim_verifier import (
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageStatus, StageToolResult
 from code2paper.agentic.decision_core import write_decision_trace
 from code2paper.core.output_names import artifact_dir, method_output
-from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, MethodEvidence
+from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, MethodEvidence, RawEvidencePack
 from code2paper.llm.providers import load_llm_config_from_env, with_node_output_budget
 from code2paper.pipeline.stages.authoring import write_phase5_artifacts
 
@@ -51,6 +56,19 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
         claim_map=claim_map,
         report=verification,
     )
+    projection = build_authoring_projection(
+        method_evidence=method_evidence,
+        claim_map=claim_map,
+        verification=verification,
+        raw_evidence=(
+            RawEvidencePack.model_validate(_read_json(Path(state.artifacts["evidence_raw"])))
+            if state.artifacts.get("evidence_raw") and Path(state.artifacts["evidence_raw"]).exists()
+            else None
+        ),
+    )
+    projection_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_input_projection.json"
+    write_authoring_projection(projection_path, projection)
+    constrained_evidence, constrained_claim_map = projected_writer_inputs(projection, template=constrained_evidence)
     constraints_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_constraints.json"
     write_authoring_constraints(constraints_path, constraints)
     authoring_context = build_authoring_context(
@@ -70,7 +88,7 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
     else:
         authoring_plan, plan_trace = authoring_plan_trace(
             authoring_context,
-            author_intent_summary=author_intent_summary_from_state(state),
+            projection=projection,
         )
         write_authoring_plan(authoring_plan_path, authoring_plan)
         trace_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_plan_decision_trace.json"
@@ -81,6 +99,7 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
         "authoring_constraints": str(constraints_path),
         "authoring_context": str(authoring_context_path),
         "authoring_plan": str(authoring_plan_path),
+        "authoring_projection": str(projection_path),
     }
     if authoring_plan_trace_path:
         pre_authoring_artifacts["authoring_plan_decision_trace"] = str(authoring_plan_trace_path)
@@ -112,12 +131,19 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
                 "authoring_plan_sections": len(authoring_plan.sections),
             },
         )
+    if authoring_plan.projection_digest != projection.projection_digest:
+        return StageToolResult(
+            stage="authoring",
+            status=StageStatus.BLOCKED,
+            artifacts=pre_authoring_artifacts,
+            blocked_reason="authoring_plan_projection_digest_mismatch",
+            summary="Authoring plan is not bound to the current authoring projection.",
+        )
     alignment_path = method_output(state.method_root, "alignment")
     alignment = CodeAlignmentIR.model_validate(_read_json(alignment_path)) if alignment_path.exists() else None
     grounding_context = _join_context_blocks(
-        authoring_context_brief(authoring_context),
-        authoring_plan_brief(authoring_plan),
-        _read_text(method_output(state.method_root, "grounding_context")),
+        projection_writer_brief(projection),
+        authoring_plan_brief(authoring_plan, include_exclusions=False),
     )
     markdown, _tex, paths = write_phase5_artifacts(
         method_root=state.method_root,

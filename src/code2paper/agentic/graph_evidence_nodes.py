@@ -7,6 +7,7 @@ from code2paper.agentic.authoring_constraints import apply_authoring_constraints
 from code2paper.agentic.authoring_context import build_authoring_context, write_authoring_context
 from code2paper.agentic.authoring_plan import write_authoring_plan
 from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
+from code2paper.agentic.authoring_projection import build_authoring_projection, write_authoring_projection
 from code2paper.agentic.claim_verifier import build_claim_verification_report, load_claim_verification_report, write_claim_verification_report
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.decision_core import DecisionProvider, write_decision_trace
@@ -21,7 +22,7 @@ from code2paper.agentic.graph_routes import FROZEN_EVIDENCE_KEYS
 from code2paper.agentic.graph_state_io import claim_verification_path, read_json
 from code2paper.agentic.routing import load_symbol_index, write_router_decision
 from code2paper.core.output_names import artifact_dir, final_dir, method_output
-from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence
+from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence, RawEvidencePack
 
 
 def evidence_sufficiency_node(*, decision_provider: DecisionProvider | None = None):
@@ -132,9 +133,21 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
         )
         context_path = authoring_dir / "agentic_authoring_context.json"
         write_authoring_context(context_path, authoring_context)
+        projection = build_authoring_projection(
+            method_evidence=method_evidence,
+            claim_map=claim_map,
+            verification=verification,
+            raw_evidence=(
+                RawEvidencePack.model_validate(read_json(state.artifacts["evidence_raw"]))
+                if state.artifacts.get("evidence_raw")
+                else None
+            ),
+        )
+        projection_path = authoring_dir / "agentic_authoring_input_projection.json"
+        write_authoring_projection(projection_path, projection)
         authoring_plan, trace = authoring_plan_trace(
             authoring_context,
-            author_intent_summary=author_intent_summary_from_state(state),
+            projection=projection,
             decision_provider=decision_provider,
         )
         plan_path = authoring_dir / "agentic_authoring_plan.json"
@@ -146,6 +159,7 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
             "claim_verification": str(verification_path),
             "authoring_constraints": str(constraints_path),
             "authoring_context": str(context_path),
+            "authoring_projection": str(projection_path),
             "authoring_plan": str(plan_path),
             "authoring_plan_decision_trace": str(trace_path),
         }
@@ -159,6 +173,7 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
                 "authoring_plan_decision_trace",
                 "authoring_context",
                 "authoring_constraints",
+                "authoring_projection",
                 "claim_verification",
             ],
         )

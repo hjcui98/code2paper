@@ -45,6 +45,8 @@ class AgenticRunEvaluationReport(BaseModel):
     evidence_support_rate: float | None = None
     unsupported_claim_rate: float | None = None
     partial_claim_rate: float | None = None
+    final_text_unsupported_claim_rate: float | None = None
+    text_evidence_validation_passed: bool | None = None
     retrieval_loops: int = 0
     retrieval_rescan_plan_items: int = 0
     retrieval_rescan_covered_items: int = 0
@@ -84,6 +86,7 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
     repair_focus = _artifact_json(state, "evidence_repair_focus")
     repair_tasks = _artifact_json(state, "analysis_repair_tasks")
     verification = _artifact_json(state, "claim_verification")
+    text_validation = _artifact_json(state, "text_evidence_validation")
     validation_manifest = _artifact_json(state, "validation_manifest")
     contract_audit = _artifact_json(state, "agentic_contract_audit")
     audit = _artifact_json(state, "agentic_invariant_audit")
@@ -99,6 +102,10 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
     claim_counts = claim_support_counts(verification)
     unsupported_claim_rate = rate(claim_counts.unsupported, claim_counts.total)
     partial_claim_rate = rate(claim_counts.partial, claim_counts.total)
+    final_checked = int_or_zero(text_validation.get("checked_factual_claims"))
+    final_unsupported = int_or_zero(text_validation.get("unsupported_claims")) + int_or_zero(text_validation.get("unverified_claims"))
+    final_text_unsupported_claim_rate = rate(final_unsupported, final_checked)
+    text_evidence_validation_passed = validation_passed(text_validation)
     validation_passed_value = validation_passed(validation_manifest)
     figure_plan_nodes = len(figure_plan.get("nodes") or []) if isinstance(figure_plan.get("nodes"), list) else 0
     figure_plan_edges = len(figure_plan.get("edges") or []) if isinstance(figure_plan.get("edges"), list) else 0
@@ -168,6 +175,8 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
         evidence_support_rate=evidence_support_rate,
         unsupported_claim_rate=unsupported_claim_rate,
         partial_claim_rate=partial_claim_rate,
+        final_text_unsupported_claim_rate=final_text_unsupported_claim_rate,
+        text_evidence_validation_passed=text_evidence_validation_passed,
         retrieval_loops=retrieval_loops,
         retrieval_rescan_plan_items=retrieval_rescan_plan_items,
         retrieval_rescan_covered_items=retrieval_rescan_covered_items,

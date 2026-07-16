@@ -172,7 +172,8 @@ class AgenticAuthoringConstraintsTests(unittest.TestCase):
         self.assertEqual([claim.claim_id for claim in context.excluded_claims], ["C2"])
         self.assertIn("Explain the implementation", brief)
         self.assertIn("Allowed claims", brief)
-        self.assertIn("Excluded claims", brief)
+        self.assertIn("Excluded claim ids", brief)
+        self.assertNotIn("unsupported extra behavior", brief)
         plan = build_authoring_plan(context)
         self.assertTrue(plan.hard_gate_passed)
         self.assertEqual([section.claim_ids for section in plan.sections], [["C1"], ["C3"]])
@@ -243,15 +244,17 @@ class AgenticAuthoringConstraintsTests(unittest.TestCase):
 
         self.assertEqual(result.status, StageStatus.SUCCESS)
         self.assertEqual(captured_claim_ids, ["C1", "C3"])
-        self.assertIn("Evidence-bound authoring contract", captured_grounding_context[0])
+        self.assertIn("Authoring input projection", captured_grounding_context[0])
         self.assertIn("Evidence-bound Method writing plan", captured_grounding_context[0])
-        self.assertIn("C2", captured_grounding_context[0])
+        self.assertNotIn("C2", captured_grounding_context[0])
+        self.assertNotIn("unsupported extra behavior", captured_grounding_context[0])
         self.assertEqual(constraints["excluded_claim_ids"], ["C2"])
         self.assertEqual([claim.claim_id for claim in context.allowed_claims], ["C1"])
         self.assertEqual([section.claim_ids for section in plan.sections], [["C1"], ["C3"]])
         self.assertIn("authoring_context", result.artifacts)
         self.assertIn("authoring_plan", result.artifacts)
         self.assertIn("authoring_plan_decision_trace", result.artifacts)
+        self.assertIn("authoring_projection", result.artifacts)
 
 
 if __name__ == "__main__":
