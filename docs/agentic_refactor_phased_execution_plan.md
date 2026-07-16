@@ -1,14 +1,14 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.6
+版本：1.7
 
 日期：2026-07-17
 
-状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 真实矩阵已完成，named human review、cutover 与 rollout 仍在进行
+状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 deterministic 与 adversarial 子矩阵通过，Gemma/fixed 矩阵受服务不可用阻塞，named human review、cutover 与 rollout 尚未完成
 
 执行负责人：Codex
 
-当前实施分支：`codex/agentic-p3-tools-checkpoint`
+当前实施分支：`codex/agentic-p4-benchmark-cutover`
 
 上位设计：[agentic_refactor_final_design.md](./agentic_refactor_final_design.md)
 
@@ -1865,25 +1865,26 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.9 2026-07-17 实施状态
 
-P4 已从 clean tracked commit `29504b177ccceea74346641e1a111deb6ced7f3d`
-冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
-agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。三类 variant
-分别完成 5、5、15 次正常 runner 结束；Gemma semantic verifier 共 42 次真实调用、
-0 cache hit。完整 digest、延迟、blocked reason 和 adversarial 摘要记录在
-`tests/baselines/agentic/p4_live_matrix_status.json`。
+P4 已从 clean tracked commit `de29ac0c25742f95fcbc41e1cccc6ddf0244c8bf`
+重新冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
+agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。当前 5 个
+deterministic run 全部正常结束并达到 `success`、`completion=complete` 与
+`package_lineage_passed`，覆盖 toy、FastGS training、FastGS rendering、
+Spatial-SSRL 和 MOS。
 
 13 个 curated mutation 已全部执行并被对应 text/figure/post-render/freshness
 validator 检出。该 campaign 同时发现并修复了一个旧的 claim-extraction 绕过：
 不在 factual hint 白名单中的实质性科研陈述曾可能不进入 atomic claim gate。
 
-当前 20 个 agentic full-pipeline run 均为解释性 block，没有 success 绕过 final
-invariant；5 个 legacy run 均在 V1 下报告 fidelity success。Legacy V2 audit 将
-这 5 个结果全部标记为 `legacy_false_success_candidate`，原因是 curated V2 text
-gate 未通过且图缺少 V2 relation lineage/post-render audit；该标签仍要求 named
-human review，不能由自动 audit 自行定案。
+当前冻结的 Gemma 4 服务端点 `http://127.0.0.1:8000` 连续三轮健康检查均不可连接，
+因此新提交上的 5 个 fixed legacy 与 15 个 Gemma agentic run 尚未执行。旧提交上的
+fixed/Gemma 结果不能与新 deterministic 结果混合使用，也不能作为 cutover 证据。
+完整 protocol、已完成子矩阵、延迟、服务阻塞原因和 adversarial 摘要记录在
+`tests/baselines/agentic/p4_live_matrix_status.json`。
 
-25-entry review queue 已生成，但 named human review 尚未完成。因此 P4 状态仍是
-`human_review_required`，cutover 必须 `hold`，`code2paper-run` 默认仍为 legacy。
+25-entry review queue 已重新生成，其中 5 项已有当前提交的 run record，20 项明确
+标记为 `run_record_missing`；named human review 尚未完成。因此 P4 状态为
+`external_dependencies_blocked`，cutover 必须 `hold`，`code2paper-run` 默认仍为 legacy。
 不得在 review、shadow、opt-in 和 canary 证据齐备前把默认切换为 agentic。
 
 ## 13. 代码落点总表
@@ -2145,13 +2146,13 @@ Batch A 不改 authoring/figure 的可信度算法。
 
 ### P4
 
-- [ ] gold/adversarial benchmark 可复现
-- [ ] 三个以上真实项目
+- [x] gold/adversarial benchmark 可复现
+- [x] 三个以上真实项目
 - [ ] Gemma 4 每 case 三次
 - [ ] 所有可信度硬阈值达到
 - [ ] shadow/canary 完成
 - [ ] 默认路线切换有数据支持
-- [ ] legacy contract version 明确
+- [x] legacy contract version 明确
 
 ## 20. 最终交付形态
 
