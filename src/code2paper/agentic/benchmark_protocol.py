@@ -117,7 +117,10 @@ def build_benchmark_protocol_v2(
         raise ValueError("LLM base URL must not contain credentials, query, or fragment")
     effective_budgets = budgets or {
         "retrieval": 1, "evidence_revision": 1, "authoring_revision": 1,
-        "figure_revision": 1, "semantic_verifier_calls": 3,
+        # The largest frozen case currently extracts seven factual claims. One
+        # authoring revision can require a second independent validation pass,
+        # so three calls made the formal Gemma matrix fail by construction.
+        "figure_revision": 1, "semantic_verifier_calls": 16,
     }
     specs: list[BenchmarkRunSpecV2] = []
     for case in dataset.cases:

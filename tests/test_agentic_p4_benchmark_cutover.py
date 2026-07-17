@@ -314,6 +314,7 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
 
     assert len(protocol.specs) == 25
     assert all(item.environment["CODE2PAPER_LLM_CACHE"] == "0" for item in protocol.specs)
+    assert all(item.budgets["semantic_verifier_calls"] == 16 for item in protocol.specs)
     assert all(
         item.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") == item.capability_profile_path
         for item in protocol.specs if item.variant != "agentic_deterministic"

@@ -73,7 +73,9 @@ FastGS, Spatial-SSRL, and MOS, exact code-excerpt digests, adversarial mutations
 and paired FastGS intents. Freeze the 25-run protocol before execution. Every
 Gemma spec sets `CODE2PAPER_LLM_CACHE=0`; every model-backed spec also freezes a
 credential-free OpenAI-compatible base URL and capability profile. Every variant
-for a case/intent is bound to the same repository snapshot:
+for a case/intent is bound to the same repository snapshot. The frozen semantic
+verifier budget is 16 calls, covering the largest seven-claim case plus one bounded
+authoring revision without making a successful validation impossible by construction:
 
 ```bash
 code2paper-agentic-benchmark-protocol \
