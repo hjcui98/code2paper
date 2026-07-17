@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `469 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `473 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -76,6 +76,15 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   The frozen workspace currently reports 0 validated, 25 pending, and 0 invalid;
   this improves review operability without claiming that human review occurred.
   The machine record is `docs/agentic_p4_review_workspace_2026-07-18.json`.
+- Figure review can no longer score an empty inventory as perfect. Every visible
+  scene node, edge, annotation, and group is now materialized from the
+  digest-pinned scene and retained as an immutable review inventory; every element
+  requires semantic-support and render-drift adjudication, while edges separately
+  require direct-relation-evidence adjudication. A completed run with missing or
+  incomplete inventory receives zero figure/edge precision, maximal drift, and a
+  contract failure. The rebuilt formal queue contains 28 visible nodes across 16
+  successful agentic deliveries; all 25 run reviews remain honestly pending. See
+  `docs/agentic_p4_figure_review_inventory_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

@@ -2,6 +2,9 @@
   "schema_version": "code2paper-agentic-p4-review-workspace-eval/v1",
   "evaluated_at": "2026-07-18",
   "implementation_commit": "da90c610447928925b3806a21e5c51454552fb27",
+  "historical_status": "superseded",
+  "superseded_by": "docs/agentic_p4_figure_review_inventory_2026-07-18.json",
+  "supersession_reason": "The v2 queue predated mandatory frozen figure-scene adjudication inventory and must not be used for cutover review.",
   "formal_p4_baseline": {
     "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
     "protocol_runs": 25,
@@ -54,6 +57,7 @@
     "src/code2paper/cli/agentic_benchmark.py": "6bfa5b3f4d1985558e5e97f9dbf5d47d429bd64b2ed202c719e67b3b07db62e7",
     "pyproject.toml": "0dbbfe16830a1ea113d60de47a1f7a8d1c9ad2b12841f8a6dcd7ada178320f53"
   },
+  "source_hash_scope": "implementation_commit",
   "cutover": {
     "status": "hold",
     "default_mode": "legacy",

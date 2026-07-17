@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.8
+版本：1.9
 
 日期：2026-07-18
 
@@ -2154,6 +2154,40 @@ review 通过真实 artifact extraction 和 protocol observation validation 后�
 
 该工具消除了人工流程的机械阻力和绑定漂移风险，但不能填写 reviewer、不能判断语义质量，也不能把
 0/25 改计为完成。正式 P4 baseline 仍为 `9a98c17`，默认路线继续 hold。
+
+### 12.16 Figure human-review 空集门禁（2026-07-18）
+
+在 12.15 的 workspace 上继续做 completion audit 时发现，`BenchmarkRunReviewV2.figures` 默认是空
+列表，而旧 `evaluate_observation()` 对空 figure elements 使用 `empty=1.0`。因此一个实际已经渲染方法
+图的成功 run，如果 reviewer 完全不填写图节点和边，仍可能得到
+`figure_element_semantic_precision=1.0`、`direct_edge_evidence_rate=1.0` 和
+`rendered_element_drift_rate=0.0`。这会把“没有审核图”误计为“图审核满分”，直接违背图节点/边分别
+取证和 post-render 人工抽查的要求。
+
+修复提交 `daaf1136917e96788b1b503fc8daea2e6035e0bb` 后，review queue 从 run summary 中读取
+digest-pinned `figure_scene`，把每个可见 node、edge、annotation、group 物化为不可删减的
+`FigureAdjudicationV2`。每项冻结 `element_id`、kind、label、scene element digest 和内部 relation ID；
+reviewer 只能填写 gold 映射与语义判断。每个元素必须显式填写 `semantically_supported` 和
+`rendered_drift`，每条 edge 还必须填写 `direct_relation_evidence`。workspace validator 和 observation
+extractor 都重新比较 exact inventory，删除、增加、重复或改绑任一元素均 fail closed。
+
+`BenchmarkObservationV2` 同时记录 expected figure/relation inventory count 与
+`figure_inventory_reviewed`。对 completion-complete run，空或不完整 inventory 现在产生
+`complete_without_full_figure_human_review_inventory`，对应 figure precision/edge evidence 强制为 0、
+rendered drift 强制为 1；对没有生成图的 safe block 保持中性，不因不存在的产物制造假失败。边场景的
+对抗测试证明，即使 source/target node 都已审核，edge 未显式裁决 direct relation evidence 仍不能通过。
+
+冻结 `9a98c17` 的 25-run queue 已重建为
+`/tmp/code2paper-p4-review-queue-9a98c17-figure-inventory.json`，并物化到
+`/tmp/code2paper-p4-review-workspace-9a98c17-v3-figure-inventory`。20 个 agentic records 中，16 个成功
+交付包含共 28 个 visible scene nodes，4 个 safe block 没有 figure asset；当前正式产物没有 scene edge，
+但 edge gate 已由独立 relation fixture 覆盖。workspace validation 仍正确报告 0 validated、25 pending、
+0 invalid、不输出 observations。定向测试 35 passed，全量测试为
+`473 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_figure_review_inventory_2026-07-18.json`。
+
+旧 v2 workspace 的 queue 没有 figure inventory，现已标记 superseded，不能用于完成具名 review 或签发
+cutover。正式 baseline run 本身未改变，named review 仍为 0/25，默认路线继续 hold。
 
 ## 13. 代码落点总表
 

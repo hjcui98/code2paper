@@ -1,0 +1,82 @@
+{
+  "schema_version": "code2paper-agentic-p4-figure-review-inventory-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "daaf1136917e96788b1b503fc8daea2e6035e0bb",
+  "finding": {
+    "old_behavior": "An empty BenchmarkRunReviewV2.figures list produced perfect empty-set figure precision and edge-evidence metrics even when a completed run had a rendered method figure.",
+    "trust_violation": "Absence of human figure adjudication was counted as perfect semantic and relation review."
+  },
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "run_count": 25,
+    "agentic_records": 20,
+    "successful_agentic_deliveries_with_scene": 16,
+    "safe_blocks_without_figure_asset": 4,
+    "unchanged": true
+  },
+  "frozen_figure_inventory": {
+    "visible_elements": 28,
+    "nodes": 28,
+    "edges": 0,
+    "annotations": 0,
+    "groups": 0,
+    "entries_with_figure_inventory": 16,
+    "required_element_decisions": [
+      "semantically_supported",
+      "rendered_drift"
+    ],
+    "required_edge_decision": "direct_relation_evidence",
+    "immutable_fields": [
+      "element_id",
+      "element_kind",
+      "label",
+      "scene_element_digest",
+      "scene_relation_id"
+    ]
+  },
+  "fail_closed_metrics": {
+    "completed_empty_or_incomplete_inventory": {
+      "figure_element_semantic_precision": 0.0,
+      "direct_edge_evidence_rate": 0.0,
+      "rendered_element_drift_rate": 1.0,
+      "failure": "complete_without_full_figure_human_review_inventory"
+    },
+    "safe_block_without_figure": "neutral_not_applicable",
+    "node_evidence_implies_edge_evidence": false
+  },
+  "workspace": {
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17-figure-inventory.json",
+    "queue_sha256": "2f8a224431de2ddf7ca5dbd12db50d908af23228b676904c69cb512a8fe6651b",
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v3-figure-inventory",
+    "manifest_sha256": "14e549a9b8f4b113b14a06ce9eaff0f436e155fc67393b6203508ec3ba998110",
+    "validation_sha256": "b79051e6a74da2fce9efa7d89979335c9aa3966c3e92dc720e12cd943a40ae4f",
+    "status": "pending_human_review",
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "observations_emitted": false
+  },
+  "verification": {
+    "targeted": "35 passed",
+    "full_suite": "473 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "completed observation with empty figure inventory",
+      "deleted or rebound scene element",
+      "duplicate or extra scene element",
+      "missing semantic or rendered-drift decision",
+      "edge without explicit direct-relation-evidence decision",
+      "scene artifact digest drift before queue construction"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_v2.py": "96c0e50f543b59f364e92daa7f7fc3e1e277634ef9196446d966a6836ee97a8c",
+    "src/code2paper/agentic/benchmark_observation.py": "cd3766a7d11836871e54304e98d2f8200a9fd04314535f075e5acc82ae28126e",
+    "src/code2paper/agentic/benchmark_review_queue.py": "1e5b949d33e302f94fd87579e7b94c670e0d43e0c0c0229b04d38b213d933c02",
+    "src/code2paper/agentic/benchmark_review_workspace.py": "9d6171fd43fec2acbb2346c5e1cd8d0b8e22e6a03d7a353dd04aed4ed4e7b385"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All 25 named reviews, including 28 visible figure-element adjudications, remain pending."
+  }
+}

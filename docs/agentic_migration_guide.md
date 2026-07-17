@@ -166,7 +166,12 @@ This creates one editable JSON under `reviews/` and one read-only context file
 under `contexts/` for every protocol identity. Context files link the frozen
 method text, figure, validator, final invariant, package, code-grounded gold
 claims, and their digests. They intentionally exclude the reference paper as
-evidence. The command refuses to overwrite a non-empty workspace.
+evidence. For every agentic run with a rendered figure, the review JSON also
+contains the complete frozen scene inventory. The reviewer must fill
+`semantically_supported` and `rendered_drift` for every visible node, edge,
+annotation, and group; edges additionally require `direct_relation_evidence`.
+Deleting the inventory or leaving it empty is not a valid shortcut. The command
+refuses to overwrite a non-empty workspace.
 
 After named reviewers fill the JSON files, validate the whole workspace before
 benchmark aggregation:
