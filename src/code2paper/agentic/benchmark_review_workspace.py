@@ -268,6 +268,21 @@ def _immutable_binding_failures(template: dict[str, Any], review: dict[str, Any]
         ]
         if actual_claims != expected_claims:
             failures.append("agentic_claim_inventory_or_validator_verdict_changed")
+        immutable_figure_fields = (
+            "element_id", "element_kind", "label", "scene_element_digest", "scene_relation_id",
+        )
+        expected_figures = [
+            tuple(item.get(field) for field in immutable_figure_fields)
+            for item in template.get("figures", [])
+            if isinstance(item, dict)
+        ]
+        actual_figures = [
+            tuple(item.get(field) for field in immutable_figure_fields)
+            for item in review.get("figures", [])
+            if isinstance(item, dict)
+        ]
+        if actual_figures != expected_figures:
+            failures.append("agentic_figure_inventory_or_scene_binding_changed")
     expected_trials = sorted(
         (
             str(item.get("mutation_id") or ""),
@@ -318,6 +333,8 @@ def _review_context(entry: dict[str, Any]) -> str:
     lines.append(json.dumps(entry.get("gold_claims", []), ensure_ascii=False, indent=2))
     lines.extend(["```", "", "## Gold figure relations grounded in code", "", "```json"])
     lines.append(json.dumps(entry.get("gold_figure_relations", []), ensure_ascii=False, indent=2))
+    lines.extend(["```", "", "## Frozen visible figure inventory requiring human decisions", "", "```json"])
+    lines.append(json.dumps(template.get("figures", []), ensure_ascii=False, indent=2))
     lines.extend(["```", ""])
     legacy_path = str(entry.get("legacy_v2_audit_path") or "")
     if legacy_path:

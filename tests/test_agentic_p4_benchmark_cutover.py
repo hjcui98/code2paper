@@ -24,7 +24,10 @@ from code2paper.agentic.cutover import (
 from code2paper.agentic.benchmark_observation import (
     BenchmarkRunReviewV2,
     ClaimAdjudicationV2,
+    FigureAdjudicationV2,
     MutationTrialAdjudicationV2,
+    _validated_figure_adjudications,
+    build_figure_review_inventory,
     extract_benchmark_observation_v2,
 )
 from code2paper.agentic.benchmark_protocol import (
@@ -71,6 +74,9 @@ def _perfect_observation(case, variant: str, repeat: int = 1, intent_id: str = "
         run_status="success",
         claims=claims,
         figure_elements=figures,
+        figure_inventory_expected=len(figures),
+        figure_relation_inventory_expected=0,
+        figure_inventory_reviewed=True,
         detected_mutation_ids=[item.mutation_id for item in case.mutations],
         stale_trials=2,
         stale_detected=2,
@@ -145,6 +151,50 @@ def test_observation_metrics_detect_unsupported_paraphrase_and_high_risk_leakage
     assert evaluated.metrics.unsupported_leakage_rate > 0
     assert evaluated.metrics.paraphrased_unsupported_leakage_rate == 1.0
     assert evaluated.metrics.high_risk_false_supported_rate > 0
+
+
+def test_completed_observation_cannot_receive_perfect_figure_metrics_from_empty_inventory() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    case = dataset.cases[0]
+    observation = _perfect_observation(case, "agentic_gemma4_mtp").model_copy(update={
+        "figure_elements": [],
+        "figure_inventory_reviewed": False,
+    })
+
+    evaluated = evaluate_observation(case, observation)
+
+    assert evaluated.metrics.figure_element_semantic_precision == 0.0
+    assert evaluated.metrics.direct_edge_evidence_rate == 0.0
+    assert evaluated.metrics.rendered_element_drift_rate == 1.0
+    assert "complete_without_full_figure_human_review_inventory" in evaluated.failures
+
+
+def test_figure_edge_review_requires_explicit_direct_relation_evidence_decision() -> None:
+    inventory = build_figure_review_inventory({
+        "nodes": [
+            {"element_id": "scene-N1", "label": "Source"},
+            {"element_id": "scene-N2", "label": "Target"},
+        ],
+        "edges": [{
+            "element_id": "scene-E1", "label": "passes tensor", "relation_id": "R1",
+        }],
+        "annotations": [],
+        "groups": [],
+    })
+    decisions = [FigureAdjudicationV2(**{
+        **item,
+        "semantically_supported": True,
+        "rendered_drift": False,
+    }) for item in inventory]
+
+    with pytest.raises(ValueError, match="figure edge evidence decision missing"):
+        _validated_figure_adjudications(decisions, inventory, completion_complete=True)
+
+    decisions[-1] = decisions[-1].model_copy(update={"direct_relation_evidence": True})
+    observed = _validated_figure_adjudications(decisions, inventory, completion_complete=True)
+    assert len(observed) == 3
+    assert observed[-1].element_kind == "edge"
+    assert observed[-1].direct_relation_evidence
 
 
 def test_named_review_schema_rejects_queue_placeholders_and_naive_timestamps() -> None:
@@ -541,6 +591,25 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
     evaluation_path, evaluation_hash = write("evaluation.json", {"retrieval_loops": 1, "revision_loops": 2})
     freshness_path, freshness_hash = write("freshness.json", {"passed": True})
     repo_path, repo_hash = write("repo.json", {"snapshot_id": "repo:test"})
+    scene = {
+        "nodes": [{
+            "element_id": "scene-N1",
+            "stage_id": "S1",
+            "label": "Reviewed stage",
+            "kind": "stage",
+            "claim_ids": ["T1"],
+            "direct_evidence_ids": ["E1"],
+            "visible_text_boundary": "Reviewed stage",
+        }],
+        "edges": [],
+        "annotations": [],
+        "groups": [],
+    }
+    scene_path, scene_hash = write("scene.json", scene)
+    post_render_path, post_render_hash = write("post-render.json", {"hard_gate_passed": True})
+    svg_path = tmp_path / "method.svg"
+    svg_path.write_text("<svg><text>Reviewed stage</text></svg>", encoding="utf-8")
+    svg_hash = "sha256:" + hashlib.sha256(svg_path.read_bytes()).hexdigest()
     trial_reviews = []
     for mutation in case.mutations:
         path, digest = write(f"{mutation.mutation_id}.json", {"detected": True})
@@ -558,6 +627,9 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
             "agentic_run_evaluation_report": {"path": str(evaluation_path), "hash": evaluation_hash},
             "artifact_freshness": {"path": str(freshness_path), "hash": freshness_hash},
             "repo_snapshot": {"path": str(repo_path), "hash": repo_hash},
+            "figure_scene": {"path": str(scene_path), "hash": scene_hash},
+            "post_render_audit": {"path": str(post_render_path), "hash": post_render_hash},
+            "method_overview_svg": {"path": str(svg_path), "hash": svg_hash},
         },
     }
     summary_path, summary_hash = write("summary.json", summary)
@@ -569,6 +641,12 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
             atomic_claim_id="FAC1", verdict="caveated", gold_claim_id="T1",
             qualifiers_preserved=True,
         )],
+        figures=[FigureAdjudicationV2(**{
+            **build_figure_review_inventory(scene)[0],
+            "gold_claim_id": "T1",
+            "semantically_supported": True,
+            "rendered_drift": False,
+        })],
         mutation_trials=trial_reviews,
         usable_completion=True,
     )
@@ -579,6 +657,10 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
     assert observation.detected_mutation_ids == ["TM1", "TM2", "TM3"]
     assert observation.asset_lineage_complete and observation.usable_completion
     assert observation.authoring_revision_loops == 2
+    assert observation.figure_inventory_reviewed
+    assert observation.figure_inventory_expected == 1
+    with pytest.raises(ValueError, match="figure review inventory mismatch"):
+        extract_benchmark_observation_v2(case, review.model_copy(update={"figures": []}))
 
 
 def test_cutover_holds_if_agentic_usable_completion_is_below_legacy() -> None:

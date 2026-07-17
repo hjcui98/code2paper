@@ -11,6 +11,8 @@ from code2paper.agentic.benchmark_review_workspace import (
     materialize_review_workspace,
     validate_review_workspace,
 )
+from code2paper.agentic.benchmark_observation import build_figure_review_inventory
+from code2paper.agentic.benchmark_review_queue import _agentic_figure_templates
 from code2paper.agentic.benchmark_v2 import BenchmarkObservationV2
 from code2paper.cli.agentic_benchmark_review_workspace import main as workspace_main
 
@@ -260,3 +262,75 @@ def test_workspace_cli_materializes_review_files(tmp_path: Path) -> None:
     assert exit_code == 0
     assert (workspace / "review_workspace_manifest.json").is_file()
     assert len(list((workspace / "reviews").glob("*.json"))) == 1
+
+
+def test_review_workspace_rejects_deleted_or_rebound_agentic_figure_inventory(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    queue_payload["entries"][0]["identity"][1] = "agentic_deterministic"
+    template = queue_payload["entries"][0]["review_template"]
+    template["variant"] = "agentic_deterministic"
+    template["model_id"] = ""
+    template["capability_profile_digest"] = ""
+    template["figures"] = build_figure_review_inventory({
+        "nodes": [{"element_id": "scene-N1", "label": "Frozen node"}],
+        "edges": [], "annotations": [], "groups": [],
+    })
+    queue = tmp_path / "agentic-queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+    _completed_review(review_path)
+    payload = json.loads(review_path.read_text(encoding="utf-8"))
+    payload["figures"][0].update({"semantically_supported": True, "rendered_drift": False})
+    review_path.write_text(json.dumps(payload), encoding="utf-8")
+    protocol = SimpleNamespace(
+        workspace_commit="commit:test",
+        specs=[SimpleNamespace(
+            case_id=IDENTITY[0], variant="agentic_deterministic", intent_id=IDENTITY[2], repeat_index=IDENTITY[3],
+        )],
+    )
+
+    with (
+        patch(
+            "code2paper.agentic.benchmark_review_workspace.extract_benchmark_observation_v2",
+            return_value=_observation().model_copy(update={"variant": "agentic_deterministic"}),
+        ),
+        patch(
+            "code2paper.agentic.benchmark_review_workspace.validate_protocol_observations_v2",
+            return_value=[],
+        ),
+    ):
+        report, _ = validate_review_workspace(queue, workspace, _dataset(), protocol)
+    assert report["status"] == "passed"
+
+    payload["figures"] = []
+    review_path.write_text(json.dumps(payload), encoding="utf-8")
+    report, observations = validate_review_workspace(queue, workspace, _dataset(), protocol)
+    assert report["status"] == "failed"
+    assert "agentic_figure_inventory_or_scene_binding_changed" in report["invalid_reviews"][0]["failures"]
+    assert observations == []
+
+
+def test_review_queue_figure_templates_are_scene_complete_and_digest_pinned(tmp_path: Path) -> None:
+    scene_path = tmp_path / "scene.json"
+    scene_path.write_text(json.dumps({
+        "nodes": [{"element_id": "scene-N1", "label": "Node"}],
+        "edges": [{"element_id": "scene-E1", "label": "passes", "relation_id": "R1"}],
+        "annotations": [],
+        "groups": [],
+    }), encoding="utf-8")
+    scene_digest = "sha256:" + __import__("hashlib").sha256(scene_path.read_bytes()).hexdigest()
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text(json.dumps({
+        "artifacts": {"figure_scene": {"path": str(scene_path), "hash": scene_digest}},
+    }), encoding="utf-8")
+
+    inventory = _agentic_figure_templates(summary_path)
+
+    assert [item["element_kind"] for item in inventory] == ["node", "edge"]
+    assert all(item["semantically_supported"] is None for item in inventory)
+    assert inventory[1]["direct_relation_evidence"] is None
+    scene_path.write_text('{"nodes":[]}', encoding="utf-8")
+    with pytest.raises(ValueError, match="figure scene digest changed"):
+        _agentic_figure_templates(summary_path)

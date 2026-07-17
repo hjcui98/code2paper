@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from code2paper.agentic.benchmark_protocol import BenchmarkProtocolV2, benchmark_spec_digest
+from code2paper.agentic.benchmark_observation import build_figure_review_inventory
 from code2paper.agentic.benchmark_v2 import BenchmarkDatasetV2
 
 
@@ -48,7 +49,7 @@ def build_review_queue_v2(
             "reviewed_at": "__REQUIRED_ISO8601__",
             "blocked_reason_review": "",
             "claims": _agentic_claim_templates(summary_path) if spec.variant != "fixed_legacy" else [],
-            "figures": [],
+            "figures": _agentic_figure_templates(summary_path) if spec.variant != "fixed_legacy" else [],
             "mutation_trials": _mutation_templates(case, mutation_roots[case.case_id]),
             "expected_retrieval_targets_observed": [],
             "section_claim_order": [],
@@ -111,6 +112,19 @@ def _agentic_claim_templates(summary_path: Path) -> list[dict]:
         "gold_claim_id": "", "mutation_id": "", "qualifiers_preserved": False,
         "high_risk": bool(item.get("high_risk_markers")),
     } for item in claims.get("atomic_claims", [])]
+
+
+def _agentic_figure_templates(summary_path: Path) -> list[dict]:
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    record = summary.get("artifacts", {}).get("figure_scene")
+    if not record:
+        return []
+    path = Path(record["path"]).resolve()
+    expected_digest = str(record.get("hash") or "")
+    if _digest(path) != expected_digest:
+        raise ValueError("figure scene digest changed before review queue construction")
+    scene = json.loads(path.read_text(encoding="utf-8"))
+    return build_figure_review_inventory(scene)
 
 
 def _mutation_templates(case, root: str | Path) -> list[dict]:

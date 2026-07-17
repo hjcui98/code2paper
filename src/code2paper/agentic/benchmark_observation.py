@@ -32,11 +32,15 @@ class ClaimAdjudicationV2(ReviewModel):
 
 class FigureAdjudicationV2(ReviewModel):
     element_id: str
+    element_kind: Literal["node", "edge", "annotation", "group"] = "node"
+    label: str = ""
+    scene_element_digest: str = ""
+    scene_relation_id: str = ""
     gold_claim_id: str = ""
     relation_id: str = ""
-    semantically_supported: bool
-    direct_relation_evidence: bool = False
-    rendered_drift: bool = False
+    semantically_supported: bool | None = None
+    direct_relation_evidence: bool | None = None
+    rendered_drift: bool | None = None
 
 
 class MutationTrialAdjudicationV2(ReviewModel):
@@ -157,6 +161,23 @@ def _agentic_observation(
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
     completion_complete = bool(completion.get("complete"))
     asset_lineage = _completion_asset_lineage(completion)
+    figure_scene, figure_scene_digest = _artifact_json(
+        artifacts, "figure_scene", required=completion_complete,
+    )
+    expected_figure_inventory = build_figure_review_inventory(figure_scene)
+    observed_figures = _validated_figure_adjudications(
+        review.figures,
+        expected_figure_inventory,
+        completion_complete=completion_complete,
+    )
+    post_render_audit, post_render_digest = _artifact_json(
+        artifacts, "post_render_audit", required=completion_complete,
+    )
+    figure_asset_digest = _artifact_file_digest(
+        artifacts, "method_overview_svg", required=completion_complete,
+    )
+    if completion_complete and not post_render_audit.get("hard_gate_passed"):
+        raise ValueError("completed run post-render audit is not passed")
     loops = summary.get("loop_counters", {})
     semantic_trace, semantic_trace_digest = _artifact_json(
         artifacts, "semantic_verifier_call_trace", required=False,
@@ -189,6 +210,9 @@ def _agentic_observation(
         "model_id": observed_model or review.model_id,
         "capability_profile_digest": observed_profile or review.capability_profile_digest,
         "semantic_verifier_call_trace": semantic_trace_digest,
+        "figure_scene": figure_scene_digest,
+        "post_render_audit": post_render_digest,
+        "method_overview_svg": figure_asset_digest,
         "authoring_mode": str(evaluation.get("authoring_mode") or ""),
         "authoring_llm_used": str(bool(evaluation.get("authoring_llm_used"))).lower(),
         "authoring_llm_call_count": str(int(evaluation.get("authoring_llm_call_count") or 0)),
@@ -205,7 +229,12 @@ def _agentic_observation(
         run_status="success" if summary.get("status") == "success" else "blocked",
         blocked_reason=summary.get("blocked_reason", ""),
         claims=observed_claims,
-        figure_elements=[ObservedFigureElement(**item.model_dump()) for item in review.figures],
+        figure_elements=observed_figures,
+        figure_inventory_expected=len(expected_figure_inventory),
+        figure_relation_inventory_expected=sum(
+            item["element_kind"] == "edge" for item in expected_figure_inventory
+        ),
+        figure_inventory_reviewed=bool(expected_figure_inventory) or not completion_complete,
         detected_mutation_ids=detected,
         stale_trials=stale_trials,
         stale_detected=stale_detected,
@@ -247,6 +276,19 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             high_risk=item.high_risk,
         ))
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
+    observed_figures: list[ObservedFigureElement] = []
+    for item in review.figures:
+        if item.semantically_supported is None or item.rendered_drift is None:
+            raise ValueError(f"legacy figure review decision missing:{item.element_id}")
+        observed_figures.append(ObservedFigureElement(
+            element_id=item.element_id,
+            element_kind=item.element_kind,
+            gold_claim_id=item.gold_claim_id,
+            relation_id=item.relation_id,
+            semantically_supported=item.semantically_supported,
+            direct_relation_evidence=bool(item.direct_relation_evidence),
+            rendered_drift=item.rendered_drift,
+        ))
     return BenchmarkObservationV2(
         case_id=case.case_id,
         variant="fixed_legacy",
@@ -256,7 +298,10 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
         run_status="success" if summary.get("status", "success") == "success" else "blocked",
         blocked_reason=summary.get("blocked_reason", ""),
         claims=observed,
-        figure_elements=[ObservedFigureElement(**item.model_dump()) for item in review.figures],
+        figure_elements=observed_figures,
+        figure_inventory_expected=len(observed_figures),
+        figure_relation_inventory_expected=sum(item.element_kind == "edge" for item in observed_figures),
+        figure_inventory_reviewed=bool(observed_figures),
         detected_mutation_ids=detected,
         stale_trials=stale_trials,
         stale_detected=stale_detected,
@@ -275,6 +320,80 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             "capability_profile_digest": review.capability_profile_digest, **trial_provenance,
         },
     )
+
+
+def build_figure_review_inventory(scene: dict) -> list[dict]:
+    """Build the immutable human-review inventory from the frozen visible scene."""
+
+    inventory: list[dict] = []
+    for kind, key in (
+        ("node", "nodes"),
+        ("edge", "edges"),
+        ("annotation", "annotations"),
+        ("group", "groups"),
+    ):
+        values = scene.get(key, []) if isinstance(scene, dict) else []
+        if not isinstance(values, list):
+            raise ValueError(f"figure scene {key} must be a list")
+        for index, item in enumerate(values, start=1):
+            if not isinstance(item, dict):
+                raise ValueError(f"figure scene {key} entry must be an object")
+            element_id = str(item.get("element_id") or item.get("group_id") or f"scene-{kind}-{index}")
+            label = str(item.get("label") or item.get("visible_text_boundary") or "")
+            inventory.append({
+                "element_id": element_id,
+                "element_kind": kind,
+                "label": label,
+                "scene_element_digest": _digest_value({"element_kind": kind, "scene_element": item}),
+                "scene_relation_id": str(item.get("relation_id") or "") if kind == "edge" else "",
+                "gold_claim_id": "",
+                "relation_id": "",
+                "semantically_supported": None,
+                "direct_relation_evidence": None if kind == "edge" else False,
+                "rendered_drift": None,
+            })
+    identities = [item["element_id"] for item in inventory]
+    if len(identities) != len(set(identities)):
+        raise ValueError("figure scene contains duplicate visible element ids")
+    return inventory
+
+
+def _validated_figure_adjudications(
+    adjudications: list[FigureAdjudicationV2],
+    expected_inventory: list[dict],
+    *,
+    completion_complete: bool,
+) -> list[ObservedFigureElement]:
+    expected = {item["element_id"]: item for item in expected_inventory}
+    actual_ids = [item.element_id for item in adjudications]
+    if len(actual_ids) != len(set(actual_ids)):
+        raise ValueError("figure review contains duplicate element ids")
+    if set(actual_ids) != set(expected):
+        missing = sorted(set(expected) - set(actual_ids))
+        extra = sorted(set(actual_ids) - set(expected))
+        raise ValueError(f"figure review inventory mismatch:missing={missing}:extra={extra}")
+    if completion_complete and not expected:
+        raise ValueError("completed run has no visible figure review inventory")
+    observed: list[ObservedFigureElement] = []
+    for adjudication in adjudications:
+        frozen = expected[adjudication.element_id]
+        for field in ("element_kind", "label", "scene_element_digest", "scene_relation_id"):
+            if getattr(adjudication, field) != frozen[field]:
+                raise ValueError(f"figure review changed frozen scene field:{adjudication.element_id}:{field}")
+        if adjudication.semantically_supported is None or adjudication.rendered_drift is None:
+            raise ValueError(f"figure review decision missing:{adjudication.element_id}")
+        if adjudication.element_kind == "edge" and adjudication.direct_relation_evidence is None:
+            raise ValueError(f"figure edge evidence decision missing:{adjudication.element_id}")
+        observed.append(ObservedFigureElement(
+            element_id=adjudication.element_id,
+            element_kind=adjudication.element_kind,
+            gold_claim_id=adjudication.gold_claim_id,
+            relation_id=adjudication.relation_id,
+            semantically_supported=adjudication.semantically_supported,
+            direct_relation_evidence=bool(adjudication.direct_relation_evidence),
+            rendered_drift=adjudication.rendered_drift,
+        ))
+    return observed
 
 
 def _mutation_trials(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2) -> tuple[list[str], int, int, dict[str, str]]:
@@ -308,6 +427,18 @@ def _artifact_json(artifacts: dict, key: str, *, required: bool) -> tuple[dict, 
     return _read_json(path), digest
 
 
+def _artifact_file_digest(artifacts: dict, key: str, *, required: bool) -> str:
+    record = artifacts.get(key)
+    if not record:
+        if required:
+            raise ValueError(f"required benchmark artifact missing:{key}")
+        return ""
+    path = Path(record["path"]).resolve()
+    digest = str(record.get("hash") or "")
+    _require_digest(path, digest, key)
+    return digest
+
+
 def _completion_asset_lineage(completion: dict) -> bool:
     checks = {item.get("name"): bool(item.get("passed")) for item in completion.get("checks", [])}
     return all(checks.get(name, False) for name in ("method_figure", "traceability", "final_package"))
@@ -316,6 +447,11 @@ def _completion_asset_lineage(completion: dict) -> bool:
 def _support_signature(claims: list[ObservedClaim]) -> str:
     values = sorted((item.gold_claim_id, item.verdict) for item in claims if item.gold_claim_id)
     payload = json.dumps(values, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def _digest_value(value: object) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
 

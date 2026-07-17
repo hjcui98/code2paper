@@ -103,6 +103,7 @@ class ObservedClaim(BenchmarkModel):
 
 class ObservedFigureElement(BenchmarkModel):
     element_id: str
+    element_kind: Literal["node", "edge", "annotation", "group"] = "node"
     gold_claim_id: str = ""
     relation_id: str = ""
     semantically_supported: bool
@@ -120,6 +121,9 @@ class BenchmarkObservationV2(BenchmarkModel):
     blocked_reason: str = ""
     claims: list[ObservedClaim] = Field(default_factory=list)
     figure_elements: list[ObservedFigureElement] = Field(default_factory=list)
+    figure_inventory_expected: int = 0
+    figure_relation_inventory_expected: int = 0
+    figure_inventory_reviewed: bool = False
     detected_mutation_ids: list[str] = Field(default_factory=list)
     stale_trials: int = 0
     stale_detected: int = 0
@@ -212,7 +216,22 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
     qualified = [item for item in correct_positive if gold_claims[item.gold_claim_id].required_qualifiers]
     traceable = [item for item in correct_positive]
     elements = observation.figure_elements
-    edges = [item for item in elements if item.relation_id]
+    edges = [item for item in elements if item.element_kind == "edge"]
+    figure_review_required = bool(
+        observation.completion_complete
+        or elements
+        or observation.figure_inventory_expected
+        or observation.figure_relation_inventory_expected
+    )
+    figure_inventory_complete = (
+        not figure_review_required
+        or (
+            observation.figure_inventory_reviewed
+            and len(elements) == observation.figure_inventory_expected
+            and len(edges) == observation.figure_relation_inventory_expected
+            and (not observation.completion_complete or observation.figure_inventory_expected > 0)
+        )
+    )
     expected_block = case.expected_run_outcome == "block"
     false_block = observation.run_status == "blocked" and case.expected_run_outcome == "success"
     intent = next((item for item in case.intents if item.intent_id == observation.intent_id), None)
@@ -231,9 +250,18 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
         high_risk_false_supported_rate=_rate(len(leaked_mutation_ids & high_risk_ids), len(high_risk_ids), empty=0.0),
         qualifier_preservation_rate=_rate(sum(item.qualifiers_preserved for item in qualified), len(qualified), empty=1.0),
         text_trace_exactness=_rate(sum(item.trace_exact for item in traceable), len(traceable), empty=1.0),
-        figure_element_semantic_precision=_rate(sum(item.semantically_supported for item in elements), len(elements), empty=1.0),
-        direct_edge_evidence_rate=_rate(sum(item.direct_relation_evidence for item in edges), len(edges), empty=1.0),
-        rendered_element_drift_rate=_rate(sum(item.rendered_drift for item in elements), len(elements), empty=0.0),
+        figure_element_semantic_precision=(
+            _rate(sum(item.semantically_supported for item in elements), len(elements), empty=1.0)
+            if figure_inventory_complete else 0.0
+        ),
+        direct_edge_evidence_rate=(
+            _rate(sum(item.direct_relation_evidence for item in edges), len(edges), empty=1.0)
+            if figure_inventory_complete else 0.0
+        ),
+        rendered_element_drift_rate=(
+            _rate(sum(item.rendered_drift for item in elements), len(elements), empty=0.0)
+            if figure_inventory_complete else 1.0
+        ),
         stale_detection_rate=_rate(observation.stale_detected, observation.stale_trials, empty=1.0),
         correct_block_rate=1.0 if (not expected_block or observation.run_status == "blocked") else 0.0,
         false_block_rate=1.0 if false_block else 0.0,
@@ -245,6 +273,8 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
         failures.append("success_without_final_invariant")
     if observation.completion_complete and not observation.asset_lineage_complete:
         failures.append("complete_without_asset_lineage")
+    if observation.completion_complete and not figure_inventory_complete:
+        failures.append("complete_without_full_figure_human_review_inventory")
     if false_block and not observation.false_block_human_reviewed:
         failures.append("false_block_not_human_reviewed")
     return EvaluatedBenchmarkRunV2(observation=observation, metrics=metrics, failures=failures)
