@@ -68,12 +68,14 @@ def materialize_review_workspace(queue_path: str | Path, out_root: str | Path) -
         "queue_path": str(source),
         "queue_digest": _digest_file(source),
         "protocol_commit": str(queue.get("protocol_commit") or ""),
+        "gold_digest": str(queue.get("gold_digest") or ""),
         "expected_reviews": len(entries),
         "status": "human_review_required",
         "instructions": [
             "Edit only files under reviews/; contexts/ are read-only reviewer aids.",
             "Replace reviewer and reviewed_at placeholders with an attributable name and timezone-aware ISO-8601 timestamp.",
             "Do not change run, protocol, snapshot, model, claim-text, validator-verdict, or mutation-artifact bindings.",
+            "Every claim requires an explicit direct_evidence_support decision based on the frozen code spans.",
             "The validator never supplies semantic adjudications and cannot replace the named reviewer.",
         ],
         "entries": manifest_entries,
@@ -114,6 +116,10 @@ def validate_review_workspace(
         global_failures.append("review_queue_digest_drift")
     if manifest.get("protocol_commit") != protocol.workspace_commit:
         global_failures.append("workspace_protocol_commit_mismatch")
+    if queue.get("gold_digest") != protocol.gold_digest:
+        global_failures.append("review_queue_gold_digest_mismatch")
+    if manifest.get("gold_digest") != protocol.gold_digest:
+        global_failures.append("workspace_gold_digest_mismatch")
     expected = {_identity(entry): entry for entry in queue_entries}
     protocol_identities = {
         (spec.case_id, spec.variant, spec.intent_id, spec.repeat_index)
@@ -225,6 +231,8 @@ def validate_review_workspace(
 def _validated_queue_entries(queue: dict[str, Any]) -> list[dict[str, Any]]:
     if queue.get("schema_version") != "2.0":
         raise ValueError("review queue schema must be 2.0")
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(queue.get("gold_digest") or "")):
+        raise ValueError("review queue requires a frozen gold dataset digest")
     entries = queue.get("entries")
     if not isinstance(entries, list) or queue.get("entry_count") != len(entries):
         raise ValueError("review queue entry count mismatch")
@@ -234,6 +242,26 @@ def _validated_queue_entries(queue: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError("every queue entry must be ready for human review")
         if not isinstance(entry.get("review_template"), dict):
             raise ValueError("review queue entry is missing its template")
+        gold_claims = entry.get("gold_claims")
+        gold_spans = entry.get("gold_evidence_spans")
+        if not isinstance(gold_claims, list) or not isinstance(gold_spans, list):
+            raise ValueError("review queue entry requires gold claims and code evidence spans")
+        if not str(entry.get("gold_repo_root") or "").strip():
+            raise ValueError("review queue entry requires the frozen gold repository root")
+        span_ids = [
+            str(item.get("evidence_id") or "") for item in gold_spans if isinstance(item, dict)
+        ]
+        if len(span_ids) != len(gold_spans) or any(not item for item in span_ids):
+            raise ValueError("gold code evidence spans require evidence ids")
+        if len(span_ids) != len(set(span_ids)):
+            raise ValueError("gold code evidence spans contain duplicate evidence ids")
+        known_spans = set(span_ids)
+        for claim in gold_claims:
+            if not isinstance(claim, dict):
+                raise ValueError("gold claim inventory must contain objects")
+            direct_ids = claim.get("direct_evidence_ids")
+            if not isinstance(direct_ids, list) or not direct_ids or not set(direct_ids).issubset(known_spans):
+                raise ValueError("gold claim references missing code evidence spans")
         identity = _identity(entry)
         template = entry["review_template"]
         template_identity = (
@@ -331,7 +359,10 @@ def _review_context(entry: dict[str, Any]) -> str:
     lines.extend(f"- {instruction}" for instruction in entry.get("review_instructions", []))
     lines.extend(["", "## Gold claims grounded in code", "", "```json"])
     lines.append(json.dumps(entry.get("gold_claims", []), ensure_ascii=False, indent=2))
-    lines.extend(["```", "", "## Gold figure relations grounded in code", "", "```json"])
+    lines.extend(["```", "", "## Gold code evidence spans", "", "```json"])
+    lines.append(json.dumps(entry.get("gold_evidence_spans", []), ensure_ascii=False, indent=2))
+    lines.extend(["```", "", f"- Frozen repository root: `{entry.get('gold_repo_root', '')}`"])
+    lines.extend(["", "## Gold figure relations grounded in code", "", "```json"])
     lines.append(json.dumps(entry.get("gold_figure_relations", []), ensure_ascii=False, indent=2))
     lines.extend(["```", "", "## Frozen visible figure inventory requiring human decisions", "", "```json"])
     lines.append(json.dumps(template.get("figures", []), ensure_ascii=False, indent=2))
@@ -354,7 +385,12 @@ def _review_artifact_lines(template: dict[str, Any]) -> list[str]:
     except (OSError, ValueError, json.JSONDecodeError):
         return ["- Run artifacts are unavailable; validation will fail until the frozen run is restored."]
     selected_agentic = (
+        "evidence_snapshot_v2",
+        "evidence",
+        "evidence_index",
+        "final_text_claims",
         "text_clean_md",
+        "final_text_trace",
         "method_overview_svg",
         "text_evidence_validation",
         "final_invariant_audit",

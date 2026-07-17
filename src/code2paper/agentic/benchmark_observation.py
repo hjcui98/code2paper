@@ -26,6 +26,7 @@ class ClaimAdjudicationV2(ReviewModel):
     verdict: Literal["supported", "caveated", "unsupported", "unverified"] | None = None
     gold_claim_id: str = ""
     mutation_id: str = ""
+    direct_evidence_support: bool | None = None
     qualifiers_preserved: bool = False
     high_risk: bool = False
 
@@ -172,6 +173,15 @@ def _agentic_observation(
             raise ValueError(f"review verdict decision missing:{adjudication.atomic_claim_id}")
         if adjudication.verdict != artifact_verdict:
             raise ValueError(f"review verdict contradicts validator:{adjudication.atomic_claim_id}")
+        if adjudication.direct_evidence_support is None:
+            raise ValueError(
+                f"review direct evidence support decision missing:{adjudication.atomic_claim_id}"
+            )
+        direct_evidence_ids = verdict.get("direct_evidence_ids", [])
+        if adjudication.direct_evidence_support and not direct_evidence_ids:
+            raise ValueError(
+                f"review cannot confirm absent direct evidence:{adjudication.atomic_claim_id}"
+            )
         trace_entry = trace_by_id.get(adjudication.atomic_claim_id)
         trace_exact = bool(
             trace_entry
@@ -184,7 +194,8 @@ def _agentic_observation(
             text=atomic.get("text", ""),
             verdict=artifact_verdict,
             gold_claim_id=adjudication.gold_claim_id,
-            direct_evidence_ids=verdict.get("direct_evidence_ids", []),
+            direct_evidence_ids=direct_evidence_ids,
+            direct_evidence_support=adjudication.direct_evidence_support,
             qualifiers_preserved=adjudication.qualifiers_preserved,
             trace_exact=trace_exact,
             mutation_id=adjudication.mutation_id,
@@ -305,10 +316,13 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
     for item in review.claims:
         if item.verdict is None or not item.text:
             raise ValueError("legacy claim review requires text and verdict")
+        if item.direct_evidence_support is None:
+            raise ValueError("legacy claim review requires a direct evidence support decision")
         observed.append(ObservedClaim(
             text=item.text,
             verdict=item.verdict,
             gold_claim_id=item.gold_claim_id,
+            direct_evidence_support=item.direct_evidence_support,
             qualifiers_preserved=item.qualifiers_preserved,
             trace_exact=False,
             mutation_id=item.mutation_id,

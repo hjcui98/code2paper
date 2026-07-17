@@ -17,6 +17,10 @@ def build_review_queue_v2(
     mutation_roots: dict[str, str | Path],
     legacy_audit_root: str | Path,
 ) -> dict:
+    gold_payload = dataset.model_dump_json(exclude_none=False)
+    gold_digest = "sha256:" + hashlib.sha256(gold_payload.encode("utf-8")).hexdigest()
+    if protocol.gold_digest != gold_digest:
+        raise ValueError("benchmark gold dataset does not match the frozen protocol digest")
     cases = {item.case_id: item for item in dataset.cases}
     records: dict[tuple[str, str, str, int], dict] = {}
     for path in run_indexes:
@@ -66,11 +70,14 @@ def build_review_queue_v2(
         entries.append({
             "identity": list(key), "status": "human_review_required", "review_template": template,
             "gold_claims": [item.model_dump(mode="json") for item in case.supported_claims],
+            "gold_evidence_spans": [item.model_dump(mode="json") for item in case.evidence_spans],
+            "gold_repo_root": spec.repo_root,
             "gold_figure_relations": [item.model_dump(mode="json") for item in case.figure_relations],
             "legacy_v2_audit_path": legacy_audit,
             "legacy_v2_audit_digest": _digest(Path(legacy_audit)) if legacy_audit else "",
             "review_instructions": [
                 "Map each factual claim to a gold claim only after semantic comparison.",
+                "Set direct_evidence_support only after checking that the cited frozen code spans support the exact claim.",
                 "Mark qualifiers_preserved only when every required qualifier is present.",
                 "Review every blocked reason as specific/correct/repairable or false-block.",
                 "Do not set usable_completion when V2 text, figure, lineage, or final invariant is absent.",
@@ -78,6 +85,7 @@ def build_review_queue_v2(
         })
     return {
         "schema_version": "2.0", "protocol_commit": protocol.workspace_commit,
+        "gold_digest": gold_digest,
         "entry_count": len(entries), "ready_for_cutover": False,
         "blocking_reason": "named_human_reviews_not_completed", "entries": entries,
     }
@@ -123,7 +131,8 @@ def _agentic_claim_templates(summary_path: Path) -> list[dict]:
     return [{
         "atomic_claim_id": item["atomic_claim_id"], "text": item.get("text", ""),
         "verdict": verdicts.get(item["atomic_claim_id"], {}).get("status", "unverified"),
-        "gold_claim_id": "", "mutation_id": "", "qualifiers_preserved": False,
+        "gold_claim_id": "", "mutation_id": "", "direct_evidence_support": None,
+        "qualifiers_preserved": False,
         "high_risk": bool(item.get("high_risk_markers")),
     } for item in atomic_claims]
 

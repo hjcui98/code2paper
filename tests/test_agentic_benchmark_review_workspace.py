@@ -52,6 +52,7 @@ def _queue() -> dict:
     return {
         "schema_version": "2.0",
         "protocol_commit": "commit:test",
+        "gold_digest": "sha256:" + "6" * 64,
         "entry_count": 1,
         "ready_for_cutover": False,
         "blocking_reason": "named_human_reviews_not_completed",
@@ -66,6 +67,14 @@ def _queue() -> dict:
                 "required_qualifiers": [],
                 "high_risk": False,
             }],
+            "gold_evidence_spans": [{
+                "evidence_id": "E1",
+                "path": "train.py",
+                "line_start": 1,
+                "line_end": 2,
+                "exact_excerpt_digest": "sha256:" + "5" * 64,
+            }],
+            "gold_repo_root": "/tmp/frozen-toy-train",
             "gold_figure_relations": [],
             "legacy_v2_audit_path": "/tmp/legacy-audit.json",
             "legacy_v2_audit_digest": "sha256:" + "4" * 64,
@@ -83,6 +92,7 @@ def _write_queue(tmp_path: Path) -> Path:
 def _protocol():
     return SimpleNamespace(
         workspace_commit="commit:test",
+        gold_digest="sha256:" + "6" * 64,
         specs=[SimpleNamespace(
             case_id=IDENTITY[0], variant=IDENTITY[1], intent_id=IDENTITY[2], repeat_index=IDENTITY[3],
         )],
@@ -127,6 +137,9 @@ def test_materialize_creates_one_non_overwriting_review_and_context(tmp_path: Pa
     assert manifest["status"] == "human_review_required"
     assert review["reviewer"] == "__REQUIRED_NAMED_HUMAN__"
     assert "A directly grounded claim" in context
+    assert "Gold code evidence spans" in context
+    assert '"path": "train.py"' in context
+    assert "/tmp/frozen-toy-train" in context
     assert "paper reference is not evidence" in context
     with pytest.raises(FileExistsError, match="not empty"):
         materialize_review_workspace(queue, workspace)
@@ -155,6 +168,13 @@ def test_materialize_rejects_duplicate_or_missing_run_records(tmp_path: Path) ->
     mismatch.write_text(json.dumps(queue), encoding="utf-8")
     with pytest.raises(ValueError, match="identity contradicts template"):
         materialize_review_workspace(mismatch, tmp_path / "mismatch-workspace")
+
+    queue = _queue()
+    queue["entries"][0]["gold_evidence_spans"] = []
+    missing_gold = tmp_path / "missing-gold-evidence.json"
+    missing_gold.write_text(json.dumps(queue), encoding="utf-8")
+    with pytest.raises(ValueError, match="references missing code evidence spans"):
+        materialize_review_workspace(missing_gold, tmp_path / "missing-gold-workspace")
 
 
 def test_validate_reports_placeholders_as_pending_without_emitting_observations(tmp_path: Path) -> None:
@@ -238,6 +258,21 @@ def test_validate_rejects_queue_drift_and_review_path_escape(tmp_path: Path) -> 
     assert report["invalid_reviews"][0]["failures"] == ["review_path_escapes_workspace"]
 
 
+def test_validate_rejects_gold_digest_not_bound_to_protocol(tmp_path: Path) -> None:
+    queue = _write_queue(tmp_path)
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+
+    protocol = _protocol()
+    protocol.gold_digest = "sha256:" + "7" * 64
+    report, observations = validate_review_workspace(queue, workspace, _dataset(), protocol)
+
+    assert report["status"] == "failed"
+    assert "review_queue_gold_digest_mismatch" in report["global_failures"]
+    assert "workspace_gold_digest_mismatch" in report["global_failures"]
+    assert observations == []
+
+
 def test_validate_reports_malformed_manifest_identity_instead_of_crashing(tmp_path: Path) -> None:
     queue = _write_queue(tmp_path)
     workspace = tmp_path / "workspace"
@@ -286,6 +321,7 @@ def test_review_workspace_rejects_deleted_or_rebound_agentic_figure_inventory(tm
     review_path.write_text(json.dumps(payload), encoding="utf-8")
     protocol = SimpleNamespace(
         workspace_commit="commit:test",
+        gold_digest="sha256:" + "6" * 64,
         specs=[SimpleNamespace(
             case_id=IDENTITY[0], variant="agentic_deterministic", intent_id=IDENTITY[2], repeat_index=IDENTITY[3],
         )],
@@ -362,6 +398,7 @@ def test_review_queue_claim_templates_are_complete_and_digest_pinned(tmp_path: P
         "verdict": "supported",
         "gold_claim_id": "",
         "mutation_id": "",
+        "direct_evidence_support": None,
         "qualifiers_preserved": False,
         "high_risk": False,
     }]

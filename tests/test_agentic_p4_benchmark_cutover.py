@@ -53,6 +53,7 @@ def _perfect_observation(case, variant: str, repeat: int = 1, intent_id: str = "
             verdict="caveated" if claim.required_qualifiers else "supported",
             gold_claim_id=claim.claim_id,
             direct_evidence_ids=claim.direct_evidence_ids,
+            direct_evidence_support=True,
             qualifiers_preserved=True,
             trace_exact=True,
             high_risk=claim.high_risk,
@@ -640,6 +641,7 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
         claims=[ClaimAdjudicationV2(
             atomic_claim_id="FAC1", text=case.supported_claims[0].text,
             verdict="caveated", gold_claim_id="T1",
+            direct_evidence_support=True,
             qualifiers_preserved=True,
         )],
         figures=[FigureAdjudicationV2(**{
@@ -683,6 +685,54 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
                 "claims": [review.claims[0].model_copy(update={"verdict": None})],
             }),
         )
+    with pytest.raises(ValueError, match="direct evidence support decision missing"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"direct_evidence_support": None})],
+            }),
+        )
+    with pytest.raises(ValueError, match="cannot confirm absent direct evidence"):
+        no_evidence_validation_path, no_evidence_validation_hash = write(
+            "validation-no-evidence.json",
+            {"verdicts": [{"atomic_claim_id": "FAC1", "status": "caveated", "direct_evidence_ids": []}]},
+        )
+        no_evidence_summary = {
+            **summary,
+            "artifacts": {
+                **summary["artifacts"],
+                "text_evidence_validation": {
+                    "path": str(no_evidence_validation_path),
+                    "hash": no_evidence_validation_hash,
+                },
+            },
+        }
+        no_evidence_summary_path, no_evidence_summary_hash = write(
+            "summary-no-evidence.json", no_evidence_summary,
+        )
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "run_summary_path": str(no_evidence_summary_path),
+                "run_summary_digest": no_evidence_summary_hash,
+            }),
+        )
+
+
+def test_semantic_precision_requires_human_confirmation_of_direct_code_evidence() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    case = dataset.cases[0]
+    observation = _perfect_observation(case, "agentic_gemma4_mtp")
+    contradicted = observation.model_copy(update={
+        "claims": [
+            observation.claims[0].model_copy(update={"direct_evidence_support": False}),
+        ],
+    })
+
+    evaluated = evaluate_observation(case, contradicted)
+
+    assert evaluated.metrics.atomic_claim_semantic_precision == 0.0
+    assert evaluated.metrics.atomic_claim_semantic_recall == 0.0
 
 
 def test_cutover_holds_if_agentic_usable_completion_is_below_legacy() -> None:

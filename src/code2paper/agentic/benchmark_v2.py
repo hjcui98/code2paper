@@ -95,6 +95,7 @@ class ObservedClaim(BenchmarkModel):
     verdict: Literal["supported", "caveated", "unsupported", "unverified"]
     gold_claim_id: str = ""
     direct_evidence_ids: list[str] = Field(default_factory=list)
+    direct_evidence_support: bool = False
     qualifiers_preserved: bool = True
     trace_exact: bool = False
     mutation_id: str = ""
@@ -203,7 +204,10 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
     gold_claims = {item.claim_id: item for item in case.supported_claims}
     mutations = {item.mutation_id: item for item in case.mutations}
     positive = [item for item in observation.claims if item.verdict in {"supported", "caveated"}]
-    correct_positive = [item for item in positive if item.gold_claim_id in gold_claims]
+    correct_positive = [
+        item for item in positive
+        if item.gold_claim_id in gold_claims and item.direct_evidence_support
+    ]
     recovered = {item.gold_claim_id for item in correct_positive}
     supported_mutation_ids = {item.mutation_id for item in positive if item.mutation_id in mutations}
     rejected_mutation_ids = set(observation.detected_mutation_ids)
