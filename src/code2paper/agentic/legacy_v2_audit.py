@@ -130,7 +130,7 @@ def _visible_svg_inventory(path: Path, svg_digest: str) -> list[dict]:
         if not label:
             continue
         element_id = f"legacy-svg-text-{index}"
-        element_kind = "annotation" if index == 1 and len(text_elements) > 1 else "node"
+        element_kind = "annotation"
         payload = json.dumps(
             {
                 "element_id": element_id,

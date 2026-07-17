@@ -799,7 +799,7 @@ def test_legacy_v2_audit_marks_v1_fidelity_success_as_review_candidate(tmp_path:
     assert report.claim_inventory[0]["text"] == "The module implements a complete production training system."
     assert report.claim_inventory[0]["verdict"] == "unsupported"
     assert report.figure_asset_digest.startswith("sha256:")
-    assert [item["element_kind"] for item in report.figure_inventory] == ["node", "edge"]
+    assert [item["element_kind"] for item in report.figure_inventory] == ["annotation", "edge"]
     assert report.figure_inventory[0]["label"] == "Legacy visible stage"
     assert report.figure_inventory[1]["scene_relation_id"] == "legacy-svg-relation-1"
 
