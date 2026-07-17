@@ -166,12 +166,26 @@ def _dossier_queue(tmp_path: Path) -> tuple[dict, Path, Path]:
             "excerpt_digest": digest,
         }],
     })
+    method_path = tmp_path / "method.md"
+    method_path.write_text("# Method\n\nThe grounded function returns true.\n", encoding="utf-8")
+    figure_path = tmp_path / "method.svg"
+    figure_path.write_text('<svg xmlns="http://www.w3.org/2000/svg"></svg>', encoding="utf-8")
+    method = {
+        "path": str(method_path),
+        "hash": "sha256:" + __import__("hashlib").sha256(method_path.read_bytes()).hexdigest(),
+    }
+    figure = {
+        "path": str(figure_path),
+        "hash": "sha256:" + __import__("hashlib").sha256(figure_path.read_bytes()).hexdigest(),
+    }
     summary = tmp_path / "summary.json"
     summary.write_text(json.dumps({
         "status": "success",
         "artifacts": {
             "text_evidence_validation": validation,
             "evidence_snapshot_v2": snapshot,
+            "text_clean_md": method,
+            "method_overview_svg": figure,
         },
     }), encoding="utf-8")
     template["run_summary_path"] = str(summary)
@@ -772,6 +786,8 @@ def test_review_dossier_exposes_verified_claim_and_code_without_judgment(tmp_pat
     assert "The grounded function returns true." in dossier
     assert "def grounded():" in dossier
     assert "The module defines grounded and returns true." in dossier
+    assert "## Delivered method and figure" in dossier
+    assert "![Frozen method figure]" in dossier
     assert "never proposes, infers, or records a scientific judgment" in dossier
     assert "Current semantic decision: `None`" in dossier
 
@@ -844,6 +860,63 @@ def test_materialize_all_review_dossiers_leaves_no_partial_output_on_drift(tmp_p
 
     assert not output.exists()
     assert list(tmp_path.glob(".failed-dossiers.*.tmp")) == []
+
+
+def test_legacy_dossier_binds_complete_draft_figure_and_v2_audit(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    entry = queue_payload["entries"][0]
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    source = repo / "train.py"
+    excerpt = "def main():\n    pass\n"
+    source.write_text(excerpt, encoding="utf-8")
+    excerpt_digest = "sha256:" + __import__("hashlib").sha256(excerpt.encode()).hexdigest()
+    entry["gold_repo_root"] = str(repo)
+    entry["gold_evidence_spans"][0].update({
+        "path": "train.py",
+        "line_start": 1,
+        "line_end": 2,
+        "exact_excerpt_digest": excerpt_digest,
+    })
+    draft = tmp_path / "legacy-method.md"
+    draft.write_text("# Legacy method\n\nA complete legacy draft.\n", encoding="utf-8")
+    figure = tmp_path / "legacy-method.svg"
+    figure.write_text('<svg xmlns="http://www.w3.org/2000/svg"></svg>', encoding="utf-8")
+    summary = tmp_path / "legacy-summary.json"
+    summary.write_text(json.dumps({
+        "status": "success",
+        "outputs": {"method_draft_md": str(draft)},
+        "phase5_figure": {"outputs": {"svg": str(figure)}},
+    }), encoding="utf-8")
+    summary_digest = "sha256:" + __import__("hashlib").sha256(summary.read_bytes()).hexdigest()
+    audit = tmp_path / "legacy-audit.json"
+    audit.write_text(json.dumps({
+        "legacy_run_report_digest": summary_digest,
+        "draft_digest": "sha256:" + __import__("hashlib").sha256(draft.read_bytes()).hexdigest(),
+        "figure_asset_digest": "sha256:" + __import__("hashlib").sha256(figure.read_bytes()).hexdigest(),
+        "v2_usable_completion": False,
+        "legacy_false_success_candidate": True,
+    }), encoding="utf-8")
+    template = entry["review_template"]
+    template.update({
+        "run_summary_path": str(summary),
+        "run_summary_digest": summary_digest,
+        "legacy_v2_audit_path": str(audit),
+        "legacy_v2_audit_digest": "sha256:" + __import__("hashlib").sha256(audit.read_bytes()).hexdigest(),
+    })
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+
+    dossier = build_review_dossier(workspace, _review_path(workspace).name)
+
+    assert "A complete legacy draft." in dossier
+    assert str(figure) in dossier
+    assert "Legacy false-success candidate: `True`" in dossier
+    draft.write_text("tampered", encoding="utf-8")
+    with pytest.raises(ValueError, match="legacy method draft is unavailable or drifted"):
+        build_review_dossier(workspace, _review_path(workspace).name)
 
 
 def test_validate_reports_malformed_manifest_identity_instead_of_crashing(tmp_path: Path) -> None:

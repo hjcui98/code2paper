@@ -119,10 +119,10 @@ def build_review_dossier(workspace_root: str | Path, review_selector: str) -> st
         f"- Repository snapshot: `{review.get('repo_snapshot_id', '')}`",
         f"- Model: `{review.get('model_id', '')}`",
         "",
-        "## Generated claims awaiting human decisions",
-        "",
     ]
     artifacts = summary.get("artifacts") if isinstance(summary.get("artifacts"), dict) else {}
+    lines.extend(_delivered_method_markdown(review, summary, artifacts))
+    lines.extend(["## Generated claims awaiting human decisions", ""])
     validation = _bound_artifact_json(artifacts, "text_evidence_validation")
     evidence_snapshot = _bound_artifact_json(artifacts, "evidence_snapshot_v2")
     validation_by_id = {
@@ -802,6 +802,60 @@ def _bound_artifact_record(artifacts: dict[str, Any], key: str) -> dict[str, str
     if not path.is_file() or not expected or _digest_file(path) != expected:
         raise ValueError(f"frozen review artifact is unavailable or drifted:{key}")
     return {"path": str(path), "digest": expected}
+
+
+def _delivered_method_markdown(
+    review: dict[str, Any],
+    summary: dict[str, Any],
+    artifacts: dict[str, Any],
+) -> list[str]:
+    lines = ["## Delivered method and figure", ""]
+    text_record = _bound_artifact_record(artifacts, "text_clean_md")
+    figure_record = _bound_artifact_record(artifacts, "method_overview_svg")
+    if review.get("variant") == "fixed_legacy":
+        audit_path = Path(str(review.get("legacy_v2_audit_path") or "")).expanduser().resolve()
+        expected_audit = str(review.get("legacy_v2_audit_digest") or "")
+        if not audit_path.is_file() or _digest_file(audit_path) != expected_audit:
+            raise ValueError("frozen legacy V2 audit is unavailable or drifted")
+        audit = _load_json(audit_path)
+        if audit.get("legacy_run_report_digest") != review.get("run_summary_digest"):
+            raise ValueError("legacy V2 audit contradicts the frozen run summary")
+        draft_path = Path(str(summary.get("outputs", {}).get("method_draft_md") or "")).resolve()
+        figure_path = Path(str(summary.get("phase5_figure", {}).get("outputs", {}).get("svg") or "")).resolve()
+        if not draft_path.is_file() or _digest_file(draft_path) != audit.get("draft_digest"):
+            raise ValueError("frozen legacy method draft is unavailable or drifted")
+        if not figure_path.is_file() or _digest_file(figure_path) != audit.get("figure_asset_digest"):
+            raise ValueError("frozen legacy method figure is unavailable or drifted")
+        text_record = {"path": str(draft_path), "digest": str(audit["draft_digest"])}
+        figure_record = {"path": str(figure_path), "digest": str(audit["figure_asset_digest"])}
+        lines.extend([
+            f"- Legacy V2 audit: `{audit_path}` (`{expected_audit}`)",
+            f"- V2 usable completion: `{bool(audit.get('v2_usable_completion'))}`",
+            f"- Legacy false-success candidate: `{bool(audit.get('legacy_false_success_candidate'))}`",
+            "",
+        ])
+    if text_record:
+        text = Path(text_record["path"]).read_text(encoding="utf-8", errors="replace")
+        lines.extend([
+            f"- Method text: `{text_record['path']}` (`{text_record['digest']}`)",
+            "",
+            "```markdown",
+            text.rstrip("\n"),
+            "```",
+            "",
+        ])
+    else:
+        lines.extend(["_No method text was delivered by this blocked run._", ""])
+    if figure_record:
+        lines.extend([
+            f"- Method figure: `{figure_record['path']}` (`{figure_record['digest']}`)",
+            "",
+            f"![Frozen method figure]({figure_record['path']})",
+            "",
+        ])
+    else:
+        lines.extend(["_No method figure was delivered by this blocked run._", ""])
+    return lines
 
 
 def _bound_artifact_json(artifacts: dict[str, Any], key: str) -> dict[str, Any]:
