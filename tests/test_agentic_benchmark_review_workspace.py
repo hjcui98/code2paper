@@ -12,7 +12,7 @@ from code2paper.agentic.benchmark_review_workspace import (
     validate_review_workspace,
 )
 from code2paper.agentic.benchmark_observation import build_figure_review_inventory
-from code2paper.agentic.benchmark_review_queue import _agentic_figure_templates
+from code2paper.agentic.benchmark_review_queue import _agentic_claim_templates, _agentic_figure_templates
 from code2paper.agentic.benchmark_v2 import BenchmarkObservationV2
 from code2paper.cli.agentic_benchmark_review_workspace import main as workspace_main
 
@@ -334,3 +334,37 @@ def test_review_queue_figure_templates_are_scene_complete_and_digest_pinned(tmp_
     scene_path.write_text('{"nodes":[]}', encoding="utf-8")
     with pytest.raises(ValueError, match="figure scene digest changed"):
         _agentic_figure_templates(summary_path)
+
+
+def test_review_queue_claim_templates_are_complete_and_digest_pinned(tmp_path: Path) -> None:
+    claims_path = tmp_path / "claims.json"
+    claims_path.write_text(json.dumps({
+        "atomic_claims": [{"atomic_claim_id": "FAC1", "text": "Frozen final claim."}],
+    }), encoding="utf-8")
+    validation_path = tmp_path / "validation.json"
+    validation_path.write_text(json.dumps({
+        "verdicts": [{"atomic_claim_id": "FAC1", "status": "supported"}],
+    }), encoding="utf-8")
+    digest = lambda path: "sha256:" + __import__("hashlib").sha256(path.read_bytes()).hexdigest()
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text(json.dumps({
+        "artifacts": {
+            "final_text_claims": {"path": str(claims_path), "hash": digest(claims_path)},
+            "text_evidence_validation": {"path": str(validation_path), "hash": digest(validation_path)},
+        },
+    }), encoding="utf-8")
+
+    inventory = _agentic_claim_templates(summary_path)
+
+    assert inventory == [{
+        "atomic_claim_id": "FAC1",
+        "text": "Frozen final claim.",
+        "verdict": "supported",
+        "gold_claim_id": "",
+        "mutation_id": "",
+        "qualifiers_preserved": False,
+        "high_risk": False,
+    }]
+    claims_path.write_text('{"atomic_claims":[]}', encoding="utf-8")
+    with pytest.raises(ValueError, match="final_text_claims digest changed"):
+        _agentic_claim_templates(summary_path)

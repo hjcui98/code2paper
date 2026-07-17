@@ -128,17 +128,49 @@ def _agentic_observation(
     repo_snapshot, repo_snapshot_digest = _artifact_json(artifacts, "repo_snapshot", required=True)
     if review.repo_snapshot_id and review.repo_snapshot_id != repo_snapshot.get("snapshot_id"):
         raise ValueError("review repo snapshot contradicts run artifact")
-    atomic_by_id = {item["atomic_claim_id"]: item for item in claims_payload.get("atomic_claims", [])}
-    verdict_by_id = {item["atomic_claim_id"]: item for item in validation.get("verdicts", [])}
-    trace_by_id = {item["atomic_claim_id"]: item for item in trace.get("entries", [])}
+    atomic_items = claims_payload.get("atomic_claims", [])
+    verdict_items = validation.get("verdicts", [])
+    trace_items = trace.get("entries", [])
+    if not isinstance(atomic_items, list) or any(not isinstance(item, dict) for item in atomic_items):
+        raise ValueError("final text claim inventory must be a list of objects")
+    if not isinstance(verdict_items, list) or any(not isinstance(item, dict) for item in verdict_items):
+        raise ValueError("validator verdict inventory must be a list of objects")
+    if not isinstance(trace_items, list) or any(not isinstance(item, dict) for item in trace_items):
+        raise ValueError("final text trace inventory must be a list of objects")
+    if any(not item.get("atomic_claim_id") for item in [*atomic_items, *verdict_items, *trace_items]):
+        raise ValueError("final claim, verdict, and trace inventories require atomic claim ids")
+    atomic_by_id = {item["atomic_claim_id"]: item for item in atomic_items}
+    verdict_by_id = {item["atomic_claim_id"]: item for item in verdict_items}
+    trace_by_id = {item["atomic_claim_id"]: item for item in trace_items}
+    review_claim_ids = [item.atomic_claim_id for item in review.claims]
+    if len(atomic_by_id) != len(atomic_items):
+        raise ValueError("final text claim artifact contains duplicate atomic claim ids")
+    if len(verdict_by_id) != len(verdict_items):
+        raise ValueError("text evidence validation contains duplicate atomic claim ids")
+    if len(trace_by_id) != len(trace_items):
+        raise ValueError("final text trace contains duplicate atomic claim ids")
+    if set(verdict_by_id) != set(atomic_by_id):
+        raise ValueError("validator verdict inventory does not match final text claims")
+    if set(trace_by_id) != set(atomic_by_id):
+        raise ValueError("final text trace inventory does not match final text claims")
+    if len(review_claim_ids) != len(set(review_claim_ids)):
+        raise ValueError("review contains duplicate atomic claim ids")
+    if set(review_claim_ids) != set(atomic_by_id):
+        missing = sorted(set(atomic_by_id) - set(review_claim_ids))
+        extra = sorted(set(review_claim_ids) - set(atomic_by_id))
+        raise ValueError(f"review claim inventory mismatch:missing={missing}:extra={extra}")
     observed_claims: list[ObservedClaim] = []
     for adjudication in review.claims:
         atomic = atomic_by_id.get(adjudication.atomic_claim_id)
         verdict = verdict_by_id.get(adjudication.atomic_claim_id)
         if atomic is None or verdict is None:
             raise ValueError(f"reviewed atomic claim missing from artifacts:{adjudication.atomic_claim_id}")
+        if adjudication.text != atomic.get("text", ""):
+            raise ValueError(f"review changed final atomic claim text:{adjudication.atomic_claim_id}")
         artifact_verdict = verdict.get("status", "unverified")
-        if adjudication.verdict is not None and adjudication.verdict != artifact_verdict:
+        if adjudication.verdict is None:
+            raise ValueError(f"review verdict decision missing:{adjudication.atomic_claim_id}")
+        if adjudication.verdict != artifact_verdict:
             raise ValueError(f"review verdict contradicts validator:{adjudication.atomic_claim_id}")
         trace_entry = trace_by_id.get(adjudication.atomic_claim_id)
         trace_exact = bool(
@@ -160,6 +192,13 @@ def _agentic_observation(
         ))
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
     completion_complete = bool(completion.get("complete"))
+    if completion_complete and (
+        not claims_digest
+        or not validation_digest
+        or not trace_digest
+        or not atomic_items
+    ):
+        raise ValueError("completed run is missing authoritative final claim review artifacts")
     asset_lineage = _completion_asset_lineage(completion)
     figure_scene, figure_scene_digest = _artifact_json(
         artifacts, "figure_scene", required=completion_complete,

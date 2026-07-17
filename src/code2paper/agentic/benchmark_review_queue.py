@@ -103,15 +103,29 @@ def _agentic_claim_templates(summary_path: Path) -> list[dict]:
     validation_record = artifacts.get("text_evidence_validation")
     if not claims_record or not validation_record:
         return []
-    claims = json.loads(Path(claims_record["path"]).read_text(encoding="utf-8"))
-    validation = json.loads(Path(validation_record["path"]).read_text(encoding="utf-8"))
-    verdicts = {item["atomic_claim_id"]: item for item in validation.get("verdicts", [])}
+    claims = _bound_artifact_json(claims_record, "final_text_claims")
+    validation = _bound_artifact_json(validation_record, "text_evidence_validation")
+    atomic_claims = claims.get("atomic_claims", [])
+    verdict_items = validation.get("verdicts", [])
+    if not isinstance(atomic_claims, list) or any(not isinstance(item, dict) for item in atomic_claims):
+        raise ValueError("final claim inventory must be a list of objects before review queue construction")
+    if not isinstance(verdict_items, list) or any(not isinstance(item, dict) for item in verdict_items):
+        raise ValueError("validator verdict inventory must be a list of objects before review queue construction")
+    if any(not item.get("atomic_claim_id") for item in [*atomic_claims, *verdict_items]):
+        raise ValueError("final claim and validator inventories require atomic claim ids")
+    claim_ids = [item["atomic_claim_id"] for item in atomic_claims]
+    verdict_ids = [item["atomic_claim_id"] for item in verdict_items]
+    if len(claim_ids) != len(set(claim_ids)) or len(verdict_ids) != len(set(verdict_ids)):
+        raise ValueError("duplicate final claim or validator verdict id before review queue construction")
+    if set(claim_ids) != set(verdict_ids):
+        raise ValueError("final claim and validator verdict inventories differ before review queue construction")
+    verdicts = {item["atomic_claim_id"]: item for item in verdict_items}
     return [{
         "atomic_claim_id": item["atomic_claim_id"], "text": item.get("text", ""),
         "verdict": verdicts.get(item["atomic_claim_id"], {}).get("status", "unverified"),
         "gold_claim_id": "", "mutation_id": "", "qualifiers_preserved": False,
         "high_risk": bool(item.get("high_risk_markers")),
-    } for item in claims.get("atomic_claims", [])]
+    } for item in atomic_claims]
 
 
 def _agentic_figure_templates(summary_path: Path) -> list[dict]:
@@ -125,6 +139,17 @@ def _agentic_figure_templates(summary_path: Path) -> list[dict]:
         raise ValueError("figure scene digest changed before review queue construction")
     scene = json.loads(path.read_text(encoding="utf-8"))
     return build_figure_review_inventory(scene)
+
+
+def _bound_artifact_json(record: dict, label: str) -> dict:
+    path = Path(record["path"]).resolve()
+    expected_digest = str(record.get("hash") or "")
+    if _digest(path) != expected_digest:
+        raise ValueError(f"{label} digest changed before review queue construction")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must contain a JSON object")
+    return payload
 
 
 def _mutation_templates(case, root: str | Path) -> list[dict]:

@@ -638,7 +638,8 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
         run_summary_path=str(summary_path), run_summary_digest=summary_hash,
         reviewer="human-reviewer", reviewed_at="2026-07-17T00:00:00Z",
         claims=[ClaimAdjudicationV2(
-            atomic_claim_id="FAC1", verdict="caveated", gold_claim_id="T1",
+            atomic_claim_id="FAC1", text=case.supported_claims[0].text,
+            verdict="caveated", gold_claim_id="T1",
             qualifiers_preserved=True,
         )],
         figures=[FigureAdjudicationV2(**{
@@ -661,6 +662,27 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
     assert observation.figure_inventory_expected == 1
     with pytest.raises(ValueError, match="figure review inventory mismatch"):
         extract_benchmark_observation_v2(case, review.model_copy(update={"figures": []}))
+    with pytest.raises(ValueError, match="review claim inventory mismatch"):
+        extract_benchmark_observation_v2(case, review.model_copy(update={"claims": []}))
+    with pytest.raises(ValueError, match="duplicate atomic claim ids"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={"claims": [review.claims[0], review.claims[0]]}),
+        )
+    with pytest.raises(ValueError, match="changed final atomic claim text"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"text": "Changed after generation."})],
+            }),
+        )
+    with pytest.raises(ValueError, match="verdict decision missing"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"verdict": None})],
+            }),
+        )
 
 
 def test_cutover_holds_if_agentic_usable_completion_is_below_legacy() -> None:
