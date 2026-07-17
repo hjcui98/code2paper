@@ -43,3 +43,17 @@ def test_final_text_relevance_uses_code_operator_semantics_after_projection_matc
     assert _relevant_to_evidence(
         claim, evidence, [SimpleNamespace(supported_fragment=claim)]
     )
+
+
+def test_semantic_evidence_matches_grouped_dynamic_filtering_stage() -> None:
+    assert concepts_semantically_related(
+        "C-MoE decoder with grouped dynamic filtering.",
+        "Pack expert kernels into a single group convolution for parallel execution.",
+    )
+
+
+def test_semantic_evidence_matches_moe_in_moe_to_base_expert_composition() -> None:
+    assert concepts_semantically_related(
+        "MoE-in-MoE hierarchy with expert routing.",
+        "Build routed expert kernels as compositions of a shared base-expert bank.",
+    )

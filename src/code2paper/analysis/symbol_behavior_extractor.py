@@ -61,8 +61,21 @@ def extract_symbol_mechanisms(raw_pack: RawEvidencePack, alignment: CodeAlignmen
         node = _find_symbol_node(tree, role.symbol)
         if node is None:
             continue
-        evidence_ids = [evidence_id for evidence_id in role.evidence_ids if evidence_id in evidence_by_id]
-        source_segment = text if isinstance(node, ast.Module) else (ast.get_source_segment(text, node) or "")
+        evidence_ids = _evidence_ids_for_symbol(
+            path=role.path,
+            symbol=role.symbol,
+            candidate_ids=role.evidence_ids,
+            evidence_by_id=evidence_by_id,
+        )
+        if not evidence_ids:
+            continue
+        source_segment = _evidence_scoped_source_segment(
+            text=text,
+            node=node,
+            path=role.path,
+            evidence_ids=evidence_ids,
+            evidence_by_id=evidence_by_id,
+        )
         symbol_patterns, symbol_equations = _detect_behavior_patterns(
             path=role.path,
             symbol=role.symbol,
@@ -134,6 +147,56 @@ def _find_symbol_node(tree: ast.Module, symbol: str) -> ast.AST | None:
         # behavior detectors can still see linked operations and losses.
         return tree
     return None
+
+
+def _evidence_ids_for_symbol(
+    *,
+    path: str,
+    symbol: str,
+    candidate_ids: list[str],
+    evidence_by_id: dict[str, Any],
+) -> list[str]:
+    valid = _dedupe(
+        [
+            evidence_id
+            for evidence_id in candidate_ids
+            if evidence_id in evidence_by_id and evidence_by_id[evidence_id].path == path
+        ]
+    )
+    if not symbol:
+        return valid
+    exact: list[str] = []
+    for evidence_id in valid:
+        evidence_symbol = str(evidence_by_id[evidence_id].symbol or "").strip()
+        if evidence_symbol == symbol:
+            exact.append(evidence_id)
+            continue
+        if "." not in symbol and evidence_symbol.endswith(f".{symbol}"):
+            exact.append(evidence_id)
+    return exact or valid
+
+
+def _evidence_scoped_source_segment(
+    *,
+    text: str,
+    node: ast.AST,
+    path: str,
+    evidence_ids: list[str],
+    evidence_by_id: dict[str, Any],
+) -> str:
+    if not isinstance(node, ast.Module):
+        return ast.get_source_segment(text, node) or ""
+    lines = text.splitlines()
+    segments: list[str] = []
+    for evidence_id in evidence_ids:
+        item = evidence_by_id.get(evidence_id)
+        if item is None or item.path != path or not item.line_start or not item.line_end:
+            continue
+        start = max(0, int(item.line_start) - 1)
+        end = min(len(lines), int(item.line_end))
+        if start < end:
+            segments.append("\n".join(lines[start:end]))
+    return "\n\n".join(_dedupe(segments))
 
 
 def _detect_behavior_patterns(
@@ -288,6 +351,15 @@ def _literal(node: ast.AST) -> Any:
 def _submechanism_description(symbol: str, patterns: list[MethodBehaviorPattern]) -> str:
     if not patterns:
         return f"{symbol} implements a code-backed method submechanism."
+    concrete = _dedupe(
+        [
+            pattern.description
+            for pattern in patterns
+            if pattern.behavior_type in {"expert_composition", "expert_execution", "sparse_routing"}
+        ]
+    )
+    if concrete:
+        return " ".join(concrete)
     generic_behaviors = _dedupe([pattern.behavior_type.replace("_", " ") for pattern in patterns])
     detected_patterns = _dedupe([pattern.detected_pattern.replace("_", " ") for pattern in patterns if pattern.detected_pattern])
     description = f"{symbol} exposes generic code behaviors: " + ", ".join(generic_behaviors) + "."

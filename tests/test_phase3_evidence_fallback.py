@@ -3,7 +3,11 @@ from __future__ import annotations
 import unittest
 
 from code2paper.evidence.claim_grounder import build_claim_evidence_map
-from code2paper.pipeline.stages.evidence import build_method_evidence, _stage_match_score
+from code2paper.pipeline.stages.evidence import (
+    _stage_match_score,
+    _submechanisms_for_stage,
+    build_method_evidence,
+)
 from code2paper.core.schemas import (
     AuthorAlignment,
     AuthorClaimAssessment,
@@ -14,6 +18,7 @@ from code2paper.core.schemas import (
     EvidenceStrength,
     RawEvidencePack,
     SourceType,
+    SubMechanism,
     SupportStatus,
 )
 
@@ -42,6 +47,63 @@ class Phase3EvidenceFallbackTests(unittest.TestCase):
         )
 
         self.assertGreater(sampling_score, generic_score)
+
+    def test_stage_matching_preserves_distinctive_compound_acronyms(self) -> None:
+        cmoe_score = _stage_match_score(
+            "Cross Mixture-of-Experts (C-MoE) decoder: condition router and grouped filtering.",
+            "Domain-specific decompression via C-MoE",
+        )
+        generic_moe_score = _stage_match_score(
+            "Cross Mixture-of-Experts decoder",
+            "Generic MoE training",
+        )
+
+        self.assertGreaterEqual(cmoe_score, 0.72)
+        self.assertLess(generic_moe_score, 0.72)
+
+    def test_cmoe_stage_collects_only_matching_operator_submechanisms(self) -> None:
+        submechanisms = [
+            SubMechanism(
+                submechanism_id="SUBMECH1",
+                description=(
+                    "Packs expert kernels into a single group convolution for parallel execution."
+                ),
+                evidence_ids=["E1"],
+            ),
+            SubMechanism(
+                submechanism_id="SUBMECH2",
+                description=(
+                    "Implements an MoE-in-MoE composition from a shared base-expert bank."
+                ),
+                evidence_ids=["E2"],
+            ),
+            SubMechanism(
+                submechanism_id="SUBMECH3",
+                description="Applies an unrelated image normalization transform.",
+                evidence_ids=["E3"],
+            ),
+            SubMechanism(
+                submechanism_id="SUBMECH4",
+                description="Retains top-k experts and renormalizes their routing weights.",
+                evidence_ids=["E4"],
+            ),
+        ]
+
+        matched = _submechanisms_for_stage(
+            submechanisms,
+            stage_text=(
+                "Cross Mixture-of-Experts (C-MoE) decoder: MoE-in-MoE structure, "
+                "grouped dynamic filtering."
+            ),
+        )
+
+        self.assertEqual([item.submechanism_id for item in matched], ["SUBMECH1", "SUBMECH2"])
+
+        topk_matched = _submechanisms_for_stage(
+            submechanisms,
+            stage_text="Sparse routing with normalized top-k expert selection.",
+        )
+        self.assertIn("SUBMECH4", [item.submechanism_id for item in topk_matched])
 
     def test_build_method_evidence_preserves_hard_raw_evidence_when_analysis_has_no_mechanisms(self) -> None:
         raw_pack = RawEvidencePack(

@@ -376,6 +376,52 @@ def _default_detectors() -> list[BehaviorDetector]:
             behavior=BehaviorSpec("regularization", "dropout", "Applies dropout inside module computation.", ["drop"], ConfidenceLevel.MEDIUM),
             confidence_policy="keyword-pattern evidence; medium because dropout may be auxiliary rather than a main method mechanism",
         ),
+        KeywordBehaviorDetector(
+            name="expert_execution.batched_grouped_convolution",
+            predicate=lambda ctx: _has_any(ctx.lowered_source, ["f.conv2d", "torch.conv2d"])
+            and "groups=" in ctx.lowered_source
+            and _has_any(ctx.lowered_source, ["expert", "kernels", "b * e", "b*e"]),
+            behavior=BehaviorSpec(
+                behavior_type="expert_execution",
+                detected_pattern="batched_grouped_convolution",
+                description=(
+                    "Packs expert-specific kernels and feature maps into a single group convolution "
+                    "so the provided expert filters execute in parallel."
+                ),
+                operations=["pack_expert_inputs", "reshape_kernels", "grouped_convolution", "restore_expert_axis"],
+            ),
+        ),
+        KeywordBehaviorDetector(
+            name="expert_composition.shared_base_experts",
+            predicate=lambda ctx: "expert_base" in ctx.lowered_source
+            and "self.experts" in ctx.lowered_source
+            and "softmax" in ctx.lowered_source
+            and "einsum" in ctx.lowered_source,
+            behavior=BehaviorSpec(
+                behavior_type="expert_composition",
+                detected_pattern="shared_base_expert_composition",
+                description=(
+                    "Implements an MoE-in-MoE composition by building routed expert kernels as "
+                    "softmax-weighted mixtures of a shared base-expert bank."
+                ),
+                operations=["select_router_weights", "normalize_base_weights", "compose_expert_kernel"],
+            ),
+        ),
+        KeywordBehaviorDetector(
+            name="sparse_routing.normalized_topk_gate",
+            predicate=lambda ctx: "topk" in ctx.lowered_source
+            and "softmax" in ctx.lowered_source
+            and _has_any(ctx.lowered_source, ["gate", "router", "logits", "probs"]),
+            behavior=BehaviorSpec(
+                behavior_type="sparse_routing",
+                detected_pattern="normalized_topk_expert_gate",
+                description=(
+                    "Computes routing probabilities, retains the top-k experts, and renormalizes "
+                    "their selected weights before aggregation."
+                ),
+                operations=["compute_router_logits", "softmax", "topk", "renormalize"],
+            ),
+        ),
     ]
 
 

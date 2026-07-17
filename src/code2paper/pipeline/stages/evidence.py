@@ -42,6 +42,7 @@ from code2paper.core.schemas import (
     ArtifactHash,
 )
 from code2paper.analysis.symbol_behavior_extractor import extract_symbol_mechanisms
+from code2paper.core.semantic_evidence import concepts_semantically_related
 from code2paper.export.run_manifest import hash_file
 from code2paper.core.output_names import method_output
 from code2paper.analysis.user_focus import is_boilerplate_text, load_focus_terms, relevance_score
@@ -1004,7 +1005,20 @@ def _analysis_mechanisms_for_stage(
             candidates = [best_candidate]
     result: list[Mechanism] = []
     for offset, candidate in enumerate(candidates):
-        evidence_ids = candidate.supporting_span_ids
+        matched_submechanisms = _submechanisms_for_stage(
+            submechanisms,
+            stage_text=" ".join(
+                [method_stage.name, method_stage.purpose, candidate.name, candidate.description]
+            ),
+        )
+        evidence_ids = _dedupe(
+            candidate.supporting_span_ids
+            + [
+                evidence_id
+                for submechanism in matched_submechanisms
+                for evidence_id in submechanism.evidence_ids
+            ]
+        )
         result.append(
             Mechanism(
                 mechanism_id=candidate.mechanism_id if candidate.mechanism_id.startswith("MECH") else f"MECH{start_index + offset}",
@@ -1012,7 +1026,10 @@ def _analysis_mechanisms_for_stage(
                 support_status=SupportStatus.SUPPORTED if evidence_ids else SupportStatus.PARTIAL,
                 evidence_ids=evidence_ids,
                 confidence=_mechanism_confidence(evidence_ids, author_mode),
-                submechanisms=_submechanisms_for_evidence(submechanisms, evidence_ids),
+                submechanisms=_dedupe_submechanisms(
+                    _submechanisms_for_evidence(submechanisms, evidence_ids)
+                    + matched_submechanisms
+                ),
             )
         )
     return result
@@ -1129,10 +1146,34 @@ def _stage_match_score(stage_name: str, candidate_name: str, *, extra_text: str 
     if not stage_norm or not candidate_norm:
         return 0.0
     name_score = _stage_match_core(stage_norm, candidate_norm)
+    if _shared_distinctive_stage_acronyms(stage_name, candidate_name):
+        name_score = max(name_score, 0.72)
     if not str(extra_text or "").strip():
         return name_score
     combined_score = _stage_match_core(stage_norm, f"{candidate_norm} {extra_text}")
     return min(1.0, max(name_score, name_score * 0.85 + combined_score * 0.15))
+
+
+_GENERIC_STAGE_ACRONYMS = {
+    "api", "cnn", "cpu", "cuda", "ffn", "gpu", "llm", "mlp", "moe", "rnn", "vit",
+}
+
+
+def _shared_distinctive_stage_acronyms(left: str, right: str) -> set[str]:
+    return _distinctive_stage_acronyms(left) & _distinctive_stage_acronyms(right)
+
+
+def _distinctive_stage_acronyms(value: str) -> set[str]:
+    candidates = re.findall(
+        r"\b(?:[A-Z][A-Za-z0-9]*)(?:[-_](?:[A-Z][A-Za-z0-9]*))+\b|\b[A-Z]{2,}[A-Za-z0-9]*\b",
+        str(value or ""),
+    )
+    normalized = {re.sub(r"[^a-z0-9]", "", item.lower()) for item in candidates}
+    return {
+        item
+        for item in normalized
+        if len(item) >= 4 and item not in _GENERIC_STAGE_ACRONYMS
+    }
 
 
 def _stage_match_core(stage_norm: str, candidate_text: str) -> float:
@@ -1496,6 +1537,57 @@ def _mechanism_for_stage(
 def _submechanisms_for_evidence(submechanisms: list[SubMechanism], evidence_ids: list[str]) -> list[SubMechanism]:
     stage_evidence = set(evidence_ids)
     return [submechanism for submechanism in submechanisms if stage_evidence.intersection(submechanism.evidence_ids)]
+
+
+def _submechanisms_for_stage(submechanisms: list[SubMechanism], *, stage_text: str) -> list[SubMechanism]:
+    semantic_fragments = _stage_semantic_fragments(stage_text)
+    return [
+        submechanism
+        for submechanism in submechanisms
+        if _operator_submechanism_explicitly_requested(stage_text, submechanism.description)
+        and (
+            _stage_match_score(stage_text, submechanism.description) >= 0.34
+            or any(
+                concepts_semantically_related(fragment, submechanism.description)
+                for fragment in semantic_fragments
+            )
+        )
+    ]
+
+
+def _stage_semantic_fragments(stage_text: str) -> list[str]:
+    fragments = [str(stage_text or "")]
+    fragments.extend(
+        part.strip()
+        for part in re.split(r"[,.!?;:()]|\band\b", str(stage_text or ""), flags=re.IGNORECASE)
+        if part.strip()
+    )
+    return _dedupe(fragments)
+
+
+def _operator_submechanism_explicitly_requested(stage_text: str, description: str) -> bool:
+    stage = _normalize_name(stage_text)
+    detail = _normalize_name(description)
+    if "top k" in detail:
+        return bool(re.search(r"\btop\s*k\b", stage))
+    if "group convolution" in detail:
+        return "group" in stage.split() or "grouped" in stage.split()
+    if "moe in moe" in detail:
+        return "moe in moe" in stage or (
+            "base" in stage.split() and "expert" in stage.split()
+        )
+    return True
+
+
+def _dedupe_submechanisms(submechanisms: list[SubMechanism]) -> list[SubMechanism]:
+    result: list[SubMechanism] = []
+    seen: set[str] = set()
+    for submechanism in submechanisms:
+        if submechanism.submechanism_id in seen:
+            continue
+        seen.add(submechanism.submechanism_id)
+        result.append(submechanism)
+    return result
 
 
 def _mechanism_confidence(evidence_ids: list[str], author_mode: AuthorMode) -> ConfidenceLevel:

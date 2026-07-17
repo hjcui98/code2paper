@@ -82,6 +82,7 @@ def _claim_map() -> ClaimEvidenceMap:
                 support_status=SupportStatus.PARTIAL,
                 evidence_ids=["E1"],
                 source="method_mechanism",
+                caveats=["Only the observed weighting path is supported."],
             ),
         ]
     )

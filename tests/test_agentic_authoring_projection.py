@@ -131,6 +131,32 @@ def test_partial_projection_keeps_supported_fragment_and_qualifier() -> None:
     assert [claim.claim_id for claim in writer_claims.claims] == ["C1", "C3"]
 
 
+def test_partial_projection_without_explicit_qualifier_is_forbidden() -> None:
+    evidence = _evidence()
+    evidence.stage_packets[0]["claim_ids"] = ["C1", "C4"]
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1", claim_text="The encoder reads configured features.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+        ),
+        ClaimEvidenceItem(
+            claim_id="C4",
+            claim_text="The encoder guarantees faster inference.",
+            support_status=SupportStatus.PARTIAL, evidence_ids=["E1"],
+            source="author_claim:file",
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence, claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1"]
+    forbidden = next(item for item in projection.forbidden_claims if item.claim_id == "C4")
+    assert forbidden.reason == "partial_claim_missing_explicit_qualifier"
+
+
 def test_revision_writer_view_excludes_rejected_projection_claims() -> None:
     evidence = _evidence()
     claims = _claims()
@@ -222,6 +248,45 @@ def test_projection_omits_stage_name_scaffold_from_positive_writer_facts() -> No
     assert "paper-facing stage named" not in json.dumps(
         projection_writer_payload(projection), ensure_ascii=False
     )
+
+
+def test_projection_scopes_operator_subclaim_by_stage_semantics_and_evidence() -> None:
+    evidence = MethodEvidence(
+        project_id="cmoe", method_name="C-MoE", method_goal="Route experts.",
+        implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1", name="C-MoE grouped dynamic filtering", purpose="Route experts.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1", description="Route experts.",
+                support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1", "name": "C-MoE grouped dynamic filtering",
+            "purpose": "Route experts.", "claim_ids": ["C1"],
+            "evidence_span_ids": ["E1"],
+        }],
+    )
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1", claim_text="Route experts.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+        ),
+        ClaimEvidenceItem(
+            claim_id="C2",
+            claim_text="Pack expert kernels into a single group convolution.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            source="submechanism:SUBMECH1",
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence, claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1", "C2"]
+    assert projection.stage_packets[0]["claim_ids"] == ["C1", "C2"]
 
 
 def test_projection_recognizes_normalized_mixed_domain_score_code() -> None:

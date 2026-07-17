@@ -92,7 +92,17 @@ def build_authoring_projection(
             ]
         )
         if status == SupportStatus.PARTIAL.value and not qualifiers:
-            qualifiers = ["Describe only the implemented fragment; omit unsupported extensions."]
+            forbidden.append(
+                ForbiddenClaim(
+                    claim_id=verified.claim_id,
+                    reason="partial_claim_missing_explicit_qualifier",
+                    source=verified.source,
+                    repair_metadata={
+                        "recommended_action": "supply_supported_fragment_or_explicit_qualifier"
+                    },
+                )
+            )
+            continue
         boundary = str(getattr(contract, "allowed_wording_boundary", "") or "").strip()
         fragment = _supported_fragment(
             claim_text=verified.claim_text,
@@ -416,6 +426,13 @@ def _project_stage_packets(
                 _normalize_text(str(packet.get("name") or ""))
                 and _normalize_text(str(packet.get("name") or "")) in _normalize_text(claim.supported_fragment)
             )
+            or (
+                packet_evidence.intersection(claim.direct_evidence_ids)
+                and any(
+                    concepts_semantically_related(fragment, claim.supported_fragment)
+                    for fragment in _semantic_fragments(packet_text)
+                )
+            )
         ]
         if not matches:
             dropped.append(f"stage_packets[{index}]")
@@ -448,6 +465,20 @@ def _project_stage_packets(
 
 def _normalize_text(value: str) -> str:
     return " ".join(str(value or "").lower().strip().rstrip(".").split())
+
+
+def _semantic_fragments(value: str) -> list[str]:
+    text = str(value or "")
+    return _dedupe(
+        [
+            text,
+            *[
+                part.strip()
+                for part in re.split(r"[,.!?;:()]|\band\b", text, flags=re.IGNORECASE)
+                if part.strip()
+            ],
+        ]
+    )
 
 
 def _direct_evidence_semantically_related(
