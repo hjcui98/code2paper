@@ -27,6 +27,12 @@ def merge_revision_decision(
         return fallback.model_copy(
             update={"rationale": f"{fallback.rationale} Model-proposed authoring revision rejected: budget exhausted."}
         )
+    if (
+        proposal.recommended_next.strip() == "analysis" or proposal.selected_stage.strip() == "analysis"
+    ) and int(state.loop_counters.get("evidence_revision") or 0) >= state.max_evidence_revision_rounds:
+        return fallback.model_copy(
+            update={"rationale": f"{fallback.rationale} Model-proposed evidence revision rejected: budget exhausted."}
+        )
     next_node = proposal.recommended_next.strip() or fallback.recommended_next
     decision = proposal.decision.strip() or fallback.decision
     rationale = proposal.rationale.strip() or fallback.rationale

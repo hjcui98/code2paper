@@ -392,6 +392,29 @@ class AgenticDecisioningTests(unittest.TestCase):
         self.assertEqual(decision.recommended_next, "analysis")
         self.assertIn("Evidence-related blocks", decision.rationale)
 
+    def test_model_cannot_reopen_analysis_after_evidence_budget_is_exhausted(self) -> None:
+        state = AgenticRunState(
+            project_root=Path("."),
+            out_root=Path("/tmp/agentic-decisioning"),
+            artifacts={"validation_manifest": "validation.json"},
+            max_evidence_revision_rounds=1,
+            loop_counters={"evidence_revision": 1},
+        )
+
+        decision = revision_decision_with_model(
+            state,
+            decision_provider=lambda _prompt: {
+                "decision": "return_to_analysis",
+                "recommended_next": "analysis",
+                "selected_stage": "analysis",
+                "rationale": "Reopen evidence analysis for advisory validation issues.",
+            },
+        )
+
+        self.assertEqual(decision.decision, "rendering")
+        self.assertEqual(decision.recommended_next, "rendering")
+        self.assertIn("budget exhausted", decision.rationale)
+
 
 if __name__ == "__main__":
     unittest.main()
