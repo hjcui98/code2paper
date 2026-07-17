@@ -7,8 +7,9 @@ import unittest
 from unittest.mock import patch
 
 from code2paper.export.run_manifest import hash_text
-from code2paper.llm.client import LLMClient, LLMRequest, _ProviderResult
-from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode
+from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse, _ProviderResult
+from code2paper.agentic.semantic_verifier_provider import LLMSemanticEvidenceVerifier
+from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode, load_capability_profile
 from code2paper.llm.providers import has_provider_api_key
 from code2paper.llm.response_schemas import parse_structured_response
 from code2paper.schemas import (
@@ -41,6 +42,46 @@ class _FakeHTTPResponse:
 
 
 class LLMRuntimeTests(unittest.TestCase):
+    def test_runtime_loads_tracked_nested_deployment_profile(self) -> None:
+        profile_path = "tests/baselines/agentic/gemma4_mtp_vllm.profile.json"
+
+        with patch.dict(os.environ, {"CODE2PAPER_LLM_CAPABILITY_PROFILE": profile_path}, clear=True):
+            profile = load_capability_profile(provider="openai", model="gemma4-31b-nvfp4")
+
+        self.assertEqual(profile.response_mode, StructuredResponseMode.PROMPT_ONLY)
+        self.assertEqual(profile.inference_mode, "mtp")
+        self.assertEqual(profile.tensor_parallel_size, 2)
+        self.assertEqual(profile.speculative_tokens, 1)
+        self.assertEqual(profile.draft_tensor_parallel_size, 2)
+        self.assertEqual(profile.assistant_model_name, "Gemma-4-31B-it-assistant")
+        self.assertEqual(profile.max_model_len, 131072)
+
+    def test_semantic_verifier_trace_binds_runtime_profile_and_source_digest(self) -> None:
+        profile_path = "tests/baselines/agentic/gemma4_mtp_vllm.profile.json"
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="gemma4-31b-nvfp4", cache=False)
+        response = LLMResponse(
+            text='{"status":"supported","rationale":"direct evidence matches"}',
+            response_hash="sha256:response",
+            response_mode="prompt_only",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 8},
+        )
+
+        with patch.dict(os.environ, {"CODE2PAPER_LLM_CAPABILITY_PROFILE": profile_path}, clear=True), patch.object(
+            LLMClient, "complete", return_value=response
+        ):
+            verifier = LLMSemanticEvidenceVerifier(config)
+            result = verifier({"claim": "The implementation calls train()."})
+
+        self.assertEqual(result["status"], "supported")
+        trace = verifier.traces[0]
+        self.assertEqual(trace["model"], "gemma4-31b-nvfp4")
+        self.assertEqual(trace["capability_profile"]["inference_mode"], "mtp")
+        self.assertEqual(
+            trace["capability_profile_source_digest"],
+            "sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7",
+        )
+
     def test_cache_binds_prompt_and_capability_and_preserves_response_metadata(self) -> None:
         request = LLMRequest(prompt_template_id="cache-unit", prompt="Return JSON.", input_payload={"x": 1})
         base = LLMConfig(

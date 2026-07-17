@@ -28,6 +28,7 @@ from code2paper.agentic.benchmark_protocol import (
 )
 from code2paper.agentic.adversarial_campaign import run_adversarial_campaign_v2
 from code2paper.agentic.legacy_v2_audit import audit_legacy_run_against_gold_v2
+from code2paper.cli.agentic_benchmark_run import _capability_profile_failure
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -304,19 +305,33 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
         dataset, workspace_root=ROOT, out_root=tmp_path, author_markers=authors,
         code_root=ROOT,
         workspace_commit="abc123", model_id="gemma4-31b-nvfp4",
-        capability_profile_digest="sha256:profile",
+        capability_profile_path=ROOT / "tests/baselines/agentic/gemma4_mtp_vllm.profile.json",
+        capability_profile_digest="sha256:" + hashlib.sha256(
+            (ROOT / "tests/baselines/agentic/gemma4_mtp_vllm.profile.json").read_bytes()
+        ).hexdigest(),
     )
 
     assert len(protocol.specs) == 25
     assert all(item.environment["CODE2PAPER_LLM_CACHE"] == "0" for item in protocol.specs)
+    assert all(
+        item.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") == item.capability_profile_path
+        for item in protocol.specs if item.variant != "agentic_deterministic"
+    )
     fastgs_training = [item for item in protocol.specs if item.case_id == "fastgs" and item.intent_id == "training_mechanics"]
     assert len({item.repo_snapshot_id for item in fastgs_training}) == 1
     assert {item.repeat_index for item in fastgs_training if item.variant == "agentic_gemma4_mtp"} == {1, 2, 3}
+    model_spec = next(item for item in protocol.specs if item.variant == "agentic_gemma4_mtp")
+    assert _capability_profile_failure(model_spec) == ""
+    assert _capability_profile_failure(model_spec.model_copy(update={
+        "capability_profile_digest": "sha256:stale",
+    })) == "capability_profile_drift_before_run"
 
     observations = [item.observation for item in _complete_runs(dataset)]
     for observation, spec in zip(observations, protocol.specs, strict=True):
         observation.provenance["protocol_spec_digest"] = benchmark_spec_digest(spec)
         observation.provenance["repo_snapshot_id"] = spec.repo_snapshot_id
+        observation.provenance["model_id"] = spec.model_id
+        observation.provenance["capability_profile_digest"] = spec.capability_profile_digest
     failures = validate_protocol_observations_v2(protocol, [*observations, observations[0]])
 
     assert "observations_contain_duplicate_run_identity" in failures

@@ -33,6 +33,8 @@ class LLMCapabilityProfile(BaseModel):
     tensor_parallel_size: int = 0
     speculative_tokens: int = 0
     draft_tensor_parallel_size: int = 0
+    assistant_model_name: str = ""
+    max_model_len: int = 0
 
 
 def load_capability_profile(*, provider: str, model: str) -> LLMCapabilityProfile:
@@ -42,8 +44,27 @@ def load_capability_profile(*, provider: str, model: str) -> LLMCapabilityProfil
     if raw:
         path = Path(raw).expanduser()
         payload = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else json.loads(raw)
-        return LLMCapabilityProfile.model_validate(payload)
+        return LLMCapabilityProfile.model_validate(_runtime_profile_payload(payload, source=str(path) if path.is_file() else "inline"))
     return LLMCapabilityProfile(provider=provider, model=model)
+
+
+def _runtime_profile_payload(payload: object, *, source: str) -> object:
+    if not isinstance(payload, dict) or not isinstance(payload.get("deployment_expectations"), dict):
+        return payload
+    deployment = payload["deployment_expectations"]
+    return {
+        "profile_name": payload.get("profile_name", "default"),
+        "provider": payload.get("provider", ""),
+        "model": payload.get("model", ""),
+        "response_mode": payload.get("response_mode", StructuredResponseMode.NATIVE_JSON_SCHEMA.value),
+        "source": source,
+        "inference_mode": deployment.get("inference_mode", ""),
+        "tensor_parallel_size": deployment.get("tensor_parallel_size", 0),
+        "speculative_tokens": deployment.get("speculative_tokens", 0),
+        "draft_tensor_parallel_size": deployment.get("draft_tensor_parallel_size", 0),
+        "assistant_model_name": deployment.get("mtp_assistant_model_name", ""),
+        "max_model_len": deployment.get("max_model_len", 0),
+    }
 
 
 def sanitized_origin(url: str) -> str:

@@ -57,6 +57,8 @@ class BenchmarkRunReviewV2(ReviewModel):
     run_summary_digest: str
     protocol_spec_digest: str = ""
     repo_snapshot_id: str = ""
+    model_id: str = ""
+    capability_profile_digest: str = ""
     reviewer: str
     reviewed_at: str
     blocked_reason_review: str = ""
@@ -160,6 +162,19 @@ def _agentic_observation(
         artifacts, "semantic_verifier_call_trace", required=False,
     )
     model_calls = semantic_trace.get("calls", [])
+    observed_models = {str(item.get("model") or "") for item in model_calls if str(item.get("model") or "")}
+    observed_profiles = {
+        str(item.get("capability_profile_source_digest") or "")
+        for item in model_calls if str(item.get("capability_profile_source_digest") or "")
+    }
+    if len(observed_models) > 1 or len(observed_profiles) > 1:
+        raise ValueError("semantic verifier calls used inconsistent model capability profiles")
+    observed_model = next(iter(observed_models), "")
+    observed_profile = next(iter(observed_profiles), "")
+    if review.model_id and observed_model and review.model_id != observed_model:
+        raise ValueError("review model_id contradicts semantic verifier trace")
+    if review.capability_profile_digest and observed_profile and review.capability_profile_digest != observed_profile:
+        raise ValueError("review capability profile contradicts semantic verifier trace")
     provenance = {
         "run_summary": _digest_file(summary_path),
         "final_text_claims": claims_digest,
@@ -171,6 +186,8 @@ def _agentic_observation(
         "repo_snapshot": repo_snapshot_digest,
         "repo_snapshot_id": repo_snapshot.get("snapshot_id", ""),
         "protocol_spec_digest": review.protocol_spec_digest,
+        "model_id": observed_model or review.model_id,
+        "capability_profile_digest": observed_profile or review.capability_profile_digest,
         "semantic_verifier_call_trace": semantic_trace_digest,
         "reviewer": review.reviewer,
         "reviewed_at": review.reviewed_at,
@@ -251,7 +268,8 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
         provenance={
             "run_summary": _digest_file(summary_path), "reviewer": review.reviewer,
             "reviewed_at": review.reviewed_at, "protocol_spec_digest": review.protocol_spec_digest,
-            "repo_snapshot_id": review.repo_snapshot_id, **trial_provenance,
+            "repo_snapshot_id": review.repo_snapshot_id, "model_id": review.model_id,
+            "capability_profile_digest": review.capability_profile_digest, **trial_provenance,
         },
     )
 

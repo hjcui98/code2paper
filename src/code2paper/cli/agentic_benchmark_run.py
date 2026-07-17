@@ -34,6 +34,12 @@ def main(argv: list[str] | None = None) -> int:
     )]
     records: list[dict] = []
     for spec in selected:
+        profile_failure = _capability_profile_failure(spec)
+        if profile_failure:
+            records.append(_blocked_record(spec, profile_failure))
+            if not args.continue_on_error:
+                break
+            continue
         current = build_repo_snapshot(spec.repo_root)
         if current.snapshot_id != spec.repo_snapshot_id:
             records.append(_blocked_record(spec, "repo_snapshot_drift_before_run"))
@@ -87,6 +93,19 @@ def _blocked_record(spec, reason: str) -> dict:
         "exit_code": None, "duration_seconds": 0.0, "log_path": "", "log_digest": "",
         "repo_snapshot_id": spec.repo_snapshot_id, "status": reason,
     }
+
+
+def _capability_profile_failure(spec) -> str:
+    if spec.variant not in {"fixed_legacy", "agentic_gemma4_mtp"}:
+        return ""
+    path = Path(spec.capability_profile_path)
+    if not path.is_file():
+        return "capability_profile_missing_before_run"
+    if _digest(path) != spec.capability_profile_digest:
+        return "capability_profile_drift_before_run"
+    if spec.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") != str(path):
+        return "capability_profile_environment_mismatch"
+    return ""
 
 
 def _write_index(path: str, protocol, records: list[dict], selected) -> None:

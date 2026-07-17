@@ -82,7 +82,8 @@ code2paper-agentic-benchmark-protocol \
   --out-root /tmp/code2paper-p4-matrix \
   --out /tmp/code2paper-p4-protocol.json \
   --model-id gemma4-31b-nvfp4 \
-  --capability-profile-digest sha256:REPLACE_WITH_PREFLIGHT_PROFILE_DIGEST \
+  --capability-profile tests/baselines/agentic/gemma4_mtp_vllm.profile.json \
+  --capability-profile-digest sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7 \
   --author toy_train=tests/fixtures/toy_train_project_author_markers.yaml \
   --author fastgs:training_mechanics=tests/fixtures/benchmark_v2/fastgs_training_intent.yaml \
   --author fastgs:rendering_flow=tests/fixtures/benchmark_v2/fastgs_rendering_intent.yaml \

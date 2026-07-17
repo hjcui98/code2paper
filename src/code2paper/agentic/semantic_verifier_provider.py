@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.decision_models import SemanticEvidenceProposal
@@ -7,6 +8,7 @@ from code2paper.core.schemas import LLMConfig, LLMProvider
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.providers import has_provider_api_key, with_node_output_budget
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
+from code2paper.export.run_manifest import hash_file
 
 
 class LLMSemanticEvidenceVerifier:
@@ -14,6 +16,7 @@ class LLMSemanticEvidenceVerifier:
 
     def __init__(self, config: LLMConfig) -> None:
         self.config = with_node_output_budget(config, "text_evidence_validator", 512)
+        self.client = LLMClient(self.config)
         self.traces: list[dict[str, Any]] = []
 
     def __call__(self, payload: dict[str, Any]) -> dict[str, Any] | None:
@@ -29,7 +32,7 @@ class LLMSemanticEvidenceVerifier:
             schema_name=SemanticEvidenceProposal.__name__,
             response_json_schema=json_schema_for(SemanticEvidenceProposal),
         )
-        response = LLMClient(self.config).complete(request)
+        response = self.client.complete(request)
         parsed, error = (None, response.blocked_reason)
         if not response.blocked_reason:
             parsed, error = try_parse_structured_response(response.text, SemanticEvidenceProposal)
@@ -44,6 +47,12 @@ class LLMSemanticEvidenceVerifier:
             "blocked_reason": response.blocked_reason,
             "parse_error": error or "",
             "schema_validation_passed": parsed is not None,
+            "provider": self.config.provider.value,
+            "model": self.config.model,
+            "capability_profile": self.client.capability_profile.model_dump(mode="json"),
+            "capability_profile_source_digest": _capability_profile_source_digest(
+                self.client.capability_profile.source
+            ),
         }
         self.traces.append(trace)
         if parsed is None:
@@ -51,6 +60,11 @@ class LLMSemanticEvidenceVerifier:
         result = parsed.model_dump(mode="json")
         result["_response_metadata"] = trace
         return result
+
+
+def _capability_profile_source_digest(source: str) -> str:
+    path = Path(source)
+    return hash_file(path) if source and path.is_file() else ""
 
 
 def build_llm_semantic_verifier(config: LLMConfig | None) -> LLMSemanticEvidenceVerifier | None:

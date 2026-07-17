@@ -42,6 +42,8 @@ def build_review_queue_v2(
             "run_summary_digest": _digest(summary_path),
             "protocol_spec_digest": benchmark_spec_digest(spec),
             "repo_snapshot_id": spec.repo_snapshot_id,
+            "model_id": spec.model_id,
+            "capability_profile_digest": spec.capability_profile_digest,
             "reviewer": "__REQUIRED_NAMED_HUMAN__",
             "reviewed_at": "__REQUIRED_ISO8601__",
             "blocked_reason_review": "",

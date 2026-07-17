@@ -27,6 +27,7 @@ class BenchmarkRunSpecV2(ProtocolModel):
     repo_snapshot_id: str
     repo_tree_hash: str
     model_id: str = ""
+    capability_profile_path: str = ""
     capability_profile_digest: str = ""
     prompt_version: str = "agentic-graph-v3"
     renderer: str = "structured-svg"
@@ -56,6 +57,11 @@ class BenchmarkProtocolV2(ProtocolModel):
             grouped.setdefault((spec.case_id, spec.intent_id), []).append(spec)
             if spec.variant == "agentic_gemma4_mtp" and spec.environment.get("CODE2PAPER_LLM_CACHE") != "0":
                 raise ValueError("Gemma benchmark runs must disable the LLM cache")
+            if spec.variant in {"fixed_legacy", "agentic_gemma4_mtp"}:
+                if not spec.capability_profile_path or not spec.capability_profile_digest:
+                    raise ValueError("model-backed benchmark runs require a frozen capability profile")
+                if spec.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") != spec.capability_profile_path:
+                    raise ValueError("model-backed benchmark environment must load the frozen capability profile")
         for key, items in grouped.items():
             variants = {item.variant for item in items}
             if variants != {"fixed_legacy", "agentic_deterministic", "agentic_gemma4_mtp"}:
@@ -79,11 +85,18 @@ def build_benchmark_protocol_v2(
     workspace_commit: str,
     model_id: str,
     capability_profile_digest: str,
+    capability_profile_path: str | Path,
     budgets: dict[str, int] | None = None,
 ) -> BenchmarkProtocolV2:
     root = Path(workspace_root).resolve()
     clean_code_root = Path(code_root or workspace_root).resolve()
     destination = Path(out_root).resolve()
+    profile_path = Path(capability_profile_path).resolve()
+    if not profile_path.is_file():
+        raise ValueError(f"capability profile not found:{profile_path}")
+    actual_profile_digest = "sha256:" + hashlib.sha256(profile_path.read_bytes()).hexdigest()
+    if capability_profile_digest != actual_profile_digest:
+        raise ValueError("capability profile digest does not match the frozen profile file")
     effective_budgets = budgets or {
         "retrieval": 1, "evidence_revision": 1, "authoring_revision": 1,
         "figure_revision": 1, "semantic_verifier_calls": 3,
@@ -119,11 +132,17 @@ def build_benchmark_protocol_v2(
                         repo_snapshot_id=snapshot.snapshot_id,
                         repo_tree_hash=snapshot.project_tree_hash,
                         model_id=model_id if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
+                        capability_profile_path=str(profile_path) if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         capability_profile_digest=capability_profile_digest if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         budgets=effective_budgets,
                         environment={
                             "CODE2PAPER_LLM_CACHE": "0",
                             "PYTHONPATH": str(clean_code_root / "src"),
+                            **(
+                                {"CODE2PAPER_LLM_CAPABILITY_PROFILE": str(profile_path)}
+                                if variant in {"fixed_legacy", "agentic_gemma4_mtp"}
+                                else {}
+                            ),
                         },
                         command=command,
                     ))
@@ -172,6 +191,11 @@ def validate_protocol_observations_v2(
             failures.append(f"protocol_spec_digest_mismatch:{':'.join(map(str, key))}")
         if observation.provenance.get("repo_snapshot_id") != spec.repo_snapshot_id:
             failures.append(f"protocol_repo_snapshot_mismatch:{':'.join(map(str, key))}")
+        if spec.variant in {"fixed_legacy", "agentic_gemma4_mtp"}:
+            if observation.provenance.get("model_id") != spec.model_id:
+                failures.append(f"protocol_model_id_mismatch:{':'.join(map(str, key))}")
+            if observation.provenance.get("capability_profile_digest") != spec.capability_profile_digest:
+                failures.append(f"protocol_capability_profile_mismatch:{':'.join(map(str, key))}")
     return failures
 
 

@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Author marker mapping; repeat for every case/intent.",
     )
     parser.add_argument("--model-id", required=True)
+    parser.add_argument("--capability-profile", required=True)
     parser.add_argument("--capability-profile-digest", required=True)
     args = parser.parse_args(argv)
     dataset = load_benchmark_dataset_v2(args.gold)
@@ -53,6 +54,7 @@ def main(argv: list[str] | None = None) -> int:
         author_markers=authors,
         workspace_commit=commit,
         model_id=args.model_id,
+        capability_profile_path=args.capability_profile,
         capability_profile_digest=args.capability_profile_digest,
     )
     output = write_benchmark_protocol_v2(args.out, protocol)
