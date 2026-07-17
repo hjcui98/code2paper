@@ -9,7 +9,9 @@ import pytest
 
 from code2paper.agentic.benchmark_review_workspace import (
     _review_context,
+    build_review_dossier,
     materialize_review_workspace,
+    materialize_review_dossiers,
     record_claim_adjudication,
     record_figure_adjudication,
     record_run_adjudication,
@@ -103,6 +105,78 @@ def _bind_run_summary(queue: dict, tmp_path: Path, *, status: str = "success") -
     template["run_summary_path"] = str(path)
     template["run_summary_digest"] = "sha256:" + __import__("hashlib").sha256(path.read_bytes()).hexdigest()
     return path
+
+
+def _write_bound_json(tmp_path: Path, name: str, payload: dict) -> dict[str, str]:
+    path = tmp_path / name
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    digest = "sha256:" + __import__("hashlib").sha256(path.read_bytes()).hexdigest()
+    return {"path": str(path), "hash": digest}
+
+
+def _dossier_queue(tmp_path: Path) -> tuple[dict, Path, Path]:
+    queue = _queue()
+    entry = queue["entries"][0]
+    entry["identity"][1] = "agentic_deterministic"
+    template = entry["review_template"]
+    template["variant"] = "agentic_deterministic"
+    excerpt = "def grounded():\n    return True\n"
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    source = repo / "train.py"
+    source.write_text(excerpt, encoding="utf-8")
+    digest = "sha256:" + __import__("hashlib").sha256(excerpt.encode()).hexdigest()
+    entry["gold_repo_root"] = str(repo)
+    entry["gold_evidence_spans"] = [{
+        "evidence_id": "E1",
+        "path": "train.py",
+        "line_start": 1,
+        "line_end": 2,
+        "exact_excerpt_digest": digest,
+    }]
+    entry["gold_claims"] = [{
+        "claim_id": "T1",
+        "text": "The module defines grounded and returns true.",
+        "direct_evidence_ids": ["E1"],
+        "required_qualifiers": [],
+        "high_risk": False,
+    }]
+    template["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "The grounded function returns true.",
+        "verdict": "supported",
+        "semantic_match": None,
+        "gold_claim_id": "",
+        "mutation_match": None,
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": None,
+        "high_risk": False,
+    }]
+    validation = _write_bound_json(tmp_path, "validation.json", {
+        "verdicts": [{"atomic_claim_id": "FAC1", "direct_evidence_ids": ["E1"]}],
+    })
+    snapshot = _write_bound_json(tmp_path, "evidence.json", {
+        "spans": [{
+            "evidence_id": "E1",
+            "path": "train.py",
+            "line_start": 1,
+            "line_end": 2,
+            "exact_excerpt": excerpt,
+            "excerpt_digest": digest,
+        }],
+    })
+    summary = tmp_path / "summary.json"
+    summary.write_text(json.dumps({
+        "status": "success",
+        "artifacts": {
+            "text_evidence_validation": validation,
+            "evidence_snapshot_v2": snapshot,
+        },
+    }), encoding="utf-8")
+    template["run_summary_path"] = str(summary)
+    template["run_summary_digest"] = "sha256:" + __import__("hashlib").sha256(summary.read_bytes()).hexdigest()
+    return queue, source, Path(snapshot["path"])
 
 
 def _protocol():
@@ -683,6 +757,93 @@ def test_sign_revalidates_manually_edited_match_ids(tmp_path: Path) -> None:
             reviewer="Ada Reviewer",
             reviewed_at="2026-07-18T12:00:00+08:00",
         )
+
+
+def test_review_dossier_exposes_verified_claim_and_code_without_judgment(tmp_path: Path) -> None:
+    queue_payload, source, evidence_path = _dossier_queue(tmp_path)
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_name = _review_path(workspace).name
+
+    dossier = build_review_dossier(workspace, review_name)
+
+    assert "The grounded function returns true." in dossier
+    assert "def grounded():" in dossier
+    assert "The module defines grounded and returns true." in dossier
+    assert "never proposes, infers, or records a scientific judgment" in dossier
+    assert "Current semantic decision: `None`" in dossier
+
+    source.write_text("def drifted():\n    return False\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="gold evidence excerpt digest drift"):
+        build_review_dossier(workspace, review_name)
+
+    source.write_text("def grounded():\n    return True\n", encoding="utf-8")
+    evidence_path.write_text("{}", encoding="utf-8")
+    with pytest.raises(ValueError, match="frozen review artifact is unavailable or drifted"):
+        build_review_dossier(workspace, review_name)
+
+
+def test_review_dossier_cli_writes_once_and_refuses_overwrite(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    queue_payload, _source, _evidence_path = _dossier_queue(tmp_path)
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    output = tmp_path / "dossier.md"
+    args = [
+        "inspect",
+        "--workspace", str(workspace),
+        "--review", _review_path(workspace).name,
+        "--out", str(output),
+    ]
+
+    assert workspace_main(args) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result == {"dossier": str(output), "read_only": True}
+    assert "# Named review dossier" in output.read_text(encoding="utf-8")
+    with pytest.raises(FileExistsError, match="already exists"):
+        workspace_main(args)
+
+
+def test_materialize_all_review_dossiers_is_digest_indexed_and_non_overwriting(tmp_path: Path) -> None:
+    queue_payload, _source, _evidence_path = _dossier_queue(tmp_path)
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    output = tmp_path / "dossiers"
+
+    manifest_path = materialize_review_dossiers(workspace, output)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest["dossier_count"] == 1
+    assert manifest["scientific_judgments_inferred"] is False
+    dossier = Path(manifest["dossiers"][0]["dossier_path"])
+    assert dossier.is_file()
+    assert manifest["dossiers"][0]["dossier_digest"].startswith("sha256:")
+    with pytest.raises(FileExistsError, match="already exists"):
+        materialize_review_dossiers(workspace, output)
+
+
+def test_materialize_all_review_dossiers_leaves_no_partial_output_on_drift(tmp_path: Path) -> None:
+    queue_payload, _source, evidence_path = _dossier_queue(tmp_path)
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    evidence_path.write_text("{}", encoding="utf-8")
+    output = tmp_path / "failed-dossiers"
+
+    with pytest.raises(ValueError, match="frozen review artifact is unavailable or drifted"):
+        materialize_review_dossiers(workspace, output)
+
+    assert not output.exists()
+    assert list(tmp_path.glob(".failed-dossiers.*.tmp")) == []
 
 
 def test_validate_reports_malformed_manifest_identity_instead_of_crashing(tmp_path: Path) -> None:

@@ -6,7 +6,9 @@ from pathlib import Path
 
 from code2paper.agentic.benchmark_protocol import load_benchmark_protocol_v2
 from code2paper.agentic.benchmark_review_workspace import (
+    build_review_dossier,
     materialize_review_workspace,
+    materialize_review_dossiers,
     record_claim_adjudication,
     record_figure_adjudication,
     record_run_adjudication,
@@ -15,7 +17,7 @@ from code2paper.agentic.benchmark_review_workspace import (
     validate_review_workspace,
 )
 from code2paper.agentic.benchmark_v2 import load_benchmark_dataset_v2
-from code2paper.agentic.tool_runtime import atomic_write_json
+from code2paper.agentic.tool_runtime import atomic_write_bytes, atomic_write_json
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,6 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     materialize.add_argument("--out-root", required=True)
     progress = subparsers.add_parser("progress", help="Show unresolved human decisions without adjudicating them.")
     progress.add_argument("--workspace", required=True)
+    inspect = subparsers.add_parser("inspect", help="Render one digest-verified, read-only review dossier.")
+    _review_selector_arguments(inspect)
+    inspect.add_argument("--out", default="", help="Optional non-existing Markdown output path; stdout otherwise.")
+    inspect_all = subparsers.add_parser("inspect-all", help="Materialize non-overwriting dossiers for every review.")
+    inspect_all.add_argument("--workspace", required=True)
+    inspect_all.add_argument("--out-root", required=True)
     claim = subparsers.add_parser("claim", help="Record all explicit decisions for one frozen claim.")
     _review_selector_arguments(claim)
     claim.add_argument("--claim-id", required=True)
@@ -79,6 +87,26 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "progress":
         print(json.dumps(review_workspace_progress(args.workspace), ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "inspect":
+        dossier = build_review_dossier(args.workspace, args.review)
+        if not args.out:
+            print(dossier)
+            return 0
+        output = Path(args.out).expanduser().resolve()
+        if output.exists():
+            raise FileExistsError(f"review dossier output already exists:{output}")
+        atomic_write_bytes(output, dossier.encode("utf-8"))
+        print(json.dumps({"dossier": str(output), "read_only": True}, indent=2))
+        return 0
+    if args.command == "inspect-all":
+        dossier_manifest = materialize_review_dossiers(args.workspace, args.out_root)
+        payload = json.loads(dossier_manifest.read_text(encoding="utf-8"))
+        print(json.dumps({
+            "dossier_manifest": str(dossier_manifest),
+            "dossier_count": payload["dossier_count"],
+            "read_only": True,
+        }, indent=2))
         return 0
     if args.command == "claim":
         path = record_claim_adjudication(

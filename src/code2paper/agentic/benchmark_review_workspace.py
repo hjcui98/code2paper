@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +16,7 @@ from code2paper.agentic.benchmark_observation import (
 )
 from code2paper.agentic.benchmark_protocol import BenchmarkProtocolV2, validate_protocol_observations_v2
 from code2paper.agentic.benchmark_v2 import BenchmarkDatasetV2, BenchmarkObservationV2
-from code2paper.agentic.tool_runtime import atomic_write_json
+from code2paper.agentic.tool_runtime import atomic_write_bytes, atomic_write_json
 
 
 _IMMUTABLE_REVIEW_FIELDS = (
@@ -89,6 +92,175 @@ def review_workspace_progress(workspace_root: str | Path) -> dict[str, Any]:
         "reviews_pending": totals["reviews"] - totals["signed_reviews"],
         "review_progress": review_progress,
     }
+
+
+def build_review_dossier(workspace_root: str | Path, review_selector: str) -> str:
+    """Assemble one read-only, digest-verified reviewer view without judgments."""
+
+    root, entry, review_path, review = _editable_review(workspace_root, review_selector)
+    del root
+    summary_path = Path(str(review.get("run_summary_path") or "")).expanduser().resolve()
+    if not summary_path.is_file() or _digest_file(summary_path) != review.get("run_summary_digest"):
+        raise ValueError("frozen run summary is unavailable or its digest drifted")
+    summary = _load_json(summary_path)
+    identity = _identity(entry)
+    lines = [
+        f"# Named review dossier: {' / '.join(str(item or 'default') for item in identity)}",
+        "",
+        "> Read-only evidence view. It never proposes, infers, or records a scientific judgment.",
+        "> The reference paper is intentionally excluded; code is the evidence authority.",
+        "",
+        "## Frozen binding",
+        "",
+        f"- Review file: `{review_path}`",
+        f"- Run summary: `{summary_path}`",
+        f"- Run summary digest: `{review['run_summary_digest']}`",
+        f"- Run status: `{summary.get('status', '')}`",
+        f"- Repository snapshot: `{review.get('repo_snapshot_id', '')}`",
+        f"- Model: `{review.get('model_id', '')}`",
+        "",
+        "## Generated claims awaiting human decisions",
+        "",
+    ]
+    artifacts = summary.get("artifacts") if isinstance(summary.get("artifacts"), dict) else {}
+    validation = _bound_artifact_json(artifacts, "text_evidence_validation")
+    evidence_snapshot = _bound_artifact_json(artifacts, "evidence_snapshot_v2")
+    validation_by_id = {
+        str(item.get("atomic_claim_id") or ""): item
+        for item in validation.get("verdicts", [])
+        if isinstance(item, dict)
+    }
+    evidence_by_id = {
+        str(item.get("evidence_id") or ""): item
+        for item in evidence_snapshot.get("spans", [])
+        if isinstance(item, dict)
+    }
+    claims = review.get("claims") if isinstance(review.get("claims"), list) else []
+    if not claims:
+        lines.extend(["_This blocked run has no delivered factual claims._", ""])
+    for claim in claims:
+        claim_id = str(claim.get("atomic_claim_id") or "")
+        verdict = validation_by_id.get(claim_id, {})
+        lines.extend([
+            f"### {claim_id}",
+            "",
+            str(claim.get("text") or ""),
+            "",
+            f"- Frozen validator verdict: `{claim.get('verdict')}`",
+            f"- Current semantic decision: `{claim.get('semantic_match')}` / `{claim.get('gold_claim_id', '')}`",
+            f"- Current mutation decision: `{claim.get('mutation_match')}` / `{claim.get('mutation_id', '')}`",
+            f"- Required qualifiers preserved: `{claim.get('qualifiers_preserved')}`",
+            f"- Direct evidence support: `{claim.get('direct_evidence_support')}`",
+        ])
+        direct_ids = verdict.get("direct_evidence_ids") if isinstance(verdict.get("direct_evidence_ids"), list) else []
+        if direct_ids:
+            lines.extend(["", "Frozen validator-cited evidence:", ""])
+            for evidence_id in direct_ids:
+                span = evidence_by_id.get(str(evidence_id))
+                if span is None:
+                    raise ValueError(f"validator cites evidence absent from frozen snapshot:{claim_id}:{evidence_id}")
+                lines.extend(_evidence_span_markdown(span, prefix=f"{evidence_id}"))
+        lines.append("")
+    lines.extend(["## Code-grounded gold claims", ""])
+    gold_spans = {
+        str(item.get("evidence_id") or ""): item
+        for item in entry.get("gold_evidence_spans", [])
+        if isinstance(item, dict)
+    }
+    for claim in entry.get("gold_claims", []):
+        claim_id = str(claim.get("claim_id") or "")
+        lines.extend([
+            f"### {claim_id}",
+            "",
+            str(claim.get("text") or ""),
+            "",
+            f"- Required qualifiers: `{json.dumps(claim.get('required_qualifiers', []), ensure_ascii=False)}`",
+            f"- High risk: `{bool(claim.get('high_risk'))}`",
+            "",
+        ])
+        for evidence_id in claim.get("direct_evidence_ids", []):
+            span = gold_spans.get(str(evidence_id))
+            if span is None:
+                raise ValueError(f"gold claim cites an absent evidence span:{claim_id}:{evidence_id}")
+            excerpt = _verified_gold_excerpt(entry, span)
+            lines.extend(_evidence_span_markdown({**span, "exact_excerpt": excerpt}, prefix=str(evidence_id)))
+        lines.append("")
+    lines.extend(["## Figure inventory and gold relations", "", "```json"])
+    lines.append(json.dumps({
+        "review_elements": review.get("figures", []),
+        "gold_relations": entry.get("gold_figure_relations", []),
+        "figure_scene": _bound_artifact_json(artifacts, "figure_scene"),
+        "post_render_audit": _bound_artifact_json(artifacts, "post_render_audit"),
+        "figure_asset": _bound_artifact_record(artifacts, "method_overview_svg"),
+    }, ensure_ascii=False, indent=2))
+    lines.extend(["```", "", "## Curated mutation trials", ""])
+    for trial in review.get("mutation_trials", []):
+        trial_path = Path(str(trial.get("trial_artifact_path") or "")).expanduser().resolve()
+        expected_digest = str(trial.get("trial_artifact_digest") or "")
+        if not trial_path.is_file() or _digest_file(trial_path) != expected_digest:
+            raise ValueError(f"mutation trial artifact is unavailable or drifted:{trial.get('mutation_id', '')}")
+        lines.extend([
+            f"### {trial.get('mutation_id', '')}",
+            "",
+            "```json",
+            json.dumps(_load_json(trial_path), ensure_ascii=False, indent=2),
+            "```",
+            "",
+        ])
+    lines.extend([
+        "## Reviewer action",
+        "",
+        "Return to the matching `claim`, `figure`, and `run` commands only after checking the code excerpts above.",
+        "Do not use this dossier as evidence that a decision or signature has occurred.",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def materialize_review_dossiers(
+    workspace_root: str | Path,
+    out_root: str | Path,
+) -> Path:
+    """Create one non-overwriting, digest-indexed Markdown dossier per review."""
+
+    workspace = Path(workspace_root).expanduser().resolve()
+    output = Path(out_root).expanduser().resolve()
+    manifest, _queue, _entries = _load_editable_workspace(workspace)
+    if output.exists():
+        raise FileExistsError(f"review dossier output already exists:{output}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.", suffix=".tmp", dir=output.parent))
+    try:
+        dossiers: list[dict[str, Any]] = []
+        for item in manifest["entries"]:
+            review_path = _contained_path(workspace, item.get("review_path"), "reviews")
+            dossier_name = f"{review_path.stem}.md"
+            staging_path = staging / dossier_name
+            dossier = build_review_dossier(workspace, review_path.name)
+            atomic_write_bytes(staging_path, dossier.encode("utf-8"))
+            dossiers.append({
+                "identity": list(_tuple_identity(item.get("identity"))),
+                "review_path": str(review_path),
+                "dossier_path": str(output / dossier_name),
+                "dossier_digest": _digest_file(staging_path),
+            })
+        dossier_manifest = {
+            "schema_version": "code2paper-agentic-review-dossier-manifest/v1",
+            "workspace_manifest": str(workspace / "review_workspace_manifest.json"),
+            "workspace_manifest_digest": _digest_file(workspace / "review_workspace_manifest.json"),
+            "queue_path": str(Path(manifest["queue_path"]).resolve()),
+            "queue_digest": str(manifest["queue_digest"]),
+            "dossier_count": len(dossiers),
+            "status": "read_only_human_review_aid",
+            "scientific_judgments_inferred": False,
+            "dossiers": dossiers,
+        }
+        atomic_write_json(staging / "dossier_manifest.json", dossier_manifest)
+        os.replace(staging, output)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return output / "dossier_manifest.json"
 
 
 def record_claim_adjudication(
@@ -619,6 +791,77 @@ def _review_artifact_lines(template: dict[str, Any]) -> list[str]:
         if path:
             lines.append(f"- {key}: `{path}`")
     return lines or ["- No reviewable text or figure artifact is recorded for this run."]
+
+
+def _bound_artifact_record(artifacts: dict[str, Any], key: str) -> dict[str, str]:
+    record = artifacts.get(key)
+    if not isinstance(record, dict) or not str(record.get("path") or ""):
+        return {}
+    path = Path(str(record["path"])).expanduser().resolve()
+    expected = str(record.get("hash") or "")
+    if not path.is_file() or not expected or _digest_file(path) != expected:
+        raise ValueError(f"frozen review artifact is unavailable or drifted:{key}")
+    return {"path": str(path), "digest": expected}
+
+
+def _bound_artifact_json(artifacts: dict[str, Any], key: str) -> dict[str, Any]:
+    record = _bound_artifact_record(artifacts, key)
+    return _load_json(Path(record["path"])) if record else {}
+
+
+def _verified_gold_excerpt(entry: dict[str, Any], span: dict[str, Any]) -> str:
+    repo = Path(str(entry.get("gold_repo_root") or "")).expanduser().resolve()
+    path = (repo / str(span.get("path") or "")).resolve()
+    try:
+        path.relative_to(repo)
+    except ValueError as exc:
+        raise ValueError(f"gold evidence path escapes frozen repository:{span.get('evidence_id', '')}") from exc
+    try:
+        line_start = int(span.get("line_start"))
+        line_end = int(span.get("line_end"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"gold evidence has invalid line bounds:{span.get('evidence_id', '')}") from exc
+    if line_start < 1 or line_end < line_start:
+        raise ValueError(f"gold evidence has invalid line bounds:{span.get('evidence_id', '')}")
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    except OSError as exc:
+        raise ValueError(f"gold evidence source is unavailable:{span.get('evidence_id', '')}") from exc
+    excerpt = "".join(lines[line_start - 1:line_end])
+    if _digest_text(excerpt) != span.get("exact_excerpt_digest"):
+        raise ValueError(f"gold evidence excerpt digest drift:{span.get('evidence_id', '')}")
+    return excerpt
+
+
+def _evidence_span_markdown(span: dict[str, Any], *, prefix: str) -> list[str]:
+    excerpt = str(span.get("exact_excerpt") or "")
+    expected = str(span.get("excerpt_digest") or span.get("exact_excerpt_digest") or "")
+    if expected and _digest_text(excerpt) != expected:
+        raise ValueError(f"evidence excerpt digest drift:{prefix}")
+    language = _fence_language(str(span.get("path") or ""))
+    return [
+        f"- `{prefix}` — `{span.get('path', '')}:{span.get('line_start', '')}-{span.get('line_end', '')}` (`{expected}`)",
+        "",
+        f"```{language}",
+        excerpt.rstrip("\n"),
+        "```",
+        "",
+    ]
+
+
+def _fence_language(path: str) -> str:
+    return {
+        ".py": "python",
+        ".sh": "bash",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".json": "json",
+        ".toml": "toml",
+        ".cpp": "cpp",
+        ".cc": "cpp",
+        ".c": "c",
+        ".h": "c",
+    }.get(Path(path).suffix.lower(), "text")
 
 
 def _report(status, pending, invalid, failures, validated, manifest_entries) -> dict[str, Any]:
