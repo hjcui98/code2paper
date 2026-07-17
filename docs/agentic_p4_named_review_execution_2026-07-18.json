@@ -1,6 +1,7 @@
 {
   "schema_version": "code2paper-agentic-p4-named-review-execution-eval/v1",
   "evaluated_at": "2026-07-18",
+  "operational_successor": "docs/agentic_p4_review_dossiers_2026-07-18.json",
   "implementation_commit": "debf05c45b1799e23fbb654310f3b79c6088a138",
   "finding": {
     "old_behavior": "Reviewers had to edit adjudication JSON directly and could accidentally mix incomplete decisions with attribution.",

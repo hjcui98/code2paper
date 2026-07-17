@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `488 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `493 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -128,6 +128,14 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   interpreting or auto-filling any scientific judgment. The formal workspace
   remains 0/25 signed; see
   `docs/agentic_p4_named_review_execution_2026-07-18.json`.
+- Review evidence can now be rendered as single-run or all-run, read-only
+  dossiers. They combine final claims, validator-cited EvidenceSpanV2 excerpts,
+  re-read gold source lines, required qualifiers, figure scene/audit bindings,
+  and mutation payloads only after digest verification. Batch publication is
+  atomic, non-overwriting, digest-indexed, and explicitly records that no
+  scientific judgment was inferred. All 25 formal dossiers were materialized
+  successfully, while signed review progress remains 0/25. See
+  `docs/agentic_p4_review_dossiers_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

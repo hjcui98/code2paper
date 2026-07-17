@@ -1,0 +1,73 @@
+{
+  "schema_version": "code2paper-agentic-p4-review-dossier-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commits": [
+    "bd3254f2ac53c90e8cada588c064998fac21c8d5",
+    "207602d9c561f9c9e14360a2e6061ff46e15be11"
+  ],
+  "finding": {
+    "old_behavior": "A reviewer had to navigate separate review, run, evidence, gold-source, figure, and mutation files to make one decision.",
+    "trust_risk": "Manual navigation increased omission and wrong-artifact risk even though final workspace validation remained fail-closed."
+  },
+  "operations": [
+    "inspect",
+    "inspect-all"
+  ],
+  "dossier_contract": {
+    "read_only": true,
+    "reference_paper_excluded": true,
+    "scientific_judgments_inferred": false,
+    "generated_claims_included": true,
+    "complete_delivered_method_text_included": true,
+    "rendered_figure_asset_included": true,
+    "legacy_v2_audit_draft_and_figure_bound": true,
+    "validator_cited_evidence_excerpts_included": true,
+    "gold_claims_and_qualifiers_included": true,
+    "gold_source_lines_reread_and_digest_verified": true,
+    "figure_scene_and_post_render_audit_included": true,
+    "mutation_trial_payloads_included": true,
+    "all_included_artifact_digests_rechecked": true,
+    "batch_publication_atomic": true,
+    "existing_output_refused": true,
+    "partial_output_removed_on_failure": true
+  },
+  "formal_materialization": {
+    "workspace": "/tmp/code2paper-p4-review-workspace-9a98c17-v9-explicit-human-decisions",
+    "out_root": "/tmp/code2paper-p4-review-dossiers-9a98c17-v3",
+    "manifest": "/tmp/code2paper-p4-review-dossiers-9a98c17-v3/dossier_manifest.json",
+    "manifest_sha256": "377c138c7ed05b3c6820244b42bce313f32c6d68a5e9d3f8593b03a1e74ec68c",
+    "workspace_manifest_digest": "sha256:4c91b77c0553ac18112fc9b1affe903fedd1914b9e6a0cc0b59dd75a1d6a98f2",
+    "queue_digest": "sha256:85a846d9a5999ad06c44bcc74cac837f4e0273119dd22955aebd7dda2405065c",
+    "dossiers": 25,
+    "published_files": 26,
+    "signed_reviews": 0
+  },
+  "verification": {
+    "workspace_tests": "26 passed",
+    "p4_review_cli_regression": "59 passed",
+    "full_suite": "493 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "gold source excerpt drift",
+      "validator evidence artifact drift",
+      "missing cited evidence id",
+      "gold source path escape",
+      "mutation artifact drift",
+      "legacy V2 audit drift",
+      "legacy method draft drift",
+      "legacy method figure drift",
+      "existing single dossier output",
+      "existing batch output",
+      "partial batch output cleanup"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_review_workspace.py": "79ed4d1387af2f2c9654f898a52e705f3db09e73c32d1be830978528d92a691d",
+    "src/code2paper/cli/agentic_benchmark_review_workspace.py": "7dd857d39a7cc77d064aa309a702ec3af78ad2c55840f198f7396e5fdb12585f",
+    "tests/test_agentic_benchmark_review_workspace.py": "7673cc84ac06770f15e19c7ac78cd684ca5f3f296711d218a9ce3c42cf750de3"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All evidence packets are ready, but scientific decisions and signatures remain attributable human work."
+  }
+}

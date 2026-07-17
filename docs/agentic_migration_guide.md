@@ -217,6 +217,28 @@ code2paper-agentic-benchmark-review-workspace progress \
   --workspace /tmp/code2paper-p4-review-workspace
 ```
 
+Build a read-only dossier before deciding. It includes each generated claim,
+the exact EvidenceSpanV2 excerpts actually cited by the validator, code-grounded
+gold claims and qualifiers, figure inventory/scene/audit, and full curated
+mutation trial payloads. Every source, artifact, and excerpt digest is checked:
+
+```bash
+code2paper-agentic-benchmark-review-workspace inspect \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --review 002-toy_train-agentic_deterministic-default-r1.json \
+  --out /tmp/review-002-dossier.md
+
+code2paper-agentic-benchmark-review-workspace inspect-all \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --out-root /tmp/code2paper-p4-review-dossiers
+```
+
+`inspect-all` atomically publishes one Markdown file per protocol identity and a
+digest-indexed `dossier_manifest.json`. It refuses an existing output directory
+and removes staging output if any artifact has drifted. Dossiers intentionally
+exclude the reference paper, never suggest a mapping or verdict, and cannot be
+used as evidence that a human decision occurred.
+
 Then record one complete claim, figure, or run decision at a time. The `--review`
 selector must be an exact manifest basename, `reviews/...` path, or absolute
 manifest path. For example:

@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：2.5
+版本：2.6
 
 日期：2026-07-18
 
@@ -2352,6 +2352,30 @@ inventory/binding drift、未知 ID、错误布尔值或提前签字均 fail clo
 pending、25 run decisions pending，没有把工具上线计作人审完成。定向 P4/review/CLI 回归 54 passed，全量为
 `488 passed, 2 skipped, 6 subtests passed`。机器记录为
 `docs/agentic_p4_named_review_execution_2026-07-18.json`。
+
+### 12.23 Digest-verified reviewer dossiers（2026-07-18）
+
+安全写入命令解决了误改与提前签字，但 reviewer 仍需跨 review JSON、run summary、EvidenceSpanV2、gold
+源码、figure scene/audit 和 mutation artifact 手工查找。提交
+`bd3254f2ac53c90e8cada588c064998fac21c8d5` 增加 `inspect` 与 `inspect-all`：前者为一个
+manifest identity 生成只读 Markdown dossier，后者在 staging directory 中生成全部 dossier，全部成功后才
+原子发布目标目录和 `dossier_manifest.json`；目标已存在或任一输入 drift 时不覆盖、不留下半成品。
+提交 `207602d9c561f9c9e14360a2e6061ff46e15be11` 进一步把完整 delivered method text、实际
+SVG asset 与 legacy V2 audit/draft/figure digest 纳入 dossier，避免 usability/figure review 只看原子清单。
+
+每份 dossier 同屏展示 frozen claim text/verdict、当前仍未填写的人审字段、validator 实际引用的 direct
+EvidenceSpanV2 exact excerpts、gold claim/qualifier 与从 frozen repo 行号重新读取的源码、figure
+inventory/scene/post-render audit/asset binding，以及完整 mutation trial payload。run summary、artifact、gold
+excerpt、mutation trial 均重算 SHA-256；缺失 evidence ID、路径逃逸或摘要不符立即失败。原论文仍被明确排除，
+dossier 不建议 mapping、verdict 或签字，manifest 固定 `scientific_judgments_inferred=false`。
+
+正式 v9 workspace 已实际批量生成 25/25 dossier 至
+`/tmp/code2paper-p4-review-dossiers-9a98c17-v3`；manifest 同时绑定 queue digest
+`85a846d9...5065c` 与 workspace manifest digest `4c91b77c...a98f2`，自身 SHA-256 为
+`377c138c...c68c`。这证明当前全部 reviewer 输入仍可重读且未漂移，但不等于任何判断已完成：状态继续
+0/25 signed。workspace 定向测试 26 passed，P4/review/CLI 回归 59 passed，全量为
+`493 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_review_dossiers_2026-07-18.json`。
 
 ## 13. 代码落点总表
 
