@@ -1,0 +1,44 @@
+{
+  "schema_version": "code2paper.real-project-blind-cases.v1",
+  "cases": [
+    {
+      "case_id": "unimmad",
+      "run_dir": "unimmad",
+      "original": "paper_final/114_UniMMAD.md",
+      "concepts": [
+        {"id": "general_to_specific", "aliases": ["general → specific", "general-to-specific", "general features into domain-specific"]},
+        {"id": "feature_compression", "aliases": ["feature compression module", "pass through fcm to compress"]},
+        {"id": "cross_moe", "aliases": ["cross mixture-of-experts", "c-moe decoder", "cross-conditioned moe"]},
+        {"id": "condition_router", "aliases": ["condition router", "domain priors to select"]},
+        {"id": "moe_in_moe", "aliases": ["moe-in-moe", "shared base experts"]},
+        {"id": "grouped_dynamic_filtering", "aliases": ["grouped dynamic filtering", "group convolution"]},
+        {"id": "anomaly_inference", "aliases": ["cosine dissimilarity between priors and decompressed features", "pixel-level anomaly maps"]}
+      ]
+    },
+    {
+      "case_id": "codequant",
+      "run_dir": "codequant",
+      "original": "paper_final/088_CodeQuant - Unified Clustering and Quantization for Enhanced Outlier Smoothing in Low-Precision Mixture-of-Experts.md",
+      "concepts": [
+        {"id": "aos_rotation", "aliases": ["activation-oriented outlier smoothing", "learning a rotation matrix", "learnable rotation"]},
+        {"id": "accf_centroids", "aliases": ["adaptive weight clustering", "row-wise centroids", "centroid finetuning"]},
+        {"id": "router_kl", "aliases": ["router-preserving kl", "preserving router behavior via kl", "kl divergence"]},
+        {"id": "pog_permutation", "aliases": ["permutation-invariant outlier grouping", "reorder weight columns", "column permutation"]},
+        {"id": "lut_gemm", "aliases": ["lookup-table-based gemm", "lookup tables", "table lookups instead of multiply"]}
+      ]
+    },
+    {
+      "case_id": "domain_pruning",
+      "run_dir": "domain_pruning",
+      "original": "paper_final/024_Domain-Specific Pruning of Large Mixture-of-Experts Models with.md",
+      "concepts": [
+        {"id": "few_shot_statistics", "aliases": ["small set of target-domain", "few-shot set", "few-shot domain demonstrations"]},
+        {"id": "gating_times_output_norm", "aliases": ["product of the gating value and the l2 norm", "gating value and the l2 norm", "gating score and the l2 norm"]},
+        {"id": "token_contribution", "aliases": ["1 − cosine similarity", "1 - cosine similarity", "1 − cosine_similarity", "similarity of representations before and after"]},
+        {"id": "score_aggregation", "aliases": ["sum over all tokens the product", "aggregating the product of two terms"]},
+        {"id": "top_m_selection", "aliases": ["keep the top-m", "select the top-m", "top-m experts"]},
+        {"id": "mixed_domain", "aliases": ["averaging the normalized expert scores", "average the normalized domain-specific scores", "averaging the normalized expert scores of all target domains"]}
+      ]
+    }
+  ]
+}

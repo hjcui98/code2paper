@@ -183,20 +183,29 @@ def _is_authoring_projection_input(method_evidence: MethodEvidence) -> bool:
 def _build_projection_only_draft(method_evidence: MethodEvidence, claim_map: ClaimEvidenceMap) -> str:
     """Conservative fallback whose factual sentences are exactly projected claims."""
 
-    claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
+    canonical_claims, claim_by_id = _canonical_projection_claims(claim_map.claims)
     emitted: set[str] = set()
+    emitted_sentences: set[str] = set()
     lines: list[str] = ["# Method", ""]
     for packet in method_evidence.stage_packets:
-        claim_ids = [str(item) for item in packet.get("claim_ids", []) if str(item) in claim_by_id]
-        claim_ids = [claim_id for claim_id in claim_ids if claim_id not in emitted]
+        claim_ids: list[str] = []
+        packet_sentences = set(emitted_sentences)
+        for item in packet.get("claim_ids", []):
+            claim_id = str(item)
+            if claim_id not in claim_by_id or claim_id in emitted:
+                continue
+            claim = claim_by_id[claim_id]
+            signature = _projection_sentence_signature(claim)
+            if not _projection_claim_is_writable(claim) or signature in packet_sentences:
+                continue
+            claim_ids.append(claim_id)
+            packet_sentences.add(signature)
         if not claim_ids:
             continue
         lines.extend([f"## {str(packet.get('name') or 'Method stage')}"])
         for claim_id in claim_ids:
             claim = claim_by_id[claim_id]
-            sentence = claim.claim_text.strip().rstrip(".")
-            if claim.caveats:
-                sentence += "; " + "; ".join(item.strip().rstrip(".") for item in claim.caveats if item.strip())
+            sentence = _projection_sentence(claim)
             lines.extend(
                 [
                     grounding_comment(
@@ -210,17 +219,87 @@ def _build_projection_only_draft(method_evidence: MethodEvidence, claim_map: Cla
                 ]
             )
             emitted.add(claim_id)
-    remaining = [claim for claim in claim_map.claims if claim.claim_id not in emitted]
+            emitted_sentences.add(_normalize_text(sentence))
+    remaining: list[ClaimEvidenceItem] = []
+    remaining_sentences = set(emitted_sentences)
+    for claim in canonical_claims:
+        signature = _projection_sentence_signature(claim)
+        if (
+            claim.claim_id in emitted
+            or not _projection_claim_is_writable(claim)
+            or signature in remaining_sentences
+        ):
+            continue
+        remaining.append(claim)
+        remaining_sentences.add(signature)
     if remaining:
         lines.extend(["## Additional supported behavior"])
         for claim in remaining:
-            sentence = claim.claim_text.strip().rstrip(".")
-            if claim.caveats:
-                sentence += "; " + "; ".join(item.strip().rstrip(".") for item in claim.caveats if item.strip())
+            sentence = _projection_sentence(claim)
             lines.extend(
                 [grounding_comment(stage_id="ALL", mechanism_ids=[], evidence_ids=claim.evidence_ids, confidence="high"), sentence + ".", ""]
             )
+            emitted_sentences.add(_normalize_text(sentence))
     return normalize_markdown(lines)
+
+
+def _canonical_projection_claims(
+    claims: list[ClaimEvidenceItem],
+) -> tuple[list[ClaimEvidenceItem], dict[str, ClaimEvidenceItem]]:
+    """Merge duplicate wording conservatively so a weaker copy cannot drop caveats."""
+
+    canonical_by_text: dict[str, ClaimEvidenceItem] = {}
+    ids_by_text: dict[str, list[str]] = {}
+    order: list[str] = []
+    for claim in claims:
+        signature = _normalize_text(claim.claim_text)
+        if signature not in canonical_by_text:
+            canonical_by_text[signature] = claim
+            ids_by_text[signature] = []
+            order.append(signature)
+        else:
+            current = canonical_by_text[signature]
+            caveats = list(dict.fromkeys([*current.caveats, *claim.caveats]))
+            evidence_ids = list(
+                dict.fromkeys([*current.evidence_ids, *claim.evidence_ids])
+            )
+            canonical_by_text[signature] = current.model_copy(
+                update={"caveats": caveats, "evidence_ids": evidence_ids}
+            )
+        ids_by_text[signature].append(claim.claim_id)
+    claim_by_id = {
+        claim_id: canonical_by_text[signature]
+        for signature, claim_ids in ids_by_text.items()
+        for claim_id in claim_ids
+    }
+    return [canonical_by_text[signature] for signature in order], claim_by_id
+
+
+def _projection_claim_is_writable(claim: ClaimEvidenceItem) -> bool:
+    """Keep trust metadata out of prose even when it has evidence lineage."""
+
+    if claim.support_status == SupportStatus.UNSUPPORTED:
+        return False
+    normalized = _normalize_text(claim.claim_text)
+    return not any(
+        marker in normalized
+        for marker in (
+            "the method contains a paper-facing stage named",
+            "represent the paper-facing stage named",
+        )
+    )
+
+
+def _projection_sentence(claim: ClaimEvidenceItem) -> str:
+    sentence = claim.claim_text.strip().rstrip(".")
+    caveats = [item.strip().rstrip(".") for item in claim.caveats if item.strip()]
+    if caveats:
+        sentence += "; " + "; ".join(caveats)
+    return sentence
+
+
+def _projection_sentence_signature(claim: ClaimEvidenceItem) -> str:
+    return _normalize_text(_projection_sentence(claim))
 
 
 def build_method_draft_tex(
