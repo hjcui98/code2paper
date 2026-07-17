@@ -5,6 +5,9 @@
     "069e1180cd021f4e43825108e13c3487442b834b",
     "6610aaa6c1857dc929a0d52ff8c6c964ff3abf68"
   ],
+  "status": "historical_agentic_only_inventory_superseded_by_symmetric_legacy_and_agentic_inventory",
+  "superseded_by": "docs/agentic_p4_legacy_review_inventory_2026-07-18.json",
+  "source_hash_scope": "Hashes below predate the fixed-legacy exact review inventory and rollout artifact gate.",
   "findings": [
     {
       "old_behavior": "A valid gold-claim mapping counted as a correct semantic positive without a separate human decision that the cited direct code evidence supported the exact final sentence.",

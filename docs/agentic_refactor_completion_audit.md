@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `477 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `481 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -100,6 +100,18 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   template, or immutable-binding drift fails before placeholder handling. The
   53 evidence-support decisions remain pending; see
   `docs/agentic_p4_code_evidence_adjudication_2026-07-18.json`.
+- Fixed legacy review is now exact-inventory based as well. Five frozen audits
+  expose 112 visible factual claims and 45 SVG text/arrow elements; combined
+  with agentic output, the v8 workspace contains 165 claim-evidence decisions
+  and 73 figure decisions. Draft, SVG, audit, claim, and element deletion or
+  drift fails closed. See `docs/agentic_p4_legacy_review_inventory_2026-07-18.json`.
+- Rollout progress counters are no longer trusted from the policy JSON. Schema
+  2.2 decisions advance only from digest-validated per-case rollout artifacts
+  that bind the prior authorization, named reviewer, run completion, protocol,
+  and gold digest. The implicit default additionally requires exact shadow,
+  opt-in, and canary coverage with zero incidents. No rollout artifacts exist
+  yet, so rollout remains pending. See
+  `docs/agentic_p4_rollout_artifact_gate_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

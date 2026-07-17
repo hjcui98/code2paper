@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：2.1
+版本：2.3
 
 日期：2026-07-18
 
@@ -2248,6 +2248,59 @@ agentic records、53 条 final atomic claims、28 个 visible figure elements，
 旧 v4 claim + figure workspace 没有 direct-evidence 人审字段、gold digest 和 context digest，现仅保留为
 历史审计证据；不能用于完成 named review 或授权 cutover。正式 baseline run 未改变，默认路线继续
 hold。
+
+### 12.19 Fixed legacy exact human-review inventory（2026-07-18）
+
+对新 workspace 的 variant 对称性审计发现，旧 fixed legacy template 的 `claims=[]`、`figures=[]`；同时
+旧 `LegacyV2AuditReport` 只记录 factual/supported/unsupported 数量，不保留逐句文本。以 toy 为例，旧
+audit 报告 43 个 factual claims，但 reviewer 可以提交空列表或只选择有利句子。legacy 图虽然存在 SVG，
+也完全没有人审 inventory。这样会使 fixed baseline 的 precision/recall 与 figure metrics 受到选择性遗漏
+影响，不能作为 agentic 对照。
+
+提交 `3841fdc73efa5f6d408362557651e4f39510e7e6` 后，final claim extractor 首先隐藏不渲染的 Markdown
+HTML comments，同时保持原始字符和行偏移；旧 `c2p` 元数据不再被误计为论文 claim。legacy V2 audit
+现在冻结每个可见 factual atomic claim 的 ID、原文、claim digest、validator verdict、direct evidence
+IDs 和风险标记，并绑定 exact draft digest。它也绑定 SVG digest，将每个可见 `<text>` 作为 annotation、
+每个带 `marker-end` 的 line/path/polyline 作为 edge。提交
+`892d62170ec053c037059f1bce19f213c88fb748` 明确保持这种可见元素分类，避免把多行 SVG 文本错误合并
+成虚构 scene node。
+
+Queue 构建现在强制 legacy audit 存在并重新校验 run report、draft、SVG 和 inventory count；review
+template 冻结 legacy audit path/digest 以及 exact claim/figure inventory。workspace 在 reviewer 占位符
+阶段就检查 legacy/agentic 两类 inventory；observation extractor 再从 digest-pinned audit 重建 expected
+集合，删除、增加、重复、改写、改 verdict 或改风险标记均失败。legacy `usable_completion` 也不能超过
+audit 的 `v2_usable_completion`。
+
+冻结五个 legacy runs 重建后共有 112 条可见 factual claims，均被当前 curated V2 validator 判为
+unsupported；五张 SVG 共有 45 个可见 review elements（30 个 text annotations、15 条 arrows）。与
+agentic 的 53 claims/28 elements 合并后，新 queue 含 165 条 claim evidence decisions 和 73 个图元素。
+Queue 为 `/tmp/code2paper-p4-review-queue-9a98c17-agentic-legacy-inventory.json`，workspace 为
+`/tmp/code2paper-p4-review-workspace-9a98c17-v8-agentic-legacy-inventory`；validation 仍为 0 validated、
+25 pending、0 invalid、`observations_emitted=false`。机器记录为
+`docs/agentic_p4_legacy_review_inventory_2026-07-18.json`。
+
+### 12.20 Digest-pinned rollout authorization（2026-07-18）
+
+继续审计 shadow → opt-in → canary 路径时发现，旧 `RolloutEvidenceV2` 的 `shadow_cases`、
+`shadow_reviewed`、`opt_in_cases`、`canary_cases` 和 `canary_incidents` 全由 `--rollout` JSON 自报，CLI
+不重读任何 rollout run、人工 review 或前序授权 decision。因此即使 25 个 benchmark reviews 将来完成，
+手写计数也可能把状态直接推进到 `default_ready`。
+
+提交 `a4ebab084c233d4417e6de91c2096238d5358d33` 后，这些旧计数被明确降级为不可信输入；非零自报值
+产生 `self_reported_rollout_progress_not_accepted`。新增 `RolloutTrialArtifactV2` 和重复
+`--rollout-artifact` 输入，每个 artifact 必须绑定 stage/case、具名 reviewer、带时区时间、accepted
+decision、前序授权 decision path/digest、可信 agentic run summary 和 complete report；shadow 还必须
+绑定 legacy comparison run。授权 decision 必须绑定同一 protocol commit、canonical gold digest 和
+digest-pinned named reviews。重复 case-stage、摘要漂移、未接受 trial、越级 opt-in/canary 或 canary
+incident 都 fail closed。
+
+Cutover decision 升级为 schema 2.2，保存 invocation-derived `ValidatedRolloutEvidenceV2`、protocol
+commit、gold digest 和完整 benchmark case IDs。`run_cli` 的隐式默认切换重新要求所有 benchmark cases
+均具有 shadow、opt-in 和 canary artifact coverage、0 canary incidents、唯一 artifact digests 以及完整
+named review evidence；旧 2.1 或只含自报计数的 decision 保持 legacy。当前实际 rollout artifacts 仍为
+0，正确状态仍是 hold。定向测试 34 passed，全量测试为
+`481 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_rollout_artifact_gate_2026-07-18.json`。
 
 ## 13. 代码落点总表
 

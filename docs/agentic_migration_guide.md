@@ -120,13 +120,22 @@ code2paper-agentic-benchmark \
   --observations-out /path/to/extracted-observations.json \
   --workspace-root . \
   --rollout /path/to/rollout.json \
+  --rollout-artifact /path/to/validated-shadow-trial.json \
   --out /path/to/benchmark_v2.json \
   --cutover-out /path/to/cutover_decision.json
 ```
 
-No route becomes default merely because this command succeeds. A schema 2.1
+No route becomes default merely because this command succeeds. A schema 2.2
 cutover decision must retain the validated review-file digests and pass the
 remaining rollout gates before it can authorize the implicit default.
+`--rollout` contains policy inputs such as the team false-block threshold and
+migration/legacy-contract declarations; its old shadow/opt-in/canary counters
+are untrusted and now fail closed. Progress comes only from repeated
+`--rollout-artifact` inputs. Each trial binds its case, stage, named reviewer,
+timezone-aware review time, prior stage-authorization decision, agentic run
+summary/completion, and (for shadow) legacy comparison run by SHA-256. Opt-in
+evidence is accepted only after shadow evidence for the same case, and canary
+only after opt-in. Any canary incident prevents `default_ready`.
 
 Before completing those reviews, audit each fixed legacy output against the
 same curated V2 slice and generate the review queue:
@@ -152,6 +161,12 @@ code2paper-agentic-benchmark-review-queue \
   --legacy-audit-root /tmp/code2paper-p4-legacy-audits \
   --out /tmp/code2paper-p4-human-review-queue.json
 ```
+
+The legacy audit is not a count-only advisory. It freezes every visible factual
+claim extracted from the exact draft, its V2 verdict, every visible SVG text
+annotation, and every rendered arrow. The queue refuses a missing/stale audit,
+draft, SVG, claim, or figure element, so reviewers cannot improve the legacy
+baseline by selectively omitting weak sentences or diagram elements.
 
 Do not manually copy 25 nested templates out of that queue. Materialize a
 non-overwriting review workspace instead:
@@ -212,6 +227,9 @@ code2paper-agentic-benchmark \
   --review-workspace /tmp/code2paper-p4-review-workspace \
   --workspace-root . \
   --rollout /path/to/rollout.json \
+  --rollout-artifact /path/to/shadow-case-1.json \
+  --rollout-artifact /path/to/opt-in-case-1.json \
+  --rollout-artifact /path/to/canary-case-1.json \
   --out /path/to/benchmark_v2.json \
   --cutover-out /path/to/cutover_decision.json
 ```

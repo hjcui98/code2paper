@@ -1,0 +1,55 @@
+{
+  "schema_version": "code2paper-agentic-p4-rollout-artifact-gate-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "a4ebab084c233d4417e6de91c2096238d5358d33",
+  "finding": {
+    "old_behavior": "Shadow, opt-in, canary, and incident counts were accepted directly from a RolloutEvidenceV2 JSON without reading rollout run or review artifacts.",
+    "trust_violation": "Handwritten counters could advance a future reviewed benchmark directly to default_ready."
+  },
+  "validated_rollout_contract": {
+    "decision_schema": "2.2",
+    "self_reported_progress_accepted": false,
+    "required_stage_order": ["shadow", "opt_in", "canary", "default"],
+    "trial_bindings": [
+      "case and stage",
+      "named reviewer and timezone-aware timestamp",
+      "prior stage authorization decision path and digest",
+      "matching protocol commit and canonical gold digest",
+      "digest-pinned named review evidence",
+      "trusted agentic run summary and complete completion report",
+      "legacy comparison run for shadow"
+    ],
+    "duplicate_stage_case_accepted": false,
+    "unaccepted_trial_accepted": false,
+    "canary_incidents_allowed_for_default": false,
+    "implicit_default_requires_exact_case_coverage": true
+  },
+  "current_state": {
+    "validated_rollout_artifacts": 0,
+    "shadow_cases": 0,
+    "opt_in_cases": 0,
+    "canary_cases": 0,
+    "status": "hold",
+    "default_mode": "legacy"
+  },
+  "verification": {
+    "targeted": "34 passed",
+    "full_suite": "481 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "self-reported rollout counters",
+      "run summary digest drift",
+      "missing trusted completion",
+      "wrong stage authorization",
+      "protocol or gold mismatch",
+      "duplicate stage-case identity",
+      "opt-in without shadow or canary without opt-in",
+      "old schema 2.1 implicit-default decision"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/cutover.py": "5f346e3d52e1e8fd32968801f4ba58bd2430dd90c9cea4e9f051e21daf2dfc7a",
+    "src/code2paper/agentic/rollout_evidence.py": "1938652f9145ed19caed7e3e5f1a1ba8005bbbc5a0618b3fcccdddb1b51c3fe5",
+    "src/code2paper/cli/agentic_benchmark.py": "f45153daa1c22315091ef34f28ab878115e43e3fbcf8c9271f31653afef0bd67",
+    "src/code2paper/run_cli.py": "d0ea333ddaf392e0f7fffa953efef3dc427ad9469ea735072263d78ce7f8b4bc"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "code2paper-agentic-p4-legacy-review-inventory-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commits": [
+    "3841fdc73efa5f6d408362557651e4f39510e7e6",
+    "892d62170ec053c037059f1bce19f213c88fb748"
+  ],
+  "finding": {
+    "old_behavior": "Fixed-legacy review templates had empty claim and figure inventories even when the V2 audit counted many factual claims and the run rendered an SVG.",
+    "trust_violation": "A reviewer could selectively omit weak legacy sentences or all legacy figure elements, distorting the fixed baseline used for comparison."
+  },
+  "legacy_inventory_contract": {
+    "html_comments_are_visible_claims": false,
+    "claim_fields_frozen": ["atomic_claim_id", "text", "claim_digest", "verdict", "direct_evidence_ids", "high_risk"],
+    "draft_digest_bound": true,
+    "svg_digest_bound": true,
+    "visible_svg_text_inventory": true,
+    "visible_svg_arrow_inventory": true,
+    "review_may_delete_inventory_items": false,
+    "legacy_usable_completion_may_exceed_v2_audit": false
+  },
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "run_count": 25,
+    "legacy_runs": 5,
+    "legacy_visible_factual_claims": 112,
+    "legacy_validator_supported_claims": 0,
+    "legacy_validator_unsupported_claims": 112,
+    "legacy_visible_figure_elements": 45,
+    "legacy_svg_text_annotations": 30,
+    "legacy_svg_edges": 15,
+    "agentic_final_atomic_claims": 53,
+    "agentic_visible_figure_elements": 28,
+    "combined_claim_decisions": 165,
+    "combined_figure_decisions": 73,
+    "unchanged": true
+  },
+  "legacy_audit_sha256": {
+    "fastgs-rendering_flow.json": "6105695315382cedc2cb65b18d723121e2eea0f26df2e32f006e3c3ad153f1dd",
+    "fastgs-training_mechanics.json": "f9cfb1d5e919a4342cfaa4c7d34e11419504360e955bf3084952a7821ffe4f8c",
+    "mos-default.json": "988b44c6b731109adb3ca4d6b5584fc276b4fb237e0c002872ff4dc8731744d7",
+    "spatial_ssrl-default.json": "b7aacda03c4c2d3e50638dcaf3adb90169e899203e142462c193e84e7f7dd31f",
+    "toy_train-default.json": "ac41b0a44615a85ff79ec96a5546f69286b5f10304c291d67b417bf6a54061f3"
+  },
+  "workspace": {
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17-agentic-legacy-inventory.json",
+    "queue_sha256": "d297d2d5e7f9bf05deaaa5e5421a1c41623b385615b235d9fc574845eec416fb",
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v8-agentic-legacy-inventory",
+    "manifest_sha256": "acacaabadfb3f3c9a18beb6cc3c4af3b0c52a93fdb3881080247d4e34ae535bd",
+    "validation_sha256": "f051b500f78eff77c0eb7f185b1493ad21c24b29b71eecf6f6bbfd40ea99f9f5",
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "observations_emitted": false
+  },
+  "verification": {
+    "targeted": "48 passed",
+    "full_suite": "481 passed, 2 skipped, 6 subtests passed"
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/final_text_claims.py": "8b21e7d470d92a06db86716f2517c67a0ebd7980f5698aaf09dea7834e6bd13c",
+    "src/code2paper/agentic/legacy_v2_audit.py": "096817eb3fd470a2081a9faa4af9a67dfa2b71c78dfdfdb8f653e7b766420989",
+    "src/code2paper/agentic/benchmark_observation.py": "9537c65e86eb151c4209c5e1ae1d526eadc96ba7fadd2a6c085f1d383e1e37f7",
+    "src/code2paper/agentic/benchmark_review_queue.py": "bf8ccb46541e8507f3bdb84190bd4e92f903055973f829a590ebc2be0c7bcaf8",
+    "src/code2paper/agentic/benchmark_review_workspace.py": "3dfc4808fc59071caf6803d6c42052a0a6c6b44fef5006cb060f1d10b700ea2b"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All 165 claim-evidence decisions, 73 figure-element decisions, and 25 named run reviews remain pending."
+  }
+}
