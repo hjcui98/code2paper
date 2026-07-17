@@ -1999,6 +1999,19 @@ verifier 调用后，最终 6/6 candidate claims 被拒绝并安全阻断。run 
 rescan；模型仍可排序和扩展，但不能删除 deterministic seed。完成该项并重新 live 复测前，
 Domain-Specific Pruning 继续计为解释性 trust block，不计为可用完成。
 
+该 retrieval 修复随后落地：rescan queue 对同一路径设定上限，并从 deterministic
+symbol-index context 注入最多 20 个 path-diverse seeds，避免一个通用 symbol 因匹配所有 gap
+而占满 40 项预算。用上一份失败 live context 重放时，queue 从 10 个 unique paths 提升到
+22 个，并包含 `expert_selection.py`、`expert_selection_mix_domain.py` 和 `model_new.py`。
+新的真实仓库离线端到端运行位于
+`/tmp/code2paper-domain-pruning-diverse-retrieval-deterministic`：raw evidence 实际冻结上述
+三个 pruning 文件，18 个 seed 对应 18 个 unique paths，`success + complete`，4/4 final
+factual claims 通过且 unsupported=0。run summary digest 为
+`sha256:2b9b23b2...2e7a8e`，text validation digest 为
+`sha256:048dc012...63483`；全量测试为 `433 passed, 2 skipped, 6 subtests passed`。
+Gemma 对新 retrieval freeze 的 cache-independent 复测仍需执行，在此之前不回写正式 P4
+baseline，也不把旧 safe block 改计为成功。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |

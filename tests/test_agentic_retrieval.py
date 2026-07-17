@@ -14,6 +14,9 @@ from code2paper.agentic.legacy_retrieval_focus import rescan_focus_from_state
 from code2paper.agentic.retrieval import (
     AgenticRetrievalPlan,
     RetrievalCoverageReport,
+    RetrievalDecisionCandidate,
+    RetrievalDecisionContext,
+    RetrievalDecisionGap,
     RetrievalRescanGuidance,
     RetrievalRescanItem,
     RetrievalRescanPlan,
@@ -457,6 +460,52 @@ class AgenticRetrievalTests(unittest.TestCase):
         self.assertIn("rank:claim_evidence_repair", plan.items[0].reasons)
         self.assertTrue(any(item.source == "analysis_repair_task" and item.claim_id == "C2" for item in plan.items))
         self.assertFalse(any(item.path == "train.py" and item.source == "analysis_repair_task" for item in plan.items))
+
+    def test_retrieval_rescan_plan_preserves_location_diversity_under_bounded_queue(self) -> None:
+        coverage = RetrievalCoverageReport(overall_score=0.0, missing_targets=30)
+        generic = RetrievalDecisionCandidate(
+            path="runtime/server_args.py", symbol="ServerArgs", kind="class", score=100.0
+        )
+        method_specific = RetrievalDecisionCandidate(
+            path="pruning/expert_selection.py", symbol="main", kind="function", score=10.0
+        )
+        context = RetrievalDecisionContext(
+            coverage_score=0.0,
+            missing_targets=30,
+            gaps=[
+                RetrievalDecisionGap(
+                    target_id=f"RT{index}",
+                    query=f"expert pruning target {index}",
+                    support_status="missing",
+                    suggested_candidates=[generic, method_specific],
+                )
+                for index in range(30)
+            ],
+        )
+
+        plan = build_retrieval_rescan_plan(
+            coverage=coverage,
+            context=context,
+            max_items=40,
+        )
+
+        paths = [item.path for item in plan.items]
+        self.assertIn("pruning/expert_selection.py", paths)
+        self.assertLessEqual(paths.count("runtime/server_args.py"), 4)
+        self.assertLessEqual(paths.count("pruning/expert_selection.py"), 4)
+
+    def test_retrieval_rescan_plan_keeps_deterministic_recommended_path_seed(self) -> None:
+        plan = build_retrieval_rescan_plan(
+            coverage=RetrievalCoverageReport(overall_score=0.5),
+            context=RetrievalDecisionContext(
+                coverage_score=0.5,
+                recommended_paths=["pruning/expert_selection.py"],
+            ),
+        )
+
+        self.assertEqual(len(plan.items), 1)
+        self.assertEqual(plan.items[0].source, "deterministic_intent_seed")
+        self.assertEqual(plan.items[0].path, "pruning/expert_selection.py")
 
     def test_retrieval_rescan_plan_accepts_coverage_critic_model_guidance(self) -> None:
         coverage = RetrievalCoverageReport(overall_score=0.25, missing_targets=1)

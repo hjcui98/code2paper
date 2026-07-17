@@ -490,6 +490,23 @@ def build_retrieval_rescan_plan(
 
     items: list[RetrievalRescanItem] = []
     next_id = 1
+    # Preserve a bounded, path-diverse seed from the deterministic symbol-index
+    # context. Gap-local candidate lists often repeat one generic high-scoring
+    # symbol for every target; these seeds guarantee that intent-relevant files
+    # discovered farther down the ranking still reach the rescan freezer.
+    seed_limit = min(20, max(1, max_items // 2))
+    for path in context.recommended_paths[:seed_limit]:
+        items.append(
+            RetrievalRescanItem(
+                item_id=f"RS{next_id}",
+                source="deterministic_intent_seed",
+                priority="high",
+                query=Path(path).stem.replace("_", " "),
+                path=path,
+                reasons=["deterministic_symbol_index_path_seed"],
+            )
+        )
+        next_id += 1
     for gap in context.gaps:
         gap_priority = "high" if gap.support_status == "missing" else "medium"
         if gap.suggested_candidates:
@@ -568,7 +585,12 @@ def build_retrieval_rescan_plan(
             next_id += 1
     items = [_ranked_rescan_item(item) for item in _dedupe_rescan_items(items)]
     items.sort(key=_rescan_sort_key)
-    items = items[:max_items]
+    # A single generic symbol can score against every intent target. Without a
+    # diversity cap those duplicates consume the bounded queue before
+    # method-specific candidates are reached (for example server_args.py can
+    # crowd out pruning/expert_selection.py). Freezing a location once is
+    # enough to make its exact span available to every downstream claim.
+    items = _diverse_rescan_items(items, max_items=max_items)
     return RetrievalRescanPlan(
         coverage_score=coverage.overall_score,
         source_artifacts=_dedupe(
@@ -1506,6 +1528,25 @@ def _dedupe_rescan_items(items: list[RetrievalRescanItem]) -> list[RetrievalResc
     return result
 
 
+def _diverse_rescan_items(
+    items: list[RetrievalRescanItem],
+    *,
+    max_items: int,
+    max_per_path: int = 4,
+) -> list[RetrievalRescanItem]:
+    selected: list[RetrievalRescanItem] = []
+    path_counts: dict[str, int] = {}
+    for item in items:
+        path_key = item.path or f"query:{item.query}"
+        if path_counts.get(path_key, 0) >= max_per_path:
+            continue
+        path_counts[path_key] = path_counts.get(path_key, 0) + 1
+        selected.append(item)
+        if len(selected) >= max_items:
+            break
+    return [item.model_copy(update={"item_id": f"RS{index}"}) for index, item in enumerate(selected, start=1)]
+
+
 def _ranked_rescan_item(item: RetrievalRescanItem) -> RetrievalRescanItem:
     reasons = list(item.reasons)
     if item.source == "analysis_repair_task":
@@ -1522,7 +1563,13 @@ def _rescan_sort_key(item: RetrievalRescanItem) -> tuple[int, int, float, str, s
 
 
 def _source_rank(source: str) -> int:
-    return {"analysis_repair_task": 0, "coverage_critic_decision": 1, "coverage_gap": 2, "coverage_gap_query": 3}.get(source, 4)
+    return {
+        "analysis_repair_task": 0,
+        "deterministic_intent_seed": 1,
+        "coverage_critic_decision": 2,
+        "coverage_gap": 3,
+        "coverage_gap_query": 4,
+    }.get(source, 5)
 
 
 def _priority_rank(priority: str) -> int:

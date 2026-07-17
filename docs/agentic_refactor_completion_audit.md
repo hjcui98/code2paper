@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `431 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `433 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -30,6 +30,10 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   Gemma run remains a safe block because model retrieval omitted the top-level pruning
   implementation before repair could run. This is a retrieval-recall gap, not cutover
   evidence, and is documented in execution-plan section 12.11.
+- A follow-up deterministic retrieval-diversity patch now caps repeated paths and
+  injects bounded symbol-index path seeds. The real Domain Pruning run froze all three
+  core pruning files and completed with 4/4 final factual claims supported. A new Gemma
+  run is still required before changing the frozen live baseline.
 
 ## Final-design Definition of Done
 
