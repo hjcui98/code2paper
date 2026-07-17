@@ -58,3 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         "canary_incidents": evidence.canary_incidents,
     }, indent=2))
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
