@@ -129,6 +129,7 @@ class AgenticAuthoringConstraintsTests(unittest.TestCase):
                                 "status": "unsupported",
                                 "supported_fragment": "Load the base configuration.",
                                 "unsupported_fragment": "to resolve all settings",
+                                "matched_projection_claim_ids": ["C1", "C5"],
                                 "deterministic_failures": ["semantic_verifier_rejected_claim"],
                                 "repair_action": "revise_authoring_from_verifier_fragments",
                             }
@@ -144,6 +145,7 @@ class AgenticAuthoringConstraintsTests(unittest.TestCase):
 
         self.assertIn('"keep_supported_fragment": "Load the base configuration."', brief)
         self.assertIn('"remove_or_rewrite_text": "to resolve all settings"', brief)
+        self.assertIn('"matched_projection_claim_ids": [', brief)
         self.assertIn("Never reintroduce", brief)
 
     def test_constraints_split_allowed_caveated_and_excluded_claims(self) -> None:

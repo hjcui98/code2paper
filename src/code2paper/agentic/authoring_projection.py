@@ -205,6 +205,67 @@ def projection_writer_brief(projection: AuthoringInputProjection) -> str:
     return "\n".join(lines)
 
 
+def restrict_projection_for_authoring_revision(
+    projection: AuthoringInputProjection,
+    excluded_claim_ids: set[str],
+) -> AuthoringInputProjection:
+    """Create a writer-only subset after final-text validation rejects a claim."""
+
+    if not excluded_claim_ids:
+        return projection
+    kept = [
+        claim for claim in projection.projected_claims
+        if claim.claim_id not in excluded_claim_ids
+    ]
+    # An empty writer view must not silently replace a safe block with an empty
+    # Method. Keep the original view so the normal hard gate remains decisive.
+    if not kept:
+        return projection
+    packets, _dropped = _project_stage_packets(projection.stage_packets, kept)
+    allowed_evidence = {
+        evidence_id for claim in kept for evidence_id in claim.direct_evidence_ids
+    }
+    update = {
+        "projected_claims": kept,
+        "stage_packets": packets,
+        "safe_equations": _filter_projection_safe_objects(
+            projection.safe_equations, allowed_evidence
+        ),
+        "safe_numeric_facts": _filter_projection_safe_objects(
+            projection.safe_numeric_facts, allowed_evidence
+        ),
+        "safe_aliases": _filter_projection_safe_objects(
+            projection.safe_aliases, allowed_evidence
+        ),
+    }
+    payload = projection.model_dump(mode="json")
+    payload.update(
+        {
+            **update,
+            "projected_claims": [claim.model_dump(mode="json") for claim in kept],
+        }
+    )
+    payload.pop("projection_digest", None)
+    return projection.model_copy(
+        update={**update, "projection_digest": _digest(payload)}
+    )
+
+
+def _filter_projection_safe_objects(
+    values: list[dict[str, Any]], allowed_evidence: set[str]
+) -> list[dict[str, Any]]:
+    return [
+        value for value in values
+        if allowed_evidence
+        & {
+            str(item)
+            for key in ("evidence_ids", "evidence_span_ids", "direct_evidence_ids")
+            for item in value.get(key, [])
+            if str(item)
+        }
+    ]
+
+
 def projected_writer_inputs(
     projection: AuthoringInputProjection,
     *,

@@ -17,6 +17,7 @@ from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
     projected_writer_inputs,
     projection_writer_brief,
+    restrict_projection_for_authoring_revision,
     write_authoring_projection,
 )
 from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
@@ -80,7 +81,13 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
     )
     projection_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_input_projection.json"
     write_authoring_projection(projection_path, projection)
-    constrained_evidence, constrained_claim_map = projected_writer_inputs(projection, template=constrained_evidence)
+    revision_excluded_ids = _revision_excluded_projection_claim_ids(state)
+    writer_projection = restrict_projection_for_authoring_revision(
+        projection, revision_excluded_ids
+    )
+    constrained_evidence, constrained_claim_map = projected_writer_inputs(
+        writer_projection, template=constrained_evidence
+    )
     constraints_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_constraints.json"
     write_authoring_constraints(constraints_path, constraints)
     authoring_context = build_authoring_context(
@@ -154,8 +161,12 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
     alignment_path = method_output(state.method_root, "alignment")
     alignment = CodeAlignmentIR.model_validate(_read_json(alignment_path)) if alignment_path.exists() else None
     grounding_context = _join_context_blocks(
-        projection_writer_brief(projection),
-        authoring_plan_brief(authoring_plan, include_exclusions=False),
+        projection_writer_brief(writer_projection),
+        (
+            authoring_plan_brief(authoring_plan, include_exclusions=False)
+            if writer_projection.projection_digest == projection.projection_digest
+            else ""
+        ),
         _text_revision_brief(state),
     )
     markdown, _tex, paths = write_phase5_artifacts(
@@ -273,6 +284,7 @@ def _text_revision_brief(state: AgenticRunState) -> str:
     issues = [
         {
             "atomic_claim_id": verdict.get("atomic_claim_id", ""),
+            "matched_projection_claim_ids": verdict.get("matched_projection_claim_ids", []),
             "keep_supported_fragment": verdict.get("supported_fragment", ""),
             "remove_or_rewrite_text": verdict.get("unsupported_fragment", ""),
             "failures": verdict.get("deterministic_failures", []),
@@ -295,6 +307,24 @@ def _text_revision_brief(state: AgenticRunState) -> str:
         ensure_ascii=False,
         indent=2,
     )
+
+
+def _revision_excluded_projection_claim_ids(state: AgenticRunState) -> set[str]:
+    path = state.artifacts.get("text_evidence_validation", "")
+    if not path or not Path(path).exists():
+        return set()
+    try:
+        payload = _read_json(Path(path))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return {
+        str(claim_id)
+        for verdict in payload.get("verdicts", [])
+        if verdict.get("status") not in {"supported", "caveated"}
+        and str(verdict.get("repair_action") or "").startswith("revise_authoring")
+        for claim_id in verdict.get("matched_projection_claim_ids", [])
+        if str(claim_id)
+    }
 
 
 def _blocked_reason(path: Path | None) -> str:

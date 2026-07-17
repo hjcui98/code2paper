@@ -527,8 +527,12 @@ def _write_projection_llm_artifacts(
             llm_call_logs=call_logs,
         )
         return None, None, paths
+    candidate_markdown = _remove_rejected_revision_sentences(
+        draft_output.markdown,
+        grounding_context_markdown,
+    )
     markdown = _normalize_markdown_grounding_comments(
-        markdown=draft_output.markdown,
+        markdown=candidate_markdown,
         draft_claim_map=claim_map_output,
         method_evidence=method_evidence,
         claim_map=claim_map,
@@ -3412,7 +3416,10 @@ def _normalize_markdown_grounding_comments(
             if not _last_non_empty_line(normalized).startswith("<!-- c2p:"):
                 paragraph = None if match_claims_by_text else _paragraph_for_index(paragraphs, paragraph_index)
                 if match_claims_by_text:
-                    normalized.append(_grounding_comment_for_text(stripped, method_evidence, claim_map))
+                    comment = _grounding_comment_for_text(stripped, method_evidence, claim_map)
+                    if comment is None:
+                        continue
+                    normalized.append(comment)
                 elif paragraph is None:
                     normalized.append("<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->")
                 else:
@@ -3424,7 +3431,10 @@ def _normalize_markdown_grounding_comments(
             if not _last_non_empty_line(normalized).startswith("<!-- c2p:"):
                 paragraph = None if match_claims_by_text else _paragraph_for_index(paragraphs, paragraph_index)
                 if match_claims_by_text:
-                    normalized.append(_grounding_comment_for_text(stripped, method_evidence, claim_map))
+                    comment = _grounding_comment_for_text(stripped, method_evidence, claim_map)
+                    if comment is None:
+                        continue
+                    normalized.append(comment)
                 elif paragraph is None:
                     normalized.append("<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->")
                 else:
@@ -3433,14 +3443,15 @@ def _normalize_markdown_grounding_comments(
             paragraph_index += 1
             continue
         normalized.append(line)
-    return "\n".join(normalized).rstrip() + "\n"
+    result = "\n".join(normalized).rstrip() + "\n"
+    return _prune_empty_projection_sections(result) if match_claims_by_text else result
 
 
 def _grounding_comment_for_text(
     text: str,
     method_evidence: MethodEvidence,
     claim_map: ClaimEvidenceMap,
-) -> str:
+) -> str | None:
     """Bind model prose only to projected claims it can actually be matched to."""
 
     text_tokens = _grounding_tokens(text)
@@ -3455,7 +3466,7 @@ def _grounding_comment_for_text(
         if coverage >= 0.55 or (coverage >= 0.4 and precision >= 0.4):
             matches.append(claim)
     if not matches:
-        return "<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->"
+        return None
 
     claim_ids = {claim.claim_id for claim in matches}
     stage_ids = _dedupe(
@@ -3502,6 +3513,77 @@ def _grounding_tokens(text: str) -> set[str]:
         for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
         if len(token) > 1 and token not in stop
     }
+
+
+def _remove_rejected_revision_sentences(markdown: str, grounding_context: str) -> str:
+    """Conservatively delete a verifier-rejected atomic claim if it is repeated."""
+
+    feedback = _revision_feedback_from_context(grounding_context)
+    rejected = [
+        _normalized_grounding_text(item.get("remove_or_rewrite_text", ""))
+        for item in feedback
+        if isinstance(item, dict) and item.get("remove_or_rewrite_text")
+    ]
+    if not rejected:
+        return markdown
+    result: list[str] = []
+    for line in str(markdown or "").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("<!--"):
+            result.append(line)
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+", line)
+        kept = []
+        for sentence in sentences:
+            normalized = _normalized_grounding_text(sentence)
+            if any(fragment and fragment in normalized for fragment in rejected):
+                continue
+            kept.append(sentence)
+        if kept:
+            result.append(" ".join(kept))
+    return "\n".join(result)
+
+
+def _revision_feedback_from_context(context: str) -> list[dict[str, Any]]:
+    marker = '"authoring_revision_feedback"'
+    marker_index = str(context or "").find(marker)
+    if marker_index < 0:
+        return []
+    start = str(context).rfind("{", 0, marker_index)
+    if start < 0:
+        return []
+    try:
+        payload, _end = json.JSONDecoder().raw_decode(str(context)[start:])
+    except (json.JSONDecodeError, TypeError):
+        return []
+    feedback = payload.get("authoring_revision_feedback", []) if isinstance(payload, dict) else []
+    return feedback if isinstance(feedback, list) else []
+
+
+def _normalized_grounding_text(text: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9_]+", str(text or "").lower()))
+
+
+def _prune_empty_projection_sections(markdown: str) -> str:
+    lines = str(markdown or "").splitlines()
+    result: list[str] = []
+    index = 0
+    while index < len(lines):
+        if lines[index].startswith("## "):
+            end = index + 1
+            while end < len(lines) and not lines[end].startswith("## "):
+                end += 1
+            body = [
+                line for line in lines[index + 1:end]
+                if line.strip() and not line.strip().startswith("<!--")
+            ]
+            if body:
+                result.extend(lines[index:end])
+            index = end
+            continue
+        result.append(lines[index])
+        index += 1
+    return "\n".join(result).rstrip() + "\n"
 
 
 def _grounding_comment_for_paragraph(

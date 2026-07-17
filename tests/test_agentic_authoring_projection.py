@@ -8,6 +8,7 @@ from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
     projected_writer_inputs,
     projection_writer_payload,
+    restrict_projection_for_authoring_revision,
 )
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.authoring.writing.method_writer import build_method_draft_markdown
@@ -126,6 +127,22 @@ def test_partial_projection_keeps_supported_fragment_and_qualifier() -> None:
     assert [claim.claim_id for claim in writer_claims.claims] == ["C1", "C3"]
 
 
+def test_revision_writer_view_excludes_rejected_projection_claims() -> None:
+    evidence = _evidence()
+    claims = _claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    restricted = restrict_projection_for_authoring_revision(projection, {"C1"})
+
+    assert [claim.claim_id for claim in restricted.projected_claims] == ["C3"]
+    assert restricted.projection_digest != projection.projection_digest
+    assert all("C1" not in packet["claim_ids"] for packet in restricted.stage_packets)
+
+
 def test_projection_writer_deduplicates_claims_and_omits_stage_contract_metadata() -> None:
     evidence = _evidence()
     evidence.writing_constraints.append(
@@ -221,7 +238,7 @@ def test_projection_model_writer_uses_only_projected_positive_facts() -> None:
         assert "FORBIDDEN_RAW_SYMBOL" not in serialized_payload
 
 
-def test_projection_model_writer_does_not_invent_grounding_for_unmatched_prose() -> None:
+def test_projection_model_writer_removes_unmatched_positive_prose() -> None:
     evidence = _evidence()
     claims = _claims()
     projection = build_authoring_projection(
@@ -247,4 +264,53 @@ def test_projection_model_writer_does_not_invent_grounding_for_unmatched_prose()
         )
 
     assert markdown is not None
-    assert "stage=ALL; mechanisms=none; evidence=none; confidence=low" in markdown
+    assert "guarantees higher accuracy" not in markdown
+    assert "## Results" not in markdown
+
+
+def test_projection_model_writer_drops_repeated_verifier_rejected_sentence() -> None:
+    evidence = _evidence()
+    claims = _claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+    writer_evidence, writer_claims = projected_writer_inputs(projection, template=evidence)
+    rejected = "The encoder reads configured features to resolve all training settings."
+    feedback = json.dumps(
+        {
+            "authoring_revision_feedback": [
+                {
+                    "keep_supported_fragment": "",
+                    "remove_or_rewrite_text": rejected,
+                }
+            ]
+        },
+        indent=2,
+    )
+    with workspace_tempdir() as tmpdir, patch(
+        "code2paper.llm.client.LLMClient.complete", autospec=True
+    ) as complete:
+        complete.return_value = LLMResponse(
+            text=json.dumps(
+                {
+                    "markdown": (
+                        "# Method\n\n## Encoding\n"
+                        "The encoder reads configured features. " + rejected + "\n"
+                    )
+                }
+            ),
+            response_hash="sha256:projection-writer-revision",
+        )
+        markdown, _tex, _paths = write_phase5_artifacts(
+            method_root=Path(tmpdir),
+            method_evidence=writer_evidence,
+            claim_map=writer_claims,
+            llm_config=LLMConfig(provider="openai", model="test-model"),
+            grounding_context_markdown=feedback,
+        )
+
+    assert markdown is not None
+    assert "The encoder reads configured features." in markdown
+    assert "resolve all training settings" not in markdown
