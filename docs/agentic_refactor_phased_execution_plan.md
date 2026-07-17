@@ -1867,32 +1867,35 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.9 2026-07-17 实施状态
 
-P4 已从 clean tracked commit `f96b2676632de8693a706ef24ddddb005eb56de0`
-重新冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
-agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。当前 5 个
-deterministic run 全部正常结束并达到 `success`、`completion=complete` 与
-`package_lineage_passed`，覆盖 toy、FastGS training、FastGS rendering、
-Spatial-SSRL 和 MOS。
+P4 已从 clean tracked commit `9a98c17aaa4dd5134804ee057d7ff5d5d81e281e`
+冻结并完整执行 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
+agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。protocol digest 为
+`sha256:f662f28c...768b06c`；5 个 deterministic run 全部达到 `success` 与
+`completion=complete`，13 个 curated mutation 仍为 13/13 检出。
 正式 protocol 还固定了 capability profile 的绝对路径、文件摘要
 `sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7`
 与运行时环境变量；每个 model-backed run 启动前都会重新校验 profile，
 防止 fixed/Gemma 子矩阵在不同推理配置下被误合并。
 
-13 个 curated mutation 已全部执行并被对应 text/figure/post-render/freshness
-validator 检出。该 campaign 同时发现并修复了一个旧的 claim-extraction 绕过：
-不在 factual hint 白名单中的实质性科研陈述曾可能不进入 atomic claim gate。
+模型路径不再把 Gemma 限制为 planner：`projection-constrained-llm-writer` 真实生成 Method
+prose，最终 atomic claim validator 和 invariant gate 再做交付裁决。实现期间两类 live
+失败推动了边界收紧：无 projection 匹配的模型段落被确定性剔除；被 semantic verifier
+拒绝的 projection claim IDs 在下一轮 writer view 中撤销写作权限。原始 projection 和拒绝
+verdict 仍保留用于审计，不能通过过滤改写历史。
 
-当前冻结的 Gemma 4 服务端点 `http://127.0.0.1:8000` 健康检查不可连接，
-当前执行环境的 `nvidia-smi` 亦无法与 GPU driver 通信，无法在本轮安全启动双卡 vLLM。
-因此新提交上的 5 个 fixed legacy 与 15 个 Gemma agentic run 尚未执行。旧提交上的
-fixed/Gemma 结果不能与新 deterministic 结果混合使用，也不能作为 cutover 证据。
-完整 protocol、已完成子矩阵、延迟、服务阻塞原因和 adversarial 摘要记录在
-`tests/baselines/agentic/p4_live_matrix_status.json`。
+正式结果：5 个 fixed legacy 运行均正常结束，但在当前 V2 gold 审计下 5/5 都是
+`legacy_false_success_candidate`，没有 relation lineage、post-render audit 或 authoritative
+V2 final invariant。15 个 agentic Gemma 运行中 11 个 `success + complete`，4 个因
+`text_claim_authoring_revision_budget_exhausted` 安全阻断；11 个交付产物的最终 unsupported
+rate 全为 0，4 个阻断没有产出可交付包，false completion 为 0。分组完成率为：toy 3/3，
+FastGS training 2/3，FastGS rendering 2/3，Spatial-SSRL 3/3，MOS 1/3。15/15 均记录
+真实 model writer provenance；总耗时 4185.191 秒，中位数 242.69 秒。
 
-25-entry review queue 已重新生成，其中 5 项已有当前提交的 run record，20 项明确
-标记为 `run_record_missing`；named human review 尚未完成。因此 P4 状态为
-`external_dependencies_blocked`，cutover 必须 `hold`，`code2paper-run` 默认仍为 legacy。
-不得在 review、shadow、opt-in 和 canary 证据齐备前把默认切换为 agentic。
+25-entry review queue 已包含 25/25 run records，缺失记录为 0，但 reviewer/reviewed_at 仍是
+强制待填字段，named human review 为 0/25，不能由自动化结果代替。完整机器摘要保存在
+`tests/baselines/agentic/p4_live_matrix_status.json`。因此机器矩阵已完成，但 P4 与总目标仍
+不能宣告 complete：默认路线继续 `hold / legacy`，必须完成具名人工 review、shadow、
+opt-in 和 canary 后，才可依据 cutover policy 决定是否转为 agentic default。
 
 ### 12.10 外部真实项目原文盲测
 
@@ -1950,10 +1953,22 @@ reference-quality complete，Gemma authoring 与人工 review 仍需重点检查
 2. **intent/reference quality**：关键方法是否展开、组织是否接近作者意图、是否存在重复；
 3. **usable completion**：同时通过前两类要求且完成人工审核的交付比例。
 
-机器可复现摘要保存在
-`tests/baselines/agentic/p4_real_project_blind_status.json`。下一步在正式 P4 25-run 矩阵
-结束后，用同一冻结 Gemma profile 对这三例各运行一次，再由具名 reviewer 对 success、
-false-block、遗漏概念和原文语义差距逐例签字。原文不因进入人工 review 而升级为代码证据。
+正式矩阵结束后，又在 commit `9a98c17` 和同一冻结 Gemma profile 上对三例执行模型盲测。
+生成命令仅传入 `code_final/<project>` 与对应 paperyaml；三次生成全部结束后，独立 evaluator
+才读取 `paper_final` 原文。reference isolation 3/3 passed，结果如下：
+
+| Case | Gemma 结果 | 生成正文/原文 intent 概念覆盖 | 最终文本 unsupported | 交付结论 |
+|---|---:|---:|---:|---|
+| UniMMAD | blocked：direct evidence budget exhausted | 28.57% / 85.71% | 85.71% | fail-closed，不交付 |
+| CodeQuant | success，completion=complete | 60% / 100% | 0% | text/figure/invariant/trace/package 全通过 |
+| Domain-Specific Pruning | blocked：direct evidence budget exhausted | 0% / 100% | 100% | fail-closed，不交付 |
+
+因此模型盲测的可追溯交付为 1/3，trust block 为 2/3，false completion 为 0。CodeQuant
+交付稿覆盖 AOS rotation、adaptive clustering 和 permutation grouping，但未覆盖 router KL
+与 LUT GEMM；两份 blocked candidate 只能用于定位 retrieval/evidence 缺口，不能作为论文
+交付或质量成功计数。完整报告 digest 为 `sha256:ee851fa3...cde26f8`，机器摘要保存在
+`tests/baselines/agentic/p4_real_project_blind_status.json`。下一步由具名 reviewer 对 1 个
+success 与 2 个 block 分别检查语义质量、漏写和 false-block；原文仍不升级为代码证据。
 
 ## 13. 代码落点总表
 

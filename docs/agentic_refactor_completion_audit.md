@@ -4,7 +4,7 @@ Date: 2026-07-17
 
 Implementation branch: `codex/agentic-p4-benchmark-cutover`
 
-Current formal benchmark commit: `f96b2676632de8693a706ef24ddddb005eb56de0`
+Current formal benchmark commit: `9a98c17aaa4dd5134804ee057d7ff5d5d81e281e`
 
 This audit separates implementation evidence from rollout authorization. A passing
 deterministic run proves that the V2 contracts can complete; it does not replace the
@@ -12,10 +12,12 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `417 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `429 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
-- Completed current-commit submatrix: 5/5 agentic deterministic runs finished with
-  `status=success`, `completion=complete`, and complete package lineage.
+- Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
+  cache-disabled Gemma protocol records are present.
+- Agentic Gemma: 11 trusted completions and 4 explicit safe blocks; every completed
+  package has zero final unsupported leakage and a real model-writer provenance record.
 - Projects/intents: toy train, FastGS training, FastGS rendering, Spatial-SSRL, MOS.
 - Adversarial campaign: 13/13 curated mutations detected.
 - Every current deterministic package binds `intent_spec`, final text trust artifacts,
@@ -37,8 +39,8 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 | 8 | Pre-render, post-render, and final invariants cannot be bypassed | Proven | LangGraph topology/route tests, render authorization, post-package lineage verification |
 | 9 | LangGraph decisions have budgets, checkpoint/resume, and complete trace | Proven | Five budgets, typed state/reducers, SQLite resume, freshness-on-resume, decision traces |
 | 10 | LangChain tools have structured schemas, idempotency/side-effect declarations, and evidence policy | Proven | Tool specs, LangChain/trust tool manifests, contract audit, idempotency tests |
-| 11 | Toy and real projects produce trusted success or a specific repairable block | Proven for deterministic route | 5/5 current-commit deterministic successes across toy and three real repositories |
-| 12 | Benchmark proves agentic semantic evidence precision is no worse than fixed legacy | **Not yet proven** | Current-commit fixed/Gemma matrix and named human reviews are missing |
+| 11 | Toy and real projects produce trusted success or a specific repairable block | Proven by machine matrix | 11 Gemma completions, 4 specific safe blocks, plus external CodeQuant success and two direct-evidence blocks |
+| 12 | Benchmark proves agentic semantic evidence precision is no worse than fixed legacy | **Machine evidence complete; human decision pending** | 25-run matrix, 13/13 mutations, 5 legacy V2 false-success candidates, and 25-entry review queue |
 
 The overall goal must remain incomplete while item 12 is unproven.
 
@@ -46,9 +48,9 @@ The overall goal must remain incomplete while item 12 is unproven.
 
 | Condition | Status | Notes |
 |---|---|---|
-| Current-commit fixed legacy runs | Blocked | 5 runs require the unavailable Gemma endpoint; the current execution environment also cannot communicate with the GPU driver |
-| Current-commit Gemma agentic repeats | Blocked | 15 runs require the unavailable Gemma endpoint; the current execution environment also cannot communicate with the GPU driver |
-| Exact 25-run protocol validation | Partial | Protocol is frozen; 5 deterministic records exist and 20 records are missing |
+| Current-commit fixed legacy runs | Complete | 5/5 normal finishes; 5/5 fail authoritative V2 usability audit despite legacy fidelity success |
+| Current-commit Gemma agentic repeats | Complete | 15/15 records: 11 trusted completions, 4 fail-closed authoring-budget blocks |
+| Exact 25-run protocol validation | Complete | All 25 run records bind the same clean commit, gold digest, model profile, and protocol |
 | Named human review | Pending | Queue has 25 entries; placeholders are schema-invalid and cannot count as reviews |
 | Shadow review | Pending | CLI emits digest-pinned shadow comparison artifacts, but rollout evidence is not complete |
 | Opt-in/canary evidence | Pending | Cutover policy enforces the sequence; no reviewed rollout evidence yet |
@@ -56,13 +58,9 @@ The overall goal must remain incomplete while item 12 is unproven.
 
 ## Resume procedure
 
-1. Restore and verify `http://127.0.0.1:8000/health` and `/v1/models` for
-   `gemma4-31b-nvfp4`, including the expected MTP deployment profile.
-2. Execute the remaining fixed and Gemma variants from the exact frozen protocol.
-3. Run legacy V2 audits and regenerate the complete review queue.
-4. Have named reviewers complete all digest-pinned reviews, including block/false-block
+1. Have named reviewers complete all 25 digest-pinned reviews, including block/false-block
    classification and paired-intent organization checks.
-5. Aggregate observations with the frozen protocol and evaluate worst-case cutover
+2. Aggregate reviewed observations with the frozen protocol and evaluate worst-case cutover
    thresholds.
-6. Run and review shadow, opt-in, and canary evidence in order. Apply a resulting
+3. Run and review shadow, opt-in, and canary evidence in order. Apply a resulting
    `default_ready` decision through `--cutover-decision`; otherwise keep legacy default.

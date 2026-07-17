@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
   "phase": "P4",
-  "status": "external_dependencies_blocked",
-  "workspace_commit": "f96b2676632de8693a706ef24ddddb005eb56de0",
+  "status": "machine_matrix_complete_named_review_and_rollout_pending",
+  "workspace_commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
   "gold_digest": "sha256:c88d55e9ffdbd5f68772634ff672ffce8044446b9a855ba35676201d2f2913e9",
   "protocol": {
     "run_count": 25,
-    "digest": "sha256:5b5f0b458f29ad8f9c68147380c8d0b7b054077da56a8809eebc1a1a6ad3d2cb",
+    "digest": "sha256:f662f28c12c91c2539f2b10e01fe80486a15bd40a9f2124c820a4e28a768b06c",
     "clean_tracked_commit": true,
     "gemma_cache_enabled": false,
     "gemma_profile_digest": "sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7"
@@ -17,54 +17,67 @@
       "normal_finishes": 5,
       "successes": 5,
       "complete_runs": 5,
-      "package_lineage_passes": 5,
-      "explanatory_blocks": 0,
-      "total_latency_seconds": 11.294,
-      "average_latency_seconds": 2.259,
-      "worst_latency_seconds": 3.452,
-      "index_digest": "sha256:7d7da4e9ea0fed5aefd6177ed325f2c9ca52eb76e38498b87753010f7135c045"
+      "safe_blocks": 0,
+      "total_latency_seconds": 11.207,
+      "worst_latency_seconds": 3.445,
+      "index_digest": "sha256:f81ff054f62f03f3014c3e8555652d5fa5da9640b8798f76e8386b2c34c1c288"
     },
     "fixed_legacy": {
       "runs": 5,
-      "normal_finishes": 0,
-      "status": "not_run",
-      "blocked_reason": "gemma4_service_unavailable_at_127.0.0.1:8000_and_gpu_driver_unavailable_in_current_execution_environment"
+      "normal_finishes": 5,
+      "legacy_reported_successes": 5,
+      "v2_usable_completions": 0,
+      "legacy_false_success_candidates": 5,
+      "total_latency_seconds": 595.482,
+      "worst_latency_seconds": 147.518,
+      "index_digest": "sha256:8885d55abccefacf8a5856d39f404bbbb02e76e1e7825783d6b23fe0eabb3379"
     },
     "agentic_gemma4_mtp": {
       "runs": 15,
-      "normal_finishes": 0,
-      "status": "not_run",
-      "blocked_reason": "gemma4_service_unavailable_at_127.0.0.1:8000_and_gpu_driver_unavailable_in_current_execution_environment"
+      "normal_finishes": 15,
+      "successes": 11,
+      "complete_runs": 11,
+      "safe_blocks": 4,
+      "false_completions": 0,
+      "successful_run_final_unsupported_rate": 0.0,
+      "model_writer_provenance_runs": 15,
+      "total_latency_seconds": 4185.191,
+      "median_latency_seconds": 242.69,
+      "index_digest": "sha256:4805e5f9c15d3e118d093d4f3d950c9e74599a31f2771be62c6bc555771943db",
+      "case_results": {
+        "toy_train": {"successes": 3, "safe_blocks": 0},
+        "fastgs_training_mechanics": {"successes": 2, "safe_blocks": 1},
+        "fastgs_rendering_flow": {"successes": 2, "safe_blocks": 1},
+        "spatial_ssrl": {"successes": 3, "safe_blocks": 0},
+        "mos": {"successes": 1, "safe_blocks": 2}
+      }
     }
   },
   "blocked_reasons": {
-    "fixed_legacy": {
-      "gemma4_service_unavailable": 5
-    },
     "agentic_gemma4_mtp": {
-      "gemma4_service_unavailable": 15
+      "text_claim_authoring_revision_budget_exhausted": 4
     }
   },
   "adversarial_campaign": {
     "trials": 13,
-    "detected": 13,
-    "case_digests": {
-      "toy_train": "sha256:813a55c630699d4afb91a47b6f9593abf3a60ad4509b2085fbd5a846c2f77152",
-      "fastgs": "sha256:bc8853cea4585ee588688feb070bb4697d838f6781fb6ab5618331de0a0308f7",
-      "spatial_ssrl": "sha256:116ca21543e26e46c10b49074e3a93aaf2b23be428e3879c37b63d2da4f2b860",
-      "mos": "sha256:ebdd27d4a2b0b31fb5b960d8bee7537a06afc1c906b8c75bdc3dcaef4751e6cf"
-    }
+    "detected": 13
+  },
+  "legacy_v2_audits": {
+    "runs": 5,
+    "legacy_fidelity_passed": 5,
+    "v2_usable_completion": 0,
+    "false_success_candidates": 5
   },
   "review_queue": {
     "entries": 25,
-    "run_records_available": 5,
-    "run_records_missing": 20,
+    "run_records_available": 25,
+    "run_records_missing": 0,
     "completed_named_human_reviews": 0,
-    "digest": "sha256:8ea7bc06004f68fda3cdfee9c798346164e1e031aa1ac43effb00f7948864877"
+    "digest": "sha256:a96d1e7a2bdc6e020e24164bfc5b84887caefbf5c4a0e9412ac3dd4f1bac57b3"
   },
   "cutover": {
     "status": "hold",
     "default_mode": "legacy",
-    "reason": "20 Gemma-backed protocol runs cannot start while the frozen service endpoint is unavailable; all 25 entries still require named human review"
+    "reason": "machine matrix is complete, but named human reviews and shadow/opt-in/canary rollout evidence are still required"
   }
 }
