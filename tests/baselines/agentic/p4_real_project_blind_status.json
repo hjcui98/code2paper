@@ -1,0 +1,79 @@
+{
+  "schema_version": "code2paper.real-project-blind-status.v1",
+  "phase": "P4",
+  "status": "deterministic_baseline_complete_gemma_and_human_review_pending",
+  "generation_commit": "a51518cffbebf0c3811928a11d9ae129d536348a",
+  "protocol": {
+    "generation_inputs": ["code", "author_intent"],
+    "original_paper_role": "evaluation_only_after_generation",
+    "reference_isolation_passed": true,
+    "case_manifest": "tests/fixtures/real_project_blind_eval_cases.json",
+    "case_manifest_digest": "sha256:e02eba1c005d41e7f4a045539980dd6325731bf7d57b723872e6603df18b79c7",
+    "full_report_digest": "sha256:1df443569e2d8da36ccd8672b45f4099d466ff3875a718f18123bf83112c49ce",
+    "concept_metric_scope": "intent-derived substantive body phrase coverage"
+  },
+  "data_root": "/data1/users/cuihengjia/code2paper",
+  "runs_root": "/tmp/code2paper-realset-a51518c",
+  "summary": {
+    "selected_cases": 3,
+    "delivery_complete": 3,
+    "trust_blocked": 0,
+    "false_completion": 0
+  },
+  "cases": [
+    {
+      "case_id": "unimmad",
+      "status": "success",
+      "completion_status": "complete",
+      "accepted_for_delivery": true,
+      "generated_intent_body_coverage": 0.2857,
+      "original_intent_body_coverage": 0.8571,
+      "final_text_unsupported_claim_rate": 0.0,
+      "text_evidence_validation_passed": true,
+      "invariant_audit_passed": true,
+      "traceability_passed": true,
+      "unique_body_line_ratio": 1.0,
+      "generated_method_digest": "sha256:f027fdef3d9258b9d335e4c0a8cc2d388762c60e5aebcc341796c851c4f71710",
+      "original_method_digest": "sha256:81ceec4fff7cb8e96f22bbd290b3759ffa68826a9715f33269b2500fa23735d4"
+    },
+    {
+      "case_id": "codequant",
+      "status": "success",
+      "completion_status": "complete",
+      "accepted_for_delivery": true,
+      "generated_intent_body_coverage": 1.0,
+      "original_intent_body_coverage": 1.0,
+      "final_text_unsupported_claim_rate": 0.0,
+      "text_evidence_validation_passed": true,
+      "invariant_audit_passed": true,
+      "traceability_passed": true,
+      "unique_body_line_ratio": 1.0,
+      "generated_method_digest": "sha256:93815cab5a009c832995160c7720690382d9d504aea09a9abe377f862346e622",
+      "original_method_digest": "sha256:0690c62684c4f1e7103ed43acf0a749a95bc6c7419c0aa7859be341127a5d516"
+    },
+    {
+      "case_id": "domain_pruning",
+      "status": "success",
+      "completion_status": "complete",
+      "accepted_for_delivery": true,
+      "generated_intent_body_coverage": 0.6667,
+      "original_intent_body_coverage": 1.0,
+      "final_text_unsupported_claim_rate": 0.0,
+      "text_evidence_validation_passed": true,
+      "invariant_audit_passed": true,
+      "traceability_passed": true,
+      "unique_body_line_ratio": 1.0,
+      "generated_method_digest": "sha256:a6b734c52bb41916c240818fa3cc1f72157c188a9927598bc1030b7be66aa08d",
+      "original_method_digest": "sha256:536217074904a85a2c45e5ed30892eb314feca3007d980ccf8c8454a7ce9429a"
+    }
+  ],
+  "interpretation": {
+    "trust_result": "All three deterministic runs passed text, figure, invariant, traceability, and package gates with zero final unsupported leakage.",
+    "quality_result": "Projection meta-claim leakage and duplicate lines were removed, but two successful runs still trail the original in substantive intent coverage; writing quality remains a separate cutover gate.",
+    "pending": [
+      "Run the same three cases with the frozen Gemma capability profile after the formal P4 matrix.",
+      "Perform named human semantic and false-block review.",
+      "Do not use original-paper text as evidence or generation context."
+    ]
+  }
+}

@@ -1894,6 +1894,67 @@ fixed/Gemma 结果不能与新 deterministic 结果混合使用，也不能作�
 `external_dependencies_blocked`，cutover 必须 `hold`，`code2paper-run` 默认仍为 legacy。
 不得在 review、shadow、opt-in 和 canary 证据齐备前把默认切换为 agentic。
 
+### 12.10 外部真实项目原文盲测
+
+为避免只在仓库内置 fixture 上优化，P4 增加一组来自
+`/data1/users/cuihengjia/code2paper` 的外部真实项目盲测。生成阶段只能读取代码与
+author intent YAML；对应论文原文必须等生成结束后才由独立 evaluator 打开，只能用于
+评估，不能进入 prompt、retrieval、evidence、validator 或 revision context。若
+`input_manifest` 或 run summary 出现原文路径或原文摘要，reference isolation 直接失败。
+
+首批选择三种互补项目：
+
+| Case | 代码规模/侧重点 | author intent | 评估原文 |
+|---|---|---|---|
+| UniMMAD | 14 个 Python 文件；多模态异常检测、FCM、C-MoE | `paperyaml/UniMMAD.yaml` | `paper_final/114_UniMMAD.md` |
+| CodeQuant | 16 个 Python 文件；旋转、聚类、置换、LUT kernel | `paperyaml2/CodeQuant - Unified Clustering and Quantization for Enhanced Outlier Smoothing in Low-Precision Mixture-of-Experts.yaml` | `paper_final/088_CodeQuant - Unified Clustering and Quantization for Enhanced Outlier Smoothing in Low-Precision Mixture-of-Experts.md` |
+| Domain-Specific Pruning | 456 个 Python 文件；few-shot MoE expert pruning | `paperyaml4/Domain-Specific Pruning of Large Mixture-of-Experts Models with.yaml` | `paper_final/024_Domain-Specific Pruning of Large Mixture-of-Experts Models with.md` |
+
+可复现的后置对照工具为
+`code2paper-agentic-real-project-blind-eval`，case 与 intent-derived 概念词组冻结在
+`tests/fixtures/real_project_blind_eval_cases.json`。概念覆盖只扫描正文而不扫描 Markdown
+标题，降低“把 intent 复制成小节名”造成的虚高；它仍然只是透明的表面覆盖指标，不能替代
+人工语义质量 review。运行方式：
+
+```bash
+PYTHONPATH=src python3 -m code2paper.cli.agentic_real_project_blind_eval \
+  --manifest tests/fixtures/real_project_blind_eval_cases.json \
+  --data-root /data1/users/cuihengjia/code2paper \
+  --runs-root /tmp/code2paper-realset-a51518c \
+  --output /tmp/code2paper-realset-a51518c/blind_eval_report.json
+```
+
+第一轮在 `4d8e4e5` 上发现 projection writer 会把内部“paper-facing stage named”
+claim-contract 写入正文，并重复输出同一机制句，造成可复现 false-block。修复原则不是放宽
+validator，而是在 writer 边界移除元 claim、按正文归一化去重，并在同文 claim 冲突时合并
+所有 qualifier，防止无 qualifier 的弱副本覆盖严格约束。同一 Gemma toy 回归由 blocked
+恢复为 `success + completion=complete + final invariant passed`。
+
+随后在 clean generation commit `a51518cffbebf0c3811928a11d9ae129d536348a`
+上重新执行三例 deterministic 盲测，结果如下：
+
+| Case | Run 结果 | 生成正文/原文 intent 概念覆盖 | 最终文本 unsupported | 可信度结论 |
+|---|---:|---:|---:|---|
+| UniMMAD | success，completion=complete | 28.57% / 85.71% | 0% | text/figure/invariant/trace/package 全通过，但正文只展开 FCM 与 anomaly inference |
+| CodeQuant | success，completion=complete | 100% / 100% | 0% | 五个 intent 概念全部出现；LUT claim 保留“当前代码证据不支持”限定，不作无条件事实 |
+| Domain-Specific Pruning | success，completion=complete | 66.67% / 100% | 0% | trust 全通过；few-shot statistics 与 mixed-domain 展开仍不足 |
+
+本轮 reference isolation 为 3/3 passed，可追溯交付为 3/3，假完成和最终 unsupported
+leakage 均为 0。projection writer 修复后，三例正文唯一行比例均为 1.0，旧重复已消失。
+它同时揭示了不能被可信度指标掩盖的质量差距：UniMMAD 仅覆盖 2/7 个冻结正文概念，
+Domain-Specific Pruning 覆盖 4/6；原文分别覆盖 6/7 与 6/6。因此 trust-complete 不等于
+reference-quality complete，Gemma authoring 与人工 review 仍需重点检查漏写而非只查幻觉。
+因此 P4 必须分别报告：
+
+1. **scientific trust**：陈述和图能否回溯到冻结代码证据，unsupported 是否零泄漏；
+2. **intent/reference quality**：关键方法是否展开、组织是否接近作者意图、是否存在重复；
+3. **usable completion**：同时通过前两类要求且完成人工审核的交付比例。
+
+机器可复现摘要保存在
+`tests/baselines/agentic/p4_real_project_blind_status.json`。下一步在正式 P4 25-run 矩阵
+结束后，用同一冻结 Gemma profile 对这三例各运行一次，再由具名 reviewer 对 success、
+false-block、遗漏概念和原文语义差距逐例签字。原文不因进入人工 review 而升级为代码证据。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |
