@@ -34,6 +34,191 @@ _IMMUTABLE_REVIEW_FIELDS = (
 )
 
 
+def review_workspace_progress(workspace_root: str | Path) -> dict[str, Any]:
+    """Report human-decision progress without interpreting any decision."""
+
+    root = Path(workspace_root).expanduser().resolve()
+    manifest, _queue, entries = _load_editable_workspace(root)
+    totals = {
+        "reviews": 0,
+        "signed_reviews": 0,
+        "claims": 0,
+        "claims_pending": 0,
+        "figures": 0,
+        "figures_pending": 0,
+        "run_decisions_pending": 0,
+    }
+    review_progress: list[dict[str, Any]] = []
+    for item in manifest["entries"]:
+        identity = _tuple_identity(item.get("identity"))
+        entry = entries[identity]
+        path = _contained_path(root, item.get("review_path"), "reviews")
+        review = _load_json(path)
+        failures = _immutable_binding_failures(entry["review_template"], review)
+        if failures:
+            raise ValueError(f"review immutable binding drift:{path}:{','.join(failures)}")
+        claims = review.get("claims") if isinstance(review.get("claims"), list) else []
+        figures = review.get("figures") if isinstance(review.get("figures"), list) else []
+        claim_pending = sum(_claim_decision_pending(value) for value in claims)
+        figure_pending = sum(_figure_decision_pending(value) for value in figures)
+        run_pending = _run_decision_pending(review)
+        signed = not _identity_pending(review)
+        totals["reviews"] += 1
+        totals["signed_reviews"] += int(signed)
+        totals["claims"] += len(claims)
+        totals["claims_pending"] += claim_pending
+        totals["figures"] += len(figures)
+        totals["figures_pending"] += figure_pending
+        totals["run_decisions_pending"] += int(run_pending)
+        review_progress.append({
+            "identity": list(identity),
+            "review_path": str(path),
+            "signed": signed,
+            "claims": len(claims),
+            "claims_pending": claim_pending,
+            "figures": len(figures),
+            "figures_pending": figure_pending,
+            "run_decisions_pending": run_pending,
+            "ready_to_sign": not claim_pending and not figure_pending and not run_pending,
+        })
+    return {
+        "schema_version": "code2paper-agentic-review-workspace-progress/v1",
+        "workspace_manifest": str(root / "review_workspace_manifest.json"),
+        "queue_path": str(Path(manifest["queue_path"]).resolve()),
+        **totals,
+        "reviews_pending": totals["reviews"] - totals["signed_reviews"],
+        "review_progress": review_progress,
+    }
+
+
+def record_claim_adjudication(
+    workspace_root: str | Path,
+    review_selector: str,
+    claim_id: str,
+    *,
+    semantic_match: str,
+    gold_claim_id: str,
+    mutation_match: str,
+    mutation_id: str,
+    direct_evidence_support: bool,
+    qualifiers_preserved: bool,
+) -> Path:
+    root, entry, path, review = _editable_review(workspace_root, review_selector)
+    del root
+    _require_unsigned(review)
+    gold_ids = {str(item.get("claim_id") or "") for item in entry.get("gold_claims", [])}
+    mutation_ids = {
+        str(item.get("mutation_id") or "")
+        for item in entry["review_template"].get("mutation_trials", [])
+        if isinstance(item, dict)
+    }
+    _validate_match("semantic", semantic_match, gold_claim_id, gold_ids)
+    _validate_match("mutation", mutation_match, mutation_id, mutation_ids)
+    claims = review.get("claims") if isinstance(review.get("claims"), list) else []
+    matches = [item for item in claims if isinstance(item, dict) and item.get("atomic_claim_id") == claim_id]
+    if len(matches) != 1:
+        raise ValueError(f"claim selector must match exactly one frozen claim:{claim_id}")
+    matches[0].update({
+        "semantic_match": semantic_match,
+        "gold_claim_id": gold_claim_id,
+        "mutation_match": mutation_match,
+        "mutation_id": mutation_id,
+        "direct_evidence_support": direct_evidence_support,
+        "qualifiers_preserved": qualifiers_preserved,
+    })
+    return atomic_write_json(path, review)
+
+
+def record_figure_adjudication(
+    workspace_root: str | Path,
+    review_selector: str,
+    element_id: str,
+    *,
+    gold_claim_id: str,
+    relation_id: str,
+    semantically_supported: bool,
+    direct_relation_evidence: bool,
+    rendered_drift: bool,
+) -> Path:
+    root, entry, path, review = _editable_review(workspace_root, review_selector)
+    del root
+    _require_unsigned(review)
+    known_claims = {str(item.get("claim_id") or "") for item in entry.get("gold_claims", [])}
+    known_relations = {str(item.get("relation_id") or "") for item in entry.get("gold_figure_relations", [])}
+    if gold_claim_id and gold_claim_id not in known_claims:
+        raise ValueError(f"unknown gold claim id:{gold_claim_id}")
+    if relation_id and relation_id not in known_relations:
+        raise ValueError(f"unknown gold relation id:{relation_id}")
+    figures = review.get("figures") if isinstance(review.get("figures"), list) else []
+    matches = [item for item in figures if isinstance(item, dict) and item.get("element_id") == element_id]
+    if len(matches) != 1:
+        raise ValueError(f"figure selector must match exactly one frozen element:{element_id}")
+    if matches[0].get("element_kind") == "edge" and direct_relation_evidence and not relation_id:
+        raise ValueError("direct edge evidence requires a gold relation id")
+    if matches[0].get("element_kind") != "edge" and direct_relation_evidence:
+        raise ValueError("direct relation evidence is only valid for edge elements")
+    matches[0].update({
+        "gold_claim_id": gold_claim_id,
+        "relation_id": relation_id,
+        "semantically_supported": semantically_supported,
+        "direct_relation_evidence": direct_relation_evidence,
+        "rendered_drift": rendered_drift,
+    })
+    return atomic_write_json(path, review)
+
+
+def record_run_adjudication(
+    workspace_root: str | Path,
+    review_selector: str,
+    *,
+    usable_completion: bool,
+    intent_fields_reviewed: bool,
+    blocked_reason_review: str = "",
+    blocked_reason_classification: str = "",
+) -> Path:
+    root, entry, path, review = _editable_review(workspace_root, review_selector)
+    del root, entry
+    _require_unsigned(review)
+    allowed = {"", "correct_repairable", "correct_terminal", "false_block"}
+    if blocked_reason_classification not in allowed:
+        raise ValueError(f"invalid blocked reason classification:{blocked_reason_classification}")
+    if bool(blocked_reason_review.strip()) != bool(blocked_reason_classification):
+        raise ValueError("blocked review rationale and classification must be supplied together")
+    _validate_run_decision_against_frozen_summary(
+        review,
+        usable_completion=usable_completion,
+        intent_fields_reviewed=intent_fields_reviewed,
+        blocked_reason_review=blocked_reason_review,
+        blocked_reason_classification=blocked_reason_classification,
+    )
+    review.update({
+        "usable_completion": usable_completion,
+        "intent_fields_reviewed": intent_fields_reviewed,
+        "blocked_reason_review": blocked_reason_review.strip(),
+        "blocked_reason_classification": blocked_reason_classification or None,
+    })
+    return atomic_write_json(path, review)
+
+
+def sign_review(
+    workspace_root: str | Path,
+    review_selector: str,
+    *,
+    reviewer: str,
+    reviewed_at: str,
+) -> Path:
+    root, entry, path, review = _editable_review(workspace_root, review_selector)
+    del root
+    _require_unsigned(review)
+    candidate = dict(review)
+    candidate.update({"reviewer": reviewer.strip(), "reviewed_at": reviewed_at.strip()})
+    if _has_human_placeholders(candidate):
+        raise ValueError("review decisions are incomplete; refusing named-human signature")
+    _validate_decisions_for_signature(entry, candidate)
+    BenchmarkRunReviewV2.model_validate(candidate)
+    return atomic_write_json(path, candidate)
+
+
 def materialize_review_workspace(queue_path: str | Path, out_root: str | Path) -> Path:
     """Materialize one human-editable review file per frozen queue entry.
 
@@ -480,37 +665,195 @@ def _contained_path(root: Path, relative: object, required_parent: str) -> Path:
     return path
 
 
-def _has_human_placeholders(review: dict[str, Any]) -> bool:
-    identity_placeholders = (
+def _load_editable_workspace(
+    root: Path,
+) -> tuple[dict[str, Any], dict[str, Any], dict[tuple[str, str, str, int], dict[str, Any]]]:
+    manifest_path = root / "review_workspace_manifest.json"
+    manifest = _load_json(manifest_path)
+    if manifest.get("schema_version") != "code2paper-agentic-review-workspace/v1":
+        raise ValueError("workspace manifest schema mismatch")
+    queue_path = Path(str(manifest.get("queue_path") or "")).expanduser().resolve()
+    if not queue_path.is_file():
+        raise ValueError(f"workspace queue is unavailable:{queue_path}")
+    if manifest.get("queue_digest") != _digest_file(queue_path):
+        raise ValueError("review queue digest drift")
+    queue = _load_json(queue_path)
+    entries_list = _validated_queue_entries(queue)
+    entries = {_identity(item): item for item in entries_list}
+    manifest_entries = manifest.get("entries")
+    if not isinstance(manifest_entries, list):
+        raise ValueError("workspace manifest entries must be a list")
+    identities = [_tuple_identity(item.get("identity")) for item in manifest_entries if isinstance(item, dict)]
+    if len(identities) != len(manifest_entries) or len(identities) != len(set(identities)):
+        raise ValueError("workspace manifest review identities are invalid or duplicated")
+    if set(identities) != set(entries):
+        raise ValueError("workspace review identity coverage mismatch")
+    return manifest, queue, entries
+
+
+def _editable_review(
+    workspace_root: str | Path,
+    review_selector: str,
+) -> tuple[Path, dict[str, Any], Path, dict[str, Any]]:
+    root = Path(workspace_root).expanduser().resolve()
+    manifest, queue, entries = _load_editable_workspace(root)
+    del queue
+    selected: list[tuple[dict[str, Any], Path]] = []
+    for item in manifest["entries"]:
+        path = _contained_path(root, item.get("review_path"), "reviews")
+        relative = str(path.relative_to(root))
+        if review_selector in {path.name, relative, str(path)}:
+            selected.append((item, path))
+    if len(selected) != 1:
+        raise ValueError(f"review selector must match exactly one manifest entry:{review_selector}")
+    item, path = selected[0]
+    if not path.is_file():
+        raise ValueError(f"review file is unavailable:{path}")
+    identity = _tuple_identity(item.get("identity"))
+    entry = entries[identity]
+    review = _load_json(path)
+    failures = _immutable_binding_failures(entry["review_template"], review)
+    if failures:
+        raise ValueError(f"review immutable binding drift:{','.join(failures)}")
+    return root, entry, path, review
+
+
+def _identity_pending(review: dict[str, Any]) -> bool:
+    return (
         str(review.get("reviewer") or "").strip() in {"", "__REQUIRED_NAMED_HUMAN__"}
         or str(review.get("reviewed_at") or "").strip() in {"", "__REQUIRED_ISO8601__"}
     )
-    claims = review.get("claims") if isinstance(review.get("claims"), list) else []
-    figures = review.get("figures") if isinstance(review.get("figures"), list) else []
-    claim_placeholders = any(
-        not isinstance(item, dict)
-        or item.get("semantic_match") is None
-        or item.get("mutation_match") is None
-        or item.get("direct_evidence_support") is None
-        or item.get("qualifiers_preserved") is None
-        for item in claims
+
+
+def _require_unsigned(review: dict[str, Any]) -> None:
+    if not _identity_pending(review):
+        raise ValueError("signed review is immutable; create a new reviewed workspace for corrections")
+
+
+def _validate_match(kind: str, decision: str, value: str, known_ids: set[str]) -> None:
+    if decision not in {"matched", "no_match"}:
+        raise ValueError(f"invalid {kind} match decision:{decision}")
+    if decision == "matched":
+        if not value:
+            raise ValueError(f"{kind} matched decision requires an id")
+        if value not in known_ids:
+            raise ValueError(f"unknown {kind} match id:{value}")
+    elif value:
+        raise ValueError(f"{kind} no_match decision must not retain an id")
+
+
+def _validate_decisions_for_signature(entry: dict[str, Any], review: dict[str, Any]) -> None:
+    gold_ids = {str(item.get("claim_id") or "") for item in entry.get("gold_claims", [])}
+    mutation_ids = {
+        str(item.get("mutation_id") or "")
+        for item in entry["review_template"].get("mutation_trials", [])
+        if isinstance(item, dict)
+    }
+    relation_ids = {
+        str(item.get("relation_id") or "") for item in entry.get("gold_figure_relations", [])
+    }
+    for item in review.get("claims", []):
+        claim_id = str(item.get("atomic_claim_id") or "")
+        _validate_match("semantic", str(item.get("semantic_match") or ""), str(item.get("gold_claim_id") or ""), gold_ids)
+        _validate_match("mutation", str(item.get("mutation_match") or ""), str(item.get("mutation_id") or ""), mutation_ids)
+        if not isinstance(item.get("direct_evidence_support"), bool):
+            raise ValueError(f"claim direct evidence decision missing:{claim_id}")
+        if not isinstance(item.get("qualifiers_preserved"), bool):
+            raise ValueError(f"claim qualifier decision missing:{claim_id}")
+    for item in review.get("figures", []):
+        element_id = str(item.get("element_id") or "")
+        gold_claim_id = str(item.get("gold_claim_id") or "")
+        relation_id = str(item.get("relation_id") or "")
+        if gold_claim_id and gold_claim_id not in gold_ids:
+            raise ValueError(f"unknown gold claim id:{gold_claim_id}")
+        if relation_id and relation_id not in relation_ids:
+            raise ValueError(f"unknown gold relation id:{relation_id}")
+        if item.get("element_kind") == "edge" and item.get("direct_relation_evidence") and not relation_id:
+            raise ValueError(f"direct edge evidence requires a gold relation id:{element_id}")
+        if item.get("element_kind") != "edge" and item.get("direct_relation_evidence"):
+            raise ValueError(f"direct relation evidence is only valid for edge elements:{element_id}")
+    rationale = str(review.get("blocked_reason_review") or "").strip()
+    classification = str(review.get("blocked_reason_classification") or "").strip()
+    if bool(rationale) != bool(classification):
+        raise ValueError("blocked review rationale and classification must be supplied together")
+    _validate_run_decision_against_frozen_summary(
+        review,
+        usable_completion=review.get("usable_completion"),
+        intent_fields_reviewed=review.get("intent_fields_reviewed"),
+        blocked_reason_review=rationale,
+        blocked_reason_classification=classification,
     )
-    figure_placeholders = any(
-        not isinstance(item, dict)
-        or item.get("semantically_supported") is None
-        or item.get("rendered_drift") is None
-        or (item.get("element_kind") == "edge" and item.get("direct_relation_evidence") is None)
-        for item in figures
+
+
+def _validate_run_decision_against_frozen_summary(
+    review: dict[str, Any],
+    *,
+    usable_completion: object,
+    intent_fields_reviewed: object,
+    blocked_reason_review: str,
+    blocked_reason_classification: str,
+) -> None:
+    if not isinstance(usable_completion, bool) or not isinstance(intent_fields_reviewed, bool):
+        raise ValueError("run usability and intent decisions must be explicit booleans")
+    summary_path = Path(str(review.get("run_summary_path") or "")).expanduser().resolve()
+    if not summary_path.is_file() or _digest_file(summary_path) != review.get("run_summary_digest"):
+        raise ValueError("frozen run summary is unavailable or its digest drifted")
+    summary = _load_json(summary_path)
+    blocked = summary.get("status") == "blocked"
+    has_block_review = bool(blocked_reason_review.strip() and blocked_reason_classification)
+    if blocked and not has_block_review:
+        raise ValueError("blocked run requires rationale and a structured classification")
+    if not blocked and has_block_review:
+        raise ValueError("successful run must not carry a blocked-run classification")
+    if blocked and usable_completion:
+        raise ValueError("blocked run cannot be marked as a usable completion")
+    if str(review.get("intent_id") or "") and intent_fields_reviewed is not True:
+        raise ValueError("paired-intent run requires intent_fields_reviewed=true")
+
+
+def _claim_decision_pending(value: object) -> bool:
+    return bool(
+        not isinstance(value, dict)
+        or value.get("semantic_match") is None
+        or value.get("mutation_match") is None
+        or not isinstance(value.get("direct_evidence_support"), bool)
+        or not isinstance(value.get("qualifiers_preserved"), bool)
     )
-    return (
-        identity_placeholders
-        or review.get("usable_completion") is None
-        or review.get("intent_fields_reviewed") is None
+
+
+def _figure_decision_pending(value: object) -> bool:
+    return bool(
+        not isinstance(value, dict)
+        or not isinstance(value.get("semantically_supported"), bool)
+        or not isinstance(value.get("rendered_drift"), bool)
+        or (
+            value.get("element_kind") == "edge"
+            and not isinstance(value.get("direct_relation_evidence"), bool)
+        )
+    )
+
+
+def _run_decision_pending(review: dict[str, Any]) -> bool:
+    return bool(
+        not isinstance(review.get("usable_completion"), bool)
+        or not isinstance(review.get("intent_fields_reviewed"), bool)
         or str(review.get("blocked_reason_review") or "") == "__REQUIRED_BLOCK_REVIEW__"
         or (
             bool(str(review.get("blocked_reason_review") or "").strip())
             and review.get("blocked_reason_classification") is None
         )
+    )
+
+
+def _has_human_placeholders(review: dict[str, Any]) -> bool:
+    identity_placeholders = _identity_pending(review)
+    claims = review.get("claims") if isinstance(review.get("claims"), list) else []
+    figures = review.get("figures") if isinstance(review.get("figures"), list) else []
+    claim_placeholders = any(_claim_decision_pending(item) for item in claims)
+    figure_placeholders = any(_figure_decision_pending(item) for item in figures)
+    return (
+        identity_placeholders
+        or _run_decision_pending(review)
         or claim_placeholders
         or figure_placeholders
     )

@@ -10,6 +10,11 @@ import pytest
 from code2paper.agentic.benchmark_review_workspace import (
     _review_context,
     materialize_review_workspace,
+    record_claim_adjudication,
+    record_figure_adjudication,
+    record_run_adjudication,
+    review_workspace_progress,
+    sign_review,
     validate_review_workspace,
 )
 from code2paper.agentic.benchmark_observation import build_figure_review_inventory
@@ -88,6 +93,15 @@ def _queue() -> dict:
 def _write_queue(tmp_path: Path) -> Path:
     path = tmp_path / "queue.json"
     path.write_text(json.dumps(_queue()), encoding="utf-8")
+    return path
+
+
+def _bind_run_summary(queue: dict, tmp_path: Path, *, status: str = "success") -> Path:
+    path = tmp_path / "frozen-run-summary.json"
+    path.write_text(json.dumps({"status": status}), encoding="utf-8")
+    template = queue["entries"][0]["review_template"]
+    template["run_summary_path"] = str(path)
+    template["run_summary_digest"] = "sha256:" + __import__("hashlib").sha256(path.read_bytes()).hexdigest()
     return path
 
 
@@ -358,6 +372,317 @@ def test_validate_rejects_gold_digest_not_bound_to_protocol(tmp_path: Path) -> N
     assert "review_queue_gold_digest_mismatch" in report["global_failures"]
     assert "workspace_gold_digest_mismatch" in report["global_failures"]
     assert observations == []
+
+
+def test_review_progress_and_safe_claim_run_signing_workflow(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    _bind_run_summary(queue_payload, tmp_path)
+    template = queue_payload["entries"][0]["review_template"]
+    template["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "A directly grounded claim.",
+        "verdict": "supported",
+        "semantic_match": None,
+        "gold_claim_id": "",
+        "mutation_match": None,
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": None,
+        "high_risk": False,
+    }]
+    template["mutation_trials"] = [{
+        "mutation_id": "TM1",
+        "detected": True,
+        "trial_artifact_path": "/tmp/tm1.json",
+        "trial_artifact_digest": "sha256:" + "8" * 64,
+    }]
+    template["usable_completion"] = None
+    template["intent_fields_reviewed"] = None
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+
+    progress = review_workspace_progress(workspace)
+    assert progress["reviews"] == 1
+    assert progress["claims_pending"] == 1
+    assert progress["run_decisions_pending"] == 1
+    assert progress["reviews_pending"] == 1
+    assert not progress["review_progress"][0]["ready_to_sign"]
+
+    with pytest.raises(ValueError, match="decisions are incomplete"):
+        sign_review(
+            workspace,
+            review_path.name,
+            reviewer="Ada Reviewer",
+            reviewed_at="2026-07-18T12:00:00+08:00",
+        )
+
+    record_claim_adjudication(
+        workspace,
+        review_path.name,
+        "FAC1",
+        semantic_match="matched",
+        gold_claim_id="T1",
+        mutation_match="no_match",
+        mutation_id="",
+        direct_evidence_support=True,
+        qualifiers_preserved=True,
+    )
+    record_run_adjudication(
+        workspace,
+        review_path.name,
+        usable_completion=True,
+        intent_fields_reviewed=True,
+    )
+    progress = review_workspace_progress(workspace)
+    assert progress["claims_pending"] == 0
+    assert progress["run_decisions_pending"] == 0
+    assert progress["review_progress"][0]["ready_to_sign"]
+
+    sign_review(
+        workspace,
+        review_path.name,
+        reviewer="Ada Reviewer",
+        reviewed_at="2026-07-18T12:00:00+08:00",
+    )
+    signed = json.loads(review_path.read_text(encoding="utf-8"))
+    assert signed["claims"][0]["gold_claim_id"] == "T1"
+    assert signed["reviewer"] == "Ada Reviewer"
+    assert review_workspace_progress(workspace)["signed_reviews"] == 1
+    with pytest.raises(ValueError, match="signed review is immutable"):
+        record_run_adjudication(
+            workspace,
+            review_path.name,
+            usable_completion=False,
+            intent_fields_reviewed=True,
+        )
+
+
+def test_safe_review_edits_reject_unknown_ids_drift_and_non_manifest_paths(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    queue_payload["entries"][0]["review_template"]["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "A directly grounded claim.",
+        "verdict": "supported",
+        "semantic_match": None,
+        "gold_claim_id": "",
+        "mutation_match": None,
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": None,
+        "high_risk": False,
+    }]
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+
+    with pytest.raises(ValueError, match="unknown semantic match id"):
+        record_claim_adjudication(
+            workspace,
+            review_path.name,
+            "FAC1",
+            semantic_match="matched",
+            gold_claim_id="UNKNOWN",
+            mutation_match="no_match",
+            mutation_id="",
+            direct_evidence_support=False,
+            qualifiers_preserved=False,
+        )
+    with pytest.raises(ValueError, match="must not retain an id"):
+        record_claim_adjudication(
+            workspace,
+            review_path.name,
+            "FAC1",
+            semantic_match="no_match",
+            gold_claim_id="T1",
+            mutation_match="no_match",
+            mutation_id="",
+            direct_evidence_support=False,
+            qualifiers_preserved=False,
+        )
+    with pytest.raises(ValueError, match="selector must match exactly one"):
+        record_run_adjudication(
+            workspace,
+            "../../outside.json",
+            usable_completion=False,
+            intent_fields_reviewed=False,
+        )
+    tampered = json.loads(review_path.read_text(encoding="utf-8"))
+    tampered["run_summary_digest"] = "sha256:" + "f" * 64
+    review_path.write_text(json.dumps(tampered), encoding="utf-8")
+    with pytest.raises(ValueError, match="immutable binding drift"):
+        review_workspace_progress(workspace)
+
+
+def test_safe_figure_edit_requires_known_direct_relation(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    entry = queue_payload["entries"][0]
+    entry["gold_figure_relations"] = [{"relation_id": "R1"}]
+    entry["review_template"]["figures"] = [{
+        "element_id": "edge-1",
+        "element_kind": "edge",
+        "label": "",
+        "scene_element_digest": "sha256:" + "9" * 64,
+        "scene_relation_id": "scene-R1",
+        "gold_claim_id": "",
+        "relation_id": "",
+        "semantically_supported": None,
+        "direct_relation_evidence": None,
+        "rendered_drift": None,
+    }]
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+
+    with pytest.raises(ValueError, match="requires a gold relation id"):
+        record_figure_adjudication(
+            workspace,
+            review_path.name,
+            "edge-1",
+            gold_claim_id="",
+            relation_id="",
+            semantically_supported=True,
+            direct_relation_evidence=True,
+            rendered_drift=False,
+        )
+    record_figure_adjudication(
+        workspace,
+        review_path.name,
+        "edge-1",
+        gold_claim_id="T1",
+        relation_id="R1",
+        semantically_supported=True,
+        direct_relation_evidence=True,
+        rendered_drift=False,
+    )
+    progress = review_workspace_progress(workspace)
+    assert progress["figures_pending"] == 0
+
+
+def test_review_workspace_cli_exposes_progress_and_strict_boolean_updates(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    queue_payload = _queue()
+    _bind_run_summary(queue_payload, tmp_path)
+    queue_payload["entries"][0]["review_template"]["usable_completion"] = None
+    queue_payload["entries"][0]["review_template"]["intent_fields_reviewed"] = None
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_name = _review_path(workspace).name
+
+    assert workspace_main(["progress", "--workspace", str(workspace)]) == 0
+    progress = json.loads(capsys.readouterr().out)
+    assert progress["reviews_pending"] == 1
+    assert workspace_main([
+        "run",
+        "--workspace", str(workspace),
+        "--review", review_name,
+        "--usable-completion", "false",
+        "--intent-fields-reviewed", "true",
+    ]) == 0
+    updated = json.loads(capsys.readouterr().out)
+    assert updated["updated"] == "run"
+
+    with pytest.raises(SystemExit) as exc:
+        workspace_main([
+            "run",
+            "--workspace", str(workspace),
+            "--review", review_name,
+            "--usable-completion", "yes",
+            "--intent-fields-reviewed", "true",
+        ])
+    assert exc.value.code == 2
+
+
+def test_run_adjudication_is_bound_to_blocked_status_and_paired_intent(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    _bind_run_summary(queue_payload, tmp_path, status="blocked")
+    entry = queue_payload["entries"][0]
+    entry["identity"][2] = "training"
+    entry["review_template"]["intent_id"] = "training"
+    entry["review_template"]["usable_completion"] = None
+    entry["review_template"]["intent_fields_reviewed"] = None
+    entry["review_template"]["blocked_reason_review"] = "__REQUIRED_BLOCK_REVIEW__"
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_name = _review_path(workspace).name
+
+    with pytest.raises(ValueError, match="blocked run requires"):
+        record_run_adjudication(
+            workspace,
+            review_name,
+            usable_completion=False,
+            intent_fields_reviewed=True,
+        )
+    with pytest.raises(ValueError, match="paired-intent run requires"):
+        record_run_adjudication(
+            workspace,
+            review_name,
+            usable_completion=False,
+            intent_fields_reviewed=False,
+            blocked_reason_review="Budget exhausted after evidence-safe retries.",
+            blocked_reason_classification="correct_repairable",
+        )
+    record_run_adjudication(
+        workspace,
+        review_name,
+        usable_completion=False,
+        intent_fields_reviewed=True,
+        blocked_reason_review="Budget exhausted after evidence-safe retries.",
+        blocked_reason_classification="correct_repairable",
+    )
+    saved = json.loads(_review_path(workspace).read_text(encoding="utf-8"))
+    assert saved["blocked_reason_classification"] == "correct_repairable"
+
+
+def test_sign_revalidates_manually_edited_match_ids(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    _bind_run_summary(queue_payload, tmp_path)
+    queue_payload["entries"][0]["review_template"]["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "A directly grounded claim.",
+        "verdict": "supported",
+        "semantic_match": None,
+        "gold_claim_id": "",
+        "mutation_match": None,
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": None,
+        "high_risk": False,
+    }]
+    queue = tmp_path / "queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["claims"][0].update({
+        "semantic_match": "matched",
+        "gold_claim_id": "UNKNOWN",
+        "mutation_match": "no_match",
+        "direct_evidence_support": True,
+        "qualifiers_preserved": True,
+    })
+    review_path.write_text(json.dumps(review), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown semantic match id"):
+        sign_review(
+            workspace,
+            review_path.name,
+            reviewer="Ada Reviewer",
+            reviewed_at="2026-07-18T12:00:00+08:00",
+        )
 
 
 def test_validate_reports_malformed_manifest_identity_instead_of_crashing(tmp_path: Path) -> None:
