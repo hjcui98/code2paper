@@ -38,6 +38,7 @@ class AgenticInvariantAudit(BaseModel):
 def build_invariant_audit(state: AgenticRunState) -> AgenticInvariantAudit:
     checks = [
         _check_source_integrity(state),
+        _check_author_intent_spec(state),
         _check_frozen_evidence_present(state),
         _check_claim_verification(state),
         _check_evidence_sufficiency(state),
@@ -121,6 +122,46 @@ def _check_source_integrity(state: AgenticRunState) -> InvariantCheck:
         message="Repo snapshot, exact evidence excerpts, and downstream freshness are current."
         if not failures else "; ".join(failures),
         artifact_keys=["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"],
+    )
+
+
+def _check_author_intent_spec(state: AgenticRunState) -> InvariantCheck:
+    if not _artifact_exists(state, "repo_snapshot"):
+        return InvariantCheck(
+            name="author_intent_spec_gate",
+            passed=True,
+            blocking=False,
+            message="Legacy compatibility state does not require a frozen author intent specification.",
+            artifact_keys=["resolved_author_markers", "intent_spec"],
+        )
+    payload = _artifact_json(state, "intent_spec")
+    if not payload:
+        return InvariantCheck(
+            name="author_intent_spec_gate",
+            passed=False,
+            message="Formal agentic trust requires a readable frozen intent_spec artifact.",
+            artifact_keys=["resolved_author_markers", "intent_spec"],
+        )
+    problem = _artifact_record_problem(
+        state,
+        payload.get("source_author_markers"),
+        "resolved_author_markers",
+    )
+    digest_map = payload.get("input_artifact_digests")
+    recorded_hash = str(digest_map.get("resolved_author_markers") or "") if isinstance(digest_map, dict) else ""
+    source_record = payload.get("source_author_markers")
+    source_hash = str(source_record.get("hash") or "") if isinstance(source_record, dict) else ""
+    if not problem and (not recorded_hash or recorded_hash != source_hash):
+        problem = "input_artifact_digests does not match the resolved AuthorMarkers hash"
+    if not problem and not isinstance(payload.get("intent"), dict):
+        problem = "intent payload is missing"
+    return InvariantCheck(
+        name="author_intent_spec_gate",
+        passed=not problem,
+        message="Author intent is frozen against the exact resolved AuthorMarkers digest."
+        if not problem
+        else "Author intent specification is stale or invalid: " + problem,
+        artifact_keys=["resolved_author_markers", "intent_spec"],
     )
 
 
@@ -807,6 +848,7 @@ def _formal_package_lineage_problems(
 
     required_lineage = {
         "source_text_tex": registered_source_key,
+        "intent_spec": "intent_spec",
         "repo_snapshot": "repo_snapshot",
         "evidence_snapshot_v2": "evidence_snapshot_v2",
         "final_text_candidate": "final_text_candidate",

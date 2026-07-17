@@ -775,7 +775,7 @@ class AgenticInvariantAuditTests(unittest.TestCase):
                 "final_tex": _write_text(root / "final_method.tex", "\\begin{document}\n" + source_body + "\n\\end{document}\n"),
             }
             for key in (
-                "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+                "intent_spec", "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
                 "final_text_claims", "text_evidence_validation", "final_text_trace",
                 "validation_manifest", "traceability_ledger", "figure_scene",
                 "figure_relation_validation", "pre_render_audit", "method_overview_svg",
@@ -789,7 +789,7 @@ class AgenticInvariantAuditTests(unittest.TestCase):
                 **{
                     key: key
                     for key in (
-                        "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+                        "intent_spec", "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
                         "final_text_claims", "text_evidence_validation", "final_text_trace",
                         "validation_manifest", "traceability_ledger", "figure_scene",
                         "figure_relation_validation", "pre_render_audit", "method_overview_svg",

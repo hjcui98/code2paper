@@ -329,7 +329,7 @@ def run_finalize(state: AgenticRunState) -> StageToolResult:
     figure_root = final_dir(state.method_root, "figures")
     method_markdown_path = _method_markdown_path(state)
     lineage_keys = (
-        "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
+        "intent_spec", "repo_snapshot", "evidence_snapshot_v2", "final_text_candidate",
         "final_text_claims", "text_evidence_validation", "final_text_trace",
         "validation_manifest", "traceability_ledger", "figure_scene",
         "figure_relation_validation", "pre_render_audit", "method_overview_svg",

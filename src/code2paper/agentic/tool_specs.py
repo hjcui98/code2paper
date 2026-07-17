@@ -9,7 +9,7 @@ def canonical_stage_tool_specs() -> list[StageToolSpec]:
             name="code2paper_input_resolution",
             stage="input_resolution",
             description="Resolve author intent into strict AuthorMarkers before code grounding.",
-            output_artifacts=["resolved_author_markers", "input_manifest"],
+            output_artifacts=["resolved_author_markers", "intent_spec", "input_manifest"],
             evidence_policy=EvidencePolicy.NONE,
             allow_model_decision=True,
         ),
@@ -17,7 +17,7 @@ def canonical_stage_tool_specs() -> list[StageToolSpec]:
             name="code2paper_intake",
             stage="intake",
             description="Retrieve implementation evidence from the target repository.",
-            input_artifacts=["resolved_author_markers"],
+            input_artifacts=["resolved_author_markers", "intent_spec"],
             output_artifacts=[
                 "retrieval_plan",
                 "rescan_focus",

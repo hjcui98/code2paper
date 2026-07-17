@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from code2paper.agentic.author_intent_summary import load_author_intent_summary
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageStatus, StageToolResult
 from code2paper.agentic.legacy_retrieval_focus import evidence_repair_focus_payload
+from code2paper.agentic.tool_runtime import atomic_write_json
 from code2paper.core.output_names import method_output
 from code2paper.export.run_manifest import hash_file
 from code2paper.llm.providers import load_llm_config_from_env
@@ -28,6 +30,28 @@ def run_input_resolution_stage(state: AgenticRunState) -> StageToolResult:
         "resolved_author_markers": str(resolved.effective_author_markers_path),
         "input_manifest": str(method_output(state.out_root, "input_manifest")),
     }
+    intent_summary = load_author_intent_summary(resolved.effective_author_markers_path)
+    if intent_summary is None:
+        return StageToolResult(
+            stage="input_resolution",
+            status=StageStatus.BLOCKED,
+            artifacts=artifacts,
+            blocked_reason="resolved_author_intent_unreadable",
+            summary="Resolved AuthorMarkers could not be converted into the frozen intent specification.",
+        )
+    intent_spec_path = method_output(state.out_root, "intent_spec")
+    source_digest = hash_file(resolved.effective_author_markers_path)
+    atomic_write_json(intent_spec_path, {
+        "schema_version": "2.0",
+        "mode": "agentic-author-intent-spec",
+        "source_author_markers": {
+            "path": str(resolved.effective_author_markers_path),
+            "hash": source_digest,
+        },
+        "input_artifact_digests": {"resolved_author_markers": source_digest},
+        "intent": intent_summary.model_dump(mode="json"),
+    })
+    artifacts["intent_spec"] = str(intent_spec_path)
     if resolved.generated_author_markers_path:
         artifacts["generated_author_markers"] = str(resolved.generated_author_markers_path)
     return StageToolResult(

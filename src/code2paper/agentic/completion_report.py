@@ -68,7 +68,7 @@ def load_run_completion_report(path: str | Path) -> AgenticRunCompletionReport:
 def _check_evidence_base(state: AgenticRunState) -> CompletionCheck:
     required = ["evidence", "claims", "claim_verification"]
     if artifact_exists(state, "repo_snapshot"):
-        required.extend(["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
+        required.extend(["intent_spec", "repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
     missing = [key for key in required if not artifact_exists(state, key)]
     freshness = artifact_json(state, "artifact_freshness")
     stale = "artifact_freshness" in required and (

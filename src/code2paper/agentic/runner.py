@@ -294,6 +294,7 @@ def _agentic_phase_inputs(state: AgenticRunState) -> dict[str, list[str]]:
             [
                 str(state.project_root),
                 state.artifacts.get("resolved_author_markers", ""),
+                state.artifacts.get("intent_spec", ""),
                 state.artifacts.get("retrieval_decision_context", ""),
                 state.artifacts.get("retrieval_rescan_plan", ""),
                 state.artifacts.get("retrieval_rescan_report", ""),

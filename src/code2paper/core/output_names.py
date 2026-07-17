@@ -14,6 +14,7 @@ METHOD_OUTPUTS = {
     "refined_markers_json": "artifacts/01_input/author_markers.refined.json",
     "prepare_report": "artifacts/01_input/prepare_report.json",
     "input_manifest": "artifacts/01_input/input_manifest.json",
+    "intent_spec": "artifacts/01_input/intent_spec.json",
     "evidence_raw": "artifacts/02_intake/evidence_raw.json",
     "sources": "artifacts/02_intake/sources.json",
     "snippets": "artifacts/02_intake/snippets.json",

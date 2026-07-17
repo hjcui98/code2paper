@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,7 +14,10 @@ from code2paper.agentic.decisioning import AgenticDecisionPrompt
 from code2paper.agentic.evidence_sufficiency import EvidenceSufficiencyReport, evidence_sufficiency_trace
 from code2paper.agentic.figure_planner import figure_plan_trace
 from code2paper.agentic.graph import _coverage_critic_node
+from code2paper.agentic.invariant_audit import build_invariant_audit
+from code2paper.agentic.legacy_pre_evidence_stage_tools import run_input_resolution_stage
 from code2paper.agentic.retrieval import CoverageItem, RetrievalCoverageReport
+from code2paper.core.author_questionnaire import load_author_markers
 from code2paper.core.schemas import (
     AuthorDesignIntent,
     AuthorInnovationClaim,
@@ -30,9 +34,58 @@ from code2paper.core.schemas import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TOY_MARKERS = ROOT / "tests" / "fixtures" / "toy_train_project_author_markers.yaml"
+TOY_PROJECT = ROOT / "tests" / "fixtures" / "toy_train_project"
 
 
 class AgenticAuthorIntentSummaryTests(unittest.TestCase):
+    def test_input_resolution_freezes_digest_bound_intent_spec(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            markers = root / "author.yaml"
+            markers.write_text(TOY_MARKERS.read_text(encoding="utf-8"), encoding="utf-8")
+            state = AgenticRunState(
+                project_root=TOY_PROJECT,
+                out_root=root / "out",
+                author_markers_path=str(markers),
+            )
+
+            result = run_input_resolution_stage(state)
+            payload = json.loads(Path(result.artifacts["intent_spec"]).read_text(encoding="utf-8"))
+            repo_snapshot = root / "repo_snapshot.json"
+            repo_snapshot.write_text("{}\n", encoding="utf-8")
+            formal_state = state.model_copy(update={
+                "artifacts": {
+                    **result.artifacts,
+                    "repo_snapshot": str(repo_snapshot),
+                }
+            })
+            initial = next(
+                item for item in build_invariant_audit(formal_state).checks
+                if item.name == "author_intent_spec_gate"
+            )
+            resolved_markers = Path(result.artifacts["resolved_author_markers"])
+            resolved_markers.write_text(
+                resolved_markers.read_text(encoding="utf-8") + "\n# changed\n",
+                encoding="utf-8",
+            )
+            stale = next(
+                item for item in build_invariant_audit(formal_state).checks
+                if item.name == "author_intent_spec_gate"
+            )
+
+        self.assertEqual(result.status.value, "success")
+        self.assertEqual(payload["schema_version"], "2.0")
+        self.assertEqual(
+            payload["source_author_markers"]["hash"],
+            payload["input_artifact_digests"]["resolved_author_markers"],
+        )
+        self.assertEqual(
+            payload["intent"]["method_goal"],
+            build_author_intent_summary(load_author_markers(TOY_MARKERS)).method_goal,
+        )
+        self.assertTrue(initial.passed)
+        self.assertFalse(stale.passed)
+
     def test_summary_keeps_story_relevant_author_intent(self) -> None:
         markers = AuthorMarkers(
             project_goal="Train a configurable model.",

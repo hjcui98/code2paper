@@ -91,7 +91,7 @@ def _check_frozen_evidence_contract(state: AgenticRunState) -> ReadinessCheck:
     formal_v2 = artifact_exists(state, "repo_snapshot")
     required = ["evidence", "claims", "claim_verification"]
     if formal_v2:
-        required.extend(["repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
+        required.extend(["intent_spec", "repo_snapshot", "evidence_snapshot_v2", "atomic_claims_v2", "artifact_freshness"])
     missing = [key for key in required if not artifact_json(state, key)]
     problems: list[str] = []
     if missing:
