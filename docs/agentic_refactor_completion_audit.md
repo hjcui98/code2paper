@@ -4,7 +4,7 @@ Date: 2026-07-17
 
 Implementation branch: `codex/agentic-p4-benchmark-cutover`
 
-Current formal benchmark commit: `e9ab53db85d40281043d40885f4b4bd462ab8ed7`
+Current formal benchmark commit: `f96b2676632de8693a706ef24ddddb005eb56de0`
 
 This audit separates implementation evidence from rollout authorization. A passing
 deterministic run proves that the V2 contracts can complete; it does not replace the
@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `415 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `417 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit submatrix: 5/5 agentic deterministic runs finished with
   `status=success`, `completion=complete`, and complete package lineage.
@@ -46,8 +46,8 @@ The overall goal must remain incomplete while item 12 is unproven.
 
 | Condition | Status | Notes |
 |---|---|---|
-| Current-commit fixed legacy runs | Blocked | 5 runs require the unavailable Gemma endpoint |
-| Current-commit Gemma agentic repeats | Blocked | 15 runs require the unavailable Gemma endpoint |
+| Current-commit fixed legacy runs | Blocked | 5 runs require the unavailable Gemma endpoint; the current execution environment also cannot communicate with the GPU driver |
+| Current-commit Gemma agentic repeats | Blocked | 15 runs require the unavailable Gemma endpoint; the current execution environment also cannot communicate with the GPU driver |
 | Exact 25-run protocol validation | Partial | Protocol is frozen; 5 deterministic records exist and 20 records are missing |
 | Named human review | Pending | Queue has 25 entries; placeholders are schema-invalid and cannot count as reviews |
 | Shadow review | Pending | CLI emits digest-pinned shadow comparison artifacts, but rollout evidence is not complete |
@@ -66,4 +66,3 @@ The overall goal must remain incomplete while item 12 is unproven.
    thresholds.
 6. Run and review shadow, opt-in, and canary evidence in order. Apply a resulting
    `default_ready` decision through `--cutover-decision`; otherwise keep legacy default.
-

@@ -1867,18 +1867,23 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.9 2026-07-17 实施状态
 
-P4 已从 clean tracked commit `e9ab53db85d40281043d40885f4b4bd462ab8ed7`
+P4 已从 clean tracked commit `f96b2676632de8693a706ef24ddddb005eb56de0`
 重新冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
 agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。当前 5 个
 deterministic run 全部正常结束并达到 `success`、`completion=complete` 与
 `package_lineage_passed`，覆盖 toy、FastGS training、FastGS rendering、
 Spatial-SSRL 和 MOS。
+正式 protocol 还固定了 capability profile 的绝对路径、文件摘要
+`sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7`
+与运行时环境变量；每个 model-backed run 启动前都会重新校验 profile，
+防止 fixed/Gemma 子矩阵在不同推理配置下被误合并。
 
 13 个 curated mutation 已全部执行并被对应 text/figure/post-render/freshness
 validator 检出。该 campaign 同时发现并修复了一个旧的 claim-extraction 绕过：
 不在 factual hint 白名单中的实质性科研陈述曾可能不进入 atomic claim gate。
 
-当前冻结的 Gemma 4 服务端点 `http://127.0.0.1:8000` 连续三轮健康检查均不可连接，
+当前冻结的 Gemma 4 服务端点 `http://127.0.0.1:8000` 健康检查不可连接，
+当前执行环境的 `nvidia-smi` 亦无法与 GPU driver 通信，无法在本轮安全启动双卡 vLLM。
 因此新提交上的 5 个 fixed legacy 与 15 个 Gemma agentic run 尚未执行。旧提交上的
 fixed/Gemma 结果不能与新 deterministic 结果混合使用，也不能作为 cutover 证据。
 完整 protocol、已完成子矩阵、延迟、服务阻塞原因和 adversarial 摘要记录在
