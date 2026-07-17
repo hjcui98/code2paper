@@ -36,6 +36,15 @@ def build_review_queue_v2(
             continue
         case = cases[spec.case_id]
         summary_path = _summary_path(spec.variant, Path(spec.out_root))
+        legacy_audit = ""
+        legacy_payload: dict = {}
+        if spec.variant == "fixed_legacy":
+            slug = "-".join(filter(None, (spec.case_id, spec.intent_id or "default"))) + ".json"
+            audit_path = Path(legacy_audit_root) / slug
+            if not audit_path.is_file():
+                raise ValueError(f"legacy V2 audit is required before review queue construction:{audit_path}")
+            legacy_audit = str(audit_path.resolve())
+            legacy_payload = _bound_legacy_audit(audit_path, summary_path)
         template = {
             "schema_version": "2.0",
             "case_id": spec.case_id,
@@ -49,11 +58,21 @@ def build_review_queue_v2(
             "repo_snapshot_id": spec.repo_snapshot_id,
             "model_id": spec.model_id,
             "capability_profile_digest": spec.capability_profile_digest,
+            "legacy_v2_audit_path": legacy_audit,
+            "legacy_v2_audit_digest": _digest(Path(legacy_audit)) if legacy_audit else "",
             "reviewer": "__REQUIRED_NAMED_HUMAN__",
             "reviewed_at": "__REQUIRED_ISO8601__",
             "blocked_reason_review": "",
-            "claims": _agentic_claim_templates(summary_path) if spec.variant != "fixed_legacy" else [],
-            "figures": _agentic_figure_templates(summary_path) if spec.variant != "fixed_legacy" else [],
+            "claims": (
+                _agentic_claim_templates(summary_path)
+                if spec.variant != "fixed_legacy"
+                else _legacy_claim_templates(legacy_payload)
+            ),
+            "figures": (
+                _agentic_figure_templates(summary_path)
+                if spec.variant != "fixed_legacy"
+                else _legacy_figure_templates(legacy_payload)
+            ),
             "mutation_trials": _mutation_templates(case, mutation_roots[case.case_id]),
             "expected_retrieval_targets_observed": [],
             "section_claim_order": [],
@@ -61,12 +80,6 @@ def build_review_queue_v2(
             "usable_completion": False,
             "latency_seconds": record.get("duration_seconds", 0.0),
         }
-        legacy_audit = ""
-        if spec.variant == "fixed_legacy":
-            slug = "-".join(filter(None, (spec.case_id, spec.intent_id or "default"))) + ".json"
-            audit_path = Path(legacy_audit_root) / slug
-            if audit_path.is_file():
-                legacy_audit = str(audit_path.resolve())
         entries.append({
             "identity": list(key), "status": "human_review_required", "review_template": template,
             "gold_claims": [item.model_dump(mode="json") for item in case.supported_claims],
@@ -159,6 +172,52 @@ def _bound_artifact_json(record: dict, label: str) -> dict:
     if not isinstance(payload, dict):
         raise ValueError(f"{label} must contain a JSON object")
     return payload
+
+
+def _bound_legacy_audit(path: Path, summary_path: Path) -> dict:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("legacy V2 audit must contain a JSON object")
+    if payload.get("legacy_run_report_digest") != _digest(summary_path):
+        raise ValueError("legacy V2 audit does not match the frozen run report")
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    draft_path = Path(str(summary.get("outputs", {}).get("method_draft_md") or "")).resolve()
+    if _digest(draft_path) != payload.get("draft_digest"):
+        raise ValueError("legacy draft digest changed before review queue construction")
+    figure_path = Path(str(summary.get("phase5_figure", {}).get("outputs", {}).get("svg") or "")).resolve()
+    if _digest(figure_path) != payload.get("figure_asset_digest"):
+        raise ValueError("legacy figure digest changed before review queue construction")
+    claims = payload.get("claim_inventory")
+    figures = payload.get("figure_inventory")
+    if not isinstance(claims, list) or len(claims) != payload.get("factual_claims"):
+        raise ValueError("legacy V2 audit claim inventory is incomplete")
+    if not isinstance(figures, list) or not figures:
+        raise ValueError("legacy V2 audit figure inventory is empty")
+    return payload
+
+
+def _legacy_claim_templates(audit: dict) -> list[dict]:
+    return [{
+        "atomic_claim_id": item["atomic_claim_id"],
+        "text": item["text"],
+        "verdict": item["verdict"],
+        "gold_claim_id": "",
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": False,
+        "high_risk": bool(item.get("high_risk")),
+    } for item in audit["claim_inventory"]]
+
+
+def _legacy_figure_templates(audit: dict) -> list[dict]:
+    return [{
+        **item,
+        "gold_claim_id": "",
+        "relation_id": "",
+        "semantically_supported": None,
+        "direct_relation_evidence": None if item.get("element_kind") == "edge" else False,
+        "rendered_drift": None,
+    } for item in audit["figure_inventory"]]
 
 
 def _mutation_templates(case, root: str | Path) -> list[dict]:

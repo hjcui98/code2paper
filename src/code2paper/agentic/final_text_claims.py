@@ -39,12 +39,13 @@ _DISCOURSE_PREFIXES = (
 
 def extract_final_text_claims(text: str, projection: AuthoringInputProjection) -> FinalTextClaims:
     text_digest = _digest(text)
+    visible_text = _without_html_comments(text)
     units: list[FinalTextUnit] = []
     atomic: list[FinalAtomicClaim] = []
     char_cursor = 0
     unit_number = 1
     claim_number = 1
-    for line_number, raw_line in enumerate(text.splitlines(keepends=True), start=1):
+    for line_number, raw_line in enumerate(visible_text.splitlines(keepends=True), start=1):
         line = raw_line.rstrip("\r\n")
         line_start = char_cursor
         char_cursor += len(raw_line)
@@ -238,3 +239,14 @@ def _digest(text: str) -> str:
 
 def _dedupe(values: list[str]) -> list[str]:
     return list(dict.fromkeys(value for value in values if value))
+
+
+def _without_html_comments(text: str) -> str:
+    """Hide non-rendered Markdown comments while preserving every source offset."""
+
+    return re.sub(
+        r"<!--.*?-->",
+        lambda match: "".join("\n" if char == "\n" else " " for char in match.group(0)),
+        text,
+        flags=re.DOTALL,
+    )

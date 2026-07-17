@@ -63,6 +63,21 @@ def test_final_extractor_splits_compound_claims_and_ignores_discourse() -> None:
     ]
 
 
+def test_final_extractor_ignores_non_rendered_html_claim_metadata() -> None:
+    text = (
+        "# Method\n"
+        "<!-- c2p: stage=ALL; evidence=E1; confidence=high -->\n"
+        "The encoder reads configured features.\n"
+    )
+
+    extracted = extract_final_text_claims(text, _projection())
+
+    assert [claim.text for claim in extracted.atomic_claims] == [
+        "The encoder reads configured features.",
+    ]
+    assert extracted.atomic_claims[0].line_start == 3
+
+
 def test_valid_direct_evidence_claim_passes_and_builds_posthoc_trace() -> None:
     text = "The encoder reads configured features."
     projection = _projection()

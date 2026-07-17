@@ -64,6 +64,8 @@ class BenchmarkRunReviewV2(ReviewModel):
     repo_snapshot_id: str = ""
     model_id: str = ""
     capability_profile_digest: str = ""
+    legacy_v2_audit_path: str = ""
+    legacy_v2_audit_digest: str = ""
     reviewer: str
     reviewed_at: str
     blocked_reason_review: str = ""
@@ -312,16 +314,47 @@ def _agentic_observation(
 
 
 def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, summary_path: Path, summary: dict) -> BenchmarkObservationV2:
+    audit_path = Path(review.legacy_v2_audit_path).resolve()
+    _require_digest(audit_path, review.legacy_v2_audit_digest, "legacy_v2_audit")
+    audit = _read_json(audit_path)
+    if audit.get("legacy_run_report_digest") != review.run_summary_digest:
+        raise ValueError("legacy V2 audit contradicts the frozen run report")
+    draft_path = Path(str(summary.get("outputs", {}).get("method_draft_md") or "")).resolve()
+    _require_digest(draft_path, str(audit.get("draft_digest") or ""), "legacy_method_draft")
+    figure_path = Path(str(summary.get("phase5_figure", {}).get("outputs", {}).get("svg") or "")).resolve()
+    _require_digest(figure_path, str(audit.get("figure_asset_digest") or ""), "legacy_method_figure")
+    expected_claim_items = audit.get("claim_inventory")
+    if not isinstance(expected_claim_items, list) or any(
+        not isinstance(item, dict) for item in expected_claim_items
+    ):
+        raise ValueError("legacy V2 audit claim inventory must be a list of objects")
+    expected_claims = {item.get("atomic_claim_id"): item for item in expected_claim_items}
+    actual_claim_ids = [item.atomic_claim_id for item in review.claims]
+    if len(expected_claims) != len(expected_claim_items):
+        raise ValueError("legacy V2 audit contains duplicate atomic claim ids")
+    if len(actual_claim_ids) != len(set(actual_claim_ids)):
+        raise ValueError("legacy review contains duplicate atomic claim ids")
+    if set(actual_claim_ids) != set(expected_claims):
+        missing = sorted(set(expected_claims) - set(actual_claim_ids))
+        extra = sorted(set(actual_claim_ids) - set(expected_claims))
+        raise ValueError(f"legacy review claim inventory mismatch:missing={missing}:extra={extra}")
     observed: list[ObservedClaim] = []
     for item in review.claims:
-        if item.verdict is None or not item.text:
-            raise ValueError("legacy claim review requires text and verdict")
+        expected = expected_claims[item.atomic_claim_id]
+        if item.text != expected.get("text") or item.verdict != expected.get("verdict"):
+            raise ValueError(f"legacy review changed frozen claim or verdict:{item.atomic_claim_id}")
+        if item.high_risk != bool(expected.get("high_risk")):
+            raise ValueError(f"legacy review changed frozen claim risk:{item.atomic_claim_id}")
         if item.direct_evidence_support is None:
             raise ValueError("legacy claim review requires a direct evidence support decision")
+        direct_evidence_ids = expected.get("direct_evidence_ids", [])
+        if item.direct_evidence_support and not direct_evidence_ids:
+            raise ValueError(f"legacy review cannot confirm absent direct evidence:{item.atomic_claim_id}")
         observed.append(ObservedClaim(
             text=item.text,
             verdict=item.verdict,
             gold_claim_id=item.gold_claim_id,
+            direct_evidence_ids=direct_evidence_ids,
             direct_evidence_support=item.direct_evidence_support,
             qualifiers_preserved=item.qualifiers_preserved,
             trace_exact=False,
@@ -329,19 +362,14 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             high_risk=item.high_risk,
         ))
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
-    observed_figures: list[ObservedFigureElement] = []
-    for item in review.figures:
-        if item.semantically_supported is None or item.rendered_drift is None:
-            raise ValueError(f"legacy figure review decision missing:{item.element_id}")
-        observed_figures.append(ObservedFigureElement(
-            element_id=item.element_id,
-            element_kind=item.element_kind,
-            gold_claim_id=item.gold_claim_id,
-            relation_id=item.relation_id,
-            semantically_supported=item.semantically_supported,
-            direct_relation_evidence=bool(item.direct_relation_evidence),
-            rendered_drift=item.rendered_drift,
-        ))
+    expected_figures = audit.get("figure_inventory")
+    if not isinstance(expected_figures, list):
+        raise ValueError("legacy V2 audit figure inventory must be a list")
+    observed_figures = _validated_figure_adjudications(
+        review.figures,
+        expected_figures,
+        completion_complete=False,
+    )
     return BenchmarkObservationV2(
         case_id=case.case_id,
         variant="fixed_legacy",
@@ -358,7 +386,7 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
         detected_mutation_ids=detected,
         stale_trials=stale_trials,
         stale_detected=stale_detected,
-        usable_completion=review.usable_completion,
+        usable_completion=review.usable_completion and bool(audit.get("v2_usable_completion")),
         blocked_run_human_reviewed=bool(review.blocked_reason_review) if summary.get("status") == "blocked" else False,
         false_block_human_reviewed=bool(review.blocked_reason_review),
         expected_retrieval_targets_observed=review.expected_retrieval_targets_observed,
@@ -370,7 +398,11 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             "run_summary": _digest_file(summary_path), "reviewer": review.reviewer,
             "reviewed_at": review.reviewed_at, "protocol_spec_digest": review.protocol_spec_digest,
             "repo_snapshot_id": review.repo_snapshot_id, "model_id": review.model_id,
-            "capability_profile_digest": review.capability_profile_digest, **trial_provenance,
+            "capability_profile_digest": review.capability_profile_digest,
+            "legacy_v2_audit": review.legacy_v2_audit_digest,
+            "legacy_method_draft": str(audit.get("draft_digest") or ""),
+            "legacy_method_figure": str(audit.get("figure_asset_digest") or ""),
+            **trial_provenance,
         },
     )
 

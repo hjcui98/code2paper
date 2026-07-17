@@ -29,6 +29,8 @@ _IMMUTABLE_REVIEW_FIELDS = (
     "repo_snapshot_id",
     "model_id",
     "capability_profile_digest",
+    "legacy_v2_audit_path",
+    "legacy_v2_audit_digest",
 )
 
 
@@ -302,33 +304,33 @@ def _immutable_binding_failures(template: dict[str, Any], review: dict[str, Any]
         for field in _IMMUTABLE_REVIEW_FIELDS
         if review.get(field) != template.get(field)
     ]
-    if template.get("variant") != "fixed_legacy":
-        expected_claims = [
-            (item.get("atomic_claim_id"), item.get("text"), item.get("verdict"))
-            for item in template.get("claims", [])
-        ]
-        actual_claims = [
-            (item.get("atomic_claim_id"), item.get("text"), item.get("verdict"))
-            for item in review.get("claims", [])
-            if isinstance(item, dict)
-        ]
-        if actual_claims != expected_claims:
-            failures.append("agentic_claim_inventory_or_validator_verdict_changed")
-        immutable_figure_fields = (
-            "element_id", "element_kind", "label", "scene_element_digest", "scene_relation_id",
-        )
-        expected_figures = [
-            tuple(item.get(field) for field in immutable_figure_fields)
-            for item in template.get("figures", [])
-            if isinstance(item, dict)
-        ]
-        actual_figures = [
-            tuple(item.get(field) for field in immutable_figure_fields)
-            for item in review.get("figures", [])
-            if isinstance(item, dict)
-        ]
-        if actual_figures != expected_figures:
-            failures.append("agentic_figure_inventory_or_scene_binding_changed")
+    expected_claims = [
+        (item.get("atomic_claim_id"), item.get("text"), item.get("verdict"), item.get("high_risk"))
+        for item in template.get("claims", [])
+        if isinstance(item, dict)
+    ]
+    actual_claims = [
+        (item.get("atomic_claim_id"), item.get("text"), item.get("verdict"), item.get("high_risk"))
+        for item in review.get("claims", [])
+        if isinstance(item, dict)
+    ]
+    if actual_claims != expected_claims:
+        failures.append("claim_inventory_or_validator_verdict_changed")
+    immutable_figure_fields = (
+        "element_id", "element_kind", "label", "scene_element_digest", "scene_relation_id",
+    )
+    expected_figures = [
+        tuple(item.get(field) for field in immutable_figure_fields)
+        for item in template.get("figures", [])
+        if isinstance(item, dict)
+    ]
+    actual_figures = [
+        tuple(item.get(field) for field in immutable_figure_fields)
+        for item in review.get("figures", [])
+        if isinstance(item, dict)
+    ]
+    if actual_figures != expected_figures:
+        failures.append("figure_inventory_or_scene_binding_changed")
     expected_trials = sorted(
         (
             str(item.get("mutation_id") or ""),

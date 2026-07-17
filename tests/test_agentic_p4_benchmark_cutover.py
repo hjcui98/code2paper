@@ -781,7 +781,11 @@ def test_legacy_v2_audit_marks_v1_fidelity_success_as_review_candidate(tmp_path:
     (method / "method_draft.md").write_text(
         "# Method\nThe module implements a complete production training system.\n", encoding="utf-8",
     )
-    (figure / "method_overview.svg").write_text("<svg></svg>", encoding="utf-8")
+    (figure / "method_overview.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg"><text>Legacy visible stage</text>'
+        '<path d="M 0 0 L 1 1" marker-end="url(#arrow)"/></svg>',
+        encoding="utf-8",
+    )
 
     report = audit_legacy_run_against_gold_v2(
         case, workspace_root=ROOT, legacy_out_root=legacy, scratch_root=tmp_path / "scratch",
@@ -791,3 +795,95 @@ def test_legacy_v2_audit_marks_v1_fidelity_success_as_review_candidate(tmp_path:
     assert not report.text_v2_gate_passed
     assert report.legacy_false_success_candidate
     assert report.requires_named_human_review
+    assert report.factual_claims == len(report.claim_inventory) == 1
+    assert report.claim_inventory[0]["text"] == "The module implements a complete production training system."
+    assert report.claim_inventory[0]["verdict"] == "unsupported"
+    assert report.figure_asset_digest.startswith("sha256:")
+    assert [item["element_kind"] for item in report.figure_inventory] == ["node", "edge"]
+    assert report.figure_inventory[0]["label"] == "Legacy visible stage"
+    assert report.figure_inventory[1]["scene_relation_id"] == "legacy-svg-relation-1"
+
+
+def test_legacy_observation_requires_exact_audit_claim_and_figure_inventory(tmp_path: Path) -> None:
+    case = load_benchmark_dataset_v2(DATASET_PATH).cases[0]
+    draft_path = tmp_path / "method.md"
+    draft_path.write_text("The legacy trainer claims unsupported behavior.\n", encoding="utf-8")
+    svg_path = tmp_path / "method.svg"
+    svg_path.write_text('<svg><text>Legacy stage</text></svg>', encoding="utf-8")
+    digest = lambda path: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    figure_item = {
+        "element_id": "legacy-svg-text-1",
+        "element_kind": "annotation",
+        "label": "Legacy stage",
+        "scene_element_digest": "sha256:" + "8" * 64,
+        "scene_relation_id": "",
+    }
+    summary = {
+        "status": "success",
+        "outputs": {"method_draft_md": str(draft_path)},
+        "phase5_figure": {"outputs": {"svg": str(svg_path)}},
+    }
+    summary_path = tmp_path / "legacy-summary.json"
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+    audit = {
+        "legacy_run_report_digest": digest(summary_path),
+        "draft_digest": digest(draft_path),
+        "claim_inventory": [{
+            "atomic_claim_id": "FAC1",
+            "text": "The legacy trainer claims unsupported behavior.",
+            "claim_digest": "sha256:" + "9" * 64,
+            "verdict": "unsupported",
+            "direct_evidence_ids": [],
+            "high_risk": False,
+        }],
+        "figure_asset_digest": digest(svg_path),
+        "figure_inventory": [figure_item],
+        "v2_usable_completion": False,
+    }
+    audit_path = tmp_path / "legacy-audit.json"
+    audit_path.write_text(json.dumps(audit), encoding="utf-8")
+    trials = []
+    for mutation in case.mutations:
+        path = tmp_path / f"{mutation.mutation_id}.json"
+        path.write_text('{"detected":true}', encoding="utf-8")
+        trials.append(MutationTrialAdjudicationV2(
+            mutation_id=mutation.mutation_id,
+            detected=True,
+            trial_artifact_path=str(path),
+            trial_artifact_digest=digest(path),
+        ))
+    claim = ClaimAdjudicationV2(
+        atomic_claim_id="FAC1",
+        text="The legacy trainer claims unsupported behavior.",
+        verdict="unsupported",
+        direct_evidence_support=False,
+    )
+    figure = FigureAdjudicationV2(**{
+        **figure_item,
+        "semantically_supported": False,
+        "rendered_drift": False,
+    })
+    review = BenchmarkRunReviewV2(
+        case_id=case.case_id,
+        variant="fixed_legacy",
+        run_summary_path=str(summary_path),
+        run_summary_digest=digest(summary_path),
+        legacy_v2_audit_path=str(audit_path),
+        legacy_v2_audit_digest=digest(audit_path),
+        reviewer="legacy-reviewer",
+        reviewed_at="2026-07-18T12:00:00+08:00",
+        claims=[claim],
+        figures=[figure],
+        mutation_trials=trials,
+        usable_completion=True,
+    )
+
+    observation = extract_benchmark_observation_v2(case, review)
+
+    assert len(observation.claims) == len(observation.figure_elements) == 1
+    assert not observation.usable_completion
+    assert observation.provenance["legacy_v2_audit"] == digest(audit_path)
+    with pytest.raises(ValueError, match="legacy review claim inventory mismatch"):
+        extract_benchmark_observation_v2(case, review.model_copy(update={"claims": []}))
+    with pytest.raises(ValueError, match="figure review inventory mismatch"):
+        extract_benchmark_observation_v2(case, review.model_copy(update={"figures": []}))

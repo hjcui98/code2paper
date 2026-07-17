@@ -218,6 +218,34 @@ def test_validate_rejects_context_or_template_drift_before_human_review(tmp_path
     assert "workspace_template_digest_mismatch" in report["invalid_reviews"][0]["failures"]
 
 
+def test_validate_rejects_legacy_claim_inventory_deletion_while_review_is_pending(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    queue_payload["entries"][0]["review_template"]["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "Frozen legacy sentence.",
+        "verdict": "unsupported",
+        "gold_claim_id": "",
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": False,
+        "high_risk": False,
+    }]
+    queue = tmp_path / "legacy-queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    review_path = _review_path(workspace)
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["claims"] = []
+    review_path.write_text(json.dumps(review), encoding="utf-8")
+
+    report, observations = validate_review_workspace(queue, workspace, _dataset(), _protocol())
+
+    assert report["status"] == "failed"
+    assert "claim_inventory_or_validator_verdict_changed" in report["invalid_reviews"][0]["failures"]
+    assert observations == []
+
+
 def test_validate_extracts_only_complete_immutable_reviews(tmp_path: Path) -> None:
     queue = _write_queue(tmp_path)
     workspace = tmp_path / "workspace"
@@ -371,7 +399,7 @@ def test_review_workspace_rejects_deleted_or_rebound_agentic_figure_inventory(tm
     review_path.write_text(json.dumps(payload), encoding="utf-8")
     report, observations = validate_review_workspace(queue, workspace, _dataset(), protocol)
     assert report["status"] == "failed"
-    assert "agentic_figure_inventory_or_scene_binding_changed" in report["invalid_reviews"][0]["failures"]
+    assert "figure_inventory_or_scene_binding_changed" in report["invalid_reviews"][0]["failures"]
     assert observations == []
 
 
