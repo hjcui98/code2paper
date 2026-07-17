@@ -376,6 +376,7 @@ class AgenticDecisioningTests(unittest.TestCase):
             out_root=Path("/tmp/agentic-decisioning"),
             blocked_reason="missing_evidence_for_claim",
             artifacts={"validation_manifest": "validation.json"},
+            max_evidence_revision_rounds=1,
         )
 
         decision = revision_decision_with_model(

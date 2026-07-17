@@ -41,7 +41,9 @@ def revision_router_node(*, decision_provider: DecisionProvider | None = None):
                 "next_node": decision.recommended_next,
             }
         )
-        if decision.recommended_next in {"analysis", "authoring"}:
+        if decision.recommended_next == "analysis":
+            updated = updated.increment_loop("evidence_revision")
+        elif decision.recommended_next == "authoring":
             updated = updated.increment_loop("revision")
         return updated.model_dump(mode="json")
 

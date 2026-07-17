@@ -39,6 +39,37 @@ class AgenticRevisionBudgetTests(unittest.TestCase):
         self.assertEqual(updated.next_node, "authoring")
         self.assertEqual(updated.loop_counters["revision"], 1)
 
+    def test_revision_router_blocks_evidence_return_when_budget_is_exhausted(self) -> None:
+        state = AgenticRunState(
+            project_root=Path("."),
+            out_root=Path("/tmp/demo"),
+            blocked_reason="text_claim_direct_evidence_missing",
+            artifacts={"validation_manifest": "validation.json"},
+            max_evidence_revision_rounds=1,
+            loop_counters={"evidence_revision": 1},
+        )
+
+        decision = route_revision(state)
+
+        self.assertEqual(decision.recommended_next, "blocked")
+        self.assertEqual(decision.decision, "blocked")
+
+    def test_revision_router_node_counts_analysis_as_evidence_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = AgenticRunState(
+                project_root=Path("."),
+                out_root=Path(tmpdir),
+                blocked_reason="text_claim_direct_evidence_missing",
+                artifacts={"validation_manifest": "validation.json"},
+                max_evidence_revision_rounds=1,
+            )
+
+            updated = AgenticRunState.model_validate(revision_router_node()(state.model_dump(mode="json")))
+
+        self.assertEqual(updated.next_node, "analysis")
+        self.assertEqual(updated.loop_counters["evidence_revision"], 1)
+        self.assertNotIn("revision", updated.loop_counters)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -200,6 +200,15 @@ def route_revision(state: AgenticRunState) -> RevisionRouterDecision:
         )
     lowered = reason.lower()
     if any(token in lowered for token in ("evidence", "coverage", "missing", "unsupported")):
+        if int(state.loop_counters.get("evidence_revision") or 0) >= state.max_evidence_revision_rounds:
+            return RevisionRouterDecision(
+                decision="blocked",
+                recommended_next="blocked",
+                selected_stage="blocked",
+                blocked_reason=reason,
+                rationale="Evidence revision budget is exhausted; keep the validation failure visible instead of looping.",
+                artifact_keys=["retrieval_coverage", "validation_manifest"],
+            )
         return RevisionRouterDecision(
             decision="return_to_analysis",
             recommended_next="analysis",
