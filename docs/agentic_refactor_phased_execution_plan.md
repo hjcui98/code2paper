@@ -1970,6 +1970,35 @@ reference-quality complete，Gemma authoring 与人工 review 仍需重点检查
 `tests/baselines/agentic/p4_real_project_blind_status.json`。下一步由具名 reviewer 对 1 个
 success 与 2 个 block 分别检查语义质量、漏写和 false-block；原文仍不升级为代码证据。
 
+### 12.11 真实项目 evidence repair 稳定身份回归（2026-07-18）
+
+对 Domain-Specific Pruning 的 block 反查发现，bounded repair 已经检索到
+`pruning/model_new.py`、`pruning/expert_selection.py` 和 mixed-domain selection，但第二次
+evidence freeze 会重新分配 `C<number>`；analysis bridge 仍沿用旧 snippet/fallback 绑定，
+导致 repair candidate 没有进入当前 mechanism 的 direct evidence。修复后 repair task 以
+claim 文本与当前 mechanism 做保守语义匹配，`C<number>` 只作审计标签，不再作跨 freeze
+身份；author claim 引用也被限制在 MethodEvidence 冻结 ID 集合，越界 ID 清空且保持
+unsupported，禁止 dangling reference 阻塞或进入 prose。
+
+同一真实项目、同一代码+intent、相同预算的无模型端到端回归位于
+`/tmp/code2paper-domain-pruning-repair-deterministic-v2`：`success + complete`，final
+invariant 0 个 blocking failure，5/5 final factual claims 通过，unsupported=0。run summary
+digest 为 `sha256:326ed37a...832458`，text validation digest 为
+`sha256:cf885de1...bb8e33`。全量测试更新为 `431 passed, 2 skipped, 6 subtests passed`。
+
+随后使用宿主机 `gemma4-31b-nvfp4` 做 cache-independent live 复测，结果仍为
+`text_claim_authoring_revision_budget_exhausted`，false completion=0。该次失败不是 repair
+重绑定回归：模型 retrieval proposal 在 repair 前就没有把 `pruning/*.py` 纳入 raw evidence，
+而选择了 `bench_serving.py`、`olmoe.py`、`mixtral.py` 等通用 MoE 文件；14 次 semantic
+verifier 调用后，最终 6/6 candidate claims 被拒绝并安全阻断。run summary digest 为
+`sha256:14dc44bc...ad70fd`，text validation digest 为 `sha256:d03f2b23...db7bb`。
+
+因此下一项机器工程不是放宽 semantic gate，也不是增加 writer 次数，而是给 retrieval
+增加不可被模型 proposal 覆盖的 author-intent lexical seed：诸如 `pruning/`、
+`expert_selection.py`、`model_new.py` 这类与方法词和顶层目录同时匹配的候选必须进入 bounded
+rescan；模型仍可排序和扩展，但不能删除 deterministic seed。完成该项并重新 live 复测前，
+Domain-Specific Pruning 继续计为解释性 trust block，不计为可用完成。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |

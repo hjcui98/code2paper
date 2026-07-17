@@ -115,6 +115,7 @@ def run_phase2_analysis(
         author_markers=author_markers,
         snippet_to_evidence=snippet_to_evidence,
         raw_pack=raw_pack,
+        evidence_repair_focus=evidence_repair_focus,
     )
     analysis = CodeMethodAnalysis.model_validate(analysis_payload)
     alignment = _merge_alignment_with_scan_outputs(

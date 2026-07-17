@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import re
 from pathlib import Path
 from typing import Any
 
@@ -324,6 +325,7 @@ def _build_code_method_analysis_payload(
     author_markers: Any,
     snippet_to_evidence: dict[str, str],
     raw_pack: RawEvidencePack | None,
+    evidence_repair_focus: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     path_to_ids = _build_path_to_evidence_ids(raw_pack)
     all_evidence_ids: list[str] = list(dict.fromkeys(eid for ids in path_to_ids.values() for eid in ids))
@@ -432,6 +434,19 @@ def _build_code_method_analysis_payload(
                 for evidence_id in _lookup_evidence_ids(path_to_ids, path)
             ]
             support_ids = [*scoped_ids, *support_ids]
+        # Evidence repair is claim-driven and may discover a better code span
+        # without changing the analyzer's stale snippet ids. Rebind a repaired
+        # claim to the matching mechanism by claim text, not by the ephemeral
+        # C<number> assigned by a particular evidence freeze.
+        repair_ids = _repair_evidence_ids_for_mechanism(
+            mechanism_text=" ".join(
+                str(value or "")
+                for value in (step.get("name"), step.get("description"))
+            ),
+            evidence_repair_focus=evidence_repair_focus,
+            path_to_ids=path_to_ids,
+        )
+        support_ids = [*repair_ids, *support_ids]
         support_ids = list(dict.fromkeys(support_ids))
         if not support_ids:
             support_ids = list(fallback_evidence)
@@ -486,6 +501,45 @@ def _build_code_method_analysis_payload(
         "candidate_distinguishing_mechanisms": [str(claim.claim) for claim in author_markers.innovation_claims[:30]],
         "evidence_spans": evidence_spans,
         "gaps": [],
+    }
+
+
+def _repair_evidence_ids_for_mechanism(
+    *,
+    mechanism_text: str,
+    evidence_repair_focus: dict[str, Any] | None,
+    path_to_ids: dict[str, list[str]],
+) -> list[str]:
+    if not evidence_repair_focus or not path_to_ids:
+        return []
+    mechanism_tokens = _repair_match_tokens(mechanism_text)
+    if not mechanism_tokens:
+        return []
+    evidence_ids: list[str] = []
+    for target in evidence_repair_focus.get("claim_targets", []):
+        if not isinstance(target, dict):
+            continue
+        query_tokens = _repair_match_tokens(str(target.get("claim_query") or ""))
+        overlap = mechanism_tokens & query_tokens
+        if len(overlap) < 2 or len(overlap) / max(1, min(len(mechanism_tokens), len(query_tokens))) < 0.35:
+            continue
+        for candidate in target.get("candidates", []):
+            if isinstance(candidate, dict):
+                evidence_ids.extend(
+                    _lookup_evidence_ids(path_to_ids, str(candidate.get("path") or ""))
+                )
+    return list(dict.fromkeys(evidence_ids))
+
+
+def _repair_match_tokens(text: str) -> set[str]:
+    stop = {
+        "claim", "compute", "computation", "method", "stage", "using",
+        "from", "into", "with", "this", "that", "then", "only",
+    }
+    return {
+        token
+        for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
+        if len(token) >= 3 and token not in stop and not re.fullmatch(r"c\d+", token)
     }
 
 

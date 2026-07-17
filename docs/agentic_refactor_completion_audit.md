@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `429 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `431 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -24,6 +24,12 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   figure scene/audits/SVG, final TeX, final PDF, and delivery files by SHA-256.
 - Machine-readable digests and current blockers are recorded in
   `tests/baselines/agentic/p4_live_matrix_status.json`.
+- Post-matrix Domain Pruning repair now rebinds focused evidence by claim text across
+  evidence-freeze claim renumbering and drops author-claim references outside frozen
+  MethodEvidence. The deterministic real-project run is trusted complete; the follow-up
+  Gemma run remains a safe block because model retrieval omitted the top-level pruning
+  implementation before repair could run. This is a retrieval-recall gap, not cutover
+  evidence, and is documented in execution-plan section 12.11.
 
 ## Final-design Definition of Done
 

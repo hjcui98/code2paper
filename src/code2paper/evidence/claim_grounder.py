@@ -19,6 +19,7 @@ def build_claim_evidence_map(
     alignment: CodeAlignmentIR | None = None,
 ) -> ClaimEvidenceMap:
     claims: list[ClaimEvidenceItem] = []
+    frozen_evidence_ids = _frozen_evidence_ids(method_evidence)
     claim_index = 1
     for stage in method_evidence.stages:
         for mechanism in stage.mechanisms:
@@ -82,12 +83,17 @@ def build_claim_evidence_map(
 
     if alignment is not None:
         for assessment in alignment.author_alignment.claim_assessments:
+            assessment_evidence_ids = [
+                evidence_id
+                for evidence_id in assessment.evidence_ids
+                if evidence_id in frozen_evidence_ids
+            ]
             claims.append(
                 ClaimEvidenceItem(
                     claim_id=f"C{claim_index}",
                     claim_text=assessment.claim_text,
                     support_status=assessment.support_status,
-                    evidence_ids=assessment.evidence_ids,
+                    evidence_ids=assessment_evidence_ids,
                     mechanism_ids=[],
                     source=f"author_claim:{assessment.support_level.value}",
                     caveats=assessment.caveats
@@ -100,6 +106,26 @@ def build_claim_evidence_map(
             )
             claim_index += 1
     return ClaimEvidenceMap(claims=claims)
+
+
+def _frozen_evidence_ids(method_evidence: MethodEvidence) -> set[str]:
+    found: set[str] = set()
+
+    def collect(value: object) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in {"evidence_id", "span_id"} and isinstance(item, str):
+                    found.add(item)
+                elif key in {"evidence_ids", "evidence_span_ids", "related_evidence_ids"} and isinstance(item, list):
+                    found.update(str(element) for element in item if str(element).strip())
+                else:
+                    collect(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect(item)
+
+    collect(method_evidence.model_dump(mode="json"))
+    return found
 
 
 def _contract_support_status(status: str) -> SupportStatus:
