@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `473 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `474 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -85,6 +85,13 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   contract failure. The rebuilt formal queue contains 28 visible nodes across 16
   successful agentic deliveries; all 25 run reviews remain honestly pending. See
   `docs/agentic_p4_figure_review_inventory_2026-07-18.json`.
+- Final prose review is also exact-inventory checked. The claim, validator,
+  final-trace, and human-review ID sets must be identical; claim text and the
+  frozen validator verdict cannot be deleted, duplicated, renamed, rewritten,
+  or left implicit. The rebuilt formal workspace contains all 53 final atomic
+  claims across 20 agentic records together with the 28 figure elements. It
+  still reports 0 validated and 25 pending reviews. See
+  `docs/agentic_p4_claim_review_inventory_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

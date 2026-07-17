@@ -2,6 +2,9 @@
   "schema_version": "code2paper-agentic-p4-figure-review-inventory-eval/v1",
   "evaluated_at": "2026-07-18",
   "implementation_commit": "daaf1136917e96788b1b503fc8daea2e6035e0bb",
+  "status": "historical_figure_only_record_superseded_by_claim_and_figure_inventory",
+  "superseded_by": "docs/agentic_p4_claim_review_inventory_2026-07-18.json",
+  "source_hash_scope": "Hashes below describe implementation_commit, not the later claim-inventory implementation.",
   "finding": {
     "old_behavior": "An empty BenchmarkRunReviewV2.figures list produced perfect empty-set figure precision and edge-evidence metrics even when a completed run had a rendered method figure.",
     "trust_violation": "Absence of human figure adjudication was counted as perfect semantic and relation review."

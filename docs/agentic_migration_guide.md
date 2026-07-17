@@ -173,6 +173,13 @@ annotation, and group; edges additionally require `direct_relation_evidence`.
 Deleting the inventory or leaving it empty is not a valid shortcut. The command
 refuses to overwrite a non-empty workspace.
 
+The same exact-inventory rule applies to final prose. Every review must retain
+all atomic claim IDs from the digest-pinned `final_text_claims` artifact, with
+byte-identical claim text and an explicit validator verdict equal to the frozen
+`text_evidence_validation` verdict. The claim, validator, final-trace, and
+human-review ID sets must be identical; omitting, duplicating, renaming, or
+rewriting a claim fails validation instead of removing it from human metrics.
+
 After named reviewers fill the JSON files, validate the whole workspace before
 benchmark aggregation:
 

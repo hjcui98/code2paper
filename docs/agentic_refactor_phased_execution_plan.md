@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.9
+版本：2.0
 
 日期：2026-07-18
 
@@ -2188,6 +2188,33 @@ rendered drift 强制为 1；对没有生成图的 safe block 保持中性，不
 
 旧 v2 workspace 的 queue 没有 figure inventory，现已标记 superseded，不能用于完成具名 review 或签发
 cutover。正式 baseline run 本身未改变，named review 仍为 0/25，默认路线继续 hold。
+
+### 12.17 Final atomic claim human-review 完整性门禁（2026-07-18）
+
+继续审计单文件 `--review` 路径时发现，旧 observation extractor 只遍历 reviewer 实际提交的
+`claims`。因此即使 workspace 模板完整，直接传入一个删掉部分 final atomic claims 的 review 文件，
+被删除的最终方法句也不会进入 human semantic precision/recall；这会把“没有审核”误计成“不存在”。
+
+修复提交 `d1f85f2c0f293b639f4758b96d7b568d74fc3815` 后，最终文本的三份权威 inventory——
+`final_text_claims.atomic_claims`、`text_evidence_validation.verdicts` 和
+`final_text_trace.entries`——都必须是带 atomic ID 的 object list，内部 ID 唯一且三者 ID 集合完全
+相等。human review 必须逐项覆盖同一集合；claim text 必须与 final artifact 字节一致，review 中的
+validator verdict 必须显式填写且等于冻结 validator verdict。删除、增加、重复、改名、改写或留空
+任一项均 fail closed。completion-complete run 还必须具有全部三份权威 artifact，且至少包含一条 factual
+claim，不能用空 inventory 绕过评审。
+
+冻结 `9a98c17` 的 queue 已按 claim + figure 双重完整 inventory 重建为
+`/tmp/code2paper-p4-review-queue-9a98c17-claim-figure-inventory.json`，并物化到
+`/tmp/code2paper-p4-review-workspace-9a98c17-v4-claim-figure-inventory`。25 个 entries 中有 20 个
+agentic records，合计 53 条 final atomic claims；16 个成功 agentic deliveries 仍包含 28 个 visible
+figure elements。workspace validation 正确报告 0 validated、25 pending、0 invalid、
+`observations_emitted=false`。定向测试 36 passed，全量测试为
+`474 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_claim_review_inventory_2026-07-18.json`。
+
+旧 v3 figure-only workspace 没有被本次 claim artifact digest 重新验证，现仅作为历史审计证据；完成
+具名评审和签发 cutover 必须使用 v4 claim + figure inventory。正式 baseline run 未改变，默认路线继续
+hold。
 
 ## 13. 代码落点总表
 

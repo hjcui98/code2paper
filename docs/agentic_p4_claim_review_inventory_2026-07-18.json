@@ -1,0 +1,68 @@
+{
+  "schema_version": "code2paper-agentic-p4-claim-review-inventory-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "d1f85f2c0f293b639f4758b96d7b568d74fc3815",
+  "finding": {
+    "old_behavior": "Individual --review files could omit one or more final atomic claims because extraction iterated only the adjudications supplied by the reviewer.",
+    "trust_violation": "A final method sentence could be excluded from human semantic metrics by deleting it from the review file."
+  },
+  "exact_inventory_contract": {
+    "authoritative_artifacts": [
+      "final_text_claims.atomic_claims",
+      "text_evidence_validation.verdicts",
+      "final_text_trace.entries"
+    ],
+    "required_invariants": [
+      "all inventories are lists of objects with atomic claim IDs",
+      "IDs are unique within every inventory",
+      "claim, validator, trace, and review ID sets are identical",
+      "review claim text is identical to the final artifact text",
+      "review verdict is explicit and equals the validator verdict",
+      "completed runs contain all authoritative claim artifacts and at least one factual claim"
+    ],
+    "workspace_bypass_possible": false,
+    "individual_review_bypass_possible": false
+  },
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "run_count": 25,
+    "agentic_records": 20,
+    "agentic_records_with_claim_inventory": 20,
+    "final_atomic_claims": 53,
+    "visible_figure_elements": 28,
+    "unchanged": true
+  },
+  "workspace": {
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17-claim-figure-inventory.json",
+    "queue_sha256": "2f8a224431de2ddf7ca5dbd12db50d908af23228b676904c69cb512a8fe6651b",
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v4-claim-figure-inventory",
+    "manifest_sha256": "4d058273c3d5a7649a8ea4c4facecc4634129183f5fc3397acaefffd9f673ddb",
+    "validation_sha256": "7c110cf414f7f5970218649def5b3121bc072066f8ff76e90028946d0a19ce10",
+    "status": "pending_human_review",
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "observations_emitted": false
+  },
+  "verification": {
+    "targeted": "36 passed",
+    "full_suite": "474 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "review omits a final atomic claim",
+      "review duplicates an atomic claim ID",
+      "review changes final claim text",
+      "review leaves validator verdict blank",
+      "validator and final-claim inventories differ",
+      "final-claim artifact digest drifts before queue construction"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_observation.py": "0852f71b3524ecfd8cb32a9a3121e9f316bf82c0b5a64cbe7789481c74ab5b42",
+    "src/code2paper/agentic/benchmark_review_queue.py": "19ae51f54f8a780ffb49202ca4684a007672f2008dbea10a471f22aceffa8584"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All 53 claim adjudications, 28 figure-element adjudications, and 25 named run reviews remain pending."
+  }
+}
