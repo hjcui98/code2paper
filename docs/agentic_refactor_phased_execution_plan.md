@@ -1,8 +1,8 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：1.7
+版本：1.8
 
-日期：2026-07-17
+日期：2026-07-18
 
 状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 的 25-run 机器矩阵已在 `9a98c17` 冻结完成，后续真实项目修复的 Gemma 复测受服务不可用阻塞，named human review、cutover 与 rollout 尚未完成
 
@@ -2096,6 +2096,35 @@ UniMMAD 未写 `general_to_specific` 的因果性“缓解干扰”叙事，是�
 `127.0.0.1:8000` 仍不可达，post-fix Gemma cache-independent 复测、具名 review 和 rollout
 序列继续 pending，默认路线保持 hold。
 
+### 12.14 Cutover named-review 来源门禁（2026-07-18）
+
+P4 完成度审计发现一个 rollout 授权边界缺口：`code2paper-agentic-benchmark` 允许通过
+`--observations` 直接加载 `BenchmarkObservationV2`。旧 `decide_cutover()` 虽然要求 observation
+provenance 中存在 `reviewer` 和 `reviewed_at`，却无法区分这些字段是由 digest-pinned
+`BenchmarkRunReviewV2` 经真实 artifact 回读产生，还是由 observation JSON 自行声明。因而一个构造的
+observations 文件配合完整 rollout 数字，理论上可能生成 `default_ready`；同样，旧 run CLI 会接受一个
+手写的、字段表面完整的 `CutoverDecisionV2`。这违反“具名人工 review 必须绑定被审产物 digest，且
+默认切换只能消费已验证 review”的 P4 要求。
+
+修复提交 `7ad7535ce8f8fbeac2a61c95074b9d11e2714eb7` 将 cutover decision contract 升级为
+`2.1`，并新增独立的 `NamedReviewEvidenceV2`。该 evidence 不能从 `RolloutEvidenceV2` JSON 自报：
+只有 CLI 的 `--review` 路径在逐份完成 review schema 校验、run summary digest 回读、所有必需 artifact
+digest 回读和 mutation trial digest 回读之后，才按实际 review 文件内容计算 SHA-256 列表并传入
+decision。列表必须覆盖冻结 protocol 的全部 25 个唯一 run identity，digest 必须是唯一且合法的
+SHA-256；否则固定失败码为 `digest_pinned_named_review_artifacts_not_validated`，状态保持
+`hold / legacy`。
+
+`--observations` 仍可用于报告和诊断，但不能授权 shadow 之后的切换。隐式默认路线只接受 schema 2.1、
+`default_ready`、无失败且携带 validated review digests 的 decision；旧 2.0 decision 和缺少 review
+evidence 的手写 decision 均 fail closed 到 legacy。显式 `--mode agentic` 仍作为用户主动 opt-in，
+不等同于修改默认路线。定向 cutover/run CLI 测试为 24 passed，全量测试为
+`459 passed, 2 skipped, 6 subtests passed`。机器记录保存在
+`docs/agentic_cutover_review_gate_2026-07-18.json`。
+
+正式 P4 基线和 review queue 不因本次 gate 修复发生计数变化：25-run matrix 仍冻结在 `9a98c17`，
+具名 review 仍为 0/25，因此新 gate 的当前正确结果仍是 hold。它修复的是“将来 review 完成时如何
+可信地签发切换决策”，不能替代实际人工审核、shadow、opt-in 或 canary。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |
@@ -2357,7 +2386,7 @@ Batch A 不改 authoring/figure 的可信度算法。
 
 - [x] gold/adversarial benchmark 可复现
 - [x] 三个以上真实项目
-- [ ] Gemma 4 每 case 三次
+- [x] Gemma 4 每 case 三次（正式 25-run protocol 中 5 个 case-intent 组合各 3 次）
 - [ ] 所有可信度硬阈值达到
 - [ ] shadow/canary 完成
 - [ ] 默认路线切换有数据支持

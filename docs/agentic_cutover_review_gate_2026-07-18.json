@@ -1,0 +1,54 @@
+{
+  "schema_version": "code2paper-agentic-cutover-review-gate/v1",
+  "implemented_at": "2026-07-18",
+  "implementation_commit": "7ad7535ce8f8fbeac2a61c95074b9d11e2714eb7",
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "run_count": 25,
+    "named_human_reviews_completed": 0,
+    "unchanged": true
+  },
+  "finding": {
+    "old_behavior": "Cutover accepted reviewer/reviewed_at provenance copied directly into BenchmarkObservationV2 JSON and a handwritten default_ready decision could activate the implicit agentic default.",
+    "trust_violation": "Named review attribution was not proven to originate from digest-pinned BenchmarkRunReviewV2 artifact extraction."
+  },
+  "contract": {
+    "cutover_decision_schema": "2.1",
+    "review_evidence_schema": "NamedReviewEvidenceV2",
+    "required_source": "digest_pinned_review_artifacts",
+    "required_unique_review_digests": 25,
+    "failure_code": "digest_pinned_named_review_artifacts_not_validated",
+    "observations_authorize_cutover": false,
+    "old_schema_authorizes_implicit_default": false,
+    "explicit_agentic_mode_remains_opt_in": true
+  },
+  "validated_review_path": [
+    "load BenchmarkRunReviewV2 and reject placeholders or unattributed timestamps",
+    "verify the reviewed run-summary digest",
+    "verify required run artifact digests and repo snapshot identity",
+    "verify every mutation-trial artifact digest",
+    "extract observations from the verified artifacts",
+    "hash each review file and require exact unique protocol coverage",
+    "emit CutoverDecisionV2 2.1 with NamedReviewEvidenceV2"
+  ],
+  "verification": {
+    "targeted": "24 passed",
+    "full_suite": "459 passed, 2 skipped, 6 subtests passed",
+    "covered_bypasses": [
+      "complete self-reported observations plus rollout remain hold/legacy",
+      "benchmark CLI --observations cannot emit an authorizing decision",
+      "default_ready without named-review evidence remains legacy",
+      "duplicate, malformed, or source-inconsistent review digests are rejected"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/cutover.py": "bb8d0d667f77a7a789d2993d6560492c066ac37d7730004851eb829366a46ce2",
+    "src/code2paper/cli/agentic_benchmark.py": "76e0a345263b1c265ab215fd00e94761daf8e343ea654a4c2d91a386b1926d34",
+    "src/code2paper/run_cli.py": "effc89f02db0fa021b9322100b5576fdb1d8ac8a87a2cae4ab06a03bf48af75d"
+  },
+  "current_cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "The formal queue still has zero of 25 named reviews; shadow, opt-in, and canary evidence are also pending."
+  }
+}

@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `455 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `459 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -61,6 +61,13 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   The digest-bound machine record is
   `docs/agentic_real_project_operator_eval_2026-07-18.json`; it is follow-up evidence,
   not a rewrite of the formal P4 baseline.
+- Cutover decisions now use schema 2.1 and carry invocation-derived
+  `NamedReviewEvidenceV2`. Self-reported `--observations` remain valid report inputs but
+  cannot authorize cutover; only review files whose run, trust-artifact, and mutation
+  digests were actually re-read can contribute the 25 unique review digests required by
+  the frozen protocol. The implicit default route also rejects old 2.0 or handwritten
+  `default_ready` decisions without that evidence. The machine record is
+  `docs/agentic_cutover_review_gate_2026-07-18.json`.
 
 ## Final-design Definition of Done
 
