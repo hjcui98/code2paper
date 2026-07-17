@@ -61,6 +61,7 @@ def materialize_review_workspace(queue_path: str | Path, out_root: str | Path) -
             "identity": list(identity),
             "review_path": str(review_path.relative_to(root)),
             "context_path": str(context_path.relative_to(root)),
+            "context_digest": _digest_file(context_path),
             "template_digest": _digest_json(template),
         })
     manifest = {
@@ -156,6 +157,22 @@ def validate_review_workspace(
         if queue_entry is None:
             invalid.append({"identity": list(identity), "failures": ["review_identity_not_in_queue"]})
             continue
+        failures: list[str] = []
+        try:
+            context_path = _contained_path(root, item.get("context_path"), "contexts")
+        except ValueError as exc:
+            failures.append(str(exc).replace("review_path", "context_path"))
+        else:
+            if not context_path.is_file():
+                failures.append("review_context_file_missing")
+            else:
+                expected_context_digest = _digest_text(_review_context(queue_entry))
+                if item.get("context_digest") != expected_context_digest:
+                    failures.append("workspace_context_digest_mismatch")
+                if _digest_file(context_path) != expected_context_digest:
+                    failures.append("review_context_content_drift")
+        if item.get("template_digest") != _digest_json(queue_entry["review_template"]):
+            failures.append("workspace_template_digest_mismatch")
         try:
             review_path = _contained_path(root, item.get("review_path"), "reviews")
         except ValueError as exc:
@@ -169,12 +186,13 @@ def validate_review_workspace(
         except (OSError, json.JSONDecodeError) as exc:
             invalid.append({"identity": list(identity), "failures": [f"review_json_invalid:{exc}"]})
             continue
+        failures.extend(_immutable_binding_failures(queue_entry["review_template"], raw_review))
+        if failures:
+            invalid.append({"identity": list(identity), "review_path": str(review_path), "failures": failures})
+            continue
         if _has_human_placeholders(raw_review):
             pending.append({"identity": list(identity), "review_path": str(review_path)})
             continue
-        failures = _immutable_binding_failures(queue_entry["review_template"], raw_review)
-        if item.get("template_digest") != _digest_json(queue_entry["review_template"]):
-            failures.append("workspace_template_digest_mismatch")
         review: BenchmarkRunReviewV2 | None = None
         if not failures:
             try:
@@ -475,6 +493,10 @@ def _load_json(path: Path) -> dict[str, Any]:
 def _digest_json(value: object) -> str:
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def _digest_text(value: str) -> str:
+    return "sha256:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _digest_file(path: Path) -> str:

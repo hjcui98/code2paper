@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from code2paper.agentic.benchmark_review_workspace import (
+    _review_context,
     materialize_review_workspace,
     validate_review_workspace,
 )
@@ -135,6 +136,7 @@ def test_materialize_creates_one_non_overwriting_review_and_context(tmp_path: Pa
 
     assert manifest["expected_reviews"] == 1
     assert manifest["status"] == "human_review_required"
+    assert manifest["entries"][0]["context_digest"].startswith("sha256:")
     assert review["reviewer"] == "__REQUIRED_NAMED_HUMAN__"
     assert "A directly grounded claim" in context
     assert "Gold code evidence spans" in context
@@ -189,6 +191,31 @@ def test_validate_reports_placeholders_as_pending_without_emitting_observations(
     assert report["invalid_review_count"] == 0
     assert not report["hard_gate_passed"]
     assert observations == []
+
+
+def test_validate_rejects_context_or_template_drift_before_human_review(tmp_path: Path) -> None:
+    queue = _write_queue(tmp_path)
+    workspace = tmp_path / "workspace"
+    manifest_path = materialize_review_workspace(queue, workspace)
+    context_path = next((workspace / "contexts").glob("*.md"))
+    context_path.write_text("tampered reviewer context", encoding="utf-8")
+
+    report, observations = validate_review_workspace(queue, workspace, _dataset(), _protocol())
+
+    assert report["status"] == "failed"
+    assert "review_context_content_drift" in report["invalid_reviews"][0]["failures"]
+    assert observations == []
+
+    context_path.write_text(
+        _review_context(_queue()["entries"][0]),
+        encoding="utf-8",
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["entries"][0]["template_digest"] = "sha256:" + "f" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    report, _ = validate_review_workspace(queue, workspace, _dataset(), _protocol())
+    assert "workspace_template_digest_mismatch" in report["invalid_reviews"][0]["failures"]
 
 
 def test_validate_extracts_only_complete_immutable_reviews(tmp_path: Path) -> None:
