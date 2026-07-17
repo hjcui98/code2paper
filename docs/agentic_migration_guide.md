@@ -179,6 +179,13 @@ byte-identical claim text and an explicit validator verdict equal to the frozen
 `text_evidence_validation` verdict. The claim, validator, final-trace, and
 human-review ID sets must be identical; omitting, duplicating, renaming, or
 rewriting a claim fails validation instead of removing it from human metrics.
+For each retained claim, the reviewer must also set
+`direct_evidence_support` after checking the frozen evidence snapshot and code
+spans. A gold-claim mapping alone is not a semantic-precision hit: the cited
+direct code evidence must independently support the exact final sentence.
+The queue, manifest, and every context file are digest-bound to the frozen gold
+dataset and protocol; context or template drift fails even while reviewer/name
+placeholders are still pending.
 
 After named reviewers fill the JSON files, validate the whole workspace before
 benchmark aggregation:

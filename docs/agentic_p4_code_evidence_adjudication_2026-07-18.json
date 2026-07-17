@@ -1,0 +1,84 @@
+{
+  "schema_version": "code2paper-agentic-p4-code-evidence-adjudication-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commits": [
+    "069e1180cd021f4e43825108e13c3487442b834b",
+    "6610aaa6c1857dc929a0d52ff8c6c964ff3abf68"
+  ],
+  "findings": [
+    {
+      "old_behavior": "A valid gold-claim mapping counted as a correct semantic positive without a separate human decision that the cited direct code evidence supported the exact final sentence.",
+      "trust_violation": "Semantically similar prose bound to unrelated code could receive full atomic-claim semantic precision."
+    },
+    {
+      "old_behavior": "Reviewer context files were not digest-bound, and placeholder reviews bypassed template and immutable-binding checks until a reviewer name was entered.",
+      "trust_violation": "A reviewer could work from drifted context while workspace validation reported only pending_human_review."
+    }
+  ],
+  "code_evidence_contract": {
+    "required_human_decision": "direct_evidence_support",
+    "semantic_hit_requires": [
+      "validator verdict is supported or caveated",
+      "human gold-claim mapping resolves to the frozen gold dataset",
+      "human direct_evidence_support is explicitly true",
+      "validator artifact contains at least one direct evidence ID"
+    ],
+    "validator_self_assertion_sufficient": false,
+    "missing_decision_fails_closed": true
+  },
+  "review_binding_contract": {
+    "protocol_gold_digest_bound": true,
+    "gold_code_spans_in_context": true,
+    "frozen_repo_root_in_context": true,
+    "evidence_snapshot_and_final_trace_in_context": true,
+    "context_digest_per_entry": true,
+    "binding_checks_before_placeholder_classification": true
+  },
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "run_count": 25,
+    "agentic_records": 20,
+    "final_atomic_claims": 53,
+    "visible_figure_elements": 28,
+    "canonical_gold_digest": "sha256:c88d55e9ffdbd5f68772634ff672ffce8044446b9a855ba35676201d2f2913e9",
+    "unchanged": true
+  },
+  "workspace": {
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17-code-evidence-adjudication.json",
+    "queue_sha256": "76fceb5f49f7e1a7bbb285955d81aa823bf2dfeb3c61468b10e65e32b83d5d69",
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v7-code-evidence-adjudication",
+    "manifest_sha256": "abedbcd872d9b4ad2f75cd35a896e319351b929d18866ac794f6cf00bc39aeb8",
+    "validation_sha256": "351b375a26f4a86c8688d3be4b0bfef583803bd464ca830679336c8d0a89f754",
+    "context_digests_present": 25,
+    "direct_evidence_decisions_pending": 53,
+    "status": "pending_human_review",
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "observations_emitted": false
+  },
+  "verification": {
+    "targeted": "39 passed",
+    "full_suite": "477 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "gold mapping with human-rejected direct code evidence",
+      "affirmative evidence decision with no validator direct evidence IDs",
+      "missing per-claim direct evidence decision",
+      "gold dataset digest differs from frozen protocol",
+      "gold claim references an absent code evidence span",
+      "reviewer context content drifts before reviewer placeholders are filled",
+      "workspace template digest drifts before reviewer placeholders are filled"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_observation.py": "e0494d37924e3815dac68902b257a636105294b70a8de31fb443742ef869b737",
+    "src/code2paper/agentic/benchmark_v2.py": "a1cfa6d262c12e6df65857a8cbf135eed437becbd7d028e709ce76018a27bf40",
+    "src/code2paper/agentic/benchmark_review_queue.py": "82d30df08b5fd2170f3f34f0256114420139e85a4a4b5812318d843afa901b53",
+    "src/code2paper/agentic/benchmark_review_workspace.py": "fcbc87118170e90bd742337469ca3db1fa43d03770f439d018c8ce20584aff10"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All 53 direct-code-evidence decisions, 28 figure-element adjudications, and 25 named run reviews remain pending."
+  }
+}

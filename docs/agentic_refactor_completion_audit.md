@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `474 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `477 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -92,6 +92,14 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   claims across 20 agentic records together with the 28 figure elements. It
   still reports 0 validated and 25 pending reviews. See
   `docs/agentic_p4_claim_review_inventory_2026-07-18.json`.
+- Human semantic precision now requires two independent decisions: a valid
+  gold-claim mapping and explicit confirmation that the frozen direct code
+  evidence supports the exact final claim. The queue is bound to the protocol's
+  canonical gold digest and exposes gold code spans plus final evidence/trace
+  artifacts. All 25 reviewer contexts have validated digests, and context,
+  template, or immutable-binding drift fails before placeholder handling. The
+  53 evidence-support decisions remain pending; see
+  `docs/agentic_p4_code_evidence_adjudication_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

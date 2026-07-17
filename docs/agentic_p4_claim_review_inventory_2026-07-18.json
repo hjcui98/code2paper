@@ -2,6 +2,9 @@
   "schema_version": "code2paper-agentic-p4-claim-review-inventory-eval/v1",
   "evaluated_at": "2026-07-18",
   "implementation_commit": "d1f85f2c0f293b639f4758b96d7b568d74fc3815",
+  "status": "historical_claim_inventory_record_superseded_by_direct_code_evidence_adjudication",
+  "superseded_by": "docs/agentic_p4_code_evidence_adjudication_2026-07-18.json",
+  "source_hash_scope": "Hashes below describe implementation_commit, before direct-evidence and context-digest review gates.",
   "finding": {
     "old_behavior": "Individual --review files could omit one or more final atomic claims because extraction iterated only the adjudications supplied by the reviewer.",
     "trust_violation": "A final method sentence could be excluded from human semantic metrics by deleting it from the review file."

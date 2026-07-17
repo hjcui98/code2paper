@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：2.0
+版本：2.1
 
 日期：2026-07-18
 
@@ -2214,6 +2214,39 @@ figure elements。workspace validation 正确报告 0 validated、25 pending、0
 
 旧 v3 figure-only workspace 没有被本次 claim artifact digest 重新验证，现仅作为历史审计证据；完成
 具名评审和签发 cutover 必须使用 v4 claim + figure inventory。正式 baseline run 未改变，默认路线继续
+hold。
+
+### 12.18 Claim-to-code human semantic gate 与 review context 绑定（2026-07-18）
+
+对 12.17 的人审聚合继续做反向审计时发现，旧 `atomic_claim_semantic_precision` 只要求 reviewer 把
+final claim 映射到一个合法 gold claim ID；它没有要求 reviewer 独立确认 validator 所列
+`direct_evidence_ids` 是否真的语义支持该句。因此“句子与 gold 语义接近、引用代码却无关”的结果仍可
+被计为正确 positive。这与“每个最终 atomic claim 必须回到 direct code evidence”的总目标不一致。
+
+实现提交 `069e1180cd021f4e43825108e13c3487442b834b` 增加逐 claim 的
+`direct_evidence_support` 三态人审字段。每条 final claim 必须显式裁决；选择 true 时 validator artifact
+必须确实包含 direct evidence IDs。benchmark 只有在 gold claim 语义映射和 direct-evidence 人审同时为
+真时，才把该 positive 计入 semantic precision/recall。缺省字段、空 direct evidence 上的肯定裁决、
+或人审否定均 fail closed/计为未命中，不能由 validator 自报 supported 代替人工代码证据判断。
+
+同一提交还把 protocol 的 canonical gold digest、gold code evidence spans 和 frozen repo root 写入
+review queue；workspace context 现在直接列出 evidence snapshot/index、final claims、final trace、
+validator 和 gold spans。后续提交 `6610aaa6c1857dc929a0d52ff8c6c964ff3abf68` 为每个 context 增加摘要，
+并把 context、template 和 immutable review binding 的校验移到 placeholder 判定之前。因此人工评审尚未
+开始时，只要上下文或模板发生漂移，就立即返回 failed，而不是误报普通 pending。
+
+冻结 `9a98c17` 的新 queue 为
+`/tmp/code2paper-p4-review-queue-9a98c17-code-evidence-adjudication.json`，canonical gold digest 为
+`sha256:c88d55e9ffdbd5f68772634ff672ffce8044446b9a855ba35676201d2f2913e9`；最终 workspace 为
+`/tmp/code2paper-p4-review-workspace-9a98c17-v7-code-evidence-adjudication`。它保留 25 entries、20 个
+agentic records、53 条 final atomic claims、28 个 visible figure elements，且 25/25 context digests
+齐全。当前 53 个 direct-evidence decisions 和全部具名评审仍待人工填写，validation 为 0 validated、
+25 pending、0 invalid、`observations_emitted=false`。定向测试 39 passed，全量测试为
+`477 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_code_evidence_adjudication_2026-07-18.json`。
+
+旧 v4 claim + figure workspace 没有 direct-evidence 人审字段、gold digest 和 context digest，现仅保留为
+历史审计证据；不能用于完成 named review 或授权 cutover。正式 baseline run 未改变，默认路线继续
 hold。
 
 ## 13. 代码落点总表
