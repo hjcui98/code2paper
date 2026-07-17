@@ -27,6 +27,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Author marker mapping; repeat for every case/intent.",
     )
     parser.add_argument("--model-id", required=True)
+    parser.add_argument(
+        "--llm-base-url", required=True,
+        help="Credential-free OpenAI-compatible base URL frozen into every model-backed run.",
+    )
     parser.add_argument("--capability-profile", required=True)
     parser.add_argument("--capability-profile-digest", required=True)
     args = parser.parse_args(argv)
@@ -54,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         author_markers=authors,
         workspace_commit=commit,
         model_id=args.model_id,
+        llm_base_url=args.llm_base_url,
         capability_profile_path=args.capability_profile,
         capability_profile_digest=args.capability_profile_digest,
     )

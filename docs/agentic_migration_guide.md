@@ -71,8 +71,9 @@ The curated dataset is
 `tests/fixtures/benchmark_v2/gold_adversarial_v1.json`. It contains a toy case,
 FastGS, Spatial-SSRL, and MOS, exact code-excerpt digests, adversarial mutations,
 and paired FastGS intents. Freeze the 25-run protocol before execution. Every
-Gemma spec sets `CODE2PAPER_LLM_CACHE=0`, and every variant for a case/intent is
-bound to the same repository snapshot:
+Gemma spec sets `CODE2PAPER_LLM_CACHE=0`; every model-backed spec also freezes a
+credential-free OpenAI-compatible base URL and capability profile. Every variant
+for a case/intent is bound to the same repository snapshot:
 
 ```bash
 code2paper-agentic-benchmark-protocol \
@@ -82,6 +83,7 @@ code2paper-agentic-benchmark-protocol \
   --out-root /tmp/code2paper-p4-matrix \
   --out /tmp/code2paper-p4-protocol.json \
   --model-id gemma4-31b-nvfp4 \
+  --llm-base-url http://127.0.0.1:8000 \
   --capability-profile tests/baselines/agentic/gemma4_mtp_vllm.profile.json \
   --capability-profile-digest sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7 \
   --author toy_train=tests/fixtures/toy_train_project_author_markers.yaml \

@@ -305,6 +305,7 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
         dataset, workspace_root=ROOT, out_root=tmp_path, author_markers=authors,
         code_root=ROOT,
         workspace_commit="abc123", model_id="gemma4-31b-nvfp4",
+        llm_base_url="http://127.0.0.1:8000",
         capability_profile_path=ROOT / "tests/baselines/agentic/gemma4_mtp_vllm.profile.json",
         capability_profile_digest="sha256:" + hashlib.sha256(
             (ROOT / "tests/baselines/agentic/gemma4_mtp_vllm.profile.json").read_bytes()
@@ -317,6 +318,10 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
         item.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") == item.capability_profile_path
         for item in protocol.specs if item.variant != "agentic_deterministic"
     )
+    assert all(
+        item.environment.get("CODE2PAPER_OPENAI_BASE_URL") == "http://127.0.0.1:8000"
+        for item in protocol.specs if item.variant != "agentic_deterministic"
+    )
     fastgs_training = [item for item in protocol.specs if item.case_id == "fastgs" and item.intent_id == "training_mechanics"]
     assert len({item.repo_snapshot_id for item in fastgs_training}) == 1
     assert {item.repeat_index for item in fastgs_training if item.variant == "agentic_gemma4_mtp"} == {1, 2, 3}
@@ -325,6 +330,12 @@ def test_protocol_freezes_complete_same_snapshot_cache_disabled_matrix(tmp_path:
     assert _capability_profile_failure(model_spec.model_copy(update={
         "capability_profile_digest": "sha256:stale",
     })) == "capability_profile_drift_before_run"
+    assert _capability_profile_failure(model_spec.model_copy(update={
+        "environment": {
+            **model_spec.environment,
+            "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:9000",
+        },
+    })) == "llm_base_url_environment_mismatch"
 
     observations = [item.observation for item in _complete_runs(dataset)]
     for observation, spec in zip(observations, protocol.specs, strict=True):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -27,6 +28,7 @@ class BenchmarkRunSpecV2(ProtocolModel):
     repo_snapshot_id: str
     repo_tree_hash: str
     model_id: str = ""
+    llm_base_url: str = ""
     capability_profile_path: str = ""
     capability_profile_digest: str = ""
     prompt_version: str = "agentic-graph-v3"
@@ -58,6 +60,15 @@ class BenchmarkProtocolV2(ProtocolModel):
             if spec.variant == "agentic_gemma4_mtp" and spec.environment.get("CODE2PAPER_LLM_CACHE") != "0":
                 raise ValueError("Gemma benchmark runs must disable the LLM cache")
             if spec.variant in {"fixed_legacy", "agentic_gemma4_mtp"}:
+                if not spec.llm_base_url:
+                    raise ValueError("model-backed benchmark runs require a frozen LLM base URL")
+                parsed_url = urlsplit(spec.llm_base_url)
+                if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
+                    raise ValueError("model-backed benchmark LLM base URL must be an absolute HTTP(S) URL")
+                if parsed_url.username or parsed_url.password or parsed_url.query or parsed_url.fragment:
+                    raise ValueError("model-backed benchmark LLM base URL must not contain credentials, query, or fragment")
+                if spec.environment.get("CODE2PAPER_OPENAI_BASE_URL") != spec.llm_base_url:
+                    raise ValueError("model-backed benchmark environment must load the frozen LLM base URL")
                 if not spec.capability_profile_path or not spec.capability_profile_digest:
                     raise ValueError("model-backed benchmark runs require a frozen capability profile")
                 if spec.environment.get("CODE2PAPER_LLM_CAPABILITY_PROFILE") != spec.capability_profile_path:
@@ -84,6 +95,7 @@ def build_benchmark_protocol_v2(
     author_markers: dict[tuple[str, str], str | Path],
     workspace_commit: str,
     model_id: str,
+    llm_base_url: str,
     capability_profile_digest: str,
     capability_profile_path: str | Path,
     budgets: dict[str, int] | None = None,
@@ -97,6 +109,12 @@ def build_benchmark_protocol_v2(
     actual_profile_digest = "sha256:" + hashlib.sha256(profile_path.read_bytes()).hexdigest()
     if capability_profile_digest != actual_profile_digest:
         raise ValueError("capability profile digest does not match the frozen profile file")
+    normalized_base_url = llm_base_url.strip().rstrip("/")
+    parsed_url = urlsplit(normalized_base_url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
+        raise ValueError("LLM base URL must be an absolute HTTP(S) URL")
+    if parsed_url.username or parsed_url.password or parsed_url.query or parsed_url.fragment:
+        raise ValueError("LLM base URL must not contain credentials, query, or fragment")
     effective_budgets = budgets or {
         "retrieval": 1, "evidence_revision": 1, "authoring_revision": 1,
         "figure_revision": 1, "semantic_verifier_calls": 3,
@@ -132,6 +150,7 @@ def build_benchmark_protocol_v2(
                         repo_snapshot_id=snapshot.snapshot_id,
                         repo_tree_hash=snapshot.project_tree_hash,
                         model_id=model_id if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
+                        llm_base_url=normalized_base_url if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         capability_profile_path=str(profile_path) if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         capability_profile_digest=capability_profile_digest if variant in {"fixed_legacy", "agentic_gemma4_mtp"} else "",
                         budgets=effective_budgets,
@@ -139,7 +158,10 @@ def build_benchmark_protocol_v2(
                             "CODE2PAPER_LLM_CACHE": "0",
                             "PYTHONPATH": str(clean_code_root / "src"),
                             **(
-                                {"CODE2PAPER_LLM_CAPABILITY_PROFILE": str(profile_path)}
+                                {
+                                    "CODE2PAPER_LLM_CAPABILITY_PROFILE": str(profile_path),
+                                    "CODE2PAPER_OPENAI_BASE_URL": normalized_base_url,
+                                }
                                 if variant in {"fixed_legacy", "agentic_gemma4_mtp"}
                                 else {}
                             ),

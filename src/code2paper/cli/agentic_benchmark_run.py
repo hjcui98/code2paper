@@ -98,6 +98,10 @@ def _blocked_record(spec, reason: str) -> dict:
 def _capability_profile_failure(spec) -> str:
     if spec.variant not in {"fixed_legacy", "agentic_gemma4_mtp"}:
         return ""
+    if not spec.llm_base_url:
+        return "llm_base_url_missing_before_run"
+    if spec.environment.get("CODE2PAPER_OPENAI_BASE_URL") != spec.llm_base_url:
+        return "llm_base_url_environment_mismatch"
     path = Path(spec.capability_profile_path)
     if not path.is_file():
         return "capability_profile_missing_before_run"
