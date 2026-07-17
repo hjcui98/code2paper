@@ -14,7 +14,12 @@ from code2paper.agentic.benchmark_v2 import (
     load_benchmark_dataset_v2,
     validate_gold_evidence,
 )
-from code2paper.agentic.cutover import LegacyTrustContractV1, RolloutEvidenceV2, decide_cutover
+from code2paper.agentic.cutover import (
+    LegacyTrustContractV1,
+    NamedReviewEvidenceV2,
+    RolloutEvidenceV2,
+    decide_cutover,
+)
 from code2paper.agentic.benchmark_observation import (
     BenchmarkRunReviewV2,
     ClaimAdjudicationV2,
@@ -29,6 +34,7 @@ from code2paper.agentic.benchmark_protocol import (
 from code2paper.agentic.adversarial_campaign import run_adversarial_campaign_v2
 from code2paper.agentic.legacy_v2_audit import audit_legacy_run_against_gold_v2
 from code2paper.cli.agentic_benchmark_run import _capability_profile_failure
+from code2paper.cli.agentic_benchmark import main as benchmark_main
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,6 +103,14 @@ def _complete_runs(dataset):
     return runs
 
 
+def _validated_reviews(dataset) -> NamedReviewEvidenceV2:
+    count = sum((2 + 3) * max(1, len(case.intents)) for case in dataset.cases)
+    return NamedReviewEvidenceV2(
+        source="digest_pinned_review_artifacts",
+        review_artifact_digests=[f"sha256:{index:064x}" for index in range(1, count + 1)],
+    )
+
+
 def test_gold_dataset_has_exact_current_code_evidence_and_required_scope() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
 
@@ -150,6 +164,21 @@ def test_named_review_schema_rejects_queue_placeholders_and_naive_timestamps() -
             "reviewer": "Ada Reviewer",
             "reviewed_at": "2026-07-17T12:00:00",
         })
+
+
+def test_named_review_cutover_evidence_rejects_self_reported_or_malformed_digests() -> None:
+    with pytest.raises(ValueError, match="require digest_pinned"):
+        NamedReviewEvidenceV2(source="none", review_artifact_digests=["sha256:" + "a" * 64])
+    with pytest.raises(ValueError, match="must be unique"):
+        NamedReviewEvidenceV2(
+            source="digest_pinned_review_artifacts",
+            review_artifact_digests=["sha256:" + "a" * 64, "sha256:" + "a" * 64],
+        )
+    with pytest.raises(ValueError, match="must be sha256"):
+        NamedReviewEvidenceV2(
+            source="digest_pinned_review_artifacts",
+            review_artifact_digests=["sha256:not-a-real-digest"],
+        )
 
 
 def test_cutover_fails_closed_when_repeats_or_rollout_evidence_are_missing() -> None:
@@ -218,19 +247,85 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
         legacy_contract_marked=True, migration_guide_complete=True,
     )
 
-    shadow = decide_cutover(dataset, runs, base)
-    opt_in = decide_cutover(dataset, runs, base.model_copy(update={"shadow_cases": 4, "shadow_reviewed": True}))
+    reviews = _validated_reviews(dataset)
+    shadow = decide_cutover(dataset, runs, base, named_review_evidence=reviews)
+    opt_in = decide_cutover(
+        dataset, runs, base.model_copy(update={"shadow_cases": 4, "shadow_reviewed": True}),
+        named_review_evidence=reviews,
+    )
     canary = decide_cutover(dataset, runs, base.model_copy(update={
         "shadow_cases": 4, "shadow_reviewed": True, "opt_in_cases": 4,
-    }))
+    }), named_review_evidence=reviews)
     default = decide_cutover(dataset, runs, base.model_copy(update={
         "shadow_cases": 4, "shadow_reviewed": True, "opt_in_cases": 4, "canary_cases": 4,
-    }))
+    }), named_review_evidence=reviews)
 
     assert shadow.status == "shadow_ready" and shadow.default_mode == "legacy"
     assert opt_in.status == "opt_in_ready" and opt_in.default_mode == "legacy"
     assert canary.status == "canary_ready" and canary.default_mode == "legacy"
     assert default.status == "default_ready" and default.default_mode == "agentic"
+
+
+def test_cutover_cannot_authorize_self_reported_observations_without_review_artifacts() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    runs = _complete_runs(dataset)
+    rollout = RolloutEvidenceV2(
+        protocol_validated=True,
+        team_false_block_threshold=0.0,
+        shadow_cases=4,
+        shadow_reviewed=True,
+        opt_in_cases=4,
+        canary_cases=4,
+        legacy_contract_marked=True,
+        migration_guide_complete=True,
+    )
+
+    decision = decide_cutover(dataset, runs, rollout)
+
+    assert decision.status == "hold"
+    assert decision.default_mode == "legacy"
+    assert "digest_pinned_named_review_artifacts_not_validated" in decision.failures
+
+
+def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_path: Path) -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    observations_path = tmp_path / "observations.json"
+    observations_path.write_text(
+        json.dumps([item.observation.model_dump(mode="json") for item in _complete_runs(dataset)]),
+        encoding="utf-8",
+    )
+    rollout_path = tmp_path / "rollout.json"
+    rollout_path.write_text(
+        RolloutEvidenceV2(
+            protocol_validated=True,
+            team_false_block_threshold=0.0,
+            shadow_cases=4,
+            shadow_reviewed=True,
+            opt_in_cases=4,
+            canary_cases=4,
+            legacy_contract_marked=True,
+            migration_guide_complete=True,
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    decision_path = tmp_path / "cutover.json"
+
+    exit_code = benchmark_main([
+        "--gold", str(DATASET_PATH),
+        "--observations", str(observations_path),
+        "--workspace-root", str(ROOT),
+        "--rollout", str(rollout_path),
+        "--out", str(tmp_path / "report.json"),
+        "--cutover-out", str(decision_path),
+    ])
+    decision = json.loads(decision_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert decision["schema_version"] == "2.1"
+    assert decision["status"] == "hold"
+    assert decision["default_mode"] == "legacy"
+    assert decision["named_review_evidence"]["source"] == "none"
+    assert "digest_pinned_named_review_artifacts_not_validated" in decision["failures"]
 
 
 def test_cutover_requires_author_intent_adherence_and_paired_organization_change() -> None:

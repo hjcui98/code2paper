@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--cutover-decision", default="",
-        help="CutoverDecisionV2 JSON. Only a clean default_ready decision may change the implicit default to agentic.",
+        help="CutoverDecisionV2 v2.1 JSON. Only a clean default_ready decision with digest-pinned named-review evidence may change the implicit default to agentic.",
     )
     parser.add_argument("--run-id", default="", help="Stable agentic run identity.")
     parser.add_argument("--max-retrieval-rounds", type=int, default=0)
@@ -581,13 +581,20 @@ def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, d
     except (OSError, ValueError):
         return "legacy", activation
     authorized = (
-        decision.status == "default_ready"
+        decision.schema_version == "2.1"
+        and decision.status == "default_ready"
         and decision.default_mode == "agentic"
         and decision.hard_gates_passed
         and not decision.failures
+        and decision.named_review_evidence.source == "digest_pinned_review_artifacts"
+        and bool(decision.named_review_evidence.review_artifact_digests)
+        and len(set(decision.named_review_evidence.review_artifact_digests))
+        == len(decision.named_review_evidence.review_artifact_digests)
     )
     activation.update({
         "decision_status": decision.status,
+        "named_review_evidence_source": decision.named_review_evidence.source,
+        "validated_review_count": len(decision.named_review_evidence.review_artifact_digests),
         "authorized": authorized,
         "resolved_mode": "agentic" if authorized else "legacy",
         "reason": "default_ready_cutover_authorized" if authorized else "cutover_decision_not_default_ready",

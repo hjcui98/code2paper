@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -20,7 +21,7 @@ from code2paper.agentic.benchmark_v2 import (
     write_benchmark_report_v2,
 )
 from code2paper.agentic.benchmark_observation import extract_benchmark_observation_v2, load_benchmark_run_review_v2
-from code2paper.agentic.cutover import RolloutEvidenceV2, decide_cutover
+from code2paper.agentic.cutover import NamedReviewEvidenceV2, RolloutEvidenceV2, decide_cutover
 from code2paper.agentic.tool_runtime import atomic_write_json
 from code2paper.agentic.benchmark_protocol import load_benchmark_protocol_v2, validate_protocol_observations_v2
 
@@ -40,10 +41,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("reports", nargs="*", help="Evaluation report paths using variant=agentic and path stem labels.")
     parser.add_argument("--out", required=True, help="Output path for agentic_benchmark_report.json")
     parser.add_argument("--gold", default="", help="P4 BenchmarkDatasetV2 gold/adversarial JSON.")
-    parser.add_argument("--observations", default="", help="P4 BenchmarkObservationV2 JSON list.")
+    parser.add_argument(
+        "--observations",
+        default="",
+        help="P4 BenchmarkObservationV2 JSON list for reporting; this input cannot authorize cutover.",
+    )
     parser.add_argument(
         "--review", action="append", default=[],
-        help="Digest-pinned BenchmarkRunReviewV2 JSON; repeat to extract observations from real artifacts.",
+        help="Digest-pinned BenchmarkRunReviewV2 JSON; repeat for every run. Required to authorize cutover beyond hold.",
     )
     parser.add_argument("--observations-out", default="", help="Write artifact-extracted observations to this JSON path.")
     parser.add_argument("--workspace-root", default=".", help="Root used to verify gold code excerpts.")
@@ -62,10 +67,18 @@ def main(argv: list[str] | None = None) -> int:
         if gold_failures:
             print(f"[code2paper-agentic-benchmark] error={gold_failures[0]}", file=sys.stderr)
             return 2
+        review_evidence = NamedReviewEvidenceV2()
         if args.review:
             case_by_id = {item.case_id: item for item in dataset.cases}
             reviews = [load_benchmark_run_review_v2(path) for path in args.review]
             observations = [extract_benchmark_observation_v2(case_by_id[item.case_id], item) for item in reviews]
+            review_evidence = NamedReviewEvidenceV2(
+                source="digest_pinned_review_artifacts",
+                review_artifact_digests=[
+                    "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                    for path in args.review
+                ],
+            )
             if args.observations_out:
                 atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
         else:
@@ -84,7 +97,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.rollout:
             rollout = RolloutEvidenceV2.model_validate_json(Path(args.rollout).read_text(encoding="utf-8"))
         rollout = rollout.model_copy(update={"protocol_validated": protocol_validated})
-        decision = decide_cutover(dataset, report.evaluated_runs, rollout)
+        decision = decide_cutover(
+            dataset,
+            report.evaluated_runs,
+            rollout,
+            named_review_evidence=review_evidence,
+        )
         if args.cutover_out:
             atomic_write_json(args.cutover_out, decision)
         print(f"[code2paper-agentic-benchmark] report={output}")

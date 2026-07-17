@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.benchmark_v2 import BenchmarkDatasetV2, EvaluatedBenchmarkRunV2
 
@@ -38,14 +38,39 @@ class RolloutEvidenceV2(CutoverModel):
     legacy_contract_marked: bool = False
 
 
+class NamedReviewEvidenceV2(CutoverModel):
+    """Invocation-derived proof that observations came from validated review files.
+
+    This evidence is deliberately separate from ``RolloutEvidenceV2`` so a rollout JSON
+    cannot self-assert that named reviews were loaded and digest checked.
+    """
+
+    source: Literal["none", "digest_pinned_review_artifacts"] = "none"
+    review_artifact_digests: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _review_artifacts_are_consistent(self) -> "NamedReviewEvidenceV2":
+        digests = self.review_artifact_digests
+        if self.source == "none" and digests:
+            raise ValueError("review digests require digest_pinned_review_artifacts source")
+        if self.source == "digest_pinned_review_artifacts" and not digests:
+            raise ValueError("digest-pinned review source requires review artifact digests")
+        if len(set(digests)) != len(digests):
+            raise ValueError("review artifact digests must be unique")
+        if any(not _is_sha256_digest(item) for item in digests):
+            raise ValueError("review artifact digests must be sha256 values")
+        return self
+
+
 class CutoverDecisionV2(CutoverModel):
-    schema_version: str = "2.0"
+    schema_version: str = "2.1"
     status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"]
     default_mode: Literal["legacy", "agentic"]
     hard_gates_passed: bool
     worst_case_metrics: dict[str, float] = Field(default_factory=dict)
     failures: list[str] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
+    named_review_evidence: NamedReviewEvidenceV2 = Field(default_factory=NamedReviewEvidenceV2)
 
 
 class LegacyTrustContractV1(CutoverModel):
@@ -64,8 +89,11 @@ def decide_cutover(
     runs: list[EvaluatedBenchmarkRunV2],
     rollout: RolloutEvidenceV2,
     thresholds: TrustThresholdsV2 | None = None,
+    *,
+    named_review_evidence: NamedReviewEvidenceV2 | None = None,
 ) -> CutoverDecisionV2:
     policy = thresholds or TrustThresholdsV2()
+    review_evidence = named_review_evidence or NamedReviewEvidenceV2()
     failures: list[str] = []
     agentic = [item for item in runs if item.observation.variant in {"agentic_deterministic", "agentic_gemma4_mtp"}]
     variants = {item.observation.variant for item in runs}
@@ -106,6 +134,13 @@ def decide_cutover(
                             "missing_matrix_run:"
                             f"{case.case_id}:{variant}:{intent_id or 'default'}:{repeat_index}"
                         )
+    review_digests = review_evidence.review_artifact_digests
+    reviews_were_validated = (
+        review_evidence.source == "digest_pinned_review_artifacts"
+        and len(review_digests) == len(expected_identities)
+    )
+    if not reviews_were_validated:
+        failures.append("digest_pinned_named_review_artifacts_not_validated")
     for case_id, variant, intent_id, repeat_index in sorted(actual_identities - expected_identities):
         failures.append(
             "unexpected_matrix_run:"
@@ -190,6 +225,7 @@ def decide_cutover(
         worst_case_metrics=worst,
         failures=list(dict.fromkeys(failures)),
         next_actions=actions,
+        named_review_evidence=review_evidence,
     )
 
 
@@ -246,3 +282,10 @@ def _actions(failures: list[str], status: str, case_count: int) -> list[str]:
     if status == "canary_ready":
         return [f"run_{case_count}_canary_cases_and_complete_migration_guide"]
     return ["agentic_default_authorized_with_explicit_legacy_fallback"]
+
+
+def _is_sha256_digest(value: str) -> bool:
+    prefix = "sha256:"
+    if not value.startswith(prefix) or len(value) != len(prefix) + 64:
+        return False
+    return all(character in "0123456789abcdef" for character in value[len(prefix):])
