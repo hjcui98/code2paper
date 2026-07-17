@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib
 import json
 import pytest
+from unittest.mock import patch
 
 from code2paper.agentic.benchmark_v2 import (
     BenchmarkObservationV2,
@@ -326,6 +327,74 @@ def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_p
     assert decision["default_mode"] == "legacy"
     assert decision["named_review_evidence"]["source"] == "none"
     assert "digest_pinned_named_review_artifacts_not_validated" in decision["failures"]
+
+
+def test_benchmark_cli_consumes_validated_review_workspace_as_exact_review_source(tmp_path: Path) -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    observations = [item.observation for item in _complete_runs(dataset)]
+    validated_reviews = []
+    for index in range(len(observations)):
+        review_path = tmp_path / f"review-{index:02d}.json"
+        review_path.write_text(json.dumps({"review": index}), encoding="utf-8")
+        validated_reviews.append({"review_path": str(review_path)})
+    workspace_report = {
+        "status": "passed",
+        "hard_gate_passed": True,
+        "validated_reviews": validated_reviews,
+    }
+    rollout_path = tmp_path / "rollout.json"
+    rollout_path.write_text(
+        RolloutEvidenceV2(team_false_block_threshold=0.0).model_dump_json(),
+        encoding="utf-8",
+    )
+    decision_path = tmp_path / "cutover.json"
+
+    with (
+        patch(
+            "code2paper.cli.agentic_benchmark.validate_review_workspace",
+            return_value=(workspace_report, observations),
+        ) as validate_workspace,
+        patch("code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2", return_value=object()),
+        patch("code2paper.cli.agentic_benchmark.validate_protocol_observations_v2", return_value=[]),
+    ):
+        exit_code = benchmark_main([
+            "--gold", str(DATASET_PATH),
+            "--review-workspace", str(tmp_path / "workspace"),
+            "--review-queue", str(tmp_path / "queue.json"),
+            "--protocol", str(tmp_path / "protocol.json"),
+            "--workspace-root", str(ROOT),
+            "--rollout", str(rollout_path),
+            "--out", str(tmp_path / "report.json"),
+            "--cutover-out", str(decision_path),
+        ])
+    decision = json.loads(decision_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    validate_workspace.assert_called_once()
+    assert decision["status"] == "shadow_ready"
+    assert decision["named_review_evidence"]["source"] == "digest_pinned_review_artifacts"
+    assert len(decision["named_review_evidence"]["review_artifact_digests"]) == 25
+
+
+def test_benchmark_cli_rejects_pending_review_workspace(tmp_path: Path) -> None:
+    with (
+        patch(
+            "code2paper.cli.agentic_benchmark.validate_review_workspace",
+            return_value=({"status": "pending_human_review", "hard_gate_passed": False}, []),
+        ),
+        patch("code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2", return_value=object()),
+    ):
+        exit_code = benchmark_main([
+            "--gold", str(DATASET_PATH),
+            "--review-workspace", str(tmp_path / "workspace"),
+            "--review-queue", str(tmp_path / "queue.json"),
+            "--protocol", str(tmp_path / "protocol.json"),
+            "--workspace-root", str(ROOT),
+            "--out", str(tmp_path / "report.json"),
+        ])
+
+    assert exit_code == 2
+    assert not (tmp_path / "report.json").exists()
 
 
 def test_cutover_requires_author_intent_adherence_and_paired_organization_change() -> None:

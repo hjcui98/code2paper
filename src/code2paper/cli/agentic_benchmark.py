@@ -21,6 +21,7 @@ from code2paper.agentic.benchmark_v2 import (
     write_benchmark_report_v2,
 )
 from code2paper.agentic.benchmark_observation import extract_benchmark_observation_v2, load_benchmark_run_review_v2
+from code2paper.agentic.benchmark_review_workspace import validate_review_workspace
 from code2paper.agentic.cutover import NamedReviewEvidenceV2, RolloutEvidenceV2, decide_cutover
 from code2paper.agentic.tool_runtime import atomic_write_json
 from code2paper.agentic.benchmark_protocol import load_benchmark_protocol_v2, validate_protocol_observations_v2
@@ -50,6 +51,16 @@ def main(argv: list[str] | None = None) -> int:
         "--review", action="append", default=[],
         help="Digest-pinned BenchmarkRunReviewV2 JSON; repeat for every run. Required to authorize cutover beyond hold.",
     )
+    parser.add_argument(
+        "--review-workspace",
+        default="",
+        help="Validated review workspace root; consumes every exact queue entry without 25 repeated --review flags.",
+    )
+    parser.add_argument(
+        "--review-queue",
+        default="",
+        help="Frozen review queue used to materialize --review-workspace.",
+    )
     parser.add_argument("--observations-out", default="", help="Write artifact-extracted observations to this JSON path.")
     parser.add_argument("--workspace-root", default=".", help="Root used to verify gold code excerpts.")
     parser.add_argument("--rollout", default="", help="Optional RolloutEvidenceV2 JSON for cutover decision.")
@@ -57,18 +68,41 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--protocol", default="", help="Frozen BenchmarkProtocolV2 used to validate the exact run matrix.")
     args = parser.parse_args(argv)
 
-    if args.gold or args.observations or args.review:
-        if not args.gold or (not args.observations and not args.review):
-            parser.error("P4 mode requires --gold and either --observations or one or more --review")
-        if args.observations and args.review:
-            parser.error("use either --observations or --review, not both")
+    if args.gold or args.observations or args.review or args.review_workspace:
+        sources = sum(bool(item) for item in (args.observations, args.review, args.review_workspace))
+        if not args.gold or sources != 1:
+            parser.error("P4 mode requires --gold and exactly one of --observations, --review, or --review-workspace")
+        if args.review_workspace and (not args.review_queue or not args.protocol):
+            parser.error("--review-workspace requires --review-queue and --protocol")
         dataset = load_benchmark_dataset_v2(args.gold)
         gold_failures = validate_gold_evidence(dataset, args.workspace_root)
         if gold_failures:
             print(f"[code2paper-agentic-benchmark] error={gold_failures[0]}", file=sys.stderr)
             return 2
         review_evidence = NamedReviewEvidenceV2()
-        if args.review:
+        protocol = load_benchmark_protocol_v2(args.protocol) if args.protocol else None
+        if args.review_workspace:
+            workspace_report, observations = validate_review_workspace(
+                args.review_queue,
+                args.review_workspace,
+                dataset,
+                protocol,
+            )
+            if not workspace_report["hard_gate_passed"]:
+                print(
+                    f"[code2paper-agentic-benchmark] error=review_workspace_{workspace_report['status']}",
+                    file=sys.stderr,
+                )
+                return 2
+            review_paths = [item["review_path"] for item in workspace_report["validated_reviews"]]
+            review_evidence = NamedReviewEvidenceV2(
+                source="digest_pinned_review_artifacts",
+                review_artifact_digests=[
+                    "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                    for path in review_paths
+                ],
+            )
+        elif args.review:
             case_by_id = {item.case_id: item for item in dataset.cases}
             reviews = [load_benchmark_run_review_v2(path) for path in args.review]
             observations = [extract_benchmark_observation_v2(case_by_id[item.case_id], item) for item in reviews]
@@ -79,13 +113,12 @@ def main(argv: list[str] | None = None) -> int:
                     for path in args.review
                 ],
             )
-            if args.observations_out:
-                atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
         else:
             observations = load_benchmark_observations_v2(args.observations)
+        if (args.review or args.review_workspace) and args.observations_out:
+            atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
         protocol_validated = False
-        if args.protocol:
-            protocol = load_benchmark_protocol_v2(args.protocol)
+        if protocol is not None:
             protocol_failures = validate_protocol_observations_v2(protocol, observations)
             if protocol_failures:
                 print(f"[code2paper-agentic-benchmark] error={protocol_failures[0]}", file=sys.stderr)
