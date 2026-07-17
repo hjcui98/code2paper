@@ -2091,48 +2091,48 @@ Batch A 不改 authoring/figure 的可信度算法。
 
 ### M0
 
-- [ ] 规划文档已有 Git baseline/tag
-- [ ] tracked/untracked/ignored inventory 完成
-- [ ] `.gitignore` 已审计并单独提交
-- [ ] 全量 collection 通过
-- [ ] agentic extra 可安装
-- [ ] console scripts 可运行
-- [ ] 五项预算全链路一致
-- [ ] Gemma capability profile 可生成
-- [ ] L0/L1/L2 live tests 完成
-- [ ] full suite 结果已记录
-- [ ] M0 validation report 绑定 clean commit
-- [ ] annotated phase tag 已创建
+- [x] 规划文档已有 Git baseline/tag
+- [x] tracked/untracked/ignored inventory 完成
+- [x] `.gitignore` 已审计并单独提交
+- [x] 全量 collection 通过
+- [x] agentic extra 可安装
+- [x] console scripts 可运行
+- [x] 五项预算全链路一致
+- [x] Gemma capability profile 可生成
+- [x] L0/L1/L2 live tests 完成
+- [x] full suite 结果已记录
+- [x] M0 validation report 绑定 clean commit
+- [x] annotated phase tag 已创建
 
 ### P0
 
-- [ ] writer 只消费 projection
-- [ ] 无首项 claim/evidence fallback
-- [ ] final claims 从最终文本提取
-- [ ] semantic validation 绑定 direct evidence
-- [ ] partial qualifier 强制保留
-- [ ] final text trace 为后验权威 trace
-- [ ] adversarial leakage 为 0
-- [ ] FastGS 正确 success/block
+- [x] writer 只消费 projection
+- [x] 无首项 claim/evidence fallback
+- [x] final claims 从最终文本提取
+- [x] semantic validation 绑定 direct evidence
+- [x] partial qualifier 强制保留
+- [x] final text trace 为后验权威 trace
+- [x] adversarial leakage 为 0
+- [x] FastGS 正确 success/block
 
 ### P1
 
-- [ ] repo snapshot 可复验
-- [ ] exact excerpt digest 可 round-trip
-- [ ] direct/context evidence 分离
-- [ ] report 绑定 input digests
-- [ ] evidence 更新使下游 stale
-- [ ] source drift 阻止 finalize
-- [ ] live mutation/resume 通过
+- [x] repo snapshot 可复验
+- [x] exact excerpt digest 可 round-trip
+- [x] direct/context evidence 分离
+- [x] report 绑定 input digests
+- [x] evidence 更新使下游 stale
+- [x] source drift 阻止 finalize
+- [x] live mutation/resume 通过
 
 ### P2
 
-- [ ] edge 仅来自 direct relation evidence
-- [ ] scene 每个可见元素可追溯
-- [ ] 真实 SVG asset 生成
-- [ ] pre/post-render audit 均为 hard gate
-- [ ] completion 不再接受 plan-only
-- [ ] Gemma/PaperBanana drift 被拒绝或回退
+- [x] edge 仅来自 direct relation evidence
+- [x] scene 每个可见元素可追溯
+- [x] 真实 SVG asset 生成
+- [x] pre/post-render audit 均为 hard gate
+- [x] completion 不再接受 plan-only
+- [x] Gemma/PaperBanana drift 被拒绝或回退
 
 ### P3
 
