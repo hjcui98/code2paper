@@ -108,7 +108,8 @@ code2paper-agentic-adversarial-campaign \
 Do not author observations directly for formal cutover. A named reviewer must
 write `BenchmarkRunReviewV2` files that pin the run-summary and mutation-trial
 digests. The extractor cross-checks agentic claim verdicts against the real
-final-text validator and post-hoc trace. Aggregate those reviews with:
+final-text validator and post-hoc trace. For a small ad-hoc set, aggregate
+individual reviews with:
 
 ```bash
 code2paper-agentic-benchmark \
@@ -123,8 +124,9 @@ code2paper-agentic-benchmark \
   --cutover-out /path/to/cutover_decision.json
 ```
 
-No route becomes default merely because this command succeeds. The generated
-cutover decision is the authoritative rollout recommendation.
+No route becomes default merely because this command succeeds. A schema 2.1
+cutover decision must retain the validated review-file digests and pass the
+remaining rollout gates before it can authorize the implicit default.
 
 Before completing those reviews, audit each fixed legacy output against the
 same curated V2 slice and generate the review queue:
@@ -149,6 +151,50 @@ code2paper-agentic-benchmark-review-queue \
   --mutation-root mos=/tmp/adversarial-mos \
   --legacy-audit-root /tmp/code2paper-p4-legacy-audits \
   --out /tmp/code2paper-p4-human-review-queue.json
+```
+
+Do not manually copy 25 nested templates out of that queue. Materialize a
+non-overwriting review workspace instead:
+
+```bash
+code2paper-agentic-benchmark-review-workspace materialize \
+  --queue /tmp/code2paper-p4-human-review-queue.json \
+  --out-root /tmp/code2paper-p4-review-workspace
+```
+
+This creates one editable JSON under `reviews/` and one read-only context file
+under `contexts/` for every protocol identity. Context files link the frozen
+method text, figure, validator, final invariant, package, code-grounded gold
+claims, and their digests. They intentionally exclude the reference paper as
+evidence. The command refuses to overwrite a non-empty workspace.
+
+After named reviewers fill the JSON files, validate the whole workspace before
+benchmark aggregation:
+
+```bash
+code2paper-agentic-benchmark-review-workspace validate \
+  --queue /tmp/code2paper-p4-human-review-queue.json \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
+  --report-out /tmp/code2paper-p4-review-validation.json
+```
+
+Exit code `1` means human placeholders remain; exit code `2` means an identity,
+queue, run, claim/verdict, mutation, artifact digest, or protocol binding is
+invalid. Neither state emits observations. A completely validated workspace
+can be consumed without spelling out 25 `--review` flags:
+
+```bash
+code2paper-agentic-benchmark \
+  --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
+  --review-queue /tmp/code2paper-p4-human-review-queue.json \
+  --review-workspace /tmp/code2paper-p4-review-workspace \
+  --workspace-root . \
+  --rollout /path/to/rollout.json \
+  --out /path/to/benchmark_v2.json \
+  --cutover-out /path/to/cutover_decision.json
 ```
 
 `legacy_false_success_candidate` is an audit prompt, not an automatic verdict.

@@ -1,0 +1,62 @@
+{
+  "schema_version": "code2paper-agentic-p4-review-workspace-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "da90c610447928925b3806a21e5c51454552fb27",
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "protocol_runs": 25,
+    "named_human_reviews_completed": 0,
+    "unchanged": true
+  },
+  "workspace": {
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v2",
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17.json",
+    "queue_sha256": "a96d1e7a2bdc6e020e24164bfc5b84887caefbf5c4a0e9412ac3dd4f1bac57b3",
+    "manifest_path": "/tmp/code2paper-p4-review-workspace-9a98c17-v2/review_workspace_manifest.json",
+    "manifest_sha256": "8cbfb2ca0ff210199ac0935974bc158b071ac70c95360fab5241b7798aa45c02",
+    "validation_path": "/tmp/code2paper-p4-review-workspace-9a98c17-v2/validation_report.json",
+    "validation_sha256": "02492fb5654ca976e450f0a6561b8cf76da6fcde114f889559f896045b24e148",
+    "review_files": 25,
+    "context_files": 25,
+    "non_overwriting": true,
+    "reference_papers_in_evidence_context": false
+  },
+  "validation": {
+    "status": "pending_human_review",
+    "hard_gate_passed": false,
+    "manifest_entries": 25,
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "global_failures": [],
+    "observations_emitted": false,
+    "exit_code": 1
+  },
+  "fail_closed_checks": [
+    "queue digest and workspace manifest",
+    "protocol commit and exact run identity coverage",
+    "unique and complete review identities",
+    "reviewer attribution and timezone-aware reviewed_at",
+    "run summary digest and required trust artifact digests",
+    "repo snapshot, model, and capability profile",
+    "agentic atomic claim text and validator verdict inventory",
+    "mutation trial artifact path and digest",
+    "workspace path containment",
+    "protocol observation validation before emission"
+  ],
+  "verification": {
+    "targeted": "34 passed",
+    "full_suite": "469 passed, 2 skipped, 6 subtests passed"
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_review_workspace.py": "d53386a95debf1899fa929ad2c685ec9168ea4aeda0b9906de53d94164b39621",
+    "src/code2paper/cli/agentic_benchmark_review_workspace.py": "a7fa50bb497f110278b549164e6795e267faa99d0b9842065c40414306e49a90",
+    "src/code2paper/cli/agentic_benchmark.py": "6bfa5b3f4d1985558e5e97f9dbf5d47d429bd64b2ed202c719e67b3b07db62e7",
+    "pyproject.toml": "0dbbfe16830a1ea113d60de47a1f7a8d1c9ad2b12841f8a6dcd7ada178320f53"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "next_required_action": "Named reviewers must complete all 25 review JSON files; tooling does not perform or impersonate that review."
+  }
+}

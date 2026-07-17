@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `459 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `469 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -68,6 +68,14 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   the frozen protocol. The implicit default route also rejects old 2.0 or handwritten
   `default_ready` decisions without that evidence. The machine record is
   `docs/agentic_cutover_review_gate_2026-07-18.json`.
+- The 25-entry queue can now be materialized into a non-overwriting named-review
+  workspace with one editable review and one code-grounded context per protocol
+  identity. Batch validation fails closed on placeholders, identity coverage,
+  immutable run/protocol/snapshot/model/claim/verdict/mutation bindings, artifact
+  drift, or path escape, and emits no observations until every review passes.
+  The frozen workspace currently reports 0 validated, 25 pending, and 0 invalid;
+  this improves review operability without claiming that human review occurred.
+  The machine record is `docs/agentic_p4_review_workspace_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

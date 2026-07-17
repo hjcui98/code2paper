@@ -2125,6 +2125,36 @@ evidence 的手写 decision 均 fail closed 到 legacy。显式 `--mode agentic`
 具名 review 仍为 0/25，因此新 gate 的当前正确结果仍是 hold。它修复的是“将来 review 完成时如何
 可信地签发切换决策”，不能替代实际人工审核、shadow、opt-in 或 canary。
 
+### 12.15 具名人工 review workspace（2026-07-18）
+
+12.14 收紧了 cutover 的 review 来源，但冻结 queue 仍只有一个包含 25 个嵌套 template 的大 JSON。
+reviewer 若手工复制模板，容易遗漏 run identity，误改 summary/protocol/snapshot/model binding，或直到
+最终 benchmark 聚合时才发现 mutation trial 与 claim inventory 漂移；这会让真正的 25-entry 人工
+流程难以执行。此次新增 `code2paper-agentic-benchmark-review-workspace`，它不作任何语义裁决，只把
+既有 queue 安全地变成可填写、可批量验证的工作区。
+
+`materialize` 为每个 frozen protocol identity 生成一个 `reviews/*.json` 和一个 `contexts/*.md`。
+review JSON 保留具名 reviewer 与时区 ISO-8601 占位符；context 列出 run summary、最终方法文本、方法
+图、text validator、final invariant、package、code-grounded gold claims/relations 及其 digest，明确不把
+论文原文放入 evidence context。目标目录非空时拒绝执行，避免覆盖已填写的人工判断。
+
+`validate` 必须同时通过 queue digest、workspace manifest、protocol commit、exact identity coverage、
+review schema 和以下不可变绑定：run summary、protocol spec、repo snapshot、model/profile、agentic
+atomic claim inventory 与 validator verdict，以及 mutation artifact path/digest。占位符未填写返回
+`pending_human_review`，篡改/缺失/重复/路径逃逸返回 `failed`；两者都不产生 observations。只有全部
+review 通过真实 artifact extraction 和 protocol observation validation 后，才输出 observation，并可由
+`code2paper-agentic-benchmark --review-workspace ... --review-queue ...` 一次性消费全部 review file，
+继承 12.14 的 `NamedReviewEvidenceV2` cutover 门禁。
+
+实现提交为 `da90c610447928925b3806a21e5c51454552fb27`。定向 review/cutover/run CLI 测试
+34 passed，全量测试为 `469 passed, 2 skipped, 6 subtests passed`。冻结 queue 已在
+`/tmp/code2paper-p4-review-workspace-9a98c17-v2` 真实物化为 25 个 review + 25 个 context；当前 validation
+为 `pending_human_review`，0 validated、25 pending、0 invalid、`observations_emitted=false`，因此没有把
+物化动作冒充人工评审完成。机器记录为 `docs/agentic_p4_review_workspace_2026-07-18.json`。
+
+该工具消除了人工流程的机械阻力和绑定漂移风险，但不能填写 reviewer、不能判断语义质量，也不能把
+0/25 改计为完成。正式 P4 baseline 仍为 `9a98c17`，默认路线继续 hold。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |
