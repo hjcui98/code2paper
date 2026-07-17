@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `481 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `482 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -112,6 +112,14 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   opt-in, and canary coverage with zero incidents. No rollout artifacts exist
   yet, so rollout remains pending. See
   `docs/agentic_p4_rollout_artifact_gate_2026-07-18.json`.
+- Review templates now distinguish explicit negative judgments from untouched
+  defaults. All 165 claims require semantic, mutation, direct-evidence, and
+  qualifier decisions; all 25 runs require usability decisions, paired intents
+  require reviewed organization fields, and four blocked runs require a
+  structured classification plus rationale. The v9 workspace remains 0/25
+  validated. A non-overwriting rollout artifact CLI now materializes and
+  validates stage bindings without hand-copying digests. See
+  `docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

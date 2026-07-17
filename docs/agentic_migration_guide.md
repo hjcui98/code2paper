@@ -194,6 +194,13 @@ byte-identical claim text and an explicit validator verdict equal to the frozen
 `text_evidence_validation` verdict. The claim, validator, final-trace, and
 human-review ID sets must be identical; omitting, duplicating, renaming, or
 rewriting a claim fails validation instead of removing it from human metrics.
+Every retained claim must explicitly set `semantic_match` (`matched` or
+`no_match`), `mutation_match`, `direct_evidence_support`, and
+`qualifiers_preserved`. An empty gold or mutation ID is not interpreted as an
+answer. Every run also requires an explicit `usable_completion`; paired-intent
+runs require `intent_fields_reviewed=true`, and blocked runs require both a
+written rationale and a structured correct-repairable/correct-terminal/
+false-block classification. Unresolved fields remain `pending_human_review`.
 For each retained claim, the reviewer must also set
 `direct_evidence_support` after checking the frozen evidence snapshot and code
 spans. A gold-claim mapping alone is not a semantic-precision hit: the cited
@@ -237,3 +244,29 @@ code2paper-agentic-benchmark \
 `legacy_false_success_candidate` is an audit prompt, not an automatic verdict.
 Only a named reviewer may confirm it or classify an agentic block as correct or
 false. Until all 25 review entries are complete, cutover remains `hold`.
+
+After a reviewed benchmark emits `shadow_ready`, create rollout trials without
+hand-copying digests:
+
+```bash
+code2paper-agentic-rollout-artifact materialize \
+  --stage shadow --case fastgs \
+  --authorization-decision /path/to/shadow-ready.json \
+  --agentic-run-summary /path/to/agentic_run_summary.json \
+  --legacy-run-summary /path/to/code2paper_run_report.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
+  --out /path/to/shadow-fastgs.json
+```
+
+The command refuses to overwrite existing reviewer work. A named reviewer fills
+only `reviewer`, `reviewed_at`, `accepted`, and canary `incident_ids`. Validate
+the complete accumulated stage set before passing the same artifacts to the
+benchmark command:
+
+```bash
+code2paper-agentic-rollout-artifact validate \
+  --artifact /path/to/shadow-fastgs.json \
+  --gold tests/fixtures/benchmark_v2/gold_adversarial_v1.json \
+  --protocol /tmp/code2paper-p4-protocol.json \
+  --out /path/to/validated-rollout-evidence.json
+```

@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：2.3
+版本：2.4
 
 日期：2026-07-18
 
@@ -2301,6 +2301,35 @@ named review evidence；旧 2.1 或只含自报计数的 decision 保持 legacy�
 0，正确状态仍是 hold。定向测试 34 passed，全量测试为
 `481 passed, 2 skipped, 6 subtests passed`。机器记录为
 `docs/agentic_p4_rollout_artifact_gate_2026-07-18.json`。
+
+### 12.21 Explicit human decisions 与 rollout artifact 操作化（2026-07-18）
+
+对 v8 workspace 做 reviewer-completion 演练时发现，旧模板中的 `gold_claim_id=""`、
+`mutation_id=""` 和 `usable_completion=false` 无法区分“reviewer 明确判断无匹配/不可用”和“模板默认值
+尚未填写”。尤其 mutation ID 留空会使 final prose 与 curated mutation 的语义对应关系被静默跳过；
+虽然空 gold mapping 会保守降低 precision，workspace 仍可能把语义未完成的文件计为 validated。
+
+提交 `fac0d827dd03b94019e54c7c79330290b8021312` 后，每条 claim 新增显式三态/枚举人审字段：
+`semantic_match=matched|no_match`、`mutation_match=matched|no_match`、
+`direct_evidence_support=true|false` 和 `qualifiers_preserved=true|false`。matched 必须引用当前 frozen gold
+或 mutation ID，no_match 禁止残留 ID。每个 run 的 `usable_completion` 必须显式填写；FastGS 两个 paired
+intents 的 10 个 variant records 必须确认 `intent_fields_reviewed=true`；4 个 blocked Gemma runs 必须同时
+填写 rationale 和 `correct_repairable|correct_terminal|false_block` 分类。任何未决字段在 workspace 中继续
+保持 pending，而不是进入 observation extraction。
+
+冻结 queue 已重建为 `/tmp/code2paper-p4-review-queue-9a98c17-explicit-human-decisions.json`，workspace 为
+`/tmp/code2paper-p4-review-workspace-9a98c17-v9-explicit-human-decisions`。它保留 165 条 claim，各有 165 个
+semantic、mutation、direct-evidence 和 qualifier decisions；另有 25 个 usable decisions、10 个 intent
+reviews、4 个 block classifications 与 73 个图元素。validation 仍诚实报告 0 validated、25 pending、
+0 invalid、`observations_emitted=false`。
+
+同一提交增加 `code2paper-agentic-rollout-artifact materialize|validate`：materialize 重新读取并冻结
+authorization decision、agentic completion 和 shadow legacy comparison 的 digests，拒绝覆盖已有 artifact；
+validate 批量重读 gold/protocol 和所有 stage trials 后输出 `ValidatedRolloutEvidenceV2`。提交
+`bfca1a4c7802990e79be26e6ea607884b623374a` 补齐模块的 `python -m`/console 入口。当前没有实际 rollout
+artifact，能力上线不等于 rollout 已完成。定向测试 49 passed，全量测试为
+`482 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json`。
 
 ## 13. 代码落点总表
 

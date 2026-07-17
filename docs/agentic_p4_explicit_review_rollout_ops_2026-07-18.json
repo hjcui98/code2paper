@@ -1,0 +1,83 @@
+{
+  "schema_version": "code2paper-agentic-p4-explicit-review-rollout-ops-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commits": [
+    "fac0d827dd03b94019e54c7c79330290b8021312",
+    "bfca1a4c7802990e79be26e6ea607884b623374a"
+  ],
+  "finding": {
+    "old_behavior": "Empty gold/mutation IDs and false usability defaults were indistinguishable from explicit human no-match or unusable decisions.",
+    "trust_violation": "A semantically unfinished review could be schema-valid, and mutation correspondence could be silently omitted."
+  },
+  "explicit_human_decision_contract": {
+    "per_claim_required": [
+      "semantic_match=matched|no_match",
+      "mutation_match=matched|no_match",
+      "direct_evidence_support=true|false",
+      "qualifiers_preserved=true|false"
+    ],
+    "matched_gold_id_must_exist": true,
+    "matched_mutation_id_must_exist": true,
+    "no_match_must_have_empty_id": true,
+    "per_run_usable_completion_required": true,
+    "paired_intent_fields_reviewed_required": true,
+    "blocked_run_rationale_and_classification_required": true,
+    "unresolved_decisions_are_pending": true
+  },
+  "formal_workspace": {
+    "queue_path": "/tmp/code2paper-p4-review-queue-9a98c17-explicit-human-decisions.json",
+    "queue_sha256": "85a846d9a5999ad06c44bcc74cac837f4e0273119dd22955aebd7dda2405065c",
+    "root": "/tmp/code2paper-p4-review-workspace-9a98c17-v9-explicit-human-decisions",
+    "manifest_sha256": "4c91b77c0553ac18112fc9b1affe903fedd1914b9e6a0cc0b59dd75a1d6a98f2",
+    "validation_sha256": "6523d793264292c5e260ae5080128d6e3c73485d654ca0b364700404e2a0dc29",
+    "run_reviews": 25,
+    "claims": 165,
+    "semantic_decisions_pending": 165,
+    "mutation_decisions_pending": 165,
+    "direct_evidence_decisions_pending": 165,
+    "qualifier_decisions_pending": 165,
+    "usable_completion_decisions_pending": 25,
+    "intent_reviews_pending": 10,
+    "blocked_run_classifications_pending": 4,
+    "figure_elements": 73,
+    "validated_reviews": 0,
+    "pending_reviews": 25,
+    "invalid_reviews": 0,
+    "observations_emitted": false
+  },
+  "rollout_operations": {
+    "command": "code2paper-agentic-rollout-artifact",
+    "subcommands": ["materialize", "validate"],
+    "non_overwriting_materialization": true,
+    "automatic_digest_binding": true,
+    "module_entrypoint_verified": true,
+    "validated_rollout_artifacts": 0
+  },
+  "verification": {
+    "targeted": "49 passed",
+    "full_suite": "482 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "missing semantic match decision",
+      "matched unknown gold claim",
+      "missing mutation match decision",
+      "missing usable-completion decision",
+      "unresolved decisions after reviewer identity is filled",
+      "rollout artifact overwrite",
+      "rollout run digest drift",
+      "python module entrypoint missing"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_observation.py": "c7c047710c215851ee2f8f648329f4c9efd9b9c665d3c2293bcd0c509a7f42f9",
+    "src/code2paper/agentic/benchmark_review_queue.py": "a0a824d59bad34e59818ee6761bd4d1a33592472dc19866710ad1d161fbc56a8",
+    "src/code2paper/agentic/benchmark_review_workspace.py": "9203a51b8514606511aa8e7a98f19fe8b89271c1ae7f801dcd83b89ffa25668b",
+    "src/code2paper/agentic/rollout_evidence.py": "2988406ed8b267aabf694db152dd954b6127ec3d0ed38d1dcb659930b6366c69",
+    "src/code2paper/cli/agentic_rollout_artifact.py": "db98e9b3cfe7c1df08f6141e23025147edc98fe579449e5c155aa1da8bb4440c",
+    "pyproject.toml": "5da19f88db11a2d9413fae96fed4247f3d9cf5a5ffb7606b7fd85b89a6d67fe9"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "All 25 explicit named reviews and all rollout stages remain pending."
+  }
+}

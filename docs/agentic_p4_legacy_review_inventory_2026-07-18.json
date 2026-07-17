@@ -5,6 +5,9 @@
     "3841fdc73efa5f6d408362557651e4f39510e7e6",
     "892d62170ec053c037059f1bce19f213c88fb748"
   ],
+  "status": "historical_exact_inventory_superseded_by_explicit_human_decision_workspace",
+  "superseded_by": "docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json",
+  "source_hash_scope": "Hashes below predate explicit semantic/mutation/usable/intent/block review decisions.",
   "finding": {
     "old_behavior": "Fixed-legacy review templates had empty claim and figure inventories even when the V2 audit counted many factual claims and the run rendered an SVG.",
     "trust_violation": "A reviewer could selectively omit weak legacy sentences or all legacy figure elements, distorting the fixed baseline used for comparison."

@@ -2,6 +2,9 @@
   "schema_version": "code2paper-agentic-p4-rollout-artifact-gate-eval/v1",
   "evaluated_at": "2026-07-18",
   "implementation_commit": "a4ebab084c233d4417e6de91c2096238d5358d33",
+  "status": "gate_implemented_and_superseded_by_operational_materialize_validate_cli",
+  "superseded_by": "docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json",
+  "source_hash_scope": "Hashes below predate the non-overwriting rollout artifact materialize/validate CLI.",
   "finding": {
     "old_behavior": "Shadow, opt-in, canary, and incident counts were accepted directly from a RolloutEvidenceV2 JSON without reading rollout run or review artifacts.",
     "trust_violation": "Handwritten counters could advance a future reviewed benchmark directly to default_ready."
