@@ -560,7 +560,8 @@ def _repair_match_tokens(text: str) -> set[str]:
 
 _MECHANISM_CONCEPT_ALIASES: dict[str, set[str]] = {
     "aggregate": {"aggregate", "aggregated", "aggregation", "average", "averaged", "sum", "stack"},
-    "data": {"data", "dataset", "demonstration", "example", "sample", "samples", "sampling"},
+    "bounded": {"few", "fewshot", "small"},
+    "data": {"data", "dataset", "demonstration", "demonstrations", "example", "sample", "samples", "sampling"},
     "domain": {"domain", "domains", "mixed", "multi"},
     "expert": {"expert", "experts", "idx", "idxs", "indices"},
     "gating": {"gate", "gating", "router", "routing"},
@@ -609,7 +610,17 @@ def _content_evidence_ids_for_mechanism(
             r"\bscore\s*=\s*score\s*/\s*(?:torch\.)?sum\s*\(", searchable, flags=re.IGNORECASE
         ):
             snippet_concepts.add("norm")
-        required_signatures = mechanism_concepts & {"aggregate", "norm", "select", "similarity"}
+        bounded_data_slice = bool(re.search(
+            r"\b(?:data|samples?)\s*\[[^\]\n]*:\s*\d+\s*\]", searchable,
+            flags=re.IGNORECASE,
+        ))
+        if "bounded" in mechanism_concepts and bounded_data_slice:
+            snippet_concepts.add("bounded")
+        if {"bounded", "data"}.issubset(mechanism_concepts) and not bounded_data_slice:
+            continue
+        required_signatures = mechanism_concepts & {
+            "aggregate", "bounded", "data", "norm", "select", "similarity"
+        }
         if required_signatures - snippet_concepts:
             continue
         if {"gating", "norm", "output", "expert"}.issubset(mechanism_concepts):

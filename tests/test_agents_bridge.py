@@ -168,6 +168,9 @@ def test_bridge_rebinds_output_norm_and_cosine_mechanisms_to_direct_code() -> No
             EvidenceItem(evidence_id="E4", source_type=SourceType.SOURCE,
                          path="pruning/expert_selection_mix_domain.py", line_start=7, line_end=30,
                          confidence=0.9, content_summary="Mixed-domain score aggregation."),
+            EvidenceItem(evidence_id="E5", source_type=SourceType.SOURCE,
+                         path="pruning/expert_selection.py", line_start=7, line_end=20,
+                         confidence=0.9, content_summary="Bounded input sampling."),
         ],
     )
     markers = SimpleNamespace(
@@ -184,6 +187,9 @@ def test_bridge_rebinds_output_norm_and_cosine_mechanisms_to_direct_code() -> No
              "evidence_refs": ["stale"]},
             {"name": "Multi-domain extension", "description":
              "For multiple domains, average normalized domain-specific scores before final selection.",
+             "evidence_refs": ["stale"]},
+            {"name": "Data sampling", "description":
+             "Collect a small number of demonstrations from the target domain.",
              "evidence_refs": ["stale"]},
         ]},
         core_snippets={"snippets": [
@@ -202,12 +208,16 @@ def test_bridge_rebinds_output_norm_and_cosine_mechanisms_to_direct_code() -> No
              "text": "score = score / torch.sum(score, dim=-1, keepdim=True)\n"
                      "tmp = tmp + score\n"
                      "topk_experts = torch.topk(tmp, k=128, dim=-1)[1]"},
+            {"snippet_id": "sample", "role": "agentic_rescan_symbol_index",
+             "source": {"path": "pruning/expert_selection.py", "symbol": "main"},
+             "text": "data = [json.loads(d) for d in data[:25]]"},
         ]},
         author_markers=markers,
-        snippet_to_evidence={"stale": "E1", "stats": "E2", "similarity": "E3", "mixed": "E4"},
+        snippet_to_evidence={"stale": "E1", "stats": "E2", "similarity": "E3", "mixed": "E4", "sample": "E5"},
         raw_pack=raw,
     )
 
     assert payload["candidate_mechanisms"][0]["supporting_span_ids"] == ["E2"]
     assert payload["candidate_mechanisms"][1]["supporting_span_ids"] == ["E3"]
     assert payload["candidate_mechanisms"][2]["supporting_span_ids"] == ["E4"]
+    assert payload["candidate_mechanisms"][3]["supporting_span_ids"] == ["E5"]

@@ -14,6 +14,7 @@ from code2paper.agentic.trust_contracts import (
     TextEvidenceValidationReport,
 )
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import RawEvidencePack, SourceType
 
 
@@ -199,7 +200,12 @@ def _relevant_to_evidence(text: str, evidence_text: str, matches: list[Any]) -> 
     projection_tokens = set().union(*(_tokens(item.supported_fragment) for item in matches)) if matches else set()
     projection_overlap = len(claim_tokens & projection_tokens) / max(1, min(len(claim_tokens), len(projection_tokens)))
     evidence_overlap = len(claim_tokens & evidence_tokens) / max(1, min(len(claim_tokens), len(evidence_tokens)))
-    return projection_overlap >= 0.45 and (evidence_overlap >= 0.12 or len(claim_tokens & evidence_tokens) >= 2)
+    evidence_related = (
+        evidence_overlap >= 0.12
+        or len(claim_tokens & evidence_tokens) >= 2
+        or concepts_semantically_related(text, evidence_text)
+    )
+    return projection_overlap >= 0.45 and evidence_related
 
 
 def _qualifier_preserved(text: str, qualifiers: list[str]) -> bool:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from code2paper.evidence.claim_grounder import build_claim_evidence_map
-from code2paper.pipeline.stages.evidence import build_method_evidence
+from code2paper.pipeline.stages.evidence import build_method_evidence, _stage_match_score
 from code2paper.core.schemas import (
     AuthorAlignment,
     AuthorClaimAssessment,
@@ -19,6 +19,30 @@ from code2paper.core.schemas import (
 
 
 class Phase3EvidenceFallbackTests(unittest.TestCase):
+    def test_stage_matching_normalizes_unicode_hyphens_for_mixed_domain_extension(self) -> None:
+        mixed_score = _stage_match_score(
+            "Extension to mixed‑domain pruning (optional).",
+            "Multi‑domain extension (optional)",
+        )
+        generic_score = _stage_match_score(
+            "Extension to mixed‑domain pruning (optional).",
+            "Expert pruning",
+        )
+
+        self.assertGreater(mixed_score, generic_score)
+
+    def test_stage_matching_connects_few_shot_motivation_to_data_sampling(self) -> None:
+        sampling_score = _stage_match_score(
+            "Motivation from few‑shot expert localization phenomenon.",
+            "Data sampling",
+        )
+        generic_score = _stage_match_score(
+            "Motivation from few‑shot expert localization phenomenon.",
+            "Expert pruning",
+        )
+
+        self.assertGreater(sampling_score, generic_score)
+
     def test_build_method_evidence_preserves_hard_raw_evidence_when_analysis_has_no_mechanisms(self) -> None:
         raw_pack = RawEvidencePack(
             project_id="demo",

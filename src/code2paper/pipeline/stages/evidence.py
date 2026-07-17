@@ -1030,10 +1030,15 @@ def _dedupe_method_modules(modules: list[MethodModule]) -> list[MethodModule]:
 
 
 def _normalize_name(value: str) -> str:
-    return " ".join((value or "").replace("_", " ").replace("-", " ").lower().split())
+    normalized = (value or "").translate(
+        str.maketrans({"‐": "-", "‑": "-", "–": "-", "—": "-"})
+    )
+    normalized = re.sub(r"[^\w]+", " ", normalized.replace("_", " ").lower())
+    return " ".join(normalized.split())
 
 
 _STAGE_TERM_GROUPS: tuple[set[str], ...] = (
+    {"data", "demonstration", "demonstrations", "few", "localization", "sample", "sampling", "shot"},
     {"config", "configuration", "setup", "assembly", "launcher", "override"},
     {"backbone", "load", "loading", "adaptation"},
     {"shared", "semantic", "representation", "projection", "project", "aligner", "align"},

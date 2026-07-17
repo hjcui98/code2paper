@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import ClaimEvidenceMap
 
 
@@ -157,9 +158,10 @@ def _semantically_related(claim_text: str, evidence_text: str) -> bool:
         return {_stem(item) for item in raw if len(item) > 1 and item not in stop}
     claim_tokens, evidence_tokens = tokens(claim_text), tokens(evidence_text)
     overlap = claim_tokens & evidence_tokens
-    return bool(overlap) and (
+    lexical_match = bool(overlap) and (
         len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45 or len(overlap) >= 2
     )
+    return lexical_match or concepts_semantically_related(claim_text, evidence_text)
 
 
 def _stem(token: str) -> str:

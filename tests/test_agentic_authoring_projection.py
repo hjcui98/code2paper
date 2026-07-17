@@ -13,6 +13,7 @@ from code2paper.agentic.authoring_projection import (
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.authoring.writing.method_writer import build_method_draft_markdown
 from code2paper.core.schemas import (
+    AuthorMode,
     ClaimEvidenceItem,
     ClaimEvidenceMap,
     Mechanism,
@@ -20,6 +21,9 @@ from code2paper.core.schemas import (
     MethodStageEvidence,
     SupportStatus,
     LLMConfig,
+    EvidenceItem,
+    RawEvidencePack,
+    SourceType,
 )
 from code2paper.llm.client import LLMResponse
 from code2paper.pipeline.stages.authoring import write_phase5_artifacts
@@ -189,6 +193,76 @@ def test_projection_writer_deduplicates_claims_and_omits_stage_contract_metadata
     assert "Only the configured path is implemented." in draft
     assert "paper-facing stage named" not in draft
     assert "Unsupported duplicate" not in draft
+
+
+def test_projection_omits_stage_name_scaffold_from_positive_writer_facts() -> None:
+    evidence = _evidence()
+    evidence.stage_packets[0]["claim_ids"] = ["C1", "C2"]
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1", claim_text="The encoder reads configured features.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            source="method_mechanism",
+        ),
+        ClaimEvidenceItem(
+            claim_id="C2", claim_text="The method contains a paper-facing stage named Encode.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            source="claim_contract:C1",
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1"]
+    assert "structural_claim:C2" in projection.dropped_positive_fields
+    assert "paper-facing stage named" not in json.dumps(
+        projection_writer_payload(projection), ensure_ascii=False
+    )
+
+
+def test_projection_recognizes_normalized_mixed_domain_score_code() -> None:
+    evidence = MethodEvidence(
+        project_id="mixed-domain", method_name="Mixed-domain pruning",
+        method_goal="Aggregate normalized domain scores.", implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1", name="Mixed domain", purpose="Average normalized scores.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1", description="Average normalized scores.",
+                support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1", "name": "Mixed domain", "purpose": "Average normalized scores.",
+            "claim_ids": ["C1"], "evidence_span_ids": ["E1"],
+        }],
+    )
+    claims = ClaimEvidenceMap(claims=[ClaimEvidenceItem(
+        claim_id="C1",
+        claim_text="For multiple domains, average normalized domain-specific scores before final selection.",
+        support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"], source="method_mechanism",
+    )])
+    raw = RawEvidencePack(
+        project_id="mixed-domain", project_root="/repo", author_mode=AuthorMode.ENHANCED,
+        evidence_items=[EvidenceItem(
+            evidence_id="E1", source_type=SourceType.SOURCE,
+            path="pruning/expert_selection_mix_domain.py", line_start=1, line_end=4,
+            content_summary=(
+                "score = score / torch.sum(score, dim=-1, keepdim=True); "
+                "tmp = tmp + score; topk_experts = torch.topk(tmp, dim=-1)"
+            ), confidence=0.9,
+        )],
+    )
+
+    projection = build_authoring_projection(
+        method_evidence=evidence, claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims), raw_evidence=raw,
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1"]
 
 
 def test_projection_model_writer_uses_only_projected_positive_facts() -> None:

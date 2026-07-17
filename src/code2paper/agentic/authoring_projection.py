@@ -9,6 +9,7 @@ from typing import Any
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
 from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
 from code2paper.core.schemas import (
     AuthorLogicMapping,
@@ -35,6 +36,7 @@ def build_authoring_projection(
     contract_by_id = {contract.claim_id: contract for contract in method_evidence.claim_contracts}
     projected: list[ProjectedClaim] = []
     forbidden: list[ForbiddenClaim] = []
+    structural_dropped: list[str] = []
     known_direct_evidence = _known_direct_evidence(method_evidence)
     v2_span_by_id = {
         span.evidence_id: span
@@ -43,6 +45,9 @@ def build_authoring_projection(
     }
     v2_claim_by_id = {claim.claim_id: claim for claim in (atomic_claims_v2.claims if atomic_claims_v2 else [])}
     for verified in verification.claims:
+        if _is_stage_scaffold_claim(verified.claim_text, verified.source):
+            structural_dropped.append(f"structural_claim:{verified.claim_id}")
+            continue
         source_claim = claim_by_id.get(verified.claim_id)
         contract = contract_by_id.get(verified.claim_id)
         direct_ids = [item for item in _dedupe(verified.evidence_ids) if item in known_direct_evidence]
@@ -160,7 +165,7 @@ def build_authoring_projection(
             "Partial claims must preserve every required qualifier.",
             "Forbidden claim records contain no reusable claim wording.",
         ],
-        "dropped_positive_fields": _dedupe(dropped),
+        "dropped_positive_fields": _dedupe([*dropped, *structural_dropped]),
         "source_digests": source_digests,
         "repo_snapshot_id": evidence_snapshot_v2.repo_snapshot_id if evidence_snapshot_v2 else "",
         "project_tree_hash": evidence_snapshot_v2.project_tree_hash if evidence_snapshot_v2 else "",
@@ -457,10 +462,11 @@ def _direct_evidence_semantically_related(
         claim_tokens = _semantic_tokens(claim_text)
         evidence_tokens = _semantic_tokens(evidence_text)
         overlap = claim_tokens & evidence_tokens
-        return bool(claim_tokens) and (
+        lexical_match = bool(claim_tokens) and (
             len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45
             or len(overlap) >= 2
         )
+        return lexical_match or concepts_semantically_related(claim_text, evidence_text)
     if raw_evidence is None:
         return True
     evidence_by_id = {item.evidence_id: item for item in raw_evidence.evidence_items}
@@ -472,15 +478,22 @@ def _direct_evidence_semantically_related(
     claim_tokens = _semantic_tokens(claim_text)
     evidence_tokens = _semantic_tokens(evidence_text)
     overlap = claim_tokens & evidence_tokens
-    return bool(claim_tokens) and (
+    lexical_match = bool(claim_tokens) and (
         len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45
         or len(overlap) >= 2
     )
+    return lexical_match or concepts_semantically_related(claim_text, evidence_text)
 
 
 def _semantic_tokens(text: str) -> set[str]:
     stop = {"the", "a", "an", "of", "to", "and", "or", "is", "are", "we", "our", "this", "that", "with", "for"}
     return {token for token in re.findall(r"[a-z0-9_]+", text.lower()) if len(token) > 1 and token not in stop}
+
+
+def _is_stage_scaffold_claim(claim_text: str, source: str) -> bool:
+    return str(source or "").startswith("claim_contract:") and bool(
+        re.search(r"\bpaper-facing\s+stage\s+named\b", str(claim_text or ""), flags=re.IGNORECASE)
+    )
 
 
 def _filter_evidence_objects(values: list[Any], allowed_evidence: set[str]) -> list[dict[str, Any]]:
