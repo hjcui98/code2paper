@@ -447,6 +447,21 @@ def _build_code_method_analysis_payload(
             path_to_ids=path_to_ids,
         )
         support_ids = [*repair_ids, *support_ids]
+        # A bounded rescan can add the right implementation after the embedded
+        # analyzer has already emitted stale snippet references.  Prefer spans
+        # whose *code content* matches the mechanism over those stale refs.  A
+        # multi-concept threshold keeps a merely recommended path from becoming
+        # positive evidence on its own.
+        content_ids = _content_evidence_ids_for_mechanism(
+            mechanism_text=" ".join(
+                str(value or "")
+                for value in (step.get("name"), step.get("description"))
+            ),
+            core_snippets=core_snippets,
+            snippet_to_evidence=snippet_to_evidence,
+        )
+        if content_ids:
+            support_ids = content_ids
         support_ids = list(dict.fromkeys(support_ids))
         if not support_ids:
             support_ids = list(fallback_evidence)
@@ -541,6 +556,120 @@ def _repair_match_tokens(text: str) -> set[str]:
         for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
         if len(token) >= 3 and token not in stop and not re.fullmatch(r"c\d+", token)
     }
+
+
+_MECHANISM_CONCEPT_ALIASES: dict[str, set[str]] = {
+    "aggregate": {"aggregate", "aggregated", "aggregation", "average", "averaged", "sum", "stack"},
+    "data": {"data", "dataset", "demonstration", "example", "sample", "samples", "sampling"},
+    "domain": {"domain", "domains", "mixed", "multi"},
+    "expert": {"expert", "experts", "idx", "idxs", "indices"},
+    "gating": {"gate", "gating", "router", "routing"},
+    "moe": {"moe", "mixture", "rmoe", "smoe", "fullmoe"},
+    "norm": {"l2", "norm", "normalization", "normalize", "normalized", "norms", "magnitude"},
+    "output": {"out", "output", "outputs", "expert_out"},
+    "product": {"multiply", "multiplied", "product"},
+    "representation": {"hidden", "representation", "state", "states", "x_before", "x_before_moe", "x_after", "x_after_moe"},
+    "score": {"importance", "score", "scores", "weight", "weights"},
+    "select": {"keep", "mask", "prune", "pruned", "pruning", "retain", "retained", "scatter", "select", "selection", "target_number", "top", "topk"},
+    "similarity": {"cos", "cosine", "similarity", "simibr"},
+}
+
+
+def _content_evidence_ids_for_mechanism(
+    *,
+    mechanism_text: str,
+    core_snippets: dict[str, Any],
+    snippet_to_evidence: dict[str, str],
+) -> list[str]:
+    mechanism_concepts = _mechanism_concepts(mechanism_text)
+    if len(mechanism_concepts) < 2:
+        return []
+    ranked: list[tuple[float, int, bool, str, str]] = []
+    snippets = core_snippets.get("snippets", []) if isinstance(core_snippets.get("snippets"), list) else []
+    mechanism_tokens = _code_match_tokens(mechanism_text)
+    for snippet in snippets:
+        if not isinstance(snippet, dict):
+            continue
+        snippet_id = str(snippet.get("snippet_id") or "").strip()
+        evidence_id = snippet_to_evidence.get(snippet_id)
+        if not evidence_id:
+            continue
+        source = snippet.get("source") if isinstance(snippet.get("source"), dict) else {}
+        searchable = " ".join(
+            str(value or "")
+            for value in (
+                source.get("path"), source.get("symbol"), snippet.get("text"),
+                snippet.get("content"), snippet.get("code"), snippet.get("summary"),
+            )
+        )
+        snippet_concepts = _mechanism_concepts(searchable)
+        if "product" in mechanism_concepts and "*" in searchable:
+            snippet_concepts.add("product")
+        if "norm" in mechanism_concepts and re.search(
+            r"\bscore\s*=\s*score\s*/\s*(?:torch\.)?sum\s*\(", searchable, flags=re.IGNORECASE
+        ):
+            snippet_concepts.add("norm")
+        required_signatures = mechanism_concepts & {"aggregate", "norm", "select", "similarity"}
+        if required_signatures - snippet_concepts:
+            continue
+        if {"gating", "norm", "output", "expert"}.issubset(mechanism_concepts):
+            compact = searchable.lower().replace(" ", "")
+            if "norm(expert_out" not in compact and "norm(expertoutput" not in compact:
+                continue
+        shared = mechanism_concepts & snippet_concepts
+        coverage = len(shared) / len(mechanism_concepts)
+        if len(shared) < 2 or (coverage < 0.5 and len(shared) < 3):
+            continue
+        direct_overlap = len(mechanism_tokens & _code_match_tokens(searchable))
+        path_overlap = len(mechanism_tokens & _code_match_tokens(str(source.get("path") or "")))
+        path_concept_overlap = len(
+            mechanism_concepts & _mechanism_concepts(str(source.get("path") or ""))
+        )
+        line_count = max(1, searchable.count("\n") + 1)
+        breadth_penalty = min(2.0, max(0, line_count - 120) / 200.0)
+        is_directed_rescan = snippet.get("role") == "agentic_rescan_symbol_index"
+        role_bonus = 0.25 if is_directed_rescan else 0.0
+        score = (
+            len(shared) * 2.0 + coverage + min(direct_overlap, 6) * 0.1
+            + min(path_overlap, 3) * 0.5 + min(path_concept_overlap, 3) * 0.5
+            + role_bonus - breadth_penalty
+        )
+        ranked.append((score, len(shared), is_directed_rescan, str(source.get("path") or ""), evidence_id))
+    if not ranked:
+        return []
+    # Once a directed rescan produces a content-matching span, compare within
+    # that bounded result set.  Earlier generic snippets can contain vocabulary
+    # such as "expert" or "weight" without implementing the requested method.
+    if any(item[2] for item in ranked):
+        ranked = [item for item in ranked if item[2]]
+    ranked.sort(key=lambda item: (-item[0], -item[1], item[3], item[4]))
+    best_score = ranked[0][0]
+    return list(dict.fromkeys(item[4] for item in ranked if item[0] >= best_score - 0.5))[:4]
+
+
+def _mechanism_concepts(text: str) -> set[str]:
+    tokens = _code_match_tokens(text)
+    return {
+        concept
+        for concept, aliases in _MECHANISM_CONCEPT_ALIASES.items()
+        if tokens & aliases
+    }
+
+
+def _code_match_tokens(text: str) -> set[str]:
+    expanded = re.sub(r"\bMoE\b", "moe", str(text or ""), flags=re.IGNORECASE)
+    expanded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", expanded)
+    compound_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]+(?:_[a-z0-9]+)+", expanded.lower())
+        if len(token) >= 2
+    }
+    split_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]+", expanded.replace("_", " ").lower())
+        if len(token) >= 2
+    }
+    return compound_tokens | split_tokens
 
 
 def _string_list(value: Any) -> list[str]:
