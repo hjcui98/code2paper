@@ -12,6 +12,8 @@
 
 上位设计：[agentic_refactor_final_design.md](./agentic_refactor_final_design.md)
 
+当前逐项验收：[agentic_refactor_completion_audit.md](./agentic_refactor_completion_audit.md)
+
 ## 0. 文档定位
 
 本文不是新的架构讨论，而是把最终设计拆成可以逐项实现、逐项测试、逐门禁验收的执行规范。实施过程中若本文与最终设计冲突，以最终设计中的科研可信度不变量为准；若文档与实际代码冲突，以代码和实际生成 artifact 的直接核验结果为事实基线，并先修正文档或建立迁移说明，不能靠放宽 gate 让实现“看起来符合”。
@@ -1865,7 +1867,7 @@ P4 不再增加核心架构，而是证明 agentic route 在多项目、多次�
 
 ### 12.9 2026-07-17 实施状态
 
-P4 已从 clean tracked commit `ed136cae71b3a29eff8d4f89d6e131ece279f2e3`
+P4 已从 clean tracked commit `e9ab53db85d40281043d40885f4b4bd462ab8ed7`
 重新冻结 25-run protocol，覆盖 5 个 case-intent 组合：每组 fixed legacy 1 次、
 agentic deterministic 1 次、cache-disabled Gemma 4 MTP 3 次。当前 5 个
 deterministic run 全部正常结束并达到 `success`、`completion=complete` 与

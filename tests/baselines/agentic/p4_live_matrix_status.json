@@ -2,11 +2,11 @@
   "schema_version": "2.0",
   "phase": "P4",
   "status": "external_dependencies_blocked",
-  "workspace_commit": "ed136cae71b3a29eff8d4f89d6e131ece279f2e3",
+  "workspace_commit": "e9ab53db85d40281043d40885f4b4bd462ab8ed7",
   "gold_digest": "sha256:c88d55e9ffdbd5f68772634ff672ffce8044446b9a855ba35676201d2f2913e9",
   "protocol": {
     "run_count": 25,
-    "digest": "sha256:cc3553d5ffc5a7c757586463bad9446300bfcc1c5ddf6278d7e388d51d557d89",
+    "digest": "sha256:6a444f2dcc63071f78e840be89e1d91ec5b4c1722835edef2cbd840b8d6fd544",
     "clean_tracked_commit": true,
     "gemma_cache_enabled": false,
     "gemma_profile_digest": "sha256:a10c7f83c898605535a1df8f54fdd9aba29effb069831ed46fed71c4a434be5f"
@@ -19,10 +19,10 @@
       "complete_runs": 5,
       "package_lineage_passes": 5,
       "explanatory_blocks": 0,
-      "total_latency_seconds": 11.404,
-      "average_latency_seconds": 2.281,
-      "worst_latency_seconds": 3.447,
-      "index_digest": "sha256:e4dd27946ecc856ebcf8299b0f403e9508e789ba4dabecf0e2fb7607323c5c11"
+      "total_latency_seconds": 11.248,
+      "average_latency_seconds": 2.25,
+      "worst_latency_seconds": 3.421,
+      "index_digest": "sha256:78e601a73284490b4bc2b85edc3312dcb5b6478d8c5d83b346393b0535c62cf7"
     },
     "fixed_legacy": {
       "runs": 5,
@@ -60,7 +60,7 @@
     "run_records_available": 5,
     "run_records_missing": 20,
     "completed_named_human_reviews": 0,
-    "digest": "sha256:12396dd01eb50499084ad1fd8140ea63cee3fc0a362c2ad0ad4cdcbfe6fc76f2"
+    "digest": "sha256:5efd39205254af5b6d5bad69ce6e161b44b5e399806da45b977912cd7b8aebcc"
   },
   "cutover": {
     "status": "hold",
