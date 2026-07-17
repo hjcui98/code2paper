@@ -209,6 +209,50 @@ The queue, manifest, and every context file are digest-bound to the frozen gold
 dataset and protocol; context or template drift fails even while reviewer/name
 placeholders are still pending.
 
+Use the workspace command instead of hand-editing adjudication fields. First
+inspect exact remaining work:
+
+```bash
+code2paper-agentic-benchmark-review-workspace progress \
+  --workspace /tmp/code2paper-p4-review-workspace
+```
+
+Then record one complete claim, figure, or run decision at a time. The `--review`
+selector must be an exact manifest basename, `reviews/...` path, or absolute
+manifest path. For example:
+
+```bash
+code2paper-agentic-benchmark-review-workspace claim \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --review 002-toy_train-agentic_deterministic-default-r1.json \
+  --claim-id FAC1 \
+  --semantic-match matched --gold-claim-id T1 \
+  --mutation-match no_match \
+  --direct-evidence-support true --qualifiers-preserved true
+
+code2paper-agentic-benchmark-review-workspace run \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --review 002-toy_train-agentic_deterministic-default-r1.json \
+  --usable-completion true --intent-fields-reviewed true
+```
+
+The command rejects unknown gold, mutation, and relation IDs, path escape,
+immutable binding drift, incomplete blocked-run classifications, and an intent
+review that is false for paired-intent runs. It writes atomically. Only after
+`progress` reports `ready_to_sign=true` may the human reviewer sign:
+
+```bash
+code2paper-agentic-benchmark-review-workspace sign \
+  --workspace /tmp/code2paper-p4-review-workspace \
+  --review 002-toy_train-agentic_deterministic-default-r1.json \
+  --reviewer "Ada Reviewer" \
+  --reviewed-at 2026-07-18T12:00:00+08:00
+```
+
+Signing never infers a judgment and does not auto-fill any field. Signed files
+are immutable to these commands; corrections require a newly materialized,
+auditable review workspace rather than silently rewriting a signature.
+
 After named reviewers fill the JSON files, validate the whole workspace before
 benchmark aggregation:
 

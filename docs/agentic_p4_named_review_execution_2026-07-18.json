@@ -1,0 +1,69 @@
+{
+  "schema_version": "code2paper-agentic-p4-named-review-execution-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "debf05c45b1799e23fbb654310f3b79c6088a138",
+  "finding": {
+    "old_behavior": "Reviewers had to edit adjudication JSON directly and could accidentally mix incomplete decisions with attribution.",
+    "trust_risk": "Direct editing made frozen-field mistakes and premature signatures operationally easy even though final validation remained fail-closed."
+  },
+  "operations": [
+    "progress",
+    "claim",
+    "figure",
+    "run",
+    "sign"
+  ],
+  "trust_contract": {
+    "manifest_owned_review_selection_only": true,
+    "queue_digest_rechecked_before_every_operation": true,
+    "immutable_bindings_rechecked_before_every_operation": true,
+    "complete_claim_decision_written_atomically": true,
+    "complete_figure_decision_written_atomically": true,
+    "frozen_run_summary_digest_rechecked_for_run_decisions": true,
+    "unknown_gold_mutation_relation_ids_rejected": true,
+    "blocked_run_classification_enforced": true,
+    "paired_intent_confirmation_enforced": true,
+    "incomplete_signature_rejected": true,
+    "signed_review_mutation_rejected": true,
+    "scientific_judgments_auto_filled": false
+  },
+  "formal_workspace_progress": {
+    "workspace": "/tmp/code2paper-p4-review-workspace-9a98c17-v9-explicit-human-decisions",
+    "queue": "/tmp/code2paper-p4-review-queue-9a98c17-explicit-human-decisions.json",
+    "reviews": 25,
+    "signed_reviews": 0,
+    "reviews_pending": 25,
+    "claims": 165,
+    "claims_pending": 165,
+    "figures": 73,
+    "figures_pending": 73,
+    "run_decisions_pending": 25
+  },
+  "verification": {
+    "workspace_tests": "21 passed",
+    "p4_review_cli_regression": "54 passed",
+    "full_suite": "488 passed, 2 skipped, 6 subtests passed",
+    "adversarial_cases": [
+      "unknown gold claim id",
+      "no-match retaining an id",
+      "unknown or absent direct relation id",
+      "non-manifest path selector",
+      "immutable run binding drift",
+      "incomplete signature",
+      "manually inserted unknown match id at signature",
+      "blocked run without classification",
+      "paired-intent review marked false",
+      "signed review mutation"
+    ]
+  },
+  "source_sha256": {
+    "src/code2paper/agentic/benchmark_review_workspace.py": "4745aa05ba91bc8cba30f801fe177801e28d2ed92d78459084a86b64cee0a028",
+    "src/code2paper/cli/agentic_benchmark_review_workspace.py": "7b0e90ff4d6d0e5d0cea7fe145067ca726a5f620e09bc0784d298229040890c4",
+    "tests/test_agentic_benchmark_review_workspace.py": "21fd87c21722a5dabed32878cc3dc4d5a8f8e546d1a4c075004090b0191007da"
+  },
+  "cutover": {
+    "status": "hold",
+    "default_mode": "legacy",
+    "reason": "The execution surface is ready, but all 25 decisions still require attributable human review."
+  }
+}

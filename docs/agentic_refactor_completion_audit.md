@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `482 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `488 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -120,6 +120,14 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   validated. A non-overwriting rollout artifact CLI now materializes and
   validates stage bindings without hand-copying digests. See
   `docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json`.
+- Named review execution now has fail-closed `progress`, `claim`, `figure`,
+  `run`, and `sign` operations. They select only manifest-owned files, preserve
+  immutable inventories and bindings, validate gold/mutation/relation IDs and
+  frozen run status, write atomically, refuse incomplete signatures, and lock a
+  file after attribution. This makes the pending human work resumable without
+  interpreting or auto-filling any scientific judgment. The formal workspace
+  remains 0/25 signed; see
+  `docs/agentic_p4_named_review_execution_2026-07-18.json`.
 
 ## Final-design Definition of Done
 

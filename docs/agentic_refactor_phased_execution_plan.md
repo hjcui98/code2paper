@@ -1,6 +1,6 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
-版本：2.4
+版本：2.5
 
 日期：2026-07-18
 
@@ -2330,6 +2330,28 @@ validate 批量重读 gold/protocol 和所有 stage trials 后输出 `ValidatedR
 artifact，能力上线不等于 rollout 已完成。定向测试 49 passed，全量测试为
 `482 passed, 2 skipped, 6 subtests passed`。机器记录为
 `docs/agentic_p4_explicit_review_rollout_ops_2026-07-18.json`。
+
+### 12.22 Named review 的可恢复执行面（2026-07-18）
+
+v9 workspace 已能严格验证完整结果，但 reviewer 若直接编辑大段 JSON，容易误改冻结字段、漏填同一 claim
+的某个判定，或在尚有 placeholder 时提前写入姓名。提交
+`debf05c45b1799e23fbb654310f3b79c6088a138` 为
+`code2paper-agentic-benchmark-review-workspace` 增加 `progress|claim|figure|run|sign` 操作：
+
+- `progress` 只统计未决项，不解释或代填任何科研判断；
+- `claim` 一次写入 semantic/mutation/direct-evidence/qualifier 四组完整判定，并校验 frozen gold/mutation ID；
+- `figure` 一次写入语义支持、relation evidence 和 rendered drift，并校验 gold claim/relation ID；
+- `run` 重新读取 digest-bound run summary，强制 blocked run 的 rationale/classification、禁止 blocked usable，
+  并要求 paired-intent review 为 true；
+- `sign` 只有在所有 claim、figure 和 run 判定完整且 schema 合法后才接受具名 reviewer 与带时区时间；
+  签字后上述命令拒绝继续修改，避免无审计地覆盖已归属判断。
+
+所有写入使用原子替换；selector 只能命中 manifest 内唯一 review 文件，queue drift、路径逃逸、immutable
+inventory/binding drift、未知 ID、错误布尔值或提前签字均 fail closed。对正式 workspace 的只读实测准确报告
+25 reviews、165 claims、73 figures，当前 0 signed、165 claim decisions pending、73 figure decisions
+pending、25 run decisions pending，没有把工具上线计作人审完成。定向 P4/review/CLI 回归 54 passed，全量为
+`488 passed, 2 skipped, 6 subtests passed`。机器记录为
+`docs/agentic_p4_named_review_execution_2026-07-18.json`。
 
 ## 13. 代码落点总表
 

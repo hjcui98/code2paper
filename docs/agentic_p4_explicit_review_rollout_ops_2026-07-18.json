@@ -1,6 +1,7 @@
 {
   "schema_version": "code2paper-agentic-p4-explicit-review-rollout-ops-eval/v1",
   "evaluated_at": "2026-07-18",
+  "operational_successor": "docs/agentic_p4_named_review_execution_2026-07-18.json",
   "implementation_commits": [
     "fac0d827dd03b94019e54c7c79330290b8021312",
     "bfca1a4c7802990e79be26e6ea607884b623374a"
