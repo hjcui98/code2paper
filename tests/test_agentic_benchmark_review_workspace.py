@@ -44,6 +44,7 @@ def _template() -> dict:
         "expected_retrieval_targets_observed": [],
         "section_claim_order": [],
         "figure_claim_ids": [],
+        "intent_fields_reviewed": True,
         "usable_completion": False,
         "latency_seconds": 1.5,
     }
@@ -224,10 +225,12 @@ def test_validate_rejects_legacy_claim_inventory_deletion_while_review_is_pendin
         "atomic_claim_id": "FAC1",
         "text": "Frozen legacy sentence.",
         "verdict": "unsupported",
+        "semantic_match": None,
         "gold_claim_id": "",
+        "mutation_match": None,
         "mutation_id": "",
         "direct_evidence_support": None,
-        "qualifiers_preserved": False,
+        "qualifiers_preserved": None,
         "high_risk": False,
     }]
     queue = tmp_path / "legacy-queue.json"
@@ -243,6 +246,35 @@ def test_validate_rejects_legacy_claim_inventory_deletion_while_review_is_pendin
 
     assert report["status"] == "failed"
     assert "claim_inventory_or_validator_verdict_changed" in report["invalid_reviews"][0]["failures"]
+    assert observations == []
+
+
+def test_validate_keeps_unresolved_semantic_decisions_pending(tmp_path: Path) -> None:
+    queue_payload = _queue()
+    template = queue_payload["entries"][0]["review_template"]
+    template["claims"] = [{
+        "atomic_claim_id": "FAC1",
+        "text": "Frozen legacy sentence.",
+        "verdict": "unsupported",
+        "semantic_match": None,
+        "gold_claim_id": "",
+        "mutation_match": None,
+        "mutation_id": "",
+        "direct_evidence_support": None,
+        "qualifiers_preserved": None,
+        "high_risk": False,
+    }]
+    template["usable_completion"] = None
+    queue = tmp_path / "pending-decisions-queue.json"
+    queue.write_text(json.dumps(queue_payload), encoding="utf-8")
+    workspace = tmp_path / "workspace"
+    materialize_review_workspace(queue, workspace)
+    _completed_review(_review_path(workspace))
+
+    report, observations = validate_review_workspace(queue, workspace, _dataset(), _protocol())
+
+    assert report["status"] == "pending_human_review"
+    assert report["pending_review_count"] == 1
     assert observations == []
 
 
@@ -451,10 +483,12 @@ def test_review_queue_claim_templates_are_complete_and_digest_pinned(tmp_path: P
         "atomic_claim_id": "FAC1",
         "text": "Frozen final claim.",
         "verdict": "supported",
+        "semantic_match": None,
         "gold_claim_id": "",
+        "mutation_match": None,
         "mutation_id": "",
         "direct_evidence_support": None,
-        "qualifiers_preserved": False,
+        "qualifiers_preserved": None,
         "high_risk": False,
     }]
     claims_path.write_text('{"atomic_claims":[]}', encoding="utf-8")

@@ -79,6 +79,8 @@ def materialize_review_workspace(queue_path: str | Path, out_root: str | Path) -
             "Replace reviewer and reviewed_at placeholders with an attributable name and timezone-aware ISO-8601 timestamp.",
             "Do not change run, protocol, snapshot, model, claim-text, validator-verdict, or mutation-artifact bindings.",
             "Every claim requires an explicit direct_evidence_support decision based on the frozen code spans.",
+            "Every claim requires explicit semantic_match, mutation_match, and qualifier decisions; empty IDs are not decisions.",
+            "usable_completion and intent_fields_reviewed (when applicable) must be explicit.",
             "The validator never supplies semantic adjudications and cannot replace the named reviewer.",
         ],
         "entries": manifest_entries,
@@ -479,9 +481,38 @@ def _contained_path(root: Path, relative: object, required_parent: str) -> Path:
 
 
 def _has_human_placeholders(review: dict[str, Any]) -> bool:
-    return (
+    identity_placeholders = (
         str(review.get("reviewer") or "").strip() in {"", "__REQUIRED_NAMED_HUMAN__"}
         or str(review.get("reviewed_at") or "").strip() in {"", "__REQUIRED_ISO8601__"}
+    )
+    claims = review.get("claims") if isinstance(review.get("claims"), list) else []
+    figures = review.get("figures") if isinstance(review.get("figures"), list) else []
+    claim_placeholders = any(
+        not isinstance(item, dict)
+        or item.get("semantic_match") is None
+        or item.get("mutation_match") is None
+        or item.get("direct_evidence_support") is None
+        or item.get("qualifiers_preserved") is None
+        for item in claims
+    )
+    figure_placeholders = any(
+        not isinstance(item, dict)
+        or item.get("semantically_supported") is None
+        or item.get("rendered_drift") is None
+        or (item.get("element_kind") == "edge" and item.get("direct_relation_evidence") is None)
+        for item in figures
+    )
+    return (
+        identity_placeholders
+        or review.get("usable_completion") is None
+        or review.get("intent_fields_reviewed") is None
+        or str(review.get("blocked_reason_review") or "") == "__REQUIRED_BLOCK_REVIEW__"
+        or (
+            bool(str(review.get("blocked_reason_review") or "").strip())
+            and review.get("blocked_reason_classification") is None
+        )
+        or claim_placeholders
+        or figure_placeholders
     )
 
 

@@ -32,6 +32,7 @@ code2paper-agentic-benchmark-run = "code2paper.cli.agentic_benchmark_run:main"
 code2paper-agentic-legacy-v2-audit = "code2paper.cli.agentic_legacy_v2_audit:main"
 code2paper-agentic-benchmark-review-queue = "code2paper.cli.agentic_benchmark_review_queue:main"
 code2paper-agentic-benchmark-review-workspace = "code2paper.cli.agentic_benchmark_review_workspace:main"
+code2paper-agentic-rollout-artifact = "code2paper.cli.agentic_rollout_artifact:main"
 code2paper-agentic-real-project-blind-eval = "code2paper.cli.agentic_real_project_blind_eval:main"
 
 [project.optional-dependencies]

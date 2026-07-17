@@ -24,7 +24,7 @@ from code2paper.agentic.cutover import (
     ValidatedRolloutEvidenceV2,
     decide_cutover,
 )
-from code2paper.agentic.rollout_evidence import validate_rollout_artifacts
+from code2paper.agentic.rollout_evidence import materialize_rollout_trial, validate_rollout_artifacts
 from code2paper.agentic.benchmark_observation import (
     BenchmarkRunReviewV2,
     ClaimAdjudicationV2,
@@ -393,21 +393,36 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
     decision_path = tmp_path / "shadow-ready.json"
     decision_path.write_text(authorization.model_dump_json(), encoding="utf-8")
     artifact_path = tmp_path / "shadow-trial.json"
-    artifact_path.write_text(json.dumps({
-        "schema_version": "code2paper-agentic-rollout-trial/v1",
-        "stage": "shadow",
-        "case_id": "toy_train",
-        "authorization_decision_path": str(decision_path),
-        "authorization_decision_digest": digest(decision_path),
-        "agentic_run_summary_path": str(agentic_path),
-        "agentic_run_summary_digest": digest(agentic_path),
-        "legacy_run_summary_path": str(legacy_path),
-        "legacy_run_summary_digest": digest(legacy_path),
+    materialize_rollout_trial(
+        stage="shadow",
+        case_id="toy_train",
+        authorization_decision_path=decision_path,
+        agentic_run_summary_path=agentic_path,
+        legacy_run_summary_path=legacy_path,
+        out_path=artifact_path,
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+    )
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["accepted"] is None
+    assert artifact["reviewer"] == "__REQUIRED_NAMED_HUMAN__"
+    artifact.update({
         "reviewer": "Named Shadow Reviewer",
         "reviewed_at": "2026-07-18T12:00:00+08:00",
         "accepted": True,
-        "incident_ids": [],
-    }), encoding="utf-8")
+    })
+    artifact_path.write_text(json.dumps(artifact), encoding="utf-8")
+    with pytest.raises(FileExistsError, match="already exists"):
+        materialize_rollout_trial(
+            stage="shadow",
+            case_id="toy_train",
+            authorization_decision_path=decision_path,
+            agentic_run_summary_path=agentic_path,
+            legacy_run_summary_path=legacy_path,
+            out_path=artifact_path,
+            protocol_commit=protocol_commit,
+            gold_digest=gold_digest,
+        )
 
     evidence = validate_rollout_artifacts(
         [artifact_path],
@@ -745,7 +760,8 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
         reviewer="human-reviewer", reviewed_at="2026-07-17T00:00:00Z",
         claims=[ClaimAdjudicationV2(
             atomic_claim_id="FAC1", text=case.supported_claims[0].text,
-            verdict="caveated", gold_claim_id="T1",
+            verdict="caveated", semantic_match="matched", gold_claim_id="T1",
+            mutation_match="no_match",
             direct_evidence_support=True,
             qualifiers_preserved=True,
         )],
@@ -797,6 +813,29 @@ def test_observation_extraction_is_digest_pinned_and_uses_validator_trace(tmp_pa
                 "claims": [review.claims[0].model_copy(update={"direct_evidence_support": None})],
             }),
         )
+    with pytest.raises(ValueError, match="semantic match decision missing"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"semantic_match": None})],
+            }),
+        )
+    with pytest.raises(ValueError, match="valid gold claim"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"gold_claim_id": "UNKNOWN"})],
+            }),
+        )
+    with pytest.raises(ValueError, match="mutation match decision missing"):
+        extract_benchmark_observation_v2(
+            case,
+            review.model_copy(update={
+                "claims": [review.claims[0].model_copy(update={"mutation_match": None})],
+            }),
+        )
+    with pytest.raises(ValueError, match="usable-completion decision missing"):
+        extract_benchmark_observation_v2(case, review.model_copy(update={"usable_completion": None}))
     with pytest.raises(ValueError, match="cannot confirm absent direct evidence"):
         no_evidence_validation_path, no_evidence_validation_hash = write(
             "validation-no-evidence.json",
@@ -961,7 +1000,10 @@ def test_legacy_observation_requires_exact_audit_claim_and_figure_inventory(tmp_
         atomic_claim_id="FAC1",
         text="The legacy trainer claims unsupported behavior.",
         verdict="unsupported",
+        semantic_match="no_match",
+        mutation_match="no_match",
         direct_evidence_support=False,
+        qualifiers_preserved=False,
     )
     figure = FigureAdjudicationV2(**{
         **figure_item,

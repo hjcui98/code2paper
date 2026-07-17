@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.cutover import CutoverDecisionV2, ValidatedRolloutEvidenceV2
+from code2paper.agentic.tool_runtime import atomic_write_json
 
 
 class RolloutArtifactModel(BaseModel):
@@ -92,6 +93,58 @@ def validate_rollout_artifacts(
     )
 
 
+def materialize_rollout_trial(
+    *,
+    stage: Literal["shadow", "opt_in", "canary"],
+    case_id: str,
+    authorization_decision_path: str | Path,
+    agentic_run_summary_path: str | Path,
+    out_path: str | Path,
+    protocol_commit: str,
+    gold_digest: str,
+    legacy_run_summary_path: str | Path | None = None,
+) -> Path:
+    output = Path(out_path).expanduser().resolve()
+    if output.exists():
+        raise FileExistsError(f"rollout trial already exists:{output}")
+    decision_path = Path(authorization_decision_path).expanduser().resolve()
+    agentic_path = Path(agentic_run_summary_path).expanduser().resolve()
+    decision_digest = _digest(decision_path)
+    agentic_digest = _digest(agentic_path)
+    _validate_authorization_decision(
+        decision_path,
+        decision_digest,
+        stage=stage,
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+    )
+    _validate_agentic_run(str(agentic_path), agentic_digest)
+    legacy_path = Path(legacy_run_summary_path).expanduser().resolve() if legacy_run_summary_path else None
+    if stage == "shadow" and legacy_path is None:
+        raise ValueError("shadow rollout requires --legacy-run-summary")
+    legacy_digest = ""
+    if legacy_path is not None:
+        legacy_digest = _digest(legacy_path)
+        _validate_legacy_run(str(legacy_path), legacy_digest)
+    template = {
+        "schema_version": "code2paper-agentic-rollout-trial/v1",
+        "stage": stage,
+        "case_id": case_id,
+        "authorization_decision_path": str(decision_path),
+        "authorization_decision_digest": decision_digest,
+        "agentic_run_summary_path": str(agentic_path),
+        "agentic_run_summary_digest": agentic_digest,
+        "legacy_run_summary_path": str(legacy_path) if legacy_path is not None else "",
+        "legacy_run_summary_digest": legacy_digest,
+        "reviewer": "__REQUIRED_NAMED_HUMAN__",
+        "reviewed_at": "__REQUIRED_ISO8601__",
+        "accepted": None,
+        "incident_ids": [],
+    }
+    atomic_write_json(output, template)
+    return output
+
+
 def _validate_authorization(
     trial: RolloutTrialArtifactV2,
     *,
@@ -99,13 +152,30 @@ def _validate_authorization(
     gold_digest: str,
 ) -> None:
     path = Path(trial.authorization_decision_path).expanduser().resolve()
-    _require_digest(path, trial.authorization_decision_digest, "rollout authorization decision")
+    _validate_authorization_decision(
+        path,
+        trial.authorization_decision_digest,
+        stage=trial.stage,
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+    )
+
+
+def _validate_authorization_decision(
+    path: Path,
+    digest: str,
+    *,
+    stage: Literal["shadow", "opt_in", "canary"],
+    protocol_commit: str,
+    gold_digest: str,
+) -> None:
+    _require_digest(path, digest, "rollout authorization decision")
     decision = CutoverDecisionV2.model_validate_json(path.read_text(encoding="utf-8"))
     expected_status = {
         "shadow": "shadow_ready",
         "opt_in": "opt_in_ready",
         "canary": "canary_ready",
-    }[trial.stage]
+    }[stage]
     if decision.status != expected_status or not decision.hard_gates_passed:
         raise ValueError(f"rollout stage lacks {expected_status} authorization")
     if decision.default_mode != "legacy":

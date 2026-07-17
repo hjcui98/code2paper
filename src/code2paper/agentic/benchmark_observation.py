@@ -24,10 +24,12 @@ class ClaimAdjudicationV2(ReviewModel):
     atomic_claim_id: str = ""
     text: str = ""
     verdict: Literal["supported", "caveated", "unsupported", "unverified"] | None = None
+    semantic_match: Literal["matched", "no_match"] | None = None
     gold_claim_id: str = ""
+    mutation_match: Literal["matched", "no_match"] | None = None
     mutation_id: str = ""
     direct_evidence_support: bool | None = None
-    qualifiers_preserved: bool = False
+    qualifiers_preserved: bool | None = None
     high_risk: bool = False
 
 
@@ -69,13 +71,15 @@ class BenchmarkRunReviewV2(ReviewModel):
     reviewer: str
     reviewed_at: str
     blocked_reason_review: str = ""
+    blocked_reason_classification: Literal["correct_repairable", "correct_terminal", "false_block"] | None = None
     claims: list[ClaimAdjudicationV2] = Field(default_factory=list)
     figures: list[FigureAdjudicationV2] = Field(default_factory=list)
     mutation_trials: list[MutationTrialAdjudicationV2] = Field(default_factory=list)
     expected_retrieval_targets_observed: list[str] = Field(default_factory=list)
     section_claim_order: list[str] = Field(default_factory=list)
     figure_claim_ids: list[str] = Field(default_factory=list)
-    usable_completion: bool = False
+    intent_fields_reviewed: bool | None = None
+    usable_completion: bool | None = None
     latency_seconds: float = 0.0
 
     @model_validator(mode="after")
@@ -175,6 +179,7 @@ def _agentic_observation(
             raise ValueError(f"review verdict decision missing:{adjudication.atomic_claim_id}")
         if adjudication.verdict != artifact_verdict:
             raise ValueError(f"review verdict contradicts validator:{adjudication.atomic_claim_id}")
+        _validate_human_claim_decisions(case, adjudication)
         if adjudication.direct_evidence_support is None:
             raise ValueError(
                 f"review direct evidence support decision missing:{adjudication.atomic_claim_id}"
@@ -198,12 +203,13 @@ def _agentic_observation(
             gold_claim_id=adjudication.gold_claim_id,
             direct_evidence_ids=direct_evidence_ids,
             direct_evidence_support=adjudication.direct_evidence_support,
-            qualifiers_preserved=adjudication.qualifiers_preserved,
+            qualifiers_preserved=bool(adjudication.qualifiers_preserved),
             trace_exact=trace_exact,
             mutation_id=adjudication.mutation_id,
             high_risk=adjudication.high_risk,
         ))
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
+    _validate_run_level_human_decisions(case, review, summary)
     completion_complete = bool(completion.get("complete"))
     if completion_complete and (
         not claims_digest
@@ -293,9 +299,12 @@ def _agentic_observation(
         final_invariant_passed=bool(summary.get("invariant_audit_passed")),
         completion_complete=completion_complete,
         asset_lineage_complete=asset_lineage,
-        usable_completion=review.usable_completion and completion_complete and asset_lineage,
-        blocked_run_human_reviewed=bool(review.blocked_reason_review) if summary.get("status") != "success" else False,
-        false_block_human_reviewed=bool(review.blocked_reason_review),
+        usable_completion=bool(review.usable_completion) and completion_complete and asset_lineage,
+        blocked_run_human_reviewed=(
+            bool(review.blocked_reason_review and review.blocked_reason_classification)
+            if summary.get("status") != "success" else False
+        ),
+        false_block_human_reviewed=bool(review.blocked_reason_review and review.blocked_reason_classification),
         expected_retrieval_targets_observed=review.expected_retrieval_targets_observed,
         section_claim_order=review.section_claim_order,
         figure_claim_ids=review.figure_claim_ids,
@@ -345,6 +354,7 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             raise ValueError(f"legacy review changed frozen claim or verdict:{item.atomic_claim_id}")
         if item.high_risk != bool(expected.get("high_risk")):
             raise ValueError(f"legacy review changed frozen claim risk:{item.atomic_claim_id}")
+        _validate_human_claim_decisions(case, item)
         if item.direct_evidence_support is None:
             raise ValueError("legacy claim review requires a direct evidence support decision")
         direct_evidence_ids = expected.get("direct_evidence_ids", [])
@@ -356,12 +366,13 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
             gold_claim_id=item.gold_claim_id,
             direct_evidence_ids=direct_evidence_ids,
             direct_evidence_support=item.direct_evidence_support,
-            qualifiers_preserved=item.qualifiers_preserved,
+            qualifiers_preserved=bool(item.qualifiers_preserved),
             trace_exact=False,
             mutation_id=item.mutation_id,
             high_risk=item.high_risk,
         ))
     detected, stale_trials, stale_detected, trial_provenance = _mutation_trials(case, review)
+    _validate_run_level_human_decisions(case, review, summary)
     expected_figures = audit.get("figure_inventory")
     if not isinstance(expected_figures, list):
         raise ValueError("legacy V2 audit figure inventory must be a list")
@@ -386,9 +397,12 @@ def _legacy_observation(case: BenchmarkCaseV2, review: BenchmarkRunReviewV2, sum
         detected_mutation_ids=detected,
         stale_trials=stale_trials,
         stale_detected=stale_detected,
-        usable_completion=review.usable_completion and bool(audit.get("v2_usable_completion")),
-        blocked_run_human_reviewed=bool(review.blocked_reason_review) if summary.get("status") == "blocked" else False,
-        false_block_human_reviewed=bool(review.blocked_reason_review),
+        usable_completion=bool(review.usable_completion) and bool(audit.get("v2_usable_completion")),
+        blocked_run_human_reviewed=(
+            bool(review.blocked_reason_review and review.blocked_reason_classification)
+            if summary.get("status") == "blocked" else False
+        ),
+        false_block_human_reviewed=bool(review.blocked_reason_review and review.blocked_reason_classification),
         expected_retrieval_targets_observed=review.expected_retrieval_targets_observed,
         section_claim_order=review.section_claim_order,
         figure_claim_ids=review.figure_claim_ids,
@@ -441,6 +455,44 @@ def build_figure_review_inventory(scene: dict) -> list[dict]:
     if len(identities) != len(set(identities)):
         raise ValueError("figure scene contains duplicate visible element ids")
     return inventory
+
+
+def _validate_human_claim_decisions(case: BenchmarkCaseV2, item: ClaimAdjudicationV2) -> None:
+    gold = {claim.claim_id: claim for claim in case.supported_claims}
+    mutations = {mutation.mutation_id for mutation in case.mutations}
+    if item.semantic_match is None:
+        raise ValueError(f"review semantic match decision missing:{item.atomic_claim_id}")
+    if item.semantic_match == "matched" and item.gold_claim_id not in gold:
+        raise ValueError(f"review matched claim requires a valid gold claim:{item.atomic_claim_id}")
+    if item.semantic_match == "no_match" and item.gold_claim_id:
+        raise ValueError(f"review no-match claim cannot retain a gold claim:{item.atomic_claim_id}")
+    if item.mutation_match is None:
+        raise ValueError(f"review mutation match decision missing:{item.atomic_claim_id}")
+    if item.mutation_match == "matched" and item.mutation_id not in mutations:
+        raise ValueError(f"review matched mutation requires a valid mutation id:{item.atomic_claim_id}")
+    if item.mutation_match == "no_match" and item.mutation_id:
+        raise ValueError(f"review no-mutation claim cannot retain a mutation id:{item.atomic_claim_id}")
+    if item.qualifiers_preserved is None:
+        raise ValueError(f"review qualifier decision missing:{item.atomic_claim_id}")
+
+
+def _validate_run_level_human_decisions(
+    case: BenchmarkCaseV2,
+    review: BenchmarkRunReviewV2,
+    summary: dict,
+) -> None:
+    if review.usable_completion is None:
+        raise ValueError("review usable-completion decision missing")
+    if summary.get("status") == "blocked":
+        if (
+            not review.blocked_reason_review.strip()
+            or review.blocked_reason_review == "__REQUIRED_BLOCK_REVIEW__"
+            or review.blocked_reason_classification is None
+        ):
+            raise ValueError("blocked run requires a classified human blocked-reason review")
+    if any(intent.intent_id == review.intent_id for intent in case.intents):
+        if review.intent_fields_reviewed is not True:
+            raise ValueError("intent benchmark run requires reviewed intent fields")
 
 
 def _validated_figure_adjudications(

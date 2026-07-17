@@ -45,6 +45,8 @@ def build_review_queue_v2(
                 raise ValueError(f"legacy V2 audit is required before review queue construction:{audit_path}")
             legacy_audit = str(audit_path.resolve())
             legacy_payload = _bound_legacy_audit(audit_path, summary_path)
+        summary_payload = json.loads(summary_path.read_text(encoding="utf-8"))
+        run_blocked = spec.variant != "fixed_legacy" and summary_payload.get("status") == "blocked"
         template = {
             "schema_version": "2.0",
             "case_id": spec.case_id,
@@ -62,7 +64,8 @@ def build_review_queue_v2(
             "legacy_v2_audit_digest": _digest(Path(legacy_audit)) if legacy_audit else "",
             "reviewer": "__REQUIRED_NAMED_HUMAN__",
             "reviewed_at": "__REQUIRED_ISO8601__",
-            "blocked_reason_review": "",
+            "blocked_reason_review": "__REQUIRED_BLOCK_REVIEW__" if run_blocked else "",
+            "blocked_reason_classification": None,
             "claims": (
                 _agentic_claim_templates(summary_path)
                 if spec.variant != "fixed_legacy"
@@ -77,7 +80,8 @@ def build_review_queue_v2(
             "expected_retrieval_targets_observed": [],
             "section_claim_order": [],
             "figure_claim_ids": [],
-            "usable_completion": False,
+            "intent_fields_reviewed": None if spec.intent_id else True,
+            "usable_completion": None,
             "latency_seconds": record.get("duration_seconds", 0.0),
         }
         entries.append({
@@ -90,8 +94,11 @@ def build_review_queue_v2(
             "legacy_v2_audit_digest": _digest(Path(legacy_audit)) if legacy_audit else "",
             "review_instructions": [
                 "Map each factual claim to a gold claim only after semantic comparison.",
+                "Set semantic_match to matched or no_match; blank gold IDs never count as an explicit no-match decision.",
+                "Set mutation_match to matched or no_match for every claim so mutation leakage cannot be silently skipped.",
                 "Set direct_evidence_support only after checking that the cited frozen code spans support the exact claim.",
                 "Mark qualifiers_preserved only when every required qualifier is present.",
+                "Set usable_completion explicitly after reviewing the complete text, figure, lineage, and invariant package.",
                 "Review every blocked reason as specific/correct/repairable or false-block.",
                 "Do not set usable_completion when V2 text, figure, lineage, or final invariant is absent.",
             ],
@@ -144,8 +151,9 @@ def _agentic_claim_templates(summary_path: Path) -> list[dict]:
     return [{
         "atomic_claim_id": item["atomic_claim_id"], "text": item.get("text", ""),
         "verdict": verdicts.get(item["atomic_claim_id"], {}).get("status", "unverified"),
-        "gold_claim_id": "", "mutation_id": "", "direct_evidence_support": None,
-        "qualifiers_preserved": False,
+        "semantic_match": None, "gold_claim_id": "",
+        "mutation_match": None, "mutation_id": "", "direct_evidence_support": None,
+        "qualifiers_preserved": None,
         "high_risk": bool(item.get("high_risk_markers")),
     } for item in atomic_claims]
 
@@ -201,10 +209,12 @@ def _legacy_claim_templates(audit: dict) -> list[dict]:
         "atomic_claim_id": item["atomic_claim_id"],
         "text": item["text"],
         "verdict": item["verdict"],
+        "semantic_match": None,
         "gold_claim_id": "",
+        "mutation_match": None,
         "mutation_id": "",
         "direct_evidence_support": None,
-        "qualifiers_preserved": False,
+        "qualifiers_preserved": None,
         "high_risk": bool(item.get("high_risk")),
     } for item in audit["claim_inventory"]]
 
