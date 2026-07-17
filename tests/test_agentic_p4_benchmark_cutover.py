@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib
 import json
 import pytest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from code2paper.agentic.benchmark_v2 import (
@@ -16,11 +17,14 @@ from code2paper.agentic.benchmark_v2 import (
     validate_gold_evidence,
 )
 from code2paper.agentic.cutover import (
+    CutoverDecisionV2,
     LegacyTrustContractV1,
     NamedReviewEvidenceV2,
     RolloutEvidenceV2,
+    ValidatedRolloutEvidenceV2,
     decide_cutover,
 )
+from code2paper.agentic.rollout_evidence import validate_rollout_artifacts
 from code2paper.agentic.benchmark_observation import (
     BenchmarkRunReviewV2,
     ClaimAdjudicationV2,
@@ -300,17 +304,32 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
     )
 
     reviews = _validated_reviews(dataset)
+    case_ids = sorted(item.case_id for item in dataset.cases)
+    def rollout_evidence(*, shadow=False, opt_in=False, canary=False):
+        stages = int(shadow) + int(opt_in) + int(canary)
+        return ValidatedRolloutEvidenceV2(
+            source="digest_pinned_rollout_artifacts" if stages else "none",
+            artifact_digests=[
+                f"sha256:{index:064x}" for index in range(100, 100 + stages * len(case_ids))
+            ],
+            shadow_case_ids=case_ids if shadow else [],
+            opt_in_case_ids=case_ids if opt_in else [],
+            canary_case_ids=case_ids if canary else [],
+        )
     shadow = decide_cutover(dataset, runs, base, named_review_evidence=reviews)
     opt_in = decide_cutover(
-        dataset, runs, base.model_copy(update={"shadow_cases": 4, "shadow_reviewed": True}),
+        dataset, runs, base,
         named_review_evidence=reviews,
+        validated_rollout_evidence=rollout_evidence(shadow=True),
     )
-    canary = decide_cutover(dataset, runs, base.model_copy(update={
-        "shadow_cases": 4, "shadow_reviewed": True, "opt_in_cases": 4,
-    }), named_review_evidence=reviews)
-    default = decide_cutover(dataset, runs, base.model_copy(update={
-        "shadow_cases": 4, "shadow_reviewed": True, "opt_in_cases": 4, "canary_cases": 4,
-    }), named_review_evidence=reviews)
+    canary = decide_cutover(
+        dataset, runs, base, named_review_evidence=reviews,
+        validated_rollout_evidence=rollout_evidence(shadow=True, opt_in=True),
+    )
+    default = decide_cutover(
+        dataset, runs, base, named_review_evidence=reviews,
+        validated_rollout_evidence=rollout_evidence(shadow=True, opt_in=True, canary=True),
+    )
 
     assert shadow.status == "shadow_ready" and shadow.default_mode == "legacy"
     assert opt_in.status == "opt_in_ready" and opt_in.default_mode == "legacy"
@@ -337,6 +356,76 @@ def test_cutover_cannot_authorize_self_reported_observations_without_review_arti
     assert decision.status == "hold"
     assert decision.default_mode == "legacy"
     assert "digest_pinned_named_review_artifacts_not_validated" in decision.failures
+    assert "self_reported_rollout_progress_not_accepted" in decision.failures
+
+
+def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_path: Path) -> None:
+    protocol_commit = "commit:test"
+    gold_digest = "sha256:" + "c" * 64
+    completion_path = tmp_path / "completion.json"
+    completion_path.write_text('{"complete":true}', encoding="utf-8")
+    digest = lambda path: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    agentic_path = tmp_path / "agentic-summary.json"
+    agentic_path.write_text(json.dumps({
+        "status": "success",
+        "invariant_audit_passed": True,
+        "artifacts": {
+            "agentic_run_completion_report": {
+                "path": str(completion_path),
+                "hash": digest(completion_path),
+            },
+        },
+    }), encoding="utf-8")
+    legacy_path = tmp_path / "legacy-summary.json"
+    legacy_path.write_text('{"fidelity_passed":true}', encoding="utf-8")
+    authorization = CutoverDecisionV2(
+        status="shadow_ready",
+        default_mode="legacy",
+        hard_gates_passed=True,
+        named_review_evidence=NamedReviewEvidenceV2(
+            source="digest_pinned_review_artifacts",
+            review_artifact_digests=["sha256:" + "a" * 64],
+        ),
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+        benchmark_case_ids=["toy_train"],
+    )
+    decision_path = tmp_path / "shadow-ready.json"
+    decision_path.write_text(authorization.model_dump_json(), encoding="utf-8")
+    artifact_path = tmp_path / "shadow-trial.json"
+    artifact_path.write_text(json.dumps({
+        "schema_version": "code2paper-agentic-rollout-trial/v1",
+        "stage": "shadow",
+        "case_id": "toy_train",
+        "authorization_decision_path": str(decision_path),
+        "authorization_decision_digest": digest(decision_path),
+        "agentic_run_summary_path": str(agentic_path),
+        "agentic_run_summary_digest": digest(agentic_path),
+        "legacy_run_summary_path": str(legacy_path),
+        "legacy_run_summary_digest": digest(legacy_path),
+        "reviewer": "Named Shadow Reviewer",
+        "reviewed_at": "2026-07-18T12:00:00+08:00",
+        "accepted": True,
+        "incident_ids": [],
+    }), encoding="utf-8")
+
+    evidence = validate_rollout_artifacts(
+        [artifact_path],
+        expected_case_ids={"toy_train"},
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+    )
+
+    assert evidence.shadow_case_ids == ["toy_train"]
+    assert evidence.source == "digest_pinned_rollout_artifacts"
+    agentic_path.write_text('{"status":"success"}', encoding="utf-8")
+    with pytest.raises(ValueError, match="agentic run summary digest mismatch"):
+        validate_rollout_artifacts(
+            [artifact_path],
+            expected_case_ids={"toy_train"},
+            protocol_commit=protocol_commit,
+            gold_digest=gold_digest,
+        )
 
 
 def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_path: Path) -> None:
@@ -373,7 +462,7 @@ def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_p
     decision = json.loads(decision_path.read_text(encoding="utf-8"))
 
     assert exit_code == 0
-    assert decision["schema_version"] == "2.1"
+    assert decision["schema_version"] == "2.2"
     assert decision["status"] == "hold"
     assert decision["default_mode"] == "legacy"
     assert decision["named_review_evidence"]["source"] == "none"
@@ -405,7 +494,15 @@ def test_benchmark_cli_consumes_validated_review_workspace_as_exact_review_sourc
             "code2paper.cli.agentic_benchmark.validate_review_workspace",
             return_value=(workspace_report, observations),
         ) as validate_workspace,
-        patch("code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2", return_value=object()),
+        patch(
+            "code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2",
+            return_value=SimpleNamespace(
+                gold_digest="sha256:" + hashlib.sha256(
+                    dataset.model_dump_json(exclude_none=False).encode("utf-8")
+                ).hexdigest(),
+                workspace_commit="commit:test",
+            ),
+        ),
         patch("code2paper.cli.agentic_benchmark.validate_protocol_observations_v2", return_value=[]),
     ):
         exit_code = benchmark_main([
@@ -433,7 +530,15 @@ def test_benchmark_cli_rejects_pending_review_workspace(tmp_path: Path) -> None:
             "code2paper.cli.agentic_benchmark.validate_review_workspace",
             return_value=({"status": "pending_human_review", "hard_gate_passed": False}, []),
         ),
-        patch("code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2", return_value=object()),
+        patch(
+            "code2paper.cli.agentic_benchmark.load_benchmark_protocol_v2",
+            return_value=SimpleNamespace(
+                gold_digest="sha256:" + hashlib.sha256(
+                    load_benchmark_dataset_v2(DATASET_PATH).model_dump_json(exclude_none=False).encode("utf-8")
+                ).hexdigest(),
+                workspace_commit="commit:test",
+            ),
+        ),
     ):
         exit_code = benchmark_main([
             "--gold", str(DATASET_PATH),

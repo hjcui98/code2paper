@@ -22,7 +22,13 @@ from code2paper.agentic.benchmark_v2 import (
 )
 from code2paper.agentic.benchmark_observation import extract_benchmark_observation_v2, load_benchmark_run_review_v2
 from code2paper.agentic.benchmark_review_workspace import validate_review_workspace
-from code2paper.agentic.cutover import NamedReviewEvidenceV2, RolloutEvidenceV2, decide_cutover
+from code2paper.agentic.cutover import (
+    NamedReviewEvidenceV2,
+    RolloutEvidenceV2,
+    ValidatedRolloutEvidenceV2,
+    decide_cutover,
+)
+from code2paper.agentic.rollout_evidence import validate_rollout_artifacts
 from code2paper.agentic.tool_runtime import atomic_write_json
 from code2paper.agentic.benchmark_protocol import load_benchmark_protocol_v2, validate_protocol_observations_v2
 
@@ -64,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--observations-out", default="", help="Write artifact-extracted observations to this JSON path.")
     parser.add_argument("--workspace-root", default=".", help="Root used to verify gold code excerpts.")
     parser.add_argument("--rollout", default="", help="Optional RolloutEvidenceV2 JSON for cutover decision.")
+    parser.add_argument(
+        "--rollout-artifact",
+        action="append",
+        default=[],
+        help="Digest-pinned rollout trial artifact; repeat for every validated shadow/opt-in/canary case.",
+    )
     parser.add_argument("--cutover-out", default="", help="Output path for CutoverDecisionV2 JSON.")
     parser.add_argument("--protocol", default="", help="Frozen BenchmarkProtocolV2 used to validate the exact run matrix.")
     args = parser.parse_args(argv)
@@ -81,6 +93,13 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         review_evidence = NamedReviewEvidenceV2()
         protocol = load_benchmark_protocol_v2(args.protocol) if args.protocol else None
+        if args.rollout_artifact and protocol is None:
+            parser.error("--rollout-artifact requires --protocol")
+        if protocol is not None:
+            gold_payload = dataset.model_dump_json(exclude_none=False).encode("utf-8")
+            if protocol.gold_digest != "sha256:" + hashlib.sha256(gold_payload).hexdigest():
+                print("[code2paper-agentic-benchmark] error=protocol_gold_digest_mismatch", file=sys.stderr)
+                return 2
         if args.review_workspace:
             workspace_report, observations = validate_review_workspace(
                 args.review_queue,
@@ -130,11 +149,26 @@ def main(argv: list[str] | None = None) -> int:
         if args.rollout:
             rollout = RolloutEvidenceV2.model_validate_json(Path(args.rollout).read_text(encoding="utf-8"))
         rollout = rollout.model_copy(update={"protocol_validated": protocol_validated})
+        validated_rollout = ValidatedRolloutEvidenceV2()
+        if args.rollout_artifact:
+            try:
+                validated_rollout = validate_rollout_artifacts(
+                    args.rollout_artifact,
+                    expected_case_ids={item.case_id for item in dataset.cases},
+                    protocol_commit=protocol.workspace_commit,
+                    gold_digest=protocol.gold_digest,
+                )
+            except (OSError, ValueError, json.JSONDecodeError) as exc:
+                print(f"[code2paper-agentic-benchmark] error=rollout_artifact_invalid:{exc}", file=sys.stderr)
+                return 2
         decision = decide_cutover(
             dataset,
             report.evaluated_runs,
             rollout,
             named_review_evidence=review_evidence,
+            validated_rollout_evidence=validated_rollout,
+            protocol_commit=protocol.workspace_commit if protocol is not None else "",
+            gold_digest=protocol.gold_digest if protocol is not None else "",
         )
         if args.cutover_out:
             atomic_write_json(args.cutover_out, decision)

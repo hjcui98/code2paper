@@ -131,7 +131,7 @@ class RunCliTests(unittest.TestCase):
             root = Path(tmpdir)
             decision = root / "cutover.json"
             decision.write_text(json.dumps({
-                "schema_version": "2.1",
+                "schema_version": "2.2",
                 "status": "default_ready",
                 "default_mode": "agentic",
                 "hard_gates_passed": True,
@@ -142,6 +142,21 @@ class RunCliTests(unittest.TestCase):
                     "source": "digest_pinned_review_artifacts",
                     "review_artifact_digests": ["sha256:" + "a" * 64],
                 },
+                "validated_rollout_evidence": {
+                    "source": "digest_pinned_rollout_artifacts",
+                    "artifact_digests": [
+                        "sha256:" + "b" * 64,
+                        "sha256:" + "d" * 64,
+                        "sha256:" + "e" * 64,
+                    ],
+                    "shadow_case_ids": ["case-1"],
+                    "opt_in_case_ids": ["case-1"],
+                    "canary_case_ids": ["case-1"],
+                    "canary_incidents": 0,
+                },
+                "protocol_commit": "commit:test",
+                "gold_digest": "sha256:" + "c" * 64,
+                "benchmark_case_ids": ["case-1"],
             }), encoding="utf-8")
             out = root / "run"
 
@@ -165,7 +180,7 @@ class RunCliTests(unittest.TestCase):
             (project / "train.py").write_text("def main():\n    pass\n", encoding="utf-8")
             decision = root / "cutover.json"
             decision.write_text(json.dumps({
-                "schema_version": "2.1",
+                "schema_version": "2.2",
                 "status": "default_ready",
                 "default_mode": "agentic",
                 "hard_gates_passed": True,

@@ -27,15 +27,53 @@ class TrustThresholdsV2(CutoverModel):
 
 
 class RolloutEvidenceV2(CutoverModel):
+    """Policy inputs only; rollout progress counters are deprecated self-reports."""
+
     protocol_validated: bool = False
     shadow_cases: int = 0
     shadow_reviewed: bool = False
     opt_in_cases: int = 0
     canary_cases: int = 0
-    canary_incidents: int = 0
+    canary_incidents: int = Field(default=0, ge=0)
     team_false_block_threshold: float | None = None
     migration_guide_complete: bool = False
     legacy_contract_marked: bool = False
+
+
+class ValidatedRolloutEvidenceV2(CutoverModel):
+    source: Literal["none", "digest_pinned_rollout_artifacts"] = "none"
+    artifact_digests: list[str] = Field(default_factory=list)
+    shadow_case_ids: list[str] = Field(default_factory=list)
+    opt_in_case_ids: list[str] = Field(default_factory=list)
+    canary_case_ids: list[str] = Field(default_factory=list)
+    canary_incidents: int = 0
+
+    @model_validator(mode="after")
+    def _validated_rollout_is_consistent(self) -> "ValidatedRolloutEvidenceV2":
+        values = [*self.shadow_case_ids, *self.opt_in_case_ids, *self.canary_case_ids]
+        if self.source == "none" and (self.artifact_digests or values or self.canary_incidents):
+            raise ValueError("rollout progress requires digest_pinned_rollout_artifacts source")
+        if self.source == "digest_pinned_rollout_artifacts" and not self.artifact_digests:
+            raise ValueError("validated rollout source requires artifact digests")
+        expected_artifacts = len(self.shadow_case_ids) + len(self.opt_in_case_ids) + len(self.canary_case_ids)
+        if self.source == "digest_pinned_rollout_artifacts" and len(self.artifact_digests) != expected_artifacts:
+            raise ValueError("rollout artifact digest count must match stage-case coverage")
+        if len(self.artifact_digests) != len(set(self.artifact_digests)):
+            raise ValueError("rollout artifact digests must be unique")
+        if any(not _is_sha256_digest(item) for item in self.artifact_digests):
+            raise ValueError("rollout artifact digests must be sha256 values")
+        for stage, case_ids in (
+            ("shadow", self.shadow_case_ids),
+            ("opt_in", self.opt_in_case_ids),
+            ("canary", self.canary_case_ids),
+        ):
+            if len(case_ids) != len(set(case_ids)):
+                raise ValueError(f"validated rollout contains duplicate {stage} cases")
+        if not set(self.opt_in_case_ids).issubset(self.shadow_case_ids):
+            raise ValueError("opt-in rollout cases require validated shadow evidence")
+        if not set(self.canary_case_ids).issubset(self.opt_in_case_ids):
+            raise ValueError("canary rollout cases require validated opt-in evidence")
+        return self
 
 
 class NamedReviewEvidenceV2(CutoverModel):
@@ -63,7 +101,7 @@ class NamedReviewEvidenceV2(CutoverModel):
 
 
 class CutoverDecisionV2(CutoverModel):
-    schema_version: str = "2.1"
+    schema_version: str = "2.2"
     status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"]
     default_mode: Literal["legacy", "agentic"]
     hard_gates_passed: bool
@@ -71,6 +109,10 @@ class CutoverDecisionV2(CutoverModel):
     failures: list[str] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
     named_review_evidence: NamedReviewEvidenceV2 = Field(default_factory=NamedReviewEvidenceV2)
+    validated_rollout_evidence: ValidatedRolloutEvidenceV2 = Field(default_factory=ValidatedRolloutEvidenceV2)
+    protocol_commit: str = ""
+    gold_digest: str = ""
+    benchmark_case_ids: list[str] = Field(default_factory=list)
 
 
 class LegacyTrustContractV1(CutoverModel):
@@ -91,9 +133,13 @@ def decide_cutover(
     thresholds: TrustThresholdsV2 | None = None,
     *,
     named_review_evidence: NamedReviewEvidenceV2 | None = None,
+    validated_rollout_evidence: ValidatedRolloutEvidenceV2 | None = None,
+    protocol_commit: str = "",
+    gold_digest: str = "",
 ) -> CutoverDecisionV2:
     policy = thresholds or TrustThresholdsV2()
     review_evidence = named_review_evidence or NamedReviewEvidenceV2()
+    rollout_evidence = validated_rollout_evidence or ValidatedRolloutEvidenceV2()
     failures: list[str] = []
     agentic = [item for item in runs if item.observation.variant in {"agentic_deterministic", "agentic_gemma4_mtp"}]
     variants = {item.observation.variant for item in runs}
@@ -102,6 +148,8 @@ def decide_cutover(
         failures.append("benchmark_case_coverage_incomplete")
     if not rollout.protocol_validated:
         failures.append("frozen_benchmark_protocol_not_validated")
+    if any((rollout.shadow_cases, rollout.shadow_reviewed, rollout.opt_in_cases, rollout.canary_cases, rollout.canary_incidents)):
+        failures.append("self_reported_rollout_progress_not_accepted")
     for required in ("fixed_legacy", "agentic_deterministic", "agentic_gemma4_mtp"):
         if required not in variants:
             failures.append(f"missing_variant:{required}")
@@ -208,13 +256,16 @@ def decide_cutover(
     status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"] = "hold"
     if hard_passed:
         status = "shadow_ready"
-        if rollout.shadow_cases >= len(dataset.cases) and rollout.shadow_reviewed:
+        expected_rollout_cases = {item.case_id for item in dataset.cases}
+        if set(rollout_evidence.shadow_case_ids) == expected_rollout_cases:
             status = "opt_in_ready"
-        if status == "opt_in_ready" and rollout.opt_in_cases >= len(dataset.cases):
+        if status == "opt_in_ready" and set(rollout_evidence.opt_in_case_ids) == expected_rollout_cases:
             status = "canary_ready"
         if (
-            status == "canary_ready" and rollout.canary_cases >= len(dataset.cases)
-            and rollout.canary_incidents == 0 and rollout.migration_guide_complete and rollout.legacy_contract_marked
+            status == "canary_ready"
+            and set(rollout_evidence.canary_case_ids) == expected_rollout_cases
+            and rollout_evidence.canary_incidents == 0
+            and rollout.migration_guide_complete and rollout.legacy_contract_marked
         ):
             status = "default_ready"
     actions = _actions(failures, status, len(dataset.cases))
@@ -226,6 +277,10 @@ def decide_cutover(
         failures=list(dict.fromkeys(failures)),
         next_actions=actions,
         named_review_evidence=review_evidence,
+        validated_rollout_evidence=rollout_evidence,
+        protocol_commit=protocol_commit,
+        gold_digest=gold_digest,
+        benchmark_case_ids=sorted(item.case_id for item in dataset.cases),
     )
 
 

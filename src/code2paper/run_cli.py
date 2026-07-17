@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--cutover-decision", default="",
-        help="CutoverDecisionV2 v2.1 JSON. Only a clean default_ready decision with digest-pinned named-review evidence may change the implicit default to agentic.",
+        help="CutoverDecisionV2 v2.2 JSON. Only a clean default_ready decision with digest-pinned named-review and rollout evidence may change the implicit default to agentic.",
     )
     parser.add_argument("--run-id", default="", help="Stable agentic run identity.")
     parser.add_argument("--max-retrieval-rounds", type=int, default=0)
@@ -581,7 +581,7 @@ def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, d
     except (OSError, ValueError):
         return "legacy", activation
     authorized = (
-        decision.schema_version == "2.1"
+        decision.schema_version == "2.2"
         and decision.status == "default_ready"
         and decision.default_mode == "agentic"
         and decision.hard_gates_passed
@@ -590,11 +590,24 @@ def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, d
         and bool(decision.named_review_evidence.review_artifact_digests)
         and len(set(decision.named_review_evidence.review_artifact_digests))
         == len(decision.named_review_evidence.review_artifact_digests)
+        and decision.validated_rollout_evidence.source == "digest_pinned_rollout_artifacts"
+        and bool(decision.validated_rollout_evidence.artifact_digests)
+        and len(set(decision.validated_rollout_evidence.artifact_digests))
+        == len(decision.validated_rollout_evidence.artifact_digests)
+        and bool(decision.benchmark_case_ids)
+        and set(decision.validated_rollout_evidence.shadow_case_ids) == set(decision.benchmark_case_ids)
+        and set(decision.validated_rollout_evidence.opt_in_case_ids) == set(decision.benchmark_case_ids)
+        and set(decision.validated_rollout_evidence.canary_case_ids) == set(decision.benchmark_case_ids)
+        and decision.validated_rollout_evidence.canary_incidents == 0
+        and bool(decision.protocol_commit)
+        and decision.gold_digest.startswith("sha256:")
     )
     activation.update({
         "decision_status": decision.status,
         "named_review_evidence_source": decision.named_review_evidence.source,
         "validated_review_count": len(decision.named_review_evidence.review_artifact_digests),
+        "rollout_evidence_source": decision.validated_rollout_evidence.source,
+        "validated_rollout_artifact_count": len(decision.validated_rollout_evidence.artifact_digests),
         "authorized": authorized,
         "resolved_mode": "agentic" if authorized else "legacy",
         "reason": "default_ready_cutover_authorized" if authorized else "cutover_decision_not_default_ready",
