@@ -1,6 +1,6 @@
 # Code2Paper Agentic Refactor Completion Audit
 
-Date: 2026-07-17
+Date: 2026-07-18
 
 Implementation branch: `codex/agentic-p4-benchmark-cutover`
 
@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `433 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `444 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -34,6 +34,20 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
   injects bounded symbol-index path seeds. The real Domain Pruning run froze all three
   core pruning files and completed with 4/4 final factual claims supported. A new Gemma
   run is still required before changing the frozen live baseline.
+- Content-based mechanism rebinding now requires operator-specific code signatures and
+  is shared by AtomicClaimV2, authoring projection, and final-text validation. Stage
+  matching also normalizes Unicode hyphens and preserves few-shot/mixed-domain intent,
+  while internal paper-facing stage-name contracts are excluded from prose facts.
+- The resulting Domain Pruning deterministic v6 is trusted complete with 7/7 final
+  factual claims supported and zero final unsupported leakage. Blind comparison opened
+  the original only after generation: frozen surface coverage is 5/6 versus the
+  original's 6/6. The generated few-shot sentence is semantically present but absent
+  from the frozen alias list, so the raw 5/6 score was retained rather than post-hoc
+  tuning the evaluator. The machine record is
+  `docs/agentic_domain_pruning_real_project_eval_2026-07-18.json`.
+- The pre-fix Gemma run safely rejected all 10 claims bound to unrelated runtime
+  evidence. The post-fix Gemma rerun is pending because `127.0.0.1:8000` currently
+  refuses connections; this deterministic result does not alter the formal baseline.
 
 ## Final-design Definition of Done
 

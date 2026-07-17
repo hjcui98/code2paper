@@ -1,0 +1,60 @@
+{
+  "schema_version": "code2paper-real-project-eval-v1",
+  "recorded_at": "2026-07-18",
+  "case_id": "domain_specific_pruning",
+  "implementation_commit": "03c3b62ed3c36d14ff2e208f6feb7f617c56b501",
+  "formal_p4_baseline_commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+  "formal_baseline_changed": false,
+  "inputs": {
+    "project_root": "/data1/users/cuihengjia/code2paper/code_final/Domain-Specific Pruning of Large Mixture-of-Experts Models with",
+    "author_intent": "/data1/users/cuihengjia/code2paper/paperyaml4/Domain-Specific Pruning of Large Mixture-of-Experts Models with.yaml",
+    "evaluation_reference": "/data1/users/cuihengjia/code2paper/paper_final/024_Domain-Specific Pruning of Large Mixture-of-Experts Models with.md",
+    "generation_reference_isolation": "passed",
+    "input_manifest_digest": "sha256:ea1c4262af808d0ad982c69816f25e2f924ac61d2b331a1b3cf06b2831fc8f5c"
+  },
+  "deterministic_run": {
+    "run_root": "/tmp/code2paper-domain-pruning-content-rebind-deterministic-v6",
+    "status": "success",
+    "completion": "complete",
+    "invariant_audit": "passed",
+    "invariant_blocking_failures": 0,
+    "checked_factual_claims": 7,
+    "supported_factual_claims": 7,
+    "unsupported_factual_claims": 0,
+    "evidence_support_rate": 0.9,
+    "all_frozen_claim_unsupported_rate": 0.05,
+    "final_text_unsupported_claim_rate": 0.0,
+    "final_text_digest": "sha256:86cdb9dbc8c1ea5cbd515aa58a7be300c3a1e5ce844edba8815848fb411c58bf",
+    "run_summary_file_digest": "sha256:01cbeff62df2dc3a5afc76952c8d730cda3afd5f307f171b7dcb2d15f30f366d",
+    "text_validation_file_digest": "sha256:7980cde7bf64978574bb41fd2fd0f77b89fda562fa3dc34a9ae9c8d597f527f5"
+  },
+  "blind_reference_evaluation": {
+    "reference_opened_after_generation": true,
+    "reference_digest": "sha256:536217074904a85a2c45e5ed30892eb314feca3007d980ccf8c8454a7ce9429a",
+    "generated_concepts_matched": 5,
+    "generated_concepts_total": 6,
+    "generated_surface_coverage": 0.8333333333,
+    "reference_concepts_matched": 6,
+    "reference_concepts_total": 6,
+    "reference_surface_coverage": 1.0,
+    "automated_surface_miss": "few_shot_statistics",
+    "semantic_review": "The generated text explicitly says 'Collect a small number of demonstrations from the target domain(s).'; the frozen evaluator aliases do not include that wording, so the raw 5/6 score is retained as a transparent surface-metric false negative.",
+    "post_hoc_fixture_alias_change": false,
+    "unique_generated_lines": 6,
+    "generated_lines": 6,
+    "accepted_for_delivery": true
+  },
+  "live_model_follow_up": {
+    "model": "gemma4-31b-nvfp4",
+    "pre_fix_run_root": "/tmp/code2paper-domain-pruning-gemma-05cfbc6",
+    "pre_fix_result": "safe_block_text_claim_direct_evidence_missing_budget_exhausted",
+    "pre_fix_final_claims_rejected": 10,
+    "post_fix_result": "pending",
+    "pending_reason": "127.0.0.1:8000 returned connection failure (HTTP 000) on 2026-07-18"
+  },
+  "cutover": {
+    "named_human_review": "pending",
+    "shadow_opt_in_canary": "pending",
+    "default_route": "hold"
+  }
+}

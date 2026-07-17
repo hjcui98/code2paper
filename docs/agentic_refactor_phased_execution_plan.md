@@ -2012,6 +2012,46 @@ factual claims 通过且 unsupported=0。run summary digest 为
 Gemma 对新 retrieval freeze 的 cache-independent 复测仍需执行，在此之前不回写正式 P4
 baseline，也不把旧 safe block 改计为成功。
 
+### 12.12 真实项目 intent-to-code 语义闭环回归（2026-07-18）
+
+在 diverse retrieval 已把三个 pruning 文件纳入 raw evidence 后，继续反查发现 analysis
+mechanism 仍可能沿用首次 freeze 中的通用 SGLang runtime/scheduler span。此次修复在 bridge
+边界加入保守的内容算子匹配：只有代码片段同时满足 mechanism 所需的高特异性签名，才允许
+替换旧 evidence，例如 `data[:25]` 的有界采样、gating 与 expert-output L2 norm 的乘积、
+MoE 前后表示的 cosine 差异、score 聚合与 top-k，以及 mixed-domain 的逐域归一化再聚合。
+仅路径名或通用 MoE 词汇不能建立支持关系。相同匹配规则被复用到 AtomicClaimV2、authoring
+projection 与 final text validator，避免三个边界对同一代码算子作出相互冲突的判断。
+
+同时修复两类 intent 丢失：Unicode hyphen 和标点先统一后再做 stage 匹配，使 few-shot
+motivation 对齐 Data sampling、mixed-domain pruning 对齐 Multi-domain extension；内部
+`paper-facing stage named ...` claim-contract 只保留为结构 scaffold，不再作为 writer 正向事实。
+全量回归为 `444 passed, 2 skipped, 6 subtests passed`，实现提交为
+`03c3b62ed3c36d14ff2e208f6feb7f617c56b501`。
+
+真实 Domain-Specific Pruning deterministic v6 位于
+`/tmp/code2paper-domain-pruning-content-rebind-deterministic-v6`。它只读取代码与 author intent，
+结果为 `success + complete`，final invariant 0 个 blocking failure；最终正文 7 个 factual
+atomic claims 全部有 direct evidence，unsupported=0，text/figure/invariant/traceability 全通过。
+最终正文覆盖 few-shot demonstration、top-M、gating × output L2 norm、`1-cosine`、token
+aggregation 和 mixed-domain normalized score averaging。最终文本 digest 为
+`sha256:86cdb9dbc8c1ea5cbd515aa58a7be300c3a1e5ce844edba8815848fb411c58bf`。
+
+生成结束后才打开冻结原文做独立 blind comparison，reference isolation passed。透明表面指标
+给出生成稿 5/6（83.33%）、原文 6/6（100%）；唯一自动 miss 为 `few_shot_statistics`，但生成稿
+明确写有 “Collect a small number of demonstrations from the target domain(s).”。这是冻结 alias
+未包含该措辞造成的表面匹配 false negative，本轮保留原始 5/6，禁止事后修改 fixture 抬分。
+input manifest、生成稿和原文 digest 分别为
+`sha256:ea1c4262...c8f5c`、`sha256:86cdb9db...58bf`、
+`sha256:53621707...429a`。机器可读记录保存在
+`docs/agentic_domain_pruning_real_project_eval_2026-07-18.json`。
+
+旧 commit `05cfbc6` 的 Gemma live run 已经检索到上述 pruning 文件，但因 mechanism 仍绑定通用
+runtime evidence，semantic verifier 拒绝全部 10 个最终 claims，并以
+`text_claim_direct_evidence_missing_budget_exhausted` 安全阻断；这证明 gate 没有把错误绑定放行。
+实现修复后再次检查 `127.0.0.1:8000/v1/models` 返回连接失败（HTTP 000），因此新 Gemma
+cache-independent 复测保持 pending，不能用 deterministic 成功替代。正式冻结 P4 baseline
+仍为 `9a98c17`，具名 human review 和 shadow → opt-in → canary 仍未完成，默认切换继续 hold。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |
