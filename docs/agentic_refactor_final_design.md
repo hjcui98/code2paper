@@ -734,6 +734,10 @@ Variant 排名采用可信度硬门槛：semantic precision、unsupported leakag
 
 ## 22. 人工 review hook
 
+该 hook 是可选的人机协作与补证据入口，不是 cutover 的固定数量/具名签署门槛。切换授权依赖 frozen
+protocol、digest-pinned automated benchmark observations、evidence/validator/final-invariant/figure gates 以及
+分阶段 rollout artifacts；人工批准本身不能把 unsupported 改成 supported。
+
 以下情况应生成明确 review request，而不是模糊报错：
 
 - 作者核心 claim 被判 partial/unsupported；

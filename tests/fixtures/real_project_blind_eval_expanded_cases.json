@@ -1,0 +1,71 @@
+{
+  "schema_version": "code2paper.real-project-blind-cases.v1",
+  "cases": [
+    {
+      "case_id": "rap",
+      "run_dir": "rap",
+      "original": "paper_final/062_RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.md",
+      "concepts": [
+        {"id": "attribute_descriptor", "aliases": ["attribute descriptor", "primitive attributes", "gaussian attributes"]},
+        {"id": "global_local_normalization", "aliases": ["global normalization", "local normalization", "global and local normalization"]},
+        {"id": "mlp_importance_score", "aliases": ["mlp", "importance score", "primitive importance"]},
+        {"id": "rendering_loss", "aliases": ["rendering loss", "rendering-based loss", "render loss"]},
+        {"id": "pruning_aware_mean", "aliases": ["pruning-aware mean", "pruning aware mean", "mean importance"]},
+        {"id": "entropy_distribution", "aliases": ["entropy", "importance distribution", "distribution regularization"]},
+        {"id": "feedforward_rendering_free", "aliases": ["feedforward", "rendering-free", "without rendering"]}
+      ]
+    },
+    {
+      "case_id": "linearrag",
+      "run_dir": "linearrag-det",
+      "original": "paper_final/053_LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora.md",
+      "concepts": [
+        {"id": "tri_graph", "aliases": ["tri-graph", "tri graph", "passage-entity"]},
+        {"id": "relation_free_graph", "aliases": ["relation-free", "contain", "mention adjacency"]},
+        {"id": "entity_activation", "aliases": ["entity activation", "activate relevant entities", "activated entities"]},
+        {"id": "semantic_bridging", "aliases": ["semantic bridging", "bridging entities", "sentence-entity subgraph"]},
+        {"id": "dynamic_pruning", "aliases": ["dynamic pruning", "dynamically prun"]},
+        {"id": "hybrid_passage_initialization", "aliases": ["hybrid score", "hybrid passage", "initializing passage nodes"]},
+        {"id": "personalized_pagerank", "aliases": ["personalized pagerank", "ppr"]}
+      ]
+    },
+    {
+      "case_id": "lookahead_reasoning",
+      "run_dir": "lookahead-det",
+      "original": "paper_final/086_Scaling Speculative Decoding with Lookahead Reasoning.md",
+      "concepts": [
+        {"id": "sequential_draft", "aliases": ["sequential draft", "draft steps", "draft model"]},
+        {"id": "parallel_target", "aliases": ["parallel target", "target steps", "target model"]},
+        {"id": "semantic_verifier", "aliases": ["semantic verifier", "semantic verification", "verify"]},
+        {"id": "longest_accepted_prefix", "aliases": ["longest accepted prefix", "accepted prefix", "longest prefix"]},
+        {"id": "decisive_target_step", "aliases": ["decisive target step", "target step", "decisive step"]}
+      ]
+    },
+    {
+      "case_id": "ebcar",
+      "run_dir": "ebcar-det",
+      "original": "paper_final/022_EBCAR - Embedding-Based Context-Aware Reranker.md",
+      "concepts": [
+        {"id": "document_id_embedding", "aliases": ["document id embedding", "document-id embedding", "document embedding"]},
+        {"id": "sinusoidal_position", "aliases": ["sinusoidal", "position embedding", "positional embedding"]},
+        {"id": "global_attention", "aliases": ["global attention", "full attention"]},
+        {"id": "masked_local_attention", "aliases": ["masked local attention", "local attention", "attention mask"]},
+        {"id": "fixed_query_anchor", "aliases": ["fixed query anchor", "query anchor", "anchor"]},
+        {"id": "contrastive_loss", "aliases": ["infonce", "info nce", "contrastive loss"]}
+      ]
+    },
+    {
+      "case_id": "dyg_mamba",
+      "run_dir": "dyg_mamba-det",
+      "original": "paper_final/029_DyG-Mamba Continuous State Space Modeling on Dynamic Graphs.md",
+      "concepts": [
+        {"id": "timespan_delta", "aliases": ["timespan", "time span", "delta"]},
+        {"id": "negative_diagonal_a", "aliases": ["negative diagonal", "diagonal state", "state matrix"]},
+        {"id": "input_dependent_bc", "aliases": ["input-dependent", "input dependent", "b and c"]},
+        {"id": "spectral_normalization", "aliases": ["spectral normalization", "spectral norm"]},
+        {"id": "cooccurrence_encoding", "aliases": ["co-occurrence", "cooccurrence", "co-occurrence encoding"]},
+        {"id": "source_destination_encoders", "aliases": ["source and destination", "source encoder", "destination encoder"]}
+      ]
+    }
+  ]
+}

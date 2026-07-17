@@ -121,7 +121,7 @@ class RunCliTests(unittest.TestCase):
         self.assertEqual(record["status"], "completed")
         self.assertFalse(record["claim_of_completion_allowed"])
         self.assertEqual(record["legacy_contract_version"], "legacy-v1-weaker-trust")
-        self.assertFalse(record["comparison_ready_for_named_review"])
+        self.assertFalse(record["comparison_ready_for_benchmark_evaluation"])
         self.assertTrue(record["artifacts"]["legacy_run_report"]["hash"])
         self.assertTrue(record["artifacts"]["legacy_run_manifest"]["hash"])
         self.assertTrue(record["artifacts"]["legacy_trust_contract"]["hash"])
@@ -131,7 +131,7 @@ class RunCliTests(unittest.TestCase):
             root = Path(tmpdir)
             decision = root / "cutover.json"
             decision.write_text(json.dumps({
-                "schema_version": "2.2",
+                "schema_version": "2.3",
                 "status": "default_ready",
                 "default_mode": "agentic",
                 "hard_gates_passed": True,
@@ -141,6 +141,11 @@ class RunCliTests(unittest.TestCase):
                 "named_review_evidence": {
                     "source": "digest_pinned_review_artifacts",
                     "review_artifact_digests": ["sha256:" + "a" * 64],
+                },
+                "validated_benchmark_evidence": {
+                    "source": "digest_pinned_observation_artifacts",
+                    "artifact_digests": ["sha256:" + "f" * 64],
+                    "observation_count": 25,
                 },
                 "validated_rollout_evidence": {
                     "source": "digest_pinned_rollout_artifacts",
@@ -172,7 +177,7 @@ class RunCliTests(unittest.TestCase):
         self.assertEqual(activation["resolved_mode"], "agentic")
         self.assertTrue(activation["decision_digest"].startswith("sha256:"))
 
-    def test_default_ready_without_validated_review_artifacts_fails_closed(self) -> None:
+    def test_default_ready_without_validated_benchmark_artifacts_fails_closed(self) -> None:
         with TemporaryDirectory() as tmpdir, patch("code2paper.cli.agentic_run.main") as agentic:
             root = Path(tmpdir)
             project = root / "repo"

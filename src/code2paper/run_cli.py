@@ -521,7 +521,7 @@ def _run_shadow_agentic(args) -> None:
         "claim_of_completion_allowed": False,
         "legacy_contract_version": LegacyTrustContractV1().contract_version,
         "artifacts": {},
-        "comparison_ready_for_named_review": False,
+        "comparison_ready_for_benchmark_evaluation": False,
     }
     atomic_write_json(legacy_out / "shadow_comparison.json", record)
     print(f"[code2paper-run] shadow_agentic_exit_code={code} shadow_record={legacy_out / 'shadow_comparison.json'}")
@@ -552,7 +552,7 @@ def _finish_shadow_record(args, legacy_exit_code: int) -> int:
         "status": "completed",
         "legacy_exit_code": legacy_exit_code,
         "artifacts": artifacts,
-        "comparison_ready_for_named_review": (
+        "comparison_ready_for_benchmark_evaluation": (
             legacy_exit_code == 0
             and int(record.get("shadow_exit_code", 1)) == 0
             and required.issubset(artifacts)
@@ -581,15 +581,14 @@ def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, d
     except (OSError, ValueError):
         return "legacy", activation
     authorized = (
-        decision.schema_version == "2.2"
+        decision.schema_version == "2.3"
         and decision.status == "default_ready"
         and decision.default_mode == "agentic"
         and decision.hard_gates_passed
         and not decision.failures
-        and decision.named_review_evidence.source == "digest_pinned_review_artifacts"
-        and bool(decision.named_review_evidence.review_artifact_digests)
-        and len(set(decision.named_review_evidence.review_artifact_digests))
-        == len(decision.named_review_evidence.review_artifact_digests)
+        and decision.validated_benchmark_evidence.source == "digest_pinned_observation_artifacts"
+        and bool(decision.validated_benchmark_evidence.artifact_digests)
+        and decision.validated_benchmark_evidence.observation_count > 0
         and decision.validated_rollout_evidence.source == "digest_pinned_rollout_artifacts"
         and bool(decision.validated_rollout_evidence.artifact_digests)
         and len(set(decision.validated_rollout_evidence.artifact_digests))
@@ -606,6 +605,8 @@ def _resolve_mode(explicit_mode: str | None, decision_path: str) -> tuple[str, d
         "decision_status": decision.status,
         "named_review_evidence_source": decision.named_review_evidence.source,
         "validated_review_count": len(decision.named_review_evidence.review_artifact_digests),
+        "benchmark_evidence_source": decision.validated_benchmark_evidence.source,
+        "validated_observation_count": decision.validated_benchmark_evidence.observation_count,
         "rollout_evidence_source": decision.validated_rollout_evidence.source,
         "validated_rollout_artifact_count": len(decision.validated_rollout_evidence.artifact_digests),
         "authorized": authorized,

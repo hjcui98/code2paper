@@ -22,6 +22,7 @@ from code2paper.agentic.cutover import (
     NamedReviewEvidenceV2,
     RolloutEvidenceV2,
     ValidatedRolloutEvidenceV2,
+    ValidatedBenchmarkEvidenceV2,
     decide_cutover,
 )
 from code2paper.agentic.rollout_evidence import materialize_rollout_trial, validate_rollout_artifacts
@@ -123,6 +124,15 @@ def _validated_reviews(dataset) -> NamedReviewEvidenceV2:
     )
 
 
+def _validated_benchmark(dataset) -> ValidatedBenchmarkEvidenceV2:
+    count = sum((2 + 3) * max(1, len(case.intents)) for case in dataset.cases)
+    return ValidatedBenchmarkEvidenceV2(
+        source="digest_pinned_observation_artifacts",
+        artifact_digests=["sha256:" + "f" * 64],
+        observation_count=count,
+    )
+
+
 def test_gold_dataset_has_exact_current_code_evidence_and_required_scope() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
 
@@ -171,7 +181,7 @@ def test_completed_observation_cannot_receive_perfect_figure_metrics_from_empty_
     assert evaluated.metrics.figure_element_semantic_precision == 0.0
     assert evaluated.metrics.direct_edge_evidence_rate == 0.0
     assert evaluated.metrics.rendered_element_drift_rate == 1.0
-    assert "complete_without_full_figure_human_review_inventory" in evaluated.failures
+    assert "complete_without_validated_figure_inventory" in evaluated.failures
 
 
 def test_figure_edge_review_requires_explicit_direct_relation_evidence_decision() -> None:
@@ -303,7 +313,7 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
         legacy_contract_marked=True, migration_guide_complete=True,
     )
 
-    reviews = _validated_reviews(dataset)
+    benchmark_evidence = _validated_benchmark(dataset)
     case_ids = sorted(item.case_id for item in dataset.cases)
     def rollout_evidence(*, shadow=False, opt_in=False, canary=False):
         stages = int(shadow) + int(opt_in) + int(canary)
@@ -316,18 +326,18 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
             opt_in_case_ids=case_ids if opt_in else [],
             canary_case_ids=case_ids if canary else [],
         )
-    shadow = decide_cutover(dataset, runs, base, named_review_evidence=reviews)
+    shadow = decide_cutover(dataset, runs, base, validated_benchmark_evidence=benchmark_evidence)
     opt_in = decide_cutover(
         dataset, runs, base,
-        named_review_evidence=reviews,
+        validated_benchmark_evidence=benchmark_evidence,
         validated_rollout_evidence=rollout_evidence(shadow=True),
     )
     canary = decide_cutover(
-        dataset, runs, base, named_review_evidence=reviews,
+        dataset, runs, base, validated_benchmark_evidence=benchmark_evidence,
         validated_rollout_evidence=rollout_evidence(shadow=True, opt_in=True),
     )
     default = decide_cutover(
-        dataset, runs, base, named_review_evidence=reviews,
+        dataset, runs, base, validated_benchmark_evidence=benchmark_evidence,
         validated_rollout_evidence=rollout_evidence(shadow=True, opt_in=True, canary=True),
     )
 
@@ -337,7 +347,7 @@ def test_cutover_requires_shadow_opt_in_and_canary_before_default() -> None:
     assert default.status == "default_ready" and default.default_mode == "agentic"
 
 
-def test_cutover_cannot_authorize_self_reported_observations_without_review_artifacts() -> None:
+def test_cutover_cannot_authorize_unpinned_observations() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     runs = _complete_runs(dataset)
     rollout = RolloutEvidenceV2(
@@ -355,7 +365,7 @@ def test_cutover_cannot_authorize_self_reported_observations_without_review_arti
 
     assert decision.status == "hold"
     assert decision.default_mode == "legacy"
-    assert "digest_pinned_named_review_artifacts_not_validated" in decision.failures
+    assert "digest_pinned_benchmark_observations_not_validated" in decision.failures
     assert "self_reported_rollout_progress_not_accepted" in decision.failures
 
 
@@ -382,9 +392,10 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
         status="shadow_ready",
         default_mode="legacy",
         hard_gates_passed=True,
-        named_review_evidence=NamedReviewEvidenceV2(
-            source="digest_pinned_review_artifacts",
-            review_artifact_digests=["sha256:" + "a" * 64],
+        validated_benchmark_evidence=ValidatedBenchmarkEvidenceV2(
+            source="digest_pinned_observation_artifacts",
+            artifact_digests=["sha256:" + "f" * 64],
+            observation_count=1,
         ),
         protocol_commit=protocol_commit,
         gold_digest=gold_digest,
@@ -404,13 +415,8 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
         gold_digest=gold_digest,
     )
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
-    assert artifact["accepted"] is None
-    assert artifact["reviewer"] == "__REQUIRED_NAMED_HUMAN__"
-    artifact.update({
-        "reviewer": "Named Shadow Reviewer",
-        "reviewed_at": "2026-07-18T12:00:00+08:00",
-        "accepted": True,
-    })
+    assert artifact["accepted"] is True
+    assert artifact["reviewer"] == ""
     artifact_path.write_text(json.dumps(artifact), encoding="utf-8")
     with pytest.raises(FileExistsError, match="already exists"):
         materialize_rollout_trial(
@@ -443,7 +449,7 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
         )
 
 
-def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_path: Path) -> None:
+def test_benchmark_cli_pins_observations_but_still_requires_protocol_and_real_rollout(tmp_path: Path) -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     observations_path = tmp_path / "observations.json"
     observations_path.write_text(
@@ -477,11 +483,14 @@ def test_benchmark_cli_observations_input_cannot_emit_authorizing_decision(tmp_p
     decision = json.loads(decision_path.read_text(encoding="utf-8"))
 
     assert exit_code == 0
-    assert decision["schema_version"] == "2.2"
+    assert decision["schema_version"] == "2.3"
     assert decision["status"] == "hold"
     assert decision["default_mode"] == "legacy"
     assert decision["named_review_evidence"]["source"] == "none"
-    assert "digest_pinned_named_review_artifacts_not_validated" in decision["failures"]
+    assert decision["validated_benchmark_evidence"]["source"] == "digest_pinned_observation_artifacts"
+    assert decision["validated_benchmark_evidence"]["observation_count"] == 25
+    assert "frozen_benchmark_protocol_not_validated" in decision["failures"]
+    assert not any("named_review" in item for item in decision["failures"])
 
 
 def test_benchmark_cli_consumes_validated_review_workspace_as_exact_review_source(tmp_path: Path) -> None:

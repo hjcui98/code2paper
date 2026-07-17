@@ -125,6 +125,7 @@ class BenchmarkObservationV2(BenchmarkModel):
     figure_inventory_expected: int = 0
     figure_relation_inventory_expected: int = 0
     figure_inventory_reviewed: bool = False
+    figure_inventory_validated: bool = False
     detected_mutation_ids: list[str] = Field(default_factory=list)
     stale_trials: int = 0
     stale_detected: int = 0
@@ -134,6 +135,8 @@ class BenchmarkObservationV2(BenchmarkModel):
     usable_completion: bool = False
     blocked_run_human_reviewed: bool = False
     false_block_human_reviewed: bool = False
+    blocked_run_validated: bool = False
+    false_block_validated: bool = False
     expected_retrieval_targets_observed: list[str] = Field(default_factory=list)
     section_claim_order: list[str] = Field(default_factory=list)
     figure_claim_ids: list[str] = Field(default_factory=list)
@@ -230,7 +233,7 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
     figure_inventory_complete = (
         not figure_review_required
         or (
-            observation.figure_inventory_reviewed
+            (observation.figure_inventory_validated or observation.figure_inventory_reviewed)
             and len(elements) == observation.figure_inventory_expected
             and len(edges) == observation.figure_relation_inventory_expected
             and (not observation.completion_complete or observation.figure_inventory_expected > 0)
@@ -278,9 +281,9 @@ def evaluate_observation(case: BenchmarkCaseV2, observation: BenchmarkObservatio
     if observation.completion_complete and not observation.asset_lineage_complete:
         failures.append("complete_without_asset_lineage")
     if observation.completion_complete and not figure_inventory_complete:
-        failures.append("complete_without_full_figure_human_review_inventory")
-    if false_block and not observation.false_block_human_reviewed:
-        failures.append("false_block_not_human_reviewed")
+        failures.append("complete_without_validated_figure_inventory")
+    if false_block and not (observation.false_block_validated or observation.false_block_human_reviewed):
+        failures.append("false_block_not_validated")
     return EvaluatedBenchmarkRunV2(observation=observation, metrics=metrics, failures=failures)
 
 

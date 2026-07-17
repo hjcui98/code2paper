@@ -1,0 +1,95 @@
+{
+  "schema_version": "code2paper-agentic-real-project-expanded-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "protocol": {
+    "generation_inputs": ["code", "author_intent_yaml"],
+    "original_paper_role": "evaluation_only_after_generation",
+    "manifest": "tests/fixtures/real_project_blind_eval_expanded_cases.json",
+    "manifest_sha256": "d66b0c8420bfaacf979182ebcc883da70a60645bd4a6cb82ce619f23b9ef5b05"
+  },
+  "cutover_policy": {
+    "named_human_review_count_required": 0,
+    "decision_schema": "2.3",
+    "replacement_gate": "digest_pinned_protocol_bound_benchmark_observations",
+    "unchanged_hard_gates": [
+      "gold_code_excerpt_digest",
+      "direct_code_evidence",
+      "claim_validator",
+      "final_invariant",
+      "figure_relation_evidence",
+      "post_render_audit",
+      "stale_and_mutation_detection",
+      "digest_pinned_staged_rollout"
+    ]
+  },
+  "deterministic": {
+    "complete": 4,
+    "trusted_success": 4,
+    "reference_isolation_passed": 4,
+    "final_unsupported_claim_rate_zero": 4,
+    "cases": [
+      {
+        "case_id": "linearrag",
+        "run_root": "/tmp/code2paper-real-expanded-20260718/linearrag-det",
+        "summary_sha256": "822389009afcaaf18576b6b2fc358f8ac1722e515377ce4c9a9413c8a8e18d82",
+        "final_atomic_claims": 3,
+        "evidence_target_coverage": 0.7347,
+        "generated_concepts": "7/7",
+        "original_concepts": "6/7"
+      },
+      {
+        "case_id": "lookahead_reasoning",
+        "run_root": "/tmp/code2paper-real-expanded-20260718/lookahead-det",
+        "summary_sha256": "4882f7a31f925f1c54c129c7487760c03b5b0702e01f830f3823a21b4076f1fa",
+        "final_atomic_claims": 1,
+        "evidence_target_coverage": 0.64,
+        "generated_concepts": "4/5",
+        "original_concepts": "5/5"
+      },
+      {
+        "case_id": "ebcar",
+        "run_root": "/tmp/code2paper-real-expanded-20260718/ebcar-det",
+        "summary_sha256": "d6a2a17c0b7f71de20812a7161d8b32fc99eace289ef5fa3c199d6aafa3927db",
+        "final_atomic_claims": 7,
+        "evidence_target_coverage": 0.6742,
+        "generated_concepts": "2/6",
+        "original_concepts": "6/6"
+      },
+      {
+        "case_id": "dyg_mamba",
+        "run_root": "/tmp/code2paper-real-expanded-20260718/dyg_mamba-det",
+        "summary_sha256": "62460f67edb4d648e66699c3b80affd33f965ce1850e57e9fca6ff1e9f405ef2",
+        "final_atomic_claims": 4,
+        "evidence_target_coverage": 0.709,
+        "generated_concepts": "2/6",
+        "original_concepts": "4/6"
+      }
+    ]
+  },
+  "gemma": {
+    "endpoint": "http://127.0.0.1:8000/v1",
+    "model": "gemma4-31b-nvfp4",
+    "health": "host_network_http_200",
+    "cache_enabled": false,
+    "rap_status": "trusted_block",
+    "run_root": "/tmp/code2paper-real-expanded-20260718/rap",
+    "summary_sha256": "a7ac2c703246432a222fe252a7f8fa2300abb04f270898bfcd23581dad0d647e",
+    "blocked_reason": "text_claim_direct_evidence_missing_budget_exhausted",
+    "final_atomic_claims": 6,
+    "unsupported_claims": 6,
+    "evidence_target_coverage": 0.705,
+    "generated_concepts": "2/7",
+    "original_concepts": "6/7",
+    "reference_isolation_passed": true,
+    "accepted_for_delivery": false,
+    "scientific_result": "retrieved evidence proves feature construction but not MLP training, importance prediction, soft reweighting, threshold pruning, or rendering-free inference"
+  },
+  "expanded_blind_eval": {
+    "case_count": 5,
+    "reference_isolation_passed": 5,
+    "trusted_success": 4,
+    "trusted_block": 1,
+    "delivery_complete": 4
+  },
+  "verification": "493 passed, 2 skipped, 6 subtests passed"
+}

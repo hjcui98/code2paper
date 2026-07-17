@@ -2377,6 +2377,62 @@ dossier 不建议 mapping、verdict 或签字，manifest 固定 `scientific_judg
 `493 passed, 2 skipped, 6 subtests passed`。机器记录为
 `docs/agentic_p4_review_dossiers_2026-07-18.json`。
 
+### 12.24 取消 25 份具名人工评审 cutover 门槛并扩展真实项目盲测（2026-07-18）
+
+产品决策取消“25 份具名人工评审全部签署”这一外部门槛。该变更只移除 reviewer 身份、签署数量和
+`blocked_run_human_reviewed` 对 cutover 的依赖，不降低科研可信度门槛：frozen protocol、完整运行矩阵、
+gold code excerpt digest、atomic claim direct evidence、validator verdict、final invariant、方法图元素/边证据、
+post-render audit、stale/mutation campaign、shadow/opt-in/canary digest 绑定仍然 fail closed。
+
+`CutoverDecisionV2` 升级为 2.3，引入 `ValidatedBenchmarkEvidenceV2`。CLI 对实际消费的 observation/review
+artifact 重算 SHA-256，并记录精确 observation count；只有该计数与 frozen protocol 的完整 identity 矩阵一致
+时，benchmark 才可进入 `shadow_ready`。具名 review workspace、dossier 和 review JSON 保留为可选的定性
+诊断工具，不能覆盖 unsupported verdict，也不再是切换授权条件。默认模式授权和 rollout authorization 同步改为
+检查 digest-pinned benchmark evidence。定向回归当前为 `34 passed`。
+
+rollout trial 也不再要求具名 reviewer 才能物化：materializer 在验证 authorization decision、agentic
+completion/final invariant、legacy shadow comparison 和全部摘要后写入 `accepted=true`；`reviewer/reviewed_at`
+仅作为成对出现的可选 attribution。shadow → opt-in → canary 的覆盖顺序和 canary zero-incident 条件不变。
+
+扩展真实项目测试采用严格盲测：先读取代码和作者 YAML 冻结意图/概念 aliases，完成生成并固定生成物 digest 后，
+才允许打开 `paper_final` 原文做事后对照。首批新增覆盖以下五类实现，避免只在原三个项目上过拟合：
+
+| case | code | intent YAML | 原文（仅生成后读取） | 重点机制 |
+|---|---|---|---|---|
+| RAP | `code_final/RAP - Fast Feedforward...` | `paperyaml/RAP - Fast Feedforward....yaml` | `paper_final/062_RAP....md` | attribute descriptor、global/local normalization、MLP score、rendering-free pruning |
+| LinearRAG | `code_final/LinearRAG...` | `paperyaml3/LinearRAG....yaml` | `paper_final/053_LinearRAG....md` | Tri-Graph、entity activation、dynamic pruning、PPR |
+| Lookahead Reasoning | `code_final/Scaling Speculative Decoding...` | `paperyaml4/Scaling Speculative Decoding....yaml` | `paper_final/086_....md` | sequential draft、parallel target、semantic verifier、accepted prefix |
+| EBCAR | `code_final/EBCAR...` | `paperyaml3/EBCAR....yaml` | `paper_final/022_EBCAR....md` | document/position embedding、global/local attention、query anchor、InfoNCE |
+| DyG-Mamba | `code_final/DyG-Mamba_...` | `paperyaml4/DyG-Mamba_....yaml` | `paper_final/029_DyG-Mamba....md` | continuous state、input-dependent B/C、spectral normalization、co-occurrence encoding |
+
+Gemma endpoint 已从宿主机网络复验：`127.0.0.1:8000/v1/models` 和 `/v1/chat/completions` 均为 HTTP 200，
+模型为 `gemma4-31b-nvfp4`。先前 HTTP 000 来自执行沙箱的 loopback namespace 隔离，不代表服务离线；后续
+live run 必须使用宿主机网络，并继续禁用 cache 以证明真实模型调用。各 case 的生成状态、可信 block/成功、
+claim/figure/invariant 结果及原文盲对照分数在运行完成后追加到本节和机器可读报告。
+
+首轮确定性扩展测试已有 4/4 trusted success，全部 `completion=complete`、final invariant/pass、post-render
+audit/pass、traceability/pass，final unsupported claim rate 均为 0；全量回归为
+`493 passed, 2 skipped, 6 subtests passed`。生成完成后才读取原文的盲对照如下：
+
+| case | final atomic claims | evidence target coverage | intent concepts（生成/原文） | 结论 |
+|---|---:|---:|---:|---|
+| LinearRAG | 3 | 0.7347 | 7/7 vs 6/7 | 核心两阶段检索机制完整，且没有 unsupported leakage |
+| Lookahead Reasoning | 1 | 0.6400 | 4/5 vs 5/5 | 可信但过度保守，遗漏 parallel target 机制 |
+| EBCAR | 7 | 0.6742 | 2/6 vs 6/6 | full attention/InfoNCE 写入正文，其余重点多停留在标题，正文完整度不足 |
+| DyG-Mamba | 4 | 0.7090 | 2/6 vs 4/6 | input-dependent filtering/spectral norm 写入，timespan/co-occurrence 等未展开 |
+| RAP (Gemma live) | 6（blocked candidate） | 0.7050 | 2/7 vs 6/7 | 6/6 final claims 被 semantic validator 判 unsupported，预算耗尽后可信 block，未交付 |
+
+四个 case 的 reference isolation 均通过。这里的低覆盖不得通过降低 direct-evidence 或 validator gate 修复；下一轮
+应提高 intent target → symbol/evidence → projection 的召回，并保持最终 unsupported rate 为 0。
+
+RAP cache-disabled Gemma live run 已结束，端点和模型调用真实可用。该 run 执行了多轮 LangGraph
+retrieval/evidence repair，期间一次 analysis synthesis 返回畸形 JSON，系统降级继续；最终 semantic verifier
+发现检索到的 direct evidence `E73` 只证明 pruning feature 构造，不能证明 MLP 训练、importance prediction、
+soft reweighting、threshold pruning 或 rendering-free inference。6/6 factual claims 均 unsupported，固定失败码为
+`text_claim_direct_evidence_missing_budget_exhausted`，completion blocked、final invariant false、无 final package。
+这是正确的科研可信 block，而不是端点故障；blocked candidate 仅用于评估，不能交付。五个新增 case 的
+reference isolation 全部通过，4 个可交付 trusted success、1 个可信 block。
+
 ## 13. 代码落点总表
 
 | 能力 | 主要现有文件 | 计划新增/重点修改 |
@@ -2444,9 +2500,10 @@ tests/benchmark
 
 命令可以记录环境变量名称，但不得记录 secret 值。
 
-## 15. 人工 review 与解释性 block
+## 15. 可选人工 review 与解释性 block
 
-尽管实现和执行由 Codex 完成，以下语义决策必须生成用户可读 review artifact：
+尽管实现和执行由 Codex 完成，以下语义决策必须生成用户可读 review artifact；artifact 用于诊断和人工补充
+意图/证据，不构成固定数量或具名签署的 cutover 门槛：
 
 - 作者核心 claim 被判断为 partial/unsupported；
 - static code 不能证明需要 runtime evidence 的行为；

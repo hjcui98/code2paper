@@ -26,6 +26,7 @@ from code2paper.agentic.cutover import (
     NamedReviewEvidenceV2,
     RolloutEvidenceV2,
     ValidatedRolloutEvidenceV2,
+    ValidatedBenchmarkEvidenceV2,
     decide_cutover,
 )
 from code2paper.agentic.rollout_evidence import validate_rollout_artifacts
@@ -51,11 +52,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--observations",
         default="",
-        help="P4 BenchmarkObservationV2 JSON list for reporting; this input cannot authorize cutover.",
+        help="Digest-pinned P4 BenchmarkObservationV2 JSON list used for protocol-bound automated cutover evidence.",
     )
     parser.add_argument(
         "--review", action="append", default=[],
-        help="Digest-pinned BenchmarkRunReviewV2 JSON; repeat for every run. Required to authorize cutover beyond hold.",
+        help="Optional digest-pinned BenchmarkRunReviewV2 JSON; retained for qualitative review, not a cutover prerequisite.",
     )
     parser.add_argument(
         "--review-workspace",
@@ -92,6 +93,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[code2paper-agentic-benchmark] error={gold_failures[0]}", file=sys.stderr)
             return 2
         review_evidence = NamedReviewEvidenceV2()
+        benchmark_evidence = ValidatedBenchmarkEvidenceV2()
         protocol = load_benchmark_protocol_v2(args.protocol) if args.protocol else None
         if args.rollout_artifact and protocol is None:
             parser.error("--rollout-artifact requires --protocol")
@@ -134,6 +136,19 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             observations = load_benchmark_observations_v2(args.observations)
+        evidence_paths = [*args.review]
+        if args.review_workspace:
+            evidence_paths = review_paths
+        elif args.observations:
+            evidence_paths = [args.observations]
+        benchmark_evidence = ValidatedBenchmarkEvidenceV2(
+            source="digest_pinned_observation_artifacts",
+            artifact_digests=[
+                "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                for path in evidence_paths
+            ],
+            observation_count=len(observations),
+        )
         if (args.review or args.review_workspace) and args.observations_out:
             atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
         protocol_validated = False
@@ -166,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
             report.evaluated_runs,
             rollout,
             named_review_evidence=review_evidence,
+            validated_benchmark_evidence=benchmark_evidence,
             validated_rollout_evidence=validated_rollout,
             protocol_commit=protocol.workspace_commit if protocol is not None else "",
             gold_digest=protocol.gold_digest if protocol is not None else "",

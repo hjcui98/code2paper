@@ -100,8 +100,35 @@ class NamedReviewEvidenceV2(CutoverModel):
         return self
 
 
+class ValidatedBenchmarkEvidenceV2(CutoverModel):
+    """Invocation-derived proof for the exact protocol-bound observation matrix.
+
+    The source artifact may be produced by automated artifact extraction or by the
+    optional review workflow.  Cutover depends on its digest and exact observation
+    count, never on reviewer identity or a fixed number of human signatures.
+    """
+
+    source: Literal["none", "digest_pinned_observation_artifacts"] = "none"
+    artifact_digests: list[str] = Field(default_factory=list)
+    observation_count: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def _benchmark_artifacts_are_consistent(self) -> "ValidatedBenchmarkEvidenceV2":
+        if self.source == "none" and (self.artifact_digests or self.observation_count):
+            raise ValueError("benchmark evidence requires digest_pinned_observation_artifacts source")
+        if self.source == "digest_pinned_observation_artifacts" and (
+            not self.artifact_digests or not self.observation_count
+        ):
+            raise ValueError("digest-pinned benchmark evidence requires artifacts and observations")
+        if len(set(self.artifact_digests)) != len(self.artifact_digests):
+            raise ValueError("benchmark artifact digests must be unique")
+        if any(not _is_sha256_digest(item) for item in self.artifact_digests):
+            raise ValueError("benchmark artifact digests must be sha256 values")
+        return self
+
+
 class CutoverDecisionV2(CutoverModel):
-    schema_version: str = "2.2"
+    schema_version: str = "2.3"
     status: Literal["hold", "shadow_ready", "opt_in_ready", "canary_ready", "default_ready"]
     default_mode: Literal["legacy", "agentic"]
     hard_gates_passed: bool
@@ -109,6 +136,9 @@ class CutoverDecisionV2(CutoverModel):
     failures: list[str] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
     named_review_evidence: NamedReviewEvidenceV2 = Field(default_factory=NamedReviewEvidenceV2)
+    validated_benchmark_evidence: ValidatedBenchmarkEvidenceV2 = Field(
+        default_factory=ValidatedBenchmarkEvidenceV2
+    )
     validated_rollout_evidence: ValidatedRolloutEvidenceV2 = Field(default_factory=ValidatedRolloutEvidenceV2)
     protocol_commit: str = ""
     gold_digest: str = ""
@@ -133,12 +163,14 @@ def decide_cutover(
     thresholds: TrustThresholdsV2 | None = None,
     *,
     named_review_evidence: NamedReviewEvidenceV2 | None = None,
+    validated_benchmark_evidence: ValidatedBenchmarkEvidenceV2 | None = None,
     validated_rollout_evidence: ValidatedRolloutEvidenceV2 | None = None,
     protocol_commit: str = "",
     gold_digest: str = "",
 ) -> CutoverDecisionV2:
     policy = thresholds or TrustThresholdsV2()
     review_evidence = named_review_evidence or NamedReviewEvidenceV2()
+    benchmark_evidence = validated_benchmark_evidence or ValidatedBenchmarkEvidenceV2()
     rollout_evidence = validated_rollout_evidence or ValidatedRolloutEvidenceV2()
     failures: list[str] = []
     agentic = [item for item in runs if item.observation.variant in {"agentic_deterministic", "agentic_gemma4_mtp"}]
@@ -182,13 +214,11 @@ def decide_cutover(
                             "missing_matrix_run:"
                             f"{case.case_id}:{variant}:{intent_id or 'default'}:{repeat_index}"
                         )
-    review_digests = review_evidence.review_artifact_digests
-    reviews_were_validated = (
-        review_evidence.source == "digest_pinned_review_artifacts"
-        and len(review_digests) == len(expected_identities)
-    )
-    if not reviews_were_validated:
-        failures.append("digest_pinned_named_review_artifacts_not_validated")
+    if not (
+        benchmark_evidence.source == "digest_pinned_observation_artifacts"
+        and benchmark_evidence.observation_count == len(expected_identities)
+    ):
+        failures.append("digest_pinned_benchmark_observations_not_validated")
     for case_id, variant, intent_id, repeat_index in sorted(actual_identities - expected_identities):
         failures.append(
             "unexpected_matrix_run:"
@@ -230,8 +260,6 @@ def decide_cutover(
     case_by_id = {item.case_id: item for item in dataset.cases}
     for item in runs:
         provenance = item.observation.provenance
-        if not provenance.get("reviewer") or not provenance.get("reviewed_at"):
-            failures.append("digest_pinned_named_review_required")
         for mutation in case_by_id[item.observation.case_id].mutations:
             if not provenance.get(f"mutation_trial:{mutation.mutation_id}"):
                 failures.append(f"missing_mutation_trial_provenance:{item.observation.case_id}:{mutation.mutation_id}")
@@ -239,8 +267,6 @@ def decide_cutover(
         failures.append("success_without_final_invariant")
     if any(item.observation.completion_complete and not item.observation.asset_lineage_complete for item in agentic):
         failures.append("complete_without_asset_lineage")
-    if any(item.observation.run_status == "blocked" and not item.observation.blocked_run_human_reviewed for item in runs):
-        failures.append("blocked_runs_require_human_review")
     legacy = [item for item in runs if item.observation.variant == "fixed_legacy"]
     if legacy and agentic:
         legacy_completion = sum(item.observation.usable_completion for item in legacy) / len(legacy)
@@ -277,6 +303,7 @@ def decide_cutover(
         failures=list(dict.fromkeys(failures)),
         next_actions=actions,
         named_review_evidence=review_evidence,
+        validated_benchmark_evidence=benchmark_evidence,
         validated_rollout_evidence=rollout_evidence,
         protocol_commit=protocol_commit,
         gold_digest=gold_digest,

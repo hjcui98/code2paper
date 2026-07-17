@@ -26,23 +26,24 @@ class RolloutTrialArtifactV2(RolloutArtifactModel):
     agentic_run_summary_digest: str
     legacy_run_summary_path: str = ""
     legacy_run_summary_digest: str = ""
-    reviewer: str
-    reviewed_at: str
-    accepted: bool
+    reviewer: str = ""
+    reviewed_at: str = ""
+    accepted: bool = True
     incident_ids: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _trial_is_attributable(self) -> "RolloutTrialArtifactV2":
         if not self.case_id.strip():
             raise ValueError("rollout trial requires case_id")
-        if not self.reviewer.strip() or self.reviewer == "__REQUIRED_NAMED_HUMAN__":
-            raise ValueError("rollout trial requires a named reviewer")
-        try:
-            timestamp = datetime.fromisoformat(self.reviewed_at.replace("Z", "+00:00"))
-        except ValueError as exc:
-            raise ValueError("rollout reviewed_at must be ISO-8601") from exc
-        if timestamp.tzinfo is None:
-            raise ValueError("rollout reviewed_at must include a timezone")
+        if bool(self.reviewer.strip()) != bool(self.reviewed_at.strip()):
+            raise ValueError("optional rollout reviewer attribution requires both reviewer and reviewed_at")
+        if self.reviewer.strip():
+            try:
+                timestamp = datetime.fromisoformat(self.reviewed_at.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValueError("rollout reviewed_at must be ISO-8601") from exc
+            if timestamp.tzinfo is None:
+                raise ValueError("rollout reviewed_at must include a timezone")
         if self.stage == "shadow" and (not self.legacy_run_summary_path or not self.legacy_run_summary_digest):
             raise ValueError("shadow rollout requires a legacy comparison run")
         if self.stage != "canary" and self.incident_ids:
@@ -136,9 +137,9 @@ def materialize_rollout_trial(
         "agentic_run_summary_digest": agentic_digest,
         "legacy_run_summary_path": str(legacy_path) if legacy_path is not None else "",
         "legacy_run_summary_digest": legacy_digest,
-        "reviewer": "__REQUIRED_NAMED_HUMAN__",
-        "reviewed_at": "__REQUIRED_ISO8601__",
-        "accepted": None,
+        "reviewer": "",
+        "reviewed_at": "",
+        "accepted": True,
         "incident_ids": [],
     }
     atomic_write_json(output, template)
@@ -182,8 +183,8 @@ def _validate_authorization_decision(
         raise ValueError("pre-default rollout authorization must retain the legacy default")
     if decision.protocol_commit != protocol_commit or decision.gold_digest != gold_digest:
         raise ValueError("rollout authorization does not match the frozen benchmark protocol")
-    if decision.named_review_evidence.source != "digest_pinned_review_artifacts":
-        raise ValueError("rollout authorization lacks digest-pinned named reviews")
+    if decision.validated_benchmark_evidence.source != "digest_pinned_observation_artifacts":
+        raise ValueError("rollout authorization lacks digest-pinned benchmark evidence")
 
 
 def _validate_agentic_run(path_value: str, digest: str) -> None:
