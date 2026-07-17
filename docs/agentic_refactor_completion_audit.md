@@ -12,7 +12,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 
 ## Verification baseline
 
-- Full suite: `444 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `455 passed, 2 skipped, 6 subtests passed`.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -48,6 +48,19 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 - The pre-fix Gemma run safely rejected all 10 claims bound to unrelated runtime
   evidence. The post-fix Gemma rerun is pending because `127.0.0.1:8000` currently
   refuses connections; this deterministic result does not alter the formal baseline.
+- Exact evidence-span scoping now prevents an ambiguous `forward` symbol from using a
+  whole file to infer behavior while citing only a local span. Shared operator matching
+  recognizes grouped dynamic filtering, normalized top-k gating, and base-expert
+  MoE-in-MoE composition, but projects high-specificity operators only into stages that
+  explicitly request them. Partial claims without an explicit qualifier are forbidden.
+- The resulting three-case current-tree deterministic matrix is trusted complete with
+  zero final unsupported leakage: UniMMAD 6/6, CodeQuant 4/4, and Domain-Specific
+  Pruning 7/7 final factual claims supported. Frozen blind body coverage is respectively
+  5/7, 5/5, and 5/6 versus original 6/7, 5/5, and 6/6. UniMMAD improved from the prior
+  2/7 to 5/7 without asserting the unsupported causal general-to-specific narrative.
+  The digest-bound machine record is
+  `docs/agentic_real_project_operator_eval_2026-07-18.json`; it is follow-up evidence,
+  not a rewrite of the formal P4 baseline.
 
 ## Final-design Definition of Done
 
@@ -63,7 +76,7 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 | 8 | Pre-render, post-render, and final invariants cannot be bypassed | Proven | LangGraph topology/route tests, render authorization, post-package lineage verification |
 | 9 | LangGraph decisions have budgets, checkpoint/resume, and complete trace | Proven | Five budgets, typed state/reducers, SQLite resume, freshness-on-resume, decision traces |
 | 10 | LangChain tools have structured schemas, idempotency/side-effect declarations, and evidence policy | Proven | Tool specs, LangChain/trust tool manifests, contract audit, idempotency tests |
-| 11 | Toy and real projects produce trusted success or a specific repairable block | Proven by machine matrix | 11 Gemma completions, 4 specific safe blocks, plus external CodeQuant success and two direct-evidence blocks |
+| 11 | Toy and real projects produce trusted success or a specific repairable block | Proven by machine matrix | 11 Gemma completions, 4 specific safe blocks, plus three current-tree external deterministic trusted completions |
 | 12 | Benchmark proves agentic semantic evidence precision is no worse than fixed legacy | **Machine evidence complete; human decision pending** | 25-run matrix, 13/13 mutations, 5 legacy V2 false-success candidates, and 25-entry review queue |
 
 The overall goal must remain incomplete while item 12 is unproven.

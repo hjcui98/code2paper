@@ -4,7 +4,7 @@
 
 日期：2026-07-17
 
-状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 deterministic 与 adversarial 子矩阵通过，Gemma/fixed 矩阵受服务不可用阻塞，named human review、cutover 与 rollout 尚未完成
+状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 的 25-run 机器矩阵已在 `9a98c17` 冻结完成，后续真实项目修复的 Gemma 复测受服务不可用阻塞，named human review、cutover 与 rollout 尚未完成
 
 执行负责人：Codex
 
@@ -2051,6 +2051,50 @@ runtime evidence，semantic verifier 拒绝全部 10 个最终 claims，并以
 实现修复后再次检查 `127.0.0.1:8000/v1/models` 返回连接失败（HTTP 000），因此新 Gemma
 cache-independent 复测保持 pending，不能用 deterministic 成功替代。正式冻结 P4 baseline
 仍为 `9a98c17`，具名 human review 和 shadow → opt-in → canary 仍未完成，默认切换继续 hold。
+
+### 12.13 真实项目 intent-matched code operator 回归（2026-07-18）
+
+继续以 UniMMAD 为质量探针时发现，retrieval 已经冻结 `mymodels/cmoe.py`，analysis 也产生了
+“Domain-specific decompression via C-MoE” mechanism，但 section title 与 mechanism 的匹配分数
+为 0.3393，略低于旧阈值 0.34，导致该阶段没有绑定证据。此次修复加入保守的 distinctive
+compound acronym 匹配；只有双方共享 `C-MoE` 这类复合缩写才提升匹配，通用 `MoE`、`CNN`、
+`MLP` 不获得同样权限。
+
+更重要的是，反查暴露了一个 evidence identity 错误：当 symbol 为常见 `forward` 时，旧 extractor
+会用整个文件源码判定行为，却把结论绑定到一个局部 evidence span。现在 AST fallback 只读取证据
+ID 所覆盖的精确行区间，并按 exact/nested symbol 过滤同文件无关 span；过滤后无证据则不产生行为。
+在此基础上新增三类可泛化 code-operator detector：`groups=B*E` 的 batched group convolution、
+`expert_base + experts + softmax + einsum` 的 base-expert composition，以及 `topk + softmax` 的
+normalized top-k gate。语义 matcher 下沉至 core 层，由 evidence、projection 和 validator 共用，
+避免 pipeline/agentic 环依赖和边界判定漂移。
+
+operator submechanism 只能投影到语义匹配的 stage；高特异性 top-k、group convolution、MoE-in-MoE
+还必须由 stage 显式请求相应概念，防止在 CodeQuant 或 Domain Pruning 中串入别的项目机制。partial
+claim 若没有显式 qualifier 现在直接以 `partial_claim_missing_explicit_qualifier` 禁止，不再自动追加
+含糊的通用 caveat。该规则在 UniMMAD 中正确剔除了代码证据不足的“high parameter efficiency and
+fast inference”陈述。全量测试为 `455 passed, 2 skipped, 6 subtests passed`，实现提交为
+`671bce1b12b6f214dd994a15e4ac4eed7f0f6058`。
+
+三个当前实现上的 deterministic 运行均只读取代码和 author intent，结果均为 `success + complete`、
+final invariant passed、最终 unsupported=0：UniMMAD 6/6 factual claims supported，CodeQuant 4/4，
+Domain-Specific Pruning 7/7。随后才由独立 evaluator 打开原文，完整报告位于
+`/tmp/code2paper-realset-final-operators/blind_eval_report.json`，digest 为
+`sha256:a4ce1fcd7257df33ac0c6bd1a6d3413366f037f9a5e963e0219870db995d331a`，manifest digest 为
+`sha256:e02eba1c005d41e7f4a045539980dd6325731bf7d57b723872e6603df18b79c7`；reference isolation、
+traceable delivery 均为 3/3，三例正文唯一行比例均为 1.0。
+
+| Case | 当前生成稿/原文冻结概念覆盖 | 相对旧 deterministic | 可信度结论 |
+|---|---:|---:|---|
+| UniMMAD | 5/7（71.43%）/ 6/7（85.71%） | 由 2/7 增至 5/7 | FCM、condition router、grouped filtering、MoE-in-MoE 与 anomaly inference 均有 direct evidence |
+| CodeQuant | 5/5（100%）/ 5/5（100%） | 保持完整 | 4/4 final claims supported |
+| Domain-Specific Pruning | 5/6（83.33%）/ 6/6（100%） | 保持 5/6 raw score | 7/7 final claims supported；few-shot 仍是冻结 alias false negative |
+
+UniMMAD 未写 `general_to_specific` 的因果性“缓解干扰”叙事，是因为当前代码证据只能支持算子结构，
+不能直接支持该效果解释；系统按可信度约束主动省略。`C-MoE` 已在 section title 中出现，正文指标
+按冻结规则不扫描标题，因此不复制标题来抬高分数。机器可读记录为
+`docs/agentic_real_project_operator_eval_2026-07-18.json`。本轮不改写正式 P4 冻结矩阵；宿主机
+`127.0.0.1:8000` 仍不可达，post-fix Gemma cache-independent 复测、具名 review 和 rollout
+序列继续 pending，默认路线保持 hold。
 
 ## 13. 代码落点总表
 

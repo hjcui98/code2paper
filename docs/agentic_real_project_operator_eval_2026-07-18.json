@@ -1,0 +1,83 @@
+{
+  "schema_version": "code2paper-agentic-real-project-operator-eval/v1",
+  "evaluated_at": "2026-07-18",
+  "implementation_commit": "671bce1b12b6f214dd994a15e4ac4eed7f0f6058",
+  "formal_p4_baseline": {
+    "commit": "9a98c17aaa4dd5134804ee057d7ff5d5d81e281e",
+    "unchanged": true,
+    "reason": "Current deterministic follow-up evidence cannot replace the frozen 25-run matrix or named human review."
+  },
+  "blind_eval": {
+    "report_path": "/tmp/code2paper-realset-final-operators/blind_eval_report.json",
+    "report_sha256": "a4ce1fcd7257df33ac0c6bd1a6d3413366f037f9a5e963e0219870db995d331a",
+    "manifest_sha256": "e02eba1c005d41e7f4a045539980dd6325731bf7d57b723872e6603df18b79c7",
+    "reference_isolation_passed": 3,
+    "reference_isolation_total": 3,
+    "traceable_delivery_complete": 3,
+    "traceable_delivery_total": 3,
+    "zero_final_unsupported_leakage": true
+  },
+  "cases": [
+    {
+      "case": "UniMMAD",
+      "run_root": "/tmp/code2paper-unimmad-final-operators",
+      "status": "success",
+      "completion": "complete",
+      "final_invariant_passed": true,
+      "final_claims": {"supported": 6, "caveated": 0, "unsupported": 0, "total": 6},
+      "generated_concept_coverage": {"hits": 5, "total": 7, "ratio": 0.7142857142857143},
+      "original_concept_coverage": {"hits": 6, "total": 7, "ratio": 0.8571428571428571},
+      "generated_hits": ["feature_compression", "condition_router", "moe_in_moe", "grouped_dynamic_filtering", "anomaly_inference"],
+      "generated_misses": ["general_to_specific", "cross_moe"],
+      "intentional_omission": "The causal general-to-specific interference-mitigation narrative lacks direct code evidence. C-MoE appears in the section title, while the frozen metric scans body text only.",
+      "input_manifest_sha256": "43859f155b319dc3cf7a7977d0c636c6a0f43a25248709bcf5df62fff7383b9e",
+      "generated_text_sha256": "b8904901c27a8bd5100da55ff8f95b5d6bd02fe3c98986fe1de27fbdcaff995b",
+      "original_text_sha256": "81ceec4fff7cb8e96f22bbd290b3759ffa68826a9715f33269b2500fa23735d4",
+      "run_summary_sha256": "5fccc10f0cf519c3802993aa4d8fc7360bc743a99874d097362b7e1d68a4286a",
+      "text_validation_sha256": "ab3170808e34465febfbb40b8e1ba7d65c50b06a0c69be1d9cc85cc61f37b970"
+    },
+    {
+      "case": "CodeQuant",
+      "run_root": "/tmp/code2paper-codequant-final-operators",
+      "status": "success",
+      "completion": "complete",
+      "final_invariant_passed": true,
+      "final_claims": {"supported": 4, "caveated": 0, "unsupported": 0, "total": 4},
+      "generated_concept_coverage": {"hits": 5, "total": 5, "ratio": 1.0},
+      "original_concept_coverage": {"hits": 5, "total": 5, "ratio": 1.0},
+      "input_manifest_sha256": "896741c7c79e348f3d3c11e99af76af5a1528a8deb92577753ed3c6715b2f265",
+      "generated_text_sha256": "964f6785bbc86fcba80ce5c2f8d772cca719d06d5d98d7e336c8ac213faf857e",
+      "original_text_sha256": "0690c62684c4f1e7103ed43acf0a749a95bc6c7419c0aa7859be341127a5d516",
+      "run_summary_sha256": "b369d512706981a7415187349d7da9bc9adbd518c9bcb07b34e22f33e11d939a",
+      "text_validation_sha256": "8c6037d8c18b0ac787504eaeff3d0f9e9e00d4a33beea7a9d9fe5f4e48af3109"
+    },
+    {
+      "case": "Domain-Specific Pruning",
+      "run_root": "/tmp/code2paper-domain-pruning-final-operators",
+      "status": "success",
+      "completion": "complete",
+      "final_invariant_passed": true,
+      "final_claims": {"supported": 7, "caveated": 0, "unsupported": 0, "total": 7},
+      "generated_concept_coverage": {"hits": 5, "total": 6, "ratio": 0.8333333333333334},
+      "original_concept_coverage": {"hits": 6, "total": 6, "ratio": 1.0},
+      "evaluation_note": "The generated body states small-number target-domain demonstrations; the frozen few_shot_statistics aliases miss this wording, so the raw score is retained.",
+      "input_manifest_sha256": "eb4490c5187f719aee4099491f4b1f0f986b7163ff5d12d45a41702d46cb55a6",
+      "generated_text_sha256": "d9cf3568efe007f913510748fa770a62f64cdf16f28bcc93b6fae06b451a8d33",
+      "original_text_sha256": "536217074904a85a2c45e5ed30892eb314feca3007d980ccf8c8454a7ce9429a",
+      "run_summary_sha256": "d2cd9bb1b719e98d188fc951bfbad709e2539d5dc027c6b082005b6f33d519ce",
+      "text_validation_sha256": "358c788b4248127fe5b235e6fb70ff63fc2ef429cc54b5a1e873aeb2f1c54f22"
+    }
+  ],
+  "safeguards": {
+    "ambiguous_symbol_evidence": "Behavior extraction is scoped to exact evidence line ranges and exact or nested symbols.",
+    "operator_projection": "High-specificity operator submechanisms require explicit semantic stage intent.",
+    "partial_claims": "A partial claim without an explicit qualifier is forbidden rather than patched with a generic caveat."
+  },
+  "verification": "455 passed, 2 skipped, 6 subtests passed",
+  "gemma_post_fix": {
+    "endpoint": "http://127.0.0.1:8000",
+    "model": "gemma4-31b-nvfp4",
+    "status": "pending_service_offline"
+  },
+  "cutover": "hold"
+}
