@@ -235,9 +235,16 @@ def _formula_tokens_supported(text: str, evidence_text: str, projection: Authori
 
 
 def _repair_action(failures: list[str]) -> str:
-    if any("semantic_verifier" in item for item in failures):
+    if "semantic_verifier_rejected_claim" in failures:
+        return "revise_authoring_from_verifier_fragments"
+    if any(
+        item in {"semantic_verifier_unavailable", "semantic_verifier_budget_exhausted"}
+        for item in failures
+    ):
         return "block_for_semantic_verifier_review"
-    if any("evidence" in item or "matching_projected" in item for item in failures):
+    if "no_semantically_matching_projected_claim" in failures:
+        return "revise_authoring_wording"
+    if any("evidence" in item for item in failures):
         return "return_to_analysis_for_direct_evidence"
     if failures:
         return "revise_authoring_wording"

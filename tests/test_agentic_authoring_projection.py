@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from unittest.mock import patch
 
 from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
@@ -16,7 +18,11 @@ from code2paper.core.schemas import (
     MethodEvidence,
     MethodStageEvidence,
     SupportStatus,
+    LLMConfig,
 )
+from code2paper.llm.client import LLMResponse
+from code2paper.pipeline.stages.authoring import write_phase5_artifacts
+from tests.tempdir_support import workspace_tempdir
 
 
 def _evidence() -> MethodEvidence:
@@ -166,3 +172,79 @@ def test_projection_writer_deduplicates_claims_and_omits_stage_contract_metadata
     assert "Only the configured path is implemented." in draft
     assert "paper-facing stage named" not in draft
     assert "Unsupported duplicate" not in draft
+
+
+def test_projection_model_writer_uses_only_projected_positive_facts() -> None:
+    evidence = _evidence()
+    claims = _claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+    writer_evidence, writer_claims = projected_writer_inputs(
+        projection, template=evidence
+    )
+    response_markdown = (
+        "# Method\n\n## Encoding\n"
+        "The encoder reads configured features and exposes only the configured "
+        "feature path; only the configured path is implemented.\n"
+    )
+    with workspace_tempdir() as tmpdir, patch(
+        "code2paper.llm.client.LLMClient.complete", autospec=True
+    ) as complete:
+        complete.return_value = LLMResponse(
+            text=json.dumps({"markdown": response_markdown}),
+            response_hash="sha256:projection-writer",
+        )
+        markdown, _tex, paths = write_phase5_artifacts(
+            method_root=Path(tmpdir),
+            method_evidence=writer_evidence,
+            claim_map=writer_claims,
+            llm_config=LLMConfig(provider="openai", model="test-model"),
+            equations_tex="FORBIDDEN_RAW_EQUATION",
+            symbols_tex="FORBIDDEN_RAW_SYMBOL",
+        )
+        manifest = json.loads(paths["phase5_manifest"].read_text(encoding="utf-8"))
+        request = complete.call_args.args[1]
+        serialized_payload = json.dumps(request.input_payload, ensure_ascii=False)
+        assert markdown is not None
+        assert complete.call_count == 1
+        assert request.prompt_template_id == "agentic_projection_method_authoring_v1"
+        assert manifest["mode"] == "projection-constrained-llm-writer"
+        assert "stage=S1" in markdown
+        assert "mechanisms=MECH1" in markdown
+        assert "evidence=E1" in markdown
+        assert "E404" not in markdown
+        assert "unsupported 99% acceleration" not in serialized_payload.lower()
+        assert "FORBIDDEN_RAW_EQUATION" not in serialized_payload
+        assert "FORBIDDEN_RAW_SYMBOL" not in serialized_payload
+
+
+def test_projection_model_writer_does_not_invent_grounding_for_unmatched_prose() -> None:
+    evidence = _evidence()
+    claims = _claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+    writer_evidence, writer_claims = projected_writer_inputs(projection, template=evidence)
+    with workspace_tempdir() as tmpdir, patch(
+        "code2paper.llm.client.LLMClient.complete", autospec=True
+    ) as complete:
+        complete.return_value = LLMResponse(
+            text=json.dumps(
+                {"markdown": "# Method\n\n## Results\nThe system guarantees higher accuracy.\n"}
+            ),
+            response_hash="sha256:projection-writer-unmatched",
+        )
+        markdown, _tex, _paths = write_phase5_artifacts(
+            method_root=Path(tmpdir),
+            method_evidence=writer_evidence,
+            claim_map=writer_claims,
+            llm_config=LLMConfig(provider="openai", model="test-model"),
+        )
+
+    assert markdown is not None
+    assert "stage=ALL; mechanisms=none; evidence=none; confidence=low" in markdown

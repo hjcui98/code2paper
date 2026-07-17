@@ -21,6 +21,7 @@ from code2paper.agentic.authoring_plan import build_authoring_plan, load_authori
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.agentic.contracts import AgenticRunState, StageStatus
 from code2paper.agentic.legacy_stage_tools import _run_authoring
+from code2paper.agentic.legacy_authoring_stage_tool import _text_revision_brief
 from code2paper.agentic.tools import canonical_stage_tool_specs
 from code2paper.core.output_names import method_output
 from code2paper.core.schemas import (
@@ -116,6 +117,35 @@ def _authorize_authoring(state: AgenticRunState) -> AgenticRunState:
 
 
 class AgenticAuthoringConstraintsTests(unittest.TestCase):
+    def test_text_revision_brief_preserves_verifier_keep_and_remove_fragments(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            report_path = Path(tmpdir) / "text_validation.json"
+            report_path.write_text(
+                json.dumps(
+                    {
+                        "verdicts": [
+                            {
+                                "atomic_claim_id": "T1",
+                                "status": "unsupported",
+                                "supported_fragment": "Load the base configuration.",
+                                "unsupported_fragment": "to resolve all settings",
+                                "deterministic_failures": ["semantic_verifier_rejected_claim"],
+                                "repair_action": "revise_authoring_from_verifier_fragments",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            state = AgenticRunState(project_root=Path("."), out_root=Path(tmpdir))
+            state.artifacts["text_evidence_validation"] = str(report_path)
+
+            brief = _text_revision_brief(state)
+
+        self.assertIn('"keep_supported_fragment": "Load the base configuration."', brief)
+        self.assertIn('"remove_or_rewrite_text": "to resolve all settings"', brief)
+        self.assertIn("Never reintroduce", brief)
+
     def test_constraints_split_allowed_caveated_and_excluded_claims(self) -> None:
         report = build_claim_verification_report(_method_evidence(), _claim_map())
         constraints = build_authoring_constraints(report)

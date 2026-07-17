@@ -47,6 +47,9 @@ class AgenticRunEvaluationReport(BaseModel):
     partial_claim_rate: float | None = None
     final_text_unsupported_claim_rate: float | None = None
     text_evidence_validation_passed: bool | None = None
+    authoring_mode: str = ""
+    authoring_llm_used: bool = False
+    authoring_llm_call_count: int = 0
     retrieval_loops: int = 0
     retrieval_rescan_plan_items: int = 0
     retrieval_rescan_covered_items: int = 0
@@ -87,6 +90,7 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
     repair_tasks = _artifact_json(state, "analysis_repair_tasks")
     verification = _artifact_json(state, "claim_verification")
     text_validation = _artifact_json(state, "text_evidence_validation")
+    authoring_manifest = _artifact_json(state, "phase5_manifest")
     validation_manifest = _artifact_json(state, "validation_manifest")
     contract_audit = _artifact_json(state, "agentic_contract_audit")
     audit = _artifact_json(state, "agentic_invariant_audit")
@@ -106,6 +110,12 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
     final_unsupported = int_or_zero(text_validation.get("unsupported_claims")) + int_or_zero(text_validation.get("unverified_claims"))
     final_text_unsupported_claim_rate = rate(final_unsupported, final_checked)
     text_evidence_validation_passed = validation_passed(text_validation)
+    authoring_mode = str(authoring_manifest.get("mode") or "")
+    authoring_llm_call_count = list_count(authoring_manifest.get("llm_call_logs"))
+    authoring_llm_used = (
+        authoring_mode == "projection-constrained-llm-writer"
+        and authoring_llm_call_count > 0
+    )
     validation_passed_value = validation_passed(validation_manifest)
     figure_plan_nodes = len(figure_plan.get("nodes") or []) if isinstance(figure_plan.get("nodes"), list) else 0
     figure_plan_edges = len(figure_plan.get("edges") or []) if isinstance(figure_plan.get("edges"), list) else 0
@@ -177,6 +187,9 @@ def build_run_evaluation_report(state: AgenticRunState) -> AgenticRunEvaluationR
         partial_claim_rate=partial_claim_rate,
         final_text_unsupported_claim_rate=final_text_unsupported_claim_rate,
         text_evidence_validation_passed=text_evidence_validation_passed,
+        authoring_mode=authoring_mode,
+        authoring_llm_used=authoring_llm_used,
+        authoring_llm_call_count=authoring_llm_call_count,
         retrieval_loops=retrieval_loops,
         retrieval_rescan_plan_items=retrieval_rescan_plan_items,
         retrieval_rescan_covered_items=retrieval_rescan_covered_items,

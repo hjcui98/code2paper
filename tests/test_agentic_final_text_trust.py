@@ -106,6 +106,7 @@ def test_paraphrased_unsupported_numeric_claim_is_rejected() -> None:
 
     assert report.status == "failed"
     assert "no_semantically_matching_projected_claim" in report.verdicts[0].deterministic_failures
+    assert report.verdicts[0].repair_action == "revise_authoring_wording"
 
 
 def test_unsupported_scientific_verb_cannot_bypass_factual_extraction() -> None:
@@ -164,3 +165,26 @@ def test_trace_rejects_report_bound_to_different_final_text_digest() -> None:
 
     assert not trace.hard_gate_passed
     assert "validator_text_digest_mismatch" in trace.failures
+
+
+def test_semantic_verifier_rejection_returns_precise_authoring_revision() -> None:
+    text = "The encoder reads configured features to resolve training settings."
+    projection = _projection()
+    extracted = extract_final_text_claims(text, projection)
+    report = validate_text_evidence(
+        final_claims=extracted,
+        projection=projection,
+        raw_evidence=_raw(),
+        semantic_verifier=lambda _payload: {
+            "status": "unsupported",
+            "rationale": "The resolution outcome is not shown.",
+            "supported_fragment": "The encoder reads configured features.",
+            "unsupported_fragment": "to resolve training settings",
+        },
+        max_semantic_verifier_calls=1,
+    )
+
+    verdict = report.verdicts[0]
+    assert verdict.repair_action == "revise_authoring_from_verifier_fragments"
+    assert verdict.supported_fragment == "The encoder reads configured features."
+    assert verdict.unsupported_fragment == "to resolve training settings"

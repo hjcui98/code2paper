@@ -106,6 +106,14 @@ class AgenticEvaluationReportTests(unittest.TestCase):
                     },
                 ),
                 "validation_manifest": _write_json(root, "validation_manifest.json", {"status": "success"}),
+                "phase5_manifest": _write_json(
+                    root,
+                    "authoring_manifest.json",
+                    {
+                        "mode": "projection-constrained-llm-writer",
+                        "llm_call_logs": ["sha256:writer-call"],
+                    },
+                ),
                 "traceability_ledger": _write_json(root, "ledger.json", {"hard_gate_passed": True}),
                 "agentic_invariant_audit": _write_json(root, "audit.json", {"passed": True}),
                 "agentic_run_readiness_report": _write_json(root, "readiness.json", {"passed": True}),
@@ -133,6 +141,9 @@ class AgenticEvaluationReportTests(unittest.TestCase):
         self.assertEqual(report.evidence_repair_candidates_with_existing_evidence, 1)
         self.assertEqual(report.unsupported_claim_rate, 0.3333)
         self.assertEqual(report.partial_claim_rate, 0.3333)
+        self.assertEqual(report.authoring_mode, "projection-constrained-llm-writer")
+        self.assertTrue(report.authoring_llm_used)
+        self.assertEqual(report.authoring_llm_call_count, 1)
         self.assertEqual(report.retrieval_loops, 2)
         self.assertEqual(report.retrieval_rescan_plan_items, 2)
         self.assertEqual(report.retrieval_rescan_covered_items, 1)

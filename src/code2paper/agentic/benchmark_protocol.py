@@ -31,7 +31,7 @@ class BenchmarkRunSpecV2(ProtocolModel):
     llm_base_url: str = ""
     capability_profile_path: str = ""
     capability_profile_digest: str = ""
-    prompt_version: str = "agentic-graph-v3"
+    prompt_version: str = "agentic-graph-v4-projection-writer"
     renderer: str = "structured-svg"
     temperature: float = 0.0
     budgets: dict[str, int] = Field(default_factory=dict)

@@ -156,6 +156,7 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
     grounding_context = _join_context_blocks(
         projection_writer_brief(projection),
         authoring_plan_brief(authoring_plan, include_exclusions=False),
+        _text_revision_brief(state),
     )
     markdown, _tex, paths = write_phase5_artifacts(
         method_root=state.method_root,
@@ -259,6 +260,41 @@ def _read_text(path: Path) -> str:
 
 def _join_context_blocks(*blocks: str) -> str:
     return "\n\n".join(block.strip() for block in blocks if str(block or "").strip())
+
+
+def _text_revision_brief(state: AgenticRunState) -> str:
+    path = state.artifacts.get("text_evidence_validation", "")
+    if not path or not Path(path).exists():
+        return ""
+    try:
+        payload = _read_json(Path(path))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    issues = [
+        {
+            "atomic_claim_id": verdict.get("atomic_claim_id", ""),
+            "keep_supported_fragment": verdict.get("supported_fragment", ""),
+            "remove_or_rewrite_text": verdict.get("unsupported_fragment", ""),
+            "failures": verdict.get("deterministic_failures", []),
+            "repair_action": verdict.get("repair_action", ""),
+        }
+        for verdict in payload.get("verdicts", [])
+        if verdict.get("status") not in {"supported", "caveated"}
+    ]
+    if not issues:
+        return ""
+    return json.dumps(
+        {
+            "authoring_revision_feedback": issues,
+            "rule": (
+                "For each issue, either use keep_supported_fragment verbatim or delete the "
+                "entire atomic claim. Never reintroduce remove_or_rewrite_text. Remove factual "
+                "text with no projected-claim match; do not retrieve evidence for model-added prose."
+            ),
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
 
 
 def _blocked_reason(path: Path | None) -> str:

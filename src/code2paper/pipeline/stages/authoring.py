@@ -139,11 +139,26 @@ def write_phase5_artifacts(
 
     if _is_projection_writer_input(method_evidence):
         # The graph-level authoring planner already decides claim order/grouping.
-        # Keep the compatibility writer deterministic so legacy free-text
-        # expansion cannot reopen a positive-fact channel outside projection.
+        # Deterministic runs keep an exact-claim fallback; model-backed runs let
+        # the model express only the projection and remain subject to the final
+        # atomic-claim validator and invariant gate.
         method_plan = _method_plan_scaffold(method_evidence, equations_tex=equations_tex)
         _write_json(paths["method_plan"], method_plan.model_dump(mode="json"))
         _write_json(paths["method_plan_quality"], _method_plan_quality_report(method_plan))
+        if llm_config.provider != LLMProvider.NONE:
+            return _write_projection_llm_artifacts(
+                paths=paths,
+                method_evidence=method_evidence,
+                claim_map=claim_map,
+                llm_config=llm_config,
+                alignment=alignment,
+                outline=outline,
+                terminology=terminology,
+                claim_map_output=claim_map_output,
+                authoring_prompt=authoring_prompt,
+                grounding_context_markdown=grounding_context_markdown,
+                method_plan=method_plan,
+            )
         markdown = build_method_draft_markdown(
             method_evidence=method_evidence,
             claim_map=claim_map,
@@ -454,6 +469,100 @@ def write_phase5_artifacts(
         method_plan=method_plan,
     )
     return markdown, latex, paths
+
+
+def _write_projection_llm_artifacts(
+    *,
+    paths: dict[str, Path],
+    method_evidence: MethodEvidence,
+    claim_map: ClaimEvidenceMap,
+    llm_config: LLMConfig,
+    alignment: CodeAlignmentIR | None,
+    outline: MethodOutline,
+    terminology: TerminologyTable,
+    claim_map_output: DraftClaimMap,
+    authoring_prompt: str,
+    grounding_context_markdown: str,
+    method_plan: MethodPlanOutput,
+) -> tuple[str | None, str | None, dict[str, Path]]:
+    """Use one projection-only model draft; graph-level revision owns retries."""
+
+    safe_equations_tex = _projected_equations_tex(method_evidence)
+    request = LLMRequest(
+        prompt_template_id="agentic_projection_method_authoring_v1",
+        prompt=_projection_method_draft_llm_prompt(),
+        input_payload={
+            "authoring_prompt": authoring_prompt,
+            "grounding_context": grounding_context_markdown,
+            "method_plan": method_plan.model_dump(mode="json"),
+            "projected_claims": claim_map.model_dump(mode="json"),
+            "stage_packets": method_evidence.stage_packets,
+            "safe_equations_tex": safe_equations_tex,
+        },
+        schema_name=METHOD_DRAFT_SCHEMA,
+        response_json_schema=json_schema_for(DraftMarkdownOutput),
+    )
+    response = LLMClient(llm_config).complete(request)
+    call_logs = [response.response_hash] if response.response_hash else []
+    if response.blocked_reason:
+        _write_blocked_phase5(
+            paths=paths,
+            method_evidence=method_evidence,
+            mode="blocked_projection_llm_required",
+            blocked_reason=response.blocked_reason,
+            llm_available=True,
+            llm_call_logs=call_logs,
+        )
+        return None, None, paths
+    draft_output, parse_error = try_parse_structured_response(
+        response.text, DraftMarkdownOutput
+    )
+    if draft_output is None or not draft_output.markdown.strip():
+        _write_blocked_phase5(
+            paths=paths,
+            method_evidence=method_evidence,
+            mode="blocked_projection_llm_response_invalid",
+            blocked_reason=parse_error or "empty_projection_method_draft_markdown",
+            llm_available=True,
+            llm_call_logs=call_logs,
+        )
+        return None, None, paths
+    markdown = _normalize_markdown_grounding_comments(
+        markdown=draft_output.markdown,
+        draft_claim_map=claim_map_output,
+        method_evidence=method_evidence,
+        claim_map=claim_map,
+        match_claims_by_text=True,
+    )
+    markdown = _maybe_compact_display_equations(markdown)
+    latex = format_method_draft_tex(markdown)
+    _write_phase5_success_outputs(
+        paths=paths,
+        method_evidence=method_evidence,
+        claim_map=claim_map,
+        alignment=alignment,
+        outline=outline,
+        terminology=terminology,
+        claim_map_output=claim_map_output,
+        markdown=markdown,
+        latex=latex,
+        llm_call_id=response.response_hash,
+        manifest_mode="projection-constrained-llm-writer",
+        llm_available=True,
+        llm_call_logs=call_logs,
+        supplemental_equations_tex=safe_equations_tex,
+        method_plan=method_plan,
+    )
+    return markdown, latex, paths
+
+
+def _projected_equations_tex(method_evidence: MethodEvidence) -> str:
+    blocks = []
+    for equation in method_evidence.equation_candidates:
+        latex = str(equation.latex or "").strip()
+        if latex and equation.evidence_ids:
+            blocks.append(f"% {equation.name}\n\\[\n{latex}\n\\]")
+    return "\n\n".join(blocks)
 
 
 def _write_blocked_phase5(
@@ -2407,6 +2516,25 @@ def _method_draft_llm_prompt() -> str:
     )
 
 
+def _projection_method_draft_llm_prompt() -> str:
+    return "\n".join(
+        [
+            "Write a concise, publication-ready Method section from the authoring projection.",
+            'Return only JSON matching {"markdown": "..."}; no wrapper or extra keys.',
+            "The projection is the complete positive-fact boundary.",
+            "Follow method_plan section order and use its headings when practical.",
+            "Every factual sentence must be a faithful paraphrase of one or more projected_claims.",
+            "Do not add an overview, method-name expansion, or pipeline summary unless that exact factual content is itself a projected claim.",
+            "When grounding_context contains authoring_revision_feedback, remove or rewrite every listed fragment.",
+            "Preserve every qualifier attached to a projected claim.",
+            "Do not add mechanisms, causal explanations, benefits, novelty, numbers, equations, or implementation details absent from projected_claims and safe_equations_tex.",
+            "You may add non-factual transitions, but they must not imply new method behavior.",
+            "Use connected research prose, avoid repetition, audit language, file paths, CLI details, and meta-writing statements.",
+            "Start with # Method and use ## subsections.",
+        ]
+    )
+
+
 def _paper_readiness_revision_prompt() -> str:
     return "\n".join(
         [
@@ -3242,6 +3370,7 @@ def _normalize_markdown_grounding_comments(
     draft_claim_map: DraftClaimMap,
     method_evidence: MethodEvidence,
     claim_map: ClaimEvidenceMap,
+    match_claims_by_text: bool = False,
 ) -> str:
     normalized_markdown = _canonicalize_markdown_from_llm(markdown)
     normalized_markdown = _sanitize_unsupported_claim_text(
@@ -3268,6 +3397,11 @@ def _normalize_markdown_grounding_comments(
             normalized.append(line)
             continue
         if stripped.startswith("<!-- c2p:"):
+            if match_claims_by_text:
+                # Model-authored paragraph order is not the legacy scaffold order.
+                # Discard model-supplied comments; a fresh comment is derived from
+                # the actual following paragraph below.
+                continue
             paragraph = _paragraph_for_index(paragraphs, paragraph_index)
             if paragraph is None:
                 normalized.append("<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->")
@@ -3276,8 +3410,10 @@ def _normalize_markdown_grounding_comments(
             continue
         if _is_single_line_display_math(stripped):
             if not _last_non_empty_line(normalized).startswith("<!-- c2p:"):
-                paragraph = _paragraph_for_index(paragraphs, paragraph_index)
-                if paragraph is None:
+                paragraph = None if match_claims_by_text else _paragraph_for_index(paragraphs, paragraph_index)
+                if match_claims_by_text:
+                    normalized.append(_grounding_comment_for_text(stripped, method_evidence, claim_map))
+                elif paragraph is None:
                     normalized.append("<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->")
                 else:
                     normalized.append(_grounding_comment_for_paragraph(paragraph, mechanism_to_stage))
@@ -3286,8 +3422,10 @@ def _normalize_markdown_grounding_comments(
             continue
         if _is_markdown_paragraph_line(stripped):
             if not _last_non_empty_line(normalized).startswith("<!-- c2p:"):
-                paragraph = _paragraph_for_index(paragraphs, paragraph_index)
-                if paragraph is None:
+                paragraph = None if match_claims_by_text else _paragraph_for_index(paragraphs, paragraph_index)
+                if match_claims_by_text:
+                    normalized.append(_grounding_comment_for_text(stripped, method_evidence, claim_map))
+                elif paragraph is None:
                     normalized.append("<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->")
                 else:
                     normalized.append(_grounding_comment_for_paragraph(paragraph, mechanism_to_stage))
@@ -3296,6 +3434,74 @@ def _normalize_markdown_grounding_comments(
             continue
         normalized.append(line)
     return "\n".join(normalized).rstrip() + "\n"
+
+
+def _grounding_comment_for_text(
+    text: str,
+    method_evidence: MethodEvidence,
+    claim_map: ClaimEvidenceMap,
+) -> str:
+    """Bind model prose only to projected claims it can actually be matched to."""
+
+    text_tokens = _grounding_tokens(text)
+    matches = []
+    for claim in claim_map.claims:
+        claim_tokens = _grounding_tokens(claim.claim_text)
+        shared = text_tokens & claim_tokens
+        if not claim_tokens or len(shared) < min(2, len(claim_tokens)):
+            continue
+        coverage = len(shared) / len(claim_tokens)
+        precision = len(shared) / max(1, len(text_tokens))
+        if coverage >= 0.55 or (coverage >= 0.4 and precision >= 0.4):
+            matches.append(claim)
+    if not matches:
+        return "<!-- c2p: stage=ALL; mechanisms=none; evidence=none; confidence=low -->"
+
+    claim_ids = {claim.claim_id for claim in matches}
+    stage_ids = _dedupe(
+        str(packet.get("stage_id") or "")
+        for packet in method_evidence.stage_packets
+        if claim_ids & {str(item) for item in packet.get("claim_ids", [])}
+    )
+    mechanisms = _dedupe(
+        mechanism_id for claim in matches for mechanism_id in claim.mechanism_ids
+    )
+    evidences = _dedupe(
+        evidence_id for claim in matches for evidence_id in claim.evidence_ids
+    )
+    # Projection claim maps may intentionally omit legacy mechanism IDs. Recover
+    # them only through an actual overlap with the claim's direct evidence.
+    evidence_set = set(evidences)
+    mechanisms = _dedupe(
+        [
+            *mechanisms,
+            *[
+                mechanism.mechanism_id
+                for stage in method_evidence.stages
+                for mechanism in stage.mechanisms
+                if evidence_set & set(mechanism.evidence_ids)
+            ],
+        ]
+    )
+    stage_id = stage_ids[0] if len(stage_ids) == 1 else "ALL"
+    return (
+        f"<!-- c2p: stage={stage_id}; "
+        f"mechanisms={','.join(mechanisms) if mechanisms else 'none'}; "
+        f"evidence={','.join(evidences) if evidences else 'none'}; "
+        f"confidence={'high' if evidences else 'low'} -->"
+    )
+
+
+def _grounding_tokens(text: str) -> set[str]:
+    stop = {
+        "the", "a", "an", "of", "to", "and", "or", "is", "are", "we",
+        "our", "this", "that", "with", "for", "from", "in", "by", "only",
+    }
+    return {
+        token
+        for token in re.findall(r"[a-z0-9_]+", str(text or "").lower())
+        if len(token) > 1 and token not in stop
+    }
 
 
 def _grounding_comment_for_paragraph(

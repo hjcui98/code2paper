@@ -250,9 +250,13 @@ def projected_writer_inputs(
                     "inputs": [],
                     "outputs": [],
                     "modules": [],
-                    "mechanisms": [],
+                    "mechanisms": _projection_stage_mechanisms(
+                        packet=packet,
+                        template=template,
+                        stage_index=index,
+                    ),
                 }
-                for packet in projection.stage_packets
+                for index, packet in enumerate(projection.stage_packets, start=1)
             ],
             "behavior_patterns": [],
             "equation_candidates": projection.safe_equations,
@@ -274,6 +278,40 @@ def projected_writer_inputs(
     )
     evidence = MethodEvidence.model_validate(evidence_payload)
     return evidence, ClaimEvidenceMap(claims=claims)
+
+
+def _projection_stage_mechanisms(
+    *, packet: dict[str, Any], template: MethodEvidence, stage_index: int
+) -> list[dict[str, Any]]:
+    """Retain trace IDs without reopening legacy mechanism prose as writer input."""
+
+    packet_evidence = {
+        str(item) for item in packet.get("evidence_span_ids", []) if str(item)
+    }
+    matched = [
+        mechanism
+        for stage in template.stages
+        for mechanism in stage.mechanisms
+        if packet_evidence & set(mechanism.evidence_ids)
+    ]
+    if not matched:
+        return [
+            {
+                "mechanism_id": f"MECH_PROJECTION_{stage_index}",
+                "description": packet["purpose"],
+                "support_status": packet.get("support_status", "supported"),
+                "evidence_ids": sorted(packet_evidence),
+            }
+        ]
+    return [
+        {
+            "mechanism_id": mechanism.mechanism_id,
+            "description": packet["purpose"],
+            "support_status": packet.get("support_status", "supported"),
+            "evidence_ids": sorted(packet_evidence & set(mechanism.evidence_ids)),
+        }
+        for mechanism in matched
+    ]
 
 
 def write_authoring_projection(path: str | Path, projection: AuthoringInputProjection) -> Path:
