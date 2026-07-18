@@ -9,7 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
-from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_span
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import ClaimEvidenceMap
 
@@ -53,7 +53,7 @@ def convert_claims_to_v2(
     evidence_snapshot: EvidenceSnapshotV2,
 ) -> AtomicClaimSetV2:
     verified_by_id = {item.claim_id: item for item in verification.claims}
-    valid_ids = {span.evidence_id for span in evidence_snapshot.spans if span.status == "valid"}
+    valid_ids = {span.evidence_id for span in evidence_snapshot.spans if is_direct_code_span(span)}
     claims: list[AtomicClaimV2] = []
     for item in claim_map.claims:
         verified = verified_by_id.get(item.claim_id)
@@ -97,7 +97,7 @@ def verify_atomic_claims_v2(
 ) -> AtomicClaimSetV2:
     """Explicit V2 verification step; conversion alone never grants support."""
 
-    spans = {span.evidence_id: span for span in evidence_snapshot.spans if span.status == "valid"}
+    spans = {span.evidence_id: span for span in evidence_snapshot.spans if is_direct_code_span(span)}
     verified: list[AtomicClaimV2] = []
     for claim in claims.claims:
         evidence_text = "\n".join(spans[item].exact_excerpt for item in claim.direct_evidence_ids if item in spans)

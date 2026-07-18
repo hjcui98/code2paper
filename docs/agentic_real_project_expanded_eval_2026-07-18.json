@@ -91,5 +91,74 @@
     "trusted_block": 1,
     "delivery_complete": 4
   },
-  "verification": "493 passed, 2 skipped, 6 subtests passed"
+  "post_fix_code_only_evidence_eval": {
+    "purpose": "repair explicit intent recall while enforcing that narrative repository artifacts can never authorize Method prose or figure relations",
+    "policy": {
+      "direct_evidence": "source_code_script_build_or_config_only",
+      "narrative_artifacts": "semantic_hint_only",
+      "forbidden_as_hard_evidence": [
+        "markdown",
+        "readme",
+        "paper_draft",
+        "tex",
+        "pdf",
+        "rst",
+        "plain_text"
+      ],
+      "specific_mechanism_operator_anchors_required": true
+    },
+    "cases": [
+      {
+        "case_id": "ebcar",
+        "run_root": "/tmp/code2paper-real-expanded-final-20260718/ebcar-det",
+        "summary_sha256": "96ac410f9f0f1a48c548eefdf26ad4686c21a690075ec4d6dcba91475ea65420",
+        "status": "trusted_success",
+        "projected_claims": 10,
+        "recovered_mechanism": "dynamic document ID embedding plus sinusoidal passage-position encoding",
+        "generated_concepts": "4/6",
+        "original_concepts": "6/6",
+        "final_text_unsupported_claim_rate": 0.0,
+        "reference_isolation_passed": true,
+        "non_hard_direct_evidence_spans": 0
+      },
+      {
+        "case_id": "dyg_mamba",
+        "run_root": "/tmp/code2paper-real-expanded-final-20260718/dyg_mamba-det",
+        "summary_sha256": "19e8ef8c9b32114f7cd4e06aeb9afbfbfe16dbf6b6326388c03379ac3a156ca9",
+        "status": "trusted_success",
+        "projected_claims": 6,
+        "recovered_mechanism": "timespan-informed delta-t and stable state decay",
+        "generated_concepts": "3/6",
+        "original_concepts": "4/6",
+        "final_text_unsupported_claim_rate": 0.0,
+        "reference_isolation_passed": true,
+        "non_hard_direct_evidence_spans": 0
+      },
+      {
+        "case_id": "rap",
+        "run_root": "/tmp/code2paper-real-expanded-codeonly2-20260718/rap",
+        "summary_sha256": "d5ee1ba34102895b50c84c3f50c2ec85f9e22ec82a8af4a0f7df3b1ee822c03d",
+        "status": "trusted_success_conservative",
+        "projected_claims": 2,
+        "retained_mechanism": "per-primitive descriptor from absolute attribute magnitudes and local contrasts",
+        "rejected_narrative_only_mechanisms": [
+          "MLP training",
+          "three training losses",
+          "soft pruning",
+          "rendering-free deployment"
+        ],
+        "generated_concepts": "0/7",
+        "original_concepts": "6/7",
+        "concept_metric_note": "Frozen aliases do not match the supported absolute-attribute/local-contrast wording; aliases were not changed after evaluation.",
+        "final_text_unsupported_claim_rate": 0.0,
+        "reference_isolation_passed": true,
+        "non_hard_direct_evidence_spans": 0
+      }
+    ],
+    "trusted_success": 3,
+    "reference_isolation_passed": 3,
+    "final_text_unsupported_claim_rate_zero": 3,
+    "non_hard_direct_evidence_spans": 0
+  },
+  "verification": "497 passed, 2 skipped, 6 subtests passed"
 }

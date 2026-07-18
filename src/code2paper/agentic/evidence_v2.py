@@ -11,6 +11,20 @@ from code2paper.agentic.repo_snapshot import RepoSnapshot
 from code2paper.core.schemas import RawEvidencePack
 
 
+_DIRECT_CODE_SUFFIXES = {
+    ".py", ".pyi", ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp",
+    ".cu", ".cuh", ".java", ".kt", ".kts", ".go", ".rs", ".scala",
+    ".js", ".jsx", ".ts", ".tsx", ".sh", ".bash", ".zsh", ".fish",
+    ".rb", ".php", ".swift", ".m", ".mm", ".jl", ".r", ".lua",
+    ".proto", ".sql", ".cmake",
+    # Configuration is code evidence for exact values and activation wiring.
+    ".yaml", ".yml", ".json", ".toml", ".ini", ".cfg", ".conf",
+}
+_DIRECT_CODE_FILENAMES = {
+    "dockerfile", "makefile", "cmakelists.txt", "justfile", "rakefile",
+}
+
+
 class EvidenceV2Model(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -85,7 +99,11 @@ def build_evidence_snapshot_v2(
                 excerpt_digest=_digest_text(excerpt),
                 file_digest=snapshot_file.content_digest if snapshot_file else "",
                 source_type=str(getattr(item.source_type, "value", item.source_type)),
-                strength="hard" if status == "valid" else "semantic_hint",
+                strength=(
+                    "hard"
+                    if status == "valid" and is_direct_code_path(relative)
+                    else "semantic_hint"
+                ),
                 status=status,
             )
         )
@@ -144,6 +162,26 @@ def write_evidence_snapshot_v2(path: str | Path, snapshot: EvidenceSnapshotV2) -
 
 def load_evidence_snapshot_v2(path: str | Path) -> EvidenceSnapshotV2:
     return EvidenceSnapshotV2.model_validate_json(Path(path).read_text(encoding="utf-8"))
+
+
+def is_direct_code_path(path: str | Path) -> bool:
+    """Return whether a repository path may serve as direct implementation evidence.
+
+    Narrative artifacts such as README, paper drafts, TeX, PDFs, and plain-text notes
+    remain useful retrieval hints but can never authorize Method prose or figure edges.
+    """
+
+    candidate = Path(str(path or ""))
+    name = candidate.name.lower()
+    return name in _DIRECT_CODE_FILENAMES or candidate.suffix.lower() in _DIRECT_CODE_SUFFIXES
+
+
+def is_direct_code_span(span: EvidenceSpanV2) -> bool:
+    return (
+        span.status == "valid"
+        and span.strength == "hard"
+        and is_direct_code_path(span.path)
+    )
 
 
 def _read_exact_excerpt(root: Path, relative: str, line_start: int, line_end: int) -> str:

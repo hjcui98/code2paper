@@ -16,6 +16,8 @@ from code2paper.core.schemas import (
     AuthorMode,
     ClaimEvidenceItem,
     ClaimEvidenceMap,
+    ClaimContract,
+    ConflictStatus,
     Mechanism,
     MethodEvidence,
     MethodStageEvidence,
@@ -287,6 +289,101 @@ def test_projection_scopes_operator_subclaim_by_stage_semantics_and_evidence() -
 
     assert [claim.claim_id for claim in projection.projected_claims] == ["C1", "C2"]
     assert projection.stage_packets[0]["claim_ids"] == ["C1", "C2"]
+
+
+def test_projection_retains_verified_explicit_claim_contract_outside_broad_stage_heading() -> None:
+    evidence = MethodEvidence(
+        project_id="intent-contract", method_name="Intent Contract",
+        method_goal="Describe explicit evidence-backed intent.", implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1", name="Architecture", purpose="Encode inputs.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1", description="Encode inputs.",
+                support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1", "name": "Architecture", "purpose": "Encode inputs.",
+            "claim_ids": ["C1"], "evidence_span_ids": ["E1"],
+        }],
+        claim_contracts=[ClaimContract(
+            claim_id="C2",
+            claim_intent="Add sinusoidal passage-position encoding.",
+            support_status=ConflictStatus.SUPPORTED,
+            evidence_span_ids=["E1"],
+            allowed_wording_boundary="Add sinusoidal passage-position encoding.",
+        )],
+    )
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1", claim_text="Encode inputs.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+        ),
+        ClaimEvidenceItem(
+            claim_id="C2", claim_text="Add sinusoidal passage-position encoding.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            source="claim_contract:C2",
+        ),
+        ClaimEvidenceItem(
+            claim_id="C3", claim_text="Run an unrelated generic helper.",
+            support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            source="submechanism:SUBMECH9",
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence, claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1", "C2"]
+    forbidden = next(item for item in projection.forbidden_claims if item.claim_id == "C3")
+    assert forbidden.reason == "outside_author_scoped_method_stages"
+
+
+def test_projection_rejects_mlp_importance_claim_when_code_only_builds_prune_features() -> None:
+    evidence = MethodEvidence(
+        project_id="rap-boundary", method_name="RAP Boundary",
+        method_goal="Describe code-supported pruning features.", implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1", name="Pruning", purpose="Build pruning features.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1", description="Build pruning features.",
+                support_status=SupportStatus.SUPPORTED, evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1", "name": "Pruning", "purpose": "Build pruning features.",
+            "claim_ids": ["C1"], "evidence_span_ids": ["E1"],
+        }],
+    )
+    claims = ClaimEvidenceMap(claims=[ClaimEvidenceItem(
+        claim_id="C1",
+        claim_text="Use an MLP to predict importance scores from pruning features.",
+        support_status=SupportStatus.SUPPORTED,
+        evidence_ids=["E1"],
+        source="claim_contract:C1",
+    )])
+    raw = RawEvidencePack(
+        project_id="rap-boundary", project_root="/repo", author_mode=AuthorMode.ENHANCED,
+        evidence_items=[EvidenceItem(
+            evidence_id="E1", source_type=SourceType.SOURCE,
+            path="gaussian_model.py", line_start=1, line_end=3,
+            content_summary=(
+                "def get_prune_input(self): input_features = torch.cat(features); "
+                "self.prune_features = percentile_cutoff_normalize(input_features)"
+            ),
+            confidence=0.9,
+        )],
+    )
+
+    projection = build_authoring_projection(
+        method_evidence=evidence, claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims), raw_evidence=raw,
+    )
+
+    assert projection.projected_claims == []
+    assert projection.forbidden_claims[0].reason == "direct_evidence_semantically_unrelated"
 
 
 def test_projection_recognizes_normalized_mixed_domain_score_code() -> None:

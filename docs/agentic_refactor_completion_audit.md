@@ -8,11 +8,14 @@ Current formal benchmark commit: `9a98c17aaa4dd5134804ee057d7ff5d5d81e281e`
 
 This audit separates implementation evidence from rollout authorization. A passing
 deterministic run proves that the V2 contracts can complete; it does not replace the
-fixed-vs-agentic Gemma matrix or named human review required for cutover.
+fixed-vs-agentic Gemma matrix or the digest-pinned shadow/canary evidence required for
+default cutover. Product policy no longer requires 25 named human signatures; review
+workspaces remain optional diagnostics and cannot override evidence validators.
 
 ## Verification baseline
 
-- Full suite: `493 passed, 2 skipped, 6 subtests passed`.
+- Full suite: `497 passed, 2 skipped, 6 subtests passed` after the code-only evidence
+  invariant and real-project recall regressions.
 - Formal protocol: 25 runs, frozen from a clean tracked commit.
 - Completed current-commit matrix: 5/5 deterministic, 5/5 fixed legacy, and 15/15
   cache-disabled Gemma protocol records are present.
@@ -152,9 +155,10 @@ fixed-vs-agentic Gemma matrix or named human review required for cutover.
 | 9 | LangGraph decisions have budgets, checkpoint/resume, and complete trace | Proven | Five budgets, typed state/reducers, SQLite resume, freshness-on-resume, decision traces |
 | 10 | LangChain tools have structured schemas, idempotency/side-effect declarations, and evidence policy | Proven | Tool specs, LangChain/trust tool manifests, contract audit, idempotency tests |
 | 11 | Toy and real projects produce trusted success or a specific repairable block | Proven by machine matrix | 11 Gemma completions, 4 specific safe blocks, plus three current-tree external deterministic trusted completions |
-| 12 | Benchmark proves agentic semantic evidence precision is no worse than fixed legacy | **Machine evidence complete; human decision pending** | 25-run matrix, 13/13 mutations, 5 legacy V2 false-success candidates, and 25-entry review queue |
+| 12 | Benchmark proves agentic semantic evidence precision is no worse than fixed legacy | Proven by digest-pinned machine evidence | 25-run matrix, 13/13 mutations, 5 legacy V2 false-success candidates; named review is optional under schema 2.3 |
 
-The overall goal must remain incomplete while item 12 is unproven.
+The overall goal remains incomplete until the P4 hard thresholds, shadow/canary sequence,
+and default-route decision are completed; named review count is not one of those gates.
 
 ## Additional execution-plan cutover conditions
 
@@ -163,16 +167,15 @@ The overall goal must remain incomplete while item 12 is unproven.
 | Current-commit fixed legacy runs | Complete | 5/5 normal finishes; 5/5 fail authoritative V2 usability audit despite legacy fidelity success |
 | Current-commit Gemma agentic repeats | Complete | 15/15 records: 11 trusted completions, 4 fail-closed authoring-budget blocks |
 | Exact 25-run protocol validation | Complete | All 25 run records bind the same clean commit, gold digest, model profile, and protocol |
-| Named human review | Pending | Queue has 25 entries; placeholders are schema-invalid and cannot count as reviews |
+| Named human review | Optional diagnostic | Existing 25-entry queue is retained for qualitative review but is not a cutover prerequisite |
 | Shadow review | Pending | CLI emits digest-pinned shadow comparison artifacts, but rollout evidence is not complete |
 | Opt-in/canary evidence | Pending | Cutover policy enforces the sequence; no reviewed rollout evidence yet |
 | Default route | Hold | Legacy remains implicit default; only a clean `default_ready` decision can activate agentic |
 
 ## Resume procedure
 
-1. Have named reviewers complete all 25 digest-pinned reviews, including block/false-block
-   classification and paired-intent organization checks.
-2. Aggregate reviewed observations with the frozen protocol and evaluate worst-case cutover
-   thresholds.
-3. Run and review shadow, opt-in, and canary evidence in order. Apply a resulting
+1. Aggregate the digest-pinned benchmark observations under decision schema 2.3 and evaluate
+   every worst-case trust threshold; optional human reviews may add diagnosis but cannot
+   override unsupported verdicts.
+2. Run and validate shadow, opt-in, and canary evidence in order. Apply a resulting
    `default_ready` decision through `--cutover-decision`; otherwise keep legacy default.

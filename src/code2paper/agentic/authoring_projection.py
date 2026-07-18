@@ -8,7 +8,7 @@ from typing import Any
 
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
 from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
-from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
 from code2paper.core.schemas import (
@@ -41,7 +41,7 @@ def build_authoring_projection(
     v2_span_by_id = {
         span.evidence_id: span
         for span in (evidence_snapshot_v2.spans if evidence_snapshot_v2 else [])
-        if span.status == "valid"
+        if is_direct_code_span(span)
     }
     v2_claim_by_id = {claim.claim_id: claim for claim in (atomic_claims_v2.claims if atomic_claims_v2 else [])}
     for verified in verification.claims:
@@ -129,8 +129,19 @@ def build_authoring_projection(
             for claim_id in packet.get("claim_ids", [])
             if str(claim_id)
         }
-        out_of_scope = [claim for claim in projected if claim.claim_id not in author_scoped_ids]
-        projected = [claim for claim in projected if claim.claim_id in author_scoped_ids]
+        # Non-scaffold claim contracts are explicit author intent that has already
+        # passed direct-code evidence and atomic-claim gates.  A broad story heading
+        # is an organization hint, not grounds to discard such a verified claim.
+        # Generic analyzer submechanisms remain stage-scoped to avoid reopening the
+        # whole repository as positive writer context.
+        explicitly_scoped = {
+            claim.claim_id
+            for claim in projected
+            if claim.source.startswith("claim_contract:")
+        }
+        retained_ids = author_scoped_ids | explicitly_scoped
+        out_of_scope = [claim for claim in projected if claim.claim_id not in retained_ids]
+        projected = [claim for claim in projected if claim.claim_id in retained_ids]
         forbidden.extend(
             ForbiddenClaim(
                 claim_id=claim.claim_id,
@@ -488,7 +499,7 @@ def _direct_evidence_semantically_related(
     evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
 ) -> bool:
     if evidence_snapshot_v2 is not None:
-        span_by_id = {span.evidence_id: span for span in evidence_snapshot_v2.spans if span.status == "valid"}
+        span_by_id = {span.evidence_id: span for span in evidence_snapshot_v2.spans if is_direct_code_span(span)}
         evidence_text = " ".join(span_by_id[item].exact_excerpt for item in direct_ids if item in span_by_id)
         claim_tokens = _semantic_tokens(claim_text)
         evidence_tokens = _semantic_tokens(evidence_text)
@@ -497,7 +508,9 @@ def _direct_evidence_semantically_related(
             len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45
             or len(overlap) >= 2
         )
-        return lexical_match or concepts_semantically_related(claim_text, evidence_text)
+        return _specific_mechanism_anchors_supported(claim_text, evidence_text) and (
+            lexical_match or concepts_semantically_related(claim_text, evidence_text)
+        )
     if raw_evidence is None:
         return True
     evidence_by_id = {item.evidence_id: item for item in raw_evidence.evidence_items}
@@ -505,6 +518,7 @@ def _direct_evidence_semantically_related(
         " ".join((str(item.config_key or ""), str(item.content_summary or "")))
         for evidence_id in direct_ids
         if (item := evidence_by_id.get(evidence_id)) is not None
+        and is_direct_code_path(item.path)
     )
     claim_tokens = _semantic_tokens(claim_text)
     evidence_tokens = _semantic_tokens(evidence_text)
@@ -513,7 +527,61 @@ def _direct_evidence_semantically_related(
         len(overlap) / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.45
         or len(overlap) >= 2
     )
-    return lexical_match or concepts_semantically_related(claim_text, evidence_text)
+    return _specific_mechanism_anchors_supported(claim_text, evidence_text) and (
+        lexical_match or concepts_semantically_related(claim_text, evidence_text)
+    )
+
+
+_SPECIFIC_MECHANISM_ANCHORS: tuple[tuple[re.Pattern[str], re.Pattern[str]], ...] = (
+    (
+        re.compile(r"\b(?:learn|train|optimi[sz])(?:s|ed|ing)?\b", re.IGNORECASE),
+        re.compile(r"\b(?:optimizer|optim\.|backward|zero_grad|training_step|fit\s*\(|\.train\s*\()", re.IGNORECASE),
+    ),
+    (
+        re.compile(r"\b(?:mlp|multi[- ]layer perceptron)\b", re.IGNORECASE),
+        re.compile(r"\b(?:mlp|prune_?predictor|nn\.linear|linear\s*\()", re.IGNORECASE),
+    ),
+    (
+        re.compile(r"\b(?:importance|saliency)\s+(?:score|scores|prediction|predictor)\b", re.IGNORECASE),
+        re.compile(r"\b(?:importance|saliency|score|scores|predictor|prediction)\b", re.IGNORECASE),
+    ),
+    (
+        re.compile(r"\bsoft[- ]?reweight(?:ing|ed)?\b", re.IGNORECASE),
+        re.compile(r"\bsoft[-_ ]?reweight|softmax|sigmoid\b", re.IGNORECASE),
+    ),
+    (
+        re.compile(r"\b(?:rendering|render[- ]free|without rendering)\b", re.IGNORECASE),
+        re.compile(r"\b(?:render|renderer|rendering|rasteri[sz])", re.IGNORECASE),
+    ),
+    (
+        re.compile(r"\b(?:without|no)\s+retrain(?:ing)?\b", re.IGNORECASE),
+        re.compile(r"\b(?:train|training|retrain|optimizer|backward)\b", re.IGNORECASE),
+    ),
+    (
+        re.compile(
+            r"(?:\bglobal(?:ly)?\b.*\blocal(?:ly)?\b|\blocal(?:ly)?\b.*\bglobal(?:ly)?\b)",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"(?=.*\bglobal(?:ly)?\b)(?=.*\blocal(?:ly)?\b)",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
+)
+
+
+def _specific_mechanism_anchors_supported(claim_text: str, evidence_text: str) -> bool:
+    """Require code anchors for high-specificity mechanisms named by a claim.
+
+    Generic overlap such as ``prune``/``feature`` must not authorize an MLP,
+    rendering, or deployment statement.  Each activated claim-side mechanism has
+    to appear in the exact direct-evidence excerpts (allowing common code spellings).
+    """
+
+    return all(
+        not claim_pattern.search(claim_text) or bool(evidence_pattern.search(evidence_text))
+        for claim_pattern, evidence_pattern in _SPECIFIC_MECHANISM_ANCHORS
+    )
 
 
 def _semantic_tokens(text: str) -> set[str]:

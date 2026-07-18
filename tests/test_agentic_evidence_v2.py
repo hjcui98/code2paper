@@ -12,6 +12,7 @@ from code2paper.agentic.atomic_claim_v2 import convert_claims_to_v2, verify_atom
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.agentic.evidence_v2 import (
     build_evidence_snapshot_v2,
+    is_direct_code_span,
     validate_evidence_snapshot_round_trip,
     write_evidence_snapshot_v2,
 )
@@ -95,6 +96,53 @@ def test_exact_excerpt_digest_round_trip_and_output_exclusion(tmp_path: Path) ->
     before = repo.project_tree_hash
     (tmp_path / "outputs" / "generated.txt").write_text("changed", encoding="utf-8")
     assert build_repo_snapshot(tmp_path).project_tree_hash == before
+
+
+def test_narrative_markdown_is_semantic_hint_never_direct_code_evidence(tmp_path: Path) -> None:
+    (tmp_path / "model.py").write_text(
+        "class Predictor:\n    def forward(self, features): return features\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "paperdraft.md").write_text(
+        "The MLP uses soft reweighting and a rendering loss.\n",
+        encoding="utf-8",
+    )
+    raw = RawEvidencePack(
+        project_id="demo", project_root=str(tmp_path),
+        evidence_items=[
+            EvidenceItem(
+                evidence_id="E1", source_type=SourceType.SOURCE, path="model.py",
+                line_start=1, line_end=2, content_summary="predictor code", confidence=0.9,
+            ),
+            EvidenceItem(
+                evidence_id="E2", source_type=SourceType.SOURCE, path="paperdraft.md",
+                line_start=1, line_end=1, content_summary="paper narrative", confidence=0.9,
+            ),
+        ],
+    )
+    claim_map = ClaimEvidenceMap(claims=[ClaimEvidenceItem(
+        claim_id="C1",
+        claim_text="The MLP uses soft reweighting and a rendering loss.",
+        support_status=SupportStatus.SUPPORTED,
+        evidence_ids=["E2"],
+    )])
+    method = MethodEvidence(
+        project_id="demo", method_name="Demo", method_goal="Describe code.",
+        implementation_scope="test",
+    )
+    snapshot = build_evidence_snapshot_v2(raw, build_repo_snapshot(tmp_path))
+    converted = convert_claims_to_v2(
+        claim_map, build_claim_verification_report(method, claim_map), snapshot
+    )
+    verified = verify_atomic_claims_v2(converted, snapshot)
+    code_span = next(item for item in snapshot.spans if item.evidence_id == "E1")
+    narrative_span = next(item for item in snapshot.spans if item.evidence_id == "E2")
+
+    assert is_direct_code_span(code_span)
+    assert narrative_span.strength == "semantic_hint"
+    assert not is_direct_code_span(narrative_span)
+    assert converted.claims[0].direct_evidence_ids == []
+    assert verified.claims[0].verdict_status == "unsupported"
 
 
 def test_excerpt_and_file_drift_invalidate_snapshot_and_downstream(tmp_path: Path) -> None:

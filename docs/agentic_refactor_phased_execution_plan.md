@@ -4,7 +4,7 @@
 
 日期：2026-07-18
 
-状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 的 25-run 机器矩阵已在 `9a98c17` 冻结完成，后续真实项目修复的 Gemma 复测受服务不可用阻塞，named human review、cutover 与 rollout 尚未完成
+状态：M0、P0、P1、P2、P3 已完成并通过阶段门禁；P4 的 25-run 机器矩阵已在 `9a98c17` 冻结完成，25 份具名人工评审已取消为 cutover 外部门槛；宿主机 Gemma 服务已验证可用，当前剩余门槛为所有可信度阈值、shadow/canary 与默认路线数据支持
 
 执行负责人：Codex
 
@@ -2432,6 +2432,40 @@ soft reweighting、threshold pruning 或 rendering-free inference。6/6 factual 
 `text_claim_direct_evidence_missing_budget_exhausted`，completion blocked、final invariant false、无 final package。
 这是正确的科研可信 block，而不是端点故障；blocked candidate 仅用于评估，不能交付。五个新增 case 的
 reference isolation 全部通过，4 个可交付 trusted success、1 个可信 block。
+
+### 12.25 真实项目召回修复与“源码才是硬证据”不变量（2026-07-18）
+
+对 EBCAR、DyG-Mamba 和 RAP 的 intent → retrieval → evidence → projection 链路逐项复核后，确认有两类问题：
+
+1. 已通过 atomic/direct-code gate 的显式 `claim_contract:*` 会因无法再次匹配宽泛 story heading 被投影层丢弃；
+2. RAP 仓库内的 `paperdraft.md` 被旧 ingestion 标成 `source/hard`，使论文叙述能够错误授权训练、三项损失、
+   soft pruning 等方法声明。这一行为违反“所有方法文本和方法图必须回溯到代码证据”的总目标。
+
+修复后，显式、非 scaffold 的 claim contract 在通过代码证据和 atomic gate 后不再因宽泛标题二次过滤而丢失；
+通用 analyzer submechanism 仍保持 stage-scoped。与此同时新增路径级硬不变量：只有源码、脚本、构建文件和配置
+文件可成为 direct code evidence；Markdown、README、论文草稿、TeX、PDF、RST 和纯文本说明只能作为
+`semantic_hint`，不能授权 AtomicClaimV2、writer projection、最终文本、方法图节点/边或 relation evidence。
+MLP、训练/优化、importance prediction、soft reweighting、rendering/no-rendering 等高特异机制还必须在精确源码
+excerpt 中出现对应 operator anchor，不能只靠 `feature`/`prune` 等宽泛词汇通过。
+
+最终规则在三个真实项目上重新执行，原文仍严格在生成物固定后才读取：
+
+| case | 结果 | projection/final 改善 | direct evidence 路径审计 | 盲对照正文概念 | trust |
+|---|---|---|---|---:|---|
+| EBCAR | trusted success | document ID embedding + sinusoidal position claim 被恢复；10 个 projected claims | 仅 `.py` 与 `conf/config.yaml`，无非 hard span | 4/6（原文 6/6） | final unsupported 0，reference isolation pass |
+| DyG-Mamba | trusted success | timespan-informed Δt / stable decay claim 被恢复；6 个 projected claims | 仅 `models/*.py`、评估/配置 Python 文件 | 3/6（原文 4/6） | final unsupported 0，reference isolation pass |
+| RAP | trusted success（保守） | 删除由 `paperdraft.md` 错误授权的训练/损失/soft pruning；只交付源码可证的 absolute-attribute/local-contrast descriptor | `paperdraft.md` 全部为 `semantic_hint`；最终 claim 只绑定特征计算 `.py` | frozen alias 指标 0/7（原文 6/7） | final unsupported 0，reference isolation pass |
+
+RAP 的 0/7 是保守召回/措辞指标，不是可信度失败：正文使用 “absolute attribute magnitudes and local contrasts”，
+未命中冻结的 “attribute descriptor / global normalization” aliases；为避免事后调 benchmark，本轮不修改 aliases。
+更重要的是，缺失训练源码时系统不再用论文草稿补证据，也没有把 unsupported claim 交付。后续提高 RAP 完整度必须
+检索到真实训练实现或由作者补充代码/runtime trace，不能降低 direct-code gate。
+
+最终运行目录分别为 `/tmp/code2paper-real-expanded-final-20260718/ebcar-det`、
+`/tmp/code2paper-real-expanded-final-20260718/dyg_mamba-det` 和
+`/tmp/code2paper-real-expanded-codeonly2-20260718/rap`。三者均 `completion=complete`、final invariant/pass、
+post-render audit/pass、traceability/pass、final text unsupported claim rate 0，且全部 direct evidence 路径审计
+无非 hard span。新增回归后全量测试为 `497 passed, 2 skipped, 6 subtests passed`。
 
 ## 13. 代码落点总表
 

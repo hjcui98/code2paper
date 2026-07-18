@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_span
 from code2paper.core.schemas import MethodEvidence
 
 
@@ -49,7 +49,7 @@ def build_evidence_relations_v2(
 ) -> EvidenceRelationSetV2:
     """Build only relations with evidence that directly states the relation."""
 
-    spans = {span.evidence_id: span for span in evidence_snapshot.spans if span.status == "valid"}
+    spans = {span.evidence_id: span for span in evidence_snapshot.spans if is_direct_code_span(span)}
     stage_evidence = {
         stage.stage_id: {
             evidence_id

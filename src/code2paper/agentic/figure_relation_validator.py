@@ -6,7 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.evidence_relations_v2 import EvidenceRelationSetV2
-from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_span
 from code2paper.agentic.figure_scene import FigureSceneGraph
 
 
@@ -27,7 +27,7 @@ def validate_figure_relations(
     relations: EvidenceRelationSetV2,
     evidence: EvidenceSnapshotV2,
 ) -> FigureRelationValidation:
-    known_evidence = {span.evidence_id for span in evidence.spans if span.status == "valid"}
+    known_evidence = {span.evidence_id for span in evidence.spans if is_direct_code_span(span)}
     supported = {item.relation_id: item for item in relations.relations if item.support_status == "supported"}
     node_ids = {node.element_id for node in scene.nodes}
     failures: list[str] = []

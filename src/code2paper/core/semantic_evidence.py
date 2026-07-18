@@ -5,6 +5,7 @@ import re
 
 _CONCEPT_ALIASES: dict[str, set[str]] = {
     "aggregate": {"aggregate", "aggregated", "aggregating", "aggregation", "average", "averaging", "sum"},
+    "attribute": {"anisotropy", "attribute", "attributes", "opacity", "opacities", "position", "positions", "rgb", "scale", "scales"},
     "bounded": {"few", "fewshot", "small"},
     "data": {"data", "dataset", "demonstration", "demonstrations", "sample", "samples"},
     "domain": {"domain", "domains", "mixed", "multi"},
@@ -13,11 +14,12 @@ _CONCEPT_ALIASES: dict[str, set[str]] = {
     "gating": {"gate", "gating", "router", "routing"},
     "grouping": {"group", "grouped", "groups", "parallel"},
     "hierarchy": {"base", "bank", "compose", "composed", "composition", "hierarchical", "hierarchy", "nested"},
+    "locality": {"contrast", "contrasts", "global", "globally", "knn", "local", "locally", "neighbor", "neighbors"},
     "moe": {"moe", "mixture", "rmoe", "smoe", "fullmoe"},
     "norm": {"l2", "magnitude", "norm", "normalization", "normalize", "normalized", "norms"},
     "output": {"out", "output", "outputs"},
     "product": {"multiply", "multiplied", "product"},
-    "representation": {"hidden", "representation", "state", "states", "x_before", "x_before_moe", "x_after", "x_after_moe"},
+    "representation": {"descriptor", "descriptors", "embedding", "embeddings", "encoding", "encodings", "feature", "features", "hidden", "representation", "state", "states", "x_before", "x_before_moe", "x_after", "x_after_moe"},
     "score": {"importance", "score", "scores", "weight", "weights"},
     "select": {"keep", "mask", "prune", "pruned", "pruning", "retain", "retained", "scatter", "select", "selection", "top", "topk"},
     "similarity": {"cos", "cosine", "similarity", "simibr"},

@@ -57,3 +57,10 @@ def test_semantic_evidence_matches_moe_in_moe_to_base_expert_composition() -> No
         "MoE-in-MoE hierarchy with expert routing.",
         "Build routed expert kernels as compositions of a shared base-expert bank.",
     )
+
+
+def test_semantic_evidence_matches_attribute_descriptor_to_local_global_feature_code() -> None:
+    assert concepts_semantically_related(
+        "Build a per-primitive descriptor from attribute magnitudes and local contrasts.",
+        "features = torch.cat([opacity, scales, rgb, knn_neighbors, global_features])",
+    )

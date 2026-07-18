@@ -13,7 +13,7 @@ from code2paper.agentic.trust_contracts import (
     TextClaimEvidenceVerdict,
     TextEvidenceValidationReport,
 )
-from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2
+from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import RawEvidencePack, SourceType
 
@@ -36,7 +36,7 @@ def validate_text_evidence(
     v2_by_id = {
         span.evidence_id: span
         for span in (evidence_snapshot_v2.spans if evidence_snapshot_v2 else [])
-        if span.status == "valid"
+        if is_direct_code_span(span)
     }
     projection_by_id = {claim.claim_id: claim for claim in projection.projected_claims}
     verdicts: list[TextClaimEvidenceVerdict] = []
@@ -59,7 +59,7 @@ def validate_text_evidence(
             evidence_text = "\n".join(
                 _evidence_text(evidence_by_id[item], project_root=raw_evidence.project_root)
                 for item in direct_ids
-                if item in evidence_by_id
+                if item in evidence_by_id and is_direct_code_path(evidence_by_id[item].path)
             )
         if matches and not _relevant_to_evidence(claim.text, evidence_text, matches):
             failures.append("direct_evidence_semantically_unrelated")
