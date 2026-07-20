@@ -57,6 +57,7 @@ def build_final_text_trace(
                 claim_digest=claim.claim_digest,
                 verdict_status=verdict.status,
                 direct_evidence_ids=verdict.direct_evidence_ids,
+                relation_evidence_ids=verdict.relation_evidence_ids,
                 projection_claim_ids=verdict.matched_projection_claim_ids,
                 validator_report_ref=validator_report_ref,
                 projection_ref=projection_ref,

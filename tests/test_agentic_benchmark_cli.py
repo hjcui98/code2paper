@@ -45,6 +45,11 @@ class AgenticBenchmarkCliTests(unittest.TestCase):
         self.assertEqual(report_payload["case_count"], 4)
         self.assertEqual(cutover_payload["status"], "hold")
         self.assertEqual(cutover_payload["default_mode"], "legacy")
+        self.assertEqual(cutover_payload["validated_benchmark_evidence"]["source"], "none")
+        self.assertIn(
+            "digest_pinned_benchmark_observations_not_validated",
+            cutover_payload["failures"],
+        )
 
     def test_cli_writes_benchmark_report_from_variant_specs(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

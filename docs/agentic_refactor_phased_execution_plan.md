@@ -1,5 +1,7 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
+> 2026-07-18 reassessment：本文保留为已执行工作的历史日志，不再追加新的 12.x 修补项。后续唯一执行计划为 `docs/agentic_research_writing_agent_v2_execution_plan.md`；P2 图语义/拓扑与 P4 gold/extractor/cutover 已重新打开。
+
 版本：2.6
 
 日期：2026-07-18

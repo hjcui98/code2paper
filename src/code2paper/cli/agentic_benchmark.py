@@ -52,7 +52,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--observations",
         default="",
-        help="Digest-pinned P4 BenchmarkObservationV2 JSON list used for protocol-bound automated cutover evidence.",
+        help=(
+            "Untrusted P4 BenchmarkObservationV2 JSON list for report/debug input only. "
+            "Raw observations never authorize cutover; use artifact-extracted evidence."
+        ),
     )
     parser.add_argument(
         "--review", action="append", default=[],
@@ -136,19 +139,25 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             observations = load_benchmark_observations_v2(args.observations)
-        evidence_paths = [*args.review]
+        # A digest proves immutability, not truth. Raw BenchmarkObservationV2 JSON
+        # contains semantic/gold mappings and trust booleans that are otherwise fully
+        # self-reported, so hashing that file must never convert it into cutover
+        # evidence. Review extraction re-reads the bound run/gold/mutation artifacts
+        # and is therefore the only validated source currently accepted here.
+        evidence_paths: list[str] = []
         if args.review_workspace:
             evidence_paths = review_paths
-        elif args.observations:
-            evidence_paths = [args.observations]
-        benchmark_evidence = ValidatedBenchmarkEvidenceV2(
-            source="digest_pinned_observation_artifacts",
-            artifact_digests=[
-                "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
-                for path in evidence_paths
-            ],
-            observation_count=len(observations),
-        )
+        elif args.review:
+            evidence_paths = [*args.review]
+        if evidence_paths:
+            benchmark_evidence = ValidatedBenchmarkEvidenceV2(
+                source="digest_pinned_observation_artifacts",
+                artifact_digests=[
+                    "sha256:" + hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                    for path in evidence_paths
+                ],
+                observation_count=len(observations),
+            )
         if (args.review or args.review_workspace) and args.observations_out:
             atomic_write_json(args.observations_out, [item.model_dump(mode="json") for item in observations])
         protocol_validated = False

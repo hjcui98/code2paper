@@ -151,11 +151,40 @@ def _strip_markup(text: str, kind: str) -> str:
 
 def _sentence_spans(text: str) -> list[tuple[str, int, int]]:
     spans: list[tuple[str, int, int]] = []
-    for match in re.finditer(r"[^.!?]+(?:[.!?]+|$)", text):
-        sentence = match.group(0).strip()
+    start = 0
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char not in ".!?":
+            index += 1
+            continue
+        # Dots inside code identifiers (torch.no_grad), module paths, and
+        # decimals are not sentence boundaries. Splitting there can detach a
+        # required scope/condition qualifier from the factual clause.
+        if (
+            char == "."
+            and index > 0
+            and index + 1 < len(text)
+            and (text[index - 1].isalnum() or text[index - 1] == "_")
+            and (text[index + 1].isalnum() or text[index + 1] == "_")
+        ):
+            index += 1
+            continue
+        end = index + 1
+        while end < len(text) and text[end] in ".!?":
+            end += 1
+        raw = text[start:end]
+        sentence = raw.strip()
         if sentence:
-            start = match.start() + len(match.group(0)) - len(match.group(0).lstrip())
-            spans.append((sentence, start, start + len(sentence)))
+            local_start = start + len(raw) - len(raw.lstrip())
+            spans.append((sentence, local_start, local_start + len(sentence)))
+        start = end
+        index = end
+    raw = text[start:]
+    sentence = raw.strip()
+    if sentence:
+        local_start = start + len(raw) - len(raw.lstrip())
+        spans.append((sentence, local_start, local_start + len(sentence)))
     return spans or [(text, 0, len(text))]
 
 

@@ -16,6 +16,11 @@ from code2paper.agentic.evidence_v2 import (
     load_evidence_snapshot_v2,
     write_evidence_snapshot_v2,
 )
+from code2paper.agentic.evidence_compiler_v3 import (
+    compile_evidence_v3,
+    validate_evidence_compiler_v3,
+    write_compiler_v3_artifacts,
+)
 from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.core.output_names import artifact_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, CodeMethodAnalysis, MethodEvidence, RawEvidencePack
@@ -91,6 +96,23 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
     artifacts["evidence_snapshot_v2"] = str(evidence_v2_path)
     artifacts["atomic_claims_v2"] = str(atomic_claims_v2_path)
     artifacts["atomic_claims_v2_unverified"] = str(atomic_claims_v2_unverified_path)
+    compiler_v3 = compile_evidence_v3(repo_snapshot)
+    if compiler_v3 is not None:
+        compiler_failures = validate_evidence_compiler_v3(compiler_v3, repo_snapshot)
+        if compiler_failures:
+            return StageToolResult(
+                stage="evidence",
+                status=StageStatus.BLOCKED,
+                blocked_reason="evidence_compiler_v3_validation_failed",
+                summary="; ".join(compiler_failures),
+            )
+        artifacts.update(
+            write_compiler_v3_artifacts(
+                artifact_dir(state.method_root, "04_evidence"),
+                compiler_v3,
+                suffix=version_suffix,
+            )
+        )
     if parent_path:
         artifacts["previous_evidence_snapshot_v2"] = str(parent_path)
     decision = "claims_verified" if verification.hard_gate_passed else "claims_need_caveats_or_more_evidence"
@@ -104,7 +126,11 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                 node="claim_verifier",
                 decision=decision,
                 rationale="; ".join(verification.recommended_actions),
-                artifact_keys=["claim_verification", "evidence_snapshot_v2", "atomic_claims_v2", "claims", "evidence"],
+                artifact_keys=[
+                    "claim_verification", "evidence_snapshot_v2", "atomic_claims_v2",
+                    *(list(("evidence_packets_v3", "code_facts_v1", "atomic_claims_v3")) if compiler_v3 else []),
+                    "claims", "evidence",
+                ],
             )
         ],
         metrics={
@@ -112,6 +138,8 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
             "supported_claims": verification.supported_claims,
             "partial_claims": verification.partial_claims,
             "unsupported_claims": verification.unsupported_claims,
+            "compiled_v3_facts": len(compiler_v3.facts.facts) if compiler_v3 else 0,
+            "compiled_v3_claims": len(compiler_v3.claims.claims) if compiler_v3 else 0,
         },
     )
 

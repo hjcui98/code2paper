@@ -19,6 +19,7 @@ from code2paper.agentic.decision_policy import hard_rule_texts
 from code2paper.agentic.decision_tool_guidance import stage_tool_guidance_for_decision
 from code2paper.agentic.evidence_sufficiency_attention import evidence_sufficiency_attention
 from code2paper.core.schemas import MethodEvidence, SupportStatus
+from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, EvidencePacketSetV3
 
 
 class EvidenceSufficiencyReport(BaseModel):
@@ -113,6 +114,42 @@ def build_evidence_sufficiency_report(
             missing_evidence=claim_verification.claims_with_missing_evidence,
             mechanisms_without_evidence=mechanism_counts["without_evidence"],
         ),
+    )
+
+
+def build_v3_evidence_sufficiency_report(
+    claims: AtomicClaimSetV3,
+    packets: EvidencePacketSetV3,
+) -> EvidenceSufficiencyReport:
+    """Describe validated compiler output without reopening legacy wide claims."""
+
+    safe = [item.claim_id for item in claims.claims if item.status == "supported"]
+    caveated = [item.claim_id for item in claims.claims if item.status == "partial"]
+    frozen_ids = _dedupe([
+        span.span_id
+        for packet in packets.packets
+        for span in packet.spans
+    ])
+    return EvidenceSufficiencyReport(
+        mode="evidence-sufficiency-report-v3",
+        checked_claims=len(claims.claims),
+        supported_claims=len(safe),
+        partial_claims=len(caveated),
+        unsupported_claims=0,
+        claims_with_missing_evidence=0,
+        support_rate=1.0 if claims.claims else 0.0,
+        safe_claim_ids=safe,
+        caveated_claim_ids=caveated,
+        unsupported_claim_ids=[],
+        missing_evidence_claim_ids=[],
+        frozen_evidence_ids=frozen_ids,
+        evidence_backed_mechanisms=len(claims.claims),
+        mechanisms_without_evidence=0,
+        hard_gate_passed=bool(safe or caveated) and bool(frozen_ids),
+        recommended_actions=[
+            "proceed_from_validated_v3_facts_to_evidence_constrained_authoring",
+            "preserve_explicit_code_gaps_outside_positive_prose",
+        ],
     )
 
 

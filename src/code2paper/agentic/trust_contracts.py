@@ -14,6 +14,7 @@ class ProjectedClaim(TrustModel):
     claim_text: str
     support_status: Literal["supported", "partial"]
     direct_evidence_ids: list[str] = Field(default_factory=list)
+    relation_evidence_ids: list[str] = Field(default_factory=list)
     supported_fragment: str
     required_qualifiers: list[str] = Field(default_factory=list)
     allowed_wording_boundary: str
@@ -102,6 +103,7 @@ class TextClaimEvidenceVerdict(TrustModel):
     status: Literal["supported", "caveated", "unsupported", "unverified"]
     matched_projection_claim_ids: list[str] = Field(default_factory=list)
     direct_evidence_ids: list[str] = Field(default_factory=list)
+    relation_evidence_ids: list[str] = Field(default_factory=list)
     supported_fragment: str = ""
     unsupported_fragment: str = ""
     required_qualifiers: list[str] = Field(default_factory=list)
@@ -137,6 +139,7 @@ class TextTraceEntry(TrustModel):
     claim_digest: str
     verdict_status: Literal["supported", "caveated"]
     direct_evidence_ids: list[str] = Field(default_factory=list)
+    relation_evidence_ids: list[str] = Field(default_factory=list)
     projection_claim_ids: list[str] = Field(default_factory=list)
     validator_report_ref: str
     projection_ref: str

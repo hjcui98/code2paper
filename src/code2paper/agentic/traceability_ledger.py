@@ -117,6 +117,24 @@ def _claim_entries(state: AgenticRunState) -> list[TraceabilityLedgerEntry]:
                 notes=as_string_list(verified.get("caveats")),
             )
         )
+    for claim in as_list(artifact_json(state, "atomic_claims_v3").get("claims")):
+        if not isinstance(claim, dict) or claim.get("status") not in {"supported", "partial"}:
+            continue
+        claim_id = str(claim.get("claim_id") or "").strip()
+        if not claim_id:
+            continue
+        entries.append(TraceabilityLedgerEntry(
+            entry_id=f"claim-v3:{claim_id}",
+            kind="claim",
+            source_artifact="atomic_claims_v3",
+            claim_ids=[claim_id],
+            evidence_ids=dedupe([
+                *as_string_list(claim.get("direct_evidence_ids")),
+                *as_string_list(claim.get("relation_evidence_ids")),
+            ]),
+            support_status=str(claim.get("status") or ""),
+            notes=as_string_list(claim.get("required_qualifiers")),
+        ))
     return entries
 
 
@@ -134,7 +152,10 @@ def _text_entries(state: AgenticRunState) -> list[TraceabilityLedgerEntry]:
                     kind="text_atomic_claim",
                     source_artifact="final_text_trace",
                     claim_ids=as_string_list(trace.get("projection_claim_ids")),
-                    evidence_ids=as_string_list(trace.get("direct_evidence_ids")),
+                    evidence_ids=dedupe([
+                        *as_string_list(trace.get("direct_evidence_ids")),
+                        *as_string_list(trace.get("relation_evidence_ids")),
+                    ]),
                     support_status=str(trace.get("verdict_status") or ""),
                 )
             )

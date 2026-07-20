@@ -135,6 +135,32 @@ def focus_to_retrieval_overlay(focus: EvidenceRepairFocus) -> dict[str, object]:
     }
 
 
+def rank_evidence_repair_candidates(
+    *,
+    query: str,
+    symbol_index: SymbolIndexReport | None,
+    limit: int = 16,
+) -> list[EvidenceRepairCandidate]:
+    """Rank existing symbol-index entries for an obligation repair query."""
+
+    candidates = list((symbol_index.candidates if symbol_index else []) or [])
+    ranked = _rank_candidates_for_claim(query=query, candidates=candidates)
+    query_tokens = _tokens(query)
+    # The generic symbol index score contains accumulated legacy retrieval-target
+    # matches and can dominate the active obligation. Re-rank primarily by tokens
+    # from the current question so RAP's prune_pure_feature is not hidden below a
+    # broad GaussianModel class merely because the latter matched many old targets.
+    ranked.sort(
+        key=lambda candidate: (
+            -sum(token in " ".join([candidate.path, candidate.symbol, " ".join(candidate.reasons)]).lower() for token in query_tokens),
+            -candidate.score,
+            candidate.path,
+            candidate.start_line,
+        )
+    )
+    return ranked[: max(0, limit)]
+
+
 def write_evidence_repair_focus(path: str | Path, focus: EvidenceRepairFocus) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)

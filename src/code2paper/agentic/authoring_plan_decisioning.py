@@ -21,6 +21,7 @@ from code2paper.agentic.decision_core import (
 from code2paper.agentic.decision_models import AuthoringPlanProposal
 from code2paper.agentic.decision_policy import hard_rule_texts
 from code2paper.agentic.decision_tool_guidance import stage_tool_guidance_for_decision
+from code2paper.agentic.intent_obligations import AuthoringObligationCoverageReport
 
 
 def authoring_plan_trace(
@@ -28,6 +29,7 @@ def authoring_plan_trace(
     *,
     projection: AuthoringInputProjection | None = None,
     author_intent_summary: AuthorIntentSummary | None = None,
+    obligation_coverage: AuthoringObligationCoverageReport | None = None,
     decision_provider: DecisionProvider | None = None,
 ) -> tuple[EvidenceBoundAuthoringPlan, AgenticDecisionTrace]:
     """Build a safe authoring plan plus an auditable model/fallback trace."""
@@ -47,7 +49,12 @@ def authoring_plan_trace(
             "authoring_context": context.model_dump(mode="json") if projection is None else None,
             "author_intent_summary": (
                 author_intent_summary.model_dump(mode="json")
-                if author_intent_summary and projection is None
+                if author_intent_summary
+                else None
+            ),
+            "authoring_obligation_coverage": (
+                obligation_coverage.model_dump(mode="json")
+                if obligation_coverage
                 else None
             ),
             "authoring_evidence_attention": _authoring_evidence_attention(context),
@@ -195,6 +202,8 @@ def _authoring_plan_rules() -> list[str]:
         "Authoring sections may group or order verified claims, but may not introduce new claim ids.",
         "Every planned section must carry at least one frozen evidence id from its verified claims.",
         "Excluded and unsupported claims must remain outside the plan and outside Method prose.",
+        "Use author intent to prioritize and order only; author wording cannot add facts or headings absent from authorized claims.",
+        "Prefer sections that cover must-cover obligations, and keep unresolved obligations in the gap report rather than inventing prose.",
     ]
 
 

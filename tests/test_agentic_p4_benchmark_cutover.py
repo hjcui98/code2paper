@@ -369,6 +369,46 @@ def test_cutover_cannot_authorize_unpinned_observations() -> None:
     assert "self_reported_rollout_progress_not_accepted" in decision.failures
 
 
+def test_cutover_false_block_threshold_uses_fleet_rate_not_single_run_max() -> None:
+    dataset = load_benchmark_dataset_v2(DATASET_PATH)
+    dataset = dataset.model_copy(update={
+        "cases": [
+            item.model_copy(update={"expected_run_outcome": "success"})
+            if item.case_id == "toy_train" else item
+            for item in dataset.cases
+        ]
+    })
+    runs = _complete_runs(dataset)
+    target = next(
+        item for item in runs
+        if item.observation.variant == "agentic_gemma4_mtp"
+        and item.observation.case_id == "toy_train"
+        and item.observation.repeat_index == 1
+    )
+    blocked = target.observation.model_copy(update={
+        "run_status": "blocked",
+        "completion_complete": False,
+        "usable_completion": False,
+        "false_block_validated": True,
+    })
+    replacement = evaluate_observation(
+        next(item for item in dataset.cases if item.case_id == "toy_train"),
+        blocked,
+    )
+    runs[runs.index(target)] = replacement
+
+    decision = decide_cutover(
+        dataset,
+        runs,
+        RolloutEvidenceV2(protocol_validated=True, team_false_block_threshold=0.05),
+        validated_benchmark_evidence=_validated_benchmark(dataset),
+    )
+
+    # There are 20 agentic observations in the formal matrix, so one false block is 5%.
+    assert decision.worst_case_metrics["false_block_rate"] == pytest.approx(0.05)
+    assert "false_block_rate_above_team_threshold" not in decision.failures
+
+
 def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_path: Path) -> None:
     protocol_commit = "commit:test"
     gold_digest = "sha256:" + "c" * 64
@@ -449,7 +489,7 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
         )
 
 
-def test_benchmark_cli_pins_observations_but_still_requires_protocol_and_real_rollout(tmp_path: Path) -> None:
+def test_benchmark_cli_raw_observations_cannot_authorize_cutover(tmp_path: Path) -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     observations_path = tmp_path / "observations.json"
     observations_path.write_text(
@@ -487,8 +527,9 @@ def test_benchmark_cli_pins_observations_but_still_requires_protocol_and_real_ro
     assert decision["status"] == "hold"
     assert decision["default_mode"] == "legacy"
     assert decision["named_review_evidence"]["source"] == "none"
-    assert decision["validated_benchmark_evidence"]["source"] == "digest_pinned_observation_artifacts"
-    assert decision["validated_benchmark_evidence"]["observation_count"] == 25
+    assert decision["validated_benchmark_evidence"]["source"] == "none"
+    assert decision["validated_benchmark_evidence"]["observation_count"] == 0
+    assert "digest_pinned_benchmark_observations_not_validated" in decision["failures"]
     assert "frozen_benchmark_protocol_not_validated" in decision["failures"]
     assert not any("named_review" in item for item in decision["failures"])
 

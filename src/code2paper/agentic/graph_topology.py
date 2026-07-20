@@ -94,16 +94,17 @@ CONDITIONAL_ROUTE_SPECS: Final[tuple[ConditionalRouteSpec, ...]] = (
     ConditionalRouteSpec(
         source="authoring_planner",
         router="_route_after_authoring_planner",
-        routes=(("authoring", "authoring"), ("blocked", "blocked")),
+        routes=(("authoring", "authoring"), ("intake", "intake"), ("analysis", "analysis"), ("blocked", "blocked")),
         safety_note=(
             "Authoring starts only after the section plan hard gate passes; model-proposed sections are "
-            "filtered to verified claim ids and frozen evidence ids."
+            "filtered to verified claim ids and frozen evidence ids. Unresolved must-cover author obligations "
+            "can trigger a bounded, targeted evidence-repair pass before prose is written."
         ),
     ),
     ConditionalRouteSpec(
         source="text_trace_builder",
         router="_route_after_text_trace_builder",
-        routes=(("validation", "validation"), ("authoring", "authoring"), ("analysis", "analysis"), ("blocked", "blocked")),
+        routes=(("validation", "validation"), ("authoring", "authoring"), ("analysis", "analysis"), ("evidence", "evidence"), ("blocked", "blocked")),
         safety_note="Final text reaches quality validation only after post-hoc atomic claim extraction, direct-evidence validation, and trace construction; repairs consume bounded revision budgets.",
     ),
     ConditionalRouteSpec(

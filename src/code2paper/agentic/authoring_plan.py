@@ -49,7 +49,11 @@ def build_authoring_plan(
     if projection is not None:
         context = context_from_projection(projection)
     safe_claims = [*context.allowed_claims, *context.caveated_claims]
-    sections = [_section_for_claim(index, claim) for index, claim in enumerate(safe_claims, start=1)]
+    sections = (
+        _sections_from_stage_packets(projection, safe_claims)
+        if projection is not None and projection.stage_packets
+        else [_section_for_claim(index, claim) for index, claim in enumerate(safe_claims, start=1)]
+    )
     excluded_claim_ids = [claim.claim_id for claim in context.excluded_claims]
     excluded_evidence_ids = _dedupe([evidence_id for claim in context.excluded_claims for evidence_id in claim.evidence_ids])
     missing_evidence_sections = [section.section_id for section in sections if not section.evidence_ids]
@@ -165,6 +169,38 @@ def _section_for_claim(index: int, claim: EvidenceBoundAuthoringClaim) -> Eviden
         qualifier_template=claim.caveats if caveat_required else [],
         writing_instructions=instructions,
     )
+
+
+def _sections_from_stage_packets(
+    projection: AuthoringInputProjection,
+    safe_claims: list[EvidenceBoundAuthoringClaim],
+) -> list[EvidenceBoundAuthoringSection]:
+    by_id = {item.claim_id: item for item in safe_claims}
+    sections: list[EvidenceBoundAuthoringSection] = []
+    used: set[str] = set()
+    for packet in projection.stage_packets:
+        claims = [by_id[str(item)] for item in packet.get("claim_ids", []) if str(item) in by_id]
+        if not claims:
+            continue
+        used.update(item.claim_id for item in claims)
+        sections.append(EvidenceBoundAuthoringSection(
+            section_id=f"AP-S{len(sections) + 1}",
+            heading=str(packet.get("name") or _heading_from_claim(claims[0]))[:120],
+            purpose=" ".join(item.claim_text for item in claims),
+            claim_ids=[item.claim_id for item in claims],
+            evidence_ids=_dedupe([eid for item in claims for eid in item.evidence_ids]),
+            caveat_required=any(item.support_status == "partial" for item in claims),
+            qualifier_template=_dedupe([q for item in claims for q in item.caveats]),
+            writing_instructions=[
+                "Write one cohesive paragraph that preserves the listed claim order.",
+                "Use only the implementation behavior supported by the listed evidence ids.",
+                "Do not split this semantic stage into one heading per atomic claim.",
+            ],
+        ))
+    for claim in safe_claims:
+        if claim.claim_id not in used:
+            sections.append(_section_for_claim(len(sections) + 1, claim))
+    return sections
 
 
 def _heading_from_claim(claim: EvidenceBoundAuthoringClaim) -> str:

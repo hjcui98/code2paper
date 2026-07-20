@@ -78,6 +78,15 @@ def test_final_extractor_ignores_non_rendered_html_claim_metadata() -> None:
     assert extracted.atomic_claims[0].line_start == 3
 
 
+def test_final_extractor_keeps_dotted_code_identifier_with_its_qualifier() -> None:
+    text = "Under torch.no_grad, the encoder reads configured features."
+
+    extracted = extract_final_text_claims(text, _projection())
+
+    assert [unit.text for unit in extracted.units] == [text]
+    assert [claim.text for claim in extracted.atomic_claims] == [text]
+
+
 def test_valid_direct_evidence_claim_passes_and_builds_posthoc_trace() -> None:
     text = "The encoder reads configured features."
     projection = _projection()

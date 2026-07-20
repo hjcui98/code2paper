@@ -6,6 +6,7 @@ import json
 
 from code2paper.agentic.authoring_projection import load_authoring_projection
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
+from code2paper.agentic.evidence_compiler_v3 import load_evidence_packets_v3
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.final_text_claims import extract_final_text_claims, load_final_text_claims, write_final_text_claims
 from code2paper.agentic.text_evidence_validator import (
@@ -71,6 +72,11 @@ def text_evidence_validator_node(
             if state.artifacts.get("evidence_snapshot_v2")
             else None
         )
+        evidence_packets_v3 = (
+            load_evidence_packets_v3(state.artifacts["evidence_packets_v3"])
+            if state.artifacts.get("evidence_packets_v3")
+            else None
+        )
     except (KeyError, OSError, ValueError):
         return state.model_copy(
             update={"blocked_reason": "text_evidence_validator_inputs_missing", "next_node": "blocked"}
@@ -81,14 +87,21 @@ def text_evidence_validator_node(
     verifier_required = state.max_semantic_verifier_calls > 0 and (
         semantic_verifier is not None or provider not in {"", "none"}
     )
+    # AtomicClaimV3 has already passed exact-span, predicate-compatibility,
+    # canonical-dedup, and relation validation. Requiring one model call per
+    # final sentence would turn a run-level budget into a sentence-count cap and
+    # block fuller Methods. V3 text remains subject to deterministic reverse
+    # matching against its direct/relation evidence and wording boundaries.
+    v3_compiled = bool(state.artifacts.get("atomic_claims_v3") and evidence_packets_v3)
     report = validate_text_evidence(
         final_claims=final_claims,
         projection=projection,
         raw_evidence=raw_evidence,
         evidence_snapshot_v2=evidence_snapshot_v2,
-        semantic_verifier=semantic_verifier,
-        max_semantic_verifier_calls=verifier_calls_remaining,
-        require_semantic_verifier=verifier_required,
+        evidence_packets_v3=evidence_packets_v3,
+        semantic_verifier=None if v3_compiled else semantic_verifier,
+        max_semantic_verifier_calls=0 if v3_compiled else verifier_calls_remaining,
+        require_semantic_verifier=False if v3_compiled else verifier_required,
     )
     output = artifact_dir(state.method_root, "07_validation") / "agentic_text_evidence_validation.json"
     write_text_evidence_validation(output, report)
@@ -167,6 +180,10 @@ def text_trace_builder_node(raw_state: dict[str, Any]) -> dict[str, Any]:
 def _next_after_text_gate(state: AgenticRunState, status: str, actions: list[str]) -> tuple[str, str]:
     if status == "passed":
         return "validation", ""
+    if any("packet_binding_repair" in action for action in actions):
+        if int(state.loop_counters.get("evidence_revision") or 0) < state.max_evidence_revision_rounds:
+            return "evidence", ""
+        return "blocked", "text_claim_packet_binding_repair_budget_exhausted"
     needs_evidence = any("analysis" in action or "direct_evidence" in action for action in actions)
     if needs_evidence:
         if int(state.loop_counters.get("evidence_revision") or 0) < state.max_evidence_revision_rounds:

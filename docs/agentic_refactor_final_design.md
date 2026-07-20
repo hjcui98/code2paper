@@ -1,5 +1,7 @@
 # Code2Paper Agentic Refactor Final Design
 
+> 2026-07-19 reassessment：本文保留为 M0--P3 和早期 P4 的设计/实现历史。V2 evidence-first 原则继续有效，但当前目标已进一步升级为通用 `CodeBehaviorGraph`、LLM Research Supervisor、细粒度 LangChain 工具和局部补证循环。规范性设计见 `docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md`，执行见 `docs/agentic_method_quality_next_execution_plan_2026-07-19.md`。
+
 更新时间：2026-07-16
 状态：在原有两轮迭代基础上，完成第三、第四轮“阅读现状 → 规划设计 → 批判审计”后的收敛版。
 

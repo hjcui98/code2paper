@@ -159,6 +159,47 @@ def test_partial_projection_without_explicit_qualifier_is_forbidden() -> None:
     assert forbidden.reason == "partial_claim_missing_explicit_qualifier"
 
 
+def test_projection_keeps_denial_qualifier_in_gap_metadata_not_positive_writer_input() -> None:
+    evidence = _evidence()
+    evidence.stage_packets[0]["claim_ids"] = ["C1", "C2"]
+    evidence.claim_contracts = [ClaimContract(
+        claim_id="C2",
+        claim_intent="The encoder reads configured features.",
+        support_status=ConflictStatus.PARTIALLY_SUPPORTED,
+        evidence_span_ids=["E1"],
+        allowed_wording_boundary="Do not include in method prose without hard evidence.",
+        required_qualifiers=["unsupported by current code evidence"],
+    )]
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1",
+            claim_text="The encoder reads configured features.",
+            support_status=SupportStatus.SUPPORTED,
+            evidence_ids=["E1"],
+        ),
+        ClaimEvidenceItem(
+            claim_id="C2",
+            claim_text="The encoder reads configured features.",
+            support_status=SupportStatus.SUPPORTED,
+            evidence_ids=["E1"],
+            source="claim_contract:C2",
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [claim.claim_id for claim in projection.projected_claims] == ["C1"]
+    forbidden = next(item for item in projection.forbidden_claims if item.claim_id == "C2")
+    assert forbidden.reason == "qualifier_disallows_positive_authoring"
+    assert "unsupported by current code evidence" not in json.dumps(
+        projection_writer_payload(projection), ensure_ascii=False
+    ).lower()
+
+
 def test_revision_writer_view_excludes_rejected_projection_claims() -> None:
     evidence = _evidence()
     claims = _claims()
@@ -250,6 +291,164 @@ def test_projection_omits_stage_name_scaffold_from_positive_writer_facts() -> No
     assert "paper-facing stage named" not in json.dumps(
         projection_writer_payload(projection), ensure_ascii=False
     )
+
+
+def test_projection_rewrites_author_heading_when_claim_does_not_support_its_semantics() -> None:
+    evidence = MethodEvidence(
+        project_id="heading-boundary",
+        method_name="Heading Boundary",
+        method_goal="Describe inference behavior.",
+        implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1",
+            name="Learning framework: three training losses",
+            purpose="Train an importance predictor.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1",
+                description="The predictor produces an importance score for each primitive.",
+                support_status=SupportStatus.SUPPORTED,
+                evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1",
+            "name": "Learning framework: three training losses",
+            "purpose": "Train an importance predictor.",
+            "claim_ids": ["C1"],
+            "evidence_span_ids": ["E1"],
+        }],
+    )
+    claims = ClaimEvidenceMap(claims=[ClaimEvidenceItem(
+        claim_id="C1",
+        claim_text="The predictor produces an importance score for each primitive.",
+        support_status=SupportStatus.SUPPORTED,
+        evidence_ids=["E1"],
+    )])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    heading = projection.stage_packets[0]["name"].lower()
+    assert "training" not in heading
+    assert "loss" not in heading
+    assert "predictor" in heading
+
+
+def test_projection_keeps_semantically_supported_author_heading() -> None:
+    evidence = MethodEvidence(
+        project_id="aligned-heading",
+        method_name="Aligned Heading",
+        method_goal="Describe score prediction.",
+        implementation_scope="test",
+        stages=[MethodStageEvidence(
+            stage_id="S1",
+            name="Importance score prediction",
+            purpose="Predict primitive importance scores.",
+            mechanisms=[Mechanism(
+                mechanism_id="MECH1",
+                description="Predict primitive importance scores.",
+                support_status=SupportStatus.SUPPORTED,
+                evidence_ids=["E1"],
+            )],
+        )],
+        stage_packets=[{
+            "stage_id": "S1",
+            "name": "Importance score prediction",
+            "purpose": "Predict primitive importance scores.",
+            "claim_ids": ["C1"],
+            "evidence_span_ids": ["E1"],
+        }],
+    )
+    claims = ClaimEvidenceMap(claims=[ClaimEvidenceItem(
+        claim_id="C1",
+        claim_text="The predictor computes an importance score for each primitive.",
+        support_status=SupportStatus.SUPPORTED,
+        evidence_ids=["E1"],
+    )])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert projection.stage_packets[0]["name"] == "Importance score prediction"
+
+
+def test_projection_assigns_duplicate_inference_claim_to_best_stage_not_first_story_packet() -> None:
+    evidence = MethodEvidence(
+        project_id="stage-choice",
+        method_name="Stage Choice",
+        method_goal="Describe reranking inference.",
+        implementation_scope="test",
+        stages=[
+            MethodStageEvidence(
+                stage_id="S1",
+                name="Motivation: cross-passage efficiency",
+                purpose="Motivate efficient reranking.",
+                mechanisms=[Mechanism(
+                    mechanism_id="MECH1",
+                    description="Compute query-passage similarities.",
+                    support_status=SupportStatus.SUPPORTED,
+                    evidence_ids=["E1"],
+                )],
+            ),
+            MethodStageEvidence(
+                stage_id="S2",
+                name="Inference procedure",
+                purpose="Compute query-passage similarities at inference.",
+                mechanisms=[Mechanism(
+                    mechanism_id="MECH2",
+                    description="Compute query-passage similarities at inference.",
+                    support_status=SupportStatus.SUPPORTED,
+                    evidence_ids=["E1"],
+                )],
+            ),
+        ],
+        stage_packets=[
+            {
+                "stage_id": "S1",
+                "name": "Motivation: cross-passage efficiency",
+                "purpose": "Motivate efficient reranking.",
+                "claim_ids": ["C1", "C2"],
+                "evidence_span_ids": ["E1"],
+            },
+            {
+                "stage_id": "S2",
+                "name": "Inference procedure",
+                "purpose": "Compute query-passage similarities at inference.",
+                "claim_ids": ["C1", "C2"],
+                "evidence_span_ids": ["E1"],
+            },
+        ],
+    )
+    claims = ClaimEvidenceMap(claims=[
+        ClaimEvidenceItem(
+            claim_id="C1",
+            claim_text="At inference, compute dot-product similarities between the query and candidate passages.",
+            support_status=SupportStatus.SUPPORTED,
+            evidence_ids=["E1"],
+        ),
+        ClaimEvidenceItem(
+            claim_id="C2",
+            claim_text="At inference, compute dot-product similarities between the query and candidate passages.",
+            support_status=SupportStatus.SUPPORTED,
+            evidence_ids=["E1"],
+        ),
+    ])
+
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claims,
+        verification=build_claim_verification_report(evidence, claims),
+    )
+
+    assert [packet["stage_id"] for packet in projection.stage_packets] == ["S2"]
+    assert projection.stage_packets[0]["claim_ids"] == ["C1", "C2"]
+    assert "motivation" not in projection.stage_packets[0]["name"].lower()
 
 
 def test_projection_scopes_operator_subclaim_by_stage_semantics_and_evidence() -> None:

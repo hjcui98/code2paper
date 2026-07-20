@@ -103,9 +103,10 @@ class NamedReviewEvidenceV2(CutoverModel):
 class ValidatedBenchmarkEvidenceV2(CutoverModel):
     """Invocation-derived proof for the exact protocol-bound observation matrix.
 
-    The source artifact may be produced by automated artifact extraction or by the
-    optional review workflow.  Cutover depends on its digest and exact observation
-    count, never on reviewer identity or a fixed number of human signatures.
+    The source observations must be produced by an extractor that re-reads their
+    run/gold/mutation bindings (the optional review extractor is one such source).
+    Merely hashing a caller-authored BenchmarkObservationV2 JSON file is insufficient:
+    a digest proves immutability, not the truth of self-reported trust fields.
     """
 
     source: Literal["none", "digest_pinned_observation_artifacts"] = "none"
@@ -348,10 +349,19 @@ def _worst_metrics(runs: list[EvaluatedBenchmarkRunV2]) -> dict[str, float]:
         "unsupported_leakage_rate", "paraphrased_unsupported_leakage_rate", "high_risk_false_supported_rate",
         "rendered_element_drift_rate", "false_block_rate",
     }
-    return {
+    metrics = {
         name: (max if name in lower_is_better else min)(getattr(item.metrics, name) for item in runs)
         for name in names
     }
+    # False-block usability is a fleet rate, unlike a trust-plane bypass where one
+    # failing run is already disqualifying. Taking max over per-run binary values made
+    # every non-zero team tolerance meaningless: one conservative block always became
+    # 1.0. Keep worst-case aggregation for leakage/precision/drift, but compare the
+    # configured team threshold to the actual fraction of false-blocked agentic runs.
+    metrics["false_block_rate"] = sum(
+        item.metrics.false_block_rate for item in runs
+    ) / len(runs)
+    return metrics
 
 
 def _actions(failures: list[str], status: str, case_count: int) -> list[str]:

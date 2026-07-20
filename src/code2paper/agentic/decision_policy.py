@@ -136,8 +136,8 @@ def build_agentic_decision_policy() -> AgenticDecisionPolicy:
             AgenticNodeDecisionPolicy(
                 node="authoring_planner",
                 model_may_propose=True,
-                allowed_next_nodes=["authoring", "blocked"],
-                forbidden_next_nodes=["analysis", "evidence", "rendering", "finalize"],
+                allowed_next_nodes=["intake", "analysis", "authoring", "blocked"],
+                forbidden_next_nodes=["evidence", "rendering", "finalize"],
                 required_context_artifacts=["authoring_context", "authoring_constraints", "claim_verification"],
                 required_prompt_inputs=[
                     "authoring_context",
@@ -151,8 +151,9 @@ def build_agentic_decision_policy() -> AgenticDecisionPolicy:
                 deterministic_fallback_required=True,
                 safety_merge_required=True,
                 rationale=(
-                    "Authoring plan decisions may organize verified claims into Method sections, but every section "
-                    "must be safety-merged against claim verification and frozen evidence ids before writing."
+                    "Authoring plan decisions may organize verified claims into Method sections or request bounded "
+                    "analysis repair for unresolved must-cover obligations. Every section remains safety-merged "
+                    "against claim verification and frozen evidence ids before writing."
                 ),
             ),
             AgenticNodeDecisionPolicy(

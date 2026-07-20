@@ -203,6 +203,33 @@ def _evidence_sufficiency_trace() -> dict:
 
 
 class AgenticInvariantAuditTests(unittest.TestCase):
+    def test_authoring_plan_gate_accepts_v3_claim_and_span_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            plan = _authoring_plan(claim_ids=["C-V3"], evidence_ids=["EV3-SPAN"])
+            artifacts = {
+                "evidence_packets_v3": _write_json(
+                    root / "evidence_packets_v3.json",
+                    {"packets": [{"packet_id": "EP-V3", "spans": [{"span_id": "EV3-SPAN"}]}]},
+                ),
+                "atomic_claims_v3": _write_json(
+                    root / "atomic_claims_v3.json",
+                    {"claims": [{"claim_id": "C-V3", "status": "supported"}]},
+                ),
+                "authoring_constraints": _write_json(root / "authoring_constraints.json", {"excluded_claim_ids": []}),
+                "authoring_plan": _write_json(root / "authoring_plan.json", plan),
+                "authoring_plan_decision_trace": _write_json(
+                    root / "authoring_plan_decision_trace.json", _authoring_plan_trace(plan)
+                ),
+                "text_md": _write_text(root / "method.md", "Supported Method text."),
+            }
+            state = AgenticRunState(project_root=Path("."), out_root=root, artifacts=artifacts)
+
+            audit = build_invariant_audit(state)
+
+        plan_check = next(check for check in audit.checks if check.name == "authoring_plan_gate")
+        self.assertTrue(plan_check.passed, plan_check.message)
+
     def test_audit_passes_when_unsupported_claims_are_excluded_before_authoring(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

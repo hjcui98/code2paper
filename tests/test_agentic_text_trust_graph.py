@@ -88,7 +88,7 @@ def test_text_trust_nodes_block_unrelated_direct_evidence_when_budget_is_zero(tm
     result = _run_gate(state)
 
     assert result.next_node == "blocked"
-    assert result.blocked_reason == "text_claim_direct_evidence_missing_budget_exhausted"
+    assert result.blocked_reason == "text_claim_packet_binding_repair_budget_exhausted"
     assert "final_text_trace" in result.artifacts
 
 

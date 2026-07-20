@@ -8,6 +8,7 @@ from typing import Any
 
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
 from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
+from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, EvidencePacketSetV3
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
@@ -31,7 +32,16 @@ def build_authoring_projection(
     raw_evidence: RawEvidencePack | None = None,
     evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
     atomic_claims_v2: AtomicClaimSetV2 | None = None,
+    atomic_claims_v3: AtomicClaimSetV3 | None = None,
+    evidence_packets_v3: EvidencePacketSetV3 | None = None,
 ) -> AuthoringInputProjection:
+    if atomic_claims_v3 is not None and evidence_packets_v3 is not None:
+        return _build_v3_projection(
+            method_evidence=method_evidence,
+            claims=atomic_claims_v3,
+            packets=evidence_packets_v3,
+            evidence_snapshot_v2=evidence_snapshot_v2,
+        )
     claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
     contract_by_id = {contract.claim_id: contract for contract in method_evidence.claim_contracts}
     projected: list[ProjectedClaim] = []
@@ -91,6 +101,18 @@ def build_authoring_projection(
                 *list(getattr(contract, "required_qualifiers", []) or []),
             ]
         )
+        if any(_qualifier_disallows_positive_authoring(item) for item in qualifiers):
+            forbidden.append(
+                ForbiddenClaim(
+                    claim_id=verified.claim_id,
+                    reason="qualifier_disallows_positive_authoring",
+                    source=verified.source,
+                    repair_metadata={
+                        "recommended_action": "keep_as_gap_metadata_not_writer_input",
+                    },
+                )
+            )
+            continue
         if status == SupportStatus.PARTIAL.value and not qualifiers:
             forbidden.append(
                 ForbiddenClaim(
@@ -213,6 +235,100 @@ def projection_writer_payload(projection: AuthoringInputProjection) -> dict[str,
         "writing_rules": projection.writing_rules,
         "projection_digest": projection.projection_digest,
     }
+
+
+def _build_v3_projection(
+    *,
+    method_evidence: MethodEvidence,
+    claims: AtomicClaimSetV3,
+    packets: EvidencePacketSetV3,
+    evidence_snapshot_v2: EvidenceSnapshotV2 | None,
+) -> AuthoringInputProjection:
+    """Project only compiler-validated V3 behaviors into the writer view."""
+
+    projected: list[ProjectedClaim] = []
+    for claim in claims.claims:
+        if claim.status not in {"supported", "partial"} or claim.claim_kind not in {
+            "implementation_behavior", "configuration_fact"
+        }:
+            continue
+        payload = {
+            "claim_id": claim.claim_id,
+            "claim_text": claim.canonical_text,
+            "support_status": "partial" if claim.status == "partial" else "supported",
+            "direct_evidence_ids": claim.direct_evidence_ids,
+            "relation_evidence_ids": claim.relation_evidence_ids,
+            "supported_fragment": claim.canonical_text,
+            "required_qualifiers": claim.required_qualifiers,
+            "allowed_wording_boundary": claim.allowed_wording_boundary,
+            "source": "atomic_claim_v3:" + ",".join(claim.fact_ids),
+        }
+        projected.append(ProjectedClaim(**payload, input_digest=_digest(payload)))
+
+    by_id = {item.claim_id: item for item in projected}
+    groups = [
+        ("S-V3-1", "Per-primitive feature representation", ["C-RAP-FEATURE-INPUT", "C-RAP-FEATURE-TRANSFORM"]),
+        ("S-V3-2", "Predictor loading and score inference", ["C-RAP-PREDICTOR", "C-RAP-SCORE"]),
+        ("S-V3-3", "Score-based retention and artifact output", ["C-RAP-RANK", "C-RAP-MASK", "C-RAP-OUTPUT", "C-RAP-INFERENCE-SCOPE"]),
+    ]
+    stage_packets: list[dict[str, Any]] = []
+    for stage_id, heading, claim_ids in groups:
+        selected = [by_id[item] for item in claim_ids if item in by_id]
+        if not selected:
+            continue
+        stage_packets.append({
+            "stage_id": stage_id,
+            "name": heading,
+            "purpose": " ".join(item.supported_fragment for item in selected),
+            "stage_claim": " ".join(item.supported_fragment for item in selected),
+            "claim_ids": [item.claim_id for item in selected],
+            "evidence_ids": _dedupe([eid for item in selected for eid in item.direct_evidence_ids]),
+            "relation_evidence_ids": _dedupe([eid for item in selected for eid in item.relation_evidence_ids]),
+        })
+    forbidden = [
+        ForbiddenClaim(
+            claim_id=gap.gap_id,
+            reason="explicit_code_gap:" + gap.topic,
+            source=gap.source_kind,
+            repair_metadata={"status": gap.status, "scope": gap.scope, "rationale": gap.rationale},
+        )
+        for gap in claims.explicit_code_gaps
+    ]
+    source_digests = {
+        "evidence_packets_v3": packets.content_digest,
+        "code_facts_v1": claims.code_fact_digest,
+        "atomic_claims_v3": claims.content_digest,
+    }
+    if evidence_snapshot_v2 is not None:
+        source_digests["evidence_snapshot_v2"] = evidence_snapshot_v2.content_digest
+    payload = {
+        "project_id": method_evidence.project_id,
+        "method_name": method_evidence.method_name,
+        "author_goal": "Explain the compiled inference mainline in code order while preserving explicit code gaps.",
+        "implementation_scope": method_evidence.implementation_scope,
+        "projected_claims": [item.model_dump(mode="json") for item in projected],
+        "forbidden_claims": [item.model_dump(mode="json") for item in forbidden],
+        "stage_packets": stage_packets,
+        "safe_equations": [],
+        "safe_numeric_facts": [],
+        "safe_aliases": [],
+        "safe_intent_spine": [item.claim_id for item in projected],
+        "writing_rules": [
+            "The projection is the writer's only positive method-fact input.",
+            "Organize the prose into the three semantic stage packets; do not create one heading per claim.",
+            "Preserve the feature-to-predictor-to-score-to-rank-to-mask-to-prune-to-output order.",
+            "Use two-class Softmax and score column zero; do not rewrite this as a single sigmoid score.",
+            "Training, datasets, soft pruning, and loss objectives remain explicit code gaps and must not enter positive prose.",
+        ],
+        "dropped_positive_fields": ["legacy_v2_claim_projection", "author_stage_scaffold"],
+        "source_digests": source_digests,
+        "repo_snapshot_id": packets.repo_snapshot_id,
+        "project_tree_hash": packets.project_tree_hash,
+        "evidence_snapshot_id": evidence_snapshot_v2.evidence_snapshot_id if evidence_snapshot_v2 else "",
+        "evidence_snapshot_digest": evidence_snapshot_v2.content_digest if evidence_snapshot_v2 else "",
+        "hard_gate_passed": bool(projected) and len(stage_packets) >= 2,
+    }
+    return AuthoringInputProjection(**payload, projection_digest=_digest(payload))
 
 
 def projection_writer_brief(projection: AuthoringInputProjection) -> str:
@@ -373,7 +489,10 @@ def _projection_stage_mechanisms(
     """Retain trace IDs without reopening legacy mechanism prose as writer input."""
 
     packet_evidence = {
-        str(item) for item in packet.get("evidence_span_ids", []) if str(item)
+        str(item)
+        for key in ("evidence_ids", "evidence_span_ids", "primary_evidence_ids")
+        for item in packet.get(key, [])
+        if str(item)
     }
     matched = [
         mechanism
@@ -415,36 +534,43 @@ def load_authoring_projection(path: str | Path) -> AuthoringInputProjection:
 def _project_stage_packets(
     packets: list[dict], projected_claims: list[ProjectedClaim]
 ) -> tuple[list[dict[str, Any]], list[str]]:
+    """Assign each canonical claim to its best compatible author stage.
+
+    The previous stage-first loop let the first packet greedily absorb a claim
+    through an explicit id or shared evidence.  In real EBCAR output this placed
+    an inference-ranking claim under Motivation and caused the actual Inference
+    stage to lose the duplicate canonical sentence.  Claim-first assignment makes
+    stage semantics a decision input while keeping evidence ids authoritative.
+    """
+
     result: list[dict[str, Any]] = []
     dropped: list[str] = []
+    assignments: dict[int, list[ProjectedClaim]] = {index: [] for index in range(len(packets))}
+    canonical_packet: dict[str, int] = {}
+    for claim in projected_claims:
+        signature = _normalize_text(claim.supported_fragment)
+        if signature in canonical_packet:
+            assignments[canonical_packet[signature]].append(claim)
+            continue
+        scored = [
+            (_packet_claim_match_score(packet, claim), index)
+            for index, packet in enumerate(packets)
+        ]
+        eligible = [(score, index) for score, index in scored if score is not None]
+        if not eligible:
+            continue
+        _score, best_index = max(eligible, key=lambda item: (item[0], -item[1]))
+        assignments[best_index].append(claim)
+        canonical_packet[signature] = best_index
+
     for index, packet in enumerate(packets):
-        packet_text = _normalize_text(" ".join(
-            str(packet.get(key) or "") for key in ("name", "purpose", "stage_claim")
-        ))
         packet_evidence = {
             str(item)
             for key in ("evidence_ids", "evidence_span_ids", "primary_evidence_ids")
             for item in packet.get(key, [])
             if str(item)
         }
-        explicit_ids = {str(item) for item in packet.get("claim_ids", [])}
-        matches = [
-            claim
-            for claim in projected_claims
-            if claim.claim_id in explicit_ids
-            or _normalize_text(claim.supported_fragment) in packet_text
-            or (
-                _normalize_text(str(packet.get("name") or ""))
-                and _normalize_text(str(packet.get("name") or "")) in _normalize_text(claim.supported_fragment)
-            )
-            or (
-                packet_evidence.intersection(claim.direct_evidence_ids)
-                and any(
-                    concepts_semantically_related(fragment, claim.supported_fragment)
-                    for fragment in _semantic_fragments(packet_text)
-                )
-            )
-        ]
+        matches = assignments[index]
         if not matches:
             dropped.append(f"stage_packets[{index}]")
             continue
@@ -461,7 +587,12 @@ def _project_stage_packets(
         supported_purpose = "; ".join(_dedupe(claim.supported_fragment for claim in matches))
         safe: dict[str, Any] = {
             "stage_id": str(packet.get("stage_id") or ""),
-            "name": str(packet.get("name") or "Evidence-backed stage"),
+            # A story-stage label is author intent, not an implementation fact.
+            # Preserve it only when its semantic content is covered by the claims
+            # assigned to this packet; otherwise derive the heading directly from
+            # an authorized claim.  This prevents headings such as "Motivation"
+            # or "three training losses" from wrapping unrelated inference facts.
+            "name": _safe_stage_heading(packet, matches, index=index),
             "purpose": supported_purpose,
             "stage_claim": supported_purpose,
             "claim_ids": claim_ids,
@@ -472,6 +603,126 @@ def _project_stage_packets(
         }
         result.append(safe)
     return result, dropped
+
+
+def _packet_claim_match_score(
+    packet: dict[str, Any],
+    claim: ProjectedClaim,
+) -> float | None:
+    packet_text = " ".join(
+        str(packet.get(key) or "") for key in ("name", "purpose", "stage_claim")
+    )
+    packet_evidence = {
+        str(item)
+        for key in ("evidence_ids", "evidence_span_ids", "primary_evidence_ids")
+        for item in packet.get(key, [])
+        if str(item)
+    }
+    explicit_ids = {str(item) for item in packet.get("claim_ids", [])}
+    explicit = claim.claim_id in explicit_ids
+    evidence_overlap = bool(packet_evidence.intersection(claim.direct_evidence_ids))
+    packet_tokens = _semantic_tokens(packet_text)
+    claim_tokens = _semantic_tokens(claim.supported_fragment)
+    overlap = packet_tokens & claim_tokens
+    lexical = len(overlap) / max(1, min(len(packet_tokens), len(claim_tokens)))
+    semantic = any(
+        concepts_semantically_related(fragment, claim.supported_fragment)
+        for fragment in _semantic_fragments(packet_text)
+    )
+    substring = (
+        _normalize_text(claim.supported_fragment) in _normalize_text(packet_text)
+        or (
+            _normalize_text(str(packet.get("name") or ""))
+            and _normalize_text(str(packet.get("name") or ""))
+            in _normalize_text(claim.supported_fragment)
+        )
+    )
+    if not (explicit or substring or (evidence_overlap and semantic)):
+        return None
+    score = lexical * 2.0
+    score += 0.6 if semantic else 0.0
+    score += 0.35 if evidence_overlap else 0.0
+    score += 0.1 if explicit else 0.0
+    score += 0.5 if substring else 0.0
+    risky_terms = {
+        item.lower()
+        for item in _UNSUPPORTED_HEADING_BOUNDARIES.findall(str(packet.get("name") or ""))
+        if str(item).strip()
+    }
+    if risky_terms and not all(
+        _normalize_heading_anchor(term) in _normalize_text(claim.supported_fragment)
+        for term in risky_terms
+    ):
+        score -= 1.0
+    return score
+
+
+_UNSUPPORTED_HEADING_BOUNDARIES = re.compile(
+    r"\b(?:motivation|novel(?:ty)?|benefit|advantage|improv(?:e|ement)|"
+    r"train(?:ing)?|learn(?:ing)?|loss(?:es)?|render(?:ing)?[- ]?free|"
+    r"without\s+retrain(?:ing)?|deployment)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _safe_stage_heading(
+    packet: dict[str, Any],
+    matches: list[ProjectedClaim],
+    *,
+    index: int,
+) -> str:
+    proposed = str(packet.get("name") or "").strip()
+    claim_text = "; ".join(claim.supported_fragment for claim in matches)
+    proposed_tokens = _semantic_tokens(proposed)
+    claim_tokens = _semantic_tokens(claim_text)
+    overlap = proposed_tokens & claim_tokens
+    risky_terms = {
+        item.lower()
+        for item in _UNSUPPORTED_HEADING_BOUNDARIES.findall(proposed)
+        if str(item).strip()
+    }
+    risky_terms_supported = not risky_terms or all(
+        _normalize_heading_anchor(term) in _normalize_text(claim_text)
+        for term in risky_terms
+    )
+    lexical_alignment = bool(proposed_tokens) and (
+        len(overlap) / max(1, len(proposed_tokens)) >= 0.5
+        or len(overlap) >= 2
+    )
+    semantic_alignment = concepts_semantically_related(proposed, claim_text)
+    if proposed and risky_terms_supported and (lexical_alignment or semantic_alignment):
+        return proposed[:120]
+    return _heading_from_projected_claim(matches[0], index=index) if matches else f"Evidence-backed mechanism {index + 1}"
+
+
+def _normalize_heading_anchor(value: str) -> str:
+    text = _normalize_text(value)
+    if text.startswith("train") or text.startswith("learn"):
+        return "train"
+    if text.startswith("loss"):
+        return "loss"
+    if text.startswith("render"):
+        return "render"
+    if text.startswith("deploy"):
+        return "deploy"
+    if text.startswith("improv"):
+        return "improv"
+    return text
+
+
+def _heading_from_projected_claim(claim: ProjectedClaim, *, index: int) -> str:
+    text = " ".join(claim.supported_fragment.strip().rstrip(".").split())
+    if not text:
+        return f"Evidence-backed mechanism {index + 1}"
+    inference = re.match(r"^(?:at|during)\s+inference\s*[,;:]\s*(.+)$", text, flags=re.IGNORECASE)
+    if inference:
+        text = "Inference: " + inference.group(1)
+    text = re.sub(r"^(?:the|this)\s+method\s+", "", text, flags=re.IGNORECASE)
+    words = text.split()
+    heading = " ".join(words[:10])
+    if len(words) > 10:
+        heading = heading.rstrip(",;:")
+    return (heading[:1].upper() + heading[1:])[:120]
 
 
 def _normalize_text(value: str) -> str:
@@ -581,6 +832,27 @@ def _specific_mechanism_anchors_supported(claim_text: str, evidence_text: str) -
     return all(
         not claim_pattern.search(claim_text) or bool(evidence_pattern.search(evidence_text))
         for claim_pattern, evidence_pattern in _SPECIFIC_MECHANISM_ANCHORS
+    )
+
+
+def _qualifier_disallows_positive_authoring(value: str) -> bool:
+    """Keep denial/gap instructions out of the positive writer projection.
+
+    A duplicate claim contract can carry a qualifier such as "unsupported by
+    current code evidence" while another code-derived copy of the same sentence
+    is supported.  Treating that denial as a normal caveat contaminates the
+    canonical sentence and produced RAP prose that literally said a supported
+    feature was unsupported.  Such records belong in forbidden/gap metadata.
+    """
+
+    return bool(
+        re.search(
+            r"\b(?:unsupported|not supported|unverified)\b.*\b(?:code|evidence)\b|"
+            r"\bdo not (?:include|write|use)\b|"
+            r"\bomit from (?:method|prose|authoring)\b",
+            str(value or ""),
+            flags=re.IGNORECASE,
+        )
     )
 
 

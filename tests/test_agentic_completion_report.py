@@ -90,6 +90,37 @@ class AgenticCompletionReportTests(unittest.TestCase):
         self.assertEqual(loaded.mode, "agentic-run-completion-report")
         self.assertEqual(loaded.status, "incomplete")
 
+    def test_report_does_not_call_trustworthy_but_uncovered_method_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state = AgenticRunState(
+                project_root=root,
+                out_root=root / "out",
+                artifacts={
+                    "authoring_obligation_coverage": _write_json(
+                        root,
+                        "coverage.json",
+                        {
+                            "must_cover_count": 5,
+                            "candidate_covered_must_cover_count": 1,
+                            "unresolved_must_cover_ids": ["O2", "O3", "O4", "O5"],
+                            "unique_projected_claim_count": 1,
+                        },
+                    ),
+                },
+            )
+
+            report = build_run_completion_report(state)
+
+        usability = next(check for check in report.checks if check.name == "method_usability")
+        self.assertFalse(usability.passed)
+        self.assertIn("covered 1/5", usability.message)
+        self.assertIn("method_usability", report.missing_deliverables)
+        self.assertIn(
+            "resolve_must_cover_author_obligations_or_record_terminal_code_gaps",
+            report.recommended_actions,
+        )
+
 
 def _write_json(root: Path, name: str, payload: dict[str, object]) -> str:
     path = root / name

@@ -35,6 +35,9 @@ def build_agentic_architecture_manifest() -> AgenticArchitectureManifest:
             "figure_edges_require_direct_relation_evidence",
             "rendered_svg_must_match_the_locked_scene_contract",
             "checkpoint_resume_must_revalidate_repo_and_artifact_freshness",
+            "evidence_packet_v3_spans_must_round_trip_to_the_frozen_snapshot",
+            "code_fact_v1_must_precede_atomic_claim_v3_compilation",
+            "canonical_atomic_claim_v3_behavior_must_be_deduplicated",
         ],
         evidence_gates=[
             "frozen_evidence_gate",
@@ -46,16 +49,21 @@ def build_agentic_architecture_manifest() -> AgenticArchitectureManifest:
             "pre_render_relation_audit",
             "post_render_asset_audit",
             "resume_freshness_gate",
+            "evidence_packet_v3_predicate_compatibility",
+            "code_fact_v1_validation",
         ],
         authoring_contracts=[
             "author_intent_guides_section_plan",
             "authoring_context_filters_to_supported_or_caveated_claims",
             "authoring_constraints_exclude_unsupported_claims",
+            "writer_projection_prefers_validated_atomic_claim_v3_when_available",
+            "explicit_code_gaps_never_enter_positive_writer_context",
         ],
         traceability_contracts=[
             "paragraphs_link_to_claim_ids_and_evidence_span_ids",
             "figures_link_nodes_and_edges_to_evidence_ids",
             "run_readiness_requires_auditable_decision_traces",
+            "v3_claims_trace_through_fact_ids_to_direct_and_relation_evidence",
         ],
         source_artifacts=[
             "agentic_decision_policy",

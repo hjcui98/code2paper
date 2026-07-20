@@ -41,6 +41,11 @@ def known_claim_ids(state: AgenticRunState) -> set[str]:
     )
     ids.update(
         str(claim.get("claim_id") or "")
+        for claim in as_list(artifact_json(state, "atomic_claims_v3").get("claims"))
+        if isinstance(claim, dict)
+    )
+    ids.update(
+        str(claim.get("claim_id") or "")
         for claim in as_list(artifact_json(state, "atomic_claims_v2").get("claims"))
         if isinstance(claim, dict)
     )
@@ -67,14 +72,18 @@ def unsupported_claim_ids(state: AgenticRunState) -> set[str]:
 
 
 def known_evidence_ids(state: AgenticRunState) -> set[str]:
+    ids: set[str] = set()
     evidence_v2 = artifact_json(state, "evidence_snapshot_v2")
     if evidence_v2:
-        return {
+        ids.update({
             str(span.get("evidence_id") or "")
             for span in as_list(evidence_v2.get("spans"))
             if isinstance(span, dict) and span.get("status") == "valid" and str(span.get("evidence_id") or "")
-        }
-    ids = collect_evidence_ids(artifact_json(state, "evidence"))
+        })
+    ids.update(collect_evidence_ids(artifact_json(state, "evidence_packets_v3")))
+    ids.update(collect_evidence_ids(artifact_json(state, "code_facts_v1")))
+    ids.update(collect_evidence_ids(artifact_json(state, "atomic_claims_v3")))
+    ids.update(collect_evidence_ids(artifact_json(state, "evidence")))
     ids.update(collect_evidence_ids(artifact_json(state, "claims")))
     return ids
 
@@ -83,9 +92,9 @@ def collect_evidence_ids(value: object) -> set[str]:
     ids: set[str] = set()
     if isinstance(value, dict):
         for key, item in value.items():
-            if key in {"evidence_id", "span_id"} and isinstance(item, str):
+            if key in {"evidence_id", "span_id", "relation_id"} and isinstance(item, str):
                 ids.add(item)
-            elif key in {"evidence_ids", "evidence_span_ids", "related_evidence_ids", "primary_evidence_ids"}:
+            elif key in {"evidence_ids", "evidence_span_ids", "related_evidence_ids", "primary_evidence_ids", "direct_span_ids", "relation_span_ids", "direct_evidence_ids", "relation_evidence_ids"}:
                 ids.update(as_string_list(item))
             else:
                 ids.update(collect_evidence_ids(item))

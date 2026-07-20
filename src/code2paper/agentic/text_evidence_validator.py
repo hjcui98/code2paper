@@ -14,6 +14,7 @@ from code2paper.agentic.trust_contracts import (
     TextEvidenceValidationReport,
 )
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
+from code2paper.agentic.evidence_compiler_v3 import EvidencePacketSetV3
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import RawEvidencePack, SourceType
 
@@ -28,6 +29,7 @@ def validate_text_evidence(
     projection: AuthoringInputProjection,
     raw_evidence: RawEvidencePack,
     evidence_snapshot_v2: EvidenceSnapshotV2 | None = None,
+    evidence_packets_v3: EvidencePacketSetV3 | None = None,
     semantic_verifier: SemanticVerifier | None = None,
     max_semantic_verifier_calls: int = 0,
     require_semantic_verifier: bool | None = None,
@@ -38,6 +40,16 @@ def validate_text_evidence(
         for span in (evidence_snapshot_v2.spans if evidence_snapshot_v2 else [])
         if is_direct_code_span(span)
     }
+    v3_by_id = {
+        span.span_id: span
+        for packet in (evidence_packets_v3.packets if evidence_packets_v3 else [])
+        for span in packet.spans
+    }
+    v3_relation_by_id = {
+        relation.relation_id: relation
+        for packet in (evidence_packets_v3.packets if evidence_packets_v3 else [])
+        for relation in packet.relations
+    }
     projection_by_id = {claim.claim_id: claim for claim in projection.projected_claims}
     verdicts: list[TextClaimEvidenceVerdict] = []
     verifier_calls = 0
@@ -47,14 +59,25 @@ def validate_text_evidence(
         if not matches:
             failures.append("no_semantically_matching_projected_claim")
         direct_ids = _dedupe([evidence_id for item in matches for evidence_id in item.direct_evidence_ids])
+        relation_ids = _dedupe([evidence_id for item in matches for evidence_id in item.relation_evidence_ids])
+        relation_span_ids = _dedupe([
+            span_id
+            for relation_id in relation_ids
+            for span_id in (v3_relation_by_id[relation_id].direct_span_ids if relation_id in v3_relation_by_id else [])
+        ])
+        known_exact = {**v2_by_id, **v3_by_id}
         missing_ids = [
             item for item in direct_ids
-            if item not in (v2_by_id if evidence_snapshot_v2 is not None else evidence_by_id)
+            if item not in (known_exact if (evidence_snapshot_v2 is not None or evidence_packets_v3 is not None) else evidence_by_id)
         ]
         if missing_ids or not direct_ids:
             failures.append("direct_evidence_missing")
-        if evidence_snapshot_v2 is not None:
-            evidence_text = "\n".join(v2_by_id[item].exact_excerpt for item in direct_ids if item in v2_by_id)
+        if evidence_snapshot_v2 is not None or evidence_packets_v3 is not None:
+            evidence_text = "\n".join(
+                known_exact[item].exact_excerpt
+                for item in _dedupe([*direct_ids, *relation_span_ids])
+                if item in known_exact
+            )
         else:
             evidence_text = "\n".join(
                 _evidence_text(evidence_by_id[item], project_root=raw_evidence.project_root)
@@ -120,6 +143,7 @@ def validate_text_evidence(
                 status=status,
                 matched_projection_claim_ids=[item.claim_id for item in matches],
                 direct_evidence_ids=direct_ids,
+                relation_evidence_ids=relation_ids,
                 supported_fragment=(model_supported_fragment or claim.text) if not failures else model_supported_fragment,
                 unsupported_fragment=(model_unsupported_fragment or claim.text) if failures else "",
                 required_qualifiers=required_qualifiers,
@@ -250,6 +274,8 @@ def _repair_action(failures: list[str]) -> str:
         return "block_for_semantic_verifier_review"
     if "no_semantically_matching_projected_claim" in failures:
         return "revise_authoring_wording"
+    if "direct_evidence_semantically_unrelated" in failures:
+        return "return_to_packet_binding_repair"
     if any("evidence" in item for item in failures):
         return "return_to_analysis_for_direct_evidence"
     if failures:

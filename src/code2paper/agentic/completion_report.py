@@ -36,6 +36,7 @@ def build_run_completion_report(state: AgenticRunState) -> AgenticRunCompletionR
     checks = [
         _check_evidence_base(state),
         _check_method_text(state),
+        _check_method_usability(state),
         _check_method_figure(state),
         _check_validation(state),
         _check_traceability(state),
@@ -108,6 +109,35 @@ def _check_method_text(state: AgenticRunState) -> CompletionCheck:
     )
 
 
+def _check_method_usability(state: AgenticRunState) -> CompletionCheck:
+    coverage = artifact_json(state, "authoring_obligation_coverage")
+    if not coverage:
+        return CompletionCheck(
+            name="method_usability",
+            passed=True,
+            deliverable="method_usability",
+            message="Obligation coverage is not available for this compatibility run; usability was not assessed.",
+            artifact_keys=[],
+        )
+    must_cover = int(coverage.get("must_cover_count") or 0)
+    covered = int(coverage.get("candidate_covered_must_cover_count") or 0)
+    unresolved = [str(item) for item in coverage.get("unresolved_must_cover_ids", []) if str(item)]
+    unique_claims = int(coverage.get("unique_projected_claim_count") or 0)
+    passed = (must_cover == 0 or (covered == must_cover and not unresolved)) and unique_claims > 0
+    return CompletionCheck(
+        name="method_usability",
+        passed=passed,
+        deliverable="method_usability",
+        message=(
+            "Every must-cover author obligation is represented by an authorized code-evidence claim."
+            if passed
+            else (
+                f"Method remains trustworthy but incomplete: covered {covered}/{must_cover} must-cover obligations; "
+                f"unique projected claims={unique_claims}; unresolved={', '.join(unresolved) or 'none'}."
+            )
+        ),
+        artifact_keys=["intent_obligation_graph", "authoring_obligation_coverage", "authoring_projection"],
+    )
 def _check_method_figure(state: AgenticRunState) -> CompletionCheck:
     plan = artifact_json(state, "figure_plan")
     scene = artifact_json(state, "figure_scene")
@@ -200,6 +230,7 @@ def _recommended_actions(missing: list[str], blocked_reason: str) -> list[str]:
     actions = {
         "evidence_base": "produce_frozen_code_evidence_and_claim_verification",
         "method_text": "produce_evidence_backed_method_text",
+        "method_usability": "resolve_must_cover_author_obligations_or_record_terminal_code_gaps",
         "method_figure": "produce_evidence_backed_method_figure_plan",
         "validation": "run_method_validation",
         "traceability": "pass_traceability_and_invariant_readiness_gates",

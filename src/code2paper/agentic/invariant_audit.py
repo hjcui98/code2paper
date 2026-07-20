@@ -1079,6 +1079,8 @@ def _known_claim_ids(state: AgenticRunState) -> set[str]:
     ids = {str(claim.get("claim_id") or "") for claim in claims if isinstance(claim, dict)}
     verification_claims = _as_list(_artifact_json(state, "claim_verification").get("claims"))
     ids.update(str(claim.get("claim_id") or "") for claim in verification_claims if isinstance(claim, dict))
+    v3_claims = _as_list(_artifact_json(state, "atomic_claims_v3").get("claims"))
+    ids.update(str(claim.get("claim_id") or "") for claim in v3_claims if isinstance(claim, dict))
     return {claim_id for claim_id in ids if claim_id}
 
 
@@ -1095,6 +1097,12 @@ def _unsupported_claim_ids(state: AgenticRunState) -> set[str]:
         for claim in claim_map_claims
         if isinstance(claim, dict) and str(claim.get("support_status") or "") == "unsupported"
     )
+    v3_claims = _as_list(_artifact_json(state, "atomic_claims_v3").get("claims"))
+    unsupported.update(
+        str(claim.get("claim_id") or "")
+        for claim in v3_claims
+        if isinstance(claim, dict) and str(claim.get("status") or "") == "unsupported"
+    )
     return {claim_id for claim_id in unsupported if claim_id}
 
 
@@ -1107,19 +1115,29 @@ def _claim_ids_from_context(claims: list[Any]) -> set[str]:
 
 
 def _known_evidence_ids(state: AgenticRunState) -> set[str]:
+    evidence_packets_v3 = _artifact_json(state, "evidence_packets_v3")
+    v3_ids = {
+        str(span.get("span_id") or "")
+        for packet in _as_list(evidence_packets_v3.get("packets"))
+        if isinstance(packet, dict)
+        for span in _as_list(packet.get("spans"))
+        if isinstance(span, dict) and str(span.get("span_id") or "")
+    }
     evidence_snapshot = _artifact_json(state, "evidence_snapshot_v2")
     if evidence_snapshot:
-        return {
+        v3_ids.update({
             str(span.get("evidence_id") or "")
             for span in _as_list(evidence_snapshot.get("spans"))
             if isinstance(span, dict)
             and span.get("status") == "valid"
             and str(span.get("evidence_id") or "")
-        }
+        })
+        return v3_ids
     evidence_payload = _artifact_json(state, "evidence")
     claim_payload = _artifact_json(state, "claims")
     ids = _collect_evidence_ids(evidence_payload)
     ids.update(_collect_evidence_ids(claim_payload))
+    ids.update(v3_ids)
     return ids
 
 

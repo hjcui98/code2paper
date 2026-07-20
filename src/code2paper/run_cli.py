@@ -43,7 +43,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--cutover-decision", default="",
-        help="CutoverDecisionV2 v2.2 JSON. Only a clean default_ready decision with digest-pinned named-review and rollout evidence may change the implicit default to agentic.",
+        help=(
+            "CutoverDecisionV2 v2.3 JSON. Only a clean default_ready decision with "
+            "artifact-extracted benchmark evidence and digest-pinned rollout evidence "
+            "may change the implicit default to agentic."
+        ),
     )
     parser.add_argument("--run-id", default="", help="Stable agentic run identity.")
     parser.add_argument("--max-retrieval-rounds", type=int, default=0)

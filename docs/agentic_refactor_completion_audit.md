@@ -1,5 +1,13 @@
 # Code2Paper Agentic Refactor Completion Audit
 
+> Reassessment notice (2026-07-18): the implementation history below remains useful,
+> but its P2/P4 “proven” conclusions are superseded by
+> `docs/agentic_research_writing_agent_v2_design.md`. Inspection of the five retained
+> real-project outputs found semantically mismatched section/figure labels, 17 visible
+> figure nodes with zero relations, non-minimal claim evidence fan-in, a gold set whose
+> normal outcomes are not false-block discriminable, and no fully automatic trusted
+> observation extractor. Legacy therefore remains the default and P2/P4 are reopened.
+
 Date: 2026-07-18
 
 Implementation branch: `codex/agentic-p4-benchmark-cutover`
