@@ -38,6 +38,7 @@ Design invariants:
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import Any, Mapping
@@ -47,6 +48,15 @@ from code2paper.agentic.author_intent_summary import (
     load_author_intent_summary,
 )
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
+from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
+    AtomicClaimV3,
+    CodeFactSetV1,
+    CodeFactV1,
+    EvidencePacketSetV3,
+    EvidencePacketV3,
+    ExplicitCodeGapV1,
+)
 from code2paper.agentic.gemma_supervisor_backend import GemmaSupervisorBackend
 from code2paper.agentic.graph import build_code2paper_graph
 from code2paper.agentic.intent_compiler_v2 import (
@@ -54,6 +64,7 @@ from code2paper.agentic.intent_compiler_v2 import (
     compile_intent_obligation_graph_v2,
 )
 from code2paper.agentic.research_graph import (
+    CompiledEvidence,
     CompiledResearchSubgraph,
     ResearchLoopResult,
     build_research_subgraph,
@@ -81,6 +92,26 @@ from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.schemas import LLMConfig
 
 _logger = logging.getLogger(__name__)
+
+
+def _extract_out_root(state: Any) -> Path | None:
+    """Best-effort extraction of ``out_root`` from a legacy state payload.
+
+    The legacy ``AgenticRunState`` carries ``out_root`` as a ``Path``; when
+    the state is a dict (the common case for LangGraph payloads) the same
+    key holds a string or Path.  Returns ``None`` when no ``out_root`` can
+    be found so the caller can skip artifact serialization.
+    """
+
+    if state is None:
+        return None
+    if isinstance(state, dict):
+        out_root = state.get("out_root")
+    else:
+        out_root = getattr(state, "out_root", None)
+    if out_root is None or str(out_root).strip() == "":
+        return None
+    return Path(out_root)
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +286,136 @@ def run_v3_research_phase(
 
 
 # ---------------------------------------------------------------------------
+# V3 compiled evidence merger (R4 -> legacy artifact bridge)
+# ---------------------------------------------------------------------------
+
+
+def merge_compiled_evidence(
+    compiled_evidence: dict[str, CompiledEvidence],
+    *,
+    repo_snapshot_id: str,
+    project_tree_hash: str,
+) -> tuple[EvidencePacketSetV3 | None, CodeFactSetV1 | None, AtomicClaimSetV3 | None]:
+    """Merge all per-obligation ``CompiledEvidence`` into aggregate sets.
+
+    Returns ``(packet_set, fact_set, claim_set)``.  Any element is ``None``
+    when no obligation produced compiled evidence for that artifact kind.
+    The merged sets are content-addressed so downstream consumers (legacy
+    writer, R8 acceptance checker) can verify integrity.
+    """
+
+    if not compiled_evidence:
+        return None, None, None
+
+    all_packets: list[EvidencePacketV3] = []
+    all_facts: list[CodeFactV1] = []
+    all_claims: list[AtomicClaimV3] = []
+    all_gaps: list[ExplicitCodeGapV1] = []
+    evidence_packet_digest = ""
+    code_fact_digest = ""
+    for entry in compiled_evidence.values():
+        all_packets.extend(entry.packet_set.packets)
+        all_facts.extend(entry.fact_set.facts)
+        all_claims.extend(entry.claim_set.claims)
+        all_gaps.extend(entry.claim_set.explicit_code_gaps)
+        if not evidence_packet_digest:
+            evidence_packet_digest = entry.fact_set.evidence_packet_digest
+        if not code_fact_digest:
+            code_fact_digest = entry.claim_set.code_fact_digest
+
+    import hashlib
+    import json as _json
+
+    def _digest(payload: Any) -> str:
+        encoded = _json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+    packet_set: EvidencePacketSetV3 | None = None
+    if all_packets:
+        packet_payload = [p.model_dump(mode="json") for p in all_packets]
+        packet_set = EvidencePacketSetV3(
+            repo_snapshot_id=repo_snapshot_id,
+            project_tree_hash=project_tree_hash,
+            packets=all_packets,
+            content_digest=_digest(packet_payload),
+        )
+        evidence_packet_digest = packet_set.content_digest
+
+    fact_set: CodeFactSetV1 | None = None
+    if all_facts:
+        fact_payload = [f.model_dump(mode="json") for f in all_facts]
+        fact_set = CodeFactSetV1(
+            repo_snapshot_id=repo_snapshot_id,
+            project_tree_hash=project_tree_hash,
+            evidence_packet_digest=evidence_packet_digest,
+            facts=all_facts,
+            content_digest=_digest(fact_payload),
+        )
+        code_fact_digest = fact_set.content_digest
+
+    claim_set: AtomicClaimSetV3 | None = None
+    if all_claims:
+        claim_payload = {
+            "claims": [c.model_dump(mode="json") for c in all_claims],
+            "explicit_code_gaps": [g.model_dump(mode="json") for g in all_gaps],
+        }
+        claim_set = AtomicClaimSetV3(
+            repo_snapshot_id=repo_snapshot_id,
+            project_tree_hash=project_tree_hash,
+            evidence_packet_digest=evidence_packet_digest,
+            code_fact_digest=code_fact_digest,
+            claims=all_claims,
+            explicit_code_gaps=all_gaps,
+            content_digest=_digest(claim_payload),
+        )
+
+    return packet_set, fact_set, claim_set
+
+
+def write_v3_evidence_artifacts(
+    out_root: str | Path,
+    *,
+    packet_set: EvidencePacketSetV3 | None,
+    fact_set: CodeFactSetV1 | None,
+    claim_set: AtomicClaimSetV3 | None,
+    suffix: str = "_v3",
+) -> dict[str, str]:
+    """Serialize V3 compiled evidence to the output directory.
+
+    Writes ``evidence_packets_v3_v3.json``, ``code_facts_v1_v3.json`` and
+    ``atomic_claims_v3_v3.json`` under ``out_root/artifacts/``.  Returns a
+    mapping from artifact key to file path for the keys that were written.
+    Missing sets are skipped (no file is written).
+    """
+
+    artifacts_dir = Path(out_root) / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    paths: dict[str, str] = {}
+    if packet_set is not None:
+        path = artifacts_dir / f"evidence_packets_v3{suffix}.json"
+        path.write_text(
+            json.dumps(packet_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        paths["evidence_packets_v3"] = str(path)
+    if fact_set is not None:
+        path = artifacts_dir / f"code_facts_v1{suffix}.json"
+        path.write_text(
+            json.dumps(fact_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        paths["code_facts_v1"] = str(path)
+    if claim_set is not None:
+        path = artifacts_dir / f"atomic_claims_v3{suffix}.json"
+        path.write_text(
+            json.dumps(claim_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        paths["atomic_claims_v3"] = str(path)
+    return paths
+
+
+# ---------------------------------------------------------------------------
 # V3 -> V2 decision conversion
 # ---------------------------------------------------------------------------
 
@@ -363,11 +524,21 @@ class V3GraphWrapper:
         config: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        """Run V3 research then the legacy pipeline, merging decisions."""
+        """Run V3 research then the legacy pipeline, merging decisions.
+
+        Per the P0 fix for the V3 evidence chain: after V3 research
+        completes, the compiled evidence packets / facts / claims are
+        serialized to the output directory and their file paths are
+        injected into the legacy state's ``artifacts`` dict under the
+        standard keys (``evidence_packets_v3`` / ``code_facts_v1`` /
+        ``atomic_claims_v3``) so the legacy writer and the R8 acceptance
+        checker can consume them.
+        """
 
         # 1. Run the V3 research phase.
         v3_decisions: list[ResearchDecisionV1] = []
         v3_tool_call_refs: list[str] = []
+        v3_artifact_paths: dict[str, str] = {}
         try:
             v3_result = run_v3_research_phase(
                 self._runtime, max_turns=self._max_research_turns
@@ -375,8 +546,36 @@ class V3GraphWrapper:
             self._last_v3_result = v3_result
             v3_decisions = list(v3_result.decision_trace)
             v3_tool_call_refs = extract_v3_tool_call_trace_refs(v3_decisions)
+            # R4 evidence chain: merge per-obligation compiled evidence
+            # and serialize it to the output directory so the legacy
+            # pipeline can consume the V3 artifacts.
+            compiled_evidence = getattr(v3_result.loop_state, "compiled_evidence", {})
+            if compiled_evidence:
+                packet_set, fact_set, claim_set = merge_compiled_evidence(
+                    compiled_evidence,
+                    repo_snapshot_id=self._runtime.repo_snapshot.snapshot_id,
+                    project_tree_hash=self._runtime.repo_snapshot.project_tree_hash,
+                )
+                out_root = _extract_out_root(state)
+                if out_root is not None:
+                    v3_artifact_paths = write_v3_evidence_artifacts(
+                        out_root,
+                        packet_set=packet_set,
+                        fact_set=fact_set,
+                        claim_set=claim_set,
+                    )
         except Exception as exc:  # noqa: BLE001 — V3 failures must not block legacy
             _logger.warning("v3_research_phase_failed: %s", exc)
+
+        # 1.5 Inject V3 evidence artifacts into the legacy input state so
+        # the legacy writer can consume them.  We do NOT overwrite existing
+        # artifact paths: if the caller already pointed at a specific
+        # evidence file we respect that choice.
+        if v3_artifact_paths and isinstance(state, dict):
+            existing_artifacts = dict(state.get("artifacts") or {})
+            for key, path in v3_artifact_paths.items():
+                existing_artifacts.setdefault(key, path)
+            state["artifacts"] = existing_artifacts
 
         # 2. Run the legacy pipeline.
         legacy_payload = self._legacy.invoke(state, *args, config=config, **kwargs)
@@ -394,6 +593,15 @@ class V3GraphWrapper:
                 if ref not in existing_refs:
                     existing_refs.append(ref)
             legacy_payload["tool_call_trace_refs"] = existing_refs
+
+        # 3.5 Also merge V3 artifact paths into the legacy payload so
+        # downstream consumers (R8 checker) can find them even when the
+        # legacy pipeline did not produce its own evidence artifacts.
+        if v3_artifact_paths:
+            payload_artifacts = dict(legacy_payload.get("artifacts") or {})
+            for key, path in v3_artifact_paths.items():
+                payload_artifacts.setdefault(key, path)
+            legacy_payload["artifacts"] = payload_artifacts
 
         return legacy_payload
 
@@ -451,5 +659,7 @@ __all__ = [
     "build_v3_research_runtime",
     "convert_v3_decisions_to_agent_decisions",
     "extract_v3_tool_call_trace_refs",
+    "merge_compiled_evidence",
     "run_v3_research_phase",
+    "write_v3_evidence_artifacts",
 ]

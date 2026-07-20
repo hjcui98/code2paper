@@ -87,6 +87,10 @@ class AgenticRunSummary(BaseModel):
     environment: dict[str, str] = Field(default_factory=dict)
     temperature: float | None = None
     source_authority_policy: dict[str, Any] = Field(default_factory=dict)
+    # R8.1 protocol evidence: paper was read only AFTER Method authoring
+    # (for diagnostic comparison).  ``None`` means the run did not
+    # record this evidence, which fails the protocol check.
+    paper_read_only_at_end: bool | None = None
 
 
 class AgenticRunResult(BaseModel):
@@ -285,6 +289,7 @@ def build_agentic_run_summary(
     environment = _collect_run_environment()
     temperature = _collect_run_temperature()
     source_authority_policy = _collect_source_authority_policy(state)
+    paper_read_only_at_end = _collect_paper_read_only_at_end()
     return AgenticRunSummary(
         status=status,
         project_root=str(state.project_root),
@@ -305,6 +310,7 @@ def build_agentic_run_summary(
         environment=environment,
         temperature=temperature,
         source_authority_policy=source_authority_policy,
+        paper_read_only_at_end=paper_read_only_at_end,
     )
 
 
@@ -769,6 +775,7 @@ _R8_ENV_VARS: tuple[str, ...] = (
     "CODE2PAPER_NUM_GPUS",
     "CODE2PAPER_PARALLEL_PROJECTS",
     "CODE2PAPER_LLM_TEMPERATURE",
+    "CODE2PAPER_PAPER_READ_ONLY_AT_END",
 )
 
 
@@ -817,6 +824,26 @@ def _collect_run_temperature() -> float | None:
         return float(raw)
     except ValueError:
         return None
+
+
+def _collect_paper_read_only_at_end() -> bool | None:
+    """Read evidence that the paper was read only AFTER Method authoring.
+
+    Returns ``True`` when ``CODE2PAPER_PAPER_READ_ONLY_AT_END`` is set to
+    a truthy value (``"1"`` / ``"true"`` / ``"yes"``), ``False`` when set
+    to a falsy value (``"0"`` / ``"false"`` / ``"no"``), and ``None`` when
+    unset so the R8 acceptance checker fails the protocol check for
+    missing evidence.
+    """
+
+    raw = os.environ.get("CODE2PAPER_PAPER_READ_ONLY_AT_END", "").strip().lower()
+    if not raw:
+        return None
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return None
 
 
 def _collect_source_authority_policy(state: AgenticRunState) -> dict[str, Any]:
@@ -961,4 +988,5 @@ def _build_r8_acceptance_report(
         run_environment=summary.environment,
         run_temperature=summary.temperature,
         source_authority_policy=summary.source_authority_policy,
+        paper_read_only_at_end=summary.paper_read_only_at_end,
     )

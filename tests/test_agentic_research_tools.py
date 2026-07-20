@@ -171,12 +171,52 @@ def _tool_call(
 
 
 def test_research_tool_names_are_the_four_minimal_tools() -> None:
-    assert RESEARCH_TOOL_NAMES == (
+    """The original four minimal tools must remain in the registry.
+
+    The full tool surface is larger (26 tools covering search, behavior
+    graph, hint, and evidence/fact/claim tools per design section 7),
+    but the original four are the foundation and must always be present.
+    """
+
+    _MINIMAL_TOOLS = (
         "find_entrypoints",
         "search_symbols",
         "read_symbol",
         "find_references",
     )
+    for tool in _MINIMAL_TOOLS:
+        assert tool in RESEARCH_TOOL_NAMES, f"missing minimal tool: {tool}"
+    # The full surface must include the extended tool families.
+    assert len(RESEARCH_TOOL_NAMES) >= 26, (
+        f"expected at least 26 tools, got {len(RESEARCH_TOOL_NAMES)}"
+    )
+    # Sanity: every extended tool is registered.
+    _EXTENDED_TOOLS = (
+        "list_repository_tree",
+        "search_code",
+        "read_code_span",
+        "inspect_configuration",
+        "build_behavior_subgraph",
+        "query_behavior_graph",
+        "trace_call_path",
+        "trace_data_flow",
+        "inspect_control_flow",
+        "compare_implementation_branches",
+        "find_output_side_effects",
+        "search_semantic_hints",
+        "derive_code_queries_from_hint",
+        "compare_hint_to_code",
+        "propose_evidence_packet",
+        "validate_evidence_packet",
+        "compile_code_facts",
+        "validate_code_facts",
+        "decompose_atomic_claims",
+        "authorize_atomic_claims",
+        "record_explicit_code_gap",
+        "check_obligation_coverage",
+    )
+    for tool in _EXTENDED_TOOLS:
+        assert tool in RESEARCH_TOOL_NAMES, f"missing extended tool: {tool}"
 
 
 def test_research_tool_kinds_map_to_known_tool_kinds() -> None:

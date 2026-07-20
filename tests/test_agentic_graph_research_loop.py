@@ -350,11 +350,19 @@ class TestPolicyTraceExplainability:
             }
 
     def test_every_decision_has_stable_decision_id(self, snapshot: RepoSnapshot) -> None:
-        obl = _obligation("obl-stable", search_terms=("train",))
-        agenda = _agenda("run-stable", snapshot, obl)
-        runtime = _runtime(snapshot, agenda, run_id="run-stable")
-        result1 = run_research_loop(runtime, max_turns=5)
-        result2 = run_research_loop(runtime, max_turns=5)
+        # Two independent runtimes with identical (but distinct) agendas.
+        # The agenda items must be distinct objects because
+        # ``gap_finalizer_node`` mutates the agenda item status to
+        # ``explicit_gap`` in place; reusing the same item across runs
+        # would make the second run see a terminal obligation.
+        obl1 = _obligation("obl-stable", search_terms=("train",))
+        agenda1 = _agenda("run-stable", snapshot, obl1)
+        runtime1 = _runtime(snapshot, agenda1, run_id="run-stable")
+        result1 = run_research_loop(runtime1, max_turns=5)
+        obl2 = _obligation("obl-stable", search_terms=("train",))
+        agenda2 = _agenda("run-stable", snapshot, obl2)
+        runtime2 = _runtime(snapshot, agenda2, run_id="run-stable")
+        result2 = run_research_loop(runtime2, max_turns=5)
         ids1 = [d.decision_id for d in result1.decision_trace]
         ids2 = [d.decision_id for d in result2.decision_trace]
         assert ids1 == ids2, "decision ids must be deterministic"
@@ -391,11 +399,16 @@ class TestSupportBoundaryIndependentOfToolOrder:
     ) -> None:
         """Two runs with the same obligations in different order must
         terminate with the same set of terminal obligation ids."""
-        obl_a = _obligation("obl-a", search_terms=("train",))
-        obl_b = _obligation("obl-b", search_terms=("GaussianModel",))
+        # Distinct obligation objects per agenda: ``gap_finalizer_node``
+        # mutates the agenda item status in place, so sharing items
+        # across runs would let the second run see terminal obligations.
+        obl_a1 = _obligation("obl-a", search_terms=("train",))
+        obl_b1 = _obligation("obl-b", search_terms=("GaussianModel",))
+        obl_a2 = _obligation("obl-a", search_terms=("train",))
+        obl_b2 = _obligation("obl-b", search_terms=("GaussianModel",))
 
-        agenda1 = _agenda("run-order-1", snapshot, obl_a, obl_b)
-        agenda2 = _agenda("run-order-2", snapshot, obl_b, obl_a)
+        agenda1 = _agenda("run-order-1", snapshot, obl_a1, obl_b1)
+        agenda2 = _agenda("run-order-2", snapshot, obl_b2, obl_a2)
 
         runtime1 = _runtime(snapshot, agenda1, run_id="run-order-1")
         runtime2 = _runtime(snapshot, agenda2, run_id="run-order-2")
@@ -498,17 +511,24 @@ class TestLangGraphWrapper:
     def test_lang_graph_invoke_produces_same_result_as_driver(
         self, snapshot: RepoSnapshot
     ) -> None:
-        obl = _obligation("obl-lg-equiv", search_terms=("train",))
-        agenda = _agenda("run-lg-equiv", snapshot, obl)
-        runtime = _runtime(snapshot, agenda, run_id="run-lg-equiv")
-        graph = build_research_subgraph(runtime, max_turns=5)
+        # Distinct obligation objects per run: ``gap_finalizer_node``
+        # mutates the agenda item status in place, so the LangGraph
+        # invocation and the direct driver call must use independent
+        # agendas to avoid the second call seeing terminal obligations.
+        obl1 = _obligation("obl-lg-equiv", search_terms=("train",))
+        agenda1 = _agenda("run-lg-equiv", snapshot, obl1)
+        runtime1 = _runtime(snapshot, agenda1, run_id="run-lg-equiv")
+        graph = build_research_subgraph(runtime1, max_turns=5)
         graph.invoke({})
         loop_result = graph.last_result
         assert loop_result is not None
         assert isinstance(loop_result, ResearchLoopResult)
 
-        # Compare with the direct driver.
-        direct_result = run_research_loop(runtime, max_turns=5)
+        # Compare with the direct driver on a fresh, identical runtime.
+        obl2 = _obligation("obl-lg-equiv", search_terms=("train",))
+        agenda2 = _agenda("run-lg-equiv", snapshot, obl2)
+        runtime2 = _runtime(snapshot, agenda2, run_id="run-lg-equiv")
+        direct_result = run_research_loop(runtime2, max_turns=5)
         assert loop_result.turns_executed == direct_result.turns_executed
         assert loop_result.termination_reason == direct_result.termination_reason
 

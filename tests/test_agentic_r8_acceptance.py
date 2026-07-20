@@ -229,7 +229,14 @@ def _agent_decision(
 
 
 def _passing_report_kwargs() -> dict[str, Any]:
-    """Return kwargs for ``check_r8_acceptance`` that produce an accepted report."""
+    """Return kwargs for ``check_r8_acceptance`` that produce an accepted report.
+
+    The baseline exercises EVERY criterion (no skips): trace digest
+    matches, checkpoint/resume digests are present and consistent, and
+    the paper-read-only-at-end protocol evidence is recorded.  This
+    reflects the tightened R8 checker where ``skipped`` counts as
+    failure for acceptance.
+    """
 
     claim = _claim(
         "claim-1",
@@ -243,15 +250,24 @@ def _passing_report_kwargs() -> dict[str, Any]:
     decision = _agent_decision(
         decision="SEARCH_SYMBOLS",
         rationale="issue_driven:missing_anchor",
+        evidence_ids=["tc-1", "tc-2"],
     )
+    decisions = [decision]
+    tool_refs = ["tc-1", "tc-2"]
+    recorded_trace_digest = compute_trace_digest(decisions, tool_refs)
+    final_state_digest = "sha256:final-state-1"
     return {
         "run_id": "run-pass-1",
         "project_id": "proj-1",
-        "decisions": [decision],
+        "decisions": decisions,
+        "tool_call_trace_refs": tool_refs,
+        "recorded_trace_digest": recorded_trace_digest,
         "coverage_report": coverage,
         "claim_set": claim_set,
         "validation_report": validation,
         "method_text": "The model computes a softmax over the class dimension.",
+        "original_final_state_digest": final_state_digest,
+        "resumed_final_state_digest": final_state_digest,
         "run_environment": {
             "CODE2PAPER_LLM_CACHE": "0",
             "CODE2PAPER_TP_SIZE": "2",
@@ -260,6 +276,7 @@ def _passing_report_kwargs() -> dict[str, Any]:
         },
         "run_temperature": 0.0,
         "source_authority_policy": {"code": "executable_hard", "tests": "test_scoped"},
+        "paper_read_only_at_end": True,
     }
 
 
@@ -736,7 +753,9 @@ def test_unauthorized_equation_tokens_returns_unauthorized():
 def test_trace_reproducible_skipped_when_no_recorded_digest():
     """When no recorded digest is provided, the criterion is skipped."""
 
-    report = check_r8_acceptance(**_passing_report_kwargs())
+    kwargs = _passing_report_kwargs()
+    kwargs["recorded_trace_digest"] = ""
+    report = check_r8_acceptance(**kwargs)
     assert report.criteria["trace_reproducible"].status == "skipped"
 
 
@@ -802,7 +821,10 @@ def test_verify_trace_reproducibility_returns_true_when_recorded_empty():
 
 
 def test_checkpoint_resume_consistent_skipped_when_no_digests():
-    report = check_r8_acceptance(**_passing_report_kwargs())
+    kwargs = _passing_report_kwargs()
+    kwargs["original_final_state_digest"] = ""
+    kwargs["resumed_final_state_digest"] = ""
+    report = check_r8_acceptance(**kwargs)
     assert report.criteria["checkpoint_resume_consistent"].status == "skipped"
 
 
@@ -825,6 +847,7 @@ def test_checkpoint_resume_consistent_fails_when_digests_mismatch():
 def test_checkpoint_resume_consistent_skipped_when_only_one_digest():
     kwargs = _passing_report_kwargs()
     kwargs["original_final_state_digest"] = "sha256:state-1"
+    kwargs["resumed_final_state_digest"] = ""
     # resumed_final_state_digest is empty.
     report = check_r8_acceptance(**kwargs)
     assert report.criteria["checkpoint_resume_consistent"].status == "skipped"
@@ -927,14 +950,52 @@ def test_protocol_check_passes_when_paper_is_semantic_hint():
     assert report.protocol_check_passed is True
 
 
-def test_protocol_check_skips_tp_size_when_env_absent():
-    """When TP size / num GPUs env vars are absent, the check is skipped
-    (only fails when present and wrong)."""
+def test_protocol_check_fails_when_tp_size_absent():
+    """When TP size / num GPUs env vars are absent, the check fails: an
+    acceptance run must positively evidence TP=2 on 2 GPUs rather than
+    rely on absence."""
 
     kwargs = _passing_report_kwargs()
     kwargs["run_environment"] = {"CODE2PAPER_LLM_CACHE": "0"}
     report = check_r8_acceptance(**kwargs)
-    assert report.protocol_check_passed is True
+    assert report.protocol_check_passed is False
+
+
+def test_protocol_check_fails_when_temperature_absent():
+    """A missing temperature is a failure (the run must evidence temp=0)."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["run_temperature"] = None
+    report = check_r8_acceptance(**kwargs)
+    assert report.protocol_check_passed is False
+
+
+def test_protocol_check_fails_when_source_authority_absent():
+    """An empty source authority policy is a failure."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["source_authority_policy"] = {}
+    report = check_r8_acceptance(**kwargs)
+    assert report.protocol_check_passed is False
+
+
+def test_protocol_check_fails_when_paper_read_only_at_end_not_evidenced():
+    """Missing paper-read-only-at-end evidence is a failure."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["paper_read_only_at_end"] = None
+    report = check_r8_acceptance(**kwargs)
+    assert report.protocol_check_passed is False
+
+
+def test_protocol_check_fails_when_paper_read_only_at_end_violated():
+    """Explicitly evidencing that the paper was read BEFORE authoring
+    (``paper_read_only_at_end=False``) is a failure."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["paper_read_only_at_end"] = False
+    report = check_r8_acceptance(**kwargs)
+    assert report.protocol_check_passed is False
 
 
 # ---------------------------------------------------------------------------
@@ -1031,6 +1092,10 @@ def _write_run_dir(tmp_path: Path, **overrides: Any) -> Path:
         "environment": kwargs["run_environment"],
         "temperature": kwargs["run_temperature"],
         "source_authority_policy": kwargs["source_authority_policy"],
+        "paper_read_only_at_end": kwargs["paper_read_only_at_end"],
+        "trace_digest": kwargs["recorded_trace_digest"],
+        "tool_call_trace_refs": kwargs["tool_call_trace_refs"],
+        "final_state_digest": kwargs["original_final_state_digest"],
     }
     summary.update(overrides.pop("summary_overrides", {}))
     (run_dir / "agentic_run_summary.json").write_text(
@@ -1151,12 +1216,19 @@ def test_accepted_is_false_when_protocol_check_fails():
     assert report.accepted is False
 
 
-def test_accepted_is_true_when_skipped_criteria_pass():
-    """Skipped criteria (trace / checkpoint with no digests) do not block
-    acceptance."""
+def test_accepted_is_false_when_criteria_skipped():
+    """Skipped criteria (trace / checkpoint with no digests) block
+    acceptance under the tightened R8 checker: an acceptance run must
+    positively evidence every criterion, not rely on absence."""
 
-    report = check_r8_acceptance(**_passing_report_kwargs())
-    assert report.accepted is True
+    kwargs = _passing_report_kwargs()
+    # Drop the digests so trace_reproducible and checkpoint_resume_consistent
+    # become "skipped".
+    kwargs["recorded_trace_digest"] = ""
+    kwargs["original_final_state_digest"] = ""
+    kwargs["resumed_final_state_digest"] = ""
+    report = check_r8_acceptance(**kwargs)
+    assert report.accepted is False
     assert report.criteria["trace_reproducible"].status == "skipped"
     assert report.criteria["checkpoint_resume_consistent"].status == "skipped"
 

@@ -37,9 +37,22 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+from code2paper.agentic.generic_claim_compiler import (
+    ClaimProposalV1,
+    compile_atomic_claims,
+)
+from code2paper.agentic.generic_evidence_compiler import (
+    EvidencePacketProposalV1,
+    compile_evidence_packet_proposal,
+)
+from code2paper.agentic.generic_fact_compiler import (
+    FactCompilerInputV1,
+    compile_facts_from_behavior_graph,
+)
 from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
 from code2paper.agentic.research_models import (
     BUDGET_TOOL_KINDS,
+    GapRequirementV1,
     GlobalSafetyBudgetV1,
     PerObligationBudgetV1,
     ResearchAction,
@@ -797,6 +810,444 @@ def evidence_critic_node(
 
 
 # ---------------------------------------------------------------------------
+# Node: compile_candidate (R4 wiring)
+# ---------------------------------------------------------------------------
+
+
+def _select_behavior_nodes_for_obligation(
+    behavior_graph: CodeBehaviorGraphV1,
+    *,
+    candidate_symbol_ids: list[str],
+    candidate_behavior_node_ids: list[str],
+) -> list[Any]:
+    """Select behavior nodes relevant to an obligation.
+
+    Prefers explicit ``candidate_behavior_node_ids``; falls back to
+    matching ``candidate_symbol_ids`` against behavior nodes.  The fallback
+    handles multiple candidate formats because callers use different
+    conventions:
+
+    - exact ``symbol_id`` (``sym:<digest>``) — direct match;
+    - exact ``node_id`` (``node:<digest>``) — direct match;
+    - ``path:name`` (e.g. ``train.py:train``) — match by extracting the
+      path prefix and checking the node's ``source_span_id``;
+    - bare path (e.g. ``train.py`` or ``src/``) — match by path prefix
+      in ``source_span_id``.
+
+    Returns nodes in deterministic order (by node_id).
+    """
+
+    nodes_by_id = {n.node_id: n for n in behavior_graph.nodes}
+    if candidate_behavior_node_ids:
+        selected = [
+            nodes_by_id[nid]
+            for nid in candidate_behavior_node_ids
+            if nid in nodes_by_id
+        ]
+    else:
+        selected = _match_nodes_by_candidate(behavior_graph.nodes, candidate_symbol_ids)
+    # De-duplicate by node_id while preserving sorted order for determinism.
+    seen: set[str] = set()
+    unique: list[Any] = []
+    for node in sorted(selected, key=lambda n: n.node_id):
+        if node.node_id in seen:
+            continue
+        seen.add(node.node_id)
+        unique.append(node)
+    return unique
+
+
+def _match_nodes_by_candidate(
+    nodes: list[Any],
+    candidate_symbol_ids: list[str],
+) -> list[Any]:
+    """Match behavior nodes against heterogeneous candidate identifiers.
+
+    Each candidate is matched against the node's ``symbol_id``,
+    ``node_id`` and ``source_span_id``.  Path-like candidates
+    (e.g. ``train.py:train`` or ``src/model.py``) are matched by checking
+    whether the node's ``source_span_id`` starts with
+    ``span:<path>:`` (directory candidates are prefix-matched).
+    """
+
+    if not candidate_symbol_ids:
+        return []
+    selected: list[Any] = []
+    for candidate in candidate_symbol_ids:
+        if not candidate:
+            continue
+        # Direct symbol_id / node_id match.
+        direct = [
+            n for n in nodes
+            if n.symbol_id == candidate or n.node_id == candidate
+        ]
+        if direct:
+            selected.extend(direct)
+            continue
+        # Path-based match: extract the path component and match
+        # source_span_id (format ``span:<path>:<start>:<end>``).
+        path_component = _extract_path_component(candidate)
+        if path_component:
+            prefix = f"span:{path_component}:"
+            prefix_dir = path_component.rstrip("/") + "/"
+            for node in nodes:
+                span_id = node.source_span_id or ""
+                if span_id.startswith(prefix):
+                    selected.append(node)
+                elif _span_path_matches_prefix(span_id, prefix_dir):
+                    selected.append(node)
+    return selected
+
+
+def _extract_path_component(candidate: str) -> str:
+    """Extract a file path from a candidate identifier.
+
+    Handles ``path:name`` and bare ``path`` forms.  Returns an empty
+    string when the candidate does not look like a path (e.g. it is a
+    ``sym:`` / ``node:`` id without a slash or dot).
+    """
+
+    raw = candidate.strip()
+    if not raw:
+        return ""
+    # ``sym:`` / ``node:`` ids without a path separator are not paths.
+    if raw.startswith(("sym:", "node:")) and "/" not in raw and "." not in raw:
+        return ""
+    # ``path:name`` — take everything before the last colon that follows
+    # a dot or slash.  This is a heuristic; the path component itself
+    # may contain dots (e.g. ``src/pkg.mod.py:func``).
+    if ":" in raw:
+        head, _, _tail = raw.rpartition(":")
+        if head and ("." in head or "/" in head):
+            return head
+    # Bare path (no colon) — return as-is if it looks like a path.
+    if "." in raw or "/" in raw:
+        return raw
+    return ""
+
+
+def _span_path_matches_prefix(span_id: str, path_prefix_dir: str) -> bool:
+    """Check whether ``span:<path>:...`` has a path under ``path_prefix_dir``."""
+
+    if not span_id.startswith("span:") or not path_prefix_dir:
+        return False
+    body = span_id[len("span:"):]
+    parts = body.split(":", 2)
+    if len(parts) < 3:
+        return False
+    path = parts[0]
+    return path == path_prefix_dir.rstrip("/") or path.startswith(path_prefix_dir)
+
+
+def _select_relations_among_nodes(
+    behavior_graph: CodeBehaviorGraphV1,
+    selected_node_ids: set[str],
+) -> list[Any]:
+    """Return relations whose endpoints both fall in ``selected_node_ids``."""
+
+    out: list[Any] = []
+    for rel in behavior_graph.relations:
+        if not rel.source_node_id or not rel.target_node_id:
+            continue
+        if rel.source_node_id in selected_node_ids and rel.target_node_id in selected_node_ids:
+            out.append(rel)
+    return out
+
+
+def _build_evidence_packet_proposal(
+    *,
+    obligation_id: str,
+    selected_nodes: list[Any],
+    selected_relations: list[Any],
+) -> EvidencePacketProposalV1 | None:
+    """Build a deterministic ``EvidencePacketProposalV1`` from selected nodes.
+
+    Returns ``None`` when the selection has no anchor spans (no source_span_id
+    on any node), which means the proposal cannot anchor a packet.
+    """
+
+    anchor_span_ids: list[str] = []
+    relation_span_ids: list[str] = []
+    behavior_node_ids = [n.node_id for n in selected_nodes]
+    behavior_relation_ids = [r.relation_id for r in selected_relations]
+    conditions: list[str] = []
+    for node in selected_nodes:
+        if not node.source_span_id:
+            continue
+        if node.source_span_id not in anchor_span_ids:
+            anchor_span_ids.append(node.source_span_id)
+        if node.guard and node.guard not in conditions:
+            conditions.append(node.guard)
+    for rel in selected_relations:
+        for span_id in (rel.source_span_id, rel.target_span_id):
+            if span_id and span_id not in anchor_span_ids and span_id not in relation_span_ids:
+                relation_span_ids.append(span_id)
+    if not anchor_span_ids:
+        return None
+    # Compose a deterministic packet id from obligation + span digest so
+    # repeated compiles of the same selection produce the same id.
+    import hashlib as _hashlib
+
+    digest_input = "|".join(sorted(anchor_span_ids + relation_span_ids))
+    digest = _hashlib.sha256(digest_input.encode("utf-8")).hexdigest()[:12]
+    packet_id = f"pkt-{obligation_id}-{digest}"
+    scope = selected_nodes[0].symbol_id if selected_nodes else obligation_id
+    # Packets with more than three spans require a composition rationale.
+    total_spans = len(anchor_span_ids) + len(relation_span_ids)
+    rationale = ""
+    if total_spans > 3:
+        rationale = (
+            f"Deterministic selection covers {len(anchor_span_ids)} anchor "
+            f"spans and {len(relation_span_ids)} relation spans across "
+            f"{len(selected_nodes)} behavior nodes."
+        )
+    return EvidencePacketProposalV1(
+        packet_id=packet_id,
+        obligation_id=obligation_id,
+        scope=scope,
+        anchor_span_ids=anchor_span_ids,
+        relation_span_ids=relation_span_ids,
+        semantic_span_ids=[],
+        behavior_node_ids=behavior_node_ids,
+        behavior_relation_ids=behavior_relation_ids,
+        conditions=conditions,
+        composition_rationale=rationale,
+        rejected_candidates=[],
+    )
+
+
+def _build_claim_proposals_for_facts(
+    *,
+    obligation_id: str,
+    facts: Any,
+) -> list[ClaimProposalV1]:
+    """Build conservative ``ClaimProposalV1`` per supported fact.
+
+    One claim per supported fact avoids merging contradictory conditions.
+    Wording is a simple declarative sentence (``{subject} {predicate} {object}``)
+    so no quantifier / direction expansion can occur.  ``required_qualifiers``
+    mirrors the fact's conditions so no guard is silently dropped.
+    """
+
+    proposals: list[ClaimProposalV1] = []
+    for fact in facts.facts:
+        if fact.validation_status != "supported":
+            continue
+        obj = fact.object
+        if isinstance(obj, list):
+            obj_text = ", ".join(obj)
+        else:
+            obj_text = str(obj)
+        # Replace underscores in predicate for readable text; the
+        # canonical identity is computed from the normalized text + fact ids,
+        # so this wording does not affect dedup.
+        predicate_text = fact.predicate.replace("_", " ")
+        canonical_text = f"{fact.subject} {predicate_text} {obj_text}".strip()
+        proposal = ClaimProposalV1(
+            claim_id=f"claim-{obligation_id}-{fact.fact_id}",
+            canonical_text=canonical_text,
+            claim_kind="implementation_behavior",
+            proposed_fact_ids=[fact.fact_id],
+            covers_obligation_ids=[obligation_id],
+            required_qualifiers=list(fact.conditions),
+            unsupported_author_fragments=[],
+            allowed_wording_boundary=(
+                "exact behavior predicate and operands from source span; "
+                "no quantifier, direction, or effect expansion"
+            ),
+        )
+        proposals.append(proposal)
+    return proposals
+
+
+def compile_candidate_node(
+    state: AgentStateV3,
+    *,
+    runtime: ResearchGraphRuntime,
+    behavior_graph: CodeBehaviorGraphV1,
+    active_obligation_id: str,
+    gain_tracker: InformationGainTracker,
+) -> dict[str, Any]:
+    """Compile the active obligation's candidate into authorized claims (R4).
+
+    Replaces the R3 stub that recorded a gap and moved on.  This node:
+
+    1. Selects behavior nodes/relations for the active obligation from the
+       live ``CodeBehaviorGraphV1``.
+    2. Builds an ``EvidencePacketProposalV1`` and calls
+       ``compile_evidence_packet_proposal`` (R4.1) to produce a validated
+       ``EvidencePacketV3``.
+    3. Calls ``compile_facts_from_behavior_graph`` (R4.2) to produce a
+       ``CodeFactSetV1`` with deterministic identities.
+    4. Builds conservative ``ClaimProposalV1`` per supported fact and calls
+       ``compile_atomic_claims`` (R4.3) to authorize them.
+    5. On success: marks the obligation ``supported`` with
+       ``supported_claim_ids`` and returns the packet/fact/claim refs.
+    6. On failure (no packet, no supported facts, or no authorized claims):
+       delegates to ``gap_finalizer_node`` so the obligation gets a typed
+       gap rather than silently looping.
+
+    The compiled ``EvidencePacketSetV3`` / ``CodeFactSetV1`` /
+    ``AtomicClaimSetV3`` are returned via a private ``_compiled_evidence``
+    channel so the driver can stash them in the loop state sidecar for the
+    writer to consume.  The state only stores content digests (refs).
+    """
+
+    active_obligation_id = active_obligation_id or state.get("active_obligation_id", "")
+    if not active_obligation_id:
+        return {
+            "status": "blocked",
+            "blocked_reason": "compile_candidate_without_active_obligation",
+        }
+
+    # Look up the active obligation.
+    active_obligation: ResearchAgendaItemV1 | None = None
+    for item in runtime.agenda.items:
+        if item.obligation_id == active_obligation_id:
+            active_obligation = item
+            break
+    if active_obligation is None:
+        return {
+            "status": "blocked",
+            "blocked_reason": "compile_candidate_obligation_not_in_agenda",
+        }
+
+    # If already terminal, do nothing.
+    if active_obligation.status in {"supported", "explicit_gap", "blocked"}:
+        return {"status": "researching"}
+
+    selected_nodes = _select_behavior_nodes_for_obligation(
+        behavior_graph,
+        candidate_symbol_ids=active_obligation.candidate_symbol_ids,
+        candidate_behavior_node_ids=active_obligation.candidate_behavior_node_ids,
+    )
+    if not selected_nodes:
+        # Nothing to compile: route to gap finalizer.
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+
+    selected_node_ids = {n.node_id for n in selected_nodes}
+    selected_relations = _select_relations_among_nodes(
+        behavior_graph, selected_node_ids
+    )
+
+    proposal = _build_evidence_packet_proposal(
+        obligation_id=active_obligation_id,
+        selected_nodes=selected_nodes,
+        selected_relations=selected_relations,
+    )
+    if proposal is None:
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+
+    packet, packet_report = compile_evidence_packet_proposal(
+        proposal,
+        behavior_graph,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+    )
+    if packet is None or not packet_report.accepted:
+        # Packet rejected: route to gap finalizer so the obligation gets a
+        # typed gap rather than spinning.
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+
+    # Build the FactCompilerInputV1 from the selected nodes/relations.
+    anchor_span_ids = list(packet.anchor_span_ids)
+    relation_span_ids = list(packet.relation_span_ids)
+    evidence_span_ids = anchor_span_ids + relation_span_ids
+    guards = list(packet.conditions)
+    fact_input = FactCompilerInputV1(
+        obligation_id=active_obligation_id,
+        behavior_node_ids=[n.node_id for n in selected_nodes],
+        behavior_relation_ids=[r.relation_id for r in selected_relations],
+        evidence_span_ids=evidence_span_ids,
+        guards=guards,
+        source_authority="executable_hard",
+    )
+    fact_set = compile_facts_from_behavior_graph(
+        behavior_graph,
+        fact_input,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        evidence_packet_digest=packet.source_digest,
+    )
+    supported_facts = [
+        f for f in fact_set.facts if f.validation_status == "supported"
+    ]
+    if not supported_facts:
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+
+    # Build a single packet set carrying this packet so downstream writers
+    # can consume the standard ``EvidencePacketSetV3`` shape.
+    from code2paper.agentic.evidence_compiler_v3 import EvidencePacketSetV3
+
+    packet_set = EvidencePacketSetV3(
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        packets=[packet],
+        content_digest=packet.source_digest,
+    )
+
+    claim_proposals = _build_claim_proposals_for_facts(
+        obligation_id=active_obligation_id,
+        facts=fact_set,
+    )
+    claim_set, claim_reports = compile_atomic_claims(
+        claim_proposals,
+        fact_set,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        evidence_packet_digest=packet.source_digest,
+    )
+    if not claim_set.claims:
+        # No claim was authorized: route to gap finalizer.
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+
+    # Authorization succeeded: mark the obligation as supported.
+    authorized_claim_ids = [c.claim_id for c in claim_set.claims]
+    active_obligation.supported_claim_ids = list(authorized_claim_ids)
+    active_obligation.status = "supported"
+
+    return {
+        "evidence_packet_set_ref": packet_set.content_digest,
+        "code_fact_set_ref": fact_set.content_digest,
+        "atomic_claim_set_ref": claim_set.content_digest,
+        "status": "researching",  # the obligation is terminal but the run continues
+        # Private channel: the driver pops this and stashes the objects in
+        # the loop state sidecar so the writer can consume them.
+        "_compiled_evidence": {
+            "obligation_id": active_obligation_id,
+            "packet_set": packet_set,
+            "fact_set": fact_set,
+            "claim_set": claim_set,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # Node: gap_finalizer
 # ---------------------------------------------------------------------------
 
@@ -844,6 +1295,43 @@ def gap_finalizer_node(
     gap_ref = _gap_ref(runtime.run_id, active_obligation_id)
     existing_gaps = state.get("explicit_gap_set_ref", "")
     new_gaps = f"{existing_gaps};{gap_ref}" if existing_gaps else gap_ref
+
+    # Mark the agenda item as terminal (explicit_gap).  Without this
+    # mutation, ``_next_unresolved_obligation`` would keep selecting the
+    # same obligation on wrap-around, causing the loop to spin until
+    # ``max_turns`` even though the gap was accepted.  The model
+    # validator on ``ResearchAgendaItemV1`` requires a non-empty
+    # ``gap_requirements`` entry for ``explicit_gap`` status, so we
+    # append a typed ``GapRequirementV1`` recording the exhaustive
+    # search evidence.
+    gap_requirement = GapRequirementV1(
+        requirement_id=f"gap-req:{active_obligation_id}:{gap_ref}",
+        description=(
+            f"Exhaustive search for obligation {active_obligation_id} did not "
+            f"yield sufficient executable evidence to compile a supported claim."
+        ),
+        search_scope=state.get("active_obligation_id", active_obligation_id),
+        attempted_tools=tuple(
+            sorted({
+                call.tool_name
+                for call in gain_tracker.recent_tool_calls(active_obligation_id)
+            })
+        ) if hasattr(gain_tracker, "recent_tool_calls") else (),
+        terminal="explicit_gap",
+        rationale=(
+            f"Accepted after {gain_tracker.no_progress_counter(active_obligation_id)} "
+            f"consecutive no-gain turns."
+        ),
+    )
+    for item in runtime.agenda.items:
+        if item.obligation_id == active_obligation_id:
+            # ``GapRequirementV1`` is frozen, but the item's
+            # ``gap_requirements`` list is mutable; we append in place
+            # and then set ``status`` (the item model is not frozen).
+            item.gap_requirements.append(gap_requirement)
+            item.status = "explicit_gap"
+            break
+
     return {
         "explicit_gap_set_ref": new_gaps,
         "status": "researching",  # the obligation is terminal but the run continues
@@ -976,6 +1464,7 @@ __all__ = [
     "InformationGainTracker",
     "ResearchGraphRuntime",
     "behavior_graph_updater_node",
+    "compile_candidate_node",
     "evidence_critic_node",
     "execute_pending_tool_calls",
     "gap_finalizer_node",

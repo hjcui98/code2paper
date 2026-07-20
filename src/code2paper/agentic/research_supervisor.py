@@ -427,6 +427,45 @@ class DeterministicSupervisorBackend:
             arguments["symbol"] = symbol
             arguments["depth"] = 1
             arguments["node_budget"] = 32
+        elif tool_name == "trace_data_flow":
+            symbol = self._read_symbol_target(context)
+            if symbol is None:
+                return ()
+            arguments["symbol"] = symbol
+            arguments["direction"] = "both"
+        elif tool_name == "inspect_control_flow":
+            path = self._read_symbol_path(context)
+            symbol = self._read_symbol_target(context)
+            if path is None:
+                return ()
+            arguments["path"] = path
+            if symbol is not None:
+                arguments["symbol"] = symbol
+        elif tool_name == "inspect_configuration":
+            arguments["config_key"] = ""
+            arguments["top_k"] = 20
+        elif tool_name == "search_semantic_hints":
+            query = self._search_query(context)
+            if not query:
+                return ()
+            arguments["query"] = query
+            arguments["top_k"] = 10
+        elif tool_name == "propose_evidence_packet":
+            obl = context.active_obligation
+            if obl is None:
+                return ()
+            arguments["obligation_tag"] = obl.obligation_id
+            arguments["anchor_span_ids"] = list(obl.candidate_behavior_node_ids)
+        elif tool_name == "compile_code_facts":
+            obl = context.active_obligation
+            if obl is None:
+                return ()
+            arguments["packet_id"] = f"proposed:{obl.obligation_id}"
+        elif tool_name == "decompose_atomic_claims":
+            obl = context.active_obligation
+            if obl is None:
+                return ()
+            arguments["fact_ids"] = list(obl.candidate_behavior_node_ids)
 
         call = ResearchToolCallV1(
             tool_call_id=tool_call_id,
@@ -552,14 +591,14 @@ _ACTION_DEFAULT_TOOL: dict[ResearchAction, str | None] = {
     "SEARCH_SYMBOLS": "search_symbols",
     "READ_CANDIDATE": "read_symbol",
     "TRACE_CALLS": "find_references",
-    "TRACE_DATA_FLOW": "find_references",
-    "INSPECT_BRANCH": "read_symbol",
-    "INSPECT_CONFIG": "find_entrypoints",
-    "SEARCH_HINTS": "search_symbols",  # hint tools land later; map to symbol search for now
+    "TRACE_DATA_FLOW": "trace_data_flow",
+    "INSPECT_BRANCH": "inspect_control_flow",
+    "INSPECT_CONFIG": "inspect_configuration",
+    "SEARCH_HINTS": "search_semantic_hints",
     "BUILD_BEHAVIOR_SUBGRAPH": "build_behavior_subgraph",
-    "PROPOSE_PACKET": None,  # R4 tool
-    "COMPILE_FACTS": None,  # R4 tool
-    "DECOMPOSE_CLAIMS": None,  # R4 tool
+    "PROPOSE_PACKET": "propose_evidence_packet",
+    "COMPILE_FACTS": "compile_code_facts",
+    "DECOMPOSE_CLAIMS": "decompose_atomic_claims",
     "REWRITE_SENTENCES": None,  # R6 tool
     "RECORD_GAP": None,
     "PLAN_METHOD": None,
@@ -576,7 +615,28 @@ _TOOL_KIND_MAP: dict[str, ToolKind] = {
     "search_symbols": "symbol_search",
     "read_symbol": "code_read",
     "find_references": "call_trace",
+    "list_repository_tree": "symbol_search",
+    "search_code": "symbol_search",
+    "read_code_span": "code_read",
+    "inspect_configuration": "configuration",
     "build_behavior_subgraph": "behavior_graph",
+    "query_behavior_graph": "behavior_graph",
+    "trace_call_path": "call_trace",
+    "trace_data_flow": "data_flow_trace",
+    "inspect_control_flow": "branch_inspection",
+    "compare_implementation_branches": "branch_inspection",
+    "find_output_side_effects": "call_trace",
+    "search_semantic_hints": "hint_search",
+    "derive_code_queries_from_hint": "hint_search",
+    "compare_hint_to_code": "hint_search",
+    "propose_evidence_packet": "packet_repair",
+    "validate_evidence_packet": "packet_repair",
+    "compile_code_facts": "packet_repair",
+    "validate_code_facts": "packet_repair",
+    "decompose_atomic_claims": "packet_repair",
+    "authorize_atomic_claims": "packet_repair",
+    "record_explicit_code_gap": "other",
+    "check_obligation_coverage": "other",
 }
 
 

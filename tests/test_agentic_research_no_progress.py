@@ -346,6 +346,14 @@ class TestSupervisorStrategySwitch:
         return DeterministicSupervisorBackend(
             run_id="run-switch",
             repo_snapshot_id=snapshot.snapshot_id,
+            ready_tools=(
+                "find_entrypoints",
+                "search_symbols",
+                "read_symbol",
+                "find_references",
+                "build_behavior_subgraph",
+                "search_semantic_hints",
+            ),
         )
 
     def _context(
@@ -406,6 +414,7 @@ class TestSupervisorStrategySwitch:
                 "read_symbol",
                 "find_references",
                 "build_behavior_subgraph",
+                "search_semantic_hints",
             ),
             hard_rules=(
                 "no_snapshot_external_paths",
@@ -455,7 +464,7 @@ class TestSupervisorStrategySwitch:
         # Recent tools don't include search_symbols -> switch to SEARCH_HINTS.
         assert decision.action == "SEARCH_HINTS"
         assert decision.selected_tool_calls
-        assert decision.selected_tool_calls[0].tool_name == "search_symbols"
+        assert decision.selected_tool_calls[0].tool_name == "search_semantic_hints"
 
     def test_after_three_no_gain_turns_proposes_record_gap(
         self, snapshot: RepoSnapshot
@@ -692,6 +701,64 @@ class TestEndToEndNoProgressTermination:
         obligations_in_trace = {d.obligation_id for d in result.decision_trace}
         assert "obl-a" in obligations_in_trace
         assert "obl-b" in obligations_in_trace
+
+    def test_multi_obligation_wrap_around_terminates_via_all_terminal(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        """Regression: when ALL must-cover obligations gap out, the loop
+        must terminate via ``all_obligations_terminal`` and NOT spin until
+        ``max_turns_reached``.
+
+        Before the fix, ``gap_finalizer_node`` only wrote a gap ref to
+        ``explicit_gap_set_ref`` but did NOT update the agenda item's
+        ``status`` to ``explicit_gap``.  As a result,
+        ``_next_unresolved_obligation`` kept selecting the same
+        obligations on wrap-around (their status was still
+        ``in_progress``), and the loop cycled through them repeatedly
+        until ``max_turns``.  This test reproduces that scenario with
+        three non-matching obligations and asserts the loop terminates
+        correctly with every agenda item marked terminal.
+        """
+
+        obl_a = _obligation(
+            "obl-a", search_terms=("definitely_not_a_real_symbol_xyz_a",),
+        )
+        obl_b = _obligation(
+            "obl-b", search_terms=("definitely_not_a_real_symbol_xyz_b",),
+        )
+        obl_c = _obligation(
+            "obl-c", search_terms=("definitely_not_a_real_symbol_xyz_c",),
+        )
+        agenda = _agenda("run-wrap", snapshot, obl_a, obl_b, obl_c)
+        runtime = _runtime(snapshot, agenda, run_id="run-wrap")
+        result = run_research_loop(runtime, max_turns=30)
+        # The loop MUST terminate via all_obligations_terminal, not by
+        # hitting max_turns.  This is the core regression assertion.
+        assert result.terminated is True
+        assert result.termination_reason == "all_obligations_terminal", (
+            f"expected all_obligations_terminal, got {result.termination_reason}; "
+            f"turns_executed={result.turns_executed}"
+        )
+        assert result.termination_reason != "max_turns_reached"
+        # Every agenda item must be terminal (explicit_gap).  If
+        # gap_finalizer had not mutated the agenda, some items would
+        # still be ``in_progress`` and the loop would not have
+        # terminated via all_obligations_terminal.
+        terminal_statuses = {"supported", "explicit_gap", "blocked"}
+        for item in agenda.items:
+            assert item.status in terminal_statuses, (
+                f"obligation {item.obligation_id} has non-terminal status {item.status}"
+            )
+        # All three should be explicit_gap (none of them match any symbol).
+        assert all(item.status == "explicit_gap" for item in agenda.items), (
+            [item.obligation_id for item in agenda.items if item.status != "explicit_gap"]
+        )
+        # Each gapped item must have at least one GapRequirementV1
+        # (required by the ResearchAgendaItemV1 model validator).
+        for item in agenda.items:
+            assert item.gap_requirements, (
+                f"obligation {item.obligation_id} has no gap_requirements"
+            )
 
 
 # ---------------------------------------------------------------------------

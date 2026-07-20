@@ -557,6 +557,7 @@ def check_r8_acceptance(
     run_environment: Mapping[str, str] | None = None,
     run_temperature: float | None = None,
     source_authority_policy: Mapping[str, Any] | None = None,
+    paper_read_only_at_end: bool | None = None,
 ) -> R8AcceptanceReport:
     """Check all R8 acceptance criteria for a single project run.
 
@@ -609,6 +610,11 @@ def check_r8_acceptance(
     source_authority_policy
         The run's source authority policy.  Used by the
         ``code_and_author_yml_only`` protocol check.
+    paper_read_only_at_end
+        Evidence that the original paper was read only AFTER the Method
+        was authored (i.e., for diagnostic comparison).  ``None`` means
+        the run did not record this evidence, which fails the protocol
+        check.  Used by the ``paper_read_only_at_end`` protocol check.
     """
 
     settings = protocol_settings or R8ProtocolSettings()
@@ -734,16 +740,22 @@ def check_r8_acceptance(
 
     # Protocol settings check
     protocol_ok, protocol_failures = _check_protocol_settings(
-        settings, env, run_temperature, authority
+        settings,
+        env,
+        run_temperature,
+        authority,
+        paper_read_only_at_end_evidence=paper_read_only_at_end,
     )
 
-    # Top-level accepted flag: every non-skipped criterion passed AND
-    # protocol check passed.
-    non_skipped_failed = [
+    # Top-level accepted flag: every criterion must be exercised and
+    # passed (``skipped`` counts as failure for acceptance -- an R8 run
+    # must positively evidence every criterion, not rely on absence),
+    # AND the protocol check must pass.
+    non_passed = [
         key for key, value in criteria.items()
-        if value.status == "failed"
+        if value.status != "passed"
     ]
-    accepted = protocol_ok and not non_skipped_failed
+    accepted = protocol_ok and not non_passed
 
     return R8AcceptanceReport(
         run_id=run_id,
@@ -892,17 +904,28 @@ def _check_protocol_settings(
     env: Mapping[str, str],
     run_temperature: float | None,
     source_authority_policy: Mapping[str, Any],
+    paper_read_only_at_end_evidence: bool | None = None,
 ) -> tuple[bool, list[str]]:
     """Verify the run's environment matches the R8.1 protocol settings.
 
     Returns ``(ok, failures)``.  ``failures`` is a list of human-readable
     failure strings (empty when ``ok`` is ``True``).
+
+    The check is strict: every protocol field that the R8.1 spec declares
+    as required must be present and match.  Missing values (``None`` /
+    empty string / empty policy) are failures, not skips, because an
+    acceptance run must positively evidence protocol compliance rather
+    than rely on absence of evidence.
     """
 
     failures: list[str] = []
 
-    # temperature_zero
-    if run_temperature is not None and run_temperature != settings.temperature:
+    # temperature_zero: the run must positively record temperature == 0.
+    # A missing temperature is a failure (the run did not evidence the
+    # protocol setting).
+    if run_temperature is None:
+        failures.append("temperature_not_recorded:expected=0.0")
+    elif run_temperature != settings.temperature:
         failures.append(
             f"temperature_mismatch:run={run_temperature} expected={settings.temperature}"
         )
@@ -915,14 +938,19 @@ def _check_protocol_settings(
         )
 
     # single_tp2_instance: enforced via env vars CODE2PAPER_TP_SIZE and
-    # CODE2PAPER_NUM_GPUS.  When absent, the check is skipped (the
-    # caller may pass these explicitly for the protocol check).
+    # CODE2PAPER_NUM_GPUS.  Both must be present and equal to "2".
+    # Missing values are failures (the run did not evidence TP=2 on 2
+    # GPUs).
     tp_size = env.get("CODE2PAPER_TP_SIZE", "")
     num_gpus = env.get("CODE2PAPER_NUM_GPUS", "")
     if settings.single_tp2_instance:
-        if tp_size and tp_size != "2":
+        if not tp_size:
+            failures.append("tp_size_not_recorded:expected=2")
+        elif tp_size != "2":
             failures.append(f"tp_size_mismatch:run={tp_size} expected=2")
-        if num_gpus and num_gpus != "2":
+        if not num_gpus:
+            failures.append("num_gpus_not_recorded:expected=2")
+        elif num_gpus != "2":
             failures.append(f"num_gpus_mismatch:run={num_gpus} expected=2")
 
     # serial_execution: enforced via env var CODE2PAPER_PARALLEL_PROJECTS.
@@ -941,13 +969,26 @@ def _check_protocol_settings(
                 f"parallel_projects_not_allowed:run={parallel} expected<=1"
             )
 
-    # code_and_author_yml_only: the source authority policy must not
-    # promote paper / README / TeX / PDF to executable_hard.  We scan
-    # the policy for any such promotion.
-    if not settings.paper_promoted_to_hard_evidence:
+    # code_and_author_yml_only: the source authority policy must be
+    # present and must not promote paper / README / TeX / PDF to
+    # executable_hard.  An empty policy is a failure (the run did not
+    # evidence its source authority classification).
+    if not source_authority_policy:
+        failures.append("source_authority_policy_missing")
+    elif not settings.paper_promoted_to_hard_evidence:
         paper_promotion = _detect_paper_promotion(source_authority_policy)
         for promotion in paper_promotion:
             failures.append(f"paper_promoted_to_hard_evidence:{promotion}")
+
+    # paper_read_only_at_end: the run must positively evidence that the
+    # original paper was read only AFTER the Method was authored (i.e.,
+    # for diagnostic comparison, not as a writing input).  ``None``
+    # means the run did not record this evidence -> failure.
+    if settings.paper_read_only_at_end:
+        if paper_read_only_at_end_evidence is None:
+            failures.append("paper_read_only_at_end_not_evidenced")
+        elif not paper_read_only_at_end_evidence:
+            failures.append("paper_read_only_at_end_violated")
 
     return (not failures), failures
 
@@ -1199,6 +1240,13 @@ def check_r8_acceptance_from_run_dir(
     # Source authority policy from the summary (if any).
     source_authority_policy: dict[str, Any] = dict(summary_data.get("source_authority_policy", {}) or {})
 
+    # paper_read_only_at_end evidence from the summary (if any).
+    paper_read_only_at_end_raw = summary_data.get("paper_read_only_at_end", None)
+    if paper_read_only_at_end_raw is None:
+        paper_read_only_at_end_evidence: bool | None = None
+    else:
+        paper_read_only_at_end_evidence = bool(paper_read_only_at_end_raw)
+
     return check_r8_acceptance(
         run_id=effective_run_id,
         project_id=project_id,
@@ -1215,6 +1263,7 @@ def check_r8_acceptance_from_run_dir(
         run_environment=run_environment,
         run_temperature=run_temperature,
         source_authority_policy=source_authority_policy,
+        paper_read_only_at_end=paper_read_only_at_end_evidence,
     )
 
 

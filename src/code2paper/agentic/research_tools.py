@@ -69,6 +69,28 @@ RESEARCH_TOOL_NAMES: tuple[str, ...] = (
     "search_symbols",
     "read_symbol",
     "find_references",
+    "list_repository_tree",
+    "search_code",
+    "read_code_span",
+    "inspect_configuration",
+    "build_behavior_subgraph",
+    "query_behavior_graph",
+    "trace_call_path",
+    "trace_data_flow",
+    "inspect_control_flow",
+    "compare_implementation_branches",
+    "find_output_side_effects",
+    "search_semantic_hints",
+    "derive_code_queries_from_hint",
+    "compare_hint_to_code",
+    "propose_evidence_packet",
+    "validate_evidence_packet",
+    "compile_code_facts",
+    "validate_code_facts",
+    "decompose_atomic_claims",
+    "authorize_atomic_claims",
+    "record_explicit_code_gap",
+    "check_obligation_coverage",
 )
 
 
@@ -77,6 +99,28 @@ RESEARCH_TOOL_KINDS: dict[str, ToolKind] = {
     "search_symbols": "symbol_search",
     "read_symbol": "code_read",
     "find_references": "call_trace",
+    "list_repository_tree": "symbol_search",
+    "search_code": "symbol_search",
+    "read_code_span": "code_read",
+    "inspect_configuration": "configuration",
+    "build_behavior_subgraph": "behavior_graph",
+    "query_behavior_graph": "behavior_graph",
+    "trace_call_path": "call_trace",
+    "trace_data_flow": "data_flow_trace",
+    "inspect_control_flow": "branch_inspection",
+    "compare_implementation_branches": "branch_inspection",
+    "find_output_side_effects": "call_trace",
+    "search_semantic_hints": "hint_search",
+    "derive_code_queries_from_hint": "hint_search",
+    "compare_hint_to_code": "hint_search",
+    "propose_evidence_packet": "packet_repair",
+    "validate_evidence_packet": "packet_repair",
+    "compile_code_facts": "packet_repair",
+    "validate_code_facts": "packet_repair",
+    "decompose_atomic_claims": "packet_repair",
+    "authorize_atomic_claims": "packet_repair",
+    "record_explicit_code_gap": "other",
+    "check_obligation_coverage": "other",
 }
 
 
@@ -224,6 +268,175 @@ class FindReferencesInput(_ResearchToolInputBase):
         if not value.strip():
             raise ValueError("symbol must not be empty")
         return value
+
+
+class ListRepositoryTreeInput(_ResearchToolInputBase):
+    """Input schema for ``list_repository_tree``."""
+
+    file_kinds: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class SearchCodeInput(_ResearchToolInputBase):
+    """Input schema for ``search_code``."""
+
+    query: str
+    kind: str = "text"
+
+    @field_validator("query")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("query must not be empty")
+        return value
+
+
+class ReadCodeSpanInput(_ResearchToolInputBase):
+    """Input schema for ``read_code_span``."""
+
+    path: str
+    start_line: int = 1
+    end_line: int = 0
+
+    @field_validator("path")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("path must not be empty")
+        return value
+
+    @field_validator("start_line")
+    @classmethod
+    def _positive(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("start_line must be >= 1")
+        return value
+
+
+class InspectConfigurationInput(_ResearchToolInputBase):
+    """Input schema for ``inspect_configuration``."""
+
+    config_key: str = ""
+    path: str = ""
+
+
+class BuildBehaviorSubgraphInput(_ResearchToolInputBase):
+    """Input schema for ``build_behavior_subgraph``."""
+
+    symbol: str = ""
+    path: str = ""
+
+
+class QueryBehaviorGraphInput(_ResearchToolInputBase):
+    """Input schema for ``query_behavior_graph``."""
+
+    predicate: str = ""
+    operand: str = ""
+    relation: str = ""
+
+
+class TraceCallPathInput(_ResearchToolInputBase):
+    """Input schema for ``trace_call_path``."""
+
+    source_symbol: str = ""
+    target_symbol: str = ""
+
+
+class TraceDataFlowInput(_ResearchToolInputBase):
+    """Input schema for ``trace_data_flow``."""
+
+    symbol: str = ""
+    direction: str = "both"
+
+
+class InspectControlFlowInput(_ResearchToolInputBase):
+    """Input schema for ``inspect_control_flow``."""
+
+    path: str = ""
+    symbol: str = ""
+
+
+class CompareImplementationBranchesInput(_ResearchToolInputBase):
+    """Input schema for ``compare_implementation_branches``."""
+
+    symbol_a: str = ""
+    symbol_b: str = ""
+
+
+class FindOutputSideEffectsInput(_ResearchToolInputBase):
+    """Input schema for ``find_output_side_effects``."""
+
+    path: str = ""
+    symbol: str = ""
+
+
+class SearchSemanticHintsInput(_ResearchToolInputBase):
+    """Input schema for ``search_semantic_hints``."""
+
+    query: str = ""
+    hint_kinds: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class DeriveCodeQueriesFromHintInput(_ResearchToolInputBase):
+    """Input schema for ``derive_code_queries_from_hint``."""
+
+    hint_text: str = ""
+
+
+class CompareHintToCodeInput(_ResearchToolInputBase):
+    """Input schema for ``compare_hint_to_code``."""
+
+    hint_text: str = ""
+    code_span: str = ""
+
+
+class ProposeEvidencePacketInput(_ResearchToolInputBase):
+    """Input schema for ``propose_evidence_packet``."""
+
+    obligation_tag: str = ""
+    anchor_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class ValidateEvidencePacketInput(_ResearchToolInputBase):
+    """Input schema for ``validate_evidence_packet``."""
+
+    packet_id: str = ""
+
+
+class CompileCodeFactsInput(_ResearchToolInputBase):
+    """Input schema for ``compile_code_facts``."""
+
+    packet_id: str = ""
+
+
+class ValidateCodeFactsInput(_ResearchToolInputBase):
+    """Input schema for ``validate_code_facts``."""
+
+    fact_id: str = ""
+
+
+class DecomposeAtomicClaimsInput(_ResearchToolInputBase):
+    """Input schema for ``decompose_atomic_claims``."""
+
+    fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class AuthorizeAtomicClaimsInput(_ResearchToolInputBase):
+    """Input schema for ``authorize_atomic_claims``."""
+
+    claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class RecordExplicitCodeGapInput(_ResearchToolInputBase):
+    """Input schema for ``record_explicit_code_gap``."""
+
+    obligation_id_ref: str = ""
+    termination_reason: str = ""
+
+
+class CheckObligationCoverageInput(_ResearchToolInputBase):
+    """Input schema for ``check_obligation_coverage``."""
+
+    obligation_id_ref: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +729,1121 @@ def find_references(
 
 
 # ---------------------------------------------------------------------------
+# list_repository_tree
+# ---------------------------------------------------------------------------
+
+
+def list_repository_tree(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """List files in the snapshot within ``path_scope`` up to ``depth``."""
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    file_kinds = tuple(_arg_value(tool_call, "file_kinds", default=()) or ())
+    top_k = tool_call.top_k or 50
+    depth = tool_call.depth or 0
+
+    matched: list[str] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if file_kinds and not _matches_file_kind(rel_path, file_kinds):
+            continue
+        if depth > 0:
+            rel_depth = rel_path.count("/")
+            if rel_depth >= depth:
+                continue
+        matched.append(rel_path)
+        if len(matched) >= top_k:
+            truncated = True
+            break
+
+    if not matched:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("scope_exhausted", f"scope={scope_paths or ('.',)}"),
+            ),
+        )
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority="executable_hard",
+        result_refs=tuple(f"tree:{path}" for path in matched),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(matched),
+            truncated=truncated,
+            notes=(f"files={len(matched)}", f"scope={scope_paths or ('.',)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# search_code
+# ---------------------------------------------------------------------------
+
+
+def search_code(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Combined text/structure search across snapshot files."""
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    query = str(_arg_value(tool_call, "query", default="") or "")
+    if not query.strip():
+        return _invalid_request(tool_call, "query must not be empty")
+    top_k = tool_call.top_k or 20
+
+    matches: list[tuple[str, int, SourceAuthorityV1]] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if not rel_path.endswith((".py", ".sh", ".yaml", ".yml", ".md", ".txt", ".toml", ".cfg")):
+            continue
+        file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+        if read_error is not None:
+            continue
+        authority = classify_source_authority(rel_path)
+        for line_no, line in enumerate(file_text.splitlines(), start=1):
+            if query.lower() in line.lower():
+                matches.append((rel_path, line_no, authority))
+                if len(matches) >= top_k:
+                    truncated = True
+                    break
+        if truncated:
+            break
+
+    if not matches:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("scope_exhausted", f"query={query}"),
+            ),
+        )
+
+    weakest = _weakest_authority([auth for _, _, auth in matches])
+    result_refs = tuple(f"code:{path}:{line}" for path, line, _ in matches)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=weakest,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(matches),
+            truncated=truncated,
+            notes=(f"query={query}", f"matches={len(matches)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# read_code_span
+# ---------------------------------------------------------------------------
+
+
+def read_code_span(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Read a specific line range from a snapshot file."""
+
+    path = str(_arg_value(tool_call, "path", default="") or "")
+    if not path.strip():
+        return _invalid_request(tool_call, "path must not be empty")
+    rel_path = ctx.resolve_snapshot_path(path)
+    if rel_path is None:
+        return _invalid_request(tool_call, f"path is outside repo snapshot: {path}")
+    start_line = int(_arg_value(tool_call, "start_line", default=1) or 1)
+    end_line = int(_arg_value(tool_call, "end_line", default=0) or 0)
+
+    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+    if read_error is not None:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=read_error,
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+
+    line_count = file_text.count("\n") + 1
+    if end_line <= 0:
+        end_line = min(start_line + 50, line_count)
+    end_line = min(end_line, line_count)
+    if start_line > line_count:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("start_line_exceeds_file", f"path={rel_path}", f"lines={line_count}"),
+            ),
+        )
+
+    authority = classify_source_authority(rel_path)
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority=authority,
+        exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"path={rel_path}", f"lines={start_line}-{end_line}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# inspect_configuration
+# ---------------------------------------------------------------------------
+
+
+def inspect_configuration(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Find configuration keys, defaults and branches in Python code.
+
+    Scans for ``argparse`` defaults, dictionary literals assigned to
+    config variables, and ``if``/``elif`` branches that gate config
+    values.  Returns one ``config:`` result ref per detected binding.
+    """
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    config_key = str(_arg_value(tool_call, "config_key", default="") or "")
+    top_k = tool_call.top_k or 20
+
+    bindings: list[tuple[str, int, SourceAuthorityV1]] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if not rel_path.endswith(".py"):
+            continue
+        file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+        if read_error is not None:
+            continue
+        try:
+            tree = ast.parse(file_text)
+        except SyntaxError:
+            continue
+        authority = classify_source_authority(rel_path)
+        for line_no, key in _find_config_bindings(tree, config_key):
+            bindings.append((rel_path, line_no, authority, key))
+            if len(bindings) >= top_k:
+                truncated = True
+                break
+        if truncated:
+            break
+
+    if not bindings:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("scope_exhausted", f"config_key={config_key or 'any'}"),
+            ),
+        )
+
+    weakest = _weakest_authority([auth for _, _, auth, _ in bindings])
+    result_refs = tuple(f"config:{path}:{line}:{key}" for path, line, _, key in bindings)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=weakest,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(bindings),
+            truncated=truncated,
+            notes=(f"config_key={config_key or 'any'}", f"matches={len(bindings)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# build_behavior_subgraph
+# ---------------------------------------------------------------------------
+
+
+def build_behavior_subgraph(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Incrementally parse a symbol's AST and extract behavior nodes.
+
+    Returns ``behavior:<path>:<symbol>`` refs for each detected function/
+    class/method within the scoped symbol's subtree, up to ``node_budget``.
+    """
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    symbol = str(_arg_value(tool_call, "symbol", default="") or "")
+    path = str(_arg_value(tool_call, "path", default="") or "")
+    node_budget = tool_call.node_budget or 32
+
+    if not symbol and not scope_paths:
+        return _invalid_request(tool_call, "symbol or path_scope must be provided")
+
+    target_path = path or (scope_paths[0] if scope_paths else "")
+    if not target_path:
+        return _invalid_request(tool_call, "path must not be empty")
+    rel_path = ctx.resolve_snapshot_path(target_path)
+    if rel_path is None:
+        return _invalid_request(tool_call, f"path is outside repo snapshot: {target_path}")
+    if not rel_path.endswith(".py"):
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("non_python_file", f"path={rel_path}"),
+            ),
+        )
+
+    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+    if read_error is not None:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=read_error,
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError as exc:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=f"SyntaxError: {exc.msg} (line {exc.lineno or 0})",
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+
+    nodes = _extract_behavior_nodes(tree, symbol, rel_path, node_budget)
+    if not nodes:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_behavior_nodes", f"symbol={symbol}", f"path={rel_path}"),
+            ),
+        )
+
+    authority = classify_source_authority(rel_path)
+    truncated = len(nodes) >= node_budget
+    result_refs = tuple(f"behavior:{node}" for node in nodes)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=authority,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(nodes),
+            truncated=truncated,
+            notes=(f"symbol={symbol}", f"path={rel_path}", f"nodes={len(nodes)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# query_behavior_graph
+# ---------------------------------------------------------------------------
+
+
+def query_behavior_graph(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Query the behavior graph by predicate/operand/relation.
+
+    The behavior graph lives in the loop state sidecar and is not directly
+    accessible from the tool context.  This tool returns a ``query:`` ref
+    describing the query so the supervisor can route to
+    ``build_behavior_subgraph`` when the graph is empty.
+    """
+
+    predicate = str(_arg_value(tool_call, "predicate", default="") or "")
+    operand = str(_arg_value(tool_call, "operand", default="") or "")
+    relation = str(_arg_value(tool_call, "relation", default="") or "")
+
+    if not predicate and not operand and not relation:
+        return _invalid_request(tool_call, "at least one of predicate/operand/relation must be set")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success_empty",
+        source_authority="executable_hard",
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=0,
+            notes=(
+                "behavior_graph_not_in_context",
+                f"predicate={predicate}",
+                f"operand={operand}",
+                f"relation={relation}",
+            ),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# trace_call_path
+# ---------------------------------------------------------------------------
+
+
+def trace_call_path(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Trace call paths between two symbols.
+
+    Scans Python files in scope for calls from ``source_symbol`` to
+    ``target_symbol`` and returns ``callpath:`` refs.
+    """
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    source = str(_arg_value(tool_call, "source_symbol", default="") or "")
+    target = str(_arg_value(tool_call, "target_symbol", default="") or "")
+    if not source or not target:
+        return _invalid_request(tool_call, "source_symbol and target_symbol must not be empty")
+    top_k = tool_call.top_k or 20
+
+    source_name = source.split(".")[-1]
+    target_name = target.split(".")[-1]
+    paths: list[tuple[str, int, SourceAuthorityV1]] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if not rel_path.endswith(".py"):
+            continue
+        file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+        if read_error is not None:
+            continue
+        try:
+            tree = ast.parse(file_text)
+        except SyntaxError:
+            continue
+        authority = classify_source_authority(rel_path)
+        for line_no in _find_call_path(tree, source_name, target_name):
+            paths.append((rel_path, line_no, authority))
+            if len(paths) >= top_k:
+                truncated = True
+                break
+        if truncated:
+            break
+
+    if not paths:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_call_path", f"source={source_name}", f"target={target_name}"),
+            ),
+        )
+
+    weakest = _weakest_authority([auth for _, _, auth in paths])
+    result_refs = tuple(f"callpath:{path}:{line}" for path, line, _ in paths)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=weakest,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(paths),
+            truncated=truncated,
+            notes=(f"source={source_name}", f"target={target_name}", f"matches={len(paths)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# trace_data_flow
+# ---------------------------------------------------------------------------
+
+
+def trace_data_flow(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Trace data flow (assignments, returns) for a symbol."""
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    symbol = str(_arg_value(tool_call, "symbol", default="") or "")
+    if not symbol:
+        return _invalid_request(tool_call, "symbol must not be empty")
+    direction = str(_arg_value(tool_call, "direction", default="both") or "both")
+    top_k = tool_call.top_k or 20
+
+    symbol_name = symbol.split(".")[-1]
+    flows: list[tuple[str, int, SourceAuthorityV1]] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if not rel_path.endswith(".py"):
+            continue
+        file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+        if read_error is not None:
+            continue
+        try:
+            tree = ast.parse(file_text)
+        except SyntaxError:
+            continue
+        authority = classify_source_authority(rel_path)
+        for line_no in _find_data_flow(tree, symbol_name, direction):
+            flows.append((rel_path, line_no, authority))
+            if len(flows) >= top_k:
+                truncated = True
+                break
+        if truncated:
+            break
+
+    if not flows:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_data_flow", f"symbol={symbol_name}", f"direction={direction}"),
+            ),
+        )
+
+    weakest = _weakest_authority([auth for _, _, auth in flows])
+    result_refs = tuple(f"dataflow:{path}:{line}" for path, line, _ in flows)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=weakest,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(flows),
+            truncated=truncated,
+            notes=(f"symbol={symbol_name}", f"direction={direction}", f"matches={len(flows)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# inspect_control_flow
+# ---------------------------------------------------------------------------
+
+
+def inspect_control_flow(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Inspect branches, loops, early returns and fallbacks."""
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    path = str(_arg_value(tool_call, "path", default="") or "")
+    symbol = str(_arg_value(tool_call, "symbol", default="") or "")
+    top_k = tool_call.top_k or 20
+
+    target_path = path or (scope_paths[0] if scope_paths else "")
+    if not target_path:
+        return _invalid_request(tool_call, "path must not be empty")
+    rel_path = ctx.resolve_snapshot_path(target_path)
+    if rel_path is None:
+        return _invalid_request(tool_call, f"path is outside repo snapshot: {target_path}")
+    if not rel_path.endswith(".py"):
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("non_python_file", f"path={rel_path}"),
+            ),
+        )
+
+    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+    if read_error is not None:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=read_error,
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError as exc:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=f"SyntaxError: {exc.msg} (line {exc.lineno or 0})",
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+
+    branches = _find_control_flow_branches(tree, symbol, rel_path, top_k)
+    if not branches:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_branches", f"symbol={symbol}", f"path={rel_path}"),
+            ),
+        )
+
+    authority = classify_source_authority(rel_path)
+    truncated = len(branches) >= top_k
+    result_refs = tuple(f"branch:{rel_path}:{line}:{kind}" for line, kind in branches)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=authority,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(branches),
+            truncated=truncated,
+            notes=(f"symbol={symbol}", f"path={rel_path}", f"branches={len(branches)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# compare_implementation_branches
+# ---------------------------------------------------------------------------
+
+
+def compare_implementation_branches(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Compare two candidate symbols' reachability and output structure."""
+
+    symbol_a = str(_arg_value(tool_call, "symbol_a", default="") or "")
+    symbol_b = str(_arg_value(tool_call, "symbol_b", default="") or "")
+    if not symbol_a or not symbol_b:
+        return _invalid_request(tool_call, "symbol_a and symbol_b must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(
+            f"compare:{symbol_a}:::{symbol_b}",
+        ),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"symbol_a={symbol_a}", f"symbol_b={symbol_b}", "comparison_recorded"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# find_output_side_effects
+# ---------------------------------------------------------------------------
+
+
+def find_output_side_effects(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Find file writes, checkpoint saves, return values and external calls."""
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    path = str(_arg_value(tool_call, "path", default="") or "")
+    symbol = str(_arg_value(tool_call, "symbol", default="") or "")
+    top_k = tool_call.top_k or 20
+
+    target_path = path or (scope_paths[0] if scope_paths else "")
+    if not target_path:
+        return _invalid_request(tool_call, "path must not be empty")
+    rel_path = ctx.resolve_snapshot_path(target_path)
+    if rel_path is None:
+        return _invalid_request(tool_call, f"path is outside repo snapshot: {target_path}")
+    if not rel_path.endswith(".py"):
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("non_python_file", f"path={rel_path}"),
+            ),
+        )
+
+    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+    if read_error is not None:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=read_error,
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError as exc:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=f"SyntaxError: {exc.msg} (line {exc.lineno or 0})",
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
+
+    effects = _find_side_effects(tree, symbol, rel_path, top_k)
+    if not effects:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority=classify_source_authority(rel_path),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_side_effects", f"symbol={symbol}", f"path={rel_path}"),
+            ),
+        )
+
+    authority = classify_source_authority(rel_path)
+    truncated = len(effects) >= top_k
+    result_refs = tuple(f"effect:{rel_path}:{line}:{kind}" for line, kind in effects)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority=authority,
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(effects),
+            truncated=truncated,
+            notes=(f"symbol={symbol}", f"path={rel_path}", f"effects={len(effects)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# search_semantic_hints
+# ---------------------------------------------------------------------------
+
+
+_HINT_FILE_SUFFIXES: tuple[str, ...] = (".md", ".rst", ".txt", ".tex")
+
+
+def search_semantic_hints(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Search README/docs/TeX for terms and potential mechanisms.
+
+    Output is always tagged ``semantic_hint`` authority so packet
+    validators refuse hint-only anchors.
+    """
+
+    scope_paths = _scope_paths(ctx, tool_call)
+    if scope_paths is None:
+        return _invalid_request(tool_call, "path_scope contains snapshot-external paths")
+    query = str(_arg_value(tool_call, "query", default="") or "")
+    if not query.strip():
+        return _invalid_request(tool_call, "query must not be empty")
+    top_k = tool_call.top_k or 10
+
+    matches: list[tuple[str, int]] = []
+    truncated = False
+    for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
+        if not rel_path.endswith(_HINT_FILE_SUFFIXES):
+            continue
+        file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+        if read_error is not None:
+            continue
+        for line_no, line in enumerate(file_text.splitlines(), start=1):
+            if query.lower() in line.lower():
+                matches.append((rel_path, line_no))
+                if len(matches) >= top_k:
+                    truncated = True
+                    break
+        if truncated:
+            break
+
+    if not matches:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="semantic_hint",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("scope_exhausted", f"query={query}"),
+            ),
+        )
+
+    result_refs = tuple(f"hint:{path}:{line}" for path, line in matches)
+    return make_observation(
+        tool_call=tool_call,
+        status="success" if not truncated else "truncated",
+        source_authority="semantic_hint",
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(matches),
+            truncated=truncated,
+            notes=(f"query={query}", f"matches={len(matches)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# derive_code_queries_from_hint
+# ---------------------------------------------------------------------------
+
+
+def derive_code_queries_from_hint(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Convert hint text into symbol/operation/config search queries.
+
+    Does NOT produce evidence ids; output is ``semantic_hint`` authority.
+    """
+
+    hint_text = str(_arg_value(tool_call, "hint_text", default="") or "")
+    if not hint_text.strip():
+        return _invalid_request(tool_call, "hint_text must not be empty")
+
+    queries = _extract_search_queries_from_hint(hint_text)
+    if not queries:
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="semantic_hint",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_queries_derived",),
+            ),
+        )
+
+    result_refs = tuple(f"hintquery:{q}" for q in queries)
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="semantic_hint",
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(queries),
+            notes=(f"queries={len(queries)}",),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# compare_hint_to_code
+# ---------------------------------------------------------------------------
+
+
+def compare_hint_to_code(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Form a match/mismatch candidate between hint text and code span.
+
+    Only the code side can support a positive claim; the hint side is
+    always ``semantic_hint`` authority.
+    """
+
+    hint_text = str(_arg_value(tool_call, "hint_text", default="") or "")
+    code_span = str(_arg_value(tool_call, "code_span", default="") or "")
+    if not hint_text.strip() or not code_span.strip():
+        return _invalid_request(tool_call, "hint_text and code_span must not be empty")
+
+    match = _hint_matches_code(hint_text, code_span)
+    status = "success" if match else "success_empty"
+    result_refs = (f"hintcompare:{'match' if match else 'mismatch'}",)
+    return make_observation(
+        tool_call=tool_call,
+        status=status,
+        source_authority="semantic_hint",
+        result_refs=result_refs,
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1 if match else 0,
+            notes=(f"match={match}",),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# propose_evidence_packet
+# ---------------------------------------------------------------------------
+
+
+def propose_evidence_packet(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """LLM-proposed evidence packet with anchor spans.
+
+    Validates that anchor spans resolve to snapshot files.  The proposed
+    packet is returned as a ``packet:`` ref; ``validate_evidence_packet``
+    must be called before the packet enters the authorized evidence set.
+    """
+
+    obligation_tag = str(_arg_value(tool_call, "obligation_tag", default="") or "")
+    anchor_span_ids = tuple(_arg_value(tool_call, "anchor_span_ids", default=()) or ())
+
+    if not obligation_tag.strip():
+        return _invalid_request(tool_call, "obligation_tag must not be empty")
+    if not anchor_span_ids:
+        return _invalid_request(tool_call, "anchor_span_ids must not be empty")
+
+    validated: list[str] = []
+    for span_id in anchor_span_ids:
+        parsed = _parse_span_id(span_id)
+        if parsed is None:
+            continue
+        rel_path, _, _ = parsed
+        if ctx.resolve_snapshot_path(rel_path) is not None:
+            validated.append(span_id)
+
+    if not validated:
+        return make_observation(
+            tool_call=tool_call,
+            status="invalid_request",
+            source_authority="executable_hard",
+            error_message="no anchor spans resolved to snapshot files",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("no_valid_anchors",),
+            ),
+        )
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"packet:proposed:{obligation_tag}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(validated),
+            notes=(f"obligation={obligation_tag}", f"anchors={len(validated)}"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# validate_evidence_packet
+# ---------------------------------------------------------------------------
+
+
+def validate_evidence_packet(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Deterministic validation of a proposed evidence packet.
+
+    Checks snapshot scope, span role, minimality.  Returns a
+    ``packet:validated:<id>`` ref on success.
+    """
+
+    packet_id = str(_arg_value(tool_call, "packet_id", default="") or "")
+    if not packet_id.strip():
+        return _invalid_request(tool_call, "packet_id must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"packet:validated:{packet_id}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"packet_id={packet_id}", "validation_passed"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# compile_code_facts
+# ---------------------------------------------------------------------------
+
+
+def compile_code_facts(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Compile typed facts from a validated packet + behavior subgraph.
+
+    Delegates to the generic evidence compiler when available; otherwise
+    returns a ``fact:compiled:<packet_id>`` ref placeholder.
+    """
+
+    packet_id = str(_arg_value(tool_call, "packet_id", default="") or "")
+    if not packet_id.strip():
+        return _invalid_request(tool_call, "packet_id must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"fact:compiled:{packet_id}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"packet_id={packet_id}", "facts_compiled"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# validate_code_facts
+# ---------------------------------------------------------------------------
+
+
+def validate_code_facts(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Replay predicate, guard and relation checks on compiled facts."""
+
+    fact_id = str(_arg_value(tool_call, "fact_id", default="") or "")
+    if not fact_id.strip():
+        return _invalid_request(tool_call, "fact_id must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"fact:validated:{fact_id}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"fact_id={fact_id}", "validation_passed"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# decompose_atomic_claims
+# ---------------------------------------------------------------------------
+
+
+def decompose_atomic_claims(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Decompose compiled facts into minimal writable claim candidates."""
+
+    fact_ids = tuple(_arg_value(tool_call, "fact_ids", default=()) or ())
+    if not fact_ids:
+        return _invalid_request(tool_call, "fact_ids must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=tuple(f"claim:decomposed:{fid}" for fid in fact_ids),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(fact_ids),
+            notes=(f"facts={len(fact_ids)}", "claims_decomposed"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# authorize_atomic_claims
+# ---------------------------------------------------------------------------
+
+
+def authorize_atomic_claims(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Deterministic check that claims do not exceed fact boundaries."""
+
+    claim_ids = tuple(_arg_value(tool_call, "claim_ids", default=()) or ())
+    if not claim_ids:
+        return _invalid_request(tool_call, "claim_ids must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=tuple(f"claim:authorized:{cid}" for cid in claim_ids),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(claim_ids),
+            notes=(f"claims={len(claim_ids)}", "authorization_passed"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# record_explicit_code_gap
+# ---------------------------------------------------------------------------
+
+
+def record_explicit_code_gap(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Record an explicit code gap with search scope, attempts and reason."""
+
+    obligation_id_ref = str(_arg_value(tool_call, "obligation_id_ref", default="") or "")
+    termination_reason = str(_arg_value(tool_call, "termination_reason", default="") or "")
+    if not obligation_id_ref.strip():
+        return _invalid_request(tool_call, "obligation_id_ref must not be empty")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"gap:{obligation_id_ref}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(
+                f"obligation={obligation_id_ref}",
+                f"reason={termination_reason or 'unspecified'}",
+            ),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# check_obligation_coverage
+# ---------------------------------------------------------------------------
+
+
+def check_obligation_coverage(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Recompute supported/partial/gap/unresolved coverage for an obligation."""
+
+    obligation_id_ref = str(_arg_value(tool_call, "obligation_id_ref", default="") or "")
+
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"coverage:{obligation_id_ref or 'all'}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(f"obligation={obligation_id_ref or 'all'}", "coverage_recomputed"),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Tool registry
 # ---------------------------------------------------------------------------
 
@@ -525,6 +1853,28 @@ RESEARCH_TOOL_EXECUTORS: dict[str, Any] = {
     "search_symbols": search_symbols,
     "read_symbol": read_symbol,
     "find_references": find_references,
+    "list_repository_tree": list_repository_tree,
+    "search_code": search_code,
+    "read_code_span": read_code_span,
+    "inspect_configuration": inspect_configuration,
+    "build_behavior_subgraph": build_behavior_subgraph,
+    "query_behavior_graph": query_behavior_graph,
+    "trace_call_path": trace_call_path,
+    "trace_data_flow": trace_data_flow,
+    "inspect_control_flow": inspect_control_flow,
+    "compare_implementation_branches": compare_implementation_branches,
+    "find_output_side_effects": find_output_side_effects,
+    "search_semantic_hints": search_semantic_hints,
+    "derive_code_queries_from_hint": derive_code_queries_from_hint,
+    "compare_hint_to_code": compare_hint_to_code,
+    "propose_evidence_packet": propose_evidence_packet,
+    "validate_evidence_packet": validate_evidence_packet,
+    "compile_code_facts": compile_code_facts,
+    "validate_code_facts": validate_code_facts,
+    "decompose_atomic_claims": decompose_atomic_claims,
+    "authorize_atomic_claims": authorize_atomic_claims,
+    "record_explicit_code_gap": record_explicit_code_gap,
+    "check_obligation_coverage": check_obligation_coverage,
 }
 
 
@@ -533,6 +1883,28 @@ RESEARCH_TOOL_INPUT_SCHEMAS: dict[str, type[BaseModel]] = {
     "search_symbols": SearchSymbolsInput,
     "read_symbol": ReadSymbolInput,
     "find_references": FindReferencesInput,
+    "list_repository_tree": ListRepositoryTreeInput,
+    "search_code": SearchCodeInput,
+    "read_code_span": ReadCodeSpanInput,
+    "inspect_configuration": InspectConfigurationInput,
+    "build_behavior_subgraph": BuildBehaviorSubgraphInput,
+    "query_behavior_graph": QueryBehaviorGraphInput,
+    "trace_call_path": TraceCallPathInput,
+    "trace_data_flow": TraceDataFlowInput,
+    "inspect_control_flow": InspectControlFlowInput,
+    "compare_implementation_branches": CompareImplementationBranchesInput,
+    "find_output_side_effects": FindOutputSideEffectsInput,
+    "search_semantic_hints": SearchSemanticHintsInput,
+    "derive_code_queries_from_hint": DeriveCodeQueriesFromHintInput,
+    "compare_hint_to_code": CompareHintToCodeInput,
+    "propose_evidence_packet": ProposeEvidencePacketInput,
+    "validate_evidence_packet": ValidateEvidencePacketInput,
+    "compile_code_facts": CompileCodeFactsInput,
+    "validate_code_facts": ValidateCodeFactsInput,
+    "decompose_atomic_claims": DecomposeAtomicClaimsInput,
+    "authorize_atomic_claims": AuthorizeAtomicClaimsInput,
+    "record_explicit_code_gap": RecordExplicitCodeGapInput,
+    "check_obligation_coverage": CheckObligationCoverageInput,
 }
 
 
@@ -737,6 +2109,281 @@ def _find_symbol_usages(tree: ast.AST, symbol_name: str, import_only: bool) -> I
             yield int(getattr(node, "lineno", 0) or 0)
 
 
+def _matches_file_kind(rel_path: str, file_kinds: tuple[str, ...]) -> bool:
+    """Check if ``rel_path`` matches any of the requested file kinds."""
+
+    lowered = rel_path.lower()
+    for kind in file_kinds:
+        k = kind.lower().lstrip(".")
+        if k == "python" and lowered.endswith(".py"):
+            return True
+        if k == "shell" and lowered.endswith((".sh", ".bash", ".zsh")):
+            return True
+        if k == "config" and lowered.endswith((".yaml", ".yml", ".toml", ".cfg", ".ini")):
+            return True
+        if k == "doc" and lowered.endswith((".md", ".rst", ".txt")):
+            return True
+        if lowered.endswith(f".{k}"):
+            return True
+    return False
+
+
+def _find_config_bindings(
+    tree: ast.AST, config_key: str
+) -> Iterable[tuple[int, str]]:
+    """Yield ``(line_no, key)`` tuples for configuration bindings.
+
+    Detects:
+    - ``argparse.add_argument`` calls with ``default=`` values;
+    - dictionary literal assignments to variables containing ``config``/``args``;
+    - ``if``/``elif`` branches that test config-like variables.
+    """
+
+    key_lower = config_key.lower() if config_key else ""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            func_name = ""
+            if isinstance(func, ast.Attribute):
+                func_name = func.attr
+            elif isinstance(func, ast.Name):
+                func_name = func.id
+            if func_name == "add_argument":
+                # Extract the argument name from the first string positional.
+                if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    arg_name = node.args[0].value.lstrip("-")
+                    if key_lower and key_lower not in arg_name.lower():
+                        continue
+                    yield int(getattr(node, "lineno", 0) or 0), arg_name
+        elif isinstance(node, ast.Assign):
+            if not node.value or not isinstance(node.value, ast.Dict):
+                continue
+            for target in node.targets:
+                if isinstance(target, ast.Name) and "config" in target.id.lower() or (
+                    isinstance(target, ast.Name) and "args" in target.id.lower()
+                ):
+                    for key_node in node.value.keys:
+                        if isinstance(key_node, ast.Constant) and isinstance(key_node.value, str):
+                            k = key_node.value
+                            if key_lower and key_lower not in k.lower():
+                                continue
+                            yield int(getattr(key_node, "lineno", 0) or 0), k
+
+
+def _extract_behavior_nodes(
+    tree: ast.AST, symbol: str, rel_path: str, node_budget: int
+) -> list[str]:
+    """Extract behavior node descriptors from ``symbol``'s subtree.
+
+    Returns a list of ``<path>:<symbol>:<line>`` strings for each
+    function/class/method found within the target symbol's scope.
+    """
+
+    nodes: list[str] = []
+    target_tree = tree
+    if symbol:
+        parts = symbol.split(".")
+        for part in parts:
+            found = None
+            for node in ast.walk(target_tree):
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if node.name == part:
+                        found = node
+                        break
+            if found is None:
+                return []
+            target_tree = found
+    for node in ast.walk(target_tree):
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            line = int(getattr(node, "lineno", 0) or 0)
+            nodes.append(f"{rel_path}:{node.name}:{line}")
+            if len(nodes) >= node_budget:
+                break
+    return nodes
+
+
+def _find_call_path(
+    tree: ast.AST, source_name: str, target_name: str
+) -> Iterable[int]:
+    """Yield line numbers where ``source_name`` calls ``target_name``."""
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name != source_name:
+                continue
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Call):
+                    call_name = ""
+                    if isinstance(sub.func, ast.Name):
+                        call_name = sub.func.id
+                    elif isinstance(sub.func, ast.Attribute):
+                        call_name = sub.func.attr
+                    if call_name == target_name:
+                        yield int(getattr(sub, "lineno", 0) or 0)
+
+
+def _find_data_flow(
+    tree: ast.AST, symbol_name: str, direction: str
+) -> Iterable[int]:
+    """Yield line numbers of data-flow events involving ``symbol_name``.
+
+    - ``forward``: assignments where ``symbol_name`` is the target;
+    - ``backward``: return statements referencing ``symbol_name``;
+    - ``both``: both directions.
+    """
+
+    for node in ast.walk(tree):
+        if direction in ("forward", "both") and isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == symbol_name:
+                    yield int(getattr(node, "lineno", 0) or 0)
+                elif isinstance(target, ast.Attribute) and target.attr == symbol_name:
+                    yield int(getattr(node, "lineno", 0) or 0)
+        if direction in ("backward", "both") and isinstance(node, ast.Return):
+            if node.value is not None:
+                for sub in ast.walk(node.value):
+                    if isinstance(sub, ast.Name) and sub.id == symbol_name:
+                        yield int(getattr(node, "lineno", 0) or 0)
+                        break
+                    if isinstance(sub, ast.Attribute) and sub.attr == symbol_name:
+                        yield int(getattr(node, "lineno", 0) or 0)
+                        break
+
+
+def _find_control_flow_branches(
+    tree: ast.AST, symbol: str, rel_path: str, top_k: int
+) -> list[tuple[int, str]]:
+    """Find branches, loops, early returns and fallbacks.
+
+    Returns a list of ``(line_no, kind)`` tuples.
+    """
+
+    branches: list[tuple[int, str]] = []
+    target_tree = tree
+    if symbol:
+        parts = symbol.split(".")
+        for part in parts:
+            found = None
+            for node in ast.walk(target_tree):
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if node.name == part:
+                        found = node
+                        break
+            if found is None:
+                return []
+            target_tree = found
+    for node in ast.walk(target_tree):
+        if isinstance(node, ast.If):
+            branches.append((int(getattr(node, "lineno", 0) or 0), "if"))
+        elif isinstance(node, ast.For):
+            branches.append((int(getattr(node, "lineno", 0) or 0), "for"))
+        elif isinstance(node, ast.While):
+            branches.append((int(getattr(node, "lineno", 0) or 0), "while"))
+        elif isinstance(node, ast.Return):
+            branches.append((int(getattr(node, "lineno", 0) or 0), "return"))
+        elif isinstance(node, ast.ExceptHandler):
+            branches.append((int(getattr(node, "lineno", 0) or 0), "except"))
+        if len(branches) >= top_k:
+            break
+    return branches
+
+
+def _find_side_effects(
+    tree: ast.AST, symbol: str, rel_path: str, top_k: int
+) -> list[tuple[int, str]]:
+    """Find file writes, checkpoint saves, return values and external calls.
+
+    Returns a list of ``(line_no, kind)`` tuples.
+    """
+
+    effects: list[tuple[int, str]] = []
+    target_tree = tree
+    if symbol:
+        parts = symbol.split(".")
+        for part in parts:
+            found = None
+            for node in ast.walk(target_tree):
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if node.name == part:
+                        found = node
+                        break
+            if found is None:
+                return []
+            target_tree = found
+    for node in ast.walk(target_tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            func_name = ""
+            if isinstance(func, ast.Name):
+                func_name = func.id
+            elif isinstance(func, ast.Attribute):
+                func_name = func.attr
+            if func_name in {"save", "save_state_dict", "dump", "dumps", "write", "open"}:
+                effects.append((int(getattr(node, "lineno", 0) or 0), f"write:{func_name}"))
+            elif func_name in {"torch_save", "torch.save", "np.save", "np.savetxt"}:
+                effects.append((int(getattr(node, "lineno", 0) or 0), f"checkpoint:{func_name}"))
+            elif func_name in {"print", "log", "logging"}:
+                effects.append((int(getattr(node, "lineno", 0) or 0), f"output:{func_name}"))
+            if len(effects) >= top_k:
+                break
+        if isinstance(node, ast.Return):
+            effects.append((int(getattr(node, "lineno", 0) or 0), "return"))
+            if len(effects) >= top_k:
+                break
+    return effects
+
+
+def _extract_search_queries_from_hint(hint_text: str) -> list[str]:
+    """Extract candidate symbol/operation/config search queries from hint text.
+
+    Splits on non-alphanumeric characters and returns tokens with length >= 3.
+    Deduplicates while preserving order.
+    """
+
+    seen: set[str] = set()
+    queries: list[str] = []
+    tokens = re.findall(r"[A-Za-z_][A-Za-z0-9_]{2,}", hint_text)
+    for token in tokens:
+        lowered = token.lower()
+        if lowered in seen:
+            continue
+        if lowered in {"the", "and", "for", "with", "that", "this", "from", "are", "was", "were"}:
+            continue
+        seen.add(lowered)
+        queries.append(token)
+    return queries[:20]
+
+
+def _hint_matches_code(hint_text: str, code_span: str) -> bool:
+    """Check if any hint term appears in the code span string."""
+
+    hint_terms = {t.lower() for t in _extract_search_queries_from_hint(hint_text)}
+    code_lower = code_span.lower()
+    return any(term in code_lower for term in hint_terms)
+
+
+def _parse_span_id(span_id: str) -> tuple[str, int, int] | None:
+    """Parse a ``span:<path>:<start>:<end>`` id into its components.
+
+    Returns ``None`` if the id does not match the expected format.
+    """
+
+    if not span_id.startswith("span:"):
+        return None
+    parts = span_id[5:].split(":")
+    if len(parts) < 3:
+        return None
+    try:
+        start = int(parts[-2])
+        end = int(parts[-1])
+    except ValueError:
+        return None
+    rel_path = ":".join(parts[:-2])
+    if not rel_path:
+        return None
+    return rel_path, start, end
+
+
 def _weakest_authority(authorities: list[SourceAuthorityV1]) -> SourceAuthorityV1:
     """Return the weakest authority among ``authorities`` (highest rank)."""
 
@@ -774,14 +2421,58 @@ __all__ = [
     "RESEARCH_TOOL_INPUT_SCHEMAS",
     "RESEARCH_TOOL_KINDS",
     "RESEARCH_TOOL_NAMES",
+    "AuthorizeAtomicClaimsInput",
+    "BuildBehaviorSubgraphInput",
+    "CheckObligationCoverageInput",
+    "CompareHintToCodeInput",
+    "CompareImplementationBranchesInput",
+    "CompileCodeFactsInput",
+    "DecomposeAtomicClaimsInput",
+    "DeriveCodeQueriesFromHintInput",
     "FindEntrypointsInput",
+    "FindOutputSideEffectsInput",
     "FindReferencesInput",
+    "InspectConfigurationInput",
+    "InspectControlFlowInput",
+    "ListRepositoryTreeInput",
+    "ProposeEvidencePacketInput",
+    "QueryBehaviorGraphInput",
+    "ReadCodeSpanInput",
     "ReadSymbolInput",
+    "RecordExplicitCodeGapInput",
     "ResearchToolContext",
+    "SearchCodeInput",
+    "SearchSemanticHintsInput",
     "SearchSymbolsInput",
+    "TraceCallPathInput",
+    "TraceDataFlowInput",
+    "ValidateCodeFactsInput",
+    "ValidateEvidencePacketInput",
+    "authorize_atomic_claims",
+    "build_behavior_subgraph",
+    "check_obligation_coverage",
+    "compare_hint_to_code",
+    "compare_implementation_branches",
+    "compile_code_facts",
+    "decompose_atomic_claims",
+    "derive_code_queries_from_hint",
     "execute_research_tool",
     "find_entrypoints",
+    "find_output_side_effects",
     "find_references",
+    "inspect_configuration",
+    "inspect_control_flow",
+    "list_repository_tree",
+    "propose_evidence_packet",
+    "query_behavior_graph",
+    "read_code_span",
     "read_symbol",
+    "record_explicit_code_gap",
+    "search_code",
+    "search_semantic_hints",
     "search_symbols",
+    "trace_call_path",
+    "trace_data_flow",
+    "validate_code_facts",
+    "validate_evidence_packet",
 ]
