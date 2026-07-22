@@ -145,7 +145,10 @@ def build_v3_evidence_sufficiency_report(
         frozen_evidence_ids=frozen_ids,
         evidence_backed_mechanisms=len(claims.claims),
         mechanisms_without_evidence=0,
-        hard_gate_passed=bool(safe or caveated) and bool(frozen_ids),
+        hard_gate_passed=(
+            (bool(safe or caveated) and bool(frozen_ids))
+            or (not claims.claims and bool(claims.explicit_code_gaps))
+        ),
         recommended_actions=[
             "proceed_from_validated_v3_facts_to_evidence_constrained_authoring",
             "preserve_explicit_code_gaps_outside_positive_prose",

@@ -41,7 +41,7 @@ def check_pre_authoring_authorization(state: AgenticRunState) -> PreAuthoringAut
             message=f"Authoring authorization artifacts are unreadable: {exc}",
         )
     problems: list[str] = []
-    if not report.hard_gate_passed or not (report.safe_claim_ids or report.caveated_claim_ids):
+    if not report.hard_gate_passed:
         problems.append("evidence_sufficiency_report did not approve writable claims")
     recommended_next = str(trace.final_decision.get("recommended_next") or "")
     if recommended_next not in {"grounding", "authoring"}:

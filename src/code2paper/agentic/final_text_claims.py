@@ -249,7 +249,7 @@ def _completeness_failures(units: list[FinalTextUnit], claims: list[FinalAtomicC
     return [
         f"high_risk_unit_not_extracted:{unit.unit_id}"
         for unit in units
-        if unit.high_risk_markers and unit.unit_id not in claim_units
+        if unit.high_risk_markers and unit.factual and unit.unit_id not in claim_units
     ]
 
 

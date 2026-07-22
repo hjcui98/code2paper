@@ -252,7 +252,11 @@ def _wording_strength_exceeded(text: str, matches: list[Any]) -> bool:
 
 
 def _numeric_tokens_supported(text: str, evidence_text: str, projection: AuthoringInputProjection) -> bool:
-    tokens = set(re.findall(r"\d+(?:\.\d+)?%?", text))
+    # Remove symbol references (e.g. sym:75d56395dcbb01a3) so hash digits
+    # inside symbol identifiers are not mistaken for numeric claims that
+    # require evidence support.
+    cleaned = re.sub(r"sym:[0-9a-fA-F]+", "", text)
+    tokens = set(re.findall(r"\d+(?:\.\d+)?%?", cleaned))
     allowed = evidence_text + " " + json.dumps(projection.safe_numeric_facts, ensure_ascii=False)
     return all(token in allowed for token in tokens)
 
@@ -285,7 +289,16 @@ def _repair_action(failures: list[str]) -> str:
 
 def _tokens(text: str) -> set[str]:
     stop = {"the", "a", "an", "of", "to", "and", "or", "is", "are", "we", "our", "this", "that", "with", "for"}
-    return {token for token in re.findall(r"[a-z0-9_]+", text.lower()) if len(token) > 1 and token not in stop}
+    # Split snake_case identifiers into their semantic components.  Treating
+    # ``percentile_cutoff_normalize`` as one opaque token caused prose such as
+    # “percentile clipping” to be declared unrelated even when the exact
+    # relation span contained that function and its clipping implementation.
+    # Identifier decomposition remains deterministic and project-agnostic.
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if len(token) > 1 and token not in stop
+    }
 
 
 def _dedupe(values) -> list[str]:

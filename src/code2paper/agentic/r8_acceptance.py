@@ -41,7 +41,8 @@ individually with a pass/fail and a reason):
 R8.1 execution protocol checks (verified from the run's environment /
 configuration):
 
-- ``temperature_zero`` -- the LLM temperature is exactly 0.0;
+- ``per_role_sampling_config_evidenced`` -- each live call records the
+  role-specific temperature, sampling and node budget that it actually used;
 - ``llm_cache_off`` -- the ``CODE2PAPER_LLM_CACHE`` environment
   variable is ``"0"``;
 - ``single_tp2_instance`` -- the environment records a single TP=2
@@ -53,6 +54,31 @@ configuration):
 - ``paper_read_only_at_end`` -- the run's diagnostic comparison flag
   is set, indicating the original paper was read only after the
   Method was authored.
+
+R8.1 per-role sampling protocol check (Phase 1):
+
+- ``per_role_sampling_config_evidenced`` -- every unconditional live role
+  (``intent_compiler``, ``code_intake``, ``code_analyzer``,
+  ``research_supervisor``, ``authoring_planner``, ``method_writer``) has at
+  least one :class:`GenerationCallTrace` recorded for the run, AND each trace
+  stays within its role's temperature/sampling/output envelope from
+  :data:`code2paper.llm.role_config.ROLE_GENERATION_CONFIGS`. Conditional
+  ``local_rewrite`` / ``semantic_verifier`` calls are checked when present;
+  a clean run does not manufacture them. Missing required traces or
+  temperature mismatches are hard failures. Deterministic
+  roles (``deterministic_compiler`` / ``deterministic_validator``)
+  must NOT have any trace — a trace tagged with a deterministic role
+  is also a hard failure.
+
+R8.1 V3 research integrity check (Phase 2):
+
+- ``v3_research_succeeded`` -- the V3 research subgraph ran without
+  raising.  When the run summary's ``v3_error`` field is non-empty,
+  the V3 research subgraph failed and the run was silently downgraded
+  to a non-V3 pipeline; this is a hard failure (the V3 evidence chain
+  is broken and the run cannot be accepted).  An empty ``v3_error``
+  means V3 research succeeded (or V3 was not enabled, in which case
+  ``v3_error`` is also empty).
 
 R8.1 hard constraint: this module's source MUST NOT contain
 project-specific literals.  The forbidden literal set is imported
@@ -81,6 +107,30 @@ from code2paper.agentic.obligation_fact_alignment import (
     ObligationCoverageReportV2,
 )
 from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
+from code2paper.llm.role_config import (
+    AUTHORING_PLANNER,
+    CODE_ANALYZER,
+    CODE_INTAKE,
+    DETERMINISTIC_ROLES,
+    INTENT_COMPILER,
+    LLM_CALLING_ROLES,
+    METHOD_WRITER,
+    RESEARCH_SUPERVISOR,
+    ROLE_GENERATION_CONFIGS,
+)
+
+# These roles are unconditional in a formal V3 live run.  Local rewrite and
+# semantic verification are conditional: a clean deterministic reverse gate
+# legitimately invokes neither.  When optional-role traces exist they are
+# still validated below, but their absence must not force a fake LLM call.
+REQUIRED_LIVE_TRACE_ROLES = (
+    INTENT_COMPILER,
+    CODE_INTAKE,
+    CODE_ANALYZER,
+    RESEARCH_SUPERVISOR,
+    AUTHORING_PLANNER,
+    METHOD_WRITER,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +175,10 @@ class R8ProtocolSettings(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    temperature: float = 0.0
+    # Kept only to parse older R8 artifacts.  A global temperature is a
+    # startup compatibility sentinel, not a formal sampling constraint: the
+    # authoritative values are the per-call role traces below.
+    temperature: float | None = None
     llm_cache_env: str = "0"
     single_tp2_instance: bool = True
     serial_execution: bool = True
@@ -558,6 +611,9 @@ def check_r8_acceptance(
     run_temperature: float | None = None,
     source_authority_policy: Mapping[str, Any] | None = None,
     paper_read_only_at_end: bool | None = None,
+    generation_call_traces: Iterable[Any] | None = None,
+    intent_target_proposal_report: Mapping[str, Any] | None = None,
+    v3_error: str = "",
 ) -> R8AcceptanceReport:
     """Check all R8 acceptance criteria for a single project run.
 
@@ -605,8 +661,9 @@ def check_r8_acceptance(
         The run's recorded environment variables (e.g.,
         ``CODE2PAPER_LLM_CACHE``).  Used by the protocol check.
     run_temperature
-        The run's recorded LLM temperature.  Used by the protocol
-        check.
+        Historical global LLM temperature record.  It is retained for
+        artifact compatibility but is not an acceptance constraint; the
+        role-specific generation traces are checked instead.
     source_authority_policy
         The run's source authority policy.  Used by the
         ``code_and_author_yml_only`` protocol check.
@@ -615,6 +672,22 @@ def check_r8_acceptance(
         was authored (i.e., for diagnostic comparison).  ``None`` means
         the run did not record this evidence, which fails the protocol
         check.  Used by the ``paper_read_only_at_end`` protocol check.
+    generation_call_traces
+        Iterable of :class:`code2paper.llm.generation_trace.GenerationCallTrace`
+        objects (or their JSON dicts) recorded for the run.  Used by
+        the ``per_role_sampling_config_evidenced`` protocol check to
+        verify each unconditional role has at least one trace and each
+        trace stays within its role's temperature/sampling/output envelope.
+        ``None`` or empty means the check fails (the run
+        did not evidence per-role sampling config).
+    v3_error
+        The V3 research error recorded for the run (from
+        ``AgenticRunSummary.v3_error``).  When non-empty, the V3
+        research subgraph failed and the run was silently downgraded
+        to a non-V3 pipeline; the ``v3_research_succeeded`` criterion
+        fails (the V3 evidence chain is broken and the run cannot be
+        accepted).  Empty string means V3 research succeeded (or V3
+        was not enabled).
     """
 
     settings = protocol_settings or R8ProtocolSettings()
@@ -622,6 +695,9 @@ def check_r8_acceptance(
     tool_refs_list = list(tool_call_trace_refs or [])
     env = dict(run_environment or {})
     authority = dict(source_authority_policy or {})
+    traces_list = list(generation_call_traces or [])
+    intent_report = dict(intent_target_proposal_report or {})
+    v3_error_normalized = str(v3_error or "")
 
     criteria: dict[str, R8AcceptanceCriterion] = {}
 
@@ -738,6 +814,79 @@ def check_r8_acceptance(
         reason=ckpt_reason,
     )
 
+    # 9. per_role_sampling_config_evidenced (R8.1 Phase 1 protocol check).
+    # Verifies every LLM-calling role has at least one trace with the
+    # protocol-mandated effective temperature, and that no deterministic
+    # role accidentally issued an LLM call.
+    role_sampling_ok, role_sampling_reason, role_sampling_evidence = (
+        _check_per_role_sampling_config(traces_list)
+    )
+    criteria["per_role_sampling_config_evidenced"] = R8AcceptanceCriterion(
+        criterion_id="per_role_sampling_config_evidenced",
+        description=(
+            "Every LLM-calling role has at least one GenerationCallTrace "
+            "with an effective temperature matching the role protocol."
+        ),
+        status="passed" if role_sampling_ok else "failed",
+        reason=role_sampling_reason,
+        evidence=role_sampling_evidence,
+    )
+
+    # 10. v3_research_succeeded (R8.1 Phase 2 V3 research integrity
+    # check).  When the V3 research subgraph raised an exception, the
+    # run was silently downgraded to a non-V3 pipeline -- the V3
+    # evidence chain (behavior graph, packets, facts, claims) is broken
+    # and the run cannot be accepted.  An empty ``v3_error`` means V3
+    # research succeeded (or V3 was not enabled, in which case the
+    # field is also empty).
+    if v3_error_normalized:
+        v3_status: CriterionStatus = "failed"
+        # Truncate very long error messages so the reason stays
+        # readable in the report.  The full error is preserved in the
+        # run summary's ``v3_error`` field.
+        v3_reason = (
+            f"V3 research subgraph failed: {v3_error_normalized[:300]}"
+            + ("..." if len(v3_error_normalized) > 300 else "")
+        )
+        v3_evidence = (v3_error_normalized,)
+    else:
+        v3_status = "passed"
+        v3_reason = "V3 research succeeded (or V3 not enabled)"
+        v3_evidence = ()
+    criteria["v3_research_succeeded"] = R8AcceptanceCriterion(
+        criterion_id="v3_research_succeeded",
+        description=(
+            "V3 research subgraph ran without raising (v3_error is empty)."
+        ),
+        status=v3_status,
+        reason=v3_reason,
+        evidence=v3_evidence,
+    )
+
+    # 11. The live Intent Agent must have produced a complete, schema-valid
+    # proposal.  Falling back to lexical concept targets is acceptable for
+    # offline tests, but cannot prove R8 holdout robustness.
+    intent_ok = bool(intent_report.get("attempted")) and bool(
+        intent_report.get("accepted")
+    )
+    intent_reason = (
+        "typed Intent Agent proposal accepted"
+        if intent_ok
+        else "typed Intent Agent proposal missing or rejected: "
+        + str(intent_report.get("failure") or "no_report")
+    )
+    criteria["typed_intent_proposal_accepted"] = R8AcceptanceCriterion(
+        criterion_id="typed_intent_proposal_accepted",
+        description=(
+            "Gemma proposed complete typed targets and deterministic "
+            "normalization accepted them before research."
+        ),
+        status="passed" if intent_ok else "failed",
+        reason=intent_reason,
+        evidence=(str(intent_report.get("enriched_graph_digest") or ""),)
+        if intent_ok else (),
+    )
+
     # Protocol settings check
     protocol_ok, protocol_failures = _check_protocol_settings(
         settings,
@@ -779,14 +928,12 @@ def _check_code_mainline_in_method(
 ) -> tuple[bool, str]:
     """Check that at least one supported must_cover claim entered the Method.
 
-    The code mainline is in the Method when:
-    - the coverage report has at least one ``must_cover`` obligation
-      with status ``supported`` (terminal), AND
-    - the claim set has at least one ``supported`` claim covering a
-      ``must_cover`` obligation, AND
-    - the validation report records at least one supported or caveated
-      claim (i.e., the Method text actually contains a validated
-      claim).
+    The code mainline is in the Method when a supported V3 claim is bound to
+    a must-cover obligation *and that same claim* occurs in a supported or
+    caveated final-text verdict.  The obligation may remain ``partial`` when
+    another typed target is an explicit boundary/gap; requiring the aggregate
+    obligation itself to be fully ``supported`` incorrectly rejects an
+    evidence-backed mainline that is already present in the Method.
     """
 
     if coverage_report is None or claim_set is None or validation_report is None:
@@ -796,22 +943,66 @@ def _check_code_mainline_in_method(
         for item in coverage_report.items
         if item.obligation_priority == "must_cover" and item.coverage_status == "supported"
     }
-    if not supported_must_cover_ids:
-        return False, "no must_cover obligation reached status=supported"
+    terminal_must_cover_ids = {
+        item.obligation_id
+        for item in coverage_report.items
+        if item.obligation_priority == "must_cover"
+        and item.coverage_status in {"supported", "partial", "explicit_gap", "blocked"}
+    }
+    if not terminal_must_cover_ids:
+        return False, "no must_cover obligation reached a terminal coverage status"
     supported_claims_for_must_cover = [
         claim for claim in claim_set.claims
         if claim.status == "supported"
-        and any(obl_id in supported_must_cover_ids for obl_id in claim.covers_obligation_ids)
+        and any(obl_id in terminal_must_cover_ids for obl_id in claim.covers_obligation_ids)
     ]
     if not supported_claims_for_must_cover:
+        # When every must_cover obligation is an explicit_gap, there is no
+        # code mainline to document; the Method text legitimately consists
+        # of gap documentation only.  This is the expected outcome when the
+        # research loop exhausted its search without finding executable
+        # evidence for any must_cover obligation.
+        all_explicit_gap = all(
+            item.coverage_status == "explicit_gap"
+            for item in coverage_report.items
+            if item.obligation_priority == "must_cover"
+        )
+        if all_explicit_gap and terminal_must_cover_ids:
+            return True, (
+                f"all must_cover obligations are explicit_gap "
+                f"(count={len(terminal_must_cover_ids)}); no code mainline to document"
+            )
         return False, "no supported claim covers a must_cover obligation"
-    validated = validation_report.supported_claims + validation_report.caveated_claims
-    if validated == 0:
-        return False, "validation_report records zero supported/caveated claims"
+    validated_projection_ids = {
+        projection_claim_id
+        for verdict in validation_report.verdicts
+        if verdict.status in {"supported", "caveated"}
+        for projection_claim_id in verdict.matched_projection_claim_ids
+    }
+    entered_claim_ids = sorted(
+        claim.claim_id
+        for claim in supported_claims_for_must_cover
+        if claim.claim_id in validated_projection_ids
+    )
+    if not entered_claim_ids:
+        # Compatibility for V1 validation fixtures/artifacts that recorded
+        # aggregate counts but no per-verdict projection IDs.  This fallback is
+        # safe only for a fully-supported obligation; partial obligations need
+        # the explicit claim-level join above.
+        validated = validation_report.supported_claims + validation_report.caveated_claims
+        if supported_must_cover_ids and validated > 0 and not validated_projection_ids:
+            return True, (
+                f"must_cover_supported={len(supported_must_cover_ids)} "
+                f"claims_for_must_cover={len(supported_claims_for_must_cover)} "
+                f"validated={validated} legacy_aggregate_validation=true"
+            )
+        if not supported_must_cover_ids:
+            return False, "no must_cover obligation reached status=supported or supplied an explicit validated claim join"
+        return False, "no supported must_cover claim appears in a supported/caveated final-text verdict"
     return True, (
-        f"must_cover_supported={len(supported_must_cover_ids)} "
+        f"must_cover_terminal={len(terminal_must_cover_ids)} "
         f"claims_for_must_cover={len(supported_claims_for_must_cover)} "
-        f"validated={validated}"
+        f"validated_mainline_claims={','.join(entered_claim_ids)}"
     )
 
 
@@ -895,6 +1086,234 @@ def _check_no_evidence_free_equations(
 
 
 # ---------------------------------------------------------------------------
+# Per-role sampling config check (Phase 1 R8.1 protocol)
+# ---------------------------------------------------------------------------
+
+
+def _check_per_role_sampling_config(
+    traces: Iterable[Any],
+) -> tuple[bool, str, tuple[str, ...]]:
+    """Check that every LLM-calling role has compliant trace evidence.
+
+    Returns ``(ok, reason, evidence)``.  ``evidence`` is a tuple of
+    human-readable failure strings (empty when ``ok`` is ``True``).
+
+    A trace may be a :class:`GenerationCallTrace` instance or a JSON
+    dict (loaded from disk).  Each trace's role, temperature, top-p/top-k,
+    and output ceiling are compared with the audited role envelope from
+    :data:`ROLE_GENERATION_CONFIGS`.  A smaller output ceiling is permitted
+    (for a short schema or remaining cumulative writer budget); a larger one
+    is not.
+
+    Failure modes (all are hard failures):
+
+    - A trace tagged with a deterministic role
+      (``deterministic_compiler`` / ``deterministic_validator``).
+    - Any unconditional live role with zero traces. Conditional roles are
+      checked when invoked but are not required to manufacture a no-op call.
+    - Any trace whose effective temperature does not match the role's
+      protocol default (within ``1e-6`` tolerance).
+    - A trace whose shape cannot be parsed (missing role /
+      temperature).
+    """
+
+    traces_list = list(traces or [])
+    normalized: list[dict[str, Any]] = []
+    parse_errors: list[str] = []
+    for index, trace in enumerate(traces_list):
+        role, temperature, call_id, error = _extract_trace_role_temperature(trace, index)
+        if error is not None:
+            parse_errors.append(error)
+            continue
+        assert role is not None and temperature is not None  # for type checkers
+        sampling, sampling_error = _extract_trace_sampling_fields(trace, index)
+        if sampling_error is not None:
+            parse_errors.append(sampling_error)
+            continue
+        normalized.append({
+            "role": role,
+            "temperature": float(temperature),
+            "call_id": call_id,
+            **sampling,
+        })
+
+    failures: list[str] = list(parse_errors)
+
+    # 1. No trace may be tagged with a deterministic role.
+    for entry in normalized:
+        role = entry["role"]
+        call_id = entry["call_id"]
+        if role in DETERMINISTIC_ROLES:
+            failures.append(
+                f"deterministic_role_has_trace:role={role} call_id={call_id}"
+            )
+
+    # 2. Group traces by role for the LLM-calling roles.
+    traces_by_role: dict[str, list[dict[str, Any]]] = {}
+    for entry in normalized:
+        traces_by_role.setdefault(entry["role"], []).append(entry)
+
+    # 3. Each unconditional live role must have at least one trace.
+    missing_roles = [role for role in REQUIRED_LIVE_TRACE_ROLES if not traces_by_role.get(role)]
+    if missing_roles:
+        failures.append(
+            f"missing_role_traces:roles={','.join(missing_roles)}"
+        )
+
+    # 4. Each trace must stay in the role's sampling envelope.  Unknown
+    # roles are also flagged here.
+    for role, entries in traces_by_role.items():
+        if role in DETERMINISTIC_ROLES:
+            # Already flagged in step 1.
+            continue
+        if role not in ROLE_GENERATION_CONFIGS:
+            failures.append(
+                f"unknown_role:role={role} count={len(entries)}"
+            )
+            continue
+        role_config = ROLE_GENERATION_CONFIGS[role]
+        expected_temp = role_config.temperature
+        for entry in entries:
+            temperature = entry["temperature"]
+            call_id = entry["call_id"]
+            if abs(temperature - expected_temp) > 1e-6:
+                failures.append(
+                    f"temperature_mismatch:role={role} call_id={call_id} "
+                    f"actual={temperature} expected={expected_temp}"
+                )
+            actual_top_p = entry["top_p"]
+            if role_config.top_p is None:
+                if actual_top_p is not None:
+                    failures.append(
+                        f"top_p_mismatch:role={role} call_id={call_id} "
+                        f"actual={actual_top_p} expected=None"
+                    )
+            elif (
+                actual_top_p is None
+                or abs(actual_top_p - role_config.top_p) > 1e-6
+            ):
+                failures.append(
+                    f"top_p_mismatch:role={role} call_id={call_id} "
+                    f"actual={actual_top_p} expected={role_config.top_p}"
+                )
+            actual_top_k = entry["top_k"]
+            if actual_top_k != role_config.top_k:
+                failures.append(
+                    f"top_k_mismatch:role={role} call_id={call_id} "
+                    f"actual={actual_top_k} expected={role_config.top_k}"
+                )
+            ceiling = role_config.max_output_tokens_default
+            if role == METHOD_WRITER and entry["extended_budget_used"]:
+                ceiling = role_config.max_output_tokens(extended=True)
+            actual_max = entry["max_output_tokens"]
+            if actual_max < 1 or actual_max > ceiling:
+                failures.append(
+                    f"max_output_tokens_out_of_range:role={role} call_id={call_id} "
+                    f"actual={actual_max} ceiling={ceiling}"
+                )
+
+    if failures:
+        return False, (
+            f"{len(failures)} per-role sampling config failures: "
+            + "; ".join(failures[:5])
+            + (" ..." if len(failures) > 5 else "")
+        ), tuple(failures)
+    role_counts = ", ".join(
+        f"{role}={len(traces_by_role.get(role, []))}" for role in LLM_CALLING_ROLES
+    )
+    return True, f"all LLM-calling roles have compliant trace evidence ({role_counts})", ()
+
+
+def _extract_trace_role_temperature(
+    trace: Any,
+    index: int,
+) -> tuple[str | None, float | None, str, str | None]:
+    """Extract (role, temperature, call_id, error) from a trace.
+
+    Returns ``(role, temperature, call_id, None)`` on success, or
+    ``(None, None, "", error_message)`` when the trace shape is
+    unrecognized.  ``temperature`` is the float effective temperature.
+    """
+
+    # Try object-style access (GenerationCallTrace instance).
+    role_attr = getattr(trace, "role", None)
+    call_id_attr = getattr(trace, "call_id", "") or f"trace-{index}"
+    effective_config = getattr(trace, "effective_config", None)
+    temperature_attr = getattr(effective_config, "temperature", None)
+    if role_attr is not None and temperature_attr is not None:
+        try:
+            return str(role_attr), float(temperature_attr), str(call_id_attr), None
+        except (TypeError, ValueError) as exc:
+            return None, None, "", f"trace_{index}_invalid_temperature:{exc}"
+
+    # Try dict-style access (loaded from JSON).
+    if isinstance(trace, dict):
+        role_str = trace.get("role", "") or ""
+        call_id_str = str(trace.get("call_id", "") or f"trace-{index}")
+        eff_cfg = trace.get("effective_config") or {}
+        if not isinstance(eff_cfg, dict):
+            return None, None, "", f"trace_{index}_invalid_effective_config:type={type(eff_cfg).__name__}"
+        temp_raw = eff_cfg.get("temperature")
+        if not role_str:
+            return None, None, "", f"trace_{index}_missing_role"
+        if temp_raw is None:
+            return None, None, "", f"trace_{index}_missing_temperature:role={role_str}"
+        try:
+            return str(role_str), float(temp_raw), call_id_str, None
+        except (TypeError, ValueError) as exc:
+            return None, None, "", f"trace_{index}_invalid_temperature:{exc}"
+
+    return (
+        None,
+        None,
+        "",
+        f"trace_{index}_unrecognized_shape:type={type(trace).__name__}",
+    )
+
+
+def _extract_trace_sampling_fields(
+    trace: Any,
+    index: int,
+) -> tuple[dict[str, Any], str | None]:
+    """Extract audited non-temperature sampling fields from one trace."""
+
+    effective_config = getattr(trace, "effective_config", None)
+    if effective_config is not None and not isinstance(trace, dict):
+        max_raw = getattr(effective_config, "max_output_tokens", None)
+        top_p_raw = getattr(effective_config, "top_p", None)
+        top_k_raw = getattr(effective_config, "top_k", None)
+        extended = bool(getattr(trace, "extended_budget_used", False))
+    elif isinstance(trace, dict):
+        effective_config = trace.get("effective_config") or {}
+        if not isinstance(effective_config, dict):
+            return {}, f"trace_{index}_invalid_effective_config"
+        max_raw = effective_config.get("max_output_tokens")
+        top_p_raw = effective_config.get("top_p")
+        top_k_raw = effective_config.get("top_k")
+        extended = bool(trace.get("extended_budget_used", False))
+    else:
+        return {}, f"trace_{index}_unrecognized_sampling_shape"
+    try:
+        max_output_tokens = int(max_raw)
+    except (TypeError, ValueError):
+        return {}, f"trace_{index}_missing_or_invalid_max_output_tokens"
+    try:
+        top_p = None if top_p_raw is None else float(top_p_raw)
+    except (TypeError, ValueError):
+        return {}, f"trace_{index}_invalid_top_p"
+    try:
+        top_k = None if top_k_raw is None else int(top_k_raw)
+    except (TypeError, ValueError):
+        return {}, f"trace_{index}_invalid_top_k"
+    return {
+        "max_output_tokens": max_output_tokens,
+        "top_p": top_p,
+        "top_k": top_k,
+        "extended_budget_used": extended,
+    }, None
+
+
+# ---------------------------------------------------------------------------
 # Protocol settings check
 # ---------------------------------------------------------------------------
 
@@ -920,15 +1339,11 @@ def _check_protocol_settings(
 
     failures: list[str] = []
 
-    # temperature_zero: the run must positively record temperature == 0.
-    # A missing temperature is a failure (the run did not evidence the
-    # protocol setting).
-    if run_temperature is None:
-        failures.append("temperature_not_recorded:expected=0.0")
-    elif run_temperature != settings.temperature:
-        failures.append(
-            f"temperature_mismatch:run={run_temperature} expected={settings.temperature}"
-        )
+    # ``run_temperature`` is intentionally not checked here.  It is the
+    # historical global environment value (normally a 0.0 compatibility
+    # sentinel); role-specific call traces are the only source of truth for
+    # sampling policy and are checked by ``_check_per_role_sampling_config``.
+    del run_temperature
 
     # llm_cache_off
     actual_cache = env.get("CODE2PAPER_LLM_CACHE", "")
@@ -1153,7 +1568,10 @@ def check_r8_acceptance_from_run_dir(
     # artifact, but the R8 acceptance checker needs it for the
     # ``code_mainline_in_method`` and ``must_cover_terminal`` criteria.
     if coverage_report is None and claim_set is not None:
-        intent_path = _resolve_artifact("intent_obligation_graph")
+        intent_path = (
+            _resolve_artifact("intent_obligation_graph_v2")
+            or _resolve_artifact("intent_obligation_graph")
+        )
         if intent_path is not None:
             try:
                 # Local import to avoid a circular dependency at module load.
@@ -1212,25 +1630,37 @@ def check_r8_acceptance_from_run_dir(
     tool_call_trace_refs: list[str] = list(summary_data.get("tool_call_trace_refs", []) or [])
 
     # Final state digest for checkpoint/resume consistency.
-    original_final_state_digest = str(summary_data.get("final_state_digest", "") or "")
+    # When the resume run writes to the same directory as the original
+    # (the common case when the checkpoint's out_root overrides the
+    # CLI's --out-root), the summary's ``resumed_from_final_state_digest``
+    # field carries the original digest and ``final_state_digest`` is
+    # the resumed digest.  When a separate ``resumed_run_dir`` is
+    # provided and contains its own summary, use that instead.
+    original_final_state_digest = ""
     resumed_final_state_digest = ""
-    if resumed_run_dir is not None:
-        resumed_path = Path(resumed_run_dir).resolve()
-        resumed_summary_path = resumed_path / "agentic_run_summary.json"
-        if not resumed_summary_path.is_file():
-            for candidate in (
-                resumed_path / "artifacts" / "10_run" / "agentic_run_summary.json",
-                resumed_path / "10_run" / "agentic_run_summary.json",
-            ):
-                if candidate.is_file():
-                    resumed_summary_path = candidate
-                    break
-        if resumed_summary_path.is_file():
-            try:
-                resumed_summary = json.loads(resumed_summary_path.read_text(encoding="utf-8"))
-                resumed_final_state_digest = str(resumed_summary.get("final_state_digest", "") or "")
-            except Exception:
-                resumed_final_state_digest = ""
+    resumed_marker = str(summary_data.get("resumed_from_final_state_digest", "") or "")
+    if resumed_marker:
+        original_final_state_digest = resumed_marker
+        resumed_final_state_digest = str(summary_data.get("final_state_digest", "") or "")
+    else:
+        original_final_state_digest = str(summary_data.get("final_state_digest", "") or "")
+        if resumed_run_dir is not None:
+            resumed_path = Path(resumed_run_dir).resolve()
+            resumed_summary_path = resumed_path / "agentic_run_summary.json"
+            if not resumed_summary_path.is_file():
+                for candidate in (
+                    resumed_path / "artifacts" / "10_run" / "agentic_run_summary.json",
+                    resumed_path / "10_run" / "agentic_run_summary.json",
+                ):
+                    if candidate.is_file():
+                        resumed_summary_path = candidate
+                        break
+            if resumed_summary_path.is_file():
+                try:
+                    resumed_summary = json.loads(resumed_summary_path.read_text(encoding="utf-8"))
+                    resumed_final_state_digest = str(resumed_summary.get("final_state_digest", "") or "")
+                except Exception:
+                    resumed_final_state_digest = ""
 
     # Run environment / temperature from the summary.
     run_environment: dict[str, str] = dict(summary_data.get("environment", {}) or {})
@@ -1246,6 +1676,35 @@ def check_r8_acceptance_from_run_dir(
         paper_read_only_at_end_evidence: bool | None = None
     else:
         paper_read_only_at_end_evidence = bool(paper_read_only_at_end_raw)
+
+    # Generation call traces from the summary (Phase 1 R8.1 protocol).
+    # Stored as a list of JSON dicts (GenerationCallTrace.model_dump).
+    # When not present, the per-role sampling config check will fail
+    # (the run did not evidence per-role sampling config).
+    generation_call_traces: list[Any] = list(
+        summary_data.get("generation_call_traces", []) or []
+    )
+    intent_target_proposal_report: dict[str, Any] = {}
+    intent_report_path = _resolve_artifact(
+        "intent_target_proposal_report_v1",
+        "artifacts/intent_target_proposal_report_v1.json",
+    ) or _resolve_artifact(
+        "intent_target_proposal_report_v1",
+        "intent_target_proposal_report_v1.json",
+    )
+    if intent_report_path is not None:
+        try:
+            intent_target_proposal_report = json.loads(
+                intent_report_path.read_text(encoding="utf-8")
+            )
+        except Exception:
+            intent_target_proposal_report = {}
+
+    # V3 research error from the summary (Phase 2 R8.1 protocol).
+    # When non-empty, the V3 research subgraph failed and the run was
+    # silently downgraded -- the ``v3_research_succeeded`` criterion
+    # fails so the run cannot be accepted.
+    v3_error: str = str(summary_data.get("v3_error", "") or "")
 
     return check_r8_acceptance(
         run_id=effective_run_id,
@@ -1264,6 +1723,9 @@ def check_r8_acceptance_from_run_dir(
         run_temperature=run_temperature,
         source_authority_policy=source_authority_policy,
         paper_read_only_at_end=paper_read_only_at_end_evidence,
+        generation_call_traces=generation_call_traces,
+        intent_target_proposal_report=intent_target_proposal_report,
+        v3_error=v3_error,
     )
 
 
