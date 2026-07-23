@@ -476,18 +476,29 @@ class LookaheadReasoningProfile:
         }
         matched_fingerprints = [name for name, passed in checks.items() if passed]
         missing_fingerprints = [name for name, passed in checks.items() if not passed]
-        matched = not missing_fingerprints
+        symbol_matched = not missing_fingerprints
+
+        # Also check behavior contract to avoid match=True but compile=None
+        behavior_ok = _behavior_contract_satisfied(root)
+        matched = symbol_matched and behavior_ok
+
+        reasons = []
+        if symbol_matched:
+            reasons.append(f"required executable symbols matched: {', '.join(matched_fingerprints)}")
+        else:
+            reasons.append(f"missing executable symbols: {', '.join(missing_fingerprints)}")
+        if behavior_ok:
+            reasons.append("behavior contract satisfied (async vLLM generation, tree traversal, semantic verifier)")
+        else:
+            reasons.append("behavior contract FAILED: missing vLLM async patterns, tree traversal, or semantic verifier predicates")
+
         return ProfileMatch(
             profile_id=self.profile_id,
             matched=matched,
             required_fingerprints=list(self._required),
             matched_fingerprints=matched_fingerprints,
             missing_required_fingerprints=missing_fingerprints,
-            reasons=[
-                "required executable symbol and behavior fingerprints matched"
-                if matched
-                else "one or more executable structure fingerprints were absent"
-            ],
+            reasons=reasons,
         )
 
     def compile(self, repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:

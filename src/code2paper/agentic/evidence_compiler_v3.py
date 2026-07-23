@@ -85,6 +85,9 @@ FactPredicate = Literal[
     "returns", "selects", "selects_column", "sorts_by", "selects_top_k",
     "constructs_mask", "filters_by", "writes", "writes_artifact", "branches_on",
     "computes_formula", "does_not_call",
+    # Profile-specific predicates: used by structure-triggered evidence profiles
+    # for executable facts that don't fit the generic behavior predicates.
+    "implements", "collects", "dispatches", "optimizes", "computes",
     # Generic predicates (R4.2): emitted by ``generic_fact_compiler`` from
     # ``CodeBehaviorGraphV1`` nodes/relations.  These cover every behavior
     # predicate in ``BEHAVIOR_PREDICATES`` plus the ``configured_by`` fact
