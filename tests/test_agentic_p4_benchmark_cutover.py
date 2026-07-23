@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unittest
 from pathlib import Path
 import hashlib
 import json
@@ -44,6 +45,22 @@ from code2paper.agentic.adversarial_campaign import run_adversarial_campaign_v2
 from code2paper.agentic.legacy_v2_audit import audit_legacy_run_against_gold_v2
 from code2paper.cli.agentic_benchmark_run import _capability_profile_failure
 from code2paper.cli.agentic_benchmark import main as benchmark_main
+
+
+def _external_benchmark_datasets_available() -> bool:
+    """Check whether the external benchmark datasets exist on disk."""
+    dataset_root = Path("datasets")
+    required = [
+        dataset_root / "FastGS/FastGS - Training 3D Gaussian Splatting in 100 Seconds",
+        dataset_root / "Spatial-SSRL/Spatial-SSRL - Enhancing Spatial Understanding via Self-Supervised Reinforcement Learning",
+        dataset_root / "MOS/MOS - Mitigating Optical-SAR Modality Gap for Cross-Modal Ship Re-Identification",
+    ]
+    return all(d.is_dir() for d in required)
+
+_external_datasets_skip = pytest.mark.skipif(
+    not _external_benchmark_datasets_available(),
+    reason="external benchmark datasets not available",
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -133,6 +150,7 @@ def _validated_benchmark(dataset) -> ValidatedBenchmarkEvidenceV2:
     )
 
 
+@_external_datasets_skip
 def test_gold_dataset_has_exact_current_code_evidence_and_required_scope() -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
 
@@ -489,6 +507,7 @@ def test_rollout_progress_requires_digest_pinned_authorized_run_artifacts(tmp_pa
         )
 
 
+@_external_datasets_skip
 def test_benchmark_cli_raw_observations_cannot_authorize_cutover(tmp_path: Path) -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     observations_path = tmp_path / "observations.json"
@@ -534,6 +553,7 @@ def test_benchmark_cli_raw_observations_cannot_authorize_cutover(tmp_path: Path)
     assert not any("named_review" in item for item in decision["failures"])
 
 
+@_external_datasets_skip
 def test_benchmark_cli_consumes_validated_review_workspace_as_exact_review_source(tmp_path: Path) -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     observations = [item.observation for item in _complete_runs(dataset)]
@@ -951,6 +971,7 @@ def test_cutover_holds_if_agentic_usable_completion_is_below_legacy() -> None:
     assert "agentic_usable_completion_below_legacy_requires_false_success_evidence" in decision.failures
 
 
+@_external_datasets_skip
 def test_curated_adversarial_campaign_executes_every_mutation(tmp_path: Path) -> None:
     dataset = load_benchmark_dataset_v2(DATASET_PATH)
     total = 0

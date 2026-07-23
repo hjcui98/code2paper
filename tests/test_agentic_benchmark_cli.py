@@ -10,7 +10,19 @@ from pathlib import Path
 from code2paper.cli.agentic_benchmark import main as agentic_benchmark_main
 
 
+def _external_benchmark_datasets_available() -> bool:
+    """Check whether the external benchmark datasets exist on disk."""
+    dataset_root = Path("datasets")
+    required = [
+        dataset_root / "FastGS/FastGS - Training 3D Gaussian Splatting in 100 Seconds",
+        dataset_root / "Spatial-SSRL/Spatial-SSRL - Enhancing Spatial Understanding via Self-Supervised Reinforcement Learning",
+        dataset_root / "MOS/MOS - Mitigating Optical-SAR Modality Gap for Cross-Modal Ship Re-Identification",
+    ]
+    return all(d.is_dir() for d in required)
+
+
 class AgenticBenchmarkCliTests(unittest.TestCase):
+    @unittest.skipIf(not _external_benchmark_datasets_available(), "external benchmark datasets not available")
     def test_cli_builds_p4_v2_report_and_fail_closed_cutover(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

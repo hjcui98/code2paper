@@ -30,16 +30,23 @@ if [[ "${MODE}" == "--background" ]]; then
     CODE2PAPER_R8_PROJECTS="${PROJECTS}" \
     bash "${BASH_SOURCE[0]}" --foreground \
     >"${LOG_ROOT}/driver.log" 2>&1 &
-  child_pid=$!
-  printf '%s\n' "${child_pid}" > "${LOG_ROOT}/driver.pid"
-  sleep 1
-  if ! kill -0 "${child_pid}" 2>/dev/null; then
-    printf 'background matrix failed to start; inspect %s/driver.log\n' "${LOG_ROOT}" >&2
-    exit 1
-  fi
-  printf 'started background matrix pid=%s log_root=%s out_root=%s\n' \
-    "${child_pid}" "${LOG_ROOT}" "${OUT_ROOT}"
-  exit 0
+  printf '%s\n' "$!" > "${LOG_ROOT}/driver.pid"
+  # Wait up to 30 seconds for the foreground process to signal
+  # readiness by writing status.env.  setsid(1) forks so the PID
+  # captured by $! is not the long-lived process; therefore we
+  # poll for the readiness marker instead of kill -0.
+  waited=0
+  while [[ "${waited}" -lt 30 ]]; do
+    if [[ -f "${LOG_ROOT}/status.env" ]]; then
+      printf 'started background matrix log_root=%s out_root=%s\n' \
+        "${LOG_ROOT}" "${OUT_ROOT}"
+      exit 0
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  printf 'background matrix failed to start within 30s; inspect %s/driver.log\n' "${LOG_ROOT}" >&2
+  exit 1
 fi
 
 if [[ "${MODE}" != "--foreground" ]]; then
@@ -149,21 +156,17 @@ write_r8_acceptance_report(output, report)
 print(json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2))
 PY
   exit_code=$?
-  # Extract key fields from the recheck JSON for TSV tracking.
-  if [[ -f "${log_file}" ]]; then
+  # Extract key fields directly from the written rechecked JSON file.
+  # Do NOT parse the pretty-printed log (the compact-string rfind approach
+  # breaks on indent=2 output).  The report was written to:
+  #   <project_root>/artifacts/10_run/r8_acceptance_report_rechecked.json
+  local recheck_json="${project_root}/artifacts/10_run/r8_acceptance_report_rechecked.json"
+  if [[ -f "${recheck_json}" ]]; then
     python3 -c "
 import json, sys
 try:
-    with open('${log_file}') as f:
-        # Find the last JSON object in the log (the report).
-        content = f.read()
-        # Try to find a JSON object at the end of the file.
-        # The report is the last complete JSON block.
-        idx = content.rfind('{\"run_id\"')
-        if idx >= 0:
-            data = json.loads(content[idx:].split('\n}\n')[0] + '\n}')
-        else:
-            data = {}
+    with open('${recheck_json}') as f:
+        data = json.load(f)
     accepted = data.get('accepted', False)
     protocol_ok = data.get('protocol_check_passed', False)
     criteria = data.get('criteria', {})
@@ -175,6 +178,8 @@ except Exception as e:
 " > "${recheck_tsv}" 2>/dev/null || {
       printf 'False\tFalse\terror\terror\n' > "${recheck_tsv}"
     }
+  else
+    printf 'False\tFalse\terror\terror\n' > "${recheck_tsv}"
   fi
   return ${exit_code}
 }
@@ -392,14 +397,55 @@ for name in "${selected_projects[@]}"; do
     "")
       ;;
     *)
-      log "unknown project key=${name}; skipping"
+      log "unknown project key=${name}; failing"
+      matrix_failures=$((matrix_failures + 1))
       ;;
   esac
 done
 
 nvidia-smi --query-gpu=index,name,uuid,memory.total,memory.used \
   --format=csv,noheader > "${LOG_ROOT}/gpu_after.csv" || true
-log "matrix finished; failures=${matrix_failures}; inspect ${LOG_ROOT}/project_status.tsv and per-project *.r8_recheck.log"
-if [[ "${matrix_failures}" -gt 0 ]]; then
+
+# ---------------------------------------------------------------------------
+# Final post-checks: verify the matrix produced a complete, valid result.
+# ---------------------------------------------------------------------------
+post_check_failures=0
+
+# 1. Static pytest must have completed (row exists with exit_code 0).
+pytest_exit="$(awk -F'\t' '$1=="static_pytest"{print $3}' "${LOG_ROOT}/project_status.tsv")"
+if [[ "${pytest_exit}" != "0" ]]; then
+  log "post_check FAILED: static pytest did not complete cleanly (exit=${pytest_exit:-missing})"
+  post_check_failures=$((post_check_failures + 1))
+fi
+
+# 2. Actual project row count must equal the number of requested projects
+#    (excluding the static_pytest row and empty names).
+requested_count=0
+for n in "${selected_projects[@]}"; do
+  [[ -n "${n}" ]] && requested_count=$((requested_count + 1))
+done
+project_row_count="$(awk -F'\t' 'NR>1 && $1!="static_pytest" && NF>0{c++} END{print c+0}' "${LOG_ROOT}/project_status.tsv")"
+if [[ "${project_row_count}" -ne "${requested_count}" ]]; then
+  log "post_check FAILED: expected ${requested_count} project rows, got ${project_row_count}"
+  post_check_failures=$((post_check_failures + 1))
+fi
+
+# 3. Each project row: cli_exit_code=0, recheck_exit_code=0,
+#    accepted=True, protocol_check_passed=True,
+#    completion=passed, readiness=passed.
+while IFS=$'\t' read -r p_name p_runid p_cli p_recheck p_accepted p_protocol p_completion p_readiness p_elapsed p_root; do
+  [[ "${p_name}" == "project" || "${p_name}" == "static_pytest" || -z "${p_name}" ]] && continue
+  row_err=0
+  [[ "${p_cli}" != "0" ]] && { log "post_check FAILED: ${p_name} cli_exit_code=${p_cli}"; row_err=1; }
+  [[ "${p_recheck}" != "0" ]] && { log "post_check FAILED: ${p_name} recheck_exit_code=${p_recheck}"; row_err=1; }
+  [[ "${p_accepted}" != "True" ]] && { log "post_check FAILED: ${p_name} accepted=${p_accepted}"; row_err=1; }
+  [[ "${p_protocol}" != "True" ]] && { log "post_check FAILED: ${p_name} protocol=${p_protocol}"; row_err=1; }
+  [[ "${p_completion}" != "passed" ]] && { log "post_check FAILED: ${p_name} completion=${p_completion}"; row_err=1; }
+  [[ "${p_readiness}" != "passed" ]] && { log "post_check FAILED: ${p_name} readiness=${p_readiness}"; row_err=1; }
+  [[ "${row_err}" -ne 0 ]] && post_check_failures=$((post_check_failures + 1))
+done < "${LOG_ROOT}/project_status.tsv"
+
+log "matrix finished; failures=${matrix_failures}; post_check_failures=${post_check_failures}; inspect ${LOG_ROOT}/project_status.tsv and per-project *.r8_recheck.log"
+if [[ "${matrix_failures}" -gt 0 ]] || [[ "${post_check_failures}" -gt 0 ]]; then
   exit 1
 fi

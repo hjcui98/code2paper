@@ -10,18 +10,142 @@ from code2paper.run_cli import main as run_main
 
 
 ROOT = Path(__file__).resolve().parents[1]
-AGENT_ROOT = ROOT.parent
-ATTENTION_PROJECT = AGENT_ROOT / "PosterGen/data/attention/attention-is-all-you-need-pytorch"
 AUTHOR_MARKERS = ROOT / "examples/attention_author_markers.yaml"
+
+
+def _build_minimal_attention_project(tmpdir: Path) -> Path:
+    """Build a minimal self-contained project matching the author markers."""
+    project = tmpdir / "attention-is-all-you-need-pytorch"
+    (project / "transformer").mkdir(parents=True)
+    (project / "transformer" / "__init__.py").write_text("")
+    (project / "train.py").write_text("""\
+import torch
+from transformer.Layers import EncoderLayer, DecoderLayer
+from transformer.SubLayers import MultiHeadAttention
+from transformer.Optim import ScheduledOptim
+from preprocess import preprocess
+
+def main():
+    vocab_size = 37000
+    model = Transformer(vocab_size)
+    optimizer = ScheduledOptim(0.001, 512, 4000)
+    data = preprocess("multi30k")
+    train(model, data, optimizer)
+
+class Transformer(torch.nn.Module):
+    def __init__(self, vocab_size):
+        super().__init__()
+        self.encoder = EncoderLayer(512, 8, 2048)
+        self.decoder = DecoderLayer(512, 8, 2048)
+
+def train(model, data, optimizer):
+    for batch in data:
+        optimizer.zero_grad()
+        loss = model(batch)
+        loss.backward()
+        optimizer.step()
+""")
+    (project / "preprocess.py").write_text("""\
+def preprocess(dataset_name):
+    # Download, merge, BPE-encode, filter, build vocabulary
+    return [{"src": "hello", "tgt": "hallo"}]
+""")
+    (project / "transformer" / "Layers.py").write_text("""\
+import torch
+import torch.nn as nn
+from transformer.SubLayers import MultiHeadAttention
+
+class EncoderLayer(nn.Module):
+    def __init__(self, d_model, n_head, d_ff):
+        super().__init__()
+        self.attention = MultiHeadAttention(d_model, n_head)
+        self.feed_forward = nn.Sequential(
+            nn.Linear(d_model, d_ff), nn.ReLU(), nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+
+    def forward(self, x):
+        attn = self.attention(x, x, x)
+        x = self.norm1(x + attn)
+        ff = self.feed_forward(x)
+        return self.norm2(x + ff)
+
+class DecoderLayer(nn.Module):
+    def __init__(self, d_model, n_head, d_ff):
+        super().__init__()
+        self.self_attention = MultiHeadAttention(d_model, n_head)
+        self.cross_attention = MultiHeadAttention(d_model, n_head)
+        self.feed_forward = nn.Sequential(
+            nn.Linear(d_model, d_ff), nn.ReLU(), nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.norm3 = nn.LayerNorm(d_model)
+
+    def forward(self, x, enc_output):
+        attn = self.self_attention(x, x, x)
+        x = self.norm1(x + attn)
+        cross = self.cross_attention(x, enc_output, enc_output)
+        x = self.norm2(x + cross)
+        ff = self.feed_forward(x)
+        return self.norm3(x + ff)
+""")
+    (project / "transformer" / "SubLayers.py").write_text("""\
+import torch
+import torch.nn as nn
+import math
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_model, n_head):
+        super().__init__()
+        self.d_model = d_model
+        self.n_head = n_head
+        self.d_k = d_model // n_head
+        self.w_q = nn.Linear(d_model, d_model)
+        self.w_k = nn.Linear(d_model, d_model)
+        self.w_v = nn.Linear(d_model, d_model)
+        self.w_o = nn.Linear(d_model, d_model)
+
+    def forward(self, q, k, v):
+        batch_size = q.size(0)
+        q = self.w_q(q).view(batch_size, -1, self.n_head, self.d_k).transpose(1, 2)
+        k = self.w_k(k).view(batch_size, -1, self.n_head, self.d_k).transpose(1, 2)
+        v = self.w_v(v).view(batch_size, -1, self.n_head, self.d_k).transpose(1, 2)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
+        attn = torch.softmax(scores, dim=-1)
+        out = torch.matmul(attn, v)
+        out = out.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model)
+        return self.w_o(out)
+""")
+    (project / "transformer" / "Optim.py").write_text("""\
+class ScheduledOptim:
+    def __init__(self, lr, d_model, warmup_steps):
+        self.lr = lr
+        self.d_model = d_model
+        self.warmup_steps = warmup_steps
+        self._step = 0
+
+    def zero_grad(self):
+        pass
+
+    def step(self):
+        self._step += 1
+        lr = self.lr * min(self._step ** -0.5, self._step * self.warmup_steps ** -1.5)
+        return lr
+""")
+    return project
 
 
 class RunCliTests(unittest.TestCase):
     def test_run_cli_generates_phase1_to_phase4_and_fidelity_outputs(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            out_root = Path(tmpdir) / "run"
+            tmp = Path(tmpdir)
+            project_dir = _build_minimal_attention_project(tmp)
+            out_root = tmp / "run"
             code = run_main(
                 [
-                    str(ATTENTION_PROJECT),
+                    str(project_dir),
                     "--author",
                     str(AUTHOR_MARKERS),
                     "--project-id",

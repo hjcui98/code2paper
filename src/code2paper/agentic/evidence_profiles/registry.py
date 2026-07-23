@@ -36,6 +36,9 @@ class EvidenceProfileRegistry:
 
 
 def default_evidence_profile_registry() -> EvidenceProfileRegistry:
+    from code2paper.agentic.evidence_profiles.bootstrapping_multiview import (
+        BootstrappingMultiViewProfile,
+    )
     from code2paper.agentic.evidence_profiles.dynamic_graph_mamba import (
         DynamicGraphMambaProfile,
     )
@@ -45,6 +48,9 @@ def default_evidence_profile_registry() -> EvidenceProfileRegistry:
     from code2paper.agentic.evidence_profiles.linear_graph_retrieval import (
         LinearGraphRetrievalProfile,
     )
+    from code2paper.agentic.evidence_profiles.lookahead_reasoning import (
+        LookaheadReasoningProfile,
+    )
     from code2paper.agentic.evidence_profiles.rap_pruning import RapPruningProfile
 
     return EvidenceProfileRegistry(
@@ -53,6 +59,8 @@ def default_evidence_profile_registry() -> EvidenceProfileRegistry:
             EbcarRerankerProfile(),
             DynamicGraphMambaProfile(),
             LinearGraphRetrievalProfile(),
+            LookaheadReasoningProfile(),
+            BootstrappingMultiViewProfile(),
         ]
     )
 
