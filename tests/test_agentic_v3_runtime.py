@@ -50,6 +50,7 @@ from code2paper.agentic.intent_compiler_v2 import (
     IntentObligationGraphV2,
     IntentObligationV2,
 )
+from code2paper.agentic.intent_target_proposer import IntentTargetProposalReportV1
 from code2paper.agentic.repo_snapshot import RepoSnapshot
 from code2paper.agentic.v3_runtime import (
     V3GraphWrapper,
@@ -446,6 +447,55 @@ class BuildV3ResearchRuntimeTests(unittest.TestCase):
         # should produce at least one obligation.
         self.assertGreaterEqual(len(runtime.agenda.items), 1)
 
+    def test_runtime_uses_accepted_typed_intent_proposal_before_agenda_build(self) -> None:
+        """The live intent proposal is retained and drives the research agenda."""
+
+        import code2paper.agentic.v3_runtime as v3_mod
+
+        observed: list[LLMConfig] = []
+
+        def _enrich(graph: IntentObligationGraphV2, config: LLMConfig):
+            observed.append(config)
+            replacement = TypedBehaviorTargetV1(
+                target_id="target-intent-test",
+                role="draft_generation",
+                desired_predicates=("CALL",),
+                inputs=("draft prefix",),
+                outputs=("candidate draft",),
+            )
+            first = graph.obligations[0].model_copy(update={
+                "typed_behavior_targets": (replacement,),
+            })
+            enriched = graph.model_copy(update={
+                "obligations": [first, *graph.obligations[1:]],
+            })
+            return enriched, IntentTargetProposalReportV1(
+                attempted=True,
+                accepted=True,
+                enriched_obligation_count=len(graph.obligations),
+                original_graph_digest=graph.content_digest,
+                enriched_graph_digest="sha256:typed-intent-test",
+            )
+
+        original = v3_mod.enrich_intent_graph_with_llm
+        v3_mod.enrich_intent_graph_with_llm = _enrich
+        try:
+            runtime = build_v3_research_runtime(
+                project_root=TOY_PROJECT,
+                intent_path=TOY_MARKERS,
+                run_id="run-v3-typed-intent",
+                llm_config=_llm_config(),
+            )
+        finally:
+            v3_mod.enrich_intent_graph_with_llm = original
+
+        self.assertEqual(len(observed), 1)
+        self.assertTrue(runtime.intent_target_proposal_report["accepted"])
+        self.assertEqual(
+            runtime.agenda.items[0].typed_behavior_targets[0].role,
+            "draft_generation",
+        )
+
     def test_runtime_propagates_ready_tools_and_hard_rules(self) -> None:
         ready = ("search_symbols", "read_symbol")
         rules = ("no_snapshot_external_paths",)
@@ -669,6 +719,67 @@ class V3GraphWrapperInvokeTests(unittest.TestCase):
         self.assertIn("legacy-tc-1", payload["tool_call_trace_refs"])
         self.assertIn("tc-v3-1", payload["tool_call_trace_refs"])
 
+    def test_completed_resume_restores_v3_decisions_from_checkpoint(self) -> None:
+        """A no-task resume must reproduce the post-graph V3 merge."""
+
+        v3_decision = _v3_decision(
+            decision_id="dec-v3-resume",
+            action="SEARCH_SYMBOLS",
+            tool_calls=(_tool_call(tool_call_id="tc-v3-resume"),),
+        )
+        legacy = MagicMock()
+        legacy.invoke.return_value = None
+        legacy_snapshot = MagicMock()
+        legacy_snapshot.values = {
+            "decisions": [
+                AgentDecision(
+                    node="legacy_node",
+                    decision="continue",
+                    rationale="legacy checkpoint",
+                ).model_dump(mode="json")
+            ],
+            "tool_call_trace_refs": ["legacy-tc-1"],
+        }
+        legacy.get_state.return_value = legacy_snapshot
+        runtime = self._fake_runtime_with_decisions([])
+
+        import code2paper.agentic.v3_runtime as v3_mod
+
+        v3_subgraph = MagicMock()
+        v3_snapshot = MagicMock()
+        v3_snapshot.values = {
+            "loop_state_snapshot": {
+                "decision_trace": [v3_decision.model_dump(mode="json")]
+            }
+        }
+        v3_subgraph.get_state.return_value = v3_snapshot
+        original_build = v3_mod.build_research_subgraph
+        v3_mod.build_research_subgraph = lambda *a, **kw: v3_subgraph
+        try:
+            wrapper = V3GraphWrapper(
+                v3_runtime=runtime,
+                legacy_graph=legacy,
+                max_research_turns=5,
+                v3_checkpointer=MagicMock(),
+                v3_thread_id="v3-resume-thread",
+            )
+            payload = wrapper.invoke(
+                None,
+                config={"configurable": {"thread_id": "legacy"}},
+            )
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+        self.assertEqual(len(payload["decisions"]), 2)
+        self.assertEqual(payload["decisions"][-1].node, "research_supervisor")
+        self.assertEqual(
+            payload["tool_call_trace_refs"],
+            ["legacy-tc-1", "tc-v3-resume"],
+        )
+        v3_subgraph.get_state.assert_called_once_with(
+            {"configurable": {"thread_id": "v3-resume-thread"}}
+        )
+
     def test_invoke_falls_back_when_v3_research_raises(self) -> None:
         legacy = self._fake_legacy_graph()
         runtime = self._fake_runtime_with_decisions([])
@@ -697,6 +808,15 @@ class V3GraphWrapperInvokeTests(unittest.TestCase):
         self.assertEqual(payload["decisions"][0]["node"], "legacy_node")
         # Legacy tool-call trace refs preserved.
         self.assertEqual(payload["tool_call_trace_refs"], ["legacy-tc-1"])
+        # V3 error is surfaced in the payload so R8 acceptance can
+        # fail the run instead of silently downgrading.
+        self.assertIn("v3_error", payload)
+        self.assertIn("v3 blew up", payload["v3_error"])
+        # last_v3_error property exposes the same error for inspection.
+        self.assertIsNotNone(wrapper.last_v3_error)
+        self.assertIn("v3 blew up", wrapper.last_v3_error)
+        # last_v3_result remains None because V3 never produced a result.
+        self.assertIsNone(wrapper.last_v3_result)
 
     def test_invoke_does_not_merge_when_v3_produces_no_decisions(self) -> None:
         legacy = self._fake_legacy_graph()
@@ -721,7 +841,9 @@ class V3GraphWrapperInvokeTests(unittest.TestCase):
         # Legacy tool-call trace refs preserved (no V3 refs added).
         self.assertEqual(payload["tool_call_trace_refs"], ["legacy-tc-1"])
 
-    def test_get_state_delegates_to_legacy(self) -> None:
+    def test_get_state_delegates_to_legacy_without_v3_checkpointer(self) -> None:
+        """Without V3 checkpointer, get_state returns the legacy snapshot directly."""
+
         legacy = MagicMock()
         legacy.get_state.return_value = "checkpoint-state"
         runtime = self._fake_runtime_with_decisions([])
@@ -731,6 +853,129 @@ class V3GraphWrapperInvokeTests(unittest.TestCase):
         result = wrapper.get_state(config={"thread_id": "t"})
         legacy.get_state.assert_called_once_with({"thread_id": "t"})
         self.assertEqual(result, "checkpoint-state")
+
+    def test_get_state_returns_v3_aware_snapshot_with_v3_checkpointer(self) -> None:
+        """With V3 checkpointer, get_state returns a _V3AwareStateSnapshot."""
+
+        from code2paper.agentic.v3_runtime import _V3AwareStateSnapshot
+
+        legacy = MagicMock()
+        legacy_snapshot = MagicMock()
+        legacy_snapshot.values = {"run_id": "run-1", "status": "running"}
+        legacy_snapshot.next = ("legacy_node",)
+        legacy_snapshot.metadata = {"step": 5}
+        legacy.get_state.return_value = legacy_snapshot
+
+        runtime = self._fake_runtime_with_decisions([])
+
+        # Patch build_research_subgraph so we don't need a real runtime.
+        import code2paper.agentic.v3_runtime as v3_mod
+
+        v3_subgraph = MagicMock()
+        v3_snapshot = MagicMock()
+        v3_snapshot.values = {"run_id": "run-1", "status": "researching"}
+        v3_snapshot.next = ("research_supervisor",)
+        v3_snapshot.metadata = {"step": 3}
+        v3_subgraph.get_state.return_value = v3_snapshot
+
+        original_build = v3_mod.build_research_subgraph
+        v3_mod.build_research_subgraph = lambda *a, **kw: v3_subgraph
+        try:
+            wrapper = V3GraphWrapper(
+                v3_runtime=runtime,
+                legacy_graph=legacy,
+                max_research_turns=5,
+                v3_checkpointer=MagicMock(),
+                v3_thread_id="v3-thread-1",
+            )
+            result = wrapper.get_state(config={"thread_id": "legacy-t"})
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+        self.assertIsInstance(result, _V3AwareStateSnapshot)
+        # Legacy state is accessible via .values
+        self.assertEqual(result.values, {"run_id": "run-1", "status": "running"})
+        self.assertEqual(result.next, ("legacy_node",))
+        self.assertEqual(result.metadata, {"step": 5})
+        # V3 state is accessible via .v3_values
+        self.assertTrue(result.has_v3_state)
+        self.assertEqual(result.v3_values, {"run_id": "run-1", "status": "researching"})
+        self.assertEqual(result.v3_next, ("research_supervisor",))
+        self.assertEqual(result.v3_metadata, {"step": 3})
+        # Legacy graph's get_state was called with the legacy config.
+        legacy.get_state.assert_called_once_with({"thread_id": "legacy-t"})
+        # V3 subgraph's get_state was called with the V3 thread_id.
+        v3_subgraph.get_state.assert_called_once_with(
+            {"configurable": {"thread_id": "v3-thread-1"}}
+        )
+
+    def test_get_state_falls_back_to_legacy_when_v3_query_fails(self) -> None:
+        """When V3 state query raises, get_state returns legacy snapshot only."""
+
+        legacy = MagicMock()
+        legacy_snapshot = MagicMock()
+        legacy_snapshot.values = {"run_id": "run-1"}
+        legacy.get_state.return_value = legacy_snapshot
+
+        runtime = self._fake_runtime_with_decisions([])
+
+        import code2paper.agentic.v3_runtime as v3_mod
+
+        def _raise(*a, **kw):
+            raise RuntimeError("v3 state query failed")
+
+        original_build = v3_mod.build_research_subgraph
+        v3_mod.build_research_subgraph = _raise
+        try:
+            wrapper = V3GraphWrapper(
+                v3_runtime=runtime,
+                legacy_graph=legacy,
+                max_research_turns=5,
+                v3_checkpointer=MagicMock(),
+                v3_thread_id="v3-thread-1",
+            )
+            result = wrapper.get_state(config={"thread_id": "legacy-t"})
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+        # Falls back to legacy snapshot (not a _V3AwareStateSnapshot).
+        self.assertIs(result, legacy_snapshot)
+
+    def test_get_state_returns_legacy_when_v3_checkpointer_none(self) -> None:
+        """When v3_checkpointer is None, get_state returns legacy snapshot."""
+
+        legacy = MagicMock()
+        legacy_snapshot = MagicMock()
+        legacy.get_state.return_value = legacy_snapshot
+
+        runtime = self._fake_runtime_with_decisions([])
+        wrapper = V3GraphWrapper(
+            v3_runtime=runtime,
+            legacy_graph=legacy,
+            max_research_turns=5,
+            v3_checkpointer=None,
+            v3_thread_id="v3-thread-1",  # thread_id set but no checkpointer
+        )
+        result = wrapper.get_state(config={"thread_id": "t"})
+        self.assertIs(result, legacy_snapshot)
+
+    def test_get_state_returns_legacy_when_v3_thread_id_none(self) -> None:
+        """When v3_thread_id is None, get_state returns legacy snapshot."""
+
+        legacy = MagicMock()
+        legacy_snapshot = MagicMock()
+        legacy.get_state.return_value = legacy_snapshot
+
+        runtime = self._fake_runtime_with_decisions([])
+        wrapper = V3GraphWrapper(
+            v3_runtime=runtime,
+            legacy_graph=legacy,
+            max_research_turns=5,
+            v3_checkpointer=MagicMock(),  # checkpointer set but no thread_id
+            v3_thread_id=None,
+        )
+        result = wrapper.get_state(config={"thread_id": "t"})
+        self.assertIs(result, legacy_snapshot)
 
     def test_unknown_attribute_delegates_to_legacy(self) -> None:
         legacy = MagicMock()
@@ -1032,6 +1277,166 @@ class RunV3ResearchPhaseTests(unittest.TestCase):
         self.assertIsNotNone(result.decision_trace)
         # turns_executed must be a non-negative integer.
         self.assertGreaterEqual(result.turns_executed, 0)
+
+    def test_production_path_uses_multi_node_langgraph_subgraph(self) -> None:
+        """run_v3_research_phase must use build_research_subgraph (the
+        9-node LangGraph topology), NOT the procedural run_research_loop
+        helper.  This is the P0-1 fix: the multi-node graph must be in
+        the production path so V3 checkpoints and node execution traces
+        are available for R8 verification.
+        """
+
+        import code2paper.agentic.v3_runtime as v3_mod
+        from code2paper.agentic.research_graph import CompiledResearchSubgraph
+
+        runtime = build_v3_research_runtime(
+            project_root=TOY_PROJECT,
+            intent_path=TOY_MARKERS,
+            run_id="run-v3-subgraph",
+            llm_config=_llm_config(),
+        )
+
+        # Patch build_research_subgraph to track invocation.  We wrap
+        # the real implementation so the subgraph still runs.
+        original_build = v3_mod.build_research_subgraph
+        build_calls: list[dict[str, Any]] = []
+
+        def _tracking_build(runtime_arg: Any, **kwargs: Any) -> CompiledResearchSubgraph:
+            build_calls.append({"runtime": runtime_arg, **kwargs})
+            return original_build(runtime_arg, **kwargs)
+
+        v3_mod.build_research_subgraph = _tracking_build
+        try:
+            result = run_v3_research_phase(runtime, max_turns=3)
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+        # build_research_subgraph was called exactly once.
+        self.assertEqual(len(build_calls), 1)
+        # The checkpointer and thread_id were propagated.
+        self.assertIn("checkpointer", build_calls[0])
+        # The result is still a valid ResearchLoopResult.
+        self.assertIsNotNone(result.decision_trace)
+        self.assertGreaterEqual(result.turns_executed, 0)
+
+    def test_production_path_passes_checkpointer_and_thread_id(self) -> None:
+        """When checkpointer and thread_id are provided, they are
+        propagated to build_research_subgraph so the V3 research phase
+        is checkpointable."""
+
+        from code2paper.agentic.checkpointing import build_memory_checkpointer
+
+        import code2paper.agentic.v3_runtime as v3_mod
+        from code2paper.agentic.research_graph import CompiledResearchSubgraph
+
+        runtime = build_v3_research_runtime(
+            project_root=TOY_PROJECT,
+            intent_path=TOY_MARKERS,
+            run_id="run-v3-ckpt",
+            llm_config=_llm_config(),
+        )
+
+        original_build = v3_mod.build_research_subgraph
+        captured: dict[str, Any] = {}
+
+        def _capturing_build(runtime_arg: Any, **kwargs: Any) -> CompiledResearchSubgraph:
+            captured.update(kwargs)
+            return original_build(runtime_arg, **kwargs)
+
+        v3_mod.build_research_subgraph = _capturing_build
+        real_checkpointer = build_memory_checkpointer()
+        try:
+            run_v3_research_phase(
+                runtime,
+                max_turns=3,
+                checkpointer=real_checkpointer,
+                thread_id="test-v3-thread-id",
+            )
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+        self.assertIs(captured.get("checkpointer"), real_checkpointer)
+        self.assertEqual(captured.get("max_turns"), 3)
+
+    def test_production_path_raises_when_subgraph_produces_no_result(self) -> None:
+        """When the subgraph's terminator node does not run (e.g.,
+        max_turns=0), run_v3_research_phase raises RuntimeError instead
+        of silently returning None."""
+
+        import code2paper.agentic.v3_runtime as v3_mod
+        from code2paper.agentic.research_graph import CompiledResearchSubgraph
+
+        runtime = build_v3_research_runtime(
+            project_root=TOY_PROJECT,
+            intent_path=TOY_MARKERS,
+            run_id="run-v3-no-result",
+            llm_config=_llm_config(),
+        )
+
+        class _StubSubgraph(CompiledResearchSubgraph):
+            def __init__(self) -> None:
+                # Bypass the real __init__ — we only need invoke/last_result.
+                pass
+
+            def invoke(self, state: Any, *args: Any, **kwargs: Any) -> Any:
+                return {}  # No result stashed in holder.
+
+            @property
+            def last_result(self) -> Any:
+                return None
+
+        original_build = v3_mod.build_research_subgraph
+        v3_mod.build_research_subgraph = lambda *a, **kw: _StubSubgraph()
+        try:
+            with self.assertRaises(RuntimeError) as ctx:
+                run_v3_research_phase(runtime, max_turns=3)
+            self.assertIn("did not produce a ResearchLoopResult", str(ctx.exception))
+        finally:
+            v3_mod.build_research_subgraph = original_build
+
+    def test_node_trace_is_populated_for_multi_node_graph(self) -> None:
+        """Phase 2.5: run_v3_research_phase produces a non-empty
+        node_trace when the multi-node LangGraph topology executes.
+
+        Each trace entry must have the required keys: node, timestamp,
+        duration_ms, turn_index, status, route, error.  The trace
+        must include at least linear_prefix (the first node).
+        """
+
+        runtime = build_v3_research_runtime(
+            project_root=TOY_PROJECT,
+            intent_path=TOY_MARKERS,
+            run_id="run-v3-trace",
+            llm_config=_llm_config(),
+        )
+        result = run_v3_research_phase(runtime, max_turns=3)
+        # node_trace must be a list (possibly empty if the graph didn't
+        # execute, but never None).
+        self.assertIsInstance(result.node_trace, list)
+        # The trace must be non-empty (the graph executed at least
+        # linear_prefix).
+        self.assertGreater(len(result.node_trace), 0, "node_trace must not be empty")
+        # The first entry must be linear_prefix.
+        node_names = [entry.get("node", "") for entry in result.node_trace]
+        self.assertEqual(node_names[0], "linear_prefix")
+        # Every entry must have the required keys.
+        required_keys = {"node", "timestamp", "duration_ms", "turn_index", "status", "route", "error"}
+        for entry in result.node_trace:
+            self.assertTrue(required_keys.issubset(entry.keys()), (
+                f"trace entry missing keys: {entry}"
+            ))
+            self.assertIsInstance(entry["node"], str)
+            self.assertIsInstance(entry["timestamp"], str)
+            self.assertIsInstance(entry["duration_ms"], (int, float))
+            self.assertIsInstance(entry["turn_index"], int)
+            self.assertIn(entry["status"], ("ok", "error"))
+            self.assertIsInstance(entry["route"], str)
+            self.assertIsInstance(entry["error"], str)
+        # All entries should have status="ok" (no errors in a normal run).
+        error_entries = [e for e in result.node_trace if e["status"] == "error"]
+        self.assertEqual(error_entries, [], (
+            f"unexpected error trace entries: {error_entries}"
+        ))
 
 
 if __name__ == "__main__":

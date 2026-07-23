@@ -31,6 +31,7 @@ from code2paper.agentic.graph_routes import (
     route_after_final_invariant_audit as _route_after_final_invariant_audit,
     route_after_revision_router as _route_after_revision_router,
     route_after_text_trace_builder as _route_after_text_trace_builder,
+    route_after_local_text_repair as _route_after_local_text_repair,
     validation_router,
 )
 from code2paper.agentic.graph_stage_nodes import (
@@ -43,6 +44,8 @@ from code2paper.agentic.graph_text_trust_nodes import (
     final_text_claim_extractor_node as _final_text_claim_extractor_node,
     text_evidence_validator_node as _text_evidence_validator_node,
     text_trace_builder_node as _text_trace_builder_node,
+    local_text_repair_node as _local_text_repair_node,
+    packet_binding_repair_node as _packet_binding_repair_node,
 )
 from code2paper.agentic.graph_topology import (
     CONDITIONAL_ROUTE_SPECS,
@@ -104,6 +107,8 @@ def build_code2paper_graph(
         lambda state: _text_evidence_validator_node(state, semantic_verifier=semantic_verifier),
     )
     graph.add_node("text_trace_builder", _text_trace_builder_node)
+    graph.add_node("local_text_repair", _local_text_repair_node)
+    graph.add_node("packet_binding_repair", _packet_binding_repair_node)
     graph.add_node("figure_planner", _figure_planner_node(decision_provider=decision_provider))
     graph.add_node("invariant_audit", _invariant_audit_node)
     graph.add_node("final_invariant_audit", _final_invariant_audit_node)
@@ -132,6 +137,7 @@ def _route_functions() -> dict[str, RouteFn]:
         "_route_after_authoring_planner": _route_after_authoring_planner,
         "_route_after_revision_router": _route_after_revision_router,
         "_route_after_text_trace_builder": _route_after_text_trace_builder,
+        "_route_after_local_text_repair": _route_after_local_text_repair,
         "_route_after_figure_planner": _route_after_figure_planner,
         "_route_after_invariant_audit": _route_after_invariant_audit,
         "_route_after_rendering": _route_after_rendering,

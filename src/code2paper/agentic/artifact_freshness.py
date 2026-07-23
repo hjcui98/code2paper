@@ -52,7 +52,7 @@ class CheckArtifactFreshnessInput(FreshnessModel):
 
 
 TRUST_DEPENDENCY_ORDER = (
-    "evidence_snapshot_v2", "evidence_packets_v3", "code_facts_v1", "atomic_claims_v3",
+    "evidence_snapshot_v2", "evidence_packets_v3", "code_facts_v1", "atomic_claims_v3", "equation_claims_v1",
     "atomic_claims_v2", "claim_verification", "authoring_projection",
     "authoring_plan", "final_text_claims", "text_evidence_validation", "final_text_trace",
     "evidence_relations_v2", "figure_scene", "figure_relation_validation", "pre_render_audit",
@@ -211,8 +211,24 @@ def _artifact_contract_failures(
         if payload.get("project_tree_hash") != repo.project_tree_hash: failures.append("project_tree_hash_mismatch")
         if packets and payload.get("evidence_packet_digest") != packets.get("content_digest"): failures.append("evidence_packet_digest_mismatch")
         if facts and payload.get("code_fact_digest") != facts.get("content_digest"): failures.append("code_fact_digest_mismatch")
-        expected = _digest_json({"claims": payload.get("claims", []), "explicit_code_gaps": payload.get("explicit_code_gaps", [])})
+        # Semantic stage groups are part of AtomicClaimSetV3's authoritative
+        # payload.  Obligation binding may update both claim bindings and stage
+        # organization before the set is written; excluding the groups here
+        # made a valid, freshly rebuilt claim set look stale and cascaded the
+        # failure through every downstream artifact.
+        expected = _digest_json({
+            "claims": payload.get("claims", []),
+            "explicit_code_gaps": payload.get("explicit_code_gaps", []),
+            "semantic_stage_groups": payload.get("semantic_stage_groups", []),
+        })
         if payload.get("content_digest") != expected: failures.append("content_digest_mismatch")
+    elif key == "equation_claims_v1":
+        facts = _read_artifact_json(artifacts, "code_facts_v1")
+        if payload.get("schema_version") != "1.0": failures.append("unsupported_schema")
+        if payload.get("repo_snapshot_id") != repo.snapshot_id: failures.append("repo_snapshot_id_mismatch")
+        if payload.get("project_tree_hash") != repo.project_tree_hash: failures.append("project_tree_hash_mismatch")
+        if facts and payload.get("code_fact_digest") != facts.get("content_digest"): failures.append("code_fact_digest_mismatch")
+        if payload.get("content_digest") != _digest_json(payload.get("equations", [])): failures.append("content_digest_mismatch")
     elif key == "claim_verification":
         if payload.get("schema_version") != "2.0": failures.append("unsupported_schema")
         if payload.get("producer_version") != "code2paper-agentic-p1": failures.append("producer_version_not_accepted")
@@ -230,6 +246,7 @@ def _artifact_contract_failures(
             ("evidence_packets_v3", "evidence_packets_v3"),
             ("code_facts_v1", "code_facts_v1"),
             ("atomic_claims_v3", "atomic_claims_v3"),
+            ("equation_claims_v1", "equation_claims_v1"),
         ):
             dependency = _read_artifact_json(artifacts, dependency_key)
             if dependency and source_digests.get(digest_key) != dependency.get("content_digest"):

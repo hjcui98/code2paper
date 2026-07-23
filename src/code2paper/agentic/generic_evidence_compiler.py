@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -53,6 +54,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     RejectedEvidenceCandidateV3,
     RelationEvidenceV3,
 )
+from code2paper.agentic.repo_snapshot import RepoSnapshot
 
 
 # ---------------------------------------------------------------------------
@@ -184,8 +186,31 @@ def _build_span(
     line_start: int,
     line_end: int,
     role: str,
+    repo_snapshot: RepoSnapshot | None = None,
 ) -> EvidenceSpanV3:
     excerpt = f"{path}:{line_start}-{line_end}:{symbol}:{role}"
+    file_digest = _digest(f"{path}:{project_tree_hash}")
+    if repo_snapshot is not None:
+        files = {
+            item.path: item
+            for item in repo_snapshot.included_files
+            if item.kind == "file"
+        }
+        file_entry = files.get(path)
+        root = Path(repo_snapshot.project_root).resolve()
+        source_path = (root / path).resolve()
+        try:
+            source_path.relative_to(root)
+            lines = source_path.read_text(
+                encoding="utf-8", errors="replace"
+            ).splitlines(keepends=True)
+            excerpt = "".join(lines[line_start - 1:line_end])
+            if file_entry is not None:
+                file_digest = file_entry.content_digest
+        except (OSError, ValueError):
+            # Keep the deterministic placeholder.  The production-source
+            # validator below rejects it, so this cannot authorize prose.
+            pass
     return EvidenceSpanV3(
         span_id=span_id,
         snapshot_id=snapshot_id,
@@ -196,7 +221,7 @@ def _build_span(
         line_end=line_end,
         exact_excerpt=excerpt,
         excerpt_digest=_digest(excerpt),
-        file_digest=_digest(f"{path}:{project_tree_hash}"),
+        file_digest=file_digest,
         role=role,  # type: ignore[arg-type]
     )
 
@@ -209,6 +234,7 @@ def _spans_from_nodes(
     anchor_span_ids: list[str],
     relation_span_ids: list[str],
     semantic_span_ids: list[str],
+    repo_snapshot: RepoSnapshot | None = None,
 ) -> list[EvidenceSpanV3]:
     """Build ``EvidenceSpanV3`` instances from behavior nodes.
 
@@ -245,6 +271,7 @@ def _spans_from_nodes(
             line_start=line_start,
             line_end=line_end,
             role=role,
+            repo_snapshot=repo_snapshot,
         ))
     return spans
 
@@ -305,6 +332,7 @@ def compile_evidence_packet_proposal(
     *,
     repo_snapshot_id: str,
     project_tree_hash: str,
+    repo_snapshot: RepoSnapshot | None = None,
 ) -> tuple[EvidencePacketV3 | None, EvidencePacketValidationReportV1]:
     """Compile a proposal into a typed ``EvidencePacketV3``.
 
@@ -335,6 +363,7 @@ def compile_evidence_packet_proposal(
         anchor_span_ids=proposal.anchor_span_ids,
         relation_span_ids=proposal.relation_span_ids,
         semantic_span_ids=proposal.semantic_span_ids,
+        repo_snapshot=repo_snapshot,
     )
     relations = [
         _relation_evidence_from_relation(rel, nodes_by_id=nodes_by_id)
@@ -382,6 +411,7 @@ def compile_evidence_packet_proposal(
         selected_relations=selected_relations,
         spans=spans,
         unresolved_ids=unresolved_ids,
+        repo_snapshot=repo_snapshot,
     )
     return packet, report
 
@@ -402,6 +432,7 @@ def validate_evidence_packet_proposal(
     selected_relations: list[BehaviorRelationV1],
     spans: list[EvidenceSpanV3],
     unresolved_ids: set[str],
+    repo_snapshot: RepoSnapshot | None = None,
 ) -> EvidencePacketValidationReportV1:
     """Run the R4.1 deterministic validator checklist on a proposal."""
 
@@ -413,6 +444,34 @@ def validate_evidence_packet_proposal(
             failures.append(f"span_snapshot_mismatch:{span.span_id}")
         if span.project_tree_hash != project_tree_hash:
             failures.append(f"span_tree_hash_mismatch:{span.span_id}")
+    if repo_snapshot is not None:
+        if (
+            repo_snapshot.snapshot_id != repo_snapshot_id
+            or repo_snapshot.project_tree_hash != project_tree_hash
+        ):
+            failures.append("runtime_snapshot_identity_mismatch")
+        root = Path(repo_snapshot.project_root).resolve()
+        snapshot_files = {
+            item.path: item
+            for item in repo_snapshot.included_files
+            if item.kind == "file"
+        }
+        for span in spans:
+            source_path = (root / span.path).resolve()
+            try:
+                source_path.relative_to(root)
+                lines = source_path.read_text(
+                    encoding="utf-8", errors="replace"
+                ).splitlines(keepends=True)
+                exact_excerpt = "".join(lines[span.line_start - 1:span.line_end])
+            except (OSError, ValueError):
+                failures.append(f"span_source_missing:{span.span_id}")
+                continue
+            if not exact_excerpt or exact_excerpt != span.exact_excerpt:
+                failures.append(f"span_excerpt_mismatch:{span.span_id}")
+            file_entry = snapshot_files.get(span.path)
+            if file_entry is None or span.file_digest != file_entry.content_digest:
+                failures.append(f"span_file_digest_mismatch:{span.span_id}")
 
     # 2) source authority: anchor spans must be backed by executable_hard nodes
     anchor_span_ids = set(proposal.anchor_span_ids)

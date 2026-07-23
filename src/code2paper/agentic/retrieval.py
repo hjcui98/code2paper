@@ -913,7 +913,9 @@ def _llm_revised_plan(plan: AgenticRetrievalPlan, llm_config: LLMConfig | None) 
         schema_name="agentic_retrieval_plan",
         response_json_schema=json_schema_for(AgenticRetrievalPlan),
     )
-    response = LLMClient(llm_config).complete(request)
+    from code2paper.llm.role_config import RESEARCH_SUPERVISOR, apply_role_config
+
+    response = LLMClient(apply_role_config(llm_config, RESEARCH_SUPERVISOR)).complete(request)
     if response.blocked_reason:
         return plan.model_copy(update={"blocked_reason": response.blocked_reason})
     parsed, _error = try_parse_structured_response(response.text, AgenticRetrievalPlan)

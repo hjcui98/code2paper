@@ -234,11 +234,48 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         role_hint="temporal",
     ),
     IntentConceptV1(
+        concept_id="generation_invocation",
+        predicates=("CALL", "RETURN"),
+        terms_en=(
+            "generate", "generates", "generated", "generation",
+            "invoke", "invokes", "execute", "executes", "emit", "emits",
+        ),
+        terms_cn=(
+            "生成", "产生", "调用", "执行", "输出结果",
+        ),
+        role_hint="generation",
+    ),
+    IntentConceptV1(
+        concept_id="verification_decision",
+        predicates=("COMPARE", "BRANCH"),
+        terms_en=(
+            "verify", "verifies", "verification", "verifier",
+            "compare", "compares", "comparison", "accept", "accepted",
+            "reject", "rejected", "similarity", "matching",
+        ),
+        terms_cn=(
+            "验证", "校验", "比较", "接受", "拒绝", "相似度", "匹配",
+        ),
+        role_hint="verification",
+    ),
+    IntentConceptV1(
+        concept_id="result_composition",
+        predicates=("CONCAT", "RETURN"),
+        terms_en=(
+            "append", "appends", "concatenate", "concatenates",
+            "compose", "composes", "assemble", "assembles",
+        ),
+        terms_cn=(
+            "拼接", "追加", "组合结果", "组装",
+        ),
+        role_hint="composition",
+    ),
+    IntentConceptV1(
         concept_id="data_io",
         predicates=("READ", "WRITE", "LOAD", "SERIALIZE"),
         terms_en=(
             "load", "save", "read", "write", "file", "serialize",
-            "checkpoint", "output", "store", "persist",
+            "checkpoint", "store", "persist",
         ),
         terms_cn=(
             "加载", "保存", "读取", "写入", "文件",
@@ -370,10 +407,11 @@ class IntentObligationGraphV2(BaseModel):
     """Content-addressed V2 intent graph.
 
     The digest covers obligation ids, kinds, priorities, source fields and
-    the *normalized* typed behavior targets (predicate sets + conditions).
-    It deliberately excludes the raw ``author_text`` so paraphrase or
-    translation does not change the digest: two author YAMLs that compile
-    to the same typed targets produce the same digest.
+    the *normalized* typed behavior targets.  Every field that can change
+    research selection or coverage (including role, semantic requirements,
+    aliases and search terms) is part of the digest.  It deliberately
+    excludes raw ``author_text``: two author YAMLs that compile to the same
+    typed targets produce the same digest.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -408,7 +446,15 @@ class IntentObligationGraphV2(BaseModel):
                             "role": t.role,
                             "desired_predicates": sorted(t.desired_predicates),
                             "required_relations": sorted(t.required_relations),
+                            "inputs": sorted(t.inputs),
+                            "transformations": sorted(t.transformations),
+                            "decisions": sorted(t.decisions),
+                            "outputs": sorted(t.outputs),
                             "conditions": sorted(t.conditions),
+                            "search_terms": sorted(t.search_terms),
+                            "aliases": sorted(t.aliases),
+                            "organization_preference": t.organization_preference,
+                            "risk_level": t.risk_level,
                             "scope": _scope_of(t),
                         }
                         for t in o.typed_behavior_targets

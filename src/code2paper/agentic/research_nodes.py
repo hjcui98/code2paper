@@ -31,12 +31,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1, make_symbol_id
 from code2paper.agentic.generic_claim_compiler import (
     ClaimProposalV1,
     compile_atomic_claims,
@@ -48,6 +50,11 @@ from code2paper.agentic.generic_evidence_compiler import (
 from code2paper.agentic.generic_fact_compiler import (
     FactCompilerInputV1,
     compile_facts_from_behavior_graph,
+)
+from code2paper.agentic.obligation_fact_alignment import (
+    BEHAVIOR_PREDICATE_ALIASES,
+    FACT_PREDICATE_TO_BEHAVIOR_FULL,
+    align_target_to_facts,
 )
 from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
 from code2paper.agentic.research_models import (
@@ -84,6 +91,72 @@ from code2paper.agentic.research_tools import (
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
 from code2paper.agentic.state_v3 import AgentStateV3
+from code2paper.agentic.typed_refs import (
+    behavior_refs,
+    is_behavior_ref,
+    is_entrypoint_ref,
+    is_symbol_ref,
+    split_symbol_ref,
+    split_span_ref,
+    symbol_refs,
+)
+
+
+_SPECIALIZED_MISSING_TERMS: dict[str, tuple[str, ...]] = {
+    "call": ("call", "relation", "invoke", "dispatch"),
+    "data": ("data", "flow", "input", "output"),
+    "branch": ("branch", "condition", "control"),
+    "config": ("config", "parameter", "setting", "option"),
+}
+
+
+def _resolved_missing_information(
+    missing: list[str], observation: ResearchObservationV1
+) -> list[str]:
+    """Remove only research requirements satisfied by a strong observation."""
+
+    if observation.status != "success" or observation.source_authority == "hint_only":
+        return missing
+    tool_categories = {
+        "find_references": {"call"},
+        "trace_call_path": {"call"},
+        "trace_data_flow": {"data"},
+        "inspect_control_flow": {"branch"},
+        "inspect_configuration": {"config"},
+        "build_behavior_subgraph": {"call", "data", "branch"},
+    }.get(observation.tool_name, set())
+    concrete_read = observation.tool_name in {"read_symbol", "build_behavior_subgraph"}
+    observed_paths = {
+        parsed[0]
+        for ref in observation.exact_span_ids
+        if (parsed := split_span_ref(ref)) is not None
+    }
+    for ref in observation.result_refs:
+        parsed = split_symbol_ref(ref)
+        if parsed is not None:
+            observed_paths.add(parsed[0])
+
+    unresolved: list[str] = []
+    for requirement in missing:
+        normalized = requirement.casefold()
+        categories = {
+            category
+            for category, terms in _SPECIALIZED_MISSING_TERMS.items()
+            if any(term in normalized for term in terms)
+        }
+        if requirement.startswith("candidate_path:"):
+            # Candidate paths are alternatives, not an all-paths obligation.
+            if concrete_read and observed_paths:
+                continue
+        elif categories:
+            if categories & tool_categories:
+                continue
+        elif concrete_read and observed_paths:
+            # A successful exact code read satisfies the agenda's generic
+            # retrieval query; specialized relation/config questions remain.
+            continue
+        unresolved.append(requirement)
+    return unresolved
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +181,8 @@ class BudgetPolicyV1(BaseModel):
     branch_inspection: int = 4
     hint_search: int = 3
     packet_repair: int = 4
+    behavior_graph: int = 4
+    configuration: int = 4
 
     def envelope_for(self, obligation_id: str) -> PerObligationBudgetV1:
         limits: dict[str, int] = {
@@ -118,6 +193,8 @@ class BudgetPolicyV1(BaseModel):
             "branch_inspection": self.branch_inspection,
             "hint_search": self.hint_search,
             "packet_repair": self.packet_repair,
+            "behavior_graph": self.behavior_graph,
+            "configuration": self.configuration,
         }
         return PerObligationBudgetV1(obligation_id=obligation_id, limits=limits)
 
@@ -189,7 +266,11 @@ class InformationGainTracker:
                 spans.add(span)
                 gained_items.append(f"span:{span}")
         for ref in observation.result_refs:
-            if ref.startswith("symbol:") or ref.startswith("entrypoint:"):
+            # Phase 3: use typed_refs for uniform symbol/entrypoint
+            # detection instead of hard-coded ``startswith`` checks.
+            # This lets the gain tracker recognize every symbol or
+            # entrypoint reference produced by the research tools.
+            if is_symbol_ref(ref) or is_entrypoint_ref(ref):
                 if ref not in symbols:
                     symbols.add(ref)
                     gained_items.append(f"symbol:{ref}")
@@ -235,6 +316,50 @@ class InformationGainTracker:
             "gain_history": {k: list(v) for k, v in self._gain_history.items()},
         }
 
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any] | None) -> "InformationGainTracker":
+        """Reconstruct a tracker from a ``snapshot()`` payload.
+
+        Phase 4: enables cross-instance checkpoint/resume for the
+        multi-node LangGraph topology.  When ``snapshot`` is ``None`` or
+        not a mapping, a fresh tracker is returned so callers can use
+        this method unconditionally on the resume path.
+        """
+
+        tracker = cls()
+        if not isinstance(snapshot, dict):
+            return tracker
+        for key, field in (
+            ("seen_spans", "_seen_spans"),
+            ("seen_symbols", "_seen_symbols"),
+            ("seen_predicates", "_seen_predicates"),
+            ("seen_relations", "_seen_relations"),
+            ("no_progress", "_no_progress"),
+            ("gain_history", "_gain_history"),
+        ):
+            value = snapshot.get(key)
+            if not isinstance(value, dict):
+                continue
+            if key == "gain_history":
+                setattr(
+                    tracker,
+                    field,
+                    {k: list(v) for k, v in value.items() if isinstance(v, list)},
+                )
+            elif key == "no_progress":
+                setattr(
+                    tracker,
+                    field,
+                    {k: int(v) for k, v in value.items() if isinstance(v, (int, float))},
+                )
+            else:
+                setattr(
+                    tracker,
+                    field,
+                    {k: set(v) for k, v in value.items() if isinstance(v, (list, tuple, set))},
+                )
+        return tracker
+
 
 # ---------------------------------------------------------------------------
 # Node runtime context (carries non-state dependencies)
@@ -254,6 +379,8 @@ class ResearchGraphRuntime(BaseModel):
     run_id: str
     repo_snapshot: RepoSnapshot
     agenda: ResearchAgendaV1
+    intent_graph: Any | None = None
+    intent_target_proposal_report: dict[str, Any] = Field(default_factory=dict)
     budget_policy: BudgetPolicyV1 = Field(default_factory=BudgetPolicyV1)
     global_safety_budget: GlobalSafetyBudgetV1 = Field(default_factory=GlobalSafetyBudgetV1)
     supervisor_backend: SupervisorBackend | None = None
@@ -263,6 +390,10 @@ class ResearchGraphRuntime(BaseModel):
         "read_symbol",
         "find_references",
         "build_behavior_subgraph",
+        "trace_call_path",
+        "trace_data_flow",
+        "inspect_control_flow",
+        "inspect_configuration",
     )
     hard_rules: tuple[str, ...] = (
         "no_snapshot_external_paths",
@@ -448,6 +579,7 @@ def research_supervisor_node(
     no_progress_tool_call_ids: tuple[str, ...] = (),
     turn_index: int = 0,
     current_supported_claim_ids: tuple[str, ...] = (),
+    behavior_graph: CodeBehaviorGraphV1 | None = None,
 ) -> dict[str, Any]:
     """Run the supervisor backend, then policy-merge the proposal.
 
@@ -478,6 +610,7 @@ def research_supervisor_node(
         ready_tools=runtime.ready_tools,
         hard_rules=runtime.hard_rules,
         current_supported_claim_ids=current_supported_claim_ids,
+        behavior_template_search_hints=_behavior_template_search_hints(behavior_graph),
     )
     proposal = backend.decide(context)
     merge_result = apply_policy_merge(
@@ -511,7 +644,45 @@ def research_supervisor_node(
         # R8 ``gap_driven_tool_selection`` criterion would never see LLM
         # proposals even when the backend succeeded.
         "_merged_decision": decision,
+        "_policy_merge_results": [merge_result],
     }
+
+
+def _behavior_template_search_hints(graph: CodeBehaviorGraphV1 | None):
+    """Return compact structural hints; never facts or claim authorization."""
+
+    if graph is None or os.environ.get(
+        "CODE2PAPER_AGENTIC_BEHAVIOR_TEMPLATES", "1"
+    ).strip().lower() in {"0", "false", "no", "off"}:
+        return ()
+    from code2paper.agentic.behavior_templates import (
+        DEFAULT_BEHAVIOR_TEMPLATES,
+        match_all_templates,
+    )
+    from code2paper.agentic.research_supervisor import BehaviorTemplateSearchHintV1
+
+    templates = {item.template_id: item for item in DEFAULT_BEHAVIOR_TEMPLATES}
+    matches = sorted(
+        match_all_templates(DEFAULT_BEHAVIOR_TEMPLATES, graph),
+        key=lambda item: (not item.matched, -item.match_score, item.template_id),
+    )
+    hints = []
+    for match in matches:
+        if not match.matched and match.match_score <= 0:
+            continue
+        template = templates[match.template_id]
+        hints.append(BehaviorTemplateSearchHintV1(
+            template_id=match.template_id,
+            matched=match.matched,
+            match_score=match.match_score,
+            missing_predicates=match.missing_predicates,
+            missing_relation_kinds=match.missing_relation_kinds,
+            resolved_role_symbols=match.resolved_role_symbols,
+            predicate_order_hint=template.query.predicate_order_hint,
+        ))
+        if len(hints) >= 3:
+            break
+    return tuple(hints)
 
 
 # ---------------------------------------------------------------------------
@@ -608,6 +779,14 @@ def observation_ingest_node(
 
     The node then feeds each observation into the gain tracker and returns
     the updated no-progress counter for the active obligation.
+
+    Phase 3: the node now also extracts ``symbol:`` and ``behavior:``
+    refs from each admissible observation and merges them into the
+    active obligation's ``candidate_symbol_ids`` /
+    ``candidate_behavior_node_ids``.  This repairs the evidence chain:
+    the ``evidence_critic_node`` routes to ``compile_candidate`` only
+    when ``candidate_symbol_ids`` is non-empty, so without this update
+    the loop never produces compiled evidence.
     """
 
     active_obligation_id = active_obligation_id or state.get("active_obligation_id", "")
@@ -617,8 +796,17 @@ def observation_ingest_node(
     no_progress_counter = gain_tracker.no_progress_counter(active_obligation_id)
     no_progress_history = gain_tracker.gain_history(active_obligation_id)
 
+    # Locate the active obligation so we can update its candidate lists.
+    active_obligation: ResearchAgendaItemV1 | None = None
+    for item in runtime.agenda.items:
+        if item.obligation_id == active_obligation_id:
+            active_obligation = item
+            break
+
     # Track which observations are admissible for positive claims.
     admissible_refs: list[str] = []
+    new_symbol_refs: set[str] = set()
+    new_behavior_refs: set[str] = set()
     for obs in observations:
         if obs.obligation_id != active_obligation_id:
             # Observations for other obligations are recorded but do not
@@ -632,16 +820,114 @@ def observation_ingest_node(
             continue
         gain_tracker.ingest(active_obligation_id, obs)
         admissible_refs.append(_observation_ref(obs))
+        # Phase 3: extract typed refs so the obligation's candidate
+        # lists stay in sync with what the tools actually observed.
+        # The evidence_critic_node reads candidate_symbol_ids to decide
+        # whether to route to compile_candidate; without this update
+        # the loop never compiles evidence.
+        new_symbol_refs.update(symbol_refs(list(obs.result_refs)))
+        new_behavior_refs.update(behavior_refs(list(obs.result_refs)))
+        if active_obligation is not None:
+            active_obligation.missing_information = _resolved_missing_information(
+                active_obligation.missing_information,
+                obs,
+            )
 
-    return {
+    # Merge new refs into the active obligation's candidate lists
+    # (deduplicated).  The agenda item is mutable (not frozen) so
+    # in-place extension is safe and consistent with how
+    # gap_finalizer_node / compile_candidate_node mutate status.
+    candidate_symbol_ids: list[str] = []
+    candidate_behavior_node_ids: list[str] = []
+    if active_obligation is not None:
+        existing_symbols = set(active_obligation.candidate_symbol_ids)
+        existing_behaviors = set(active_obligation.candidate_behavior_node_ids)
+        for ref in new_symbol_refs:
+            if ref not in existing_symbols:
+                active_obligation.candidate_symbol_ids.append(ref)
+                existing_symbols.add(ref)
+        for ref in new_behavior_refs:
+            if ref not in existing_behaviors:
+                active_obligation.candidate_behavior_node_ids.append(ref)
+                existing_behaviors.add(ref)
+        candidate_symbol_ids = list(active_obligation.candidate_symbol_ids)
+        candidate_behavior_node_ids = list(
+            active_obligation.candidate_behavior_node_ids
+        )
+
+    state_update: dict[str, Any] = {
         "recent_observation_refs": admissible_refs,
-        "no_progress_counters": {active_obligation_id: gain_tracker.no_progress_counter(active_obligation_id)},
+        "no_progress_counters": {
+            active_obligation_id: gain_tracker.no_progress_counter(active_obligation_id)
+        },
     }
+    # Include the candidate lists in the state update so downstream
+    # nodes (and checkpoint consumers) can see the current candidates
+    # without re-reading the agenda.  These channels are read by the
+    # evidence_critic_node and compile_candidate_node.
+    if active_obligation is not None:
+        state_update["candidate_symbol_ids"] = candidate_symbol_ids
+        state_update["candidate_behavior_node_ids"] = candidate_behavior_node_ids
+    return state_update
 
 
 # ---------------------------------------------------------------------------
 # Node: behavior_graph_updater
 # ---------------------------------------------------------------------------
+
+
+def _find_symbol_by_location(
+    symbol_index: Any,
+    path: str,
+    qualified_name: str,
+    start_line: int,
+) -> Any | None:
+    """Find a ``SymbolRefV1`` by (path, qualified_name, start_line).
+
+    The research tools emit ``symbol:<path>:<name>:<line>`` refs whose
+    body is the *location* of the symbol, not its ``symbol_id`` (which
+    is ``sym:<hash>``).  This helper bridges the two representations so
+    the behavior graph updater can re-parse the cited symbol and merge
+    its operations into the running graph.
+    """
+
+    for sym in symbol_index.symbols:
+        if (
+            sym.path == path
+            and sym.qualified_name == qualified_name
+            and sym.start_line == start_line
+        ):
+            return sym
+    # Fallback: match on (path, start_line) only — the qualified_name
+    # in the ref may differ from the index's qualified_name when the
+    # tool emits a short name (e.g. ``Bar`` vs ``module.Bar``).
+    for sym in symbol_index.symbols:
+        if sym.path == path and sym.start_line == start_line:
+            return sym
+    return None
+
+
+def _parse_behavior_ref_body(body: str) -> tuple[str, str, int] | None:
+    """Parse a ``behavior:<path>:<symbol>:<line>`` ref body.
+
+    Returns ``(path, symbol, line)`` or ``None`` when the body is not
+    a valid ``<path>:<symbol>:<line>`` triple.  The path may contain
+    colons, so the split is anchored from the right.
+    """
+
+    if not body:
+        return None
+    parts = body.rsplit(":", 2)
+    if len(parts) < 3:
+        return None
+    path, name, line_str = parts
+    try:
+        line = int(line_str)
+    except ValueError:
+        return None
+    if not path or not name or line < 1:
+        return None
+    return path, name, line
 
 
 def behavior_graph_updater_node(
@@ -654,10 +940,19 @@ def behavior_graph_updater_node(
 ) -> tuple[CodeBehaviorGraphV1, dict[str, Any]]:
     """Merge new behavior subgraphs extracted from observations.
 
-    For every ``read_symbol`` / ``build_behavior_subgraph`` observation,
-    the node re-parses the cited symbol and merges the resulting nodes
-    into the running ``CodeBehaviorGraphV1``.  The merge is content-addressed
-    so duplicate reads do not duplicate nodes.
+    For every ``search_symbols`` / ``read_symbol`` /
+    ``build_behavior_subgraph`` observation, the node re-parses the
+    cited symbol and merges the resulting nodes into the running
+    ``CodeBehaviorGraphV1``.  The merge is content-addressed so
+    duplicate reads do not duplicate nodes.
+
+    Phase 3: ref filtering now uses ``typed_refs`` so both
+    ``symbol:<path>:<name>:<line>`` refs (from ``search_symbols``) and
+    ``behavior:<path>:<name>:<line>`` refs (from
+    ``build_behavior_subgraph``) are handled uniformly.  The previous
+    implementation looked up the ref body as a ``symbol_id`` (which is
+    ``sym:<hash>``) and never matched — this is the root cause of the
+    broken evidence chain.
 
     Returns the updated behavior graph (carried in the runtime, not the
     state) and a state update containing the new digest.
@@ -676,18 +971,39 @@ def behavior_graph_updater_node(
     for obs in observations:
         if obs.obligation_id != active_obligation_id:
             continue
-        if obs.tool_name not in {"read_symbol", "build_behavior_subgraph"}:
+        if obs.tool_name not in {
+            "search_symbols",
+            "read_symbol",
+            "build_behavior_subgraph",
+        }:
             continue
         if obs.status not in {"success"}:
             continue
-        # The result_refs carry ``symbol:<symbol_id>`` entries produced by
-        # the research tools.  Re-parse each cited symbol and merge the
-        # resulting subgraph.
+        # Phase 3: handle both ``symbol:`` and ``behavior:`` refs via
+        # typed_refs.  Each ref carries a (path, name, line) location
+        # that we resolve to a SymbolRefV1 in the V2 index, then
+        # re-parse and merge the resulting subgraph.
         for ref in obs.result_refs:
-            if not ref.startswith("symbol:"):
+            sym = None
+            if is_symbol_ref(ref):
+                parsed = split_symbol_ref(ref)
+                if parsed is not None:
+                    path, name, line = parsed
+                    sym = _find_symbol_by_location(
+                        symbol_index, path, name, line
+                    )
+            elif is_behavior_ref(ref):
+                # ``behavior:<path>:<symbol>:<line>`` — parse the body
+                # and resolve to a SymbolRefV1 by location.
+                body = ref.split(":", 1)[1] if ":" in ref else ""
+                parsed = _parse_behavior_ref_body(body)
+                if parsed is not None:
+                    path, name, line = parsed
+                    sym = _find_symbol_by_location(
+                        symbol_index, path, name, line
+                    )
+            else:
                 continue
-            symbol_id = ref.removeprefix("symbol:")
-            sym = symbol_index.find(symbol_id)
             if sym is None:
                 continue
             source = files.get(sym.path)
@@ -717,6 +1033,29 @@ def behavior_graph_updater_node(
     state_update: dict[str, Any] = {
         "behavior_graph_ref": updated_graph.content_digest,
     }
+    if new_predicates:
+        available_relation_kinds = {
+            relation.kind for relation in updated_graph.relations
+        }
+        for item in runtime.agenda.items:
+            if item.obligation_id != active_obligation_id:
+                continue
+            retained: list[str] = []
+            for value in item.missing_information:
+                if value.startswith("typed_semantic:"):
+                    # A new candidate may satisfy the semantic binding; retry
+                    # compile_candidate, which will re-add an exact requirement
+                    # if the new fact slice still does not match.
+                    continue
+                if value.startswith("typed_predicate:"):
+                    if value.split(":", 1)[1].upper() in new_predicates:
+                        continue
+                if value.startswith("typed_relation:"):
+                    if value.split(":", 1)[1].upper() in available_relation_kinds:
+                        continue
+                retained.append(value)
+            item.missing_information = retained
+            break
     return updated_graph, state_update
 
 
@@ -839,9 +1178,14 @@ def _select_behavior_nodes_for_obligation(
 
     nodes_by_id = {n.node_id: n for n in behavior_graph.nodes}
     if candidate_behavior_node_ids:
+        normalized_node_ids = {
+            value.removeprefix("behavior:")
+            for value in candidate_behavior_node_ids
+            if value
+        }
         selected = [
             nodes_by_id[nid]
-            for nid in candidate_behavior_node_ids
+            for nid in normalized_node_ids
             if nid in nodes_by_id
         ]
     else:
@@ -872,6 +1216,18 @@ def _match_nodes_by_candidate(
 
     if not candidate_symbol_ids:
         return []
+    # Typed symbol refs carry the exact indexed symbol location.  Prefer
+    # those over seed paths, otherwise a successful lookup of one function
+    # can accidentally compile every operation in the same file.
+    typed_symbol_ids = {
+        make_symbol_id(path, name, line)
+        for candidate in candidate_symbol_ids
+        if (parsed := split_symbol_ref(candidate)) is not None
+        for path, name, line in (parsed,)
+    }
+    if typed_symbol_ids:
+        return [n for n in nodes if n.symbol_id in typed_symbol_ids]
+
     selected: list[Any] = []
     for candidate in candidate_symbol_ids:
         if not candidate:
@@ -899,16 +1255,156 @@ def _match_nodes_by_candidate(
     return selected
 
 
+_COMPILE_NODE_LIMIT = 3
+_COMPILE_FACT_LIMIT = 8
+_SEMANTIC_STOP_WORDS = frozenset({
+    "about", "after", "also", "author", "before", "behavior", "candidate",
+    "code", "describe", "from", "implementation", "information", "method",
+    "missing", "module", "paper", "path", "project", "related", "should",
+    "stage", "system", "that", "their", "this", "through", "using", "with",
+})
+
+
+def _semantic_tokens(value: Any) -> set[str]:
+    """Return conservative identifier-like terms for relevance matching."""
+
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", str(value))
+    tokens = {
+        token.lower()
+        for token in re.findall(r"[A-Za-z][A-Za-z0-9]+", text.replace("_", " "))
+    }
+    return {
+        token[:-1] if len(token) > 4 and token.endswith("s") else token
+        for token in tokens
+        if len(token) >= 3 and token.lower() not in _SEMANTIC_STOP_WORDS
+    }
+
+
+def _obligation_retrieval_terms(
+    obligation: ResearchAgendaItemV1,
+) -> tuple[set[str], set[str]]:
+    """Collect semantic terms and requested predicates from typed intent."""
+
+    terms = _semantic_tokens(obligation.author_text)
+    predicates: set[str] = set()
+    for missing in obligation.missing_information:
+        # Candidate-path bookkeeping is a search control, not a semantic
+        # requirement, and must not make an arbitrary node look relevant.
+        if "candidate_path" not in missing.lower():
+            terms.update(_semantic_tokens(missing))
+    for target in obligation.typed_behavior_targets:
+        raw_predicates = {value.upper() for value in target.desired_predicates}
+        predicates.update(raw_predicates)
+        # Expand with aliases so AGGREGATE also matches CONCAT/STACK/REDUCE
+        # nodes, and CONSTRUCT also matches CALL/LOAD nodes.  Without this,
+        # _rank_relevant_behavior_nodes would filter out all nodes when the
+        # adapter never emits the abstract predicate directly.
+        for pred in raw_predicates:
+            predicates.update(BEHAVIOR_PREDICATE_ALIASES.get(pred, frozenset()))
+        for values in (
+            target.search_terms,
+            target.aliases,
+            target.inputs,
+            target.transformations,
+            target.decisions,
+            target.outputs,
+            target.conditions,
+        ):
+            for value in values:
+                terms.update(_semantic_tokens(value))
+        terms.update(_semantic_tokens(target.role))
+    return terms, predicates
+
+
+def _rank_relevant_behavior_nodes(
+    nodes: list[Any],
+    obligation: ResearchAgendaItemV1,
+    *,
+    limit: int | None = None,
+) -> list[Any]:
+    """Select a small, obligation-relevant behavior slice.
+
+    When legacy/test obligations contain no semantic intent at all, retain a
+    deterministic bounded fallback.  Once intent supplies retrieval terms or
+    desired predicates, at least one term/predicate must match; otherwise the
+    compiler fails closed and the caller records a typed gap.
+    """
+
+    terms, desired_predicates = _obligation_retrieval_terms(obligation)
+    if limit is None:
+        # Three is the normal minimality target.  A typed obligation may
+        # require a few distinct predicates; allow a bounded larger slice
+        # rather than mechanically deleting evidence needed to resolve it.
+        limit = min(_COMPILE_FACT_LIMIT, max(_COMPILE_NODE_LIMIT, len(desired_predicates)))
+    if not terms and not desired_predicates:
+        return sorted(nodes, key=lambda node: node.node_id)[:limit]
+
+    symbol_terms: dict[str, set[str]] = {}
+    for candidate in obligation.candidate_symbol_ids:
+        parsed = split_symbol_ref(candidate)
+        if parsed is None:
+            continue
+        path, name, line = parsed
+        symbol_terms.setdefault(make_symbol_id(path, name, line), set()).update(
+            _semantic_tokens(name)
+        )
+
+    ranked: list[tuple[int, str, Any]] = []
+    for node in nodes:
+        node_terms: set[str] = set()
+        for value in (
+            node.predicate,
+            node.operands,
+            node.result,
+            node.guard,
+            node.iteration_context,
+            node.shape_or_type_hints,
+        ):
+            node_terms.update(_semantic_tokens(value))
+        node_terms.update(symbol_terms.get(node.symbol_id, set()))
+        overlap = terms & node_terms
+        predicate_match = node.predicate.upper() in desired_predicates
+        # A single shared word (for example ``model`` or ``step``) is too
+        # weak to authorize a Method claim.  Typed predicate intent can
+        # disambiguate one semantic term; untyped prose needs two distinct
+        # overlaps.  This deliberately prefers an explicit gap over a
+        # plausible but unrelated operation from the right file.
+        if predicate_match:
+            # Typed predicates are the deterministic authorization key;
+            # lexical terms are only needed to align untyped search prose.
+            relevant = True
+        else:
+            relevant = len(overlap) >= 2
+        if not relevant:
+            continue
+        score = len(overlap) * 4 + (8 if predicate_match else 0)
+        ranked.append((score, node.node_id, node))
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    return [item[2] for item in ranked[:limit]]
+
+
 def _extract_path_component(candidate: str) -> str:
     """Extract a file path from a candidate identifier.
 
     Handles ``path:name`` and bare ``path`` forms.  Returns an empty
     string when the candidate does not look like a path (e.g. it is a
     ``sym:`` / ``node:`` id without a slash or dot).
+
+    Phase 3: also handles typed ``symbol:<path>:<name>:<line>`` refs
+    via ``split_symbol_ref`` so the behavior graph updater and the
+    compile candidate node can match candidates produced by
+    ``observation_ingest_node`` against ``span:<path>:...`` ids.
     """
 
     raw = candidate.strip()
     if not raw:
+        return ""
+    # Phase 3: typed ``symbol:<path>:<name>:<line>`` ref — extract the
+    # path component directly from the parsed fields.
+    if is_symbol_ref(raw):
+        parsed = split_symbol_ref(raw)
+        if parsed is not None:
+            return parsed[0]
         return ""
     # ``sym:`` / ``node:`` ids without a path separator are not paths.
     if raw.startswith(("sym:", "node:")) and "/" not in raw and "." not in raw:
@@ -1030,7 +1526,7 @@ def _build_claim_proposals_for_facts(
     """
 
     proposals: list[ClaimProposalV1] = []
-    for fact in facts.facts:
+    for fact in facts.facts[:_COMPILE_FACT_LIMIT]:
         if fact.validation_status != "supported":
             continue
         obj = fact.object
@@ -1058,6 +1554,23 @@ def _build_claim_proposals_for_facts(
         )
         proposals.append(proposal)
     return proposals
+
+
+def _alignment_semantic_context(
+    obligation: ResearchAgendaItemV1,
+    selected_nodes: list[Any],
+) -> tuple[str, ...]:
+    """Expose only typed candidate names and parsed operation operands."""
+
+    values: list[str] = []
+    for candidate in obligation.candidate_symbol_ids:
+        parsed = split_symbol_ref(candidate)
+        if parsed is not None:
+            values.extend((parsed[0], parsed[1]))
+    for node in selected_nodes:
+        values.extend((node.predicate, node.result, node.guard, node.iteration_context))
+        values.extend(node.operands)
+    return tuple(value for value in values if value)
 
 
 def compile_candidate_node(
@@ -1121,6 +1634,10 @@ def compile_candidate_node(
         candidate_symbol_ids=active_obligation.candidate_symbol_ids,
         candidate_behavior_node_ids=active_obligation.candidate_behavior_node_ids,
     )
+    selected_nodes = _rank_relevant_behavior_nodes(
+        selected_nodes,
+        active_obligation,
+    )
     if not selected_nodes:
         # Nothing to compile: route to gap finalizer.
         return gap_finalizer_node(
@@ -1153,6 +1670,7 @@ def compile_candidate_node(
         behavior_graph,
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        repo_snapshot=runtime.repo_snapshot,
     )
     if packet is None or not packet_report.accepted:
         # Packet rejected: route to gap finalizer so the obligation gets a
@@ -1184,6 +1702,107 @@ def compile_candidate_node(
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
         evidence_packet_digest=packet.source_digest,
     )
+    target_alignments = [
+        align_target_to_facts(
+            target,
+            fact_set.facts,
+            behavior_relations=selected_relations,
+            semantic_context=_alignment_semantic_context(
+                active_obligation,
+                selected_nodes,
+            ),
+        )
+        for target in active_obligation.typed_behavior_targets
+    ]
+    if not target_alignments:
+        # Lexical/semantic similarity may select a candidate, but only typed
+        # target-to-fact alignment can authorize obligation coverage (R5.2).
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+    if not all(alignment.status == "resolved" for alignment in target_alignments):
+        unresolved_predicates = sorted({
+            predicate
+            for alignment in target_alignments
+            for predicate in alignment.unmatched_predicates
+        })
+        for predicate in unresolved_predicates:
+            requirement = f"typed_predicate:{predicate}"
+            if requirement not in active_obligation.missing_information:
+                active_obligation.missing_information.append(requirement)
+        unresolved_relations = sorted({
+            relation
+            for alignment in target_alignments
+            for relation in alignment.unmatched_relations
+        })
+        for relation in unresolved_relations:
+            requirement = f"typed_relation:{relation}"
+            if requirement not in active_obligation.missing_information:
+                active_obligation.missing_information.append(requirement)
+        for target, alignment in zip(
+            active_obligation.typed_behavior_targets,
+            target_alignments,
+        ):
+            requirements = _target_semantic_requirements_for_search(target)
+            for field in alignment.unmatched_semantic_fields:
+                terms = requirements.get(field, "")
+                requirement = f"typed_semantic:{field}:{terms}"
+                if requirement not in active_obligation.missing_information:
+                    active_obligation.missing_information.append(requirement)
+        return {
+            "status": "researching",
+            "candidate_symbol_ids": list(active_obligation.candidate_symbol_ids),
+            "candidate_behavior_node_ids": list(
+                active_obligation.candidate_behavior_node_ids
+            ),
+        }
+    aligned_fact_ids = {
+        fact_id
+        for alignment in target_alignments
+        for fact_id in alignment.matched_fact_ids
+    }
+    required_predicates = {
+        predicate
+        for target in active_obligation.typed_behavior_targets
+        for predicate in target.desired_predicates
+    }
+    if len(required_predicates) > _COMPILE_FACT_LIMIT:
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+    # Keep one deterministic fact per required behavior predicate.  Extra
+    # same-predicate operations are related implementation detail, not proof
+    # of additional obligation coverage.
+    aligned_facts: list[Any] = []
+    covered_predicates: set[str] = set()
+    for fact in sorted(fact_set.facts, key=lambda item: item.fact_id):
+        if fact.fact_id not in aligned_fact_ids:
+            continue
+        behavior_predicate = FACT_PREDICATE_TO_BEHAVIOR_FULL.get(fact.predicate)
+        if not behavior_predicate or behavior_predicate in covered_predicates:
+            continue
+        aligned_facts.append(fact)
+        covered_predicates.add(behavior_predicate)
+    if aligned_facts != fact_set.facts:
+        bounded_facts = aligned_facts
+        fact_payload = [item.model_dump(mode="json") for item in bounded_facts]
+        fact_set = fact_set.model_copy(update={
+            "facts": bounded_facts,
+            "content_digest": "sha256:" + hashlib.sha256(
+                json.dumps(
+                    fact_payload,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest(),
+        })
     supported_facts = [
         f for f in fact_set.facts if f.validation_status == "supported"
     ]
@@ -1245,6 +1864,26 @@ def compile_candidate_node(
             "claim_set": claim_set,
         },
     }
+
+
+def _target_semantic_requirements_for_search(
+    target: TypedBehaviorTargetV1,
+) -> dict[str, str]:
+    values: dict[str, str] = {}
+    role = target.role.strip()
+    if role:
+        values["role"] = role
+    for field in ("inputs", "transformations", "decisions", "outputs"):
+        items = getattr(target, field)
+        if items:
+            values[field] = " ".join(items)
+    conditions = [
+        value for value in target.conditions
+        if value not in {"training", "inference", "any"}
+    ]
+    if conditions:
+        values["conditions"] = " ".join(conditions)
+    return values
 
 
 # ---------------------------------------------------------------------------

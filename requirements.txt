@@ -1,0 +1,16 @@
+# Code2Paper runtime dependencies
+# Python >= 3.10 (recommended 3.11)
+
+pydantic>=2.0
+PyYAML>=6.0
+json-repair>=0.39.1
+
+# Figure rendering/conversion (used by fallback/paperbanana figure backends)
+CairoSVG>=2.7
+Pillow>=10.0
+
+# Optional: for local testing
+# pytest>=8.0
+
+# Optional: if you will run the PaperBanana backend, also install:
+# -r /path/to/PaperBanana/requirements.txt

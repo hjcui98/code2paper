@@ -176,6 +176,12 @@ class AgentStateV3(TypedDict, total=False):
     global_safety_budget: Annotated[dict[str, int], merge_mapping]
     no_progress_counters: Annotated[dict[str, int], merge_counters]
 
+    # Phase 4: serializable snapshot of the research loop state
+    # (behavior graph, gain tracker, budgets, turn index, tool call ids).
+    # Populated by the multi-node LangGraph topology so cross-instance
+    # checkpoint/resume can rebuild the non-serializable loop state.
+    loop_state_snapshot: Annotated[dict[str, Any], merge_mapping]
+
     # --- authoring -----------------------------------------------------------
     authoring_plan_ref: str
     method_draft_ref: str
@@ -232,6 +238,10 @@ class AgentStateV3Record(BaseModel):
     per_obligation_budgets: dict[str, dict[str, int]] = Field(default_factory=dict)
     global_safety_budget: dict[str, int] = Field(default_factory=dict)
     no_progress_counters: dict[str, int] = Field(default_factory=dict)
+
+    # Phase 4: serializable snapshot of the research loop state.
+    # Empty by default; populated by the multi-node LangGraph topology.
+    loop_state_snapshot: dict[str, Any] = Field(default_factory=dict)
 
     authoring_plan_ref: str = ""
     method_draft_ref: str = ""

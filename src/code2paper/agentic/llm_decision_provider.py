@@ -18,6 +18,7 @@ from code2paper.core.schemas import LLMConfig, LLMProvider
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.providers import has_provider_api_key
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
+from code2paper.llm.role_config import AUTHORING_PLANNER, apply_role_config
 
 ProposalSchema = (
     type[CoverageCriticProposal]
@@ -70,7 +71,7 @@ def build_llm_decision_provider(llm_config: LLMConfig | None) -> DecisionProvide
             schema_name=schema.__name__,
             response_json_schema=json_schema_for(schema),
         )
-        node_config = llm_config.model_copy(
+        node_config = apply_role_config(llm_config, AUTHORING_PLANNER).model_copy(
             update={"max_output_tokens": min(llm_config.max_output_tokens, _NODE_MAX_OUTPUT_TOKENS[prompt.node])}
         )
         response = LLMClient(node_config).complete(request)

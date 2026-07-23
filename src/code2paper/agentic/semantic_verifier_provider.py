@@ -8,6 +8,7 @@ from code2paper.core.schemas import LLMConfig, LLMProvider
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.providers import has_provider_api_key, with_node_output_budget
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
+from code2paper.llm.role_config import SEMANTIC_VERIFIER, apply_role_config
 from code2paper.export.run_manifest import hash_file
 
 
@@ -15,7 +16,8 @@ class LLMSemanticEvidenceVerifier:
     """Isolated claim/evidence verifier with auditable, bounded calls."""
 
     def __init__(self, config: LLMConfig) -> None:
-        self.config = with_node_output_budget(config, "text_evidence_validator", 512)
+        role_config = apply_role_config(config, SEMANTIC_VERIFIER)
+        self.config = with_node_output_budget(role_config, "text_evidence_validator", 1024)
         self.client = LLMClient(self.config)
         self.traces: list[dict[str, Any]] = []
 

@@ -43,6 +43,8 @@ TEXT_TRUST_NODE_NAMES: Final[tuple[str, ...]] = (
     "final_text_claim_extractor",
     "text_evidence_validator",
     "text_trace_builder",
+    "local_text_repair",
+    "packet_binding_repair",
 )
 TERMINAL_NODE_NAMES: Final[tuple[str, ...]] = ("finalize", "blocked")
 DIRECT_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
@@ -54,6 +56,7 @@ DIRECT_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
     DirectEdgeSpec(source="authoring", target="final_text_claim_extractor"),
     DirectEdgeSpec(source="final_text_claim_extractor", target="text_evidence_validator"),
     DirectEdgeSpec(source="text_evidence_validator", target="text_trace_builder"),
+    DirectEdgeSpec(source="packet_binding_repair", target="blocked"),
     DirectEdgeSpec(source="validation", target="revision_router"),
 )
 TERMINAL_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
@@ -104,8 +107,14 @@ CONDITIONAL_ROUTE_SPECS: Final[tuple[ConditionalRouteSpec, ...]] = (
     ConditionalRouteSpec(
         source="text_trace_builder",
         router="_route_after_text_trace_builder",
-        routes=(("validation", "validation"), ("authoring", "authoring"), ("analysis", "analysis"), ("evidence", "evidence"), ("blocked", "blocked")),
-        safety_note="Final text reaches quality validation only after post-hoc atomic claim extraction, direct-evidence validation, and trace construction; repairs consume bounded revision budgets.",
+        routes=(("validation", "validation"), ("local_text_repair", "local_text_repair"), ("final_text_claim_extractor", "final_text_claim_extractor"), ("blocked", "blocked")),
+        safety_note="Final text reaches quality validation only after exact claim tracing. Failed sentences enter a bounded local repair loop and can never route to whole-stage intake, analysis, evidence, or authoring.",
+    ),
+    ConditionalRouteSpec(
+        source="local_text_repair",
+        router="_route_after_local_text_repair",
+        routes=(("final_text_claim_extractor", "final_text_claim_extractor"), ("packet_binding_repair", "packet_binding_repair"), ("blocked", "blocked")),
+        safety_note="Local repair may rewrite only exact final-text spans or emit a typed packet repair request; it cannot restart a global pipeline stage.",
     ),
     ConditionalRouteSpec(
         source="revision_router",

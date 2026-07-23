@@ -21,8 +21,11 @@ The fixtures here are project-agnostic: they use the generic
 from __future__ import annotations
 
 from code2paper.agentic.author_intent_summary import AuthorIntentSummary
+from code2paper.agentic.behavior_graph import BehaviorRelationV1
 from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
     AtomicClaimV3,
+    CodeFactSetV1,
     CodeFactV1,
     ExplicitCodeGapV1,
 )
@@ -31,6 +34,7 @@ from code2paper.agentic.intent_compiler_v2 import compile_intent_obligation_grap
 from code2paper.agentic.obligation_fact_alignment import (
     align_obligation,
     align_target_to_facts,
+    bind_claims_to_obligations,
     build_obligation_coverage_v2,
 )
 from code2paper.agentic.research_models import TypedBehaviorTargetV1
@@ -81,6 +85,10 @@ def _make_fact(
     predicate: str,
     conditions: list[str] | None = None,
     validation_status: str = "supported",
+    object_value: str = "result",
+    relation_evidence_ids: list[str] | None = None,
+    relation_kinds: list[str] | None = None,
+    semantic_context: list[str] | None = None,
 ) -> CodeFactV1:
     """Build a minimal ``CodeFactV1`` for alignment tests."""
 
@@ -88,10 +96,13 @@ def _make_fact(
         fact_id=fact_id,
         subject="symbol",
         predicate=predicate,  # type: ignore[arg-type]
-        object="result",
+        object=object_value,
         conditions=list(conditions or []),
         scope="function",
         direct_span_ids=["span-1"],
+        relation_evidence_ids=list(relation_evidence_ids or []),
+        relation_kinds=list(relation_kinds or []),
+        semantic_context=list(semantic_context or []),
         exact_source_digest="sha256:fixture",
         canonical_identity=f"fixture:{fact_id}",
         validation_status=validation_status,  # type: ignore[arg-type]
@@ -128,6 +139,49 @@ def _fact_predicate_for(behavior_predicate: str) -> str:
     """Translate an uppercase behavior predicate to its lowercase fact predicate."""
 
     return BEHAVIOR_PREDICATE_TO_FACT[behavior_predicate]
+
+
+def test_claims_bind_to_typed_obligations_through_authorized_fact_ids() -> None:
+    graph = compile_intent_obligation_graph_v2(_inference_summary())
+    obligation = next(
+        item for item in graph.obligations
+        if item.kind == "method_mainline" and item.typed_behavior_targets
+    )
+    target = obligation.typed_behavior_targets[0]
+    facts = [
+        _inference_fact(f"fact-{index}", predicate=_fact_predicate_for(predicate))
+        for index, predicate in enumerate(target.desired_predicates, start=1)
+    ]
+    fact_set = CodeFactSetV1(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        facts=facts,
+        content_digest="sha256:facts",
+    )
+    claim = AtomicClaimV3(
+        claim_id="claim-test",
+        canonical_text="The implementation follows the typed inference behavior.",
+        fact_ids=[item.fact_id for item in facts],
+        direct_evidence_ids=["span-1"],
+        allowed_wording_boundary="Only describe the observed inference behavior.",
+        canonical_identity="test:typed-binding",
+    )
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[claim],
+        content_digest="sha256:claims",
+    )
+
+    rebound = bind_claims_to_obligations(
+        graph, fact_set=fact_set, claim_set=claim_set
+    )
+
+    assert obligation.obligation_id in rebound.claims[0].covers_obligation_ids
+    assert rebound.content_digest != claim_set.content_digest
 
 
 # ---------------------------------------------------------------------------
@@ -751,3 +805,209 @@ def test_align_target_to_facts_unresolved_when_no_match() -> None:
     assert alignment.status == "scope_blocked"
     assert alignment.matched_fact_ids == ()
     assert set(alignment.scope_blocked_fact_ids) == {"f1", "f2"}
+
+
+def test_rich_target_requires_role_inputs_and_outputs_not_only_predicates() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-RICH-DRAFT",
+        role="draft_generation",
+        desired_predicates=("CALL", "RETURN"),
+        inputs=("draft prefix",),
+        transformations=("generate",),
+        outputs=("candidate draft",),
+    )
+    facts = [
+        _make_fact(
+            "call",
+            predicate=_fact_predicate_for("CALL"),
+            object_value="engine.generate(target_prefix)",
+        ),
+        _make_fact(
+            "return",
+            predicate=_fact_predicate_for("RETURN"),
+            object_value="reference_target",
+        ),
+    ]
+
+    alignment = align_target_to_facts(
+        target,
+        facts,
+        semantic_context=("target_generation", "target_prefix"),
+    )
+
+    assert alignment.status == "partial"
+    assert "role" in alignment.unmatched_semantic_fields
+    assert "inputs" in alignment.unmatched_semantic_fields
+    assert "outputs" in alignment.unmatched_semantic_fields
+
+
+def test_rich_target_resolves_with_matching_semantic_context_and_relation() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-RICH-TARGET",
+        role="target_generation",
+        desired_predicates=("CALL", "RETURN"),
+        required_relations=("CALLS",),
+        inputs=("target prefix",),
+        transformations=("generate",),
+        outputs=("reference target",),
+    )
+    facts = [
+        _make_fact(
+            "call",
+            predicate=_fact_predicate_for("CALL"),
+            object_value="target_engine.generate(target_prefix)",
+            relation_evidence_ids=["rel:calls"],
+        ),
+        _make_fact(
+            "return",
+            predicate=_fact_predicate_for("RETURN"),
+            object_value="reference_target",
+        ),
+    ]
+    relation = BehaviorRelationV1(
+        relation_id="rel:calls",
+        kind="CALLS",
+        source_node_id="node:call",
+        target_node_id="node:target",
+        source_symbol_id="sym:caller",
+        target_symbol_id="sym:target",
+        source_span_id="span:main.py:1:1",
+        target_span_id="span:target.py:1:1",
+    )
+
+    alignment = align_target_to_facts(
+        target,
+        facts,
+        behavior_relations=[relation],
+        semantic_context=(
+            "target_generation", "target_prefix", "reference_target",
+        ),
+    )
+
+    assert alignment.status == "resolved"
+    assert alignment.unmatched_semantic_fields == ()
+    assert alignment.matched_relations == ("CALLS",)
+
+
+def test_rich_target_replays_from_persisted_fact_semantics_without_live_graph() -> None:
+    """Final coverage sees the same semantic/relation proof as candidate time."""
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-RICH-REPLAY",
+        role="draft_generation",
+        desired_predicates=("CALL", "RETURN"),
+        required_relations=("CALLS",),
+        inputs=("draft prefix",),
+        transformations=("generate",),
+        outputs=("candidate draft",),
+    )
+    facts = [
+        _make_fact(
+            "call",
+            predicate=_fact_predicate_for("CALL"),
+            object_value="engine.generate(draft_prefix)",
+            relation_evidence_ids=["rel:calls"],
+            relation_kinds=["CALLS"],
+            semantic_context=["draft_generation", "draft_prefix"],
+        ),
+        _make_fact(
+            "return",
+            predicate=_fact_predicate_for("RETURN"),
+            object_value="candidate_draft",
+            semantic_context=["candidate_draft"],
+        ),
+    ]
+
+    alignment = align_target_to_facts(target, facts)
+
+    assert alignment.status == "resolved"
+    assert alignment.matched_relations == ("CALLS",)
+    assert alignment.unmatched_semantic_fields == ()
+
+
+# ---------------------------------------------------------------------------
+# Predicate alias tests (AGGREGATE / CONSTRUCT)
+# ---------------------------------------------------------------------------
+
+
+def test_aggregate_predicate_satisfied_by_concat_alias() -> None:
+    """AGGREGATE desired predicate is satisfied by a CONCAT fact via alias."""
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-AGG-01",
+        role="training",
+        desired_predicates=("AGGREGATE", "COMPUTE", "REDUCE"),
+        required_relations=(),
+        conditions=("training",),
+        risk_level="high",
+    )
+    facts = [
+        _training_fact("f1", predicate=_fact_predicate_for("CONCAT")),
+        _training_fact("f2", predicate=_fact_predicate_for("COMPUTE")),
+        _training_fact("f3", predicate=_fact_predicate_for("REDUCE")),
+    ]
+    alignment = align_target_to_facts(target, facts)
+    assert alignment.status == "resolved"
+    assert "AGGREGATE" not in alignment.unmatched_predicates
+    assert set(alignment.unmatched_predicates) == set()
+
+
+def test_aggregate_predicate_satisfied_by_stack_alias() -> None:
+    """AGGREGATE is also satisfied by STACK (alias)."""
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-AGG-02",
+        role="feature",
+        desired_predicates=("AGGREGATE",),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    facts = [
+        _unconditional_fact("f1", predicate=_fact_predicate_for("STACK")),
+    ]
+    alignment = align_target_to_facts(target, facts)
+    assert alignment.status == "resolved"
+    assert alignment.unmatched_predicates == ()
+
+
+def test_construct_predicate_satisfied_by_call_alias() -> None:
+    """CONSTRUCT desired predicate is satisfied by a CALL fact via alias."""
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-CON-01",
+        role="feature",
+        desired_predicates=("CONSTRUCT", "NORMALIZE", "READ"),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    facts = [
+        _unconditional_fact("f1", predicate=_fact_predicate_for("CALL")),
+        _unconditional_fact("f2", predicate=_fact_predicate_for("NORMALIZE")),
+        _unconditional_fact("f3", predicate=_fact_predicate_for("READ")),
+    ]
+    alignment = align_target_to_facts(target, facts)
+    assert alignment.status == "resolved"
+    assert "CONSTRUCT" not in alignment.unmatched_predicates
+
+
+def test_aggregate_not_satisfied_when_no_alias_predicate_present() -> None:
+    """AGGREGATE remains unmatched when no CONCAT/STACK/REDUCE fact exists."""
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-AGG-03",
+        role="training",
+        desired_predicates=("AGGREGATE", "COMPUTE"),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    # Only COMPUTE is present; no CONCAT/STACK/REDUCE.
+    facts = [
+        _unconditional_fact("f1", predicate=_fact_predicate_for("COMPUTE")),
+    ]
+    alignment = align_target_to_facts(target, facts)
+    assert alignment.status == "partial"
+    assert "AGGREGATE" in alignment.unmatched_predicates
+    assert "COMPUTE" not in alignment.unmatched_predicates

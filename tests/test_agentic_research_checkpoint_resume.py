@@ -591,8 +591,16 @@ class TestDriverResumeFromLoopState:
         # The resumed counter must still be 2 (the driver didn't reset it).
         # Note: the counter may have changed during the run, but the
         # initial state was 2 and the supervisor's first decision should
-        # have been a strategy switch.
-        assert result.turns_executed >= 1
+        # have been a strategy switch.  With the Phase 3 evidence-chain
+        # repair, the loop may terminate via ``compile_candidate`` on
+        # the first turn (turn 0) if the behavior graph is populated
+        # and the obligation is marked ``supported`` — which is the
+        # desired end state.  Either way, the loop must terminate and
+        # the termination reason must not be ``no_tool_calls_no_terminal``
+        # (which would indicate the supervisor failed to produce any
+        # decision after resume).
+        assert result.terminated
+        assert result.termination_reason != "no_tool_calls_no_terminal"
 
 
 # ---------------------------------------------------------------------------
@@ -771,3 +779,464 @@ class TestQualityStateResume:
         result = run_research_loop(runtime, max_turns=3, loop_state=loop)
         # The best_quality_state must survive the run.
         assert result.loop_state.best_quality_state is not None
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: cross-instance checkpoint/resume via LoopStateSnapshot
+# ---------------------------------------------------------------------------
+
+
+class TestInformationGainTrackerFromSnapshot:
+    """Phase 4.1: InformationGainTracker.from_snapshot round-trip."""
+
+    def test_from_snapshot_returns_fresh_tracker_for_none(self) -> None:
+        from code2paper.agentic.research_nodes import InformationGainTracker
+
+        tracker = InformationGainTracker.from_snapshot(None)
+        assert tracker.no_progress_counter("obl-x") == 0
+        assert tracker.gain_history("obl-x") == ()
+
+    def test_from_snapshot_returns_fresh_tracker_for_non_dict(self) -> None:
+        from code2paper.agentic.research_nodes import InformationGainTracker
+
+        tracker = InformationGainTracker.from_snapshot("not-a-dict")  # type: ignore[arg-type]
+        assert tracker.no_progress_counter("obl-x") == 0
+
+    def test_round_trip_preserves_seen_spans_and_counters(self) -> None:
+        from code2paper.agentic.research_nodes import InformationGainTracker
+
+        tracker = InformationGainTracker()
+        obs = _observation(
+            observation_id="obs-1",
+            tool_call_id="tc-1",
+            obligation_id="obl-a",
+            exact_span_ids=("span:train.py:1:5",),
+            result_refs=("symbol:train.py:train:17",),
+        )
+        tracker.ingest("obl-a", obs)  # gain
+        tracker.ingest("obl-a", obs)  # no gain, counter=1
+        tracker.ingest("obl-a", obs)  # no gain, counter=2
+
+        snapshot = tracker.snapshot()
+        restored = InformationGainTracker.from_snapshot(snapshot)
+
+        assert restored.no_progress_counter("obl-a") == 2
+        assert restored.gain_history("obl-a") == ("gain:2", "no_gain", "no_gain")
+        assert restored.should_switch_strategy("obl-a") is True
+        assert restored.may_record_gap("obl-a") is False
+
+    def test_round_trip_preserves_multiple_obligations(self) -> None:
+        from code2paper.agentic.research_nodes import InformationGainTracker
+
+        tracker = InformationGainTracker()
+        obs_a = _observation(
+            observation_id="obs-a",
+            tool_call_id="tc-a",
+            obligation_id="obl-a",
+            exact_span_ids=("span:a.py:1:5",),
+        )
+        obs_b = _observation(
+            observation_id="obs-b",
+            tool_call_id="tc-b",
+            obligation_id="obl-b",
+            exact_span_ids=("span:b.py:1:5",),
+        )
+        tracker.ingest("obl-a", obs_a)
+        tracker.ingest("obl-b", obs_b)
+
+        restored = InformationGainTracker.from_snapshot(tracker.snapshot())
+
+        assert restored.no_progress_counter("obl-a") == 0
+        assert restored.no_progress_counter("obl-b") == 0
+        # Re-ingest the same observations: no gain since they are already seen.
+        gained, _ = restored.ingest("obl-a", obs_a)
+        assert gained is False
+        assert restored.no_progress_counter("obl-a") == 1
+
+    def test_round_trip_through_json(self) -> None:
+        import json
+
+        from code2paper.agentic.research_nodes import InformationGainTracker
+
+        tracker = InformationGainTracker()
+        obs = _observation(
+            observation_id="obs-1",
+            tool_call_id="tc-1",
+            obligation_id="obl-a",
+            exact_span_ids=("span:train.py:1:5",),
+        )
+        tracker.ingest("obl-a", obs)
+        tracker.ingest("obl-a", obs)  # no gain
+
+        encoded = json.dumps(tracker.snapshot(), sort_keys=True)
+        decoded = json.loads(encoded)
+        restored = InformationGainTracker.from_snapshot(decoded)
+
+        assert restored.no_progress_counter("obl-a") == 1
+        assert restored.gain_history("obl-a") == ("gain:1", "no_gain")
+
+
+class TestLoopStateSnapshotModel:
+    """Phase 4.2: LoopStateSnapshot Pydantic model."""
+
+    def test_default_snapshot_is_empty(self) -> None:
+        from code2paper.agentic.research_graph import LoopStateSnapshot
+
+        snap = LoopStateSnapshot()
+        assert snap.behavior_graph == {}
+        assert snap.gain_tracker == {}
+        assert snap.per_obligation_budgets == {}
+        assert snap.turn_index == 0
+        assert snap.recent_tool_call_ids == []
+        assert snap.no_progress_tool_call_ids == []
+        assert snap.evidence_critic_route == ""
+        assert snap.terminated is False
+        assert snap.termination_reason == ""
+
+    def test_to_state_dict_is_json_serializable(self) -> None:
+        import json
+
+        from code2paper.agentic.research_graph import LoopStateSnapshot
+
+        snap = LoopStateSnapshot(
+            turn_index=3,
+            recent_tool_call_ids=["tc-1", "tc-2"],
+            evidence_critic_route="search_more",
+        )
+        payload = snap.to_state_dict()
+        encoded = json.dumps(payload, sort_keys=True)
+        decoded = json.loads(encoded)
+        assert decoded["turn_index"] == 3
+        assert decoded["recent_tool_call_ids"] == ["tc-1", "tc-2"]
+        assert decoded["evidence_critic_route"] == "search_more"
+
+    def test_model_validates_extra_fields_forbid(self) -> None:
+        from pydantic import ValidationError
+
+        from code2paper.agentic.research_graph import LoopStateSnapshot
+
+        with pytest.raises(ValidationError):
+            LoopStateSnapshot.model_validate({"unknown_field": "bad"})
+
+
+class TestSnapshotLoopStateRoundTrip:
+    """Phase 4.3: snapshot_loop_state / restore_loop_state_from_snapshot."""
+
+    def test_restore_returns_none_for_empty_payload(self, snapshot: RepoSnapshot) -> None:
+        from code2paper.agentic.research_graph import restore_loop_state_from_snapshot
+
+        obl = _obligation("obl-r", search_terms=("train",))
+        agenda = _agenda("run-r", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-r")
+        assert restore_loop_state_from_snapshot(runtime, None) is None
+        assert restore_loop_state_from_snapshot(runtime, {}) is None
+        assert restore_loop_state_from_snapshot(runtime, "not-a-dict") is None  # type: ignore[arg-type]
+
+    def test_round_trip_preserves_behavior_graph_and_budgets(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            initial_loop_state,
+            restore_loop_state_from_snapshot,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation("obl-rt", search_terms=("train",))
+        agenda = _agenda("run-rt", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-rt")
+
+        loop = initial_loop_state(runtime)
+        # Mutate the loop state to simulate mid-run progress.
+        loop.turn_index = 5
+        loop.recent_tool_call_ids = {"tc-1", "tc-2", "tc-3"}
+        loop.no_progress_tool_call_ids = {"tc-2"}
+        loop.evidence_critic_route = "search_more"
+        loop.per_obligation_budgets = {
+            "obl-rt": PerObligationBudgetV1(
+                obligation_id="obl-rt",
+                limits={
+                    "symbol_search": 5,
+                    "code_read": 5,
+                    "call_trace": 5,
+                    "data_flow_trace": 5,
+                    "branch_inspection": 5,
+                    "hint_search": 5,
+                    "packet_repair": 5,
+                },
+                used={"symbol_search": 2, "code_read": 1},
+            )
+        }
+        # Ingest an observation so the gain tracker has state.
+        obs = _observation(
+            observation_id="obs-1",
+            tool_call_id="tc-1",
+            obligation_id="obl-rt",
+            exact_span_ids=("span:train.py:1:5",),
+        )
+        loop.gain_tracker.ingest("obl-rt", obs)
+
+        payload = snapshot_loop_state(loop)
+        restored = restore_loop_state_from_snapshot(runtime, payload)
+        assert restored is not None
+        assert restored.turn_index == 5
+        assert restored.recent_tool_call_ids == {"tc-1", "tc-2", "tc-3"}
+        assert restored.no_progress_tool_call_ids == {"tc-2"}
+        assert restored.evidence_critic_route == "search_more"
+        # Budgets
+        assert "obl-rt" in restored.per_obligation_budgets
+        budget = restored.per_obligation_budgets["obl-rt"]
+        assert budget.limits["symbol_search"] == 5
+        assert budget.used["symbol_search"] == 2
+        # Gain tracker
+        assert restored.gain_tracker.no_progress_counter("obl-rt") == 0
+        assert restored.gain_tracker.gain_history("obl-rt") == ("gain:1",)
+
+    def test_round_trip_through_json_preserves_state(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        import json
+
+        from code2paper.agentic.research_graph import (
+            initial_loop_state,
+            restore_loop_state_from_snapshot,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation("obl-json", search_terms=("train",))
+        agenda = _agenda("run-json", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-json")
+
+        loop = initial_loop_state(runtime)
+        loop.turn_index = 7
+        loop.recent_tool_call_ids = {"tc-x"}
+        obs = _observation(
+            observation_id="obs-1",
+            tool_call_id="tc-x",
+            obligation_id="obl-json",
+            exact_span_ids=("span:train.py:1:5",),
+        )
+        loop.gain_tracker.ingest("obl-json", obs)
+        loop.gain_tracker.ingest("obl-json", obs)  # no gain, counter=1
+
+        payload = snapshot_loop_state(loop)
+        encoded = json.dumps(payload, sort_keys=True)
+        decoded = json.loads(encoded)
+        restored = restore_loop_state_from_snapshot(runtime, decoded)
+        assert restored is not None
+        assert restored.turn_index == 7
+        assert restored.recent_tool_call_ids == {"tc-x"}
+        assert restored.gain_tracker.no_progress_counter("obl-json") == 1
+        assert restored.gain_tracker.gain_history("obl-json") == ("gain:1", "no_gain")
+
+    def test_restore_with_invalid_payload_returns_none(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import restore_loop_state_from_snapshot
+
+        obl = _obligation("obl-bad", search_terms=("train",))
+        agenda = _agenda("run-bad", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-bad")
+        # Invalid payload (wrong types) should fail-soft to None so the
+        # caller falls back to ``initial_loop_state(runtime)``.  Here
+        # ``behavior_graph`` is a string instead of a dict, which fails
+        # ``LoopStateSnapshot.model_validate``.
+        assert restore_loop_state_from_snapshot(
+            runtime, {"behavior_graph": "not-a-dict"}
+        ) is None
+
+    def test_restore_with_extra_field_returns_none(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import restore_loop_state_from_snapshot
+
+        obl = _obligation("obl-extra", search_terms=("train",))
+        agenda = _agenda("run-extra", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-extra")
+        # Extra fields are forbidden by ``LoopStateSnapshot`` (extra="forbid"),
+        # so validation fails and ``restore_loop_state_from_snapshot``
+        # returns None.
+        assert restore_loop_state_from_snapshot(
+            runtime, {"unknown_field": "bad"}
+        ) is None
+
+
+class TestLinearPrefixRestoresFromSnapshot:
+    """Phase 4.4: _ctx_linear_prefix rebuilds loop_state from snapshot."""
+
+    def test_linear_prefix_uses_snapshot_when_present(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            _ResearchGraphContext,
+            _ctx_linear_prefix,
+            initial_loop_state,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation("obl-lp", search_terms=("train",))
+        agenda = _agenda("run-lp", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-lp")
+
+        # Build a pre-existing loop state with non-default turn_index.
+        loop = initial_loop_state(runtime)
+        loop.turn_index = 9
+        loop.recent_tool_call_ids = {"tc-pre"}
+        snapshot_payload = snapshot_loop_state(loop)
+
+        # Build a state that carries the snapshot.
+        state = empty_agent_state_v3(
+            run_id="run-lp",
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        ).to_state_dict()
+        state["loop_state_snapshot"] = snapshot_payload
+
+        ctx = _ResearchGraphContext(runtime, max_turns=10)
+        update = _ctx_linear_prefix(state, ctx=ctx)
+
+        # The context's loop_state must be restored from the snapshot.
+        assert ctx.loop_state is not None
+        assert ctx.loop_state.turn_index == 9
+        assert ctx.loop_state.recent_tool_call_ids == {"tc-pre"}
+        # The update must re-emit the snapshot so the checkpointer persists it.
+        assert "loop_state_snapshot" in update
+
+    def test_linear_prefix_seeds_fresh_loop_state_when_no_snapshot(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            _ResearchGraphContext,
+            _ctx_linear_prefix,
+        )
+
+        obl = _obligation("obl-fresh", search_terms=("train",))
+        agenda = _agenda("run-fresh-lp", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-fresh-lp")
+
+        state = empty_agent_state_v3(
+            run_id="run-fresh-lp",
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        ).to_state_dict()
+
+        ctx = _ResearchGraphContext(runtime, max_turns=10)
+        update = _ctx_linear_prefix(state, ctx=ctx)
+
+        assert ctx.loop_state is not None
+        assert ctx.loop_state.turn_index == 0
+        assert ctx.loop_state.recent_tool_call_ids == set()
+        # Even on fresh start, the snapshot is emitted so the checkpointer
+        # has a baseline to compare against on resume.
+        assert "loop_state_snapshot" in update
+
+
+class TestCrossInstanceResumeViaSubgraph:
+    """Phase 4.5: end-to-end cross-instance resume through build_research_subgraph.
+
+    Simulates a process restart by:
+    1. Running the subgraph partway (or seeding a mid-run snapshot).
+    2. Serializing the LangGraph state to JSON (checkpoint).
+    3. Building a FRESH subgraph (new _ResearchGraphContext).
+    4. Invoking the fresh subgraph with the serialized state.
+    5. Verifying the fresh context's loop_state matches the snapshot.
+    """
+
+    def test_fresh_subgraph_restores_loop_state_from_snapshot(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        import json
+
+        from code2paper.agentic.research_graph import (
+            _ResearchGraphContext,
+            _ctx_linear_prefix,
+            build_research_subgraph,
+            initial_loop_state,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation("obl-ci", search_terms=("train",))
+        agenda = _agenda("run-ci", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-ci")
+
+        # Simulate a mid-run checkpoint: build a loop state with progress.
+        loop = initial_loop_state(runtime)
+        loop.turn_index = 4
+        loop.recent_tool_call_ids = {"tc-mid-1", "tc-mid-2"}
+        loop.evidence_critic_route = "search_more"
+        snapshot_payload = snapshot_loop_state(loop)
+
+        # Build a serialized state that carries the snapshot.
+        record = empty_agent_state_v3(
+            run_id="run-ci",
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        )
+        state_dict = record.to_state_dict()
+        state_dict["loop_state_snapshot"] = snapshot_payload
+        # Serialize -> deserialize (simulates cross-process checkpoint).
+        encoded = json.dumps(state_dict, sort_keys=True)
+        decoded_state = json.loads(encoded)
+
+        # Build a FRESH subgraph (new context).
+        subgraph = build_research_subgraph(runtime, max_turns=10)
+        # Access the context via the linear_prefix closure to verify
+        # the loop_state is restored on the first node call.
+        # We invoke _ctx_linear_prefix directly with the decoded state.
+        ctx = _ResearchGraphContext(runtime, max_turns=10)
+        _ctx_linear_prefix(decoded_state, ctx=ctx)
+
+        assert ctx.loop_state is not None
+        assert ctx.loop_state.turn_index == 4
+        assert ctx.loop_state.recent_tool_call_ids == {"tc-mid-1", "tc-mid-2"}
+        assert ctx.loop_state.evidence_critic_route == "search_more"
+
+    def test_subgraph_invoke_with_snapshot_continues_from_mid_run(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            build_research_subgraph,
+            initial_loop_state,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation("obl-inv", search_terms=("train",))
+        agenda = _agenda("run-inv", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-inv")
+
+        # Build a mid-run snapshot.
+        loop = initial_loop_state(runtime)
+        loop.turn_index = 2
+        loop.recent_tool_call_ids = {"tc-prev"}
+        snapshot_payload = snapshot_loop_state(loop)
+
+        # Build the state with the snapshot.
+        state_dict = empty_agent_state_v3(
+            run_id="run-inv",
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        ).to_state_dict()
+        state_dict["loop_state_snapshot"] = snapshot_payload
+
+        # Invoke the subgraph — it should restore the loop state from
+        # the snapshot and run to termination.
+        subgraph = build_research_subgraph(runtime, max_turns=10)
+        subgraph.invoke(state_dict)
+        result = subgraph.last_result
+        assert result is not None
+        # The result must have executed (either terminated or hit max_turns).
+        assert result.termination_reason in (
+            "no_active_obligation",
+            "all_obligations_terminal",
+            "ready_to_author",
+            "stop_blocked",
+            "gap_finalizer_blocked",
+            "evidence_critic_blocked",
+            "no_tool_calls_no_terminal",
+            "max_turns_reached",
+        )
+        # The final state must carry a loop_state_snapshot (re-emitted
+        # by the linear prefix and observation pipeline).
+        assert "loop_state_snapshot" in result.final_state
+        final_snapshot = result.final_state["loop_state_snapshot"]
+        assert isinstance(final_snapshot, dict)
+        assert final_snapshot.get("turn_index", 0) >= 0

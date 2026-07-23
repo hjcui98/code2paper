@@ -15,6 +15,11 @@ from code2paper.llm.response_schemas import (
     json_schema_for,
     try_parse_structured_response,
 )
+from code2paper.llm.role_config import (
+    AUTHORING_PLANNER,
+    METHOD_WRITER,
+    apply_role_config,
+)
 from code2paper.core.schemas import (
     ArtifactHash,
     ClaimEvidenceMap,
@@ -502,7 +507,7 @@ def _write_projection_llm_artifacts(
         schema_name=METHOD_DRAFT_SCHEMA,
         response_json_schema=json_schema_for(DraftMarkdownOutput),
     )
-    response = LLMClient(llm_config).complete(request)
+    response = LLMClient(apply_role_config(llm_config, METHOD_WRITER)).complete(request)
     call_logs = [response.response_hash] if response.response_hash else []
     if response.blocked_reason:
         _write_blocked_phase5(
@@ -599,11 +604,13 @@ def _write_blocked_phase5(
 
 def _complete_phase5_with_retries(llm_config: LLMConfig, request: LLMRequest):
     attempts = max(1, int(os.environ.get("CODE2PAPER_PHASE5_LLM_EMPTY_ROUNDS", os.environ.get("CODE2PAPER_PHASE4_LLM_EMPTY_ROUNDS", "2")) or "2"))
-    response = LLMClient(llm_config).complete(request)
+    role = AUTHORING_PLANNER if request.prompt_template_id == "phase5_method_plan_v1" else METHOD_WRITER
+    effective_config = apply_role_config(llm_config, role)
+    response = LLMClient(effective_config).complete(request)
     for _ in range(1, attempts):
         if not _should_use_deterministic_fallback(response.blocked_reason):
             return response
-        response = LLMClient(llm_config).complete(request)
+        response = LLMClient(effective_config).complete(request)
     return response
 
 
@@ -1027,7 +1034,7 @@ def _revise_until_paper_ready(
             schema_name=METHOD_DRAFT_SCHEMA,
             response_json_schema=json_schema_for(DraftMarkdownOutput),
         )
-        response = LLMClient(llm_config).complete(revision_request)
+        response = LLMClient(apply_role_config(llm_config, METHOD_WRITER)).complete(revision_request)
         if response.response_hash:
             call_logs.append(response.response_hash)
         if response.blocked_reason:

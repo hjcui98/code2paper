@@ -435,9 +435,14 @@ class TestSupportBoundaryIndependentOfToolOrder:
     ) -> None:
         """Running the same obligation twice must produce the same behavior
         graph digest (deterministic extraction)."""
-        obl = _obligation("obl-determinism", search_terms=("train",))
-        agenda1 = _agenda("run-det-1", snapshot, obl)
-        agenda2 = _agenda("run-det-2", snapshot, obl)
+        # Distinct obligation objects per agenda: ``observation_ingest_node``
+        # and ``gap_finalizer_node`` mutate the agenda item in place
+        # (candidate_symbol_ids, status), so sharing items across runs
+        # would let the second run see the first run's side effects.
+        obl1 = _obligation("obl-determinism", search_terms=("train",))
+        obl2 = _obligation("obl-determinism", search_terms=("train",))
+        agenda1 = _agenda("run-det-1", snapshot, obl1)
+        agenda2 = _agenda("run-det-2", snapshot, obl2)
         runtime1 = _runtime(snapshot, agenda1, run_id="run-det-1")
         runtime2 = _runtime(snapshot, agenda2, run_id="run-det-2")
         result1 = run_research_loop(runtime1, max_turns=8)

@@ -222,6 +222,26 @@ def _node_conditions(node: BehaviorNodeV1, input_guards: list[str]) -> list[str]
     return conditions
 
 
+def _node_semantic_context(node: BehaviorNodeV1) -> list[str]:
+    """Return parsed, source-derived terms for deterministic alignment replay.
+
+    Candidate-time alignment can see the selected behavior nodes directly.
+    The final coverage and claim-binding passes only receive facts, so the
+    node's symbol/result/operands must travel with the span-anchored fact.
+    Nothing author supplied is copied into this field.
+    """
+
+    values = [
+        node.symbol_id,
+        node.predicate,
+        node.result,
+        node.guard,
+        node.iteration_context,
+        *node.operands,
+    ]
+    return [value for value in values if value]
+
+
 def _node_span_ids(node: BehaviorNodeV1) -> list[str]:
     return [node.source_span_id] if node.source_span_id else []
 
@@ -377,6 +397,7 @@ def compile_facts_from_behavior_graph(
         direct_spans = _node_span_ids(node)
         relation_span_ids: list[str] = []
         relation_evidence_ids: list[str] = []
+        relation_kinds: list[str] = []
         # Attach resolved relations that reference this node.
         for rel in selected_relations:
             if rel.source_node_id == node.node_id or rel.target_node_id == node.node_id:
@@ -384,6 +405,8 @@ def compile_facts_from_behavior_graph(
                     failures.append(f"unresolved_relation:{rel.relation_id}")
                     continue
                 relation_evidence_ids.append(rel.relation_id)
+                if rel.kind not in relation_kinds:
+                    relation_kinds.append(rel.kind)
                 for span in _relation_span_ids(rel):
                     if span not in relation_span_ids:
                         relation_span_ids.append(span)
@@ -403,6 +426,8 @@ def compile_facts_from_behavior_graph(
             direct_span_ids=direct_spans,
             relation_span_ids=relation_span_ids,
             relation_evidence_ids=relation_evidence_ids,
+            relation_kinds=relation_kinds,
+            semantic_context=_node_semantic_context(node),
             exact_source_digest=exact_digest,
             canonical_identity=identity,
             validation_status="rejected" if failures else "supported",
@@ -430,6 +455,7 @@ def compile_facts_from_behavior_graph(
         direct_spans: list[str] = []
         relation_evidence_ids: list[str] = []
         relation_span_ids: list[str] = []
+        relation_kinds: list[str] = []
         failures: list[str] = []
         for node in chain:
             if _authority_rank(node.source_authority) < authority_floor:
@@ -448,6 +474,8 @@ def compile_facts_from_behavior_graph(
                     failures.append(f"unresolved_relation:{rel.relation_id}")
                     continue
                 relation_evidence_ids.append(rel.relation_id)
+                if rel.kind not in relation_kinds:
+                    relation_kinds.append(rel.kind)
                 for span in _relation_span_ids(rel):
                     if span not in relation_span_ids:
                         relation_span_ids.append(span)
@@ -462,6 +490,12 @@ def compile_facts_from_behavior_graph(
             direct_span_ids=direct_spans,
             relation_span_ids=relation_span_ids,
             relation_evidence_ids=relation_evidence_ids,
+            relation_kinds=relation_kinds,
+            semantic_context=[
+                value
+                for node in chain
+                for value in _node_semantic_context(node)
+            ],
             exact_source_digest=exact_digest,
             canonical_identity=identity,
             validation_status="rejected" if failures else "supported",
@@ -509,6 +543,17 @@ def compile_facts_from_behavior_graph(
             direct_span_ids=direct_spans,
             relation_span_ids=[],
             relation_evidence_ids=[rel.relation_id],
+            relation_kinds=[rel.kind],
+            semantic_context=[
+                value
+                for value in (
+                    rel.source_symbol_id,
+                    rel.target_symbol_id,
+                    rel.target_node_id,
+                    rel.guard,
+                )
+                if value
+            ],
             exact_source_digest=exact_digest,
             canonical_identity=identity,
             validation_status="supported",

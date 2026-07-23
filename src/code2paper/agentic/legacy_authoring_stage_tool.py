@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,11 @@ from code2paper.agentic.authoring_context import (
     write_authoring_context,
 )
 from code2paper.agentic.authoring_plan import authoring_plan_brief, load_authoring_plan, write_authoring_plan
+from code2paper.agentic.authoring_plan_v3 import (
+    authoring_plan_v3_brief,
+    build_authoring_plan_v3,
+    write_authoring_plan_v3,
+)
 from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
 from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
@@ -23,6 +29,9 @@ from code2paper.agentic.authoring_projection import (
 from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.evidence_compiler_v3 import load_atomic_claims_v3, load_evidence_packets_v3
+from code2paper.agentic.equation_claims import load_equation_claims
+from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
+from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
 from code2paper.agentic.claim_verifier import (
     build_claim_verification_report,
     load_claim_verification_report,
@@ -32,7 +41,7 @@ from code2paper.agentic.contracts import AgentDecision, AgenticRunState, StageSt
 from code2paper.agentic.decision_core import write_decision_trace
 from code2paper.core.output_names import artifact_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, MethodEvidence, RawEvidencePack
-from code2paper.llm.providers import load_llm_config_from_env, with_node_output_budget
+from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.pipeline.stages.authoring import write_phase5_artifacts
 
 
@@ -44,6 +53,26 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
             blocked_reason="frozen_evidence_required",
             summary="Authoring cannot run before MethodEvidence and claim_evidence_map exist.",
         )
+    if os.environ.get("CODE2PAPER_AGENTIC_RESEARCH_V3", "").strip().lower() in {
+        "1", "true", "yes", "on"
+    }:
+        required_v3 = ("evidence_packets_v3", "atomic_claims_v3")
+        missing_v3 = [
+            key
+            for key in required_v3
+            if not state.artifacts.get(key)
+            or not Path(state.artifacts[key]).exists()
+        ]
+        if missing_v3:
+            return StageToolResult(
+                stage="authoring",
+                status=StageStatus.BLOCKED,
+                blocked_reason="generic_path_compilation_required",
+                summary=(
+                    "V3 Method authoring is fail-closed because validated "
+                    f"V3 artifacts are missing: {', '.join(missing_v3)}."
+                ),
+            )
     authorization = check_pre_authoring_authorization(state)
     if not authorization.passed:
         return pre_authoring_blocked_result(authorization)
@@ -89,9 +118,50 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
             if state.artifacts.get("evidence_packets_v3") and Path(state.artifacts["evidence_packets_v3"]).exists()
             else None
         ),
+        equation_claims_v1=(
+            load_equation_claims(state.artifacts["equation_claims_v1"])
+            if state.artifacts.get("equation_claims_v1") and Path(state.artifacts["equation_claims_v1"]).exists()
+            else None
+        ),
     )
     projection_path = artifact_dir(state.method_root, "06_authoring") / "agentic_authoring_input_projection.json"
     write_authoring_projection(projection_path, projection)
+    v3_plan = None
+    v3_plan_path: Path | None = None
+    intent_v2_path = state.artifacts.get("intent_obligation_graph_v2", "")
+    coverage_v2_path = state.artifacts.get("obligation_coverage_v2", "")
+    claims_v3_path = state.artifacts.get("atomic_claims_v3", "")
+    if all(
+        path and Path(path).exists()
+        for path in (intent_v2_path, coverage_v2_path, claims_v3_path)
+    ):
+        intent_v2 = IntentObligationGraphV2.model_validate_json(
+            Path(intent_v2_path).read_text(encoding="utf-8")
+        )
+        coverage_v2 = ObligationCoverageReportV2.model_validate_json(
+            Path(coverage_v2_path).read_text(encoding="utf-8")
+        )
+        claims_v3 = load_atomic_claims_v3(claims_v3_path)
+        # Older/minimal graph states do not always carry a run id.  The V3
+        # plan contract is intentionally strict, so derive a stable id from
+        # the immutable claim-set digest instead of weakening the schema.
+        v3_run_id = state.run_id.strip() or f"run-{claims_v3.content_digest.removeprefix('sha256:')[:16]}"
+        v3_plan = build_authoring_plan_v3(
+            run_id=v3_run_id,
+            repo_snapshot_id=claims_v3.repo_snapshot_id,
+            project_tree_hash=claims_v3.project_tree_hash,
+            intent_graph=intent_v2,
+            coverage_report=coverage_v2,
+            claim_set=claims_v3,
+            explicit_gaps=claims_v3.explicit_code_gaps,
+            method_name=method_evidence.method_name,
+            author_goal=method_evidence.method_goal,
+        )
+        v3_plan_path = (
+            artifact_dir(state.method_root, "06_authoring")
+            / "agentic_authoring_plan_v3.json"
+        )
+        write_authoring_plan_v3(str(v3_plan_path), v3_plan)
     revision_excluded_ids = _revision_excluded_projection_claim_ids(state)
     writer_projection = restrict_projection_for_authoring_revision(
         projection, revision_excluded_ids
@@ -131,9 +201,14 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
         "authoring_plan": str(authoring_plan_path),
         "authoring_projection": str(projection_path),
     }
+    if v3_plan_path is not None:
+        pre_authoring_artifacts["authoring_plan_v3"] = str(v3_plan_path)
     if authoring_plan_trace_path:
         pre_authoring_artifacts["authoring_plan_decision_trace"] = str(authoring_plan_trace_path)
-    if not authoring_plan.hard_gate_passed:
+    # In V3 runs the typed obligation/claim plan is authoritative.  The legacy
+    # plan remains persisted for compatibility and diagnostics, but it must not
+    # veto a V3 plan that passed its stricter typed gate.
+    if v3_plan is None and not authoring_plan.hard_gate_passed:
         return StageToolResult(
             stage="authoring",
             status=StageStatus.BLOCKED,
@@ -161,6 +236,26 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
                 "authoring_plan_sections": len(authoring_plan.sections),
             },
         )
+    if v3_plan is not None and not v3_plan.plan_gate_passed:
+        return StageToolResult(
+            stage="authoring",
+            status=StageStatus.BLOCKED,
+            artifacts=pre_authoring_artifacts,
+            blocked_reason="authoring_plan_v3_failed_evidence_gate",
+            summary="V3 authoring plan did not satisfy typed obligation and minimality gates.",
+            decisions=[
+                AgentDecision(
+                    node="authoring_planner_v3",
+                    decision="authoring_plan_v3_blocked",
+                    rationale="; ".join(v3_plan.gate_failures),
+                    artifact_keys=[
+                        "authoring_plan_v3",
+                        "obligation_coverage_v2",
+                        "atomic_claims_v3",
+                    ],
+                )
+            ],
+        )
     if authoring_plan.projection_digest != projection.projection_digest:
         return StageToolResult(
             stage="authoring",
@@ -173,11 +268,15 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
     alignment = CodeAlignmentIR.model_validate(_read_json(alignment_path)) if alignment_path.exists() else None
     grounding_context = _join_context_blocks(
         projection_writer_brief(writer_projection),
+        authoring_plan_v3_brief(v3_plan, include_exclusions=False)
+        if v3_plan is not None
+        else "",
         (
             authoring_plan_brief(authoring_plan, include_exclusions=False)
             if writer_projection.projection_digest == projection.projection_digest
             else ""
         ),
+        _behavior_template_organization_brief(state),
         _text_revision_brief(state),
     )
     markdown, _tex, paths = write_phase5_artifacts(
@@ -250,10 +349,14 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
 
 
 def _llm_config(state: AgenticRunState):
-    return with_node_output_budget(
-        load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model),
-        "authoring",
-        4096,
+    # Role-tagged authoring calls apply their own audited budgets in
+    # ``apply_role_config`` (planner=2048, writer=8192, then 12288 only on
+    # a length retry).  The historical stage-wide 4096 clamp made the base
+    # config look explicit and therefore prevented the writer policy from
+    # taking effect in the production V3 wrapper.
+    return load_llm_config_from_env(
+        provider=state.llm_provider,
+        model=state.llm_model,
     )
 
 
@@ -282,6 +385,29 @@ def _read_text(path: Path) -> str:
 
 def _join_context_blocks(*blocks: str) -> str:
     return "\n\n".join(block.strip() for block in blocks if str(block or "").strip())
+
+
+def _behavior_template_organization_brief(state: AgenticRunState) -> str:
+    """Return non-authorizing organization hints derived from behavior structure."""
+
+    path = state.artifacts.get("behavior_template_matches_v1", "")
+    if not path or not Path(path).exists():
+        return ""
+    try:
+        payload = _read_json(Path(path))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    return json.dumps(
+        {
+            "behavior_template_stage_hints": payload.get("stage_hints", []),
+            "hard_rule": (
+                "These hints may only order already-authorized plan claims. "
+                "They must not add claims, evidence ids, equations, or positive facts."
+            ),
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
 
 
 def _text_revision_brief(state: AgenticRunState) -> str:

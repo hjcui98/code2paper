@@ -17,6 +17,7 @@ from code2paper.agentic.checkpointing import (
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.evidence_v2 import build_evidence_snapshot_v2, write_evidence_snapshot_v2
 from code2paper.agentic.repo_snapshot import build_repo_snapshot, write_repo_snapshot
+from code2paper.agentic.research_models import ResearchToolCallV1
 from code2paper.agentic.state_v2 import (
     AgenticRunStateV2,
     append_unique,
@@ -140,6 +141,21 @@ def test_sqlite_checkpoint_survives_reopen_and_matches_control(tmp_path: Path) -
     assert calls == {"evidence": 0, "authoring": 1}
     assert resumed["phase_statuses"] == control["phase_statuses"]
     assert resumed["loop_counters"] == control["loop_counters"]
+
+
+def test_sqlite_checkpoint_explicitly_allows_only_research_tool_call_type(tmp_path: Path) -> None:
+    call = ResearchToolCallV1(
+        tool_call_id="call-1",
+        tool_name="read_candidate",
+        obligation_id="O1",
+        goal="Inspect the scoped implementation.",
+        repo_snapshot_id="repo:1",
+    )
+    with open_sqlite_checkpointer(tmp_path / "strict.sqlite") as saver:
+        restored = saver.serde.loads_typed(saver.serde.dumps_typed(call))
+
+    assert restored == call
+    assert type(restored) is ResearchToolCallV1
 
 
 def test_resume_rejects_source_drift(tmp_path: Path) -> None:

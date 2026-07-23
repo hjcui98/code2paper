@@ -677,8 +677,16 @@ class TestEndToEndNoProgressTermination:
         # The first turn should produce a gain (search_symbols finds train).
         # So the no-progress counter must be 0 after the first turn.
         # The loop may still terminate via record_gap later, but not on
-        # the first turn.
-        assert result.turns_executed >= 1
+        # the first turn.  With the Phase 3 evidence-chain repair, the
+        # loop may also terminate via ``compile_candidate`` on the first
+        # turn (the behavior graph is populated and the obligation is
+        # marked ``supported``), which is the desired end state — not a
+        # gap.  Either way, the termination reason must NOT be
+        # ``record_gap`` on the first turn.
+        assert result.termination_reason != "record_gap"
+        assert "record_gap" not in result.evidence_critic_routes or (
+            result.evidence_critic_routes[0] != "record_gap"
+        )
 
     def test_per_obligation_isolation_in_multi_obligation_run(
         self, snapshot: RepoSnapshot

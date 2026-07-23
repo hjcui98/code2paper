@@ -29,7 +29,7 @@ R8.2 acceptance criteria verified:
 
 R8.1 protocol checks verified:
 
-- temperature 0;
+- role-specific sampling traces (global temperature is only a compatibility sentinel);
 - ``CODE2PAPER_LLM_CACHE=0``;
 - TP=2 on 2 GPUs;
 - serial execution (no parallel projects);
@@ -76,6 +76,22 @@ from code2paper.agentic.r8_acceptance import (
 from code2paper.agentic.trust_contracts import (
     TextClaimEvidenceVerdict,
     TextEvidenceValidationReport,
+)
+from code2paper.llm.generation_trace import (
+    EffectiveSamplingConfig,
+    GenerationCallTrace,
+)
+from code2paper.llm.role_config import (
+    AUTHORING_PLANNER,
+    CODE_ANALYZER,
+    CODE_INTAKE,
+    DETERMINISTIC_COMPILER,
+    LLM_CALLING_ROLES,
+    LOCAL_REWRITE,
+    METHOD_WRITER,
+    RESEARCH_SUPERVISOR,
+    ROLE_GENERATION_CONFIGS,
+    SEMANTIC_VERIFIER,
 )
 
 
@@ -223,6 +239,43 @@ def _agent_decision(
     )
 
 
+def _trace(
+    role: str,
+    *,
+    call_id: str | None = None,
+    temperature: float | None = None,
+    prompt_template_id: str = "phase5_method_writer_section_v1",
+) -> GenerationCallTrace:
+    """Build a :class:`GenerationCallTrace` for the given role.
+
+    By default the effective temperature is the role's protocol default
+    from :data:`ROLE_GENERATION_CONFIGS`, so the trace passes the
+    ``per_role_sampling_config_evidenced`` criterion.
+    """
+
+    if temperature is None:
+        temperature = ROLE_GENERATION_CONFIGS[role].temperature
+    return GenerationCallTrace(
+        call_id=call_id or f"LLM-{role}-1",
+        prompt_template_id=prompt_template_id,
+        role=role,
+        effective_config=EffectiveSamplingConfig(
+            role=role,
+            temperature=temperature,
+            max_output_tokens=ROLE_GENERATION_CONFIGS[role].max_output_tokens_default,
+            top_p=ROLE_GENERATION_CONFIGS[role].top_p,
+            top_k=ROLE_GENERATION_CONFIGS[role].top_k,
+        ),
+        finish_reason="stop",
+    )
+
+
+def _compliant_traces_for_all_llm_roles() -> list[GenerationCallTrace]:
+    """Return one trace per LLM-calling role, all temperature-compliant."""
+
+    return [_trace(role) for role in LLM_CALLING_ROLES]
+
+
 # ---------------------------------------------------------------------------
 # A passing full report
 # ---------------------------------------------------------------------------
@@ -277,6 +330,41 @@ def _passing_report_kwargs() -> dict[str, Any]:
         "run_temperature": 0.0,
         "source_authority_policy": {"code": "executable_hard", "tests": "test_scoped"},
         "paper_read_only_at_end": True,
+        "generation_call_traces": _compliant_traces_for_all_llm_roles(),
+        "intent_target_proposal_report": {
+            "attempted": True,
+            "accepted": True,
+            "enriched_graph_digest": "sha256:intent-proposal",
+        },
+        "v3_error": "",
+        "completion_report": _fake_completion_report(complete=True),
+        "readiness_report": _fake_readiness_report(passed=True),
+        "validation_manifest": {"status": "passed"},
+        "method_clean_path": __file__,
+    }
+
+
+def _fake_completion_report(complete: bool):
+    """Return a dict matching AgenticRunCompletionReport shape."""
+    return {
+        "mode": "agentic-run-completion-report",
+        "status": "complete" if complete else "blocked",
+        "complete": complete,
+        "blocked_reason": "",
+        "missing_deliverables": [],
+        "checks": [],
+        "recommended_actions": [],
+    }
+
+
+def _fake_readiness_report(passed: bool):
+    """Return a dict matching AgenticRunReadinessReport shape."""
+    return {
+        "mode": "agentic-run-readiness-report",
+        "passed": passed,
+        "blocking_failures": 0 if passed else 1,
+        "checks": [],
+        "recommended_actions": [],
     }
 
 
@@ -294,7 +382,7 @@ def test_passing_run_produces_accepted_report():
             f"criterion {key!r} status={criterion.status!r} reason={criterion.reason!r}"
         )
     assert report.content_digest.startswith("sha256:")
-    # All eight R8.2 criteria must be present in the report.
+    # All sixteen criteria must be present in the report.
     expected_keys = {
         "gap_driven_tool_selection",
         "code_mainline_in_method",
@@ -304,6 +392,14 @@ def test_passing_run_produces_accepted_report():
         "no_evidence_free_equations",
         "trace_reproducible",
         "checkpoint_resume_consistent",
+        "per_role_sampling_config_evidenced",
+        "v3_research_succeeded",
+        "typed_intent_proposal_accepted",
+        "completion_complete",
+        "readiness_passed",
+        "validation_manifest_passed",
+        "method_clean_exists",
+        "method_has_supported_mainline",
     }
     assert set(report.criteria.keys()) == expected_keys
 
@@ -866,6 +962,311 @@ def test_verify_checkpoint_resume_consistency_returns_false_when_mismatch():
 
 
 # ---------------------------------------------------------------------------
+# 9. per_role_sampling_config_evidenced (Phase 1 R8.1 protocol check)
+# ---------------------------------------------------------------------------
+
+
+def test_per_role_sampling_config_passes_with_compliant_traces_for_all_roles():
+    """One compliant trace per LLM-calling role passes the criterion."""
+
+    report = check_r8_acceptance(**_passing_report_kwargs())
+    assert report.criteria["per_role_sampling_config_evidenced"].status == "passed"
+    assert report.accepted is True
+
+
+def test_per_role_sampling_config_fails_when_no_traces_provided():
+    """No traces at all -> every unconditional live role is missing."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = []
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "missing_role_traces" in criterion.reason
+    for role in (
+        CODE_INTAKE,
+        CODE_ANALYZER,
+        RESEARCH_SUPERVISOR,
+        AUTHORING_PLANNER,
+        METHOD_WRITER,
+    ):
+        assert role in criterion.reason
+    assert report.accepted is False
+
+
+def test_per_role_sampling_config_allows_uninvoked_conditional_role():
+    """A clean run need not manufacture a semantic-verifier call."""
+
+    traces = [_trace(role) for role in LLM_CALLING_ROLES if role != SEMANTIC_VERIFIER]
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "passed"
+    assert report.accepted is True
+
+
+def test_per_role_sampling_config_fails_when_required_role_missing():
+    traces = [_trace(role) for role in LLM_CALLING_ROLES if role != METHOD_WRITER]
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert METHOD_WRITER in criterion.reason
+
+
+def test_per_role_sampling_config_fails_when_temperature_mismatches():
+    """A trace whose effective temperature doesn't match the role protocol fails."""
+
+    # Build 5 compliant traces plus one with the wrong temperature.
+    traces = _compliant_traces_for_all_llm_roles()
+    # Replace the writer trace with a wrong-temperature variant.
+    traces = [t for t in traces if t.role != METHOD_WRITER]
+    traces.append(_trace(METHOD_WRITER, temperature=0.10))  # should be 0.70
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "temperature_mismatch" in criterion.reason
+    assert METHOD_WRITER in criterion.reason
+    assert "actual=0.1" in criterion.reason
+    assert "expected=0.7" in criterion.reason
+
+
+def test_per_role_sampling_config_fails_when_top_p_mismatches():
+    traces = _compliant_traces_for_all_llm_roles()
+    writer = next(item for item in traces if item.role == METHOD_WRITER)
+    traces = [item for item in traces if item.role != METHOD_WRITER]
+    traces.append(writer.model_copy(update={
+        "effective_config": writer.effective_config.model_copy(update={"top_p": 0.5})
+    }))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "top_p_mismatch" in criterion.reason
+
+
+def test_per_role_sampling_config_fails_above_the_role_output_ceiling():
+    traces = _compliant_traces_for_all_llm_roles()
+    supervisor = next(item for item in traces if item.role == RESEARCH_SUPERVISOR)
+    traces = [item for item in traces if item.role != RESEARCH_SUPERVISOR]
+    traces.append(supervisor.model_copy(update={
+        "effective_config": supervisor.effective_config.model_copy(
+            update={"max_output_tokens": 1537}
+        )
+    }))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "max_output_tokens_out_of_range" in criterion.reason
+
+
+def test_per_role_sampling_config_fails_when_deterministic_role_has_trace():
+    """A trace tagged with a deterministic role is a hard failure."""
+
+    traces = _compliant_traces_for_all_llm_roles()
+    # Add a forbidden deterministic-role trace.
+    traces.append(_trace(DETERMINISTIC_COMPILER, temperature=0.0))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "deterministic_role_has_trace" in criterion.reason
+    assert DETERMINISTIC_COMPILER in criterion.reason
+
+
+def test_per_role_sampling_config_accepts_dict_traces_from_json():
+    """The helper accepts JSON dicts (as loaded from run summary)."""
+
+    traces = [t.model_dump(mode="json") for t in _compliant_traces_for_all_llm_roles()]
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    assert report.criteria["per_role_sampling_config_evidenced"].status == "passed"
+    assert report.accepted is True
+
+
+def test_per_role_sampling_config_fails_when_dict_trace_missing_role():
+    """A dict trace missing the ``role`` field is flagged as a parse error."""
+
+    traces = [t.model_dump(mode="json") for t in _compliant_traces_for_all_llm_roles()]
+    # Remove the role from one trace.
+    bad_trace = dict(traces[0])
+    bad_trace["role"] = ""
+    traces[0] = bad_trace
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    # Either missing role or missing role trace (since role="" doesn't match any known role).
+    assert "trace_0_missing_role" in criterion.reason or "missing_role_traces" in criterion.reason
+
+
+def test_per_role_sampling_config_fails_when_dict_trace_missing_temperature():
+    """A dict trace missing ``effective_config.temperature`` is a parse error."""
+
+    traces = [t.model_dump(mode="json") for t in _compliant_traces_for_all_llm_roles()]
+    bad_trace = dict(traces[0])
+    bad_trace["effective_config"] = {"role": bad_trace["role"]}
+    traces[0] = bad_trace
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "trace_0_missing_temperature" in criterion.reason or "missing_role_traces" in criterion.reason
+
+
+def test_per_role_sampling_config_fails_with_unrecognized_trace_shape():
+    """A non-object, non-dict trace is a parse error."""
+
+    traces = _compliant_traces_for_all_llm_roles()
+    traces.append("not-a-trace")  # type: ignore[arg-type]
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert f"trace_{len(LLM_CALLING_ROLES)}_unrecognized_shape" in criterion.reason
+
+
+def test_per_role_sampling_config_accepts_multiple_traces_per_role():
+    """Multiple traces per role are fine as long as all are compliant."""
+
+    traces = _compliant_traces_for_all_llm_roles()
+    # Add an extra compliant writer trace.
+    traces.append(_trace(METHOD_WRITER, call_id="LLM-writer-2"))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    report = check_r8_acceptance(**kwargs)
+    assert report.criteria["per_role_sampling_config_evidenced"].status == "passed"
+    assert report.accepted is True
+
+
+def test_per_role_sampling_config_evidence_is_non_empty_on_failure():
+    """Failure evidence is populated for downstream diagnostics."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = []
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert len(criterion.evidence) > 0
+
+
+# ---------------------------------------------------------------------------
+# 10. v3_research_succeeded (R8.1 Phase 2 V3 research integrity check)
+# ---------------------------------------------------------------------------
+
+
+def test_v3_research_succeeded_passes_when_v3_error_empty():
+    """Empty ``v3_error`` means V3 research succeeded (or V3 not enabled)."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["v3_error"] = ""
+    report = check_r8_acceptance(**kwargs)
+    assert report.criteria["v3_research_succeeded"].status == "passed"
+    assert report.accepted is True
+
+
+def test_v3_research_succeeded_passes_when_v3_error_none():
+    """``None`` is normalized to empty string and treated as success."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["v3_error"] = None  # type: ignore[assignment]
+    report = check_r8_acceptance(**kwargs)
+    assert report.criteria["v3_research_succeeded"].status == "passed"
+    assert report.accepted is True
+
+
+def test_v3_research_succeeded_fails_when_v3_error_nonempty():
+    """Non-empty ``v3_error`` means V3 failed and the run must be rejected."""
+
+    kwargs = _passing_report_kwargs()
+    kwargs["v3_error"] = "RuntimeError: subgraph did not produce a result"
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["v3_research_succeeded"]
+    assert criterion.status == "failed"
+    assert "V3 research subgraph failed" in criterion.reason
+    assert criterion.evidence == ("RuntimeError: subgraph did not produce a result",)
+    # Top-level acceptance must be False even when all other criteria pass.
+    assert report.accepted is False
+
+
+def test_v3_research_succeeded_fails_with_long_error_truncated():
+    """Long error messages are truncated in the reason but preserved in evidence."""
+
+    kwargs = _passing_report_kwargs()
+    long_error = "E" * 500
+    kwargs["v3_error"] = long_error
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["v3_research_succeeded"]
+    assert criterion.status == "failed"
+    # Reason is truncated to 300 chars + "...".
+    assert "..." in criterion.reason
+    assert len(criterion.reason) < 400
+    # Full error is preserved in the evidence tuple.
+    assert criterion.evidence == (long_error,)
+    assert report.accepted is False
+
+
+def test_v3_research_succeeded_fails_when_v3_error_whitespace_only():
+    """Whitespace-only ``v3_error`` is NOT treated as failure (normalized to empty)."""
+
+    kwargs = _passing_report_kwargs()
+    # Note: the checker normalizes falsy values (including empty string)
+    # but a whitespace-only string is truthy in Python.  We document
+    # this behavior: callers should pass an empty string when V3
+    # succeeded, not a whitespace-only string.
+    kwargs["v3_error"] = "   "
+    report = check_r8_acceptance(**kwargs)
+    # Whitespace-only is truthy -> fails.
+    assert report.criteria["v3_research_succeeded"].status == "failed"
+    assert report.accepted is False
+
+
+def test_v3_research_succeeded_in_criteria_keys():
+    """The criterion appears in the report's criteria map."""
+
+    report = check_r8_acceptance(**_passing_report_kwargs())
+    assert "v3_research_succeeded" in report.criteria
+
+
+# ---------------------------------------------------------------------------
+# 11. typed_intent_proposal_accepted (Gemma Intent Agent protocol check)
+# ---------------------------------------------------------------------------
+
+
+def test_typed_intent_proposal_passes_when_complete_proposal_is_accepted():
+    report = check_r8_acceptance(**_passing_report_kwargs())
+    criterion = report.criteria["typed_intent_proposal_accepted"]
+    assert criterion.status == "passed"
+    assert criterion.evidence == ("sha256:intent-proposal",)
+
+
+def test_typed_intent_proposal_fails_when_missing_or_rejected():
+    kwargs = _passing_report_kwargs()
+    kwargs["intent_target_proposal_report"] = {
+        "attempted": True,
+        "accepted": False,
+        "failure": "proposal_parse_failed",
+    }
+    report = check_r8_acceptance(**kwargs)
+    criterion = report.criteria["typed_intent_proposal_accepted"]
+    assert criterion.status == "failed"
+    assert "proposal_parse_failed" in criterion.reason
+    assert report.accepted is False
+
+
+# ---------------------------------------------------------------------------
 # Protocol settings check
 # ---------------------------------------------------------------------------
 
@@ -875,12 +1276,12 @@ def test_protocol_check_passes_with_default_settings():
     assert report.protocol_check_passed is True
 
 
-def test_protocol_check_fails_when_temperature_nonzero():
+def test_protocol_check_uses_role_traces_not_global_temperature():
     kwargs = _passing_report_kwargs()
     kwargs["run_temperature"] = 0.3
     report = check_r8_acceptance(**kwargs)
-    assert report.protocol_check_passed is False
-    assert report.accepted is False
+    assert report.protocol_check_passed is True
+    assert report.accepted is True
 
 
 def test_protocol_check_fails_when_llm_cache_not_off():
@@ -961,13 +1362,13 @@ def test_protocol_check_fails_when_tp_size_absent():
     assert report.protocol_check_passed is False
 
 
-def test_protocol_check_fails_when_temperature_absent():
-    """A missing temperature is a failure (the run must evidence temp=0)."""
+def test_protocol_check_does_not_require_a_global_temperature():
+    """Only the per-role trace records are authoritative sampling evidence."""
 
     kwargs = _passing_report_kwargs()
     kwargs["run_temperature"] = None
     report = check_r8_acceptance(**kwargs)
-    assert report.protocol_check_passed is False
+    assert report.protocol_check_passed is True
 
 
 def test_protocol_check_fails_when_source_authority_absent():
@@ -1003,9 +1404,12 @@ def test_protocol_check_fails_when_paper_read_only_at_end_violated():
 # ---------------------------------------------------------------------------
 
 
-def test_report_has_eight_criteria():
+def test_report_has_sixteen_criteria():
+    """The report has 16 criteria including the R8.2 subset, R8.1 protocol,
+    V3 integrity, typed Intent Agent gate, and R8.3 completion/readiness gates."""
+
     report = check_r8_acceptance(**_passing_report_kwargs())
-    assert len(report.criteria) == 8
+    assert len(report.criteria) == 16
 
 
 def test_report_digest_is_stable():
@@ -1054,7 +1458,7 @@ def test_protocol_settings_default_is_frozen():
     """R8ProtocolSettings is frozen with the R8.1 defaults."""
 
     settings = R8ProtocolSettings()
-    assert settings.temperature == 0.0
+    assert settings.temperature is None
     assert settings.llm_cache_env == "0"
     assert settings.single_tp2_instance is True
     assert settings.serial_execution is True
@@ -1095,6 +1499,10 @@ def _write_run_dir(tmp_path: Path, **overrides: Any) -> Path:
         "paper_read_only_at_end": kwargs["paper_read_only_at_end"],
         "trace_digest": kwargs["recorded_trace_digest"],
         "tool_call_trace_refs": kwargs["tool_call_trace_refs"],
+        "generation_call_traces": [
+            trace.model_dump(mode="json")
+            for trace in kwargs["generation_call_traces"]
+        ],
         "final_state_digest": kwargs["original_final_state_digest"],
     }
     summary.update(overrides.pop("summary_overrides", {}))
@@ -1122,6 +1530,40 @@ def _write_run_dir(tmp_path: Path, **overrides: Any) -> Path:
         kwargs["method_text"], encoding="utf-8"
     )
 
+    (run_dir / "intent_target_proposal_report_v1.json").write_text(
+        json.dumps(kwargs["intent_target_proposal_report"], indent=2),
+        encoding="utf-8",
+    )
+
+    # Write completion_report, readiness_report, validation_manifest.
+    artifacts_10_run = run_dir / "artifacts" / "10_run"
+    artifacts_10_run.mkdir(parents=True, exist_ok=True)
+    (artifacts_10_run / "agentic_run_completion_report.json").write_text(
+        json.dumps(kwargs["completion_report"], indent=2), encoding="utf-8"
+    )
+    (artifacts_10_run / "agentic_run_readiness_report.json").write_text(
+        json.dumps(kwargs["readiness_report"], indent=2), encoding="utf-8"
+    )
+    (artifacts_10_run / "validation_manifest.json").write_text(
+        json.dumps(kwargs["validation_manifest"], indent=2), encoding="utf-8"
+    )
+    # Write method_clean.md in the authoring artifacts directory.
+    authoring_dir = run_dir / "artifacts" / "06_authoring"
+    authoring_dir.mkdir(parents=True, exist_ok=True)
+    method_clean = authoring_dir / "method_clean.md"
+    method_clean.write_text(kwargs["method_text"], encoding="utf-8")
+    # Update the summary's artifacts map to include the new files.
+    summary["artifacts"] = {
+        **(summary.get("artifacts") or {}),
+        "agentic_run_completion_report": str(artifacts_10_run / "agentic_run_completion_report.json"),
+        "agentic_run_readiness_report": str(artifacts_10_run / "agentic_run_readiness_report.json"),
+        "validation_manifest": str(artifacts_10_run / "validation_manifest.json"),
+        "text_clean_md": str(method_clean),
+    }
+    (run_dir / "agentic_run_summary.json").write_text(
+        json.dumps(summary, indent=2), encoding="utf-8"
+    )
+
     return run_dir
 
 
@@ -1137,6 +1579,8 @@ def test_check_r8_acceptance_from_run_dir_loads_artifacts(tmp_path: Path):
     assert report.criteria["code_mainline_in_method"].status == "passed"
     assert report.criteria["must_cover_terminal"].status == "passed"
     assert report.criteria["unsupported_final_sentences_zero"].status == "passed"
+    assert report.criteria["typed_intent_proposal_accepted"].status == "passed"
+    assert report.criteria["per_role_sampling_config_evidenced"].status == "passed"
     assert report.protocol_check_passed is True
 
 
@@ -1211,7 +1655,11 @@ def test_accepted_is_false_when_any_criterion_fails():
 
 def test_accepted_is_false_when_protocol_check_fails():
     kwargs = _passing_report_kwargs()
-    kwargs["run_temperature"] = 0.5
+    kwargs["run_environment"] = {
+        "CODE2PAPER_LLM_CACHE": "1",
+        "CODE2PAPER_TP_SIZE": "2",
+        "CODE2PAPER_NUM_GPUS": "2",
+    }
     report = check_r8_acceptance(**kwargs)
     assert report.accepted is False
 

@@ -22,6 +22,8 @@ from typing import Any
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.runner import (
     AgenticRunSummary,
+    _R8_ENV_VARS,
+    _merge_resume_summary_evidence,
     build_agentic_run_summary,
     run_agentic_code2paper,
 )
@@ -138,26 +140,20 @@ class BuildAgenticRunSummaryR8Tests(unittest.TestCase):
     def test_summary_environment_empty_when_no_vars(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             state = _make_state(Path(tmpdir))
-            # Temporarily clear all R8 env vars.
-            keys = (
-                "CODE2PAPER_LLM_CACHE",
-                "CODE2PAPER_TP_SIZE",
-                "CODE2PAPER_NUM_GPUS",
-                "CODE2PAPER_PARALLEL_PROJECTS",
-                "CODE2PAPER_LLM_TEMPERATURE",
-            )
-            old = {k: os.environ.get(k, "") for k in keys}
+            # Keep this in lockstep with the runner's provenance allowlist.
+            keys = _R8_ENV_VARS
+            old = {key: os.environ.get(key) for key in keys}
             try:
                 for k in keys:
                     os.environ.pop(k, None)
                 summary = build_agentic_run_summary(state)
                 self.assertEqual(summary.environment, {})
             finally:
-                for k, v in old.items():
-                    if v:
-                        os.environ[k] = v
+                for key, value in old.items():
+                    if value is not None:
+                        os.environ[key] = value
                     else:
-                        os.environ.pop(k, None)
+                        os.environ.pop(key, None)
 
     def test_summary_records_temperature_when_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -172,6 +168,42 @@ class BuildAgenticRunSummaryR8Tests(unittest.TestCase):
                     os.environ["CODE2PAPER_LLM_TEMPERATURE"] = old
                 else:
                     os.environ.pop("CODE2PAPER_LLM_TEMPERATURE", None)
+
+    def test_summary_records_resolved_role_sampling_envelope(self) -> None:
+        """The summary distinguishes the writer retry ceiling from 8192 default."""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = _make_state(
+                Path(tmpdir), llm_provider="openai", llm_model="local-gemma"
+            )
+            env = {
+                "CODE2PAPER_LLM_TEMPERATURE": "0",
+                "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS": "12000",
+                "CODE2PAPER_LLM_TEMPERATURE_INTENT_COMPILER": "0.20",
+                "CODE2PAPER_LLM_TEMPERATURE_METHOD_WRITER": "0.70",
+                "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_METHOD_WRITER": "8192",
+                "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_METHOD_WRITER_EXTENDED": "12288",
+            }
+            old = {key: os.environ.get(key) for key in env}
+            try:
+                os.environ.update(env)
+                summary = build_agentic_run_summary(state)
+            finally:
+                for key, value in old.items():
+                    if value is None:
+                        os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = value
+
+        self.assertEqual(summary.temperature_by_role["intent_compiler"], 0.20)
+        self.assertEqual(summary.temperature_by_role["method_writer"], 0.70)
+        self.assertEqual(summary.max_output_tokens_by_role["method_writer"], 8192)
+        self.assertEqual(
+            summary.max_output_tokens_by_role["method_writer_extended"], 12288
+        )
+        self.assertEqual(
+            summary.max_output_tokens_by_role["method_cumulative_budget"], 24576
+        )
 
     def test_summary_temperature_none_when_not_set(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -191,6 +223,24 @@ class BuildAgenticRunSummaryR8Tests(unittest.TestCase):
             summary = build_agentic_run_summary(state)
             self.assertEqual(summary.run_id, "run-abc")
             self.assertEqual(summary.project_id, "proj-xyz")
+
+    def test_repeated_resume_preserves_original_first_run_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = _make_state(Path(tmpdir), run_id="run-resume")
+            first = build_agentic_run_summary(state)
+            second_current = build_agentic_run_summary(state)
+            second = _merge_resume_summary_evidence(second_current, first)
+            self.assertEqual(
+                second.resumed_from_final_state_digest,
+                first.final_state_digest,
+            )
+
+            third_current = build_agentic_run_summary(state)
+            third = _merge_resume_summary_evidence(third_current, second)
+            self.assertEqual(
+                third.resumed_from_final_state_digest,
+                first.final_state_digest,
+            )
 
 
 class RunAgenticCode2PaperR8Tests(unittest.TestCase):
@@ -216,6 +266,32 @@ class RunAgenticCode2PaperR8Tests(unittest.TestCase):
                 "next_node": "rendering",
             }
         ).model_dump(mode="json") | {"tool_call_trace_refs": ["tc-1", "tc-2"]}
+
+    def _fake_graph_with_accepted_intent_report(
+        self, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Synthetic graph preserving the V3 Intent Agent provenance path."""
+
+        state = AgenticRunState.model_validate(payload)
+        artifact_path = artifact_dir(state.method_root, "10_run") / "intent.json"
+        artifact_path.write_text(
+            json.dumps({
+                "attempted": True,
+                "accepted": True,
+                "enriched_graph_digest": "sha256:intent-fixture",
+            }),
+            encoding="utf-8",
+        )
+        return state.model_copy(update={
+            "artifacts": {"intent_target_proposal_report_v1": str(artifact_path)},
+            "decisions": [
+                AgentDecision(
+                    node="research_supervisor",
+                    decision="SEARCH_SYMBOLS",
+                    rationale="issue_driven:missing_anchor",
+                )
+            ],
+        }).model_dump(mode="json") | {"tool_call_trace_refs": ["tc-1"]}
 
     def test_runner_extracts_tool_call_trace_refs_from_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -262,6 +338,28 @@ class RunAgenticCode2PaperR8Tests(unittest.TestCase):
                 # most criteria fail; the report should record that.
                 self.assertIn("gap_driven_tool_selection", report.criteria)
                 self.assertIn("trace_reproducible", report.criteria)
+        finally:
+            if old:
+                os.environ["CODE2PAPER_R8_ACCEPTANCE"] = old
+            else:
+                os.environ.pop("CODE2PAPER_R8_ACCEPTANCE", None)
+
+    def test_runner_passes_intent_agent_provenance_into_r8_report(self) -> None:
+        old = os.environ.get("CODE2PAPER_R8_ACCEPTANCE", "")
+        try:
+            os.environ["CODE2PAPER_R8_ACCEPTANCE"] = "1"
+            with tempfile.TemporaryDirectory() as tmpdir:
+                initial = AgenticRunState(project_root=Path("."), out_root=Path(tmpdir))
+                result = run_agentic_code2paper(
+                    initial, graph_app=self._fake_graph_with_accepted_intent_report
+                )
+                report = load_r8_acceptance_report(
+                    result.state.artifacts["r8_acceptance_report"]
+                )
+                self.assertEqual(
+                    report.criteria["typed_intent_proposal_accepted"].status,
+                    "passed",
+                )
         finally:
             if old:
                 os.environ["CODE2PAPER_R8_ACCEPTANCE"] = old

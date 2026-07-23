@@ -57,6 +57,7 @@ from code2paper.agentic.source_authority import (
     SourceAuthorityV1,
     classify_source_authority,
 )
+from code2paper.agentic.typed_refs import build_symbol_ref
 
 
 # ---------------------------------------------------------------------------
@@ -539,6 +540,28 @@ def search_symbols(
         for entry in index.candidates
         if _symbol_matches(entry, query, kind_filter, use_regex, scope_paths)
     ]
+    if not candidates and not use_regex:
+        scored = [
+            (score, entry)
+            for entry in index.candidates
+            if (
+                (not scope_paths or any(
+                    entry.path == scope or entry.path.startswith(scope.rstrip("/") + "/")
+                    for scope in scope_paths
+                ))
+                and (not kind_filter or entry.kind in kind_filter)
+                and (score := _symbol_query_score(entry, query)) > 0
+            )
+        ]
+        candidates = [
+            entry
+            for _score, entry in sorted(
+                scored,
+                key=lambda item: (
+                    -item[0], item[1].path, item[1].symbol, item[1].start_line
+                ),
+            )
+        ]
     if not candidates:
         return make_observation(
             tool_call=tool_call,
@@ -640,7 +663,8 @@ def read_symbol(
             ),
         )
 
-    start_line, end_line = span
+    symbol_start_line, end_line = span
+    start_line = symbol_start_line
     if context_lines:
         start_line = max(1, start_line - context_lines)
         end_line = end_line + context_lines
@@ -649,6 +673,7 @@ def read_symbol(
         tool_call=tool_call,
         status="success",
         source_authority=authority,
+        result_refs=(build_symbol_ref(rel_path, symbol, symbol_start_line),),
         exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
@@ -1598,6 +1623,14 @@ def propose_evidence_packet(
 ) -> ResearchObservationV1:
     """LLM-proposed evidence packet with anchor spans.
 
+    Phase 5 note: this tool is a thin validator.  The actual packet
+    construction is handled by ``compile_candidate_node`` via
+    ``compile_evidence_packet_proposal`` in ``evidence_compiler_v3``.
+    This tool exists so the supervisor can propose a packet when the
+    evidence critic raises a ``missing_anchor`` issue, but in the
+    current V3 flow the critic routes directly to ``compile_candidate``
+    so this tool is rarely invoked.
+
     Validates that anchor spans resolve to snapshot files.  The proposed
     packet is returned as a ``packet:`` ref; ``validate_evidence_packet``
     must be called before the packet enters the authorized evidence set.
@@ -1686,6 +1719,14 @@ def compile_code_facts(
 ) -> ResearchObservationV1:
     """Compile typed facts from a validated packet + behavior subgraph.
 
+    Phase 5 note: this tool is a placeholder.  The actual fact
+    compilation is handled by ``compile_candidate_node`` via
+    ``compile_facts_from_behavior_graph`` in ``evidence_compiler_v3``.
+    This tool exists for issue-driven fallback paths
+    (``no_semantically_matching_projected_claim`` / ``formula_unsupported``)
+    but the current V3 flow routes evidence compilation through
+    ``compile_candidate`` directly, so this tool is rarely invoked.
+
     Delegates to the generic evidence compiler when available; otherwise
     returns a ``fact:compiled:<packet_id>`` ref placeholder.
     """
@@ -1742,7 +1783,16 @@ def decompose_atomic_claims(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Decompose compiled facts into minimal writable claim candidates."""
+    """Decompose compiled facts into minimal writable claim candidates.
+
+    Phase 5 note: this tool is a placeholder.  The actual claim
+    decomposition is handled by ``compile_candidate_node`` via
+    ``compile_atomic_claims`` in ``evidence_compiler_v3``.  This tool
+    exists for the issue-driven fallback path
+    (``sentence_claim_atomicity``) but the current V3 flow routes claim
+    authorization through ``compile_candidate`` directly, so this tool
+    is rarely invoked.
+    """
 
     fact_ids = tuple(_arg_value(tool_call, "fact_ids", default=()) or ())
     if not fact_ids:
@@ -2061,6 +2111,69 @@ def _symbol_matches(
         except re.error:
             return False
     return query.lower() in entry.symbol.lower()
+
+
+_SYMBOL_QUERY_STOP_WORDS = frozenset({
+    "a", "an", "and", "as", "at", "be", "by", "each", "for", "from",
+    "in", "into", "is", "it", "method", "model", "of", "on", "or",
+    "stage", "step", "steps", "that", "the", "then", "this", "to",
+    "using", "with",
+})
+
+
+def _identifier_tokens(value: str) -> tuple[str, ...]:
+    expanded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", value)
+    return tuple(
+        token
+        for token in re.findall(r"[a-z0-9]+", expanded.casefold())
+        if len(token) >= 3 and token not in _SYMBOL_QUERY_STOP_WORDS
+    )
+
+
+def _common_prefix_length(left: str, right: str) -> int:
+    count = 0
+    for a, b in zip(left, right):
+        if a != b:
+            break
+        count += 1
+    return count
+
+
+def _symbol_query_score(entry: SymbolIndexEntry, query: str) -> int:
+    """Rank natural-language retrieval terms against identifier structure.
+
+    Exact substring search remains the primary path.  This fallback exists
+    for untyped author obligations whose search query is prose rather than a
+    literal symbol name.  It uses only identifier/path tokens and a stable
+    prefix heuristic; source contents and project-specific vocabularies are
+    intentionally absent.
+    """
+
+    query_tokens = _identifier_tokens(query)
+    if not query_tokens:
+        return 0
+    symbol_tokens = _identifier_tokens(entry.symbol)
+    path_tokens = _identifier_tokens(entry.path)
+    score = 0
+    for query_token in query_tokens:
+        best = 0
+        for symbol_token in symbol_tokens:
+            if query_token == symbol_token:
+                best = max(best, 8)
+            elif query_token in symbol_token or symbol_token in query_token:
+                best = max(best, 5)
+            elif _common_prefix_length(query_token, symbol_token) >= 4:
+                best = max(best, 3)
+        if best == 0 and any(
+            query_token == path_token
+            or query_token in path_token
+            or path_token in query_token
+            or _common_prefix_length(query_token, path_token) >= 4
+            for path_token in path_tokens
+        ):
+            best = 1
+        score += best
+    return score
 
 
 def _locate_symbol_span(tree: ast.AST, symbol: str) -> tuple[int, int] | None:

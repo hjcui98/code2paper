@@ -10,6 +10,11 @@ from typing import Any
 from code2paper.agents.state.poster_state import ModelConfig
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.schemas import LLMConfig, LLMProvider
+from code2paper.llm.role_config import (
+    CODE_ANALYZER,
+    CODE_INTAKE,
+    apply_role_config,
+)
 
 
 class AgentResponse:
@@ -33,7 +38,20 @@ class LangGraphAgent:
 
     def step(self, message: str) -> AgentResponse:
         llm_config = _to_llm_config(self.config)
-        response = LLMClient(llm_config).complete(
+        # Embedded intake/analyzer agents are separate research-plane roles.
+        # Their legacy ModelConfig defaulted to writer-like sampling
+        # (0.7/4096); preserving the old role label hid those node budgets as
+        # supervisor calls in R8 artifacts.  Normalize the legacy sentinels,
+        # then apply the explicitly audited intake/analyzer role.
+        role = (
+            CODE_ANALYZER if "code_analyzer" in self.agent_name
+            else CODE_INTAKE
+        )
+        research_config = apply_role_config(
+            llm_config.model_copy(update={"temperature": 0.0, "max_output_tokens": 12000}),
+            role,
+        )
+        response = LLMClient(research_config).complete(
             LLMRequest(
                 prompt_template_id=f"code2paper.agents.{self.agent_name}.v1",
                 prompt=self.system_msg,

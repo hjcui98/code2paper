@@ -9,6 +9,7 @@ from typing import Any
 from code2paper.agentic.claim_verifier import ClaimVerificationReport
 from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
 from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, EvidencePacketSetV3
+from code2paper.agentic.equation_claims import EquationClaimSetV1
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
@@ -34,6 +35,7 @@ def build_authoring_projection(
     atomic_claims_v2: AtomicClaimSetV2 | None = None,
     atomic_claims_v3: AtomicClaimSetV3 | None = None,
     evidence_packets_v3: EvidencePacketSetV3 | None = None,
+    equation_claims_v1: EquationClaimSetV1 | None = None,
 ) -> AuthoringInputProjection:
     if atomic_claims_v3 is not None and evidence_packets_v3 is not None:
         return _build_v3_projection(
@@ -41,6 +43,7 @@ def build_authoring_projection(
             claims=atomic_claims_v3,
             packets=evidence_packets_v3,
             evidence_snapshot_v2=evidence_snapshot_v2,
+            equation_claims=equation_claims_v1,
         )
     claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
     contract_by_id = {contract.claim_id: contract for contract in method_evidence.claim_contracts}
@@ -243,6 +246,7 @@ def _build_v3_projection(
     claims: AtomicClaimSetV3,
     packets: EvidencePacketSetV3,
     evidence_snapshot_v2: EvidenceSnapshotV2 | None,
+    equation_claims: EquationClaimSetV1 | None = None,
 ) -> AuthoringInputProjection:
     """Project only compiler-validated V3 behaviors into the writer view."""
 
@@ -266,24 +270,34 @@ def _build_v3_projection(
         projected.append(ProjectedClaim(**payload, input_digest=_digest(payload)))
 
     by_id = {item.claim_id: item for item in projected}
-    groups = [
-        ("S-V3-1", "Per-primitive feature representation", ["C-RAP-FEATURE-INPUT", "C-RAP-FEATURE-TRANSFORM"]),
-        ("S-V3-2", "Predictor loading and score inference", ["C-RAP-PREDICTOR", "C-RAP-SCORE"]),
-        ("S-V3-3", "Score-based retention and artifact output", ["C-RAP-RANK", "C-RAP-MASK", "C-RAP-OUTPUT", "C-RAP-INFERENCE-SCOPE"]),
-    ]
+    groups = sorted(
+        claims.semantic_stage_groups,
+        key=lambda item: (item.organization_priority, item.stage_id),
+    )
     stage_packets: list[dict[str, Any]] = []
-    for stage_id, heading, claim_ids in groups:
-        selected = [by_id[item] for item in claim_ids if item in by_id]
+    assigned_claim_ids: set[str] = set()
+    for group in groups:
+        selected = [
+            by_id[item]
+            for item in group.ordered_claim_ids
+            if item in by_id and item not in assigned_claim_ids
+        ]
         if not selected:
             continue
+        assigned_claim_ids.update(item.claim_id for item in selected)
         stage_packets.append({
-            "stage_id": stage_id,
-            "name": heading,
-            "purpose": " ".join(item.supported_fragment for item in selected),
+            "stage_id": group.stage_id,
+            "name": group.name,
+            "purpose": group.purpose,
             "stage_claim": " ".join(item.supported_fragment for item in selected),
             "claim_ids": [item.claim_id for item in selected],
             "evidence_ids": _dedupe([eid for item in selected for eid in item.direct_evidence_ids]),
-            "relation_evidence_ids": _dedupe([eid for item in selected for eid in item.relation_evidence_ids]),
+            "relation_evidence_ids": _dedupe([
+                *group.relation_evidence_ids,
+                *[eid for item in selected for eid in item.relation_evidence_ids],
+            ]),
+            "covers_obligation_ids": list(group.covers_obligation_ids),
+            "organization_priority": group.organization_priority,
         })
     forbidden = [
         ForbiddenClaim(
@@ -299,6 +313,23 @@ def _build_v3_projection(
         "code_facts_v1": claims.code_fact_digest,
         "atomic_claims_v3": claims.content_digest,
     }
+    safe_equations: list[dict[str, Any]] = []
+    if (
+        equation_claims is not None
+        and equation_claims.repo_snapshot_id == packets.repo_snapshot_id
+        and equation_claims.project_tree_hash == packets.project_tree_hash
+        and equation_claims.code_fact_digest == claims.code_fact_digest
+    ):
+        claim_by_id = {item.claim_id: item for item in claims.claims}
+        for equation in equation_claims.equations:
+            prose_claim = claim_by_id.get(equation.prose_claim_id)
+            if (
+                equation.validation_status == "supported"
+                and prose_claim is not None
+                and set(equation.fact_ids) == set(prose_claim.fact_ids)
+            ):
+                safe_equations.append(equation.model_dump(mode="json"))
+        source_digests["equation_claims_v1"] = equation_claims.content_digest
     if evidence_snapshot_v2 is not None:
         source_digests["evidence_snapshot_v2"] = evidence_snapshot_v2.content_digest
     payload = {
@@ -309,16 +340,15 @@ def _build_v3_projection(
         "projected_claims": [item.model_dump(mode="json") for item in projected],
         "forbidden_claims": [item.model_dump(mode="json") for item in forbidden],
         "stage_packets": stage_packets,
-        "safe_equations": [],
+        "safe_equations": safe_equations,
         "safe_numeric_facts": [],
         "safe_aliases": [],
         "safe_intent_spine": [item.claim_id for item in projected],
         "writing_rules": [
             "The projection is the writer's only positive method-fact input.",
-            "Organize the prose into the three semantic stage packets; do not create one heading per claim.",
-            "Preserve the feature-to-predictor-to-score-to-rank-to-mask-to-prune-to-output order.",
-            "Use two-class Softmax and score column zero; do not rewrite this as a single sigmoid score.",
-            "Training, datasets, soft pruning, and loss objectives remain explicit code gaps and must not enter positive prose.",
+            "Follow semantic stage groups in organization_priority order.",
+            "Use only each stage group's ordered authorized claims and relation evidence.",
+            "Do not introduce explicit gaps or unsupported author fragments as positive prose.",
         ],
         "dropped_positive_fields": ["legacy_v2_claim_projection", "author_stage_scaffold"],
         "source_digests": source_digests,
@@ -326,7 +356,11 @@ def _build_v3_projection(
         "project_tree_hash": packets.project_tree_hash,
         "evidence_snapshot_id": evidence_snapshot_v2.evidence_snapshot_id if evidence_snapshot_v2 else "",
         "evidence_snapshot_digest": evidence_snapshot_v2.content_digest if evidence_snapshot_v2 else "",
-        "hard_gate_passed": bool(projected) and len(stage_packets) >= 2,
+        "hard_gate_passed": (
+            bool(projected)
+            and bool(stage_packets)
+            and assigned_claim_ids == set(by_id)
+        ),
     }
     return AuthoringInputProjection(**payload, projection_digest=_digest(payload))
 
@@ -415,12 +449,50 @@ def projected_writer_inputs(
 ) -> tuple[MethodEvidence, ClaimEvidenceMap]:
     """Build compatibility inputs with every non-projected positive fact removed."""
 
+    native_evidence_ids = {
+        evidence_id
+        for claim in projection.projected_claims
+        for evidence_id in [*claim.direct_evidence_ids, *claim.relation_evidence_ids]
+    }
+    compatibility_ids = {
+        evidence_id: (
+            evidence_id
+            if evidence_id.startswith("E") and len(evidence_id) > 1
+            else "E-V3-" + hashlib.sha256(evidence_id.encode("utf-8")).hexdigest()[:16]
+        )
+        for evidence_id in native_evidence_ids
+    }
+    compatibility_claim_ids = {
+        claim.claim_id: (
+            claim.claim_id
+            if claim.claim_id.startswith("C")
+            else "C-V3-" + hashlib.sha256(claim.claim_id.encode("utf-8")).hexdigest()[:16]
+        )
+        for claim in projection.projected_claims
+    }
+
+    def compatible(values: list[str]) -> list[str]:
+        return [compatibility_ids.get(value, value) for value in values]
+
+    compatibility_stage_packets: list[dict[str, Any]] = []
+    for packet in projection.stage_packets:
+        mapped = dict(packet)
+        for key in ("evidence_ids", "evidence_span_ids", "primary_evidence_ids", "relation_evidence_ids"):
+            if isinstance(mapped.get(key), list):
+                mapped[key] = compatible([str(value) for value in mapped[key]])
+        if isinstance(mapped.get("claim_ids"), list):
+            mapped["claim_ids"] = [
+                compatibility_claim_ids.get(str(value), str(value))
+                for value in mapped["claim_ids"]
+            ]
+        compatibility_stage_packets.append(mapped)
+
     claims = [
         ClaimEvidenceItem(
-            claim_id=claim.claim_id,
+            claim_id=compatibility_claim_ids[claim.claim_id],
             claim_text=claim.supported_fragment,
             support_status=SupportStatus(claim.support_status),
-            evidence_ids=claim.direct_evidence_ids,
+            evidence_ids=compatible(claim.direct_evidence_ids),
             source="authoring_projection",
             caveats=claim.required_qualifiers,
         )
@@ -428,14 +500,14 @@ def projected_writer_inputs(
     ]
     contracts = [
         ClaimContract(
-            claim_id=claim.claim_id,
+            claim_id=compatibility_claim_ids[claim.claim_id],
             claim_intent=claim.supported_fragment,
             support_status=(
                 ConflictStatus.SUPPORTED
                 if claim.support_status == "supported"
                 else ConflictStatus.PARTIALLY_SUPPORTED
             ),
-            evidence_span_ids=claim.direct_evidence_ids,
+            evidence_span_ids=compatible(claim.direct_evidence_ids),
             allowed_wording_boundary=claim.allowed_wording_boundary,
             required_qualifiers=claim.required_qualifiers,
         )
@@ -454,12 +526,13 @@ def projected_writer_inputs(
                     "outputs": [],
                     "modules": [],
                     "mechanisms": _projection_stage_mechanisms(
-                        packet=packet,
-                        template=template,
-                        stage_index=index,
+                    packet=packet,
+                    template=template,
+                    stage_index=index,
+                    compatibility_ids=compatibility_ids,
                     ),
                 }
-                for index, packet in enumerate(projection.stage_packets, start=1)
+                for index, packet in enumerate(compatibility_stage_packets, start=1)
             ],
             "behavior_patterns": [],
             "equation_candidates": projection.safe_equations,
@@ -468,8 +541,20 @@ def projected_writer_inputs(
             "innovation_candidates": [],
             "paper_module_aliases": projection.safe_aliases,
             "method_overview": {},
-            "stage_packets": projection.stage_packets,
-            "writing_constraints": projection.writing_rules,
+            "stage_packets": compatibility_stage_packets,
+            "writing_constraints": [
+                *projection.writing_rules,
+                *[
+                    f"Compatibility evidence id {compatibility} maps to {native}."
+                    for native, compatibility in sorted(compatibility_ids.items())
+                    if native != compatibility
+                ],
+                *[
+                    f"Compatibility claim id {compatibility} maps to {native}."
+                    for native, compatibility in sorted(compatibility_claim_ids.items())
+                    if native != compatibility
+                ],
+            ],
             "alignment_notes": [],
             "frozen_mechanisms": [],
             "distinguishing_mechanisms": [],
@@ -484,7 +569,11 @@ def projected_writer_inputs(
 
 
 def _projection_stage_mechanisms(
-    *, packet: dict[str, Any], template: MethodEvidence, stage_index: int
+    *,
+    packet: dict[str, Any],
+    template: MethodEvidence,
+    stage_index: int,
+    compatibility_ids: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Retain trace IDs without reopening legacy mechanism prose as writer input."""
 
@@ -494,6 +583,7 @@ def _projection_stage_mechanisms(
         for item in packet.get(key, [])
         if str(item)
     }
+    compatibility_ids = compatibility_ids or {}
     matched = [
         mechanism
         for stage in template.stages
@@ -506,7 +596,9 @@ def _projection_stage_mechanisms(
                 "mechanism_id": f"MECH_PROJECTION_{stage_index}",
                 "description": packet["purpose"],
                 "support_status": packet.get("support_status", "supported"),
-                "evidence_ids": sorted(packet_evidence),
+                "evidence_ids": sorted(
+                    compatibility_ids.get(value, value) for value in packet_evidence
+                ),
             }
         ]
     return [
@@ -514,7 +606,10 @@ def _projection_stage_mechanisms(
             "mechanism_id": mechanism.mechanism_id,
             "description": packet["purpose"],
             "support_status": packet.get("support_status", "supported"),
-            "evidence_ids": sorted(packet_evidence & set(mechanism.evidence_ids)),
+            "evidence_ids": sorted(
+                compatibility_ids.get(value, value)
+                for value in packet_evidence & set(mechanism.evidence_ids)
+            ),
         }
         for mechanism in matched
     ]

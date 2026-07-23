@@ -544,18 +544,18 @@ def test_build_plan_deduplicates_claims_across_sections() -> None:
         claim_set=claim_set,
     )
 
-    # The build path binds C-shared to the first section only; the second
-    # section is empty (no claim, no gap), so the gate fails for that
-    # section but no duplicate_claim failure is emitted.
+    # The build path binds C-shared to the first section only.  The redundant
+    # second obligation is coalesced instead of manufacturing an empty Method
+    # section, while its coverage remains present in the coverage report.
     sections_by_obligation = {s.obligation_id: s for s in plan.sections}
     assert sections_by_obligation["O-1"].claim_ids == ("C-shared",)
-    assert sections_by_obligation["O-2"].claim_ids == ()
+    assert "O-2" not in sections_by_obligation
     assert not any(f.startswith("duplicate_claim:") for f in plan.gate_failures)
-    # The empty O-2 section triggers the section_without_claim_or_gap rule.
-    assert any(
-        f.startswith("section_without_claim_or_gap:") and "AP-S2" in f
+    assert not any(
+        f.startswith("section_without_claim_or_gap:")
         for f in plan.gate_failures
     )
+    assert plan.plan_gate_passed
 
 
 # ---------------------------------------------------------------------------
@@ -795,6 +795,76 @@ def test_authorized_equation_passes_gate() -> None:
 
     assert plan.plan_gate_passed
     assert plan.is_trusted_ready
+
+
+def test_python_kwargs_not_flagged_as_equation() -> None:
+    """Python kwargs like ``prompt=prompt`` must NOT be flagged as equations."""
+
+    obligations = [_obligation("O-1", kind="stage", author_text="Stage.")]
+    graph = _graph(obligations)
+    claim_set = _claim_set([
+        _claim(
+            "C-kwarg",
+            covers_obligation_ids=["O-1"],
+            canonical_text=(
+                "The forward pass calls engine(prompt=prompt, "
+                "request_id=self, sampling_params=sampling_params) "
+                "and returns the output."
+            ),
+            allowed_wording_boundary="exact behavior predicate and operands",
+        ),
+    ])
+    coverage = _coverage_report([
+        _coverage_item("O-1", kind="stage", coverage_status="supported",
+                       matched_claim_ids=("C-kwarg",)),
+    ])
+
+    plan = build_authoring_plan_v3(
+        run_id="run-1",
+        repo_snapshot_id="repo-1",
+        project_tree_hash="tree-1",
+        intent_graph=graph,
+        coverage_report=coverage,
+        claim_set=claim_set,
+    )
+
+    assert plan.plan_gate_passed
+    assert not any(
+        f.startswith("equation_unauthorized:") for f in plan.gate_failures
+    )
+
+
+def test_mathematical_equation_still_flagged() -> None:
+    """Real equations with spaces around ``=`` are still detected."""
+
+    obligations = [_obligation("O-1", kind="stage", author_text="Stage.")]
+    graph = _graph(obligations)
+    claim_set = _claim_set([
+        _claim(
+            "C-eq2",
+            covers_obligation_ids=["O-1"],
+            canonical_text="The loss = alpha * task_loss + lambda * reveal_loss.",
+            allowed_wording_boundary="loss computation only",
+        ),
+    ])
+    coverage = _coverage_report([
+        _coverage_item("O-1", kind="stage", coverage_status="supported",
+                       matched_claim_ids=("C-eq2",)),
+    ])
+
+    plan = build_authoring_plan_v3(
+        run_id="run-1",
+        repo_snapshot_id="repo-1",
+        project_tree_hash="tree-1",
+        intent_graph=graph,
+        coverage_report=coverage,
+        claim_set=claim_set,
+    )
+
+    assert not plan.plan_gate_passed
+    assert any(
+        f.startswith("equation_unauthorized:C-eq2:") for f in plan.gate_failures
+    )
 
 
 # ---------------------------------------------------------------------------

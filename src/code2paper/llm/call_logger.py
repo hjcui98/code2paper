@@ -40,6 +40,11 @@ def build_call_log(
         parse_error=parse_error,
         repair_attempts=repair_attempts,
         created_at=datetime.now(timezone.utc).isoformat(),
+        role=config.role,
+        top_p=config.top_p,
+        top_k=config.top_k,
+        seed=config.seed,
+        max_input_tokens=config.max_input_tokens,
     )
 
 

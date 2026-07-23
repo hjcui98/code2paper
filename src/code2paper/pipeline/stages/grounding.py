@@ -286,7 +286,9 @@ def _complete_json_request_with_retries(
     call_logs: list[str] = []
     response = None
     parsed = None
-    no_cache_config = llm_config.model_copy(update={"cache": False})
+    from code2paper.llm.role_config import AUTHORING_PLANNER, apply_role_config
+
+    no_cache_config = apply_role_config(llm_config, AUTHORING_PLANNER).model_copy(update={"cache": False})
 
     for attempt in range(1, LLM_JSON_RETRY_ATTEMPTS + 1):
         response = LLMClient(no_cache_config).complete(request)

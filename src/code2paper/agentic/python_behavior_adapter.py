@@ -485,7 +485,8 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
         start = getattr(node, "lineno", 1)
         end = getattr(node, "end_lineno", start) or start
         # The slice was dedented, so add the symbol's start_line offset back.
-        return make_span_id(self.symbol.path, start, end)
+        offset = self.symbol.start_line - 1
+        return make_span_id(self.symbol.path, start + offset, end + offset)
 
     def _add_node(
         self,
@@ -856,7 +857,8 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
         return self._seq
 
     def _nodes_at(self, line: int) -> list[BehaviorNodeV1]:
-        return list(self._node_by_line.get(line, []))
+        global_line = line + self.symbol.start_line - 1
+        return list(self._node_by_line.get(global_line, []))
 
     def _add_relation(
         self,
@@ -881,7 +883,12 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
         else:
             start = getattr(span_node, "lineno", 1)
             end = getattr(span_node, "end_lineno", start) or start
-            span_id = make_span_id(self.symbol.path, start, end)
+            offset = self.symbol.start_line - 1
+            span_id = make_span_id(
+                self.symbol.path,
+                start + offset,
+                end + offset,
+            )
         rel = BehaviorRelationV1(
             relation_id=rel_id,
             kind=kind,

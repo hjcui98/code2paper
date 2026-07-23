@@ -21,8 +21,13 @@ section 8.2 / R3.2):
   so the graph never stalls.
 - ``produced_by`` is ``"llm_proposal"`` when the LLM succeeds and
   ``"deterministic_fallback"`` when it falls back.
-- Temperature is forced to 0 for R8 protocol compliance (section R8.1
-  rule 2), regardless of the ``LLMConfig`` default.
+- The supervisor's LLM config is built via
+  :func:`code2paper.llm.role_config.apply_role_config` with
+  ``role="research_supervisor"``.  This applies the R8 per-role
+  sampling protocol (temperature=0.20, max_output_tokens=1536) while
+  respecting per-role env overrides
+  (``CODE2PAPER_LLM_TEMPERATURE_RESEARCH_SUPERVISOR`` etc.).  ``cache``
+  is forced to ``False`` for R8 protocol compliance.
 
 The backend is selected by setting ``CODE2PAPER_AGENTIC_RESEARCH_V3=1``
 and providing a valid ``LLMConfig`` (via the standard
@@ -55,6 +60,7 @@ from code2paper.agentic.research_models import ResearchToolCallV1
 from code2paper.schemas import LLMConfig, LLMProvider
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.providers import has_provider_api_key
+from code2paper.llm.role_config import RESEARCH_SUPERVISOR, apply_role_config
 
 _logger = logging.getLogger(__name__)
 
@@ -110,8 +116,12 @@ class GemmaSupervisorBackend:
         Optional pre-constructed ``DeterministicSupervisorBackend``
         used on LLM failure.  When omitted, a fresh one is created.
     temperature
-        Override temperature for the LLM call.  Defaults to 0.0 for
-        R8 protocol compliance.
+        Optional override temperature for the LLM call.  When ``None``
+        (the default), the supervisor uses the per-role R8 protocol
+        temperature (0.20 for ``research_supervisor``) applied via
+        :func:`apply_role_config`.  When set, the override wins over
+        the role default — this is intended for testing or protocol
+        experiments and is not used in production R8 runs.
     """
 
     def __init__(
@@ -138,9 +148,21 @@ class GemmaSupervisorBackend:
             "fallback_must_be_safe",
         ),
         fallback: DeterministicSupervisorBackend | None = None,
-        temperature: float = 0.0,
+        temperature: float | None = None,
     ) -> None:
-        self._llm_config = llm_config.model_copy(update={"temperature": temperature, "cache": False})
+        # Apply the per-role R8 sampling protocol (temperature=0.20,
+        # max_output_tokens=1536 for research_supervisor) via
+        # ``apply_role_config``.  Per-role env overrides
+        # (``CODE2PAPER_LLM_TEMPERATURE_RESEARCH_SUPERVISOR`` etc.) are
+        # respected.  When the caller passes an explicit ``temperature``
+        # (non-None), it overrides the role default — this is intended
+        # for testing or protocol experiments and is not used in
+        # production R8 runs.
+        role_config = apply_role_config(llm_config, RESEARCH_SUPERVISOR)
+        if temperature is not None:
+            role_config = role_config.model_copy(update={"temperature": temperature})
+        # Always force cache=False for R8 protocol compliance.
+        self._llm_config = role_config.model_copy(update={"cache": False})
         self._run_id = run_id
         self._repo_snapshot_id = repo_snapshot_id
         self._ready_tools = tuple(ready_tools)
@@ -151,7 +173,7 @@ class GemmaSupervisorBackend:
             ready_tools=self._ready_tools,
             hard_rules=self._hard_rules,
         )
-        self._temperature = temperature
+        self._temperature = self._llm_config.temperature
 
     # ------------------------------------------------------------------
     # SupervisorBackend protocol
@@ -195,7 +217,17 @@ class GemmaSupervisorBackend:
         try:
             proposal = _parse_proposal(response.text)
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:
-            _logger.warning("gemma_supervisor_parse_error: %s", exc)
+            # Phase 7 diagnostic: record the raw response text so we can
+            # see what Gemma actually returned when the parser fails.
+            # Truncate to 500 chars to avoid flooding logs.
+            raw_preview = response.text[:500].replace("\n", "\\n")
+            _logger.warning(
+                "gemma_supervisor_parse_error: %s | response_mode=%s | finish_reason=%s | raw_preview=%r",
+                exc,
+                getattr(response, "response_mode", ""),
+                getattr(response, "finish_reason", ""),
+                raw_preview,
+            )
             return self._fallback.decide(context)
 
         action = proposal.get("action", "")
@@ -238,6 +270,10 @@ class GemmaSupervisorBackend:
             "hard_rules": list(self._hard_rules),
             "no_progress_counter": context.no_progress_counter,
             "unresolved_must_cover_ids": list(context.unresolved_must_cover_ids),
+            "behavior_template_search_hints": [
+                item.model_dump(mode="json")
+                for item in context.behavior_template_search_hints
+            ],
         }
 
         obl = context.active_obligation
@@ -423,7 +459,7 @@ class GemmaSupervisorBackend:
             obligation_id=obligation_id,
             goal=det._goal_for(action, context),
             repo_snapshot_id=self._repo_snapshot_id,
-            path_scope=tuple(context.top_candidate_symbol_ids),
+            path_scope=self._fallback._candidate_path_scope(context),
             top_k=int(arguments.get("top_k", 0)),
             depth=int(arguments.get("depth", 0)),
             node_budget=int(arguments.get("node_budget", 0)),
@@ -466,6 +502,9 @@ _SYSTEM_PROMPT = (
     "- When no_progress_counter >= 3, prefer RECORD_GAP.\n"
     "- When the active issue indicates a specific gap, pick the action that "
     "addresses that gap.\n\n"
+    "Brevity is mandatory: rationale and goal must each be at most 25 words; "
+    "expected_information_gain must be at most 18 words. Do not restate the "
+    "context, list candidates, or explain code details.\n\n"
     "Return ONLY a JSON object with this schema:\n"
     '{\n'
     '  "action": "<one of allowed_actions>",\n'
@@ -481,18 +520,22 @@ _RESPONSE_SCHEMA: dict[str, Any] = {
     "properties": {
         "action": {
             "type": "string",
+            "enum": list(_LLM_ALLOWED_ACTIONS),
             "description": "One of the allowed_actions from the context.",
         },
         "rationale": {
             "type": "string",
+            "maxLength": 240,
             "description": "Brief reason for choosing this action.",
         },
         "goal": {
             "type": "string",
+            "maxLength": 240,
             "description": "What this action should achieve.",
         },
         "expected_information_gain": {
             "type": "string",
+            "maxLength": 180,
             "description": "What new information this action should produce.",
         },
     },

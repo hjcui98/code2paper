@@ -614,6 +614,10 @@ def check_r8_acceptance(
     generation_call_traces: Iterable[Any] | None = None,
     intent_target_proposal_report: Mapping[str, Any] | None = None,
     v3_error: str = "",
+    completion_report: Any | None = None,
+    readiness_report: Any | None = None,
+    validation_manifest: Any | None = None,
+    method_clean_path: str = "",
 ) -> R8AcceptanceReport:
     """Check all R8 acceptance criteria for a single project run.
 
@@ -717,7 +721,7 @@ def check_r8_acceptance(
 
     # 2. code_mainline_in_method
     mainline_ok, mainline_reason = _check_code_mainline_in_method(
-        coverage_report, claim_set, validation_report
+        coverage_report, claim_set, validation_report, method_text
     )
     criteria["code_mainline_in_method"] = R8AcceptanceCriterion(
         criterion_id="code_mainline_in_method",
@@ -887,6 +891,139 @@ def check_r8_acceptance(
         if intent_ok else (),
     )
 
+    # 12. completion_complete — the run's completion report must indicate
+    # that all required deliverables are present and complete.
+    if completion_report is not None:
+        if hasattr(completion_report, "model_dump"):
+            completion_dict = completion_report.model_dump(mode="json")
+        elif isinstance(completion_report, dict):
+            completion_dict = completion_report
+        else:
+            completion_dict = {}
+        complete = bool(completion_dict.get("complete", False))
+        completion_status = str(completion_dict.get("status", "unknown"))
+        completion_blocked = str(completion_dict.get("blocked_reason", ""))
+        missing = list(completion_dict.get("missing_deliverables", []) or [])
+        if complete:
+            completion_reason = "completion_report.complete=true"
+        elif completion_blocked:
+            completion_reason = (
+                f"completion_report.complete=false blocked={completion_blocked}"
+            )
+        else:
+            completion_reason = (
+                f"completion_report.complete=false status={completion_status}"
+                + (f" missing={missing}" if missing else "")
+            )
+    else:
+        complete = False
+        completion_reason = "completion_report not found"
+    criteria["completion_complete"] = R8AcceptanceCriterion(
+        criterion_id="completion_complete",
+        description="Agentic run completion report marks all deliverables complete.",
+        status="passed" if complete else "failed",
+        reason=completion_reason,
+    )
+
+    # 13. readiness_passed — the run's readiness report must indicate all
+    # blocking checks passed.
+    if readiness_report is not None:
+        if hasattr(readiness_report, "model_dump"):
+            readiness_dict = readiness_report.model_dump(mode="json")
+        elif isinstance(readiness_report, dict):
+            readiness_dict = readiness_report
+        else:
+            readiness_dict = {}
+        readiness_passed = bool(readiness_dict.get("passed", False))
+        blocking_failures = int(readiness_dict.get("blocking_failures", 0))
+        if readiness_passed:
+            readiness_reason = "readiness_report.passed=true"
+        else:
+            readiness_reason = (
+                f"readiness_report.passed=false blocking_failures={blocking_failures}"
+            )
+    else:
+        readiness_passed = False
+        readiness_reason = "readiness_report not found"
+    criteria["readiness_passed"] = R8AcceptanceCriterion(
+        criterion_id="readiness_passed",
+        description="Agentic run readiness report has passed=true.",
+        status="passed" if readiness_passed else "failed",
+        reason=readiness_reason,
+    )
+
+    # 14. validation_manifest_passed — the validation manifest must exist
+    # and have status=passed.
+    if validation_manifest is not None:
+        if hasattr(validation_manifest, "model_dump"):
+            vm_dict = validation_manifest.model_dump(mode="json")
+        elif isinstance(validation_manifest, dict):
+            vm_dict = validation_manifest
+        else:
+            vm_dict = {}
+        vm_status = str(vm_dict.get("status") or "")
+        vm_passed = vm_status == "passed"
+        vm_reason = (
+            f"validation_manifest status={vm_status}"
+            if vm_passed
+            else f"validation_manifest status={vm_status} (expected 'passed')"
+        )
+    else:
+        vm_passed = False
+        vm_reason = "validation_manifest not found or failed"
+    criteria["validation_manifest_passed"] = R8AcceptanceCriterion(
+        criterion_id="validation_manifest_passed",
+        description="Validation manifest exists and has status=passed.",
+        status="passed" if vm_passed else "failed",
+        reason=vm_reason,
+    )
+
+    # 15. method_clean_exists — the final Method (method_clean.md) must
+    # exist as a file.
+    method_clean_exists = bool(method_clean_path) and Path(method_clean_path).is_file()
+    criteria["method_clean_exists"] = R8AcceptanceCriterion(
+        criterion_id="method_clean_exists",
+        description="Final method_clean.md exists on disk.",
+        status="passed" if method_clean_exists else "failed",
+        reason=(
+            f"method_clean.md found at {method_clean_path}"
+            if method_clean_exists
+            else "method_clean.md is missing"
+        ),
+    )
+
+    # 16. method_has_supported_mainline — the number of supported/partial
+    # must_cover mainline claims that entered the Method must be > 0.
+    # This is a semantic duplicate of code_mainline_in_method but is
+    # expressed as a separate criterion so the acceptance report can
+    # distinguish between "gap-only" and "no claims at all" failures.
+    methods_with_mainline = int(
+        sum(1 for item in (coverage_report.items if coverage_report else []))
+        if hasattr(coverage_report, "items") else 0
+    )
+    mainline_count = int(
+        sum(
+            1 for item in (coverage_report.items if coverage_report else [])
+            if hasattr(item, "obligation_priority")
+            and hasattr(item, "coverage_status")
+            and item.obligation_priority == "must_cover"
+            and item.coverage_status in {"supported", "partial"}
+        )
+    )
+    if mainline_count > 0:
+        mainline_reason = f"supported_or_partial_must_cover_count={mainline_count}"
+    else:
+        mainline_reason = (
+            f"supported_or_partial_must_cover_count=0; "
+            f"no must_cover obligation has a supported/partial mainline"
+        )
+    criteria["method_has_supported_mainline"] = R8AcceptanceCriterion(
+        criterion_id="method_has_supported_mainline",
+        description="At least one must_cover obligation has a supported/partial mainline.",
+        status="passed" if mainline_count > 0 else "failed",
+        reason=mainline_reason,
+    )
+
     # Protocol settings check
     protocol_ok, protocol_failures = _check_protocol_settings(
         settings,
@@ -925,6 +1062,7 @@ def _check_code_mainline_in_method(
     coverage_report: ObligationCoverageReportV2 | None,
     claim_set: AtomicClaimSetV3 | None,
     validation_report: TextEvidenceValidationReport | None,
+    method_text: str = "",
 ) -> tuple[bool, str]:
     """Check that at least one supported must_cover claim entered the Method.
 
@@ -934,10 +1072,35 @@ def _check_code_mainline_in_method(
     another typed target is an explicit boundary/gap; requiring the aggregate
     obligation itself to be fully ``supported`` incorrectly rejects an
     evidence-backed mainline that is already present in the Method.
+
+    The Method must also contain at least one factual unit: the text must
+    be non-empty and contain more than a bare title (e.g. ``# Method`` alone
+    is not acceptable).  All must_cover obligations being ``explicit_gap``
+    is NOT a valid pass; at least one must_cover obligation must be covered
+    by a supported/partial claim that enters the Method.
     """
 
     if coverage_report is None or claim_set is None or validation_report is None:
         return False, "missing coverage_report / claim_set / validation_report"
+
+    # --- Method factual unit check ---
+    # A Method that is empty or contains only a title (e.g. "# Method") has
+    # no factual units and cannot satisfy code_mainline_in_method regardless
+    # of any other artifacts.
+    stripped = method_text.strip()
+    if not stripped:
+        return False, "method_text is empty; no factual units"
+    # Remove markdown heading lines (lines starting with #) and check if
+    # any content remains after stripping.
+    non_heading_lines = [
+        line for line in stripped.splitlines()
+        if not line.strip().startswith("#")
+    ]
+    if not non_heading_lines or all(
+        not ln.strip() for ln in non_heading_lines
+    ):
+        return False, "method_text contains only heading(s); no factual units"
+
     supported_must_cover_ids = {
         item.obligation_id
         for item in coverage_report.items
@@ -951,28 +1114,18 @@ def _check_code_mainline_in_method(
     }
     if not terminal_must_cover_ids:
         return False, "no must_cover obligation reached a terminal coverage status"
+
     supported_claims_for_must_cover = [
         claim for claim in claim_set.claims
         if claim.status == "supported"
         and any(obl_id in terminal_must_cover_ids for obl_id in claim.covers_obligation_ids)
     ]
     if not supported_claims_for_must_cover:
-        # When every must_cover obligation is an explicit_gap, there is no
-        # code mainline to document; the Method text legitimately consists
-        # of gap documentation only.  This is the expected outcome when the
-        # research loop exhausted its search without finding executable
-        # evidence for any must_cover obligation.
-        all_explicit_gap = all(
-            item.coverage_status == "explicit_gap"
-            for item in coverage_report.items
-            if item.obligation_priority == "must_cover"
+        return False, (
+            f"no supported claim covers a must_cover obligation "
+            f"(terminal_must_cover_count={len(terminal_must_cover_ids)})"
         )
-        if all_explicit_gap and terminal_must_cover_ids:
-            return True, (
-                f"all must_cover obligations are explicit_gap "
-                f"(count={len(terminal_must_cover_ids)}); no code mainline to document"
-            )
-        return False, "no supported claim covers a must_cover obligation"
+
     validated_projection_ids = {
         projection_claim_id
         for verdict in validation_report.verdicts
@@ -1706,6 +1859,58 @@ def check_r8_acceptance_from_run_dir(
     # fails so the run cannot be accepted.
     v3_error: str = str(summary_data.get("v3_error", "") or "")
 
+    # --- Completion report ---
+    completion_report: Any = None
+    completion_path = _resolve_artifact(
+        "agentic_run_completion_report",
+        "artifacts/10_run/agentic_run_completion_report.json",
+    ) or _resolve_artifact(
+        "agentic_run_completion_report",
+        "agentic_run_completion_report.json",
+    )
+    if completion_path is not None:
+        try:
+            from code2paper.agentic.completion_report import load_run_completion_report
+            completion_report = load_run_completion_report(completion_path)
+        except Exception:
+            completion_report = None
+
+    # --- Readiness report ---
+    readiness_report: Any = None
+    readiness_path = _resolve_artifact(
+        "agentic_run_readiness_report",
+        "artifacts/10_run/agentic_run_readiness_report.json",
+    ) or _resolve_artifact(
+        "agentic_run_readiness_report",
+        "agentic_run_readiness_report.json",
+    )
+    if readiness_path is not None:
+        try:
+            from code2paper.agentic.readiness_report import load_run_readiness_report
+            readiness_report = load_run_readiness_report(readiness_path)
+        except Exception:
+            readiness_report = None
+
+    # --- Validation manifest ---
+    validation_manifest: Any = None
+    vm_path = _resolve_artifact(
+        "validation_manifest",
+        "validation_manifest.json",
+    )
+    if vm_path is not None:
+        try:
+            validation_manifest = json.loads(vm_path.read_text(encoding="utf-8"))
+        except Exception:
+            validation_manifest = None
+
+    # --- method_clean.md path ---
+    method_clean_path = ""
+    for key in ("text_clean_md", "text_md"):
+        mp = _resolve_artifact(key)
+        if mp is not None:
+            method_clean_path = str(mp)
+            break
+
     return check_r8_acceptance(
         run_id=effective_run_id,
         project_id=project_id,
@@ -1726,6 +1931,10 @@ def check_r8_acceptance_from_run_dir(
         generation_call_traces=generation_call_traces,
         intent_target_proposal_report=intent_target_proposal_report,
         v3_error=v3_error,
+        completion_report=completion_report,
+        readiness_report=readiness_report,
+        validation_manifest=validation_manifest,
+        method_clean_path=method_clean_path,
     )
 
 

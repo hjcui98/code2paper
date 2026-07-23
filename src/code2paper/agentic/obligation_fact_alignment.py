@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -41,6 +42,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     CodeFactV1,
     ExplicitCodeGapV1,
 )
+from code2paper.agentic.behavior_graph import BehaviorRelationV1
 from code2paper.agentic.generic_fact_compiler import BEHAVIOR_PREDICATE_TO_FACT
 from code2paper.agentic.intent_compiler_v2 import (
     IntentObligationGraphV2,
@@ -79,6 +81,42 @@ FACT_PREDICATE_TO_BEHAVIOR_FULL: dict[str, str] = {
     **FACT_PREDICATE_TO_BEHAVIOR,
     **EXTRA_FACT_PREDICATE_ALIASES,
 }
+
+
+#: Predicate aliases: when a target desires the key predicate, facts
+#: mapping to any of the listed equivalent predicates also satisfy it.
+#: This bridges the gap between the intent-graph predicate vocabulary
+#: (which includes abstract predicates like AGGREGATE / CONSTRUCT) and
+#: the ``PythonBehaviorAdapter`` output (which emits concrete predicates
+#: like CONCAT / STACK / CALL).  Without these aliases, obligations
+#: desiring AGGREGATE or CONSTRUCT can never be resolved because the
+#: adapter never emits those predicates directly.
+BEHAVIOR_PREDICATE_ALIASES: dict[str, frozenset[str]] = {
+    # AGGREGATE = collect/combine multiple items into a group; in Python
+    # code this is implemented via concatenation, stacking, or reduction.
+    "AGGREGATE": frozenset({"CONCAT", "STACK", "REDUCE"}),
+    # CONSTRUCT = create a new object/instance; in Python code this is a
+    # constructor call (tagged as CALL by the adapter) or a load.
+    "CONSTRUCT": frozenset({"CALL", "LOAD"}),
+}
+
+
+def _expand_desired_with_aliases(desired: set[str]) -> set[str]:
+    """Expand a desired-predicate set with alias-equivalent predicates."""
+    expanded = set(desired)
+    for pred in desired:
+        expanded.update(BEHAVIOR_PREDICATE_ALIASES.get(pred, frozenset()))
+    return expanded
+
+
+def _alias_satisfied(desired_pred: str, matched: set[str]) -> bool:
+    """Check whether ``desired_pred`` is satisfied directly or via alias."""
+    if desired_pred in matched:
+        return True
+    aliases = BEHAVIOR_PREDICATE_ALIASES.get(desired_pred)
+    if aliases is None:
+        return False
+    return bool(aliases & matched)
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +211,12 @@ class TargetAlignmentV1(BaseModel):
     matched_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     matched_predicates: tuple[str, ...] = Field(default_factory=tuple)
     unmatched_predicates: tuple[str, ...] = Field(default_factory=tuple)
+    required_relations: tuple[str, ...] = Field(default_factory=tuple)
+    matched_relations: tuple[str, ...] = Field(default_factory=tuple)
+    unmatched_relations: tuple[str, ...] = Field(default_factory=tuple)
+    required_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
+    matched_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
+    unmatched_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
     scope_blocked_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     status: str = "unresolved"  # resolved | partial | unresolved | scope_blocked
 
@@ -251,6 +295,8 @@ def align_target_to_facts(
     facts: list[CodeFactV1],
     *,
     only_supported: bool = True,
+    behavior_relations: list[BehaviorRelationV1] | None = None,
+    semantic_context: tuple[str, ...] = (),
 ) -> TargetAlignmentV1:
     """Align a single typed target against a fact list.
 
@@ -271,6 +317,7 @@ def align_target_to_facts(
 
     target_scope = _target_scope(target)
     desired = set(target.desired_predicates)
+    desired_expanded = _expand_desired_with_aliases(desired)
     matched_fact_ids: list[str] = []
     matched_predicates: set[str] = set()
     scope_blocked_fact_ids: list[str] = []
@@ -279,7 +326,7 @@ def align_target_to_facts(
         if only_supported and fact.validation_status != "supported":
             continue
         behavior_pred = FACT_PREDICATE_TO_BEHAVIOR_FULL.get(fact.predicate)
-        if behavior_pred is None or behavior_pred not in desired:
+        if behavior_pred is None or behavior_pred not in desired_expanded:
             continue
         fact_scope = _fact_scope(list(fact.conditions))
         if not _scope_compatible(target_scope, fact_scope):
@@ -292,11 +339,72 @@ def align_target_to_facts(
         matched_fact_ids.append(fact.fact_id)
         matched_predicates.add(behavior_pred)
 
-    unmatched = sorted(desired - matched_predicates)
+    # Compute unmatched against the ORIGINAL desired set, considering
+    # aliases: AGGREGATE is satisfied if CONCAT/STACK/REDUCE was matched,
+    # CONSTRUCT is satisfied if CALL/LOAD was matched.
+    unmatched_set = {
+        pred
+        for pred in desired
+        if not _alias_satisfied(pred, matched_predicates)
+    }
+    unmatched = sorted(unmatched_set)
+    required_relations = set(target.required_relations)
+    available_relations = {
+        relation.kind
+        for relation in (behavior_relations or [])
+        if relation.relation_id in {
+            relation_id
+            for fact in facts
+            if fact.fact_id in matched_fact_ids
+            for relation_id in fact.relation_evidence_ids
+        }
+    }
+    # A final coverage replay has facts, not the live behavior graph.  The
+    # generic compiler persists verified relation kinds on each fact so a
+    # relation requirement cannot disappear at checkpoint/resume time.
+    available_relations.update(
+        relation_kind
+        for fact in facts
+        if fact.fact_id in matched_fact_ids
+        for relation_kind in fact.relation_kinds
+    )
+    # Relation-derived facts retain the CONFIGURED_BY kind even when the
+    # live behavior graph is unavailable to a downstream coverage report.
+    if any(
+        fact.fact_id in matched_fact_ids and fact.predicate == "configured_by"
+        for fact in facts
+    ):
+        available_relations.add("CONFIGURED_BY")
+    unmatched_relations = sorted(required_relations - available_relations)
+
+    semantic_requirements = _target_semantic_requirements(target)
+    fact_terms: set[str] = set()
+    for fact in facts:
+        if fact.fact_id not in matched_fact_ids:
+            continue
+        fact_terms.update(_semantic_terms(fact.object))
+        fact_terms.update(_semantic_terms(fact.conditions))
+        fact_terms.update(_semantic_terms(fact.subject))
+        fact_terms.update(_semantic_terms(fact.scope))
+        fact_terms.update(_semantic_terms(fact.semantic_context))
+    fact_terms.update(_semantic_terms(semantic_context))
+    matched_semantic_fields = sorted(
+        field
+        for field, required_terms in semantic_requirements.items()
+        if required_terms <= fact_terms
+    )
+    unmatched_semantic_fields = sorted(
+        set(semantic_requirements) - set(matched_semantic_fields)
+    )
     matched_sorted = sorted(matched_predicates)
-    if matched_predicates and not unmatched:
+    if (
+        matched_predicates
+        and not unmatched
+        and not unmatched_relations
+        and not unmatched_semantic_fields
+    ):
         status = "resolved"
-    elif matched_predicates:
+    elif matched_predicates or available_relations:
         status = "partial"
     elif scope_blocked_fact_ids:
         status = "scope_blocked"
@@ -310,9 +418,82 @@ def align_target_to_facts(
         matched_fact_ids=tuple(matched_fact_ids),
         matched_predicates=tuple(matched_sorted),
         unmatched_predicates=tuple(unmatched),
+        required_relations=tuple(sorted(required_relations)),
+        matched_relations=tuple(sorted(required_relations & available_relations)),
+        unmatched_relations=tuple(unmatched_relations),
+        required_semantic_fields=tuple(sorted(semantic_requirements)),
+        matched_semantic_fields=tuple(matched_semantic_fields),
+        unmatched_semantic_fields=tuple(unmatched_semantic_fields),
         scope_blocked_fact_ids=tuple(scope_blocked_fact_ids),
         status=status,
     )
+
+
+_GENERIC_ROLES = frozenset({
+    "any", "control", "feature", "filter", "generation", "inference",
+    "io", "predictor", "ranking", "task_head", "temporal", "training",
+    "verification",
+})
+_SEMANTIC_STOP_WORDS = frozenset({
+    "and", "before", "from", "into", "model", "result", "step", "the",
+    "then", "this", "using", "with",
+})
+_SEMANTIC_FIELDS = (
+    "inputs", "transformations", "decisions", "outputs",
+)
+
+
+def _target_semantic_requirements(
+    target: TypedBehaviorTargetV1,
+) -> dict[str, set[str]]:
+    requirements: dict[str, set[str]] = {}
+    role = target.role.strip().lower()
+    if role and role not in _GENERIC_ROLES:
+        role_terms = _semantic_terms(role)
+        if role_terms:
+            requirements["role"] = role_terms
+    for field in _SEMANTIC_FIELDS:
+        terms = _semantic_terms(getattr(target, field))
+        if terms:
+            requirements[field] = terms
+    # Non-scope conditions (e.g. synchronous mode or rejection branch) are
+    # semantic requirements; training/inference are handled by scope rules.
+    condition_values = tuple(
+        value for value in target.conditions
+        if value not in {"training", "inference", "any"}
+    )
+    condition_terms = _semantic_terms(condition_values)
+    if condition_terms:
+        requirements["conditions"] = condition_terms
+    return requirements
+
+
+def _semantic_terms(value: Any) -> set[str]:
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", str(value))
+    raw = re.findall(r"[A-Za-z][A-Za-z0-9]+", text.replace("_", " ").lower())
+    return {
+        normalized
+        for token in raw
+        if len(token) >= 3 and token not in _SEMANTIC_STOP_WORDS
+        if (normalized := _normalize_semantic_token(token))
+    }
+
+
+def _normalize_semantic_token(token: str) -> str:
+    aliases = {
+        "generation": "generate", "generated": "generate", "generates": "generate",
+        "verification": "verify", "verifier": "verify", "verified": "verify",
+        "candidate": "draft", "reference": "target",
+    }
+    if token in aliases:
+        return aliases[token]
+    if token.endswith("ing") and len(token) > 6:
+        return token[:-3]
+    if token.endswith("ed") and len(token) > 5:
+        return token[:-2]
+    if token.endswith("s") and len(token) > 4:
+        return token[:-1]
+    return token
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +569,12 @@ def align_obligation(
         if bound_obligation_ids is not None:
             if obligation.obligation_id in bound_obligation_ids:
                 matched_gap_ids.append(gap.gap_id)
+            continue
+        # Profile/compiler gaps sourced from semantic hints are global caveat
+        # candidates, not proof that every predicate-compatible obligation is
+        # absent.  They require an explicit binding from the research loop.
+        # Only author-obligation gaps may use the conservative typed fallback.
+        if gap.source_kind != "author_obligation":
             continue
         # Fallback: predicate-based matching using the V2 concept registry.
         if _gap_matches_obligation(gap, obligation):
@@ -606,6 +793,63 @@ def build_obligation_coverage_v2(
     )
 
 
+def bind_claims_to_obligations(
+    graph: IntentObligationGraphV2,
+    *,
+    fact_set: CodeFactSetV1,
+    claim_set: AtomicClaimSetV3,
+) -> AtomicClaimSetV3:
+    """Bind authorized claims to typed obligations through their fact IDs.
+
+    Profile compilers intentionally know only executable structure, not author
+    wording. This bridge therefore derives ``covers_obligation_ids`` from the
+    same typed target-to-fact alignment used by the coverage gate. A claim is
+    bound only when at least one of its supporting facts occurs in an
+    obligation's resolved/partial target alignment.  The remaining claim facts
+    stay independently authorized by the fact/claim compiler; this allows a
+    claim to include closely coupled implementation detail (for example a load
+    paired with construction) that the author target did not enumerate.
+    """
+
+    fact_ids_by_obligation: dict[str, set[str]] = {}
+    for obligation in graph.obligations:
+        matched: set[str] = set()
+        for target in obligation.typed_behavior_targets:
+            alignment = align_target_to_facts(target, fact_set.facts)
+            matched.update(alignment.matched_fact_ids)
+        fact_ids_by_obligation[obligation.obligation_id] = matched
+
+    rebound: list[AtomicClaimV3] = []
+    for claim in claim_set.claims:
+        claim_facts = set(claim.fact_ids)
+        derived = [
+            obligation.obligation_id
+            for obligation in graph.obligations
+            if claim_facts.intersection(
+                fact_ids_by_obligation.get(obligation.obligation_id, set())
+            )
+        ]
+        covers = list(dict.fromkeys([*claim.covers_obligation_ids, *derived]))
+        rebound.append(claim.model_copy(update={"covers_obligation_ids": covers}))
+
+    payload = {
+        "claims": [claim.model_dump(mode="json") for claim in rebound],
+        "explicit_code_gaps": [
+            gap.model_dump(mode="json") for gap in claim_set.explicit_code_gaps
+        ],
+        "semantic_stage_groups": [
+            group.model_dump(mode="json")
+            for group in claim_set.semantic_stage_groups
+        ],
+    }
+    return claim_set.model_copy(
+        update={
+            "claims": rebound,
+            "content_digest": _digest_payload(payload),
+        }
+    )
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -625,5 +869,6 @@ __all__ = [
     "TargetAlignmentV1",
     "align_obligation",
     "align_target_to_facts",
+    "bind_claims_to_obligations",
     "build_obligation_coverage_v2",
 ]

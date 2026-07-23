@@ -7,7 +7,8 @@ from unittest.mock import patch
 from code2paper.agents.code_analyzer import CodeAnalyzerAgent
 from code2paper.agents.code_intake import CodeIntakeAgent
 from code2paper.agents.langgraph_utils import AgentResponse, LangGraphAgent
-from code2paper.agents.state.poster_state import create_state
+from code2paper.agents.state.poster_state import ModelConfig, create_state
+from code2paper.llm.client import LLMResponse
 
 
 class AgentJsonRetryTests(unittest.TestCase):
@@ -104,6 +105,22 @@ class AgentJsonRetryTests(unittest.TestCase):
         self.assertEqual(result["modules"][0]["name"], "Encoder")
         self.assertEqual(input_tokens, 11)
         self.assertEqual(output_tokens, 13)
+
+    def test_embedded_agents_emit_their_own_audited_sampling_roles(self) -> None:
+        seen = []
+
+        def fake_complete(client, _request):  # noqa: ANN001
+            seen.append(client.config)
+            return LLMResponse(text="{}", response_hash="sha256:test")
+
+        config = ModelConfig(model_name="gemma4-31b-nvfp4", provider="openai")
+        with patch("code2paper.agents.langgraph_utils.LLMClient.complete", new=fake_complete):
+            LangGraphAgent("sys", config, agent_name="code_intake").step("message")
+            LangGraphAgent("sys", config, agent_name="code_analyzer").step("message")
+
+        self.assertEqual([item.role for item in seen], ["code_intake", "code_analyzer"])
+        self.assertEqual([item.max_output_tokens for item in seen], [2048, 4096])
+        self.assertEqual([item.temperature for item in seen], [0.20, 0.20])
 
 
 if __name__ == "__main__":

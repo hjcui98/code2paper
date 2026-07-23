@@ -1074,6 +1074,15 @@ class LLMConfig(StrictModel):
     prompt_template_version: str = ""
     require_api_for_writing: bool = True
     cache: bool = True
+    # Per-role / per-node sampling controls (Phase 1 R8 config basis).
+    # ``role`` binds this config to a named role in
+    # ``code2paper.llm.role_config.ROLE_GENERATION_CONFIGS``; when set,
+    # ``apply_role_config`` can fill in role-specific defaults.
+    role: str = ""
+    top_p: float | None = Field(default=None, ge=0.0, le=1.0)
+    top_k: int | None = Field(default=None, ge=0)
+    seed: int | None = Field(default=None, ge=0)
+    max_input_tokens: int | None = Field(default=None, ge=1)
 
 
 class LLMCallLog(StrictModel):
@@ -1096,6 +1105,12 @@ class LLMCallLog(StrictModel):
     parse_error: str = ""
     repair_attempts: int = 0
     created_at: str = ""
+    # Effective sampling config trace (Phase 1 R8 protocol evidence).
+    role: str = ""
+    top_p: float | None = None
+    top_k: int | None = None
+    seed: int | None = None
+    max_input_tokens: int | None = None
 
     @field_validator("call_id")
     @classmethod

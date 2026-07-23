@@ -11,6 +11,7 @@ from code2paper.fusion.markers import (
     save_generated_author_markers,
 )
 from code2paper.llm.client import LLMClient, LLMRequest
+from code2paper.llm.role_config import AUTHORING_PLANNER, apply_role_config
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
 
 
@@ -85,7 +86,7 @@ def _resolve_author_markers_via_llm(
         return None
     if config is None or config.provider == LLMProvider.NONE:
         return None
-    client = LLMClient(config)
+    client = LLMClient(apply_role_config(config, AUTHORING_PLANNER))
     request = LLMRequest(
         prompt_template_id="input_resolution_author_markers_v1",
         prompt=_author_markers_resolution_prompt(),

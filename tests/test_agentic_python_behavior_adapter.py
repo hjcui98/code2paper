@@ -125,6 +125,20 @@ def test_extract_operations_assign_emits_write_node() -> None:
     assert writes[0].result == "x"
 
 
+def test_extract_operations_preserves_global_file_line_numbers() -> None:
+    source = "import os\n\n\ndef f():\n    return compute_value()\n"
+    index = _index_files({"train.py": source})
+    sym = _first_symbol(index, "f")
+    nodes, relations = _extract(sym, source)
+
+    call = next(node for node in nodes if node.predicate == "CALL")
+    assert call.source_span_id == "span:train.py:5:5"
+    assert all(
+        relation.source_span_id.startswith("span:train.py:")
+        for relation in relations
+    )
+
+
 def test_extract_operations_attribute_write() -> None:
     source = textwrap.dedent(
         """\

@@ -47,6 +47,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     CodeFactSetV1,
     CodeFactV1,
     ExplicitCodeGapV1,
+    SemanticStageGroupV1,
 )
 
 
@@ -327,11 +328,50 @@ def compile_atomic_claims(
         if claim is not None:
             authorized_claims.append(claim)
 
+    claims_by_obligation: dict[str, list[AtomicClaimV3]] = {}
+    unscoped: list[AtomicClaimV3] = []
+    for claim in authorized_claims:
+        if claim.covers_obligation_ids:
+            for obligation_id in claim.covers_obligation_ids:
+                claims_by_obligation.setdefault(obligation_id, []).append(claim)
+        else:
+            unscoped.append(claim)
+    if unscoped:
+        claims_by_obligation["implementation"] = unscoped
+    stage_groups: list[SemanticStageGroupV1] = []
+    for index, (obligation_id, grouped_claims) in enumerate(
+        claims_by_obligation.items(), start=1
+    ):
+        ordered_ids = list(dict.fromkeys(claim.claim_id for claim in grouped_claims))
+        stage_groups.append(
+            SemanticStageGroupV1(
+                stage_id=(
+                    f"SG-{index:02d}-"
+                    + hashlib.sha256(obligation_id.encode("utf-8")).hexdigest()[:8]
+                ),
+                name=f"Implementation stage {index}",
+                purpose=" ".join(claim.canonical_text for claim in grouped_claims),
+                ordered_claim_ids=ordered_ids,
+                covers_obligation_ids=(
+                    [] if obligation_id == "implementation" else [obligation_id]
+                ),
+                relation_evidence_ids=list(dict.fromkeys(
+                    relation
+                    for claim in grouped_claims
+                    for relation in claim.relation_evidence_ids
+                )),
+                organization_priority=index,
+            )
+        )
+
     payload = {
         "claims": [c.model_dump(mode="json") for c in authorized_claims],
         "explicit_code_gaps": [
             g.model_dump(mode="json")
             for g in (explicit_code_gaps or [])
+        ],
+        "semantic_stage_groups": [
+            group.model_dump(mode="json") for group in stage_groups
         ],
     }
     claim_set = AtomicClaimSetV3(
@@ -341,6 +381,7 @@ def compile_atomic_claims(
         code_fact_digest=facts.content_digest,
         claims=authorized_claims,
         explicit_code_gaps=explicit_code_gaps or [],
+        semantic_stage_groups=stage_groups,
         content_digest=_digest(payload),
     )
     return claim_set, reports

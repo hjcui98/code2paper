@@ -46,6 +46,7 @@ from code2paper.agentic.behavior_templates import (
     match_template,
     select_composable_templates,
 )
+from code2paper.agentic.research_nodes import _behavior_template_search_hints
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +132,28 @@ def test_four_required_templates_are_registered() -> None:
         "temporal_multichannel_sequence_readout",
         "sparse_bipartite_propagation_ppr",
     }
+
+
+def test_partial_template_match_becomes_non_authorizing_supervisor_hint(monkeypatch) -> None:
+    graph = _graph([_node("sym:fixture:score", "COMPUTE")])
+    monkeypatch.setenv("CODE2PAPER_AGENTIC_BEHAVIOR_TEMPLATES", "1")
+    hints = _behavior_template_search_hints(graph)
+    target = next(
+        item for item in hints
+        if item.template_id == "feature_predict_score_rank_filter"
+    )
+    assert not target.matched
+    assert target.match_score > 0
+    assert set(target.missing_predicates) == {"SORT", "TOPK", "FILTER"}
+    assert target.predicate_order_hint == ("COMPUTE", "SORT", "TOPK", "FILTER")
+
+
+def test_template_search_hints_can_be_disabled_without_affecting_graph(monkeypatch) -> None:
+    graph = _graph([_node("sym:fixture:score", "COMPUTE")])
+    original_digest = graph.content_digest
+    monkeypatch.setenv("CODE2PAPER_AGENTIC_BEHAVIOR_TEMPLATES", "0")
+    assert _behavior_template_search_hints(graph) == ()
+    assert graph.content_digest == original_digest
 
 
 def test_registry_default_templates_match_default_constant() -> None:

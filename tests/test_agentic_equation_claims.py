@@ -40,9 +40,16 @@ from code2paper.agentic.equation_claims import (
     compile_equation_claims,
 )
 from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
+    AtomicClaimV3,
     CodeFactSetV1,
     CodeFactV1,
+    EvidencePacketSetV3,
+    SemanticStageGroupV1,
 )
+from code2paper.agentic.authoring_projection import build_authoring_projection
+from code2paper.agentic.claim_verifier import ClaimVerificationReport
+from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence
 
 
 # ---------------------------------------------------------------------------
@@ -340,6 +347,64 @@ class TestProseLink:
         assert report.authorized
         assert equation is not None
         assert equation.prose_claim_id == "claim-1"
+
+
+class TestProductionProjection:
+    def _projection(self, equation_fact_ids: list[str]):
+        facts = _fact_set([_fact(fact_id="fact-1", predicate="computes_formula")])
+        equations, reports = compile_equation_claims(
+            [_proposal(prose_claim_id="claim-1", fact_ids=equation_fact_ids)],
+            facts,
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+        )
+        assert reports[0].authorized
+        claims = AtomicClaimSetV3(
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+            evidence_packet_digest=_EVIDENCE_PACKET_DIGEST,
+            code_fact_digest=facts.content_digest,
+            claims=[AtomicClaimV3(
+                claim_id="claim-1",
+                canonical_text="The implementation computes y from x.",
+                fact_ids=["fact-1"],
+                direct_evidence_ids=["span:module.py:1:10"],
+                allowed_wording_boundary="The implementation computes y from x.",
+                canonical_identity="sha256:claim-1",
+            )],
+            semantic_stage_groups=[SemanticStageGroupV1(
+                stage_id="stage-1",
+                name="Computation",
+                purpose="Describe the exact operation.",
+                ordered_claim_ids=["claim-1"],
+            )],
+            content_digest="sha256:claims",
+        )
+        packets = EvidencePacketSetV3(
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+            packets=[],
+            content_digest=_EVIDENCE_PACKET_DIGEST,
+        )
+        evidence = MethodEvidence(
+            project_id="fixture",
+            method_name="Fixture",
+            method_goal="Describe the computation.",
+            implementation_scope="fixture",
+        )
+        return build_authoring_projection(
+            method_evidence=evidence,
+            claim_map=ClaimEvidenceMap(),
+            verification=ClaimVerificationReport(),
+            atomic_claims_v3=claims,
+            evidence_packets_v3=packets,
+            equation_claims_v1=equations,
+        )
+
+    def test_authorized_equation_enters_writer_projection(self) -> None:
+        projection = self._projection(["fact-1"])
+        assert [item["equation_id"] for item in projection.safe_equations] == ["eq-1"]
+        assert "equation_claims_v1" in projection.source_digests
 
 
 # ---------------------------------------------------------------------------

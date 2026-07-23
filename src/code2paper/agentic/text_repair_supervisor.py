@@ -54,6 +54,11 @@ from code2paper.agentic.trust_contracts import (
 #: The repair hint is diagnostic only; it never authorizes an action
 #: outside ``allowed_repair_scope``.
 _FAILURE_TO_REPAIR: dict[str, tuple[TextRepairFailureType, TextRepairScope, str]] = {
+    "planned_claim_missing_from_final_text": (
+        "no_semantically_matching_projected_claim",
+        "claim_decomposition",
+        "Insert the authorized planned claim fragment into its planned section.",
+    ),
     # The sentence has no matching projected claim -> split or merge the
     # sentence so each atomic claim maps to exactly one projected claim.
     "no_semantically_matching_projected_claim": (

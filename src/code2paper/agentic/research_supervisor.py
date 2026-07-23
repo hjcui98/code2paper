@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -49,6 +50,40 @@ from code2paper.agentic.research_models import (
     ToolKind,
 )
 from code2paper.agentic.state_v3 import AgentStateV3
+from code2paper.agentic.typed_refs import (
+    is_symbol_ref,
+    split_symbol_ref,
+)
+
+
+_PREDICATE_SEARCH_QUERIES: dict[str, str] = {
+    "AGGREGATE": "aggregate pool combine",
+    "ATTEND": "attention query key value",
+    "BRANCH": "condition branch fallback",
+    "CALL": "call invoke forward",
+    "COMPUTE": "compute loss score formula",
+    "CONCAT": "concat concatenate",
+    "CONSTRUCT": "build construct initialize",
+    "FILTER": "filter prune retain",
+    "LOAD": "load checkpoint weights",
+    "LOOP": "loop iterate epoch",
+    "MASK": "mask threshold",
+    "NORMALIZE": "normalize norm",
+    "PROJECT": "project linear head",
+    "PROPAGATE": "propagate message passing",
+    "READ": "read input data",
+    "REDUCE": "reduce mean sum loss",
+    "RESHAPE": "reshape view flatten",
+    "RETURN": "return forward output",
+    "SAMPLE": "sample sampling",
+    "SELECT": "select choose index",
+    "SERIALIZE": "serialize save artifact",
+    "SORT": "sort rank order",
+    "STACK": "stack sequence",
+    "TOPK": "topk top k",
+    "TRANSFORM": "transform encode convert",
+    "WRITE": "write save store",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +112,20 @@ class RecentObservationSummaryV1(BaseModel):
     ambiguous: bool = False
     candidate_count: int = 0
     obligation_id: str = ""
+
+
+class BehaviorTemplateSearchHintV1(BaseModel):
+    """Non-authorizing structural hint for supervisor tool selection."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    template_id: str
+    matched: bool = False
+    match_score: float = 0.0
+    missing_predicates: tuple[str, ...] = Field(default_factory=tuple)
+    missing_relation_kinds: tuple[str, ...] = Field(default_factory=tuple)
+    resolved_role_symbols: dict[str, str] = Field(default_factory=dict)
+    predicate_order_hint: tuple[str, ...] = Field(default_factory=tuple)
 
 
 class ResearchDecisionContextV1(BaseModel):
@@ -112,6 +161,7 @@ class ResearchDecisionContextV1(BaseModel):
     ready_tools: tuple[str, ...] = Field(default_factory=tuple)
     hard_rules: tuple[str, ...] = Field(default_factory=tuple)
     unresolved_must_cover_ids: tuple[str, ...] = Field(default_factory=tuple)
+    behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = Field(default_factory=tuple)
 
     @field_validator("run_id", "repo_snapshot_id")
     @classmethod
@@ -354,17 +404,41 @@ class DeterministicSupervisorBackend:
 
         if not obl.candidate_symbol_ids:
             return ("SEARCH_SYMBOLS", "RECORD_GAP")
-        if obl.missing_information and any(
-            "relation" in m or "call" in m for m in obl.missing_information
+        semantic_missing = [
+            value.casefold()
+            for value in obl.missing_information
+            if not value.startswith("candidate_path:")
+        ]
+        if semantic_missing and any(
+            value.startswith("typed_semantic:") for value in semantic_missing
         ):
-            return ("TRACE_CALLS", "RECORD_GAP")
-        if obl.missing_information and any(
-            "branch" in m or "condition" in m or "config" in m
-            for m in obl.missing_information
+            return ("SEARCH_SYMBOLS", "RECORD_GAP")
+        if semantic_missing and any(
+            value.startswith("typed_relation:data_")
+            or value.startswith("typed_relation:reads_")
+            or value.startswith("typed_relation:writes_")
+            for value in semantic_missing
+        ):
+            return ("TRACE_DATA_FLOW", "RECORD_GAP")
+        if semantic_missing and any(
+            value.startswith("typed_relation:configured_by")
+            or value.startswith("typed_relation:control_")
+            or value.startswith("typed_relation:true_branch")
+            or value.startswith("typed_relation:false_branch")
+            for value in semantic_missing
         ):
             return ("INSPECT_CONFIG", "RECORD_GAP")
-        if obl.missing_information and any(
-            "data" in m for m in obl.missing_information
+        if semantic_missing and any(
+            "relation" in value or "call" in value for value in semantic_missing
+        ):
+            return ("TRACE_CALLS", "RECORD_GAP")
+        if semantic_missing and any(
+            "branch" in value or "condition" in value or "config" in value
+            for value in semantic_missing
+        ):
+            return ("INSPECT_CONFIG", "RECORD_GAP")
+        if semantic_missing and any(
+            "data" in value for value in semantic_missing
         ):
             return ("TRACE_DATA_FLOW", "RECORD_GAP")
         # Candidates exist and no special missing-info shape: read the
@@ -474,7 +548,7 @@ class DeterministicSupervisorBackend:
             obligation_id=obligation_id,
             goal=self._goal_for(action, context),
             repo_snapshot_id=self._repo_snapshot_id,
-            path_scope=tuple(context.top_candidate_symbol_ids),
+            path_scope=self._candidate_path_scope(context),
             top_k=int(arguments.get("top_k", 0)),
             depth=int(arguments.get("depth", 0)),
             node_budget=int(arguments.get("node_budget", 0)),
@@ -482,19 +556,85 @@ class DeterministicSupervisorBackend:
         )
         return (call,)
 
+    @staticmethod
+    def _candidate_path_scope(context: ResearchDecisionContextV1) -> tuple[str, ...]:
+        """Project mixed candidate references onto valid repository paths.
+
+        ``candidate_symbol_ids`` contains both seed paths and typed symbol
+        references.  Passing those values through verbatim makes tools reject
+        ``symbol:<path>:<name>:<line>`` as a snapshot-external path.
+        """
+
+        paths: list[str] = []
+        for candidate in context.top_candidate_symbol_ids:
+            path = ""
+            parsed = split_symbol_ref(candidate) if is_symbol_ref(candidate) else None
+            if parsed is not None:
+                path = parsed[0]
+            elif candidate.startswith("candidate_path:"):
+                path = candidate.split(":", 1)[1]
+            elif ":" not in candidate:
+                path = candidate
+            if path and path not in paths:
+                paths.append(path)
+        return tuple(paths)
+
     # --- heuristics for argument construction ---------------------------
 
     def _search_query(self, context: ResearchDecisionContextV1) -> str:
         obl = context.active_obligation
         if obl is None:
             return ""
+        # A failed typed alignment is a precise request for a missing
+        # executable predicate.  It must override the original entrypoint
+        # seed, otherwise the supervisor repeatedly rediscovers ``main``.
+        for requirement in obl.missing_information:
+            if not requirement.startswith("typed_predicate:"):
+                continue
+            predicate = requirement.split(":", 1)[1].upper()
+            query = _PREDICATE_SEARCH_QUERIES.get(predicate)
+            if query:
+                return query
+        for requirement in obl.missing_information:
+            if requirement.startswith("typed_semantic:"):
+                _prefix, _field, terms = requirement.split(":", 2)
+                if terms.strip():
+                    return terms.strip()
+        # Entry-point obligations need the executable symbol (normally
+        # ``main``), not a broad domain term such as ``train`` that also
+        # matches unrelated configuration keys like ``trainer``.
+        entrypoint_text = " ".join(
+            [obl.author_text, *(target.role for target in obl.typed_behavior_targets)]
+        ).casefold()
+        if "entrypoint" in entrypoint_text or "::main" in entrypoint_text:
+            return "main"
         # Prefer typed behavior target search terms, then fall back to the
         # obligation id's trailing slug.
         for target in obl.typed_behavior_targets:
             if target.search_terms:
                 return target.search_terms[0]
-        # Use the last token of the obligation id (typically a slug).
-        return obl.obligation_id.rsplit("-", 1)[-1] or obl.obligation_id
+        # Author markers commonly carry an explicit ``path::symbol`` binding
+        # even when no typed behavior target was inferred.  It is strictly
+        # better than an obligation id whose final component is a content
+        # hash and can never match a repository symbol.
+        explicit_symbol = re.search(
+            r"(?:^|\s|:)(?:[^\s:]+\.(?:py|js|ts|java|go|rs))::([A-Za-z_][\w.]*)",
+            obl.author_text,
+        )
+        if explicit_symbol:
+            return explicit_symbol.group(1).rsplit(".", 1)[-1]
+        # Preserve the semantic retrieval request for the deterministic
+        # token-ranked symbol search. Candidate-path markers are scope hints,
+        # not queries, so exclude them here.
+        semantic_query = next(
+            (
+                value.strip()
+                for value in obl.missing_information
+                if value.strip() and not value.startswith("candidate_path:")
+            ),
+            "",
+        )
+        return semantic_query or obl.author_text.strip() or obl.obligation_id
 
     def _read_symbol_target(
         self, context: ResearchDecisionContextV1
@@ -503,9 +643,19 @@ class DeterministicSupervisorBackend:
         if obl is None:
             return None
         if obl.candidate_symbol_ids:
-            # Use the last path segment of the first candidate (typically
-            # ``module.py:Class.method`` -> ``Class.method``).
-            first = obl.candidate_symbol_ids[0]
+            first = next(
+                (value for value in reversed(obl.candidate_symbol_ids) if is_symbol_ref(value)),
+                obl.candidate_symbol_ids[0],
+            )
+            # Phase 3: candidate_symbol_ids may carry typed refs of the
+            # form ``symbol:<path>:<name>:<line>`` (produced by
+            # observation_ingest_node).  Parse them via typed_refs so
+            # the supervisor reads the *name*, not the line number.
+            if is_symbol_ref(first):
+                parsed = split_symbol_ref(first)
+                if parsed is not None:
+                    return parsed[1]
+            # Legacy fallback: ``<path>:<symbol>`` or bare ``<symbol>``.
             if ":" in first:
                 return first.rsplit(":", 1)[-1]
             return first
@@ -516,7 +666,16 @@ class DeterministicSupervisorBackend:
         if obl is None:
             return None
         if obl.candidate_symbol_ids:
-            first = obl.candidate_symbol_ids[0]
+            first = next(
+                (value for value in reversed(obl.candidate_symbol_ids) if is_symbol_ref(value)),
+                obl.candidate_symbol_ids[0],
+            )
+            # Phase 3: parse typed refs to extract the path component.
+            if is_symbol_ref(first):
+                parsed = split_symbol_ref(first)
+                if parsed is not None:
+                    return parsed[0]
+            # Legacy fallback: ``<path>:<symbol>`` -> ``<path>``.
             if ":" in first:
                 return first.split(":", 1)[0]
         return None
@@ -666,6 +825,7 @@ def build_decision_context(
     hard_rules: tuple[str, ...] = (),
     current_supported_claim_ids: tuple[str, ...] = (),
     unresolved_must_cover_ids: tuple[str, ...] | None = None,
+    behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = (),
 ) -> ResearchDecisionContextV1:
     """Assemble a ``ResearchDecisionContextV1`` from graph state.
 
@@ -755,6 +915,7 @@ def build_decision_context(
         ready_tools=tuple(ready_tools),
         hard_rules=tuple(hard_rules),
         unresolved_must_cover_ids=tuple(unresolved_ids or ()),
+        behavior_template_search_hints=behavior_template_search_hints,
     )
 
 
@@ -860,6 +1021,7 @@ def _stable_tool_call_id(
 
 
 __all__ = [
+    "BehaviorTemplateSearchHintV1",
     "DeterministicSupervisorBackend",
     "RecentObservationSummaryV1",
     "ResearchDecisionContextV1",

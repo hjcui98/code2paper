@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.client import ProviderTimeoutError
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
+from code2paper.llm.role_config import RESEARCH_SUPERVISOR, apply_role_config
 from code2paper.schemas import AuthorMarkers, LLMConfig, LLMProvider
 
 
@@ -342,7 +343,9 @@ def refine_markers_with_llm(
         response_json_schema=json_schema_for(DraftMarkersRefinementOutput),
     )
     try:
-        response = LLMClient(llm_config).complete(request)
+        response = LLMClient(
+            apply_role_config(llm_config, RESEARCH_SUPERVISOR)
+        ).complete(request)
     except ProviderTimeoutError:
         # Bootstrap marker refinement is a best-effort overlay step. If the
         # provider times out, preserve the stage1/2-refined canonical markers
@@ -1462,4 +1465,3 @@ _STOPWORDS = {
     "than",
     "when",
 }
-

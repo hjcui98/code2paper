@@ -46,6 +46,12 @@ from code2paper.agentic.tools import Code2PaperStageTool, build_tool_catalog, wr
 from code2paper.agentic.traceability_ledger import build_traceability_ledger, write_traceability_ledger
 from code2paper.agentic.trust_tools import write_trust_tool_manifest
 from code2paper.core.output_names import artifact_dir
+from code2paper.llm.role_config import (
+    LLM_CALLING_ROLES,
+    METHOD_WRITER,
+    apply_role_config,
+    writer_cumulative_budget,
+)
 from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.export.run_manifest import build_run_manifest, hash_file, write_run_manifest
 
@@ -84,6 +90,7 @@ class AgenticRunSummary(BaseModel):
     trace_digest: str = ""
     tool_call_trace_refs: list[str] = Field(default_factory=list)
     final_state_digest: str = ""
+    resumed_from_final_state_digest: str = ""
     environment: dict[str, str] = Field(default_factory=dict)
     temperature: float | None = None
     source_authority_policy: dict[str, Any] = Field(default_factory=dict)
@@ -91,6 +98,32 @@ class AgenticRunSummary(BaseModel):
     # (for diagnostic comparison).  ``None`` means the run did not
     # record this evidence, which fails the protocol check.
     paper_read_only_at_end: bool | None = None
+    # R8.1 Phase 1 protocol evidence: per-role LLM generation call
+    # traces.  Each entry is a ``GenerationCallTrace.model_dump()``
+    # dict.  The R8 acceptance checker verifies each LLM-calling role
+    # has at least one trace with the protocol-mandated effective
+    # temperature.  Empty list means the run did not evidence per-role
+    # sampling config (which fails the ``per_role_sampling_config_evidenced``
+    # criterion).
+    generation_call_traces: list[dict[str, Any]] = Field(default_factory=list)
+    # The configured per-role protocol is recorded alongside individual
+    # GenerationCallTrace entries.  The maps make the intended envelope easy
+    # to audit; traces remain the evidence of calls that actually occurred.
+    temperature_by_role: dict[str, float] = Field(default_factory=dict)
+    top_p_by_role: dict[str, float | None] = Field(default_factory=dict)
+    top_k_by_role: dict[str, int | None] = Field(default_factory=dict)
+    max_output_tokens_by_role: dict[str, int] = Field(default_factory=dict)
+    # R8 Phase 2 protocol evidence: V3 research error.  When non-empty,
+    # the V3 research subgraph failed and the run must NOT be accepted
+    # by the R8 checker (the V3 evidence chain is broken).  Empty string
+    # means V3 research succeeded (or V3 was not enabled).
+    v3_error: str = ""
+    # R8 Phase 2.5 protocol evidence: V3 node execution trace.  Each
+    # entry records a node's execution (node name, timestamp, duration,
+    # turn index, status, error) so the R8 checker can verify the
+    # multi-node LangGraph topology actually executed.  Empty list means
+    # V3 was not enabled or V3 research failed before producing a trace.
+    v3_node_trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class AgenticRunResult(BaseModel):
@@ -117,7 +150,11 @@ def run_agentic_code2paper(
 ) -> AgenticRunResult:
     """Run Code2Paper through the agentic graph and persist a decision summary."""
 
+    from code2paper.llm.generation_trace import reset_run_generation_traces
+
+    reset_run_generation_traces()
     state = initial_state if isinstance(initial_state, AgenticRunState) else AgenticRunState.model_validate(initial_state)
+    baseline_summary: AgenticRunSummary | None = None
     graph_config: dict[str, Any] | None = None
     if checkpointer is not None:
         state, graph_config = _prepare_checkpoint_execution(
@@ -139,6 +176,13 @@ def run_agentic_code2paper(
                 decision_provider=provider,
                 semantic_verifier=verifier,
                 checkpointer=checkpointer,
+                # Reuse the legacy checkpointer for the V3 research
+                # subgraph.  The V3 thread_id (derived from
+                # checkpoint_thread_id_v3) is namespaced differently
+                # from the legacy thread_id (checkpoint_thread_id), so
+                # V3 research checkpoints do not collide with legacy
+                # pipeline checkpoints in the same SQLite database.
+                v3_checkpointer=checkpointer,
             )
         else:
             app = build_code2paper_graph(
@@ -154,9 +198,37 @@ def run_agentic_code2paper(
         final_payload = _invoke_graph(app, None, config=graph_config)
     else:
         final_payload = _invoke_graph(app, state.model_dump(mode="json"), config=graph_config)
+    # Load the baseline summary AFTER validate_resume_state so we use
+    # the checkpoint's method_root (which points to the original run's
+    # output directory), not the CLI's --out-root which may differ when
+    # the caller directs the resume to a separate directory.
+    if resume:
+        baseline_path = artifact_dir(state.method_root, "10_run") / "agentic_run_summary.json"
+        if baseline_path.exists():
+            try:
+                baseline_summary = load_agentic_run_summary(baseline_path)
+            except (OSError, ValueError):
+                baseline_summary = None
     # Extract V3 tool_call_trace_refs before validating as AgenticRunState
     # (AgenticRunState uses extra="forbid" and drops V3-specific channels).
     tool_call_trace_refs: list[str] = list(final_payload.pop("tool_call_trace_refs", []) or [])
+    # Extract V3 error before validating as AgenticRunState.  When V3
+    # research fails, the V3GraphWrapper surfaces the error in the
+    # payload's ``v3_error`` field so the R8 acceptance checker can
+    # fail the run instead of silently downgrading.
+    v3_error: str = str(final_payload.pop("v3_error", "") or "")
+    # Extract V3 node execution trace (Phase 2.5) before validating as
+    # AgenticRunState (extra="forbid" would drop it).
+    v3_node_trace: list[dict[str, Any]] = list(
+        final_payload.pop("v3_node_trace", []) or []
+    )
+    if baseline_summary is not None:
+        if not tool_call_trace_refs:
+            tool_call_trace_refs = list(baseline_summary.tool_call_trace_refs)
+        if not v3_error:
+            v3_error = baseline_summary.v3_error
+        if not v3_node_trace:
+            v3_node_trace = list(baseline_summary.v3_node_trace)
     final_state = AgenticRunState.model_validate(final_payload)
     final_state = _persist_freshness_report(final_state)
     policy = build_agentic_decision_policy()
@@ -240,7 +312,8 @@ def run_agentic_code2paper(
     final_state = final_state.model_copy(
         update={"artifacts": {**final_state.artifacts, "agentic_run_evaluation_report": str(evaluation_path)}}
     )
-    summary = build_agentic_run_summary(final_state, tool_call_trace_refs=tool_call_trace_refs)
+    summary = build_agentic_run_summary(final_state, tool_call_trace_refs=tool_call_trace_refs, v3_error=v3_error, v3_node_trace=v3_node_trace)
+    summary = _merge_resume_summary_evidence(summary, baseline_summary)
     summary_path = artifact_dir(final_state.method_root, "10_run") / "agentic_run_summary.json"
     write_agentic_run_summary(summary_path, summary)
     final_state = final_state.model_copy(
@@ -251,7 +324,8 @@ def run_agentic_code2paper(
     final_state = final_state.model_copy(
         update={"artifacts": {**final_state.artifacts, "run_manifest": str(run_manifest_path)}}
     )
-    summary = build_agentic_run_summary(final_state, tool_call_trace_refs=tool_call_trace_refs)
+    summary = build_agentic_run_summary(final_state, tool_call_trace_refs=tool_call_trace_refs, v3_error=v3_error, v3_node_trace=v3_node_trace)
+    summary = _merge_resume_summary_evidence(summary, baseline_summary)
     write_agentic_run_summary(summary_path, summary)
     # R8.1: optionally emit an R8 acceptance report alongside the run
     # summary.  Enabled via ``CODE2PAPER_R8_ACCEPTANCE=1`` so default
@@ -272,10 +346,39 @@ def run_agentic_code2paper(
     return AgenticRunResult(state=final_state, summary=summary, summary_path=summary_path)
 
 
+def _merge_resume_summary_evidence(
+    summary: AgenticRunSummary,
+    baseline: AgenticRunSummary | None,
+) -> AgenticRunSummary:
+    """Carry immutable first-run evidence into a no-call checkpoint resume."""
+
+    if baseline is None:
+        return summary
+    return summary.model_copy(update={
+        "generation_call_traces": list(baseline.generation_call_traces),
+        "temperature_by_role": dict(baseline.temperature_by_role),
+        "top_p_by_role": dict(baseline.top_p_by_role),
+        "top_k_by_role": dict(baseline.top_k_by_role),
+        "max_output_tokens_by_role": dict(baseline.max_output_tokens_by_role),
+        # Preserve the true first-run digest across repeated resumes.  The
+        # summary file is overwritten in place after each resume, so using
+        # only baseline.final_state_digest would make a third invocation
+        # compare against the second resume rather than the original run.
+        "resumed_from_final_state_digest": (
+            baseline.resumed_from_final_state_digest
+            or baseline.final_state_digest
+        ),
+        "v3_error": baseline.v3_error,
+        "v3_node_trace": list(baseline.v3_node_trace),
+    })
+
+
 def build_agentic_run_summary(
     state: AgenticRunState,
     *,
     tool_call_trace_refs: Iterable[str] | None = None,
+    v3_error: str = "",
+    v3_node_trace: Iterable[dict[str, Any]] | None = None,
 ) -> AgenticRunSummary:
     artifacts = {
         name: AgenticArtifactRecord(path=str(path), hash=hash_file(path))
@@ -290,6 +393,9 @@ def build_agentic_run_summary(
     temperature = _collect_run_temperature()
     source_authority_policy = _collect_source_authority_policy(state)
     paper_read_only_at_end = _collect_paper_read_only_at_end()
+    sampling_config = _collect_role_sampling_config(state)
+    from code2paper.llm.generation_trace import get_run_generation_traces
+
     return AgenticRunSummary(
         status=status,
         project_root=str(state.project_root),
@@ -311,6 +417,13 @@ def build_agentic_run_summary(
         temperature=temperature,
         source_authority_policy=source_authority_policy,
         paper_read_only_at_end=paper_read_only_at_end,
+        generation_call_traces=get_run_generation_traces(),
+        temperature_by_role=sampling_config["temperature_by_role"],
+        top_p_by_role=sampling_config["top_p_by_role"],
+        top_k_by_role=sampling_config["top_k_by_role"],
+        max_output_tokens_by_role=sampling_config["max_output_tokens_by_role"],
+        v3_error=v3_error,
+        v3_node_trace=list(v3_node_trace or []),
     )
 
 
@@ -678,16 +791,26 @@ def _build_v3_graph_for_state(
     decision_provider: DecisionProvider | None = None,
     semantic_verifier: SemanticVerifier | None = None,
     checkpointer: Any = None,
+    v3_checkpointer: Any = None,
+    v3_thread_id: str | None = None,
 ) -> Any:
     """Build a V3 graph wrapper for the given run state.
 
     Constructs a ``ResearchGraphRuntime`` with ``GemmaSupervisorBackend``
     from the state's project_root + intent_path, then wraps the legacy
     pipeline so V3 research decisions are merged into the final state.
+
+    ``v3_checkpointer`` and ``v3_thread_id`` are passed to the V3
+    research subgraph so checkpoint/resume works for the V3 research
+    phase.  When ``v3_thread_id`` is None, a stable V3 thread ID is
+    derived from the run_id and repo_snapshot_id via
+    ``checkpoint_thread_id_v3`` so the V3 research phase has a
+    consistent checkpoint identity across invocations.
     """
 
     # Local import to avoid circular imports and keep the V3 wiring
     # isolated when the feature flag is off.
+    from code2paper.agentic.state_v3 import checkpoint_thread_id_v3
     from code2paper.agentic.v3_runtime import build_code2paper_v3_graph, build_v3_research_runtime
 
     run_id = state.run_id.strip() or str(uuid.uuid4())
@@ -698,12 +821,28 @@ def _build_v3_graph_for_state(
         run_id=run_id,
         llm_config=llm_config,
     )
+    # Derive a stable V3 thread ID when one is not provided.  This
+    # ensures the V3 research subgraph has a consistent checkpoint
+    # identity across invocations (and across resume).
+    effective_v3_thread_id = v3_thread_id
+    if effective_v3_thread_id is None:
+        try:
+            effective_v3_thread_id = checkpoint_thread_id_v3(
+                run_id=run_id,
+                repo_snapshot_id=v3_runtime.repo_snapshot.snapshot_id,
+            )
+        except ValueError:
+            # When repo_snapshot_id is empty (should not happen in
+            # production), fall back to None and skip V3 checkpointing.
+            effective_v3_thread_id = None
     return build_code2paper_v3_graph(
         tool_registry,
         v3_runtime=v3_runtime,
         decision_provider=decision_provider,
         semantic_verifier=semantic_verifier,
         checkpointer=checkpointer,
+        v3_checkpointer=v3_checkpointer,
+        v3_thread_id=effective_v3_thread_id,
     )
 
 
@@ -767,8 +906,8 @@ def _audit_blocking_failures(state: AgenticRunState) -> int:
 
 
 #: Environment variables recorded in the run summary so the R8
-#: acceptance checker can verify protocol compliance (temperature zero,
-#: cache off, single TP=2 instance, serial execution).
+#: acceptance checker can verify protocol provenance (cache off, single TP=2
+#: instance, serial execution, and role-specific sampling overrides).
 _R8_ENV_VARS: tuple[str, ...] = (
     "CODE2PAPER_LLM_CACHE",
     "CODE2PAPER_TP_SIZE",
@@ -776,6 +915,23 @@ _R8_ENV_VARS: tuple[str, ...] = (
     "CODE2PAPER_PARALLEL_PROJECTS",
     "CODE2PAPER_LLM_TEMPERATURE",
     "CODE2PAPER_PAPER_READ_ONLY_AT_END",
+    "CODE2PAPER_LLM_TEMPERATURE_INTENT_COMPILER",
+    "CODE2PAPER_LLM_TEMPERATURE_CODE_INTAKE",
+    "CODE2PAPER_LLM_TEMPERATURE_CODE_ANALYZER",
+    "CODE2PAPER_LLM_TEMPERATURE_RESEARCH_SUPERVISOR",
+    "CODE2PAPER_LLM_TEMPERATURE_AUTHORING_PLANNER",
+    "CODE2PAPER_LLM_TEMPERATURE_METHOD_WRITER",
+    "CODE2PAPER_LLM_TEMPERATURE_LOCAL_REWRITE",
+    "CODE2PAPER_LLM_TEMPERATURE_SEMANTIC_VERIFIER",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_INTENT_COMPILER",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_CODE_INTAKE",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_CODE_ANALYZER",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_RESEARCH_SUPERVISOR",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_AUTHORING_PLANNER",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_METHOD_WRITER",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_METHOD_WRITER_EXTENDED",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_LOCAL_REWRITE",
+    "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_SEMANTIC_VERIFIER",
 )
 
 
@@ -824,6 +980,55 @@ def _collect_run_temperature() -> float | None:
         return float(raw)
     except ValueError:
         return None
+
+
+def _collect_role_sampling_config(state: AgenticRunState) -> dict[str, dict[str, Any]]:
+    """Resolve the formal per-role envelope once for the run summary.
+
+    This is configuration provenance, not a claim that every optional role
+    executed.  Actual calls are independently recorded in
+    ``generation_call_traces`` and validated by R8.
+    """
+
+    try:
+        base = load_llm_config_from_env(
+            provider=state.llm_provider,
+            model=state.llm_model,
+        )
+    except (TypeError, ValueError):
+        return {
+            "temperature_by_role": {},
+            "top_p_by_role": {},
+            "top_k_by_role": {},
+            "max_output_tokens_by_role": {},
+        }
+
+    resolved = {
+        role: apply_role_config(base, role)
+        for role in LLM_CALLING_ROLES
+    }
+    extended_writer = apply_role_config(
+        base, METHOD_WRITER, extended_writer_budget=True
+    )
+    return {
+        "temperature_by_role": {
+            role: config.temperature for role, config in resolved.items()
+        },
+        "top_p_by_role": {
+            role: config.top_p for role, config in resolved.items()
+        },
+        "top_k_by_role": {
+            role: config.top_k for role, config in resolved.items()
+        },
+        "max_output_tokens_by_role": {
+            **{
+                role: config.max_output_tokens
+                for role, config in resolved.items()
+            },
+            "method_writer_extended": extended_writer.max_output_tokens,
+            "method_cumulative_budget": writer_cumulative_budget(),
+        },
+    }
 
 
 def _collect_paper_read_only_at_end() -> bool | None:
@@ -932,7 +1137,13 @@ def _build_r8_acceptance_report(
     # artifact, but the R8 acceptance checker needs it for the
     # ``code_mainline_in_method`` and ``must_cover_terminal`` criteria.
     if coverage_report is None:
-        intent_path = state.artifacts.get("intent_obligation_graph", "")
+        # Prefer the V3 wrapper's post-proposal graph.  The older legacy
+        # intent artifact predates Gemma's rich typed targets and would
+        # silently replay predicate-only coverage in an R8 report.
+        intent_path = (
+            state.artifacts.get("intent_obligation_graph_v2", "")
+            or state.artifacts.get("intent_obligation_graph", "")
+        )
         if intent_path and Path(intent_path).exists() and claim_set is not None:
             try:
                 intent_graph = IntentObligationGraphV2.model_validate_json(
@@ -973,6 +1184,16 @@ def _build_r8_acceptance_report(
                 pass
             break
 
+    intent_target_proposal_report: dict[str, Any] = {}
+    proposal_path = state.artifacts.get("intent_target_proposal_report_v1", "")
+    if proposal_path and Path(proposal_path).exists():
+        try:
+            proposal_payload = json.loads(Path(proposal_path).read_text(encoding="utf-8"))
+            if isinstance(proposal_payload, dict):
+                intent_target_proposal_report = proposal_payload
+        except (OSError, json.JSONDecodeError):
+            pass
+
     return check_r8_acceptance(
         run_id=state.run_id or summary.run_id,
         project_id=state.project_id,
@@ -983,10 +1204,20 @@ def _build_r8_acceptance_report(
         claim_set=claim_set,
         validation_report=validation_report,
         method_text=method_text,
-        original_final_state_digest=summary.final_state_digest,
+        original_final_state_digest=(
+            summary.resumed_from_final_state_digest or summary.final_state_digest
+        ),
+        resumed_final_state_digest=(
+            summary.final_state_digest
+            if summary.resumed_from_final_state_digest
+            else ""
+        ),
         protocol_settings=R8ProtocolSettings(),
         run_environment=summary.environment,
         run_temperature=summary.temperature,
         source_authority_policy=summary.source_authority_policy,
         paper_read_only_at_end=summary.paper_read_only_at_end,
+        generation_call_traces=summary.generation_call_traces,
+        intent_target_proposal_report=intent_target_proposal_report,
+        v3_error=summary.v3_error,
     )

@@ -60,12 +60,22 @@ def build_memory_checkpointer():
 def open_sqlite_checkpointer(path: str | Path) -> Iterator[Any]:
     """Open a durable LangGraph saver with an explicitly managed connection."""
 
+    from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
     from langgraph.checkpoint.sqlite import SqliteSaver
 
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(str(output), check_same_thread=False)
-    saver = SqliteSaver(connection)
+    # LangGraph's historical permissive msgpack mode warns for custom types
+    # and is scheduled to become fail-closed.  Keep the checkpoint boundary
+    # strict now and allow only the concrete research tool-call value that can
+    # appear in graph decisions; never opt into the all-modules escape hatch.
+    serde = JsonPlusSerializer(
+        allowed_msgpack_modules={
+            ("code2paper.agentic.research_models", "ResearchToolCallV1"),
+        }
+    )
+    saver = SqliteSaver(connection, serde=serde)
     saver.setup()
     try:
         yield saver

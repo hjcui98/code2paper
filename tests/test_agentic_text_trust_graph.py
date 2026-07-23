@@ -6,11 +6,21 @@ from pathlib import Path
 from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.graph_text_trust_nodes import (
     final_text_claim_extractor_node,
+    local_text_repair_node,
+    packet_binding_repair_node,
     text_evidence_validator_node,
     text_trace_builder_node,
 )
-from code2paper.agentic.graph_topology import DIRECT_EDGE_SPECS
-from code2paper.agentic.trust_contracts import AuthoringInputProjection, ProjectedClaim
+from code2paper.agentic.graph_topology import CONDITIONAL_ROUTE_SPECS, DIRECT_EDGE_SPECS
+from code2paper.agentic.trust_contracts import (
+    AuthoringInputProjection,
+    FinalAtomicClaim,
+    FinalTextClaims,
+    FinalTextUnit,
+    ProjectedClaim,
+    TextClaimEvidenceVerdict,
+    TextEvidenceValidationReport,
+)
 from code2paper.core.schemas import EvidenceItem, RawEvidencePack, SourceType
 
 
@@ -83,6 +93,22 @@ def test_text_trust_nodes_route_valid_final_text_to_quality_validation(tmp_path:
     assert report["status"] == "passed"
 
 
+def test_text_trust_direct_edge_chain_preserves_upstream_blocked_reason(tmp_path: Path) -> None:
+    state = AgenticRunState(
+        project_root=tmp_path,
+        out_root=tmp_path / "out",
+        blocked_reason="authoring_projection_v3_required",
+    )
+
+    extracted = final_text_claim_extractor_node(state.model_dump(mode="json"))
+    validated = text_evidence_validator_node(extracted)
+    traced = AgenticRunState.model_validate(text_trace_builder_node(validated))
+
+    assert traced.next_node == "blocked"
+    assert traced.blocked_reason == "authoring_projection_v3_required"
+    assert not traced.artifacts
+
+
 def test_text_trust_nodes_block_unrelated_direct_evidence_when_budget_is_zero(tmp_path: Path) -> None:
     state = _write_inputs(tmp_path, evidence_summary="License and redistribution terms only.")
     result = _run_gate(state)
@@ -130,3 +156,181 @@ def test_deterministic_provider_does_not_require_unavailable_model_verifier(tmp_
 
     assert report["status"] == "passed"
     assert report["semantic_verifier_calls"] == 0
+
+
+def test_packet_failure_emits_typed_scoped_request_without_global_rerun(tmp_path: Path) -> None:
+    state = _write_inputs(tmp_path, evidence_summary="License and redistribution terms only.")
+    state = state.model_copy(update={"max_authoring_revision_rounds": 1})
+    extracted = final_text_claim_extractor_node(state.model_dump(mode="json"))
+    validated = text_evidence_validator_node(extracted)
+    traced = AgenticRunState.model_validate(text_trace_builder_node(validated))
+
+    assert traced.next_node == "local_text_repair"
+    repaired = AgenticRunState.model_validate(local_text_repair_node(traced.model_dump(mode="json")))
+    assert repaired.next_node == "packet_binding_repair"
+    payload = json.loads(Path(repaired.artifacts["packet_repair_requests_v1"]).read_text())
+    assert payload["requests"] == [{
+        "claim_id": "FAC1",
+        "packet_id": "",
+        "failure_type": "wrong_span_role",
+        "offending_span_ids": ["E1"],
+        "missing_relation_type": "relation_evidence: none",
+        "requested_scope": "packet_relation",
+        "attempt": 1,
+    }]
+    blocked = AgenticRunState.model_validate(packet_binding_repair_node(repaired.model_dump(mode="json")))
+    assert blocked.next_node == "blocked"
+    assert blocked.blocked_reason == "packet_scoped_repair_target_unknown"
+
+
+def test_text_failure_routes_cannot_reenter_global_pipeline_stages() -> None:
+    routes = {
+        route.source: {target for _decision, target in route.routes}
+        for route in CONDITIONAL_ROUTE_SPECS
+        if route.source in {"text_trace_builder", "local_text_repair"}
+    }
+    forbidden = {"input_resolution", "intake", "analysis", "evidence", "grounding", "authoring"}
+    assert routes["text_trace_builder"].isdisjoint(forbidden)
+    assert routes["local_text_repair"].isdisjoint(forbidden)
+
+
+def test_missing_planned_claim_is_inserted_locally_without_full_authoring(tmp_path: Path) -> None:
+    state = _write_inputs(
+        tmp_path,
+        evidence_summary="The encoder reads configured features and returns configured outputs.",
+    )
+    projection_path = Path(state.artifacts["authoring_projection"])
+    projection = AuthoringInputProjection.model_validate_json(projection_path.read_text())
+    projection = projection.model_copy(update={
+        "projected_claims": [
+            *projection.projected_claims,
+            ProjectedClaim(
+                claim_id="C2",
+                claim_text="The encoder returns configured outputs.",
+                support_status="supported",
+                direct_evidence_ids=["E1"],
+                supported_fragment="The encoder returns configured outputs.",
+                allowed_wording_boundary="The encoder returns configured outputs.",
+                input_digest="sha256:claim-2",
+            ),
+        ],
+    })
+    projection_path.write_text(projection.model_dump_json(indent=2), encoding="utf-8")
+    plan_path = tmp_path / "authoring_plan_v3.json"
+    plan_path.write_text(json.dumps({
+        "sections": [{
+            "heading": "Core stage",
+            "claim_ids": ["C1", "C2"],
+        }],
+    }), encoding="utf-8")
+    text_path = Path(state.artifacts["text_clean_md"])
+    text_path.write_text(
+        "# Method\n## Core stage\nThe encoder reads configured features.\n",
+        encoding="utf-8",
+    )
+    state = state.model_copy(update={
+        "artifacts": {**state.artifacts, "authoring_plan_v3": str(plan_path)},
+        "max_authoring_revision_rounds": 1,
+    })
+
+    extracted = final_text_claim_extractor_node(state.model_dump(mode="json"))
+    validated = AgenticRunState.model_validate(text_evidence_validator_node(extracted))
+    report = json.loads(Path(validated.artifacts["text_evidence_validation"]).read_text())
+    assert report["status"] == "failed"
+    assert report["recommended_actions"] == ["insert_planned_claim_locally:C2"]
+    traced = AgenticRunState.model_validate(text_trace_builder_node(validated.model_dump(mode="json")))
+    assert traced.next_node == "local_text_repair"
+    repaired = AgenticRunState.model_validate(local_text_repair_node(traced.model_dump(mode="json")))
+    assert repaired.next_node == "final_text_claim_extractor"
+    repaired_text = text_path.read_text()
+    assert "The encoder returns configured outputs." in repaired_text
+    assert repaired_text.count("# Method") == 1
+
+
+def test_wording_repair_deletes_redundant_failed_sibling_instead_of_duplicating_claim(
+    tmp_path: Path,
+) -> None:
+    state = _write_inputs(
+        tmp_path,
+        evidence_summary="Only when seed_entities is empty, retrieval bypasses graph propagation.",
+    )
+    text = (
+        "Only when seed_entities is empty, retrieval bypasses graph propagation and "
+        "When NER is empty, retrieval bypasses graph propagation.\n"
+    )
+    text_path = Path(state.artifacts["text_clean_md"])
+    text_path.write_text(text, encoding="utf-8")
+    projection_path = Path(state.artifacts["authoring_projection"])
+    projection = AuthoringInputProjection.model_validate_json(projection_path.read_text())
+    projection = projection.model_copy(update={
+        "projected_claims": [
+            projection.projected_claims[0].model_copy(update={
+                "supported_fragment": "Only when seed_entities is empty, retrieval bypasses graph propagation.",
+                "required_qualifiers": ["only when seed_entities is empty"],
+            })
+        ],
+    })
+    projection_path.write_text(projection.model_dump_json(indent=2), encoding="utf-8")
+
+    supported = "Only when seed_entities is empty, retrieval bypasses graph propagation"
+    unsupported = "When NER is empty, retrieval bypasses graph propagation"
+    unsupported_start = text.index(unsupported)
+    final_claims = FinalTextClaims(
+        input_text_digest="sha256:text",
+        units=[FinalTextUnit(
+            unit_id="FTU1", kind="sentence", text=text.strip(), line_start=1, line_end=1,
+            char_start=0, char_end=len(text.strip()), factual=True, span_digest="sha256:unit",
+        )],
+        atomic_claims=[
+            FinalAtomicClaim(
+                atomic_claim_id="FAC1", unit_id="FTU1", text=supported,
+                normalized_text=supported.lower(), line_start=1, line_end=1,
+                char_start=0, char_end=len(supported), candidate_projection_claim_ids=["C1"],
+                candidate_direct_evidence_ids=["E1"], claim_digest="sha256:fac1",
+            ),
+            FinalAtomicClaim(
+                atomic_claim_id="FAC2", unit_id="FTU1", text=unsupported,
+                normalized_text=unsupported.lower(), line_start=1, line_end=1,
+                char_start=unsupported_start, char_end=unsupported_start + len(unsupported),
+                candidate_projection_claim_ids=["C1"], candidate_direct_evidence_ids=["E1"],
+                claim_digest="sha256:fac2",
+            ),
+        ],
+    )
+    validation = TextEvidenceValidationReport(
+        status="failed", input_text_digest="sha256:text", projection_digest="sha256:projection",
+        checked_factual_claims=2, supported_claims=1, unsupported_claims=1,
+        verdicts=[
+            TextClaimEvidenceVerdict(
+                atomic_claim_id="FAC1", status="supported", matched_projection_claim_ids=["C1"],
+                direct_evidence_ids=["E1"], supported_fragment=supported,
+            ),
+            TextClaimEvidenceVerdict(
+                atomic_claim_id="FAC2", status="unsupported", matched_projection_claim_ids=["C1"],
+                direct_evidence_ids=["E1"], unsupported_fragment=unsupported,
+                required_qualifiers=["only when seed_entities is empty"],
+                deterministic_failures=["required_qualifier_missing"],
+                repair_action="revise_authoring_wording",
+            ),
+        ],
+        recommended_actions=["revise_authoring_wording"],
+    )
+    claims_path = tmp_path / "final_claims.json"
+    validation_path = tmp_path / "validation.json"
+    claims_path.write_text(final_claims.model_dump_json(indent=2), encoding="utf-8")
+    validation_path.write_text(validation.model_dump_json(indent=2), encoding="utf-8")
+    state = state.model_copy(update={
+        "artifacts": {
+            **state.artifacts,
+            "final_text_claims": str(claims_path),
+            "text_evidence_validation": str(validation_path),
+        },
+        "max_authoring_revision_rounds": 1,
+    })
+
+    repaired = AgenticRunState.model_validate(local_text_repair_node(state.model_dump(mode="json")))
+    repaired_text = text_path.read_text(encoding="utf-8")
+
+    assert repaired.next_node == "final_text_claim_extractor"
+    assert unsupported not in repaired_text
+    assert repaired_text.count("Only when seed_entities is empty") == 1

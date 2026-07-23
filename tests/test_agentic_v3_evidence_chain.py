@@ -382,7 +382,7 @@ class WriteV3EvidenceArtifactsTests(unittest.TestCase):
     """``write_v3_evidence_artifacts`` serializes the merged sets to
     ``out_root/artifacts/`` as JSON files."""
 
-    def test_writes_three_files_when_all_sets_present(self) -> None:
+    def test_writes_evidence_and_fail_closed_equation_contract(self) -> None:
         ce = _compiled_evidence(obligation_id="obl-1")
         packets, facts, claims = merge_compiled_evidence(
             {"obl-1": ce},
@@ -396,10 +396,15 @@ class WriteV3EvidenceArtifactsTests(unittest.TestCase):
                 fact_set=facts,
                 claim_set=claims,
             )
-            self.assertEqual(len(paths), 3)
+            self.assertEqual(len(paths), 4)
             self.assertIn("evidence_packets_v3", paths)
             self.assertIn("code_facts_v1", paths)
             self.assertIn("atomic_claims_v3", paths)
+            self.assertIn("equation_claims_v1", paths)
+            self.assertEqual(
+                json.loads(Path(paths["equation_claims_v1"]).read_text())["equations"],
+                [],
+            )
             # All paths must point to existing files under artifacts/.
             artifacts_dir = Path(tmp) / "artifacts"
             for key, path in paths.items():
@@ -547,6 +552,12 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
         loop_state = MagicMock()
         loop_state.compiled_evidence = compiled_evidence
         result.loop_state = loop_state
+        # final_state must be a real dict so the source_authority_policy
+        # extraction in V3GraphWrapper.invoke works (MagicMock would
+        # break dict() coercion).  Empty policy triggers the default
+        # fallback path, which is the production scenario when the
+        # LangGraph state channel drops the policy.
+        result.final_state = {"source_authority_policy": {}}
         return result
 
     def test_invoke_injects_artifact_paths_into_legacy_state(self) -> None:
@@ -710,7 +721,10 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
 
     def test_invoke_skips_artifact_writing_when_no_compiled_evidence(self) -> None:
         """When V3 research produced no compiled evidence, the wrapper
-        must skip artifact serialization."""
+        must skip evidence artifact serialization but still persist the
+        source_authority_policy so the R8 protocol-settings check can
+        verify that paper/README/TeX were kept below executable
+        authority."""
 
         runtime = self._fake_runtime_with_compiled_evidence({})
 
@@ -729,14 +743,30 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 payload = wrapper.invoke({"out_root": tmp, "artifacts": {}})
+                artifacts_dir = Path(tmp) / "artifacts"
+                # source_authority_policy_v1.json must be written even
+                # without compiled evidence (R8 protocol-settings gate).
+                policy_path = artifacts_dir / "source_authority_policy_v1.json"
+                self.assertTrue(
+                    policy_path.exists(),
+                    "source_authority_policy_v1.json must be written even when "
+                    "compiled_evidence is empty",
+                )
+                policy_payload = json.loads(policy_path.read_text(encoding="utf-8"))
+                self.assertIn("policy_id", policy_payload)
+                self.assertIn("executable_suffixes", policy_payload)
         finally:
             v3_mod.run_v3_research_phase = original
 
         # Legacy still ran.
         legacy.invoke.assert_called_once()
-        # No V3 artifacts in the payload.
+        # No V3 EVIDENCE artifacts in the payload (only the policy).
         artifacts = payload.get("artifacts") or {}
         self.assertNotIn("evidence_packets_v3", artifacts)
+        self.assertNotIn("code_facts_v1", artifacts)
+        self.assertNotIn("atomic_claims_v3", artifacts)
+        # source_authority_policy IS present.
+        self.assertIn("source_authority_policy", artifacts)
 
     def test_invoke_falls_back_gracefully_when_v3_research_raises(self) -> None:
         """When V3 research raises, the wrapper must still run the legacy
@@ -836,6 +866,7 @@ class TestEndToEndEvidenceChain:
             GlobalSafetyBudgetV1,
             ResearchAgendaItemV1,
             ResearchAgendaV1,
+            TypedBehaviorTargetV1,
         )
         from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
 
@@ -855,7 +886,10 @@ class TestEndToEndEvidenceChain:
             candidate_symbol_ids=("train.py:train",),
             candidate_behavior_node_ids=[],
             missing_information=[],
-            typed_behavior_targets=[],
+            typed_behavior_targets=[TypedBehaviorTargetV1(
+                target_id="target-e2e-read",
+                desired_predicates=("READ",),
+            )],
         )
         agenda = ResearchAgendaV1(
             run_id="run-e2e",
@@ -935,7 +969,7 @@ class TestEndToEndEvidenceChain:
             fact_set=facts,
             claim_set=claims,
         )
-        assert len(paths) == 3
+        assert len(paths) == 4
 
         # Read back and validate.
         packet_data = json.loads(

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.author_intent_summary import author_intent_summary_from_state
 from code2paper.agentic.authoring_constraints import apply_authoring_constraints, write_authoring_constraints
 from code2paper.agentic.authoring_context import build_authoring_context, write_authoring_context
 from code2paper.agentic.authoring_plan import write_authoring_plan
+from code2paper.agentic.authoring_plan_v3 import build_authoring_plan_v3, write_authoring_plan_v3
 from code2paper.agentic.authoring_plan_decisioning import authoring_plan_trace
 from code2paper.agentic.authoring_projection import build_authoring_projection, write_authoring_projection
 from code2paper.agentic.atomic_claim_v2 import load_atomic_claims_v2
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.evidence_compiler_v3 import load_atomic_claims_v3, load_evidence_packets_v3
+from code2paper.agentic.equation_claims import load_equation_claims
 from code2paper.agentic.evidence_relations_v2 import build_evidence_relations_v2, write_evidence_relations_v2
 from code2paper.agentic.figure_scene import build_figure_scene_graph, write_figure_scene_graph
 from code2paper.agentic.figure_relation_validator import validate_figure_relations, write_figure_relation_validation
@@ -43,6 +46,8 @@ from code2paper.agentic.intent_obligations import (
     write_authoring_obligation_coverage,
     write_intent_obligation_graph,
 )
+from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
+from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
 from code2paper.agentic.routing import load_symbol_index, write_router_decision
 from code2paper.agentic.traceability_artifacts import unsupported_claim_ids
 from code2paper.core.output_names import artifact_dir, final_dir, method_output
@@ -216,9 +221,41 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
                 if state.artifacts.get("evidence_packets_v3")
                 else None
             ),
+            equation_claims_v1=(
+                load_equation_claims(state.artifacts["equation_claims_v1"])
+                if state.artifacts.get("equation_claims_v1")
+                else None
+            ),
         )
         projection_path = authoring_dir / "agentic_authoring_input_projection.json"
         write_authoring_projection(projection_path, projection)
+        v3_plan = None
+        v3_plan_path = None
+        if all(
+            state.artifacts.get(key) and Path(state.artifacts[key]).exists()
+            for key in ("intent_obligation_graph_v2", "obligation_coverage_v2", "atomic_claims_v3")
+        ):
+            intent_v2 = IntentObligationGraphV2.model_validate_json(
+                Path(state.artifacts["intent_obligation_graph_v2"]).read_text(encoding="utf-8")
+            )
+            coverage_v2 = ObligationCoverageReportV2.model_validate_json(
+                Path(state.artifacts["obligation_coverage_v2"]).read_text(encoding="utf-8")
+            )
+            claims_v3 = load_atomic_claims_v3(state.artifacts["atomic_claims_v3"])
+            stable_run_id = state.run_id.strip() or f"run-{claims_v3.content_digest.removeprefix('sha256:')[:16]}"
+            v3_plan = build_authoring_plan_v3(
+                run_id=stable_run_id,
+                repo_snapshot_id=claims_v3.repo_snapshot_id,
+                project_tree_hash=claims_v3.project_tree_hash,
+                intent_graph=intent_v2,
+                coverage_report=coverage_v2,
+                claim_set=claims_v3,
+                explicit_gaps=claims_v3.explicit_code_gaps,
+                method_name=method_evidence.method_name,
+                author_goal=method_evidence.method_goal,
+            )
+            v3_plan_path = authoring_dir / "agentic_authoring_plan_v3.json"
+            write_authoring_plan_v3(str(v3_plan_path), v3_plan)
         obligation_graph = compile_intent_obligation_graph(author_intent_summary)
         obligation_graph_path = artifact_dir(state.method_root, "01_input") / "agentic_intent_obligation_graph.json"
         write_intent_obligation_graph(obligation_graph_path, obligation_graph)
@@ -247,12 +284,14 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
             "authoring_plan": str(plan_path),
             "authoring_plan_decision_trace": str(trace_path),
         }
+        if v3_plan_path is not None:
+            artifacts["authoring_plan_v3"] = str(v3_plan_path)
         # Obligation repair is a distinct decision budget. Evidence sufficiency
         # often consumes its own revision budget before authoring coverage is even
         # observable; sharing that counter made the new author-intent decision
         # unreachable in the RAP sentinel.
         current_revision_round = int(state.loop_counters.get("obligation_revision", 0))
-        quality_repair_requested = obligation_coverage.recommended_next in {
+        quality_repair_requested = v3_plan is None and obligation_coverage.recommended_next in {
             "targeted_evidence_repair",
             "claim_expansion",
         }
@@ -270,13 +309,16 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
             repair_focus_path = artifact_dir(state.method_root, "03_analysis") / "agentic_evidence_repair_focus.json"
             write_evidence_repair_focus(repair_focus_path, repair_focus)
             artifacts["evidence_repair_focus"] = str(repair_focus_path)
+        effective_gate_passed = (
+            v3_plan.plan_gate_passed if v3_plan is not None else authoring_plan.hard_gate_passed
+        )
         decision = AgentDecision(
             node="authoring_planner",
             decision=(
                 "authoring_obligation_repair"
                 if quality_repair_available
                 else "authoring_plan_ready"
-                if authoring_plan.hard_gate_passed
+                if effective_gate_passed
                 else "authoring_plan_blocked"
             ),
             rationale="; ".join([
@@ -299,6 +341,7 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
                 "authoring_obligation_coverage",
                 *(["evidence_repair_focus"] if quality_repair_available else []),
                 "claim_verification",
+                *(["authoring_plan_v3"] if v3_plan_path is not None else []),
             ],
         )
         if quality_repair_available:
@@ -317,10 +360,14 @@ def authoring_planner_node(*, decision_provider: DecisionProvider | None = None)
         updates = {
             "artifacts": artifacts,
             "decisions": [*state.decisions, decision],
-            "next_node": "authoring" if authoring_plan.hard_gate_passed else "blocked",
+            "next_node": "authoring" if effective_gate_passed else "blocked",
         }
-        if not authoring_plan.hard_gate_passed:
-            updates["blocked_reason"] = state.blocked_reason or "authoring_plan_failed_evidence_gate"
+        if not effective_gate_passed:
+            updates["blocked_reason"] = state.blocked_reason or (
+                "authoring_plan_v3_failed_evidence_gate"
+                if v3_plan is not None
+                else "authoring_plan_failed_evidence_gate"
+            )
         return state.model_copy(update=updates).model_dump(mode="json")
 
     return _run

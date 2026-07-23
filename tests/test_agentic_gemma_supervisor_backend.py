@@ -53,6 +53,7 @@ from code2paper.agentic.research_models import (
     make_observation,
 )
 from code2paper.agentic.research_supervisor import (
+    BehaviorTemplateSearchHintV1,
     DeterministicSupervisorBackend,
     ResearchDecisionContextV1,
     SupervisorBackend,
@@ -601,6 +602,33 @@ def test_successful_search_symbols_proposal(monkeypatch: pytest.MonkeyPatch) -> 
     assert len(recorded) == 1
 
 
+def test_search_proposal_projects_typed_symbol_ref_to_path_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({
+        "action": "SEARCH_SYMBOLS",
+        "rationale": "find a related implementation",
+        "goal": "locate a related symbol",
+        "expected_information_gain": "new_candidate_symbol",
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(), run_id=_RUN_ID, repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(
+        active_obligation=_obligation(
+            candidate_symbol_ids=("symbol:src/runtime.py:generate:17",),
+            missing_information=("related generation helper",),
+            typed_targets=(_typed_target(search_terms=("generate",)),),
+        ),
+        active_issue=_issue(issue_kind="missing_anchor"),
+    )
+
+    decision = backend.decide(ctx)
+
+    assert decision.selected_tool_calls[0].path_scope == ("src/runtime.py",)
+
+
 def test_successful_read_candidate_proposal(monkeypatch: pytest.MonkeyPatch) -> None:
     payload = json.dumps(
         {"action": "READ_CANDIDATE", "rationale": "read", "goal": "read the symbol"}
@@ -748,15 +776,16 @@ def test_llm_proposal_decision_is_valid_research_decision_v1(
 
 
 # ---------------------------------------------------------------------------
-# Temperature and cache enforcement (R8 protocol)
+# Per-role sampling config and cache enforcement (R8 protocol)
 # ---------------------------------------------------------------------------
 
 
-def test_temperature_forced_to_zero_and_cache_off(
+def test_temperature_uses_role_default_and_cache_off(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Regardless of the input LLMConfig temperature, the backend forces
-    temperature=0 and cache=False for R8 protocol compliance."""
+    """When ``temperature`` is None (default), the backend applies the
+    ``research_supervisor`` role default (0.20) via ``apply_role_config``
+    and forces ``cache=False`` for R8 protocol compliance."""
 
     captured_configs: list[LLMConfig] = []
 
@@ -777,23 +806,32 @@ def test_temperature_forced_to_zero_and_cache_off(
 
     monkeypatch.setattr(mod, "LLMClient", factory)
 
+    # Pass a non-role temperature (0.7) — should be ignored in favor of
+    # the per-role default (0.20) because 0.7 is NOT explicit per
+    # apply_role_config's sentinel logic (0.7 != 0.0 and != 0.2, so it
+    # IS explicit; but we want to test that the role default wins when
+    # the caller does not set temperature explicitly).  Use the default
+    # 0.2 (LLMConfig default) which is treated as a sentinel.
     backend = GemmaSupervisorBackend(
-        llm_config=_llm_config(temperature=0.7),
+        llm_config=_llm_config(temperature=0.2),
         run_id=_RUN_ID,
         repo_snapshot_id=_SNAPSHOT_ID,
-        temperature=0.0,
     )
     ctx = _context(
         active_obligation=_obligation(typed_targets=(_typed_target(),)),
     )
     backend.decide(ctx)
     assert captured_configs, "LLMClient should have been constructed"
-    assert captured_configs[0].temperature == 0.0
+    # Per-role R8 protocol: research_supervisor temperature = 0.20.
+    assert captured_configs[0].temperature == 0.20
     assert captured_configs[0].cache is False
+    assert captured_configs[0].role == "research_supervisor"
 
 
-def test_temperature_override_passed_through(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The ``temperature`` ctor arg overrides the LLMConfig temperature."""
+def test_temperature_explicit_override_wins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An explicit ``temperature`` ctor arg overrides the role default."""
 
     captured: list[LLMConfig] = []
 
@@ -815,16 +853,95 @@ def test_temperature_override_passed_through(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(mod, "LLMClient", factory)
 
     backend = GemmaSupervisorBackend(
-        llm_config=_llm_config(temperature=0.9),
+        llm_config=_llm_config(temperature=0.2),
         run_id=_RUN_ID,
         repo_snapshot_id=_SNAPSHOT_ID,
-        temperature=0.0,
+        temperature=0.15,
     )
     ctx = _context(
         active_obligation=_obligation(typed_targets=(_typed_target(),)),
     )
     backend.decide(ctx)
-    assert captured[0].temperature == 0.0
+    assert captured[0].temperature == 0.15
+    assert captured[0].cache is False
+
+
+def test_temperature_r8_baseline_zero_defers_to_role_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When CODE2PAPER_LLM_TEMPERATURE=0 sets base temp to 0.0, the
+    supervisor still uses the per-role default (0.20).  This is the
+    sentinel-value behavior that lets the global R8 baseline coexist
+    with per-role sampling protocols."""
+
+    captured_configs: list[LLMConfig] = []
+
+    def factory(config: LLMConfig, *args: Any, **kwargs: Any) -> _StubLLMClient:
+        captured_configs.append(config)
+        return _StubLLMClient(
+            config,
+            responses=[
+                _response(
+                    text=json.dumps(
+                        {"action": "SEARCH_SYMBOLS", "rationale": "r", "goal": "g"}
+                    )
+                )
+            ],
+        )
+
+    from code2paper.agentic import gemma_supervisor_backend as mod
+
+    monkeypatch.setattr(mod, "LLMClient", factory)
+
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(temperature=0.0),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(
+        active_obligation=_obligation(typed_targets=(_typed_target(),)),
+    )
+    backend.decide(ctx)
+    # 0.0 is a sentinel — per-role default (0.20) wins.
+    assert captured_configs[0].temperature == 0.20
+    assert captured_configs[0].role == "research_supervisor"
+
+
+def test_supervisor_role_field_set_on_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The role field is always set to 'research_supervisor' for R8
+    per-role trace attribution."""
+
+    captured_configs: list[LLMConfig] = []
+
+    def factory(config: LLMConfig, *args: Any, **kwargs: Any) -> _StubLLMClient:
+        captured_configs.append(config)
+        return _StubLLMClient(
+            config,
+            responses=[
+                _response(
+                    text=json.dumps(
+                        {"action": "STOP_BLOCKED", "rationale": "r", "goal": "g"}
+                    )
+                )
+            ],
+        )
+
+    from code2paper.agentic import gemma_supervisor_backend as mod
+
+    monkeypatch.setattr(mod, "LLMClient", factory)
+
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(
+        active_obligation=_obligation(typed_targets=(_typed_target(),)),
+    )
+    backend.decide(ctx)
+    assert captured_configs[0].role == "research_supervisor"
 
 
 # ---------------------------------------------------------------------------
@@ -858,6 +975,7 @@ def test_build_prompt_only_uses_context_fields() -> None:
     assert prompt["turn_index"] == 0
     assert "SEARCH_SYMBOLS" in prompt["allowed_actions"]
     assert prompt["no_progress_counter"] == 1
+    assert prompt["behavior_template_search_hints"] == []
     assert "find_entrypoints" in prompt["ready_tools"]
     assert "no_snapshot_external_paths" in prompt["hard_rules"]
 
@@ -875,6 +993,35 @@ def test_build_prompt_only_uses_context_fields() -> None:
     # Missing information and candidate symbols.
     assert prompt["missing_information"] == ["predictor_path"]
     assert prompt["top_candidate_symbol_ids"] == ["models.predictor:forward"]
+
+
+def test_build_prompt_includes_only_compact_template_search_hints() -> None:
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation()).model_copy(update={
+        "behavior_template_search_hints": (
+            BehaviorTemplateSearchHintV1(
+                template_id="generic-flow",
+                match_score=0.5,
+                missing_predicates=("SORT",),
+                resolved_role_symbols={"sym:fixture:score": "scorer"},
+                predicate_order_hint=("COMPUTE", "SORT"),
+            ),
+        )
+    })
+    hints = backend._build_prompt(ctx)["behavior_template_search_hints"]
+    assert hints == [{
+        "template_id": "generic-flow",
+        "matched": False,
+        "match_score": 0.5,
+        "missing_predicates": ["SORT"],
+        "missing_relation_kinds": [],
+        "resolved_role_symbols": {"sym:fixture:score": "scorer"},
+        "predicate_order_hint": ["COMPUTE", "SORT"],
+    }]
 
 
 def test_build_prompt_with_no_active_obligation() -> None:

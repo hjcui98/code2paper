@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +11,14 @@ from code2paper.agentic.authoring_projection import (
     projection_writer_payload,
     restrict_projection_for_authoring_revision,
 )
+
+
+def test_v3_projection_contains_no_project_specific_stage_literals() -> None:
+    import code2paper.agentic.authoring_projection as module
+
+    source = inspect.getsource(module._build_v3_projection)
+    for forbidden in ("C-RAP-", "F-RAP-", "EBCAR", "DyG-Mamba", "LinearRAG"):
+        assert forbidden not in source
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.authoring.writing.method_writer import build_method_draft_markdown
 from code2paper.core.schemas import (

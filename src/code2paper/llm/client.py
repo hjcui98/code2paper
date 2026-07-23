@@ -78,6 +78,24 @@ class LLMClient:
         )
 
     def complete(self, request: LLMRequest, *, dry_run: bool = False) -> LLMResponse:
+        response = self._complete(request, dry_run=dry_run)
+        # Import lazily to avoid the generation-trace module's intentional
+        # dependency on LLMRequest/LLMResponse creating an import cycle.
+        from code2paper.llm.generation_trace import (
+            build_generation_call_trace,
+            record_run_generation_trace,
+        )
+
+        trace = build_generation_call_trace(
+            call_id=f"{request.prompt_template_id}:{request.input_hash[7:19]}",
+            config=self.config,
+            request=request,
+            response=response,
+        )
+        record_run_generation_trace(trace)
+        return response
+
+    def _complete(self, request: LLMRequest, *, dry_run: bool = False) -> LLMResponse:
         if dry_run:
             return LLMResponse(
                 text="",
@@ -163,6 +181,16 @@ class LLMClient:
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_output_tokens,
         }
+        # Per-role sampling fields (Phase 1 R8 config basis).  Only
+        # include fields the caller actually set (None means "use the
+        # provider default"); sending e.g. ``top_p: null`` would
+        # override the vLLM default on some backends.
+        if self.config.top_p is not None:
+            payload["top_p"] = self.config.top_p
+        if self.config.top_k is not None:
+            payload["top_k"] = self.config.top_k
+        if self.config.seed is not None:
+            payload["seed"] = self.config.seed
         response_mode = self.capability_profile.response_mode
         if request.response_json_schema and response_mode == StructuredResponseMode.NATIVE_JSON_SCHEMA:
             payload["response_format"] = {
@@ -412,6 +440,11 @@ def _cache_key(
                 "model": config.model,
                 "temperature": config.temperature,
                 "max_output_tokens": config.max_output_tokens,
+                "top_p": config.top_p,
+                "top_k": config.top_k,
+                "seed": config.seed,
+                "max_input_tokens": config.max_input_tokens,
+                "role": config.role,
                 "prompt_template_version": config.prompt_template_version,
                 "capability_profile": capability_profile.model_dump(mode="json"),
                 "request_input_hash": request.input_hash,

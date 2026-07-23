@@ -187,11 +187,11 @@ def build_authoring_plan_v3(
 ) -> AuthoringPlanV3:
     """Build a V3 authoring plan from typed obligations, claims and gaps.
 
-    The plan is constructed deterministically from the coverage report:
-    every obligation in the intent graph becomes one section, in the
-    order defined by the ``precedes`` relations (stage order).  Claims
-    are bound to a section via their ``covers_obligation_ids`` field.
-    Gaps are bound via the coverage report's ``matched_gap_ids``.
+    The plan is constructed deterministically from the coverage report.
+    Authorable must/should-cover obligations become sections in data/control
+    order. Organization preferences and verify-only diagnostics never force
+    empty Method sections, and redundant obligations already represented by
+    an earlier unique claim/gap are coalesced by omission.
     """
 
     gaps = list(explicit_gaps or [])
@@ -210,7 +210,73 @@ def build_authoring_plan_v3(
 
     sections: list[AuthoringSectionV3] = []
     used_claim_ids: set[str] = set()
-    for index, obligation in enumerate(ordered_obligations, start=1):
+    if claim_set.semantic_stage_groups:
+        for group in sorted(
+            claim_set.semantic_stage_groups,
+            key=lambda item: (item.organization_priority, item.stage_id),
+        ):
+            section_claims = [
+                claim_by_id[claim_id]
+                for claim_id in group.ordered_claim_ids
+                if claim_id in claim_by_id
+                and claim_id not in used_claim_ids
+                and claim_by_id[claim_id].status in {"supported", "partial"}
+            ]
+            if not section_claims:
+                continue
+            used_claim_ids.update(claim.claim_id for claim in section_claims)
+            sections.append(AuthoringSectionV3(
+                section_id=f"AP-S{len(sections) + 1}",
+                heading=group.name,
+                purpose=group.purpose,
+                obligation_id=(
+                    group.covers_obligation_ids[0]
+                    if group.covers_obligation_ids
+                    else f"stage-group:{group.stage_id}"
+                ),
+                obligation_kind="stage",
+                obligation_priority="should_cover",
+                coverage_status=(
+                    "partial"
+                    if any(claim.status == "partial" for claim in section_claims)
+                    else "supported"
+                ),
+                claim_ids=tuple(claim.claim_id for claim in section_claims),
+                evidence_ids=tuple(_dedupe(
+                    evidence_id
+                    for claim in section_claims
+                    for evidence_id in claim.direct_evidence_ids
+                )),
+                relation_evidence_ids=tuple(_dedupe([
+                    *group.relation_evidence_ids,
+                    *[
+                        evidence_id
+                        for claim in section_claims
+                        for evidence_id in claim.relation_evidence_ids
+                    ],
+                ])),
+                qualifier_template=tuple(_dedupe(
+                    qualifier
+                    for claim in section_claims
+                    for qualifier in claim.required_qualifiers
+                )),
+                caveat_required=any(claim.status == "partial" for claim in section_claims),
+                allowed_wording_boundary=_merge_allowed_boundaries(
+                    [claim.allowed_wording_boundary for claim in section_claims]
+                ),
+                writing_instructions=(
+                    "Use only the listed authorized claims and evidence ids.",
+                    "Preserve the stage-group claim order and all required qualifiers.",
+                ),
+                organization_preference=group.name,
+            ))
+        # Semantic stage groups are compiler-authorized organization metadata.
+        # They replace one-section-per-obligation construction while the
+        # coverage report independently enforces all must-cover obligations.
+        ordered_obligations = []
+    for obligation in ordered_obligations:
+        if obligation.priority not in {"must_cover", "should_cover"}:
+            continue
         coverage = coverage_by_obligation.get(obligation.obligation_id)
         if coverage is None:
             # No coverage information: treat as unresolved with no claims.
@@ -227,12 +293,20 @@ def build_authoring_plan_v3(
             for c in coverage.matched_claim_ids
             if c in claim_by_id and c not in used_claim_ids
         ]
-        used_claim_ids.update(c.claim_id for c in section_claims)
         section_gaps = [
             gap_by_id[g]
             for g in coverage.matched_gap_ids
             if g in gap_by_id
         ]
+        if coverage.coverage_status == "explicit_gap":
+            # Terminal gaps authorize caveat text only.  An overlapping broad
+            # claim must not leak into the same section as a positive claim.
+            section_claims = []
+        if not section_claims and not section_gaps:
+            # Coverage remains visible in the coverage report.  Do not invent
+            # an empty prose section merely to mirror the obligation graph.
+            continue
+        used_claim_ids.update(c.claim_id for c in section_claims)
 
         evidence_ids = _dedupe(
             [eid for c in section_claims for eid in c.direct_evidence_ids]
@@ -255,7 +329,7 @@ def build_authoring_plan_v3(
 
         sections.append(
             AuthoringSectionV3(
-                section_id=f"AP-S{index}",
+                section_id=f"AP-S{len(sections) + 1}",
                 heading=_heading_for(obligation, section_claims, section_gaps),
                 purpose=obligation.author_text or obligation.kind,
                 obligation_id=obligation.obligation_id,
@@ -278,6 +352,24 @@ def build_authoring_plan_v3(
                 organization_preference=organization_preference,
             )
         )
+
+    if gaps:
+        sections.append(AuthoringSectionV3(
+            section_id=f"AP-S{len(sections) + 1}",
+            heading="Implementation boundaries",
+            purpose="State requested behaviors that are not implemented in the inspected repository.",
+            obligation_id="explicit-code-gaps",
+            obligation_kind="gap_boundary",
+            obligation_priority="verify_only",
+            coverage_status="explicit_gap",
+            gap_ids=tuple(gap.gap_id for gap in gaps),
+            caveat_required=True,
+            writing_instructions=(
+                "Describe each listed item only as an explicit repository boundary.",
+                "Do not turn a gap rationale into a positive implementation claim.",
+            ),
+            organization_preference="final caveat",
+        ))
 
     excluded_claim_ids = [
         c.claim_id for c in claim_set.claims
@@ -699,12 +791,49 @@ def _unauthorized_equation_tokens(canonical_text: str, allowed_boundary: str) ->
       boundary, OR
     - the boundary explicitly permits equations (contains the literal
       ``equation`` or ``formula`` token).
+
+    Python keyword arguments (e.g. ``prompt=prompt``, ``request_id=self``,
+    ``sampling_params=sampling_params``) are excluded from equation
+    detection because they are code syntax, not mathematical formulas.
+    A ``name=value`` pattern is treated as a kwarg (not an equation)
+    when it has no spaces around ``=`` and the RHS is a bare identifier,
+    ``self``, ``None``, ``True``, ``False``, or a numeric literal.
     """
 
     formulas = re.findall(r"\$([^$]+)\$", canonical_text)
-    inline_equations = re.findall(
+    raw_equations = re.findall(
         r"([A-Za-z_][A-Za-z0-9_]*\s*=\s*[^,.;]+)", canonical_text
     )
+    # Filter out Python kwargs: patterns like ``name=value`` (no spaces
+    # around ``=``) where the RHS *starts with* a bare identifier or
+    # literal that is immediately followed by a kwarg terminator
+    # (``)``, ``]``, ``}``, ``,``, whitespace, or end of string).  The
+    # terminator lookahead is required because the RHS regex
+    # ``[^,.;]+`` greedily captures trailing prose inside call
+    # expressions, e.g. ``sampling_params=sampling_params) and returns
+    # the output``.  Equations with operators in the RHS (e.g.
+    # ``x=y+z``) are NOT matched because ``+`` is not a terminator.
+    kwarg_rhs_pattern = re.compile(
+        r"^(self|None|True|False|null|nil"
+        r"|-[0-9]+(?:\.[0-9]+)?"
+        r"|[0-9]+(?:\.[0-9]+)?"
+        r"|0x[0-9A-Fa-f]+"
+        r"|[A-Za-z_][A-Za-z0-9_]*)"
+        r"(?=[\)\]\},\s]|$)"
+    )
+    inline_equations: list[str] = []
+    for expr in raw_equations:
+        # Split on the first ``=`` to check LHS/RHS.
+        lhs, _, rhs = expr.partition("=")
+        lhs_stripped = lhs.strip()
+        rhs_stripped = rhs.strip()
+        has_spaces = " = " in expr or expr.startswith(lhs_stripped + " =")
+        if not has_spaces and kwarg_rhs_pattern.match(rhs_stripped):
+            # ``name=value`` without spaces and RHS starts with a bare
+            # identifier or literal followed by a kwarg terminator →
+            # Python kwarg, not an equation.
+            continue
+        inline_equations.append(expr)
     needed = {f"$ {expr.strip()} $" for expr in formulas}
     for expr in inline_equations:
         compact = expr.replace(" ", "")

@@ -403,6 +403,34 @@ class TestDeterministicSupervisorBackend:
         call = decision.selected_tool_calls[0]
         assert call.arguments.get("query") == "prune_pure_feature"
 
+    def test_backend_uses_explicit_author_symbol_instead_of_obligation_hash(self) -> None:
+        backend = _backend()
+        obl = ResearchAgendaItemV1(
+            obligation_id="O-COMPONENT-01-deadbeef",
+            author_text="src/runtime.py::generate_candidates: execute the core path",
+            priority="must_cover",
+            status="in_progress",
+        )
+        decision = backend.decide(_context(active_obligation=obl))
+
+        assert decision.selected_tool_calls[0].arguments["query"] == "generate_candidates"
+
+    def test_backend_uses_semantic_missing_information_not_obligation_hash(self) -> None:
+        backend = _backend()
+        obl = ResearchAgendaItemV1(
+            obligation_id="O-STAGE-01-deadbeef",
+            author_text="Generate candidate sequences from the current prefix.",
+            priority="must_cover",
+            status="in_progress",
+            missing_information=[
+                "Generate candidate sequences from the current prefix.",
+                "candidate_path:src/runtime.py",
+            ],
+        )
+        decision = backend.decide(_context(active_obligation=obl))
+
+        assert decision.selected_tool_calls[0].arguments["query"].startswith("Generate candidate")
+
     def test_backend_decision_id_is_stable(self) -> None:
         backend = _backend()
         obl = _obligation()

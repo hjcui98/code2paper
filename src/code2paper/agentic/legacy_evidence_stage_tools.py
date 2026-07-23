@@ -21,6 +21,11 @@ from code2paper.agentic.evidence_compiler_v3 import (
     validate_evidence_compiler_v3,
     write_compiler_v3_artifacts,
 )
+from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
+from code2paper.agentic.obligation_fact_alignment import (
+    bind_claims_to_obligations,
+    build_obligation_coverage_v2,
+)
 from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.core.output_names import artifact_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, CodeAlignmentIR, CodeMethodAnalysis, MethodEvidence, RawEvidencePack
@@ -98,6 +103,39 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
     artifacts["atomic_claims_v2_unverified"] = str(atomic_claims_v2_unverified_path)
     compiler_v3 = compile_evidence_v3(repo_snapshot)
     if compiler_v3 is not None:
+        intent_v2_path = state.artifacts.get("intent_obligation_graph_v2", "")
+        coverage_path: Path | None = None
+        if intent_v2_path and Path(intent_v2_path).exists():
+            intent_v2 = IntentObligationGraphV2.model_validate_json(
+                Path(intent_v2_path).read_text(encoding="utf-8")
+            )
+            rebound_claims = bind_claims_to_obligations(
+                intent_v2,
+                fact_set=compiler_v3.facts,
+                claim_set=compiler_v3.claims,
+            )
+            compiler_v3 = compiler_v3.model_copy(
+                update={"claims": rebound_claims}
+            )
+            coverage = build_obligation_coverage_v2(
+                intent_v2,
+                fact_set=compiler_v3.facts,
+                claim_set=compiler_v3.claims,
+                explicit_gaps=compiler_v3.claims.explicit_code_gaps,
+            )
+            coverage_path = (
+                artifact_dir(state.method_root, "04_evidence")
+                / f"obligation_coverage_v2{version_suffix}.json"
+            )
+            coverage_path.write_text(
+                json.dumps(
+                    coverage.model_dump(mode="json"),
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
         compiler_failures = validate_evidence_compiler_v3(compiler_v3, repo_snapshot)
         if compiler_failures:
             return StageToolResult(
@@ -113,6 +151,8 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                 suffix=version_suffix,
             )
         )
+        if coverage_path is not None:
+            artifacts["obligation_coverage_v2"] = str(coverage_path)
     if parent_path:
         artifacts["previous_evidence_snapshot_v2"] = str(parent_path)
     decision = "claims_verified" if verification.hard_gate_passed else "claims_need_caveats_or_more_evidence"
@@ -128,7 +168,12 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                 rationale="; ".join(verification.recommended_actions),
                 artifact_keys=[
                     "claim_verification", "evidence_snapshot_v2", "atomic_claims_v2",
-                    *(list(("evidence_packets_v3", "code_facts_v1", "atomic_claims_v3")) if compiler_v3 else []),
+                    *(list((
+                        "evidence_packets_v3",
+                        "code_facts_v1",
+                        "atomic_claims_v3",
+                        "evidence_profile_match",
+                    )) if compiler_v3 else []),
                     "claims", "evidence",
                 ],
             )
@@ -140,6 +185,7 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
             "unsupported_claims": verification.unsupported_claims,
             "compiled_v3_facts": len(compiler_v3.facts.facts) if compiler_v3 else 0,
             "compiled_v3_claims": len(compiler_v3.claims.claims) if compiler_v3 else 0,
+            "compiled_v3_profile_id": compiler_v3.profile_id if compiler_v3 else "",
         },
     )
 

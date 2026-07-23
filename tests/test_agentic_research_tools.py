@@ -323,6 +323,22 @@ def test_search_symbols_finds_class_by_substring(ctx: ResearchToolContext) -> No
     assert all(ref.startswith("symbol:") for ref in refs)
 
 
+def test_search_symbols_ranks_natural_language_query_by_identifier_tokens(
+    ctx: ResearchToolContext,
+) -> None:
+    call = _tool_call(
+        tool_name="search_symbols",
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        arguments={"query": "sequential training loop over batches"},
+        top_k=10,
+    )
+
+    observation = search_symbols(ctx, call)
+
+    assert observation.status == "success"
+    assert any("Trainer.train_loop" in ref for ref in observation.result_refs)
+
+
 def test_search_symbols_filters_by_kind(ctx: ResearchToolContext) -> None:
     call = _tool_call(
         tool_name="search_symbols",

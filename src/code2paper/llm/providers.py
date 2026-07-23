@@ -25,6 +25,7 @@ def load_llm_config_from_env(
     temperature: float | None = None,
     max_output_tokens: int | None = None,
     prompt_template_version: str | None = None,
+    role: str | None = None,
 ) -> LLMConfig:
     provider_value = _normalize_provider_alias(provider or os.environ.get("CODE2PAPER_LLM_PROVIDER", "none"))
     provider_enum = LLMProvider(provider_value)
@@ -39,6 +40,11 @@ def load_llm_config_from_env(
     max_tokens_value = max_output_tokens
     if max_tokens_value is None:
         max_tokens_value = _int_env("CODE2PAPER_LLM_MAX_OUTPUT_TOKENS", 12000)
+    top_p_value = _float_env_or_none("CODE2PAPER_LLM_TOP_P")
+    top_k_value = _int_env_or_none("CODE2PAPER_LLM_TOP_K")
+    seed_value = _int_env_or_none("CODE2PAPER_LLM_SEED")
+    max_input_tokens_value = _int_env_or_none("CODE2PAPER_LLM_MAX_INPUT_TOKENS")
+    role_value = role or os.environ.get("CODE2PAPER_LLM_ROLE", "")
     return LLMConfig(
         provider=provider_enum,
         model=model_value,
@@ -53,6 +59,11 @@ def load_llm_config_from_env(
         or os.environ.get("CODE2PAPER_PROMPT_TEMPLATE_VERSION", ""),
         require_api_for_writing=_bool_env("CODE2PAPER_REQUIRE_API_FOR_WRITING", True),
         cache=_bool_env("CODE2PAPER_LLM_CACHE", True),
+        role=role_value,
+        top_p=top_p_value,
+        top_k=top_k_value,
+        seed=seed_value,
+        max_input_tokens=max_input_tokens_value,
     )
 
 
@@ -136,6 +147,34 @@ def _int_env(name: str, default: int) -> int:
         return int(value)
     except ValueError:
         return default
+
+
+def _float_env_or_none(name: str) -> float | None:
+    """Read a float env var; return ``None`` when unset or empty.
+
+    Used for optional sampling fields (``top_p``, etc.) where ``None``
+    means "provider default" rather than "0.0".
+    """
+
+    value = os.environ.get(name)
+    if value is None or value.strip() == "":
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _int_env_or_none(name: str) -> int | None:
+    """Read an int env var; return ``None`` when unset or empty."""
+
+    value = os.environ.get(name)
+    if value is None or value.strip() == "":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
 def _bool_env(name: str, default: bool) -> bool:

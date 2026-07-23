@@ -29,6 +29,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -335,6 +336,17 @@ def compile_equation_claims(
     return equation_set, reports
 
 
+def write_equation_claims(path: str | Path, equations: EquationClaimSetV1) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(equations.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    return output
+
+
+def load_equation_claims(path: str | Path) -> EquationClaimSetV1:
+    return EquationClaimSetV1.model_validate_json(Path(path).read_text(encoding="utf-8"))
+
+
 __all__ = [
     "EquationAuthorizationReportV1",
     "EquationClaimSetV1",
@@ -343,4 +355,6 @@ __all__ = [
     "EquationSymbolBindingV1",
     "authorize_equation",
     "compile_equation_claims",
+    "load_equation_claims",
+    "write_equation_claims",
 ]

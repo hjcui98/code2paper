@@ -32,6 +32,7 @@ from code2paper.agentic.behavior_graph import (
     BehaviorNodeV1,
     BehaviorRelationV1,
     CodeBehaviorGraphV1,
+    make_symbol_id,
 )
 from code2paper.agentic.evidence_compiler_v3 import (
     AtomicClaimSetV3,
@@ -120,6 +121,9 @@ def ml_repo(tmp_path: Path) -> Path:
     root.mkdir(parents=True)
     (root / "train.py").write_text(_TRAIN_PY, encoding="utf-8")
     (root / "model.py").write_text(_MODEL_PY, encoding="utf-8")
+    (root / "src").mkdir()
+    (root / "src" / "model.py").write_text("value = 1\n", encoding="utf-8")
+    (root / "src" / "data.py").write_text("value = 2\n", encoding="utf-8")
     return root
 
 
@@ -181,10 +185,13 @@ def _relation(
 def _graph(
     nodes: list[BehaviorNodeV1] | None = None,
     relations: list[BehaviorRelationV1] | None = None,
+    *,
+    repo_snapshot_id: str = _REPO_SNAPSHOT_ID,
+    project_tree_hash: str = _PROJECT_TREE_HASH,
 ) -> CodeBehaviorGraphV1:
     return CodeBehaviorGraphV1(
-        repo_snapshot_id=_REPO_SNAPSHOT_ID,
-        project_tree_hash=_PROJECT_TREE_HASH,
+        repo_snapshot_id=repo_snapshot_id,
+        project_tree_hash=project_tree_hash,
         language="python",
         nodes=nodes or [],
         relations=relations or [],
@@ -199,9 +206,18 @@ def _obligation(
     missing_information: tuple[str, ...] = (),
     status: str = "in_progress",
     candidate_behavior_node_ids: tuple[str, ...] = (),
+    author_text: str = "",
+    typed_behavior_targets: tuple[TypedBehaviorTargetV1, ...] | None = None,
 ) -> ResearchAgendaItemV1:
     # Terminal states require their accompanying fields per the
     # ``ResearchAgendaItemV1._terminal_status_consistency`` validator.
+    if typed_behavior_targets is None:
+        typed_behavior_targets = (
+            TypedBehaviorTargetV1(
+                target_id=f"target-{obligation_id}",
+                desired_predicates=("READ",),
+            ),
+        )
     kwargs: dict[str, Any] = {
         "obligation_id": obligation_id,
         "priority": "must_cover",
@@ -209,7 +225,8 @@ def _obligation(
         "candidate_symbol_ids": list(candidate_symbol_ids),
         "candidate_behavior_node_ids": list(candidate_behavior_node_ids),
         "missing_information": list(missing_information),
-        "typed_behavior_targets": [],
+        "author_text": author_text,
+        "typed_behavior_targets": list(typed_behavior_targets),
     }
     if status == "supported":
         kwargs["supported_claim_ids"] = ["claim-fake-supported"]
@@ -488,6 +505,113 @@ class TestCompileCandidateSuccess:
         assert update["code_fact_set_ref"] == compiled["fact_set"].content_digest
         assert update["atomic_claim_set_ref"] == compiled["claim_set"].content_digest
 
+    def test_semantic_relevance_bounds_facts_and_drops_unrelated_nodes(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        obl = _obligation(
+            "obl-semantic-slice",
+            candidate_symbol_ids=("train.py",),
+            author_text="Normalize query embeddings before retrieval.",
+            typed_behavior_targets=(TypedBehaviorTargetV1(
+                target_id="target-normalize",
+                desired_predicates=("NORMALIZE",),
+                search_terms=("query embeddings",),
+            ),),
+        )
+        runtime = _runtime(snapshot, _agenda("run-semantic", snapshot, obl))
+        relevant = _node(
+            node_id="node:normalize-query",
+            predicate="NORMALIZE",
+            operands=("query_embeddings",),
+            result="normalized_queries",
+            source_span_id="span:train.py:9:10",
+        )
+        unrelated = [
+            _node(
+                node_id=f"node:unrelated-{index}",
+                predicate="LOAD",
+                operands=(f"checkpoint_{index}",),
+                result=f"weights_{index}",
+                source_span_id=f"span:train.py:{11 + index}:{11 + index}",
+            )
+            for index in range(6)
+        ]
+        update = compile_candidate_node(
+            _state("obl-semantic-slice"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[relevant, *unrelated]),
+            active_obligation_id="obl-semantic-slice",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        compiled = update["_compiled_evidence"]
+        assert len(compiled["fact_set"].facts) <= 3
+        assert {fact.object for fact in compiled["fact_set"].facts} == {
+            "normalized_queries"
+        }
+        assert len(compiled["claim_set"].claims) <= 3
+
+    def test_semantic_mismatch_fails_closed_instead_of_authorizing_claim(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        obl = _obligation(
+            "obl-semantic-miss",
+            candidate_symbol_ids=("train.py",),
+            author_text="Normalize query embeddings before retrieval.",
+            typed_behavior_targets=(TypedBehaviorTargetV1(
+                target_id="target-normalize-miss",
+                desired_predicates=("NORMALIZE",),
+                search_terms=("query embeddings",),
+            ),),
+        )
+        runtime = _runtime(snapshot, _agenda("run-semantic-miss", snapshot, obl))
+        update = compile_candidate_node(
+            _state("obl-semantic-miss"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[_node(
+                node_id="node:load-checkpoint",
+                predicate="LOAD",
+                operands=("checkpoint",),
+                result="weights",
+            )]),
+            active_obligation_id="obl-semantic-miss",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        assert "_compiled_evidence" not in update
+        assert obl.status != "supported"
+
+    def test_typed_symbol_ref_binds_exact_symbol_not_entire_file(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        train_symbol = make_symbol_id("train.py", "train", 7)
+        eval_symbol = make_symbol_id("train.py", "evaluate", 30)
+        obl = _obligation(
+            "obl-exact-symbol",
+            candidate_symbol_ids=("train.py", "symbol:train.py:train:7"),
+        )
+        runtime = _runtime(snapshot, _agenda("run-exact-symbol", snapshot, obl))
+        train_node = _node(
+            node_id="node:train-symbol",
+            symbol_id=train_symbol,
+            result="training_loss",
+        )
+        eval_node = _node(
+            node_id="node:eval-symbol",
+            symbol_id=eval_symbol,
+            result="evaluation_metric",
+        )
+        update = compile_candidate_node(
+            _state("obl-exact-symbol"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[train_node, eval_node]),
+            active_obligation_id="obl-exact-symbol",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        facts = update["_compiled_evidence"]["fact_set"].facts
+        assert {fact.scope for fact in facts} == {train_symbol}
+
 
 # ---------------------------------------------------------------------------
 # 2. Heterogeneous candidate identifier matching
@@ -665,6 +789,32 @@ class TestGapFinalizerDelegation:
         # gap threshold is not reached, since gain_tracker is fresh).
         assert update.get("_gap_accepted") is False
 
+    def test_untyped_obligation_cannot_become_supported_by_lexical_match(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        obl = _obligation(
+            "obl-untyped",
+            candidate_symbol_ids=("train.py",),
+            author_text="Read optimizer configuration.",
+            typed_behavior_targets=(),
+        )
+        runtime = _runtime(snapshot, _agenda("run-untyped", snapshot, obl))
+        update = compile_candidate_node(
+            _state("obl-untyped"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[_node(
+                node_id="node:untyped-read",
+                predicate="READ",
+                operands=("optimizer",),
+                result="optimizer_config",
+            )]),
+            active_obligation_id="obl-untyped",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        assert "_compiled_evidence" not in update
+        assert obl.status != "supported"
+
     def test_empty_behavior_graph_routes_to_gap_finalizer(
         self, snapshot: RepoSnapshot
     ) -> None:
@@ -830,6 +980,10 @@ class TestResearchLoopProducesCompiledEvidence:
         obl = _obligation(
             "obl-loop-compile",
             candidate_symbol_ids=("train.py:train",),
+            typed_behavior_targets=(TypedBehaviorTargetV1(
+                target_id="target-loop-call",
+                desired_predicates=("CALL",),
+            ),),
             # No missing_information: evidence_critic routes to
             # compile_candidate immediately.
         )
@@ -845,7 +999,11 @@ class TestResearchLoopProducesCompiledEvidence:
             result="opt",
             source_span_id="span:train.py:9:10",
         )
-        loop.behavior_graph = _graph(nodes=[node])
+        loop.behavior_graph = _graph(
+            nodes=[node],
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        )
 
         driver = ResearchLoopDriver(runtime, max_turns=10)
         result = driver.run(loop_state=loop)
@@ -864,6 +1022,10 @@ class TestResearchLoopProducesCompiledEvidence:
         obl = _obligation(
             "obl-loop-supported",
             candidate_symbol_ids=("train.py:train",),
+            typed_behavior_targets=(TypedBehaviorTargetV1(
+                target_id="target-loop-supported-call",
+                desired_predicates=("CALL",),
+            ),),
         )
         runtime = _runtime(snapshot, _agenda("run-sup", snapshot, obl))
         loop = initial_loop_state(runtime)
@@ -875,7 +1037,11 @@ class TestResearchLoopProducesCompiledEvidence:
             result="opt",
             source_span_id="span:train.py:9:10",
         )
-        loop.behavior_graph = _graph(nodes=[node])
+        loop.behavior_graph = _graph(
+            nodes=[node],
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        )
 
         driver = ResearchLoopDriver(runtime, max_turns=10)
         driver.run(loop_state=loop)

@@ -626,6 +626,53 @@ class TextRepairIssueV1(_ResearchModel):
         return value
 
 
+class PacketRepairRequestV1(_ResearchModel):
+    """Fail-closed request for a packet-scoped evidence repair.
+
+    This is deliberately narrower than a research or authoring rerun: it
+    identifies one final claim, one packet (when known), and the exact spans
+    or relation role that failed validation.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    claim_id: str
+    packet_id: str = ""
+    failure_type: TextRepairFailureType
+    offending_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    missing_relation_type: str = ""
+    requested_scope: TextRepairScope
+    attempt: int = 0
+
+    @field_validator("claim_id")
+    @classmethod
+    def _claim_required(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("claim_id must not be empty")
+        return value
+
+    @field_validator("failure_type")
+    @classmethod
+    def _valid_failure(cls, value: TextRepairFailureType) -> TextRepairFailureType:
+        if value not in TEXT_REPAIR_FAILURE_TYPES:
+            raise ValueError(f"unknown failure_type: {value}")
+        return value
+
+    @field_validator("requested_scope")
+    @classmethod
+    def _valid_scope(cls, value: TextRepairScope) -> TextRepairScope:
+        if value not in {"packet_relation", "code_search"}:
+            raise ValueError("packet repair scope must be packet_relation or code_search")
+        return value
+
+    @field_validator("attempt")
+    @classmethod
+    def _attempt_nonnegative(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("attempt must be nonnegative")
+        return value
+
+
 # ---------------------------------------------------------------------------
 # Quality state (R6.3, design 11)
 # ---------------------------------------------------------------------------
@@ -1001,6 +1048,7 @@ __all__ = [
     "GlobalSafetyBudgetV1",
     "GapRequirementV1",
     "PerObligationBudgetV1",
+    "PacketRepairRequestV1",
     "QualityContentDimensionsV1",
     "QualityCostDimensionsV1",
     "QualityMinimalityDimensionsV1",

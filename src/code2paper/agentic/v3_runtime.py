@@ -465,19 +465,22 @@ def merge_compiled_evidence(
 def _synthesize_terminal_gaps(
     runtime: ResearchGraphRuntime,
 ) -> tuple[list[ExplicitCodeGapV1], dict[str, list[str]]]:
-    """Synthesize explicit gaps for must_cover obligations the loop left unresolved.
+    """Synthesize explicit gaps for must_cover obligations the gap_finalizer accepted.
 
-    When the research loop terminates (e.g. ``max_turns`` reached) before
-    the gap_finalizer accepted a gap for a must_cover obligation, that
-    obligation stays ``unresolved`` in the coverage report, which is
-    non-terminal and blocks the authoring plan gate (``unresolved_must_cover_ids``
-    is non-empty).  This helper creates synthetic ``ExplicitCodeGapV1``
-    entries with explicit ``gap_obligation_bindings`` so those obligations
-    become terminal (``explicit_gap``) in the coverage report, allowing the
-    pipeline to proceed to the authoring stage.
+    When the gap_finalizer node formally accepts an obligation as
+    ``explicit_gap``, it updates ``runtime.agenda.items.status`` to
+    ``explicit_gap`` but does not create a corresponding
+    ``ExplicitCodeGapV1`` serialization object.  Without this synthesis,
+    the coverage report would see no gap binding for that obligation and
+    mark it as ``unresolved`` (non-terminal), blocking the authoring
+    plan gate even when the gap was already accepted.
 
-    The agenda items are also marked ``explicit_gap`` in-place so
-    downstream consumers see a consistent terminal state.
+    Only obligations with ``status == "explicit_gap"`` are synthesized.
+    Obligations that are still ``pending``, ``in_progress``, or
+    ``blocked`` are NOT converted to terminal gaps; they remain
+    unresolved and MUST block the authoring gate.  Budget exhaustion
+    and search exhaustion are independent conditions that should not
+    be conflated with ``not_implemented_in_repo``.
     """
 
     gaps: list[ExplicitCodeGapV1] = []
@@ -485,17 +488,13 @@ def _synthesize_terminal_gaps(
     for item in runtime.agenda.items:
         if item.priority != "must_cover":
             continue
-        if item.status == "supported":
-            # Supported obligations have fact coverage; no gap needed.
+        if item.status != "explicit_gap":
+            # Only synthesize for obligations the gap_finalizer has
+            # already formally accepted.  ``pending``, ``in_progress``,
+            # ``blocked`` and ``supported`` remain as-is; they will
+            # appear as unresolved in the coverage report and block
+            # the authoring gate.
             continue
-        # For all other statuses (explicit_gap, blocked, pending,
-        # in_progress, etc.), create a synthetic gap so the coverage
-        # report marks the obligation as terminal.  ``gap_finalizer_node``
-        # only updates ``runtime.agenda.items.status`` without creating
-        # an ``ExplicitCodeGapV1`` object, so without this synthesis
-        # the coverage report would see no gap binding and mark the
-        # obligation as ``unresolved`` (non-terminal), blocking the
-        # authoring plan gate even when the gap was already accepted.
         gap_id = f"gap:synthetic:{item.obligation_id}"
         predicates = sorted(
             {
@@ -507,22 +506,19 @@ def _synthesize_terminal_gaps(
         gap = ExplicitCodeGapV1(
             gap_id=gap_id,
             topic=(
-                f"Unresolved must_cover obligation {item.obligation_id}"
+                f"Explicit gap for must_cover obligation {item.obligation_id}"
                 f" (predicates: {', '.join(predicates)})"
             ),
             scope="any",
             rationale=(
-                f"Research loop terminated before obligation "
-                f"{item.obligation_id} could be resolved or an explicit "
-                f"gap accepted; synthesizing terminal gap to prevent "
-                f"non-terminal must_cover blocking the authoring gate."
+                f"Gap_finalizer accepted obligation "
+                f"{item.obligation_id} as explicit_gap; synthesizing "
+                f"terminal gap object for coverage report."
             ),
             source_kind="author_obligation",
         )
         gaps.append(gap)
         bindings[gap_id] = [item.obligation_id]
-        if item.status not in {"explicit_gap", "blocked"}:
-            item.status = "explicit_gap"
     return gaps, bindings
 
 
