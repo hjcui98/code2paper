@@ -245,6 +245,8 @@ def _compile_facts(packets: EvidencePacketSetV3) -> CodeFactSetV1:
     specs: list[tuple[str, str, FactPredicate, str | list[str], str, list[str], list[str], list[str], list[str]]] = [
         ("F-BML-DATA-LOAD", "load_multiviewdata", "reads", ["multi-view .mat files", "extracts per-view data matrices", "normalizes via minmax_scale"], "multi_view.py:load_multiviewdata", ["EV3-BML-LOAD-DATA"], [], [], []),
         ("F-BML-NOISE-INJECT", "NC_MultiViewDataset.NoiseCorrespondence_inject", "implements", "on-the-fly TNC bootstrapping: samples noise_ratio instances, corrupts up to floor(M/2) views by shuffling with other instances, records per-view corruption mask", "multi_view.py:NC_MultiViewDataset.NoiseCorrespondence_inject", ["EV3-BML-NOISE-INJECT"], [], [], []),
+        ("F-BML-NOISE-MASK", "NC_MultiViewDataset.NoiseCorrespondence_inject", "constructs_mask", "per-view noise_indicator mask (1=clean, 0=corrupted) recording which views were shuffled", "multi_view.py:NC_MultiViewDataset.NoiseCorrespondence_inject", ["EV3-BML-NOISE-INJECT"], [], [], []),
+        ("F-BML-NOISE-SELECT", "NC_MultiViewDataset.NoiseCorrespondence_inject", "selects", "instances to corrupt via noise_ratio threshold and views to corrupt via floor(M/2) random selection", "multi_view.py:NC_MultiViewDataset.NoiseCorrespondence_inject", ["EV3-BML-NOISE-INJECT"], [], [], []),
         ("F-BML-DATASET-CONSTRUCT", "NC_MultiViewDataset.__init__", "calls", "NoiseCorrespondence_inject with noise_ratio and noise_seed to build per-epoch augmented dataset", "multi_view.py:NC_MultiViewDataset.__init__", ["EV3-BML-DATASET-INIT"], ["EV3-BML-NOISE-INJECT"], ["RV3-BML-NOISE-FLOW"], []),
         ("F-BML-ENTROPY", "ReliabilityEstimator._compute_entropy", "computes", "normalized Shannon entropy of per-view predictions as intra-view uncertainty Q_i", "multi_view.py:ReliabilityEstimator._compute_entropy", ["EV3-BML-ENTROPY"], [], [], []),
         ("F-BML-AGREEMENT", "ReliabilityEstimator._compute_pairwise_agreement", "computes", "averaged symmetric KL divergence (Jeffreys divergence) between a view's prediction and others as inter-view discrepancy J_i", "multi_view.py:ReliabilityEstimator._compute_pairwise_agreement", ["EV3-BML-AGREEMENT"], [], [], []),
@@ -252,6 +254,8 @@ def _compile_facts(packets: EvidencePacketSetV3) -> CodeFactSetV1:
         ("F-BML-ROUTER", "ReliabilityEstimator._build_router_mlps", "constructs", "per-view lightweight MLPs (Linear-ReLU-Linear-Sigmoid) mapping feat_dim+2 to scalar reliability in (0,1)", "multi_view.py:ReliabilityEstimator._build_router_mlps", ["EV3-BML-ROUTER-MLPS"], [], [], []),
         ("F-BML-ROUTER-FWD", "ReliabilityEstimator._router_forward", "computes", "per-view reliability weight alpha_i via concatenating view features with reliability features and passing through router MLP", "multi_view.py:ReliabilityEstimator._router_forward", ["EV3-BML-ROUTER-FWD"], ["EV3-BML-ROUTER-MLPS"], ["RV3-BML-ROUTER-FLOW"], []),
         ("F-BML-FINALIZE-FWD", "ReliabilityEstimator._finalize_forward", "calls_in_order", ["call _compute_reliability_features to get entropy+agreement signals", "call _router_forward to get per-view reliability weights", "stack logits via torch.stack(logits_list, dim=1)", "multiply reliability weights via reliabilities.unsqueeze(-1) * logits_stack", "reduce via sum(dim=1) to produce fused_logits", "return (logits_list, fused_logits, reliabilities)"], "multi_view.py:ReliabilityEstimator._finalize_forward", ["EV3-BML-FINALIZE-FWD"], ["EV3-BML-REL-FEATURES", "EV3-BML-ROUTER-FWD"], ["RV3-BML-FINALIZE-RELIABILITY", "RV3-BML-FINALIZE-ROUTER"], []),
+        ("F-BML-STACK", "ReliabilityEstimator._finalize_forward", "stacks", "per-view logits via torch.stack(logits_list, dim=1) into a (B, M, C) tensor", "multi_view.py:ReliabilityEstimator._finalize_forward", ["EV3-BML-FINALIZE-FWD"], [], [], []),
+        ("F-BML-REDUCE", "ReliabilityEstimator._finalize_forward", "reduces", "reliability-weighted logits via sum(dim=1) to produce fused_logits of shape (B, C)", "multi_view.py:ReliabilityEstimator._finalize_forward", ["EV3-BML-FINALIZE-FWD"], [], [], []),
         ("F-BML-BACKBONE-INIT", "MultiViewBackbone.__init__", "constructs", "per-view encoder networks (Linear-BN-ReLU-Dropout stacks) and classifier heads", "multi_view.py:MultiViewBackbone.__init__", ["EV3-BML-BACKBONE-INIT"], [], [], []),
         ("F-BML-BACKBONE-FWD", "MultiViewBackbone.forward", "calls_in_order", ["encode each view through per-view encoder", "compute per-view logits via classifier", "delegate to _finalize_forward for reliability-weighted fusion"], "multi_view.py:MultiViewBackbone.forward", ["EV3-BML-BACKBONE-FWD"], ["EV3-BML-FINALIZE-FWD"], ["RV3-BML-BACKBONE-FINALIZE"], []),
         ("F-BML-TRAIN-LOOP", "train_one_seed", "calls_in_order", ["build per-epoch noise-augmented dataset", "forward pass through backbone", "compute classification CE loss on fused_logits", "compute BCE alignment loss between reliabilities and corruption mask", "backward and optimize with joint loss", "test on multiple noise ratios"], "multi_view.py:train_one_seed", ["EV3-BML-TRAIN"], ["EV3-BML-BACKBONE-FWD", "EV3-BML-DATASET-INIT"], ["RV3-BML-TRAIN-FLOW"], []),
@@ -399,36 +403,76 @@ def _compile_claims(packets: EvidencePacketSetV3, facts: CodeFactSetV1) -> Atomi
     )
 
 
+_BEHAVIOR_REQUIRED_PATTERNS: dict[str, tuple[str, ...]] = {
+    "multi_view.py": (
+        r"class NC_MultiViewDataset", r"NoiseCorrespondence_inject",
+        r"class ReliabilityEstimator", r"_build_router_mlps",
+        r"_compute_entropy", r"_compute_pairwise_agreement",
+        r"_compute_reliability_features", r"_router_forward",
+        r"_finalize_forward",
+        r"class MultiViewBackbone", r"def forward\s*\(self",
+        r"def train_one_seed", r"def load_multiviewdata",
+        r"nn\.Linear", r"nn\.Sigmoid",
+        r"F\.binary_cross_entropy", r"CrossEntropyLoss",
+        r"F\.kl_div", r"F\.log_softmax",
+        r"noise_ratio", r"noise_indicator",
+        r"reliabilit",
+        # Weighted fusion: torch.stack, reliability * logits, sum reduction, return
+        r"torch\.stack\(logits_list,\s*dim=1\)",
+        r"reliabilities\.unsqueeze\(-1\)\s*\*\s*logits_stack",
+        r"\.sum\(dim=1\)",
+        r"return.*fused_logits",
+    ),
+}
+
+_EXECUTABLE_PREDICATE_LABELS: dict[str, str] = {
+    r"torch\.stack\(logits_list,\s*dim=1\)": "torch.stack(logits_list, dim=1)",
+    r"reliabilities\.unsqueeze\(-1\)\s*\*\s*logits_stack": "reliabilities.unsqueeze(-1) * logits_stack",
+    r"\.sum\(dim=1\)": "sum(dim=1) weighted reduction",
+    r"return.*fused_logits": "return fused_logits",
+    r"nn\.Linear": "nn.Linear",
+    r"nn\.Sigmoid": "nn.Sigmoid",
+    r"F\.binary_cross_entropy": "F.binary_cross_entropy",
+    r"CrossEntropyLoss": "CrossEntropyLoss",
+    r"F\.kl_div": "F.kl_div",
+    r"F\.log_softmax": "F.log_softmax",
+    r"noise_ratio": "noise_ratio",
+    r"noise_indicator": "noise_indicator",
+    r"reliabilit": "reliability estimation",
+    r"_finalize_forward": "_finalize_forward method",
+    r"_router_forward": "_router_forward method",
+    r"_compute_entropy": "_compute_entropy method",
+    r"_compute_pairwise_agreement": "_compute_pairwise_agreement method",
+    r"_compute_reliability_features": "_compute_reliability_features method",
+    r"_build_router_mlps": "_build_router_mlps method",
+    r"def forward\s*\(self": "forward(self) method",
+    r"def train_one_seed": "train_one_seed function",
+    r"def load_multiviewdata": "load_multiviewdata function",
+    r"class NC_MultiViewDataset": "NC_MultiViewDataset class",
+    r"class ReliabilityEstimator": "ReliabilityEstimator class",
+    r"class MultiViewBackbone": "MultiViewBackbone class",
+    r"NoiseCorrespondence_inject": "NoiseCorrespondence_inject method",
+}
+
+
 def _behavior_contract_satisfied(root: Path) -> bool:
     """Reject same-name symbols that do not implement the typed predicates."""
-    required_patterns = {
-        "multi_view.py": (
-            r"class NC_MultiViewDataset", r"NoiseCorrespondence_inject",
-            r"class ReliabilityEstimator", r"_build_router_mlps",
-            r"_compute_entropy", r"_compute_pairwise_agreement",
-            r"_compute_reliability_features", r"_router_forward",
-            r"_finalize_forward",
-            r"class MultiViewBackbone", r"def forward\s*\(self",
-            r"def train_one_seed", r"def load_multiviewdata",
-            r"nn\.Linear", r"nn\.Sigmoid",
-            r"F\.binary_cross_entropy", r"CrossEntropyLoss",
-            r"F\.kl_div", r"F\.log_softmax",
-            r"noise_ratio", r"noise_indicator",
-            r"reliabilit",
-            # Weighted fusion: torch.stack, reliability * logits, sum reduction
-            r"torch\.stack\(logits_list,\s*dim=1\)",
-            r"reliabilities\.unsqueeze\(-1\)\s*\*\s*logits_stack",
-            r"\.sum\(dim=1\)",
-        ),
-    }
-    for relative, patterns in required_patterns.items():
+    return not _behavior_contract_missing_patterns(root)
+
+
+def _behavior_contract_missing_patterns(root: Path) -> list[str]:
+    """Return the list of human-readable patterns that failed to match."""
+    missing: list[str] = []
+    for relative, patterns in _BEHAVIOR_REQUIRED_PATTERNS.items():
         try:
             text = (root / relative).read_text(encoding="utf-8", errors="replace")
         except OSError:
-            return False
-        if not all(re.search(pattern, text) for pattern in patterns):
-            return False
-    return True
+            return ["file_not_found:" + relative]
+        for pattern in patterns:
+            if not re.search(pattern, text):
+                label = _EXECUTABLE_PREDICATE_LABELS.get(pattern, pattern)
+                missing.append(label)
+    return missing
 
 
 def _normalize_object(value: str | list[str]) -> str | list[str]:
@@ -486,7 +530,8 @@ class BootstrappingMultiViewProfile:
         symbol_matched = not missing_fingerprints
 
         # Also check behavior contract to avoid match=True but compile=None
-        behavior_ok = _behavior_contract_satisfied(root)
+        missing_patterns = _behavior_contract_missing_patterns(root)
+        behavior_ok = not missing_patterns
         matched = symbol_matched and behavior_ok
 
         reasons = []
@@ -497,7 +542,7 @@ class BootstrappingMultiViewProfile:
         if behavior_ok:
             reasons.append("behavior contract satisfied (weighted fusion, router MLPs, noise injection)")
         else:
-            reasons.append("behavior contract FAILED: missing weighted fusion patterns (torch.stack, reliability.unsqueeze * logits_stack, sum(dim=1)) or other required predicates")
+            reasons.append(f"behavior contract FAILED: missing executable predicates: {', '.join(missing_patterns)}")
 
         return ProfileMatch(
             profile_id=self.profile_id,

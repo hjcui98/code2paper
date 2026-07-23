@@ -71,6 +71,14 @@ FACT_PREDICATE_TO_BEHAVIOR: dict[str, str] = {
 EXTRA_FACT_PREDICATE_ALIASES: dict[str, str] = {
     "calls_in_order": "CALL",
     "configured_by": "CONFIGURED_BY",
+    # Profile-specific predicates used by structure-triggered evidence
+    # profiles.  These are not emitted by the generic fact compiler but
+    # are the canonical predicates for hand-authored evidence profiles.
+    "computes": "COMPUTE",
+    "implements": "CONSTRUCT",
+    "collects": "AGGREGATE",
+    "dispatches": "CALL",
+    "optimizes": "COMPUTE",
 }
 
 #: Combined lookup: lowercase fact predicate -> uppercase behavior predicate.

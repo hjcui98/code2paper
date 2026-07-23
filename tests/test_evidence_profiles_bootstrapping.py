@@ -14,6 +14,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
 from code2paper.agentic.evidence_profiles.bootstrapping_multiview import (
     BootstrappingMultiViewProfile,
     _behavior_contract_satisfied,
+    _behavior_contract_missing_patterns,
 )
 from code2paper.agentic.evidence_profiles.registry import (
     default_evidence_profile_registry,
@@ -473,3 +474,59 @@ def test_profile_does_not_activate_from_project_name_or_prose(tmp_path: Path) ->
     )
     snapshot = build_repo_snapshot(tmp_path)
     assert compile_evidence_v3(snapshot) is None
+
+
+# ---------------------------------------------------------------------------
+# Executable predicate tests
+# ---------------------------------------------------------------------------
+
+def test_remove_return_fused_logits_rejects_behavior_contract(tmp_path: Path) -> None:
+    """Removing all 'return.*fused_logits' occurrences causes behavior contract rejection."""
+    _write_minimal_fixture(tmp_path)
+    path = tmp_path / MULTI_VIEW
+    text = path.read_text(encoding="utf-8")
+    # Replace all occurrences of return.*fused_logits
+    text = text.replace("return logits_list, fused_logits, reliabilities", "return logits_list, None, reliabilities")
+    text = text.replace("return fused_logits, reliabilities", "return None, reliabilities")
+    path.write_text(text, encoding="utf-8")
+    assert not _behavior_contract_satisfied(tmp_path)
+    missing = _behavior_contract_missing_patterns(tmp_path)
+    assert any("return fused_logits" in m for m in missing), f"should report missing return fused_logits, got: {missing}"
+
+
+def test_behavior_contract_missing_patterns_reports_specific_predicates(tmp_path: Path) -> None:
+    """When multiple patterns fail, missing_patterns lists each specific missing predicate."""
+    (tmp_path / MULTI_VIEW).write_text(
+        '''import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class NC_MultiViewDataset:
+    def __init__(self): pass
+    def NoiseCorrespondence_inject(self): pass
+
+class ReliabilityEstimator(nn.Module):
+    def __init__(self): super().__init__()
+    def _build_router_mlps(self): pass
+    def _compute_entropy(self, p): return p
+    def _compute_pairwise_agreement(self, p, i): return p
+    def _compute_reliability_features(self, l): return l
+    def _router_forward(self, f, r): return r
+    def _finalize_forward(self, logits_list, view_features):
+        return logits_list, logits_list[0], None
+
+class MultiViewBackbone(ReliabilityEstimator):
+    def __init__(self): super().__init__()
+    def forward(self, x): return None, None
+
+def train_one_seed(seed): pass
+def load_multiviewdata(path): return None, None
+''',
+        encoding="utf-8",
+    )
+    assert not _behavior_contract_satisfied(tmp_path)
+    missing = _behavior_contract_missing_patterns(tmp_path)
+    assert len(missing) > 0, "should report missing patterns"
+    assert "torch.stack(logits_list, dim=1)" in missing, f"should report missing torch.stack, got: {missing}"
+    assert "sum(dim=1) weighted reduction" in missing, f"should report missing sum(dim=1), got: {missing}"
+    assert "return fused_logits" in missing, f"should report missing return fused_logits, got: {missing}"
