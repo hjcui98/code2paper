@@ -601,6 +601,9 @@ def convert_v3_decisions_to_agent_decisions(
     - ``rationale`` = ``f"{produced_by}:{action}"`` plus the V3 rationale
     - ``evidence_ids`` = the V3 decision's tool call IDs
     - ``artifact_keys`` = the obligation ID (for traceability)
+    - ``goal`` / ``issue_id`` / ``expected_information_gain`` = preserved
+      from the V3 decision so the R8 ``gap_driven_tool_selection``
+      criterion can inspect the LLM-originated gap indicators.
     """
 
     converted: list[AgentDecision] = []
@@ -616,6 +619,9 @@ def convert_v3_decisions_to_agent_decisions(
                 rationale=rationale,
                 evidence_ids=tool_call_ids,
                 artifact_keys=[dec.obligation_id] if dec.obligation_id else [],
+                goal=dec.goal,
+                issue_id=dec.issue_id,
+                expected_information_gain=dec.expected_information_gain,
             )
         )
     return converted

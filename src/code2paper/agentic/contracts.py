@@ -35,6 +35,10 @@ class AgentDecision(BaseModel):
     rationale: str = ""
     evidence_ids: list[str] = Field(default_factory=list)
     artifact_keys: list[str] = Field(default_factory=list)
+    # V3 research supervisor fields preserved for R8 gap_driven_tool_selection.
+    goal: str = ""
+    issue_id: str = ""
+    expected_information_gain: str = ""
 
 
 class StageToolSpec(BaseModel):

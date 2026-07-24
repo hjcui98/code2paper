@@ -427,6 +427,14 @@ _GAP_INDICATOR_SUBSTRINGS: tuple[str, ...] = (
     "no_semantically_matching_projected_claim",
     "budget_exhausted",
     "quality_regression",
+    # The research supervisor's goal always contains "obligation="
+    # because every tool selection is driven by an active obligation
+    # (i.e. an information gap in the evidence coverage).  This
+    # indicator ensures that V3 research decisions whose goal field
+    # is preserved via ``convert_v3_decisions_to_agent_decisions``
+    # are recognised as gap-driven even when the LLM rationale text
+    # does not contain explicit gap keywords.
+    "obligation",
 )
 
 #: Actions that count as autonomous tool selection (i.e., the agent
