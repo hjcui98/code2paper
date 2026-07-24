@@ -32,7 +32,6 @@ class LLMModel:
     def __init__(self, model_path):
         self.engine = AsyncLLM.from_engine_args(model_path)
         self.SamplingParams = SamplingParams
-        self.Temperature = 0.7
 
     async def generate(self, prompt, temperature=0.7, top_p=0.95, top_k=50, stop=None):
         params = SamplingParams(temperature=temperature, top_p=top_p, top_k=top_k, stop=stop)

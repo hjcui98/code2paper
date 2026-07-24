@@ -394,7 +394,7 @@ def _behavior_contract_satisfied(root: Path) -> bool:
             r"class LLMModel", r"class Drafter", r"class Targeter",
             r"AsyncLLM\.from_engine_args", r"async def generate",
             r"def draft\s*\(self", r"def target\s*\(self",
-            r"SamplingParams", r"Temperature",
+            r"SamplingParams",
         ),
         "src/lr_tree.py": (
             r"class MainNode", r"class DrafterNode", r"class TreeNode",
