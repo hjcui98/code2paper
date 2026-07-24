@@ -1,0 +1,154 @@
+{
+  "mode": "agentic-real-method-quality-baseline-v1",
+  "created_at": "2026-07-18",
+  "purpose": "Persist the real-project Method quality bottlenecks that drive the next decision-architecture work. This is not a cutover benchmark.",
+  "blind_protocol": [
+    "Read only scoped code and author-intent YAML.",
+    "Generate evidence, Method text, figure, and trust artifacts.",
+    "Freeze summaries and digests.",
+    "Read the original paper only for diagnostic comparison."
+  ],
+  "metric_notes": {
+    "final_atomic_claim_count": "Length of artifacts/07_validation/agentic_final_text_claims.json atomic_claims.",
+    "whitespace_token_count": "Whitespace split of final/method.md; includes Markdown structure and is diagnostic only.",
+    "unique_projected_claim_count": "Case-insensitive unique supported_fragment count.",
+    "obligation_coverage": "Computed by IntentObligationGraphV1 against the existing authoring projection; it is a quality/repair signal, not a scientific support verdict.",
+    "evidence_fan_in": "Number of direct evidence ids carried by each projected claim. Values above three identify the current large-union evidence design."
+  },
+  "projects": [
+    {
+      "project": "EBCAR",
+      "run_root": "/tmp/code2paper-real-expanded-final-20260718/ebcar-det",
+      "author_intent": "/data1/users/cuihengjia/code2paper/paperyaml3/EBCAR - Embedding-Based Context-Aware Reranker.yaml",
+      "method_markdown_sha256": "adbae46f167e4d6b1ed68a40485bbcb610c020f93f281cba1957e8e8d5775a02",
+      "authoring_projection_sha256": "a0a9f1c7279127d023c821e6319920eaaae507096426322bd09ed88702d81006",
+      "projected_claim_count": 10,
+      "unique_projected_claim_count": 5,
+      "final_atomic_claim_count": 8,
+      "whitespace_token_count": 167,
+      "projected_stage_count": 5,
+      "average_direct_evidence_fan_in": 14.3,
+      "max_direct_evidence_fan_in": 20,
+      "figure_nodes": 5,
+      "figure_edges": 0,
+      "intent_obligations": 17,
+      "must_cover_obligations": 6,
+      "candidate_covered_must_cover": 4,
+      "unresolved_must_cover": 2,
+      "recommended_next": "targeted_evidence_repair",
+      "primary_bottleneck": "An author Motivation stage is weakly bound to inference ranking claims; projection duplicates claims and uses large evidence unions."
+    },
+    {
+      "project": "DyG-Mamba",
+      "run_root": "/tmp/code2paper-real-expanded-final-20260718/dyg_mamba-det",
+      "author_intent": "/data1/users/cuihengjia/code2paper/paperyaml4/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs.yaml",
+      "method_markdown_sha256": "83bdd8a7c54de62c938ae2d5c67653c597593463f9ecaee00231eb4077c88cb0",
+      "authoring_projection_sha256": "c05e888bfb9c504acafc27909cd6ca273d6d387cb91c27348fdaeda08dd2fad5",
+      "projected_claim_count": 6,
+      "unique_projected_claim_count": 4,
+      "final_atomic_claim_count": 5,
+      "whitespace_token_count": 133,
+      "projected_stage_count": 3,
+      "average_direct_evidence_fan_in": 20.3333,
+      "max_direct_evidence_fan_in": 22,
+      "figure_nodes": 3,
+      "figure_edges": 0,
+      "intent_obligations": 14,
+      "must_cover_obligations": 5,
+      "candidate_covered_must_cover": 4,
+      "unresolved_must_cover": 1,
+      "recommended_next": "targeted_evidence_repair",
+      "primary_bottleneck": "The text retains generic encoding/filtering/readout statements but does not compile enough precise dynamic state-space transformations from code."
+    },
+    {
+      "project": "RAP",
+      "run_root": "/tmp/code2paper-real-expanded-codeonly2-20260718/rap",
+      "author_intent": "/data1/users/cuihengjia/code2paper/paperyaml/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.yaml",
+      "method_markdown_sha256": "9e6b508ea5e9ceabd36a8676db45fdc2e18e5db5c3ce50051a32f5e4d9231670",
+      "authoring_projection_sha256": "1ce2207dd8180eef0d5949266a8b560743d91a3361e2225426a273fadef6d093",
+      "projected_claim_count": 2,
+      "unique_projected_claim_count": 1,
+      "final_atomic_claim_count": 1,
+      "whitespace_token_count": 27,
+      "projected_stage_count": 1,
+      "average_direct_evidence_fan_in": 20.0,
+      "max_direct_evidence_fan_in": 20,
+      "figure_nodes": 4,
+      "figure_edges": 0,
+      "intent_obligations": 16,
+      "must_cover_obligations": 5,
+      "candidate_covered_must_cover": 1,
+      "unresolved_must_cover": 4,
+      "recommended_next": "targeted_evidence_repair",
+      "code_supported_but_omitted": [
+        "PrunePredictor construction and forward architecture",
+        "checkpoint weight loading",
+        "per-primitive score inference",
+        "score sorting and boolean mask construction",
+        "prune_points invocation in the provided inference path"
+      ],
+      "correctly_excluded": [
+        "training program",
+        "three training loss definitions",
+        "repository-wide or any-scene rendering-free guarantee",
+        "repository-wide no-retraining guarantee"
+      ],
+      "primary_bottleneck": "A broad author deployment/learning claim is rejected as a whole instead of being decomposed into code-supported inference/pruning subclaims and unsupported training fragments."
+    },
+    {
+      "project": "LinearRAG",
+      "run_root": "/tmp/code2paper-real-expanded-20260718/linearrag-det",
+      "method_markdown_sha256": "aec75241c519b1416689a3a6d331fc42453a42d76c4edeff6614ceeaef0024ed",
+      "authoring_projection_sha256": "af3f36a8b43060a9c3e5ebb0828717740496547f19c7b5b48915ebb1cddb429f",
+      "projected_claim_count": 7,
+      "unique_projected_claim_count": 3,
+      "final_atomic_claim_count": 3,
+      "whitespace_token_count": 111,
+      "projected_stage_count": 4,
+      "average_direct_evidence_fan_in": 9.1,
+      "max_direct_evidence_fan_in": 20,
+      "figure_nodes": 4,
+      "figure_edges": 0,
+      "primary_bottleneck": "Usable existing result, but projection duplication and large evidence fan-in remain."
+    },
+    {
+      "project": "Lookahead Reasoning",
+      "run_root": "/tmp/code2paper-real-expanded-20260718/lookahead-det",
+      "method_markdown_sha256": "d59e7cb1671cae93fb6b1228007a57d2e780cc5f701bc9e72b0550bb38cef763",
+      "authoring_projection_sha256": "f3ab666f83c84bf9e508cf054ea3616fba26054fa5f6aadf4f127aa4bf7a43b9",
+      "projected_claim_count": 2,
+      "unique_projected_claim_count": 1,
+      "final_atomic_claim_count": 1,
+      "whitespace_token_count": 33,
+      "projected_stage_count": 1,
+      "average_direct_evidence_fan_in": 20.0,
+      "max_direct_evidence_fan_in": 20,
+      "figure_nodes": 1,
+      "figure_edges": 0,
+      "primary_bottleneck": "Only the verifier longest-prefix behavior survives; the method mainline is not represented by enough evidence-first claims."
+    }
+  ],
+  "quality_slice_runs": [
+    {
+      "run": "rap-det",
+      "run_root": "/tmp/code2paper-quality-v2-20260718/rap-det",
+      "result": "Obligation coverage was emitted but its repair could not run because the shared evidence_revision budget was already exhausted. The final one-claim text also exposed a denial-qualifier contamination bug."
+    },
+    {
+      "run": "rap-det-r2",
+      "run_root": "/tmp/code2paper-quality-v2-20260718/rap-det-r2",
+      "result": "A separate obligation_revision counter caused two bounded authoring_obligation_repair decisions. Denial qualifiers were removed from the positive writer projection, but the old analyzer still produced only one unique feature claim."
+    },
+    {
+      "run": "rap-det-r3",
+      "run_root": "/tmp/code2paper-quality-v2-20260718/rap-det-r3",
+      "result": "Obligation repair routed through targeted intake and increased selected snippets from 35 to 37. The focus identified PrunePredictor.forward, GaussianModel.get_prune_input_f15, and GaussianModel.prune_points, yet the legacy code-fact/evidence compiler still emitted only the feature claim. This is the sentinel proof that EvidencePacketV3 and CodeFactV1 are the next required implementation, not more benchmark work or more generic loops."
+    }
+  ],
+  "cross_project_findings": [
+    "Zero unsupported final claims demonstrates leakage control, not usable Method coverage.",
+    "Three sentinel projects are explicitly routed to targeted evidence repair by obligation coverage despite legacy retrieval coverage between 0.67 and 0.90.",
+    "RAP is the strongest proof that the bottleneck is upstream claim compilation rather than writer fluency.",
+    "Every real figure has zero edges, so figure work remains secondary until the prose claim contract is repaired."
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0",
+  "evaluation_kind": "real_project_blind_method_quality_diagnostic",
+  "project": "RAP",
+  "date": "2026-07-19",
+  "priority": "method_text_quality_before_figure_before_rollout_benchmark",
+  "blind_protocol": {
+    "inputs_read_before_generation": [
+      "/data1/users/cuihengjia/code2paper/code_final/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing",
+      "/data1/users/cuihengjia/code2paper/paperyaml/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.yaml"
+    ],
+    "original_paper_read_before_summary_freeze": false,
+    "llm_provider": "openai-compatible-local-vllm",
+    "model": "gemma4-31b-nvfp4",
+    "llm_cache": false,
+    "temperature": 0,
+    "run_id": "rap-quality-v2-gemma-r1",
+    "run_root": "/tmp/code2paper-quality-v2-20260719/rap-gemma-r1",
+    "budgets": {
+      "max_retrieval_rounds": 2,
+      "max_evidence_revision_rounds": 2,
+      "max_authoring_revision_rounds": 2,
+      "max_figure_revision_rounds": 1,
+      "max_semantic_verifier_calls": 1
+    }
+  },
+  "result": {
+    "status": "blocked",
+    "blocked_reason": "text_claim_direct_evidence_missing_budget_exhausted",
+    "candidate_method_word_count": 48,
+    "candidate_method_factual_claims": 3,
+    "candidate_method_supported_claims": 1,
+    "candidate_method_unsupported_claims": 2,
+    "final_text_unsupported_claim_rate": 0.6667,
+    "must_cover_obligations": 5,
+    "candidate_covered_must_cover_obligations": 0,
+    "projected_claims": 3,
+    "unique_projected_claims": 2,
+    "duplicate_projected_claim_ids": [
+      "C9"
+    ],
+    "evidence_support_rate": 0.6136,
+    "retrieval_rounds_used": 2,
+    "evidence_revision_rounds_used": 2,
+    "obligation_revision_rounds_used": 2,
+    "semantic_verifier_calls_used": 1,
+    "authoring_llm_used": true,
+    "authoring_llm_call_count": 1,
+    "invariant_audit_passed": false
+  },
+  "frozen_artifact_digests": {
+    "agentic_run_summary.json": "sha256:06c54b95a86aeb607ee4e98687fad7158680439fbbf5a2955d6fda3a7412aff9",
+    "agentic_run_completion_report.json": "sha256:fbec69a9fa1735f0c1590eddfabab5d5b68b3426d50ebd69244d7cca1b148055",
+    "agentic_run_evaluation_report.json": "sha256:8088f99ab195d3d88aaf686f7dec7f369716509a853fcb3bee4ee74541c566f4",
+    "evidence_snapshot_v2_r5.json": "sha256:94f6a1de66af87ed6e41410f6b233e58c7aded12eb72cdd4d49d9bca9cf50ae5",
+    "atomic_claims_v2_r5.json": "sha256:93f247eb05f784110236cbbf99c67ce527e18b3c3c05b2d9a8abfb4b60101235",
+    "agentic_authoring_input_projection.json": "sha256:7bc1cff3c9ae3faceb9e6429b011872794a82857d64381ac1226c61067c57ec7",
+    "agentic_authoring_obligation_coverage.json": "sha256:0d79393171b780cc45dc83d86cd1a93c10bb736ec1f0e376204b2953e63224c2",
+    "method_clean.md": "sha256:ada5faa7809a107bd8b56bf8b114ce001bce3ead923919a9704b6679fd034554",
+    "agentic_text_evidence_validation.json": "sha256:fb64963eb0ddbc29dc898ce1cda1909d38b0c7104bfadba624423980eabf2c1d"
+  },
+  "candidate_method_text": "# Method\n\n## Sort Gaussians by importance score and prune those\n\nGaussians are sorted by importance score, and those falling below the specified retention threshold are pruned.\n\n## Importance-aware feature extraction\n\nThis stage extracts raw Gaussian attributes, including scales, opacity, and DC color. Additionally, local contrast is computed using KNN z-scores.",
+  "blind_findings": [
+    {
+      "id": "RAP-G1",
+      "severity": "critical",
+      "finding": "Retrieval found the required code, but claim-to-evidence binding selected semantically wrong spans.",
+      "evidence": {
+        "available_exact_spans": [
+          "E17 utils/gaussian_model.py:192-264 GaussianModel.get_prune_input_f15",
+          "E6 utils/net_utils.py:5-37 PrunePredictor",
+          "E8 utils/net_utils.py:28-29 PrunePredictor.forward",
+          "E1 prune_percent.py:8-37 prune_pure_feature",
+          "E18 utils/gaussian_model.py:266-272 GaussianModel.prune_points"
+        ],
+        "incorrect_binding": "Feature claim C2/C9 was bound to E57/E58, which are compute_sh_anisotropy_loop and compute_sh_anisotropy_loop_std rather than the claimed attribute extraction and KNN z-score pipeline.",
+        "validator_result": "Both generated feature sentences failed with direct_evidence_semantically_unrelated."
+      },
+      "architectural_consequence": "More search loops cannot fix a compiler that ignores already-retrieved exact spans."
+    },
+    {
+      "id": "RAP-G2",
+      "severity": "critical",
+      "finding": "The V2 claim inventory is broad, duplicated, and not compositional.",
+      "evidence": {
+        "projected_claim_count": 3,
+        "unique_projected_claim_count": 2,
+        "duplicate_claim": "C2 and C9 have identical wording and identical evidence bindings.",
+        "omitted_safe_mechanism": "The supported predictor/score claim appears repeatedly as C1/C3/C4/C10 but is excluded from the final projection and plan.",
+        "missing_atomic_path": "No authorized claim sequence represents feature construction -> predictor construction/checkpoint load -> forward score -> descending sort/top-k -> boolean mask -> prune_points."
+      },
+      "architectural_consequence": "The writer cannot recover omitted control-flow facts because its positive input is intentionally limited to the projection."
+    },
+    {
+      "id": "RAP-G3",
+      "severity": "high",
+      "finding": "Gemma routing recognizes incompleteness but spends all budgets rescanning the same symbol pool.",
+      "evidence": {
+        "retrieval_rounds": 2,
+        "evidence_revision_rounds": 2,
+        "obligation_revision_rounds": 2,
+        "must_cover_coverage": "0/5",
+        "retrieved_span_count": 77,
+        "required_symbols_already_present": true
+      },
+      "architectural_consequence": "The missing action is compile_relation/compile_fact, not rescan_intake or prompt revision."
+    },
+    {
+      "id": "RAP-G4",
+      "severity": "high",
+      "finding": "The model coverage critic overclaims semantic coverage from unrelated lexical matches.",
+      "evidence": {
+        "example": "The critic treated percentile_cutoff_normalize/prune_pure_feature as coverage for entropy-based distribution regularization, although the executable source contains no soft-histogram entropy training loss.",
+        "safety_outcome": "Later evidence and text gates prevented publication, so trust was preserved while progress and prose quality suffered."
+      },
+      "architectural_consequence": "Model proposals need typed evidence predicates and deterministic relation checks before they can mark an obligation covered."
+    },
+    {
+      "id": "RAP-G5",
+      "severity": "high",
+      "finding": "Semantic hints still contaminate analysis and decision priorities even when they cannot become hard evidence.",
+      "evidence": {
+        "example": "paperdraft.md supplied DL3DV-10K, soft pruning, three losses, and entropy language to analysis; the graph repeatedly searched executable code for these absent training claims.",
+        "correct_final_policy": "These claims were excluded or caveated and did not pass the final direct-evidence gate."
+      },
+      "architectural_consequence": "semantic_hint-derived obligations must be tagged as verify_only and must terminate as explicit code gaps without consuming repeated mainline compilation rounds."
+    },
+    {
+      "id": "RAP-G6",
+      "severity": "medium",
+      "finding": "The writer is not the primary bottleneck.",
+      "evidence": {
+        "authoring_llm_used": true,
+        "writer_input_unique_claims": 2,
+        "candidate_method_word_count": 48,
+        "result": "Gemma paraphrased the two projected facts but could not invent the missing mainline, as required by the evidence policy."
+      },
+      "architectural_consequence": "Prompt expansion or extra writer calls cannot create trustworthy content absent from the projection."
+    },
+    {
+      "id": "RAP-G7",
+      "severity": "medium",
+      "finding": "One LLM analysis synthesis response failed JSON parsing because of an invalid escape, then fell back safely.",
+      "evidence": {
+        "runtime_message": "LLM synthesis failed: Invalid \\escape: line 4 column 415 (char 985)",
+        "run_effect": "The run continued, but structured-output robustness remains a secondary reliability issue."
+      },
+      "architectural_consequence": "Fix after EvidencePacketV3/CodeFactV1; it is not the cause of the missing method mainline."
+    }
+  ],
+  "required_next_batch": {
+    "name": "RAP evidence compiler vertical slice",
+    "must_implement": [
+      "EvidencePacketV3",
+      "CodeFactV1",
+      "obligation and claim decomposition",
+      "AtomicClaimV3 projection"
+    ],
+    "compile_scope": [
+      "prune_percent.py:prune_pure_feature",
+      "utils/gaussian_model.py:GaussianModel.get_prune_input_f15",
+      "utils/net_utils.py:PrunePredictor.__init__",
+      "utils/net_utils.py:PrunePredictor.load_model",
+      "utils/net_utils.py:PrunePredictor.forward",
+      "utils/gaussian_model.py:GaussianModel.prune_points"
+    ],
+    "required_path": [
+      "load PLY and construct per-primitive features",
+      "construct predictor and load checkpoint",
+      "apply predictor to prune_features and select score column",
+      "compute keep_num from retention ratio",
+      "sort scores descending and select top indices",
+      "construct boolean valid_mask",
+      "apply valid_mask in prune_points",
+      "save pruned PLY and scores"
+    ],
+    "forbidden_shortcuts": [
+      "Do not add another retrieval, evidence, or authoring loop as the primary fix.",
+      "Do not use prompt changes as a substitute for typed facts.",
+      "Do not count semantic-hint matches as implementation coverage.",
+      "Do not expand benchmark or cutover work before the RAP method-text acceptance test passes."
+    ],
+    "acceptance": [
+      "Every emitted fact names its predicate, scope, exact direct span ids, and relation span ids.",
+      "The feature packet binds GaussianModel.get_prune_input_f15 and its invoked normalization utilities, not only an anisotropy helper.",
+      "The predictor packet binds PrunePredictor.__init__, load_model, and forward separately.",
+      "The pruning packet decomposes score, argsort, top-k selection, mask construction, prune_points, and output saving into individually traceable facts/claims.",
+      "Canonical claim deduplication leaves one claim per implementation behavior.",
+      "The final projection covers the supported inference mainline in code order.",
+      "Gemma produces a multi-paragraph Method candidate whose every factual sentence passes direct-evidence validation.",
+      "Training, DL3DV-10K, soft pruning, and three-loss details remain explicit code gaps unless new executable evidence is found."
+    ]
+  },
+  "paper_comparison": {
+    "status": "diagnostic_complete_after_blind_summary_freeze",
+    "paper_path": "/data1/users/cuihengjia/code2paper/paper_final/062_RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.md",
+    "method_region": "approximately lines 256-440",
+    "diagnostic_only": true,
+    "observations": [
+      "The paper organizes the method around importance-aware feature extraction followed by learned importance prediction and optimization; the 48-word generated candidate does not reconstruct this organization.",
+      "The executable repository independently supports a much fuller inference description than the generated candidate: feature construction and normalization, predictor construction and checkpoint loading, score inference, descending ranking, top-retention mask construction, tensor filtering, and artifact saving.",
+      "The paper's training simulation, DL3DV-10K data, and three loss terms are not established by the provided executable source and therefore remain explicit gaps rather than authorizable Method claims.",
+      "Where paper prose and code differ, the generated Method must follow code. In particular, the paper describes a single sigmoid score, while utils/net_utils.py constructs two logits followed by Softmax and prune_percent.py selects column zero as the score."
+    ],
+    "conclusion": "The quality gap is not explained by an unusually detailed gold paper. The current repository itself contains enough direct code evidence for a useful multi-paragraph inference Method, but V2 evidence binding and claim projection fail to compile it."
+  }
+}

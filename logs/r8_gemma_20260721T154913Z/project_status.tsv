@@ -1,0 +1,5 @@
+project	run_id	exit_code	elapsed_seconds	run_root
+static_pytest	20260721T154913Z	0	57	/home/cuihengjia/agent/Code2Paper copy/logs/r8_gemma_20260721T154913Z/pytest.log
+ebcar	20260721T154913Z-ebcar	0	690	/tmp/code2paper-r8-matrix-20260721T154913Z/ebcar
+dyg	20260721T154913Z-dyg	0	682	/tmp/code2paper-r8-matrix-20260721T154913Z/dyg
+linearrag	20260721T154913Z-linearrag	0	695	/tmp/code2paper-r8-matrix-20260721T154913Z/linearrag

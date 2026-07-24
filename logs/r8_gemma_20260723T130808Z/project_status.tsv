@@ -1,0 +1,8 @@
+project	run_id	cli_exit_code	recheck_exit_code	accepted	protocol_check_passed	completion	readiness	elapsed_seconds	run_root
+static_pytest	20260723T130808Z	0	0	N/A	N/A	N/A	N/A	58	/home/cuihengjia/agent/Code2Paper copy/logs/r8_gemma_20260723T130808Z/pytest.log
+rap	20260723T130808Z-rap	0	0	True	True	passed	passed	546	/tmp/code2paper-r8-matrix-20260723T130808Z/rap
+ebcar	20260723T130808Z-ebcar	0	0	True	True	passed	passed	695	/tmp/code2paper-r8-matrix-20260723T130808Z/ebcar
+dyg	20260723T130808Z-dyg	0	0	True	True	passed	passed	581	/tmp/code2paper-r8-matrix-20260723T130808Z/dyg
+linearrag	20260723T130808Z-linearrag	0	0	True	True	passed	passed	566	/tmp/code2paper-r8-matrix-20260723T130808Z/linearrag
+lookahead	20260723T130808Z-lookahead	0	0	True	True	passed	passed	406	/tmp/code2paper-r8-matrix-20260723T130808Z/lookahead
+bootstrapping	20260723T130808Z-bootstrapping	0	0	False	True	failed	failed	472	/tmp/code2paper-r8-matrix-20260723T130808Z/bootstrapping

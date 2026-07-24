@@ -1,0 +1,4 @@
+project	run_id	exit_code	elapsed_seconds	run_root
+static_pytest	20260722T260000Z	0	85	/home/cuihengjia/agent/Code2Paper copy/logs/r8_gemma_20260722T260000Z/pytest.log
+lookahead	20260722T260000Z-lookahead	0	402	/tmp/code2paper-r8-matrix-20260722T260000Z/lookahead
+bootstrapping	20260722T260000Z-bootstrapping	0	473	/tmp/code2paper-r8-matrix-20260722T260000Z/bootstrapping

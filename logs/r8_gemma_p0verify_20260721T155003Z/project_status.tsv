@@ -1,0 +1,2 @@
+project	run_id	exit_code	elapsed_seconds	run_root
+static_pytest	p0verify_20260721T155003Z	0	71	/home/cuihengjia/agent/Code2Paper copy/logs/r8_gemma_p0verify_20260721T155003Z/pytest.log

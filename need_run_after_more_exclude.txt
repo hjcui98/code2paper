@@ -1,0 +1,32 @@
+CLIPoint3D - Language-Grounded Few-Shot Unsupervised 3D Point Cloud Domain Adaptation
+Calibri - Enhancing Diffusion Transformers via Parameter-Efficient Calibration
+Circuit Tracing in Vision-Language Models - Understanding the Internal Mechanisms of Multimodal Thinking
+HetCache - Accelerating Diffusion-based Video Editing via Heterogeneous Caching
+MOS - Mitigating Optical-SAR Modality Gap for Cross-Modal Ship Re-Identification
+Mitigating Instance Entanglement in Instance-Dependent Partial Label Learning
+MultiShotMaster - A Controllable Multi-Shot Video Generation Framework
+OrthoReg - Understanding and Enforcing Weight Disentanglement in Task Arithmetic
+PAM - A Pose–Appearance–Motion Engine for Sim-to-Real HOI Video Generation
+Particulate - Feed-Forward 3D Object Articulation
+PixARMesh - Autoregressive Mesh-Native Single-View Reconstruction _ Generation
+PointCNN++ _ Pointelligence
+PureCC - Pure Learning for Text-to-Image Concept Customization
+RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing
+ReDirector - Creating Any-Length Video Retakes with Rotary Camera Encoding
+ReasonMap - Towards Fine-Grained Visual Reasoning Maps _ Transit Maps
+SING - Analyzing Semantic Invariants in Classifiers
+SelVA - Hear What Matters! Text-conditioned Selective Video-to-Audio Generation
+SenseNova-SI - Scaling Spatial Intelligence with Multimodal Foundation Models
+StructXLIP - Enhancing Vision-language Models with Multimodal Structural Cues
+U4D - Uncertainty-Aware 4D World Modeling from LiDAR Sequences
+UCPE - Camera-controlled Text-to-Video Generation
+USO - Unified Style and Subject-Driven Generation
+UltraFlux - Data-Model Co-Design for High-quality Native 4K Text-to-Image Generation across Diverse Aspect Ratios
+UniMMAD
+UniTEX - Universal High Fidelity Generative Texturing for 3D Shapes
+VGGT-Det - Mining VGGT Internal Priors for Sensor-Geometry-Free Multi-View Indoor 3D Object Detection
+VIRST - Video-Instructed Reasoning Assistant for SpatioTemporal Segmentation
+WaDi - Weight Direction-aware Distillation for One-step Image Synthesis
+When Safety Collides - Resolving Multi-Category Harmful Conflicts in Text-to-Image Diffusion via Adaptive Safety Guidance _ CASG
+YOLO-Master - MOE-Accelerated with Specialized Transformers for Enhanced Real-time Detection
+tttLRM - Test-Time Training for Long Context and Autoregressive 3D Reconstruction

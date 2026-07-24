@@ -1,0 +1,8 @@
+project	run_id	exit_code	elapsed_seconds	run_root
+static_pytest	20260722T070500Z	0	71	/home/cuihengjia/agent/Code2Paper copy/logs/r8_gemma_20260722T070500Z/pytest.log
+rap	20260722T070500Z-rap	0	540	/tmp/code2paper-r8-matrix-20260722T070500Z/rap
+ebcar	20260722T070500Z-ebcar	0	682	/tmp/code2paper-r8-matrix-20260722T070500Z/ebcar
+dyg	20260722T070500Z-dyg	0	621	/tmp/code2paper-r8-matrix-20260722T070500Z/dyg
+linearrag	20260722T070500Z-linearrag	0	624	/tmp/code2paper-r8-matrix-20260722T070500Z/linearrag
+lookahead	20260722T070500Z-lookahead	0	383	/tmp/code2paper-r8-matrix-20260722T070500Z/lookahead
+bootstrapping	20260722T070500Z-bootstrapping	0	1144	/tmp/code2paper-r8-matrix-20260722T070500Z/bootstrapping

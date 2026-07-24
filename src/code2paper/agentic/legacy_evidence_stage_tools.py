@@ -23,6 +23,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
 )
 from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
 from code2paper.agentic.obligation_fact_alignment import (
+    ObligationCoverageReportV2,
     bind_claims_to_obligations,
     build_obligation_coverage_v2,
 )
@@ -152,7 +153,24 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
             )
         )
         if coverage_path is not None:
-            artifacts["obligation_coverage_v2"] = str(coverage_path)
+            # When the V3 runtime already produced a coverage report with
+            # synthetic gaps, preserve that path so the authoring plan gate
+            # does not block on unresolved must_cover obligations that have
+            # already been accepted as explicit gaps.
+            v3_coverage = state.artifacts.get("obligation_coverage_v2", "")
+            if v3_coverage and Path(v3_coverage).exists():
+                try:
+                    v3_report = ObligationCoverageReportV2.model_validate_json(
+                        Path(v3_coverage).read_text(encoding="utf-8")
+                    )
+                    if v3_report.unresolved_must_cover_ids != coverage.unresolved_must_cover_ids:
+                        artifacts["obligation_coverage_v2"] = v3_coverage
+                    else:
+                        artifacts["obligation_coverage_v2"] = str(coverage_path)
+                except Exception:
+                    artifacts["obligation_coverage_v2"] = str(coverage_path)
+            else:
+                artifacts["obligation_coverage_v2"] = str(coverage_path)
     if parent_path:
         artifacts["previous_evidence_snapshot_v2"] = str(parent_path)
     decision = "claims_verified" if verification.hard_gate_passed else "claims_need_caveats_or_more_evidence"

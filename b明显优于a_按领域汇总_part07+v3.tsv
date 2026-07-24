@@ -1,0 +1,79 @@
+domain	source	case	B_score	title
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	OccAny - Generalized Unconstrained Urban 3D Occupancy	4.8	OccAny - Generalized Unconstrained Urban 3D Occupancy
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	3DThinker - Think with 3D: Geometric Imagination Grounded Spatial Reasoning from Limited Views	4.62	3DThinker - Think with 3D: Geometric Imagination Grounded Spatial Reasoning from Limited Views
+3D/4D视觉与重建	eval_qwen36_part07_batch1	38_Exploring_the_Potential_of_Encoder-free_Architectures_in_3D_LMMs	4.62	Exploring the Potential of Encoder-free Architectures in 3D LMMs
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	InvAD - Inversion-based Reconstruction-Free Anomaly Detection with Diffusion Models	4.62	InvAD - Inversion-based Reconstruction-Free Anomaly Detection with Diffusion Models
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	LaS-Comp - Zero-shot 3D Completion with Latent-Spatial Consistency	4.62	LaS-Comp - Zero-shot 3D Completion with Latent-Spatial Consistency
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	NeoVerse - Enhancing 4D World Model with In-the-Wild Monocular Videos	4.62	NeoVerse - Enhancing 4D World Model with In-the-Wild Monocular Videos
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	Voxify3D - Pixel Art Meets Volumetric Rendering	4.62	Voxify3D - Pixel Art Meets Volumetric Rendering
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	3DGen-R1 - Are We Ready for RL in Text-to-3D Generation?	4.42	3DGen-R1 - Are We Ready for RL in Text-to-3D Generation?
+3D/4D视觉与重建	eval_qwen36_code_raw_vs_paperdraft_v3	Rewis3d - Reconstruction for Weakly-Supervised Semantic Segmentation	4.42	Rewis3d - Reconstruction for Weakly-Supervised Semantic Segmentation
+3D/4D视觉与重建	eval_qwen36_part07_batch2	88_YoNoSplat_-_You_Only_Need_One_Model_for_Feedforward_3D_Gaussian_Splatting	4.42	YoNoSplat - You Only Need One Model for Feedforward 3D Gaussian Splatting
+3D/4D视觉与重建	eval_qwen36_part07_batch2	56_Lyra_-_Generative_3D_Scene_Reconstruction_via_Video_Diffusion_Model_Self-Distillation	4.14	Lyra - Generative 3D Scene Reconstruction via Video Diffusion Model Self-Distillation
+AI for Science/生物医药	eval_qwen36_part07_batch2	70_SYNC_-_Measuring_and_Advancing_Synthesizability_in_Structure-Based_Drug_Design	4.8	SYNC - Measuring and Advancing Synthesizability in Structure-Based Drug Design
+AI for Science/生物医药	eval_qwen36_part07_batch2	60_OmniMouse_-_Scaling_properties_of_multi-modal__multi-task_Brain_Models_on_150B_Neural_Tokens	4.42	OmniMouse - Scaling properties of multi-modal multi-task Brain Models on 150B Neural Tokens
+其他	eval_qwen36_part07_batch1	08_Any-step_Generation_via_N-th_Order_Recursive_Consistent_Velocity_Field_Estimation	6.0	Any-step Generation via N-th Order Recursive Consistent Velocity Field Estimation
+其他	eval_qwen36_part07_batch1	28_Deep_Think_with_Confidence	6.0	Deep Think with Confidence
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	LitePT - Lighter Yet Stronger Point Transformer	5.82	LitePT - Lighter Yet Stronger Point Transformer
+其他	eval_qwen36_part07_batch2	76_TSPulse_-_Tiny_Pre-Trained_Models_with_Disentangled_Representations_for_Rapid_Time-Series_Analysis	5.8	TSPulse - Tiny Pre-Trained Models with Disentangled Representations for Rapid Time-Series Analysis
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	SimScale - Learning to Simulate at Scale	5.0	SimScale - Learning to Simulate at Scale
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	ApET - Approximation-Error Guided Token Compression for Efficient VLMs	4.62	ApET - Approximation-Error Guided Token Compression for Efficient VLMs
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	SEATrack - Simple, Efficient, and Adaptive Multimodal Tracker	4.62	SEATrack - Simple, Efficient, and Adaptive Multimodal Tracker
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	StyleExpert	4.62	StyleExpert
+其他	eval_qwen36_part07_batch1	20_CodeQuant_-_Unified_Clustering_and_Quantization_for_Enhanced_Outlier_Smoothing_in_Low-Precision_Mixture-of-Experts	4.52	CodeQuant - Unified Clustering and Quantization for Enhanced Outlier Smoothing in Low-Precision Mixture-of-Experts
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	F2DC - Domain-Skewed Federated Learning with Feature Decoupling and Calibration	4.44	F2DC - Domain-Skewed Federated Learning with Feature Decoupling and Calibration
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	MoVieS	4.44	MoVieS
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	UPLiFT - Universal Pixel-dense Lightweight Feature Transforms _ Efficient Pixel-Dense Feature Upsampling with Local Attenders	4.42	UPLiFT - Universal Pixel-dense Lightweight Feature Transforms Efficient Pixel-Dense Feature Upsampling with Local Attenders
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	PF-RPN	4.32	PF-RPN
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	One-to-All Animation	4.04	One-to-All Animation
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	LMEE _ MemoryExplorer - Explore with Long-term Memory	4.02	LMEE MemoryExplorer - Explore with Long-term Memory
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	Mobile-VTON - High-Fidelity On-Device Virtual Try-On	3.74	Mobile-VTON - High-Fidelity On-Device Virtual Try-On
+其他	eval_qwen36_code_raw_vs_paperdraft_v3	ProM3E - Probabilistic Multi-Modal Masked Embedding Model	3.54	ProM3E - Probabilistic Multi-Modal Masked Embedding Model
+大语言模型与智能体	eval_qwen36_part07_batch1	06_AgentSynth_-_Scalable_Task_Generation_for_Generalist_Computer-Use_Agents	6.0	AgentSynth - Scalable Task Generation for Generalist Computer-Use Agents
+大语言模型与智能体	eval_qwen36_part07_batch1	43_GEPA_-_Reflective_Prompt_Evolution_Can_Outperform_Reinforcement_Learning	6.0	GEPA - Reflective Prompt Evolution Can Outperform Reinforcement Learning
+大语言模型与智能体	eval_qwen36_part07_batch2	78_Toward_Faithful_Retrieval-Augmented_Generation_with_Sparse_Autoencoders	6.0	Toward Faithful Retrieval-Augmented Generation with Sparse Autoencoders
+大语言模型与智能体	eval_qwen36_part07_batch1	26_CrossPL_-_Systematic_Evaluation_of_Large_Language_Models_for_Cross_Programming_Language_Interoperating_Code_Generation	5.44	CrossPL - Systematic Evaluation of Large Language Models for Cross Programming Language Interoperating Code Generation
+大语言模型与智能体	eval_qwen36_code_raw_vs_paperdraft_v3	IsoCLIP - Decomposing CLIP Projectors for Efficient Intra-modal Alignment	4.82	IsoCLIP - Decomposing CLIP Projectors for Efficient Intra-modal Alignment
+大语言模型与智能体	eval_qwen36_part07_batch1	16_Better_Together_-_Leveraging_Unpaired_Multimodal_Data_for_Stronger_Unimodal_Models	4.8	Better Together - Leveraging Unpaired Multimodal Data for Stronger Unimodal Models
+大语言模型与智能体	eval_qwen36_part07_batch2	65_ReasoningBank_-_Scaling_Agent_Self-Evolving_with_Reasoning_Memory	4.8	ReasoningBank - Scaling Agent Self-Evolving with Reasoning Memory
+大语言模型与智能体	eval_qwen36_code_raw_vs_paperdraft_v3	MoDES - Accelerating Mixture-of-Experts Multimodal Large Language Models via Dynamic Expert Skipping	4.42	MoDES - Accelerating Mixture-of-Experts Multimodal Large Language Models via Dynamic Expert Skipping
+大语言模型与智能体	eval_qwen36_part07_batch2	87_When_AI_Agents_Collude_Online_-_Financial_Fraud_Risks_by_Collaborative_LLM_Agents_on_Social_Platforms	4.42	When AI Agents Collude Online - Financial Fraud Risks by Collaborative LLM Agents on Social Platforms
+大语言模型与智能体	eval_qwen36_part07_batch2	67_Reinforcement_Learning_Fine-Tuning_Enhances_Activation_Intensity_and_Diversity_in_the_Internal_Circuitry_of_LLMs	4.24	Reinforcement Learning Fine-Tuning Enhances Activation Intensity and Diversity in the Internal Circuitry of LLMs
+强化学习	eval_qwen36_code_raw_vs_paperdraft_v3	Spatial-SSRL - Enhancing Spatial Understanding via Self-Supervised Reinforcement Learning	4.42	Spatial-SSRL - Enhancing Spatial Understanding via Self-Supervised Reinforcement Learning
+机器人与具身智能	eval_qwen36_code_raw_vs_paperdraft_v3	TAVP - Learning to See and Act — Task-Aware Virtual View Exploration for Robotic Manipulation	6.0	TAVP - Learning to See and Act — Task-Aware Virtual View Exploration for Robotic Manipulation
+机器人与具身智能	eval_qwen36_code_raw_vs_paperdraft_v3	SwitchCraft - Training-Free Multi-Event Video Generation with Attention Controls	5.0	SwitchCraft - Training-Free Multi-Event Video Generation with Attention Controls
+机器人与具身智能	eval_qwen36_code_raw_vs_paperdraft_v3	APPO - Attention-guided Perception Policy Optimization for Video Reasoning	4.82	APPO - Attention-guided Perception Policy Optimization for Video Reasoning
+机器人与具身智能	eval_qwen36_part07_batch1	25_Cosmos_Policy_-_Fine-Tuning_Video_Models_for_Visuomotor_Control_and_Planning	4.62	Cosmos Policy - Fine-Tuning Video Models for Visuomotor Control and Planning
+机器人与具身智能	eval_qwen36_part07_batch2	58_Manipulation_as_in_Simulation_-_Enabling_Accurate_Geometry_Perception_in_Robots	4.62	Manipulation as in Simulation - Enabling Accurate Geometry Perception in Robots
+机器人与具身智能	eval_qwen36_part07_batch2	66_Reference-guided_Policy_Optimization_for_Molecular_Optimization_via_LLM_Reasoning	4.62	Reference-guided Policy Optimization for Molecular Optimization via LLM Reasoning
+机器人与具身智能	eval_qwen36_part07_batch1	07_Agentic_Reinforced_Policy_Optimization	3.84	Agentic Reinforced Policy Optimization
+计算机视觉与多模态生成	eval_qwen36_part07_batch1	35_Error_as_Signal_-_Stiffness-Aware_Diffusion_Sampling_via_Embedded_Runge-Kutta_Guidance	6.0	Error as Signal - Stiffness-Aware Diffusion Sampling via Embedded Runge-Kutta Guidance
+计算机视觉与多模态生成	eval_qwen36_part07_batch2	81_Uniform_Discrete_Diffusion_with_Metric_Path_for_Video_Generation	5.82	Uniform Discrete Diffusion with Metric Path for Video Generation
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	VideoCoF - Unified Video Editing with Temporal Reasoner	5.82	VideoCoF - Unified Video Editing with Temporal Reasoner
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	Multinex - Lightweight Low-light Image Enhancement	5.62	Multinex - Lightweight Low-light Image Enhancement
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	PROMPTMINER - Black-Box Prompt Stealing against Text-to-Image Generative Models via Reinforcement Learning and Fuzz Optimization	5.62	PROMPTMINER - Black-Box Prompt Stealing against Text-to-Image Generative Models via Reinforcement Learning and Fuzz Optimization
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	G2VLM - Geometry Grounded Vision-Language Model	5.42	G2VLM - Geometry Grounded Vision-Language Model
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	MedCLIPSeg - Probabilistic Vision–Language Adaptation for Data-Efficient and Generalizable Medical Image Segmentation	5.42	MedCLIPSeg - Probabilistic Vision–Language Adaptation for Data-Efficient and Generalizable Medical Image Segmentation
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	FORCE - Transferable Visual Jailbreaking Attacks via Feature Over-Reliance CorrEction	5.0	FORCE - Transferable Visual Jailbreaking Attacks via Feature Over-Reliance CorrEction
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	FlowMotion - Training-Free Flow Guidance for Video Motion Customization	5.0	FlowMotion - Training-Free Flow Guidance for Video Motion Customization
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	UCMNet - Uncertainty-Aware Context Memory Network for Under-Display Camera Image Restoration	5.0	UCMNet - Uncertainty-Aware Context Memory Network for Under-Display Camera Image Restoration
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	UniComp - Rethinking Video Compression Through Informational Uniqueness	5.0	UniComp - Rethinking Video Compression Through Informational Uniqueness
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	VANS - Video-as-Answer: Predict and Generate Next Visual States	5.0	VANS - Video-as-Answer: Predict and Generate Next Visual States
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	GThinker - Reasoning MLLM with Visual Cues and Visual Rethinking	4.82	GThinker - Reasoning MLLM with Visual Cues and Visual Rethinking
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	Retrieve and Segment - Are a Few Examples Enough to Bridge the Supervision Gap in Open-Vocabulary Segmentation?	4.82	Retrieve and Segment - Are a Few Examples Enough to Bridge the Supervision Gap in Open-Vocabulary Segmentation?
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	WeDetect - Fast Open-Vocabulary Object Detection as Retrieval	4.8	WeDetect - Fast Open-Vocabulary Object Detection as Retrieval
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	INSID3 - Training-Free In-Context Segmentation with DINOv3	4.74	INSID3 - Training-Free In-Context Segmentation with DINOv3
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	FPRL - Focus-to-Perceive Representation Learning for Endoscopic Video Analysis	4.62	FPRL - Focus-to-Perceive Representation Learning for Endoscopic Video Analysis
+计算机视觉与多模态生成	eval_qwen36_part07_batch1	40_FlashDLM_-_Accelerating_Diffusion_Language_Model_Inference_via_Efficient_KV_Caching_and_Guided_Diffusion	4.62	FlashDLM - Accelerating Diffusion Language Model Inference via Efficient KV Caching and Guided Diffusion
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	Goal Force - Teaching Video Models To Accomplish Physics-Conditioned Goals	4.62	Goal Force - Teaching Video Models To Accomplish Physics-Conditioned Goals
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	MixerCSeg - An Efficient Mixer Architecture for Crack Segmentation	4.62	MixerCSeg - An Efficient Mixer Architecture for Crack Segmentation
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	MuViT - Multi-Resolution Vision Transformers for Learning Across Scales in Microscopy	4.62	MuViT - Multi-Resolution Vision Transformers for Learning Across Scales in Microscopy
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	Open-Vocabulary Domain Generalization in Urban-Scene Segmentation	4.62	Open-Vocabulary Domain Generalization in Urban-Scene Segmentation
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	Wan-Alpha - High-Quality Text-to-Video Generation with Alpha Channel	4.62	Wan-Alpha - High-Quality Text-to-Video Generation with Alpha Channel
+计算机视觉与多模态生成	eval_qwen36_part07_batch2	83_VideoPhy-2_-_A_Challenging_Action-Centric_Physical_Commonsense_Evaluation_in_Video_Generation	4.42	VideoPhy-2 - A Challenging Action-Centric Physical Commonsense Evaluation in Video Generation
+计算机视觉与多模态生成	eval_qwen36_code_raw_vs_paperdraft_v3	ViT³ - Unlocking Test-Time Training in Vision	4.24	ViT³ - Unlocking Test-Time Training in Vision
+计算机视觉与多模态生成	eval_qwen36_part07_batch1	32_Does_FLUX_Already_Know_How_to_Perform_Physically_Plausible_Image_Composition	3.94	Does FLUX Already Know How to Perform Physically Plausible Image Composition
+计算机视觉与多模态生成	eval_qwen36_part07_batch1	45_HiDrop_-_Hierarchical_Vision_Token_Reduction_in_MLLMs_via_Late_Injection__Concave_Pyramid_Pruning__and_Early_Exit	3.74	HiDrop - Hierarchical Vision Token Reduction in MLLMs via Late Injection Concave Pyramid Pruning and Early Exit
+语音音频与音乐	eval_qwen36_part07_batch2	89_YuE_-_Scaling_Open_Foundation_Models_for_Long-Form_Music_Generation	5.28	YuE - Scaling Open Foundation Models for Long-Form Music Generation
+语音音频与音乐	eval_qwen36_code_raw_vs_paperdraft_v3	FLAC - Few-Shot Acoustic Synthesis with Flow Matching	4.42	FLAC - Few-Shot Acoustic Synthesis with Flow Matching
+语音音频与音乐	eval_qwen36_part07_batch2	71_Scalable_Multilingual_Multimodal_Machine_Translation_with_Speech-Text_Fusion	4.32	Scalable Multilingual Multimodal Machine Translation with Speech-Text Fusion

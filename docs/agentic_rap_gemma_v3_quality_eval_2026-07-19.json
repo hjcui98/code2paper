@@ -1,0 +1,97 @@
+{
+  "protocol": "blind-source-and-author-yaml-first",
+  "blind_summary_frozen_before_paper_read": true,
+  "date": "2026-07-19",
+  "scope": "RAP Evidence Compiler vertical slice (Q2/Q3)",
+  "inputs": {
+    "project_root": "/data1/users/cuihengjia/code2paper/code_final/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing",
+    "author_yaml": "/data1/users/cuihengjia/code2paper/paperyaml/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.yaml",
+    "paper_used_during_generation": false
+  },
+  "model": {
+    "provider": "openai-compatible local vLLM",
+    "name": "gemma4-31b-nvfp4",
+    "temperature": 0.0,
+    "cache": false,
+    "authoring_mode": "projection-constrained-llm-writer",
+    "authoring_llm_used": true,
+    "authoring_llm_call_count": 1
+  },
+  "run": {
+    "id": "rap-gemma-v3-r4",
+    "root": "/tmp/code2paper-quality-v3-20260719/rap-gemma-v3-r4",
+    "status": "success",
+    "blocked_reason": "",
+    "completion_status": "complete",
+    "completion_complete": true,
+    "missing_deliverables": [],
+    "invariant_audit_passed": true,
+    "invariant_blocking_failures": 0,
+    "readiness_passed": true,
+    "traceability_passed": true
+  },
+  "compiled_evidence": {
+    "evidence_packets_v3": 3,
+    "code_facts_v1": 13,
+    "atomic_claims_v3": 8,
+    "explicit_code_gaps": 3,
+    "evidence_support_rate": 1.0,
+    "supported_claims": 8,
+    "unsupported_claims": 0,
+    "freshness_status": "passed",
+    "stale_artifact_keys": []
+  },
+  "final_method": {
+    "sha256": "sha256:a038cd3224ac5e795c8036c8750e1de562c62d807216ff6d1229ee6c5952ee51",
+    "word_count": 185,
+    "semantic_paragraphs": 3,
+    "factual_sentences": 8,
+    "supported_sentences": 8,
+    "unsupported_sentences": 0,
+    "unsupported_rate": 0.0,
+    "final_text_trace_hard_gate": true,
+    "trace_failures": [],
+    "mainline_order": [
+      "feature",
+      "predictor",
+      "score column zero",
+      "descending sort and top retention",
+      "boolean mask",
+      "prune",
+      "PLY and score NPY output"
+    ],
+    "code_wins_over_paper_example": "two-logit Softmax followed by selection of column zero"
+  },
+  "acceptance": {
+    "v3_artifacts_in_manifest_freshness_traceability": true,
+    "inference_mainline_in_code_order": true,
+    "must_cover_obligations_terminal": true,
+    "multiple_semantic_paragraphs": true,
+    "all_final_factual_sentences_reverse_validated": true,
+    "final_unsupported_rate_zero": true,
+    "training_dataset_soft_pruning_loss_entropy_are_explicit_gaps": true,
+    "source_code_overrides_conflicting_narrative": true,
+    "q7_benchmark_cutover_deferred": true
+  },
+  "tests": {
+    "command": "python -m pytest -q",
+    "passed": 511,
+    "skipped": 2,
+    "subtests_passed": 6
+  },
+  "packaging_note": {
+    "final_pdf_exists": true,
+    "pdf_status": "degraded",
+    "reason": "latex_compiler_not_found; Pillow readability preview used",
+    "quality_slice_impact": "none for Q2/Q3 evidence and text acceptance; not publication-quality PDF"
+  },
+  "paper_diagnostic": {
+    "performed_after_blind_summary_freeze": true,
+    "source": "/data1/users/cuihengjia/code2paper/papermd/RAP - Fast Feedforward Rendering-Free Attribute-Guided Primitive Importance Score Prediction for Efficient 3D Gaussian Splatting Processing.md",
+    "notes": [
+      "The paper describes a single-dimensional sigmoid importance score, while the executable inference path returns two Softmax outputs and selects column zero; the frozen generated Method correctly follows code.",
+      "The paper describes renderer-backed training, soft opacity/scale reweighting, rendering/pruning/entropy losses, 15000 iterations, and ten DL3DV-10K scenes. These claims remain explicit code gaps because this source slice does not supply their executable evidence.",
+      "The generated Method accurately covers the source-backed inference slice but is intentionally narrower than the full paper Method; this is evidence-preserving incompleteness, not unsupported reconstruction."
+    ]
+  }
+}

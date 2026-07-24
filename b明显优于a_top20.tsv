@@ -1,0 +1,21 @@
+rank	source	case	B_score	domain	title
+1	eval_qwen36_part07_batch1	06_AgentSynth_-_Scalable_Task_Generation_for_Generalist_Computer-Use_Agents	6.0	大语言模型与智能体	AgentSynth - Scalable Task Generation for Generalist Computer-Use Agents
+2	eval_qwen36_part07_batch1	08_Any-step_Generation_via_N-th_Order_Recursive_Consistent_Velocity_Field_Estimation	6.0	其他	Any-step Generation via N-th Order Recursive Consistent Velocity Field Estimation
+3	eval_qwen36_part07_batch1	28_Deep_Think_with_Confidence	6.0	其他	Deep Think with Confidence
+4	eval_qwen36_part07_batch1	35_Error_as_Signal_-_Stiffness-Aware_Diffusion_Sampling_via_Embedded_Runge-Kutta_Guidance	6.0	计算机视觉与多模态生成	Error as Signal - Stiffness-Aware Diffusion Sampling via Embedded Runge-Kutta Guidance
+5	eval_qwen36_part07_batch1	43_GEPA_-_Reflective_Prompt_Evolution_Can_Outperform_Reinforcement_Learning	6.0	大语言模型与智能体	GEPA - Reflective Prompt Evolution Can Outperform Reinforcement Learning
+6	eval_qwen36_code_raw_vs_paperdraft_v3	TAVP - Learning to See and Act — Task-Aware Virtual View Exploration for Robotic Manipulation	6.0	机器人与具身智能	TAVP - Learning to See and Act — Task-Aware Virtual View Exploration for Robotic Manipulation
+7	eval_qwen36_part07_batch2	78_Toward_Faithful_Retrieval-Augmented_Generation_with_Sparse_Autoencoders	6.0	大语言模型与智能体	Toward Faithful Retrieval-Augmented Generation with Sparse Autoencoders
+8	eval_qwen36_code_raw_vs_paperdraft_v3	LitePT - Lighter Yet Stronger Point Transformer	5.82	其他	LitePT - Lighter Yet Stronger Point Transformer
+9	eval_qwen36_part07_batch2	81_Uniform_Discrete_Diffusion_with_Metric_Path_for_Video_Generation	5.82	计算机视觉与多模态生成	Uniform Discrete Diffusion with Metric Path for Video Generation
+10	eval_qwen36_code_raw_vs_paperdraft_v3	VideoCoF - Unified Video Editing with Temporal Reasoner	5.82	计算机视觉与多模态生成	VideoCoF - Unified Video Editing with Temporal Reasoner
+11	eval_qwen36_part07_batch2	76_TSPulse_-_Tiny_Pre-Trained_Models_with_Disentangled_Representations_for_Rapid_Time-Series_Analysis	5.8	其他	TSPulse - Tiny Pre-Trained Models with Disentangled Representations for Rapid Time-Series Analysis
+12	eval_qwen36_code_raw_vs_paperdraft_v3	Multinex - Lightweight Low-light Image Enhancement	5.62	计算机视觉与多模态生成	Multinex - Lightweight Low-light Image Enhancement
+13	eval_qwen36_code_raw_vs_paperdraft_v3	PROMPTMINER - Black-Box Prompt Stealing against Text-to-Image Generative Models via Reinforcement Learning and Fuzz Optimization	5.62	计算机视觉与多模态生成	PROMPTMINER - Black-Box Prompt Stealing against Text-to-Image Generative Models via Reinforcement Learning and Fuzz Optimization
+14	eval_qwen36_part07_batch1	26_CrossPL_-_Systematic_Evaluation_of_Large_Language_Models_for_Cross_Programming_Language_Interoperating_Code_Generation	5.44	大语言模型与智能体	CrossPL - Systematic Evaluation of Large Language Models for Cross Programming Language Interoperating Code Generation
+15	eval_qwen36_code_raw_vs_paperdraft_v3	G2VLM - Geometry Grounded Vision-Language Model	5.42	计算机视觉与多模态生成	G2VLM - Geometry Grounded Vision-Language Model
+16	eval_qwen36_code_raw_vs_paperdraft_v3	MedCLIPSeg - Probabilistic Vision–Language Adaptation for Data-Efficient and Generalizable Medical Image Segmentation	5.42	计算机视觉与多模态生成	MedCLIPSeg - Probabilistic Vision–Language Adaptation for Data-Efficient and Generalizable Medical Image Segmentation
+17	eval_qwen36_part07_batch2	89_YuE_-_Scaling_Open_Foundation_Models_for_Long-Form_Music_Generation	5.28	语音音频与音乐	YuE - Scaling Open Foundation Models for Long-Form Music Generation
+18	eval_qwen36_code_raw_vs_paperdraft_v3	FORCE - Transferable Visual Jailbreaking Attacks via Feature Over-Reliance CorrEction	5.0	计算机视觉与多模态生成	FORCE - Transferable Visual Jailbreaking Attacks via Feature Over-Reliance CorrEction
+19	eval_qwen36_code_raw_vs_paperdraft_v3	FlowMotion - Training-Free Flow Guidance for Video Motion Customization	5.0	计算机视觉与多模态生成	FlowMotion - Training-Free Flow Guidance for Video Motion Customization
+20	eval_qwen36_code_raw_vs_paperdraft_v3	SimScale - Learning to Simulate at Scale	5.0	其他	SimScale - Learning to Simulate at Scale

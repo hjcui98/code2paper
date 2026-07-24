@@ -1,0 +1,317 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-07-19",
+  "purpose": "Blind real-project Method quality diagnosis after the RAP Evidence Compiler V3 vertical slice",
+  "primary_goal": "Produce usable paper Method prose from author intent and executable code while preserving sentence-level traceability",
+  "protocol": {
+    "generation_inputs": [
+      "project source code",
+      "author intent YAML"
+    ],
+    "paper_used_during_generation": false,
+    "blind_summary_frozen_before_paper_read": true,
+    "model": "gemma4-31b-nvfp4",
+    "temperature": 0.0,
+    "cache": false,
+    "gpu_execution": "serial",
+    "gpu_reason": "The local Gemma endpoint is one tensor-parallel instance spanning both GPUs. Concurrent quality runs share decode scheduling, KV cache, throughput, timeout, and retry behavior and are therefore not comparable quality observations.",
+    "excluded_runs": [
+      {
+        "root": "/tmp/code2paper-quality-v2-20260719/ebcar-gemma-r1",
+        "reason": "Started concurrently with another full Gemma run and stopped; invalid for quality conclusions."
+      },
+      {
+        "root": "/tmp/code2paper-quality-v2-20260719/dyg-mamba-gemma-r1",
+        "reason": "Started concurrently with another full Gemma run and stopped; invalid for quality conclusions."
+      },
+      {
+        "root": "/tmp/code2paper-quality-v3-expanded-20260719/linearrag-gemma-r1",
+        "reason": "The sandbox blocked calls to the local vLLM endpoint; no valid Gemma inference occurred, so this run is excluded from quality conclusions."
+      }
+    ]
+  },
+  "current_architecture_observation": {
+    "rap_v3_positive_control": "The existing EvidencePacketV3, CodeFactV1, AtomicClaimV3 and reverse validator path can produce a complete, code-ordered, fully supported Method when a typed compiler profile activates.",
+    "cross_project_limit": "The current compile_evidence_v3 implementation is a RAP-specific behavior-triggered profile. EBCAR, DyG-Mamba, and LinearRAG do not satisfy its required symbol contract and fall back to Evidence V2 broad claims.",
+    "main_bottleneck": "Cross-project compilation of minimal typed code facts and relations, sentence/claim atomicity, and quality-monotonic local repair; not benchmark coverage, prompt length, writer call count, or additional global retry loops."
+  },
+  "runs": {
+    "rap_v3_positive_control": {
+      "root": "/tmp/code2paper-quality-v3-20260719/rap-gemma-v3-r4",
+      "status": "success",
+      "blocked_reason": "",
+      "compiler_route": "EvidencePacketV3 + CodeFactV1 + AtomicClaimV3",
+      "evidence_packets_v3": 3,
+      "code_facts_v1": 13,
+      "atomic_claims_v3": 8,
+      "explicit_code_gaps": 3,
+      "must_cover_obligations_terminal": true,
+      "method_word_count": 185,
+      "final_factual_claims": 8,
+      "supported_final_claims": 8,
+      "unsupported_final_claims": 0,
+      "final_unsupported_rate": 0.0,
+      "method_sha256": "sha256:a038cd3224ac5e795c8036c8750e1de562c62d807216ff6d1229ee6c5952ee51",
+      "diagnosis": "Typed minimal packets preserve feature-to-predictor-to-score-to-ranking/mask-to-prune order and show that the constrained Gemma writer is sufficient when its input contract is complete."
+    },
+    "ebcar_v2_fallback": {
+      "root": "/tmp/code2paper-quality-v2-20260719/ebcar-gemma-r2",
+      "status": "blocked",
+      "blocked_reason": "text_claim_authoring_revision_budget_exhausted",
+      "compiler_route": "Evidence V2 fallback",
+      "loop_counters": {
+        "retrieval": 2,
+        "evidence_revision": 1,
+        "obligation_revision": 2,
+        "revision": 2,
+        "semantic_verifier": 1
+      },
+      "upstream_evidence_support_rate": 0.939,
+      "upstream_unsupported_claim_rate": 0.0,
+      "must_cover_count": 6,
+      "candidate_covered_must_cover_count": 5,
+      "unresolved_must_cover_count": 1,
+      "projected_claim_count": 9,
+      "unique_projected_claim_count": 5,
+      "duplicate_projected_claim_count": 4,
+      "average_direct_evidence_fan_in": 13.8889,
+      "max_direct_evidence_fan_in": 22,
+      "method_word_count": 125,
+      "final_factual_claims": 9,
+      "supported_final_claims": 0,
+      "unsupported_final_claims": 9,
+      "final_unsupported_rate": 1.0,
+      "method_plan_quality": {
+        "passed": true,
+        "score": 100,
+        "report_only": true
+      },
+      "method_sha256": "sha256:be1cd477d728ae114d130a1a4205af5b27b9c3be781b090cfd603c3be6903779",
+      "artifact_sha256": {
+        "run_summary": "sha256:8bc486d159057bc264c3760002ae20fe64879a254f9b4e8597b77b955d2a6ec6",
+        "completion_report": "sha256:fab5ed0991a89acb3fd6ddf3184058782db436689718c7710b5e2f7c0453ce4b",
+        "evaluation_report": "sha256:e84d3b9d45affa900b8343fe33100aa05bad39a4479b314d5336bf65574acd4d",
+        "authoring_projection": "sha256:38f1a1ba94d0b3234249dbb78a80eb9351cf56f62bef85d74e7c792505e23199",
+        "obligation_coverage": "sha256:85c7060793b15c1bce5dfce9bcae11b2d282bcfa2a15a9d5844dceb3cb0772b9",
+        "text_evidence_validation": "sha256:d1f448c5168c27317ad2b92b1d8793a867cfcfde57b41f8f775faefc73f4dab4"
+      },
+      "blind_findings": [
+        "The V2 projection contains four duplicate claims and attaches up to 22 spans to one claim.",
+        "Four ordinary prose claims require semantic verification, but the single global semantic-verifier budget is already exhausted.",
+        "Code-pattern equations and their explanatory sentences are written even though they have no AtomicClaim contract accepted by the final text validator.",
+        "The writer includes a generic MultiBranch equation not established as the EBCAR execution path.",
+        "The plan-quality report returns 100 while final reverse validation rejects all nine factual claims."
+      ],
+      "required_compiler_path": [
+        "dense retrieval of query embedding and top-k passages",
+        "document and passage position embeddings",
+        "hybrid encoder with shared/full attention and same-document masked attention",
+        "contextualized passage representation",
+        "fixed query anchor and dot-product InfoNCE training",
+        "dot-product reranking and descending sort"
+      ]
+    },
+    "dyg_mamba_v2_fallback": {
+      "root": "/tmp/code2paper-quality-v2-20260719/dyg-mamba-gemma-r2",
+      "status": "blocked",
+      "blocked_reason": "text_claim_packet_binding_repair_budget_exhausted",
+      "compiler_route": "Evidence V2 fallback",
+      "loop_counters": {
+        "retrieval": 2,
+        "evidence_revision": 2,
+        "obligation_revision": 2,
+        "semantic_verifier": 1
+      },
+      "upstream_evidence_support_rate": 0.8816,
+      "upstream_unsupported_claim_rate": 0.0526,
+      "must_cover_count": 5,
+      "candidate_covered_must_cover_count": 4,
+      "unresolved_must_cover_count": 1,
+      "projected_claim_count": 7,
+      "unique_projected_claim_count": 4,
+      "duplicate_projected_claim_count": 3,
+      "average_direct_evidence_fan_in": 20.2857,
+      "max_direct_evidence_fan_in": 22,
+      "method_word_count": 225,
+      "final_factual_claims": 14,
+      "supported_final_claims": 1,
+      "unsupported_final_claims": 13,
+      "final_unsupported_rate": 0.9286,
+      "method_plan_quality": {
+        "passed": true,
+        "score": 100,
+        "report_only": true
+      },
+      "method_sha256": "sha256:eefab8f63b2bf4408980446063022e95ab3ab85b77ea9a744dfc234600856cab",
+      "artifact_sha256": {
+        "run_summary": "sha256:3bf782619477f40ad67dd154dd96d031263fbdf1d0a3431a617002594e136f22",
+        "completion_report": "sha256:882a29d87430e51bdcdd36662134e3ab56277a9cd4c67668c79cade0ef3a8e1d",
+        "evaluation_report": "sha256:f1f7bdf0c5912b49fa259d01b829fccfb6aacb14ff2fc6acc357484ae400a5ee",
+        "authoring_projection": "sha256:dd3e67f054f6b5bbb401cdca8bf0bbc9da839f8fda45ed2caa56c60aaffad9f7",
+        "obligation_coverage": "sha256:aaa5f7e6a9f0919d0ff3a3c5e3fd64e798e4525c53228a9b83901d9c20c713a9",
+        "text_evidence_validation": "sha256:a6a03b0f764776c53e511498a7015532877a78ae2d8bcb1d521535a65f0f2048"
+      },
+      "blind_findings": [
+        "Targeted obligation repair improves stage coverage from two of five to four of five, so obligation-directed retrieval is useful.",
+        "The repair repeatedly rebuilds global intake, analysis, evidence, grounding, and projection instead of repairing one packet or binding.",
+        "The final seven projected claims collapse to four unique claims and each claim carries about twenty spans.",
+        "The Method invents positional-encoding and MultiBranch equations that do not describe the DyG-Mamba executable mainline.",
+        "The spectral-norm constraint claim is not established by the relevant DyGMamba.py or mamba_simple.py execution path.",
+        "The actual code path contains concrete first-hop sampling, four-channel feature projection, elapsed-time feature generation, time-conditioned Mamba, cross linear attention, gated top-k pooling, and task heads, but the projection reduces it to broad encode/filter/readout prose.",
+        "The plan-quality report returns 100 while final reverse validation accepts only one of fourteen factual claims."
+      ],
+      "required_compiler_path": [
+        "sample and pad first-hop interaction histories",
+        "construct node, edge, time, and neighbor-cooccurrence channels",
+        "derive normalized elapsed-time features and project all channels",
+        "stack aligned channels and run Mamba blocks with time features",
+        "cross-attend source and destination sequences",
+        "softmax-gate, top-k select, renormalize, and weighted-pool sequence states",
+        "project fixed-size node embeddings and apply link-prediction or node-classification heads"
+      ]
+    },
+    "linearrag_v2_fallback": {
+      "root": "/tmp/code2paper-quality-v3-expanded-20260719/linearrag-gemma-r2",
+      "status": "blocked",
+      "blocked_reason": "text_claim_authoring_revision_budget_exhausted",
+      "compiler_route": "Evidence V2 fallback",
+      "loop_counters": {
+        "retrieval": 2,
+        "evidence_revision": 2,
+        "obligation_revision": 2,
+        "revision": 2,
+        "semantic_verifier": 1
+      },
+      "upstream_evidence_support_rate": 0.5833,
+      "upstream_unsupported_claim_rate": 0.375,
+      "upstream_partial_claim_rate": 0.0833,
+      "upstream_checked_claims": 24,
+      "upstream_supported_claims": 13,
+      "upstream_partial_claims": 2,
+      "upstream_unsupported_claims": 9,
+      "must_cover_count": 4,
+      "candidate_covered_must_cover_count": 4,
+      "unresolved_must_cover_count": 0,
+      "projected_claim_count": 8,
+      "unique_projected_claim_count": 4,
+      "duplicate_projected_claim_count": 4,
+      "average_direct_evidence_fan_in": 10.625,
+      "max_direct_evidence_fan_in": 21,
+      "method_word_count": 159,
+      "final_factual_claims": 8,
+      "supported_final_claims": 0,
+      "unsupported_final_claims": 8,
+      "final_unsupported_rate": 1.0,
+      "method_plan_quality": {
+        "passed": true,
+        "score": 100,
+        "report_only": true
+      },
+      "authoring_llm_used": true,
+      "authoring_llm_call_count": 1,
+      "semantic_verifier_calls": 1,
+      "method_sha256": "sha256:1e157717b320d626c1ff649409b5455ac5d283ab928fc367588562159363e735",
+      "artifact_sha256": {
+        "run_summary": "sha256:dd6ed2d3387739e13d0211a177ede14a6a560a46c212648feb1695e7bda6eda8",
+        "completion_report": "sha256:78cde306c3fc70d6592c4c60d1339c3c145ddf1252806715239f443964e95e6a",
+        "evaluation_report": "sha256:10c01e51a0ede326e59a9a23e7a11ba059c2dd75a58134e528cbe1e4db599801",
+        "authoring_projection": "sha256:9159ca1bb3895205ed65a5f27eb49ea2900678a1676e2606bfcf5978dd520f3c",
+        "obligation_coverage": "sha256:1695e5183a43c85786df6ebde8c62699c604ea8030bb8fe2cd95343b935efd84",
+        "text_evidence_validation": "sha256:10cc71e5dc3e3d7c9e810e9c29157e77aad0f461260aaaf03b88cba72bf56cf0"
+      },
+      "blind_findings": [
+        "The generated three-section Method is substantially more readable than the EBCAR and DyG-Mamba fallbacks, but readability does not imply traceability.",
+        "The final eight projected claims collapse to four unique claims; three duplicate Tri-Graph claims each carry 20 spans, while the pruning claim carries 21 spans.",
+        "Five otherwise ordinary factual sentences are rejected only because the single run-level semantic-verifier budget is exhausted after one real Gemma verifier call.",
+        "The sentence introducing entity activation is split away from its mechanism claim and therefore has no semantically matching projected claim.",
+        "The dynamic-pruning qualifier promotes an efficiency, exponential-growth, and noise-control rationale that is not established as executable behavior by its direct evidence.",
+        "All four must-cover obligations are terminal at the last projection, yet the final prose is 0/8 supported; obligation coverage without minimal typed claims is not a usable Method gate.",
+        "The run performs repeated global intake, analysis, evidence, grounding, and projection rebuilds even though the required LinearRAG symbols are already present. Intermediate obligation alignment changed during those rebuilds, so repair is not quality-monotonic.",
+        "The plan-quality report returns 100 while final reverse validation rejects all eight factual claims."
+      ],
+      "required_compiler_path": [
+        "split passages into sentences, run spaCy NER, and build passage/entity plus sentence/entity structures",
+        "precompute sparse entity-to-sentence and sentence-to-entity adjacency matrices",
+        "extract and embed query entities to initialize seed entity scores",
+        "propagate entity scores through connected sentences using query-sentence similarity, per-entity top-k selection, and the configured iteration threshold",
+        "map activated entities and hybrid passage scores to graph node weights",
+        "run personalized PageRank and descending passage ranking",
+        "return the top-k retrieved passages and their scores"
+      ]
+    }
+  },
+  "cross_project_findings": [
+    {
+      "priority": 1,
+      "finding": "Evidence Compiler V3 works but is not yet cross-project.",
+      "consequence": "Projects outside the RAP symbol profile silently fall back to broad Evidence V2 claims and lose executable method detail before writing."
+    },
+    {
+      "priority": 2,
+      "finding": "Evidence sufficiency is computed over generated claim inventory rather than author must-cover obligations and unique writable claims.",
+      "consequence": "Upstream support rates of 0.882 to 0.939 coexist with final unsupported rates of 0.929 to 1.0."
+    },
+    {
+      "priority": 3,
+      "finding": "Large evidence unions turn deterministic claim verification into a globally budgeted semantic-verifier problem.",
+      "consequence": "Already retrieved code cannot be converted into accepted final sentences."
+    },
+    {
+      "priority": 4,
+      "finding": "Equation candidates use a separate permissive contract from AtomicClaim validation.",
+      "consequence": "Generic code-pattern equations enter the Method and are then unsupported under final reverse validation."
+    },
+    {
+      "priority": 5,
+      "finding": "Global retry loops are too coarse.",
+      "consequence": "A wrong span role or missing relation triggers repeated intake and analysis synthesis instead of bounded packet, fact, or binding repair."
+    },
+    {
+      "priority": 6,
+      "finding": "Method plan quality is disconnected from Method usability and final trust.",
+      "consequence": "A report-only score of 100 provides no authorization signal."
+    },
+    {
+      "priority": 7,
+      "finding": "Repair is not quality-monotonic and does not retain the best prior evidence/projection state.",
+      "consequence": "A global rebuild can lose an already covered obligation or replace a narrower claim binding with a broader one before later recovering, consuming budget without guaranteed progress."
+    },
+    {
+      "priority": 8,
+      "finding": "Sentence decomposition and claim decomposition do not share one atomicity contract.",
+      "consequence": "A writer can split an authorized mechanism into an introductory sentence and an implementation sentence, after which the introduction has no matching claim even though the paragraph is conceptually faithful."
+    }
+  ],
+  "decision": {
+    "benchmark_cutover": "deferred",
+    "figure": "secondary after Method text contracts pass",
+    "next_implementation": "Generalize the existing V3 compiler into reusable AST/code-graph fact extractors plus EBCAR, DyG-Mamba, and LinearRAG path profiles; retain the lexicographically best quality state and route validation failures to local packet/fact/binding/writer repair.",
+    "do_not_do": [
+      "increase global loop counts",
+      "expand prompts as the primary fix",
+      "run more benchmark matrices before Method quality improves",
+      "allow equations that bypass AtomicClaim and reverse-validation contracts",
+      "run full Gemma quality jobs concurrently on the shared two-GPU tensor-parallel endpoint"
+    ]
+  },
+  "paper_diagnostic": {
+    "status": "completed_after_blind_freeze",
+    "blind_report_sha256_before_paper_read": "sha256:88b3389264a8ccad44cc0338427ca20ab47ef35d587dc8bba7a3ec1235bf63d9",
+    "linearrag_blind_report_sha256_before_paper_read": "sha256:6b5f28c8cb41d1faeb6b62d0fa1fd8ba4a95be46e7aee4e9e499eed3989007a9",
+    "sources": {
+      "ebcar": "/data1/users/cuihengjia/code2paper/paper_final/022_EBCAR - Embedding-Based Context-Aware Reranker.md",
+      "dyg_mamba": "/data1/users/cuihengjia/code2paper/paper_final/029_DyG-Mamba Continuous State Space Modeling on Dynamic Graphs.md",
+      "linearrag": "/data1/users/cuihengjia/code2paper/paper_final/053_LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora.md"
+    },
+    "notes": [
+      "EBCAR paper comparison confirms that the missing usable mainline is the same one visible in source: embedding-space reranking, local document-ID and passage-position augmentation, shared full plus same-document masked attention, contextual passage embeddings, fixed query anchor, InfoNCE, and descending dot-product reranking. The generated Method mentions retrieval, a generic hybrid encoder, and InfoNCE but omits the defining attention scopes and structural data flow.",
+      "EBCAR's generated positional and feed-forward equations are not inherently implausible, but the final contract does not bind equation statements to exact implementation facts; the generic MultiBranch equation is especially disconnected from the executable architecture. Paper comparison does not make those equations code evidence.",
+      "DyG-Mamba paper describes first-hop histories; node, edge, absolute-time, and co-occurrence encodings; aligned concatenation; time-aware SSM parameters; and downstream readout. The source confirms a related but not identical executable path with four projected channels, derived elapsed-time features, time-conditioned Mamba blocks, cross linear attention, gated top-k weighted pooling, and task heads.",
+      "DyG-Mamba paper claims spectral-norm-constrained B and C and MEAN pooling, while the inspected executable path does not expose the spectral constraint and instead uses learned softmax gates, top-k selection, renormalization, and weighted summation. Future Method prose must follow this code path or report the paper/code mismatch, not merge the two.",
+      "The LinearRAG paper confirms the same three high-level stages present in the generated draft: offline Tri-Graph construction, entity activation by local semantic bridging, and passage retrieval by personalized PageRank. The draft is therefore organizationally plausible, but it omits code-level details such as sparse matrix construction, per-entity top-k sentence selection, accumulated activation scores, hybrid passage initialization, and the final ranking path.",
+      "LinearRAG's generated pruning rationale is copied from an author-intent/paper-level claim rather than compiled from executable facts. The threshold comparisons are hard code evidence; prevention of exponential growth, improved efficiency, and noise control are explanatory or empirical claims and must remain a rationale gap unless separately supported.",
+      "The LinearRAG paper's compact MAX-based propagation equation is not identical to the inspected vectorized code path, which performs per-entity top-k sentence selection, sparse multiplication, score accumulation, threshold filtering, and used-sentence masking. A future equation may only be emitted from the exact executable operations or must be explicitly labeled as a paper/code mismatch.",
+      "Across all three paper comparisons, the blind conclusion remains unchanged: the information bottleneck is typed path compilation, sentence/claim atomicity, and conflict-aware selection. Importing more paper narrative would reduce rather than improve evidence fidelity."
+    ]
+  }
+}
