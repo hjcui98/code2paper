@@ -18,7 +18,7 @@ from code2paper.core.schemas import (
 
 
 _ASSIGNMENT_RE = re.compile(
-    r"(?<![A-Za-z0-9_])"
+    r"(?<![A-Za-z0-9_(,])"
     r"(?P<key>[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?)"
     r"\s*=\s*"
     r"(?P<value>[A-Za-z0-9_./${}+\-]+)"

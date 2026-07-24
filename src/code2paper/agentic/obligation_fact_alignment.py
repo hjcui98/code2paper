@@ -186,10 +186,10 @@ def _scope_compatible(target_scope: str, fact_scope: str) -> bool:
     Rules:
 
     - ``any`` target may be covered by any fact;
-    - ``training`` target may only be covered by ``training`` facts;
-    - ``inference`` target may be covered by ``inference`` or ``any`` facts
-      (an unconditional fact is assumed to run on the inference path
-      unless it is explicitly training-gated);
+    - ``training`` target may be covered by ``training`` or ``any`` facts
+      (an unconditional fact is assumed to run in both training and
+      inference unless explicitly gated);
+    - ``inference`` target may be covered by ``inference`` or ``any`` facts;
     - a ``training`` fact can never cover an ``inference`` target and
       vice-versa.
     """
@@ -197,7 +197,7 @@ def _scope_compatible(target_scope: str, fact_scope: str) -> bool:
     if target_scope == "any":
         return True
     if target_scope == "training":
-        return fact_scope == "training"
+        return fact_scope in {"training", "any"}
     if target_scope == "inference":
         return fact_scope in {"inference", "any"}
     return False
