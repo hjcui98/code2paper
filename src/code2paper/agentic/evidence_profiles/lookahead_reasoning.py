@@ -78,6 +78,7 @@ def _compile_lookahead_evidence(repo_snapshot: RepoSnapshot) -> EvidenceCompiler
         "EV3-LA-RUN-PROBLEM": index.span("EV3-LA-RUN-PROBLEM", "src/lr.py", "run_problem", "anchor"),
         "EV3-LA-ACCEPT-FUNC": index.span("EV3-LA-ACCEPT-FUNC", "src/lr.py", "accept_func", "relation"),
         "EV3-LA-TEXT-ACCEPT": index.span("EV3-LA-TEXT-ACCEPT", "src/lr.py", "text_accept", "relation"),
+        "EV3-LA-EQUAL-PROMPT": index.line_span("EV3-LA-EQUAL-PROMPT", "src/lr.py", "equal_prompt", 8, 18, "semantic"),
         "EV3-LA-MAIN": index.span("EV3-LA-MAIN", "main.py", "main", "anchor"),
     }
 
@@ -180,12 +181,12 @@ def _compile_lookahead_evidence(repo_snapshot: RepoSnapshot) -> EvidenceCompiler
         _packet(
             "EP-LA-MAIN-LOOP",
             "src/lr.py:run_problem, main.py:main",
-            [spans[x] for x in ("EV3-LA-RUN-PROBLEM", "EV3-LA-ACCEPT-FUNC", "EV3-LA-TEXT-ACCEPT", "EV3-LA-MAIN")],
+            [spans[x] for x in ("EV3-LA-RUN-PROBLEM", "EV3-LA-ACCEPT-FUNC", "EV3-LA-TEXT-ACCEPT", "EV3-LA-EQUAL-PROMPT", "EV3-LA-MAIN")],
             ["EV3-LA-RUN-PROBLEM", "EV3-LA-MAIN"],
             ["EV3-LA-ACCEPT-FUNC", "EV3-LA-TEXT-ACCEPT"],
             main_loop_relations,
             ["run_problem manages the main loop: tree traversal, acceptance checking, and output construction"],
-            "Four spans establish the main algorithm loop and semantic verifier: run_problem orchestrates the lookahead cycle, while accept_func/text_accept implement the semantic similarity check.",
+            "Five spans establish the main algorithm loop and semantic verifier: run_problem orchestrates the lookahead cycle, while accept_func/text_accept implement the semantic similarity check using the equal_prompt template.",
             [],
         ),
     ]
@@ -241,8 +242,8 @@ def _compile_facts(packets: EvidencePacketSetV3) -> CodeFactSetV1:
         ("F-LA-TREE-TRAVERSE", "TreeNode.traverse", "calls_in_order", ["start_main_if_possible to trigger target when draft completes", "allocate_children to create successor nodes"], "src/lr_tree.py:TreeNode.traverse", ["EV3-LA-TRAVERSE"], ["EV3-LA-START-MAIN"], ["RV3-LA-TREE-BUILD"], []),
         ("F-LA-TREE-COLLECT", "TreeNode.collect_main_if_possible", "collects", "target generation result when main task completes", "src/lr_tree.py:TreeNode.collect_main_if_possible", ["EV3-LA-COLLECT-MAIN"], [], [], []),
         ("F-LA-TREE-ACCEPT", "TreeNode.travel_set_accepted", "dispatches", "accept_func as async task for each child's draft vs main comparison", "src/lr_tree.py:TreeNode.travel_set_accepted", ["EV3-LA-ACCEPT"], ["EV3-LA-ACCEPT-FUNC"], ["RV3-LA-VERIFY"], []),
-        ("F-LA-VERIFIER", "accept_func", "calls", "text_accept for semantic similarity check between draft and target steps", "src/lr.py:accept_func", ["EV3-LA-ACCEPT-FUNC"], ["EV3-LA-TEXT-ACCEPT"], [], []),
-        ("F-LA-TEXT-ACCEPT", "text_accept", "implements", "semantic verifier: first checks exact string match, then uses LLM-as-judge to compare reasoning steps", "src/lr.py:text_accept", ["EV3-LA-TEXT-ACCEPT"], [], [], []),
+        ("F-LA-VERIFIER", "accept_func", "calls", "text_accept for semantic similarity check between draft and target steps", "src/lr.py:accept_func", ["EV3-LA-ACCEPT-FUNC"], ["EV3-LA-TEXT-ACCEPT", "EV3-LA-EQUAL-PROMPT"], [], []),
+        ("F-LA-TEXT-ACCEPT", "text_accept", "implements", "semantic verifier: first checks exact string match, then uses LLM-as-judge to compare reasoning steps", "src/lr.py:text_accept", ["EV3-LA-TEXT-ACCEPT"], ["EV3-LA-EQUAL-PROMPT"], [], []),
         ("F-LA-MAIN-LOOP", "run_problem", "calls_in_order", ["initialize TreeNode", "traverse tree", "collect main results", "set acceptance tasks", "check judge children", "accept/reject children", "construct output"], "src/lr.py:run_problem", ["EV3-LA-RUN-PROBLEM"], ["EV3-LA-TRAVERSE", "EV3-LA-COLLECT-MAIN", "EV3-LA-ACCEPT", "EV3-LA-JUDGE-CHILDREN"], ["RV3-LA-MAIN-LOOP"], []),
         ("F-LA-ENTRY", "main", "calls_in_order", ["load questions", "initialize target and draft models", "run_problem for each question", "save results"], "main.py:main", ["EV3-LA-MAIN"], ["EV3-LA-RUN-PROBLEM", "EV3-LA-DRAFT-INIT", "EV3-LA-TARGET-INIT"], ["RV3-LA-ENTRY"], []),
     ]

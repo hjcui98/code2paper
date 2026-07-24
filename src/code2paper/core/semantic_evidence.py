@@ -5,11 +5,13 @@ import re
 
 _CONCEPT_ALIASES: dict[str, set[str]] = {
     "aggregate": {"aggregate", "aggregated", "aggregating", "aggregation", "average", "averaging", "sum"},
+    "algorithm": {"algorithm", "algorithms", "dataset", "datasets", "input", "inputs", "problem", "problems", "procedure", "question", "questions", "workflow"},
     "attribute": {"anisotropy", "attribute", "attributes", "opacity", "opacities", "position", "positions", "rgb", "scale", "scales"},
     "bounded": {"few", "fewshot", "small"},
     "data": {"data", "dataset", "demonstration", "demonstrations", "sample", "samples"},
     "domain": {"domain", "domains", "mixed", "multi"},
     "dynamic_filter": {"conv2d", "convolution", "dynamic", "filter", "filtering", "kernel", "kernels"},
+    "execution": {"execute", "executes", "executing", "execution", "invocation", "invoke", "invokes", "orchestrate", "orchestrates", "orchestrating", "orchestration", "run", "running", "runs"},
     "expert": {"expert", "experts", "idx", "idxs", "indices"},
     "gating": {"gate", "gating", "router", "routing"},
     "grouping": {"group", "grouped", "groups", "parallel"},
@@ -19,10 +21,12 @@ _CONCEPT_ALIASES: dict[str, set[str]] = {
     "norm": {"l2", "magnitude", "norm", "normalization", "normalize", "normalized", "norms"},
     "output": {"out", "output", "outputs"},
     "product": {"multiply", "multiplied", "product"},
+    "reasoning": {"autoregressive", "autoregressively", "draft", "drafting", "drafts", "generate", "generates", "generating", "generation", "prefix", "prefixes", "reasoning", "response", "responses", "step", "steps", "target", "targeting", "targets"},
     "representation": {"descriptor", "descriptors", "embedding", "embeddings", "encoding", "encodings", "feature", "features", "hidden", "representation", "state", "states", "x_before", "x_before_moe", "x_after", "x_after_moe"},
     "score": {"importance", "score", "scores", "weight", "weights"},
     "select": {"keep", "mask", "prune", "pruned", "pruning", "retain", "retained", "scatter", "select", "selection", "top", "topk"},
     "similarity": {"cos", "cosine", "similarity", "simibr"},
+    "verification": {"accept", "acceptance", "accepted", "accepts", "aligned", "compare", "compared", "compares", "comparison", "judge", "judges", "judging", "match", "matched", "matches", "matching", "unaligned", "verification", "verified", "verifier", "verifies", "verify"},
 }
 
 
