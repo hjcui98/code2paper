@@ -21,7 +21,7 @@ _CONCEPT_ALIASES: dict[str, set[str]] = {
     "norm": {"l2", "magnitude", "norm", "normalization", "normalize", "normalized", "norms"},
     "output": {"out", "output", "outputs"},
     "product": {"multiply", "multiplied", "product"},
-    "reasoning": {"autoregressive", "autoregressively", "draft", "drafting", "drafts", "generate", "generates", "generating", "generation", "prefix", "prefixes", "reasoning", "response", "responses", "step", "steps", "target", "targeting", "targets"},
+    "reasoning": {"autoregressive", "autoregressively", "draft", "drafting", "drafts", "generate", "generates", "generating", "generation", "llm", "prefix", "prefixes", "reasoning", "response", "responses", "step", "steps", "target", "targeting", "targets"},
     "representation": {"descriptor", "descriptors", "embedding", "embeddings", "encoding", "encodings", "feature", "features", "hidden", "representation", "state", "states", "x_before", "x_before_moe", "x_after", "x_after_moe"},
     "score": {"importance", "score", "scores", "weight", "weights"},
     "select": {"keep", "mask", "prune", "pruned", "pruning", "retain", "retained", "scatter", "select", "selection", "top", "topk"},
