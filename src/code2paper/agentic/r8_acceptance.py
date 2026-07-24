@@ -1005,19 +1005,54 @@ def check_r8_acceptance(
     # This is a semantic duplicate of code_mainline_in_method but is
     # expressed as a separate criterion so the acceptance report can
     # distinguish between "gap-only" and "no claims at all" failures.
-    methods_with_mainline = int(
-        sum(1 for item in (coverage_report.items if coverage_report else []))
-        if hasattr(coverage_report, "items") else 0
-    )
-    mainline_count = int(
-        sum(
-            1 for item in (coverage_report.items if coverage_report else [])
-            if hasattr(item, "obligation_priority")
-            and hasattr(item, "coverage_status")
-            and item.obligation_priority == "must_cover"
-            and item.coverage_status in {"supported", "partial"}
-        )
-    )
+    #
+    # Use the same two-tier approach as code_mainline_in_method: first
+    # check the coverage report for terminal must_cover obligations,
+    # then check the claim_set for supported claims that cover those
+    # obligations AND are validated in the final text verdict.  This
+    # avoids false negatives when synthetic gaps mark obligations as
+    # explicit_gap but the claim_set still has valid supported claims.
+    mainline_count = 0
+    if coverage_report is not None and hasattr(coverage_report, "items"):
+        supported_must_ids = {
+            item.obligation_id
+            for item in coverage_report.items
+            if item.obligation_priority == "must_cover" and item.coverage_status == "supported"
+        }
+        terminal_must_ids = {
+            item.obligation_id
+            for item in coverage_report.items
+            if item.obligation_priority == "must_cover"
+            and item.coverage_status in {"supported", "partial", "explicit_gap", "blocked"}
+        }
+        if claim_set is not None and terminal_must_ids:
+            supported_claims_for_must = [
+                claim for claim in claim_set.claims
+                if claim.status == "supported"
+                and any(obl_id in terminal_must_ids for obl_id in claim.covers_obligation_ids)
+            ]
+            if validation_report is not None and supported_claims_for_must:
+                validated_ids = {
+                    pid
+                    for verdict in validation_report.verdicts
+                    if verdict.status in {"supported", "caveated"}
+                    for pid in verdict.matched_projection_claim_ids
+                }
+                if validated_ids:
+                    supported_claims_for_must = [
+                        c for c in supported_claims_for_must
+                        if c.claim_id in validated_ids
+                    ]
+                else:
+                    # Legacy fallback: aggregate counts without per-verdict
+                    # projection IDs (V1 fixtures/artifacts).
+                    validated = (
+                        validation_report.supported_claims
+                        + validation_report.caveated_claims
+                    )
+                    if not (supported_must_ids and validated > 0):
+                        supported_claims_for_must = []
+            mainline_count = len(supported_claims_for_must)
     if mainline_count > 0:
         mainline_reason = f"supported_or_partial_must_cover_count={mainline_count}"
     else:
