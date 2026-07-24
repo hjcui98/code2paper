@@ -98,10 +98,31 @@ def extract_json(response: str) -> dict[str, Any]:
 
 def _repair_common_json(text: str) -> str:
     repaired = text.replace("\u201c", '"').replace("\u201d", '"')
+    # Remove JavaScript-style comments that LLMs sometimes emit.
+    repaired = re.sub(r"//[^\n]*", "", repaired)
+    repaired = re.sub(r"/\*.*?\*/", "", repaired, flags=re.DOTALL)
+    # Remove trailing commas before closing brackets/braces.
     repaired = re.sub(r",(\s*[}\]])", r"\1", repaired)
     # Insert the comma commonly omitted between a completed value and the
-    # following quoted property. Local schema validation remains authoritative.
-    return re.sub(r'([}\]"0-9])([ \t\r\n]+)("(?:[^"\\]|\\.)+"\s*:)', r"\1,\2\3", repaired)
+    # following quoted property.  The character class now includes letters
+    # so that ``true``, ``false``, ``null``, and unquoted enum values are
+    # also recognised as value terminators.
+    repaired = re.sub(
+        r'([}\]"0-9a-zA-Z])([ \t\r\n]+)("(?:[^"\\]|\\.)+"\s*:)',
+        r"\1,\2\3",
+        repaired,
+    )
+    # Repair missing commas between array elements: a scalar value followed
+    # by whitespace and another scalar value or opening brace/bracket.
+    # ── string / number / bool / null ────────────────────────────────────
+    repaired = re.sub(
+        r'("(?:[^"\\]|\\.)*"|null|true|false|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)'
+        r'([ \t\r\n]+)'
+        r'("(?:[^"\\]|\\.)*"|null|true|false|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|[\[{])',
+        r"\1,\2\3",
+        repaired,
+    )
+    return repaired
 
 
 def load_prompt(path: str) -> str:

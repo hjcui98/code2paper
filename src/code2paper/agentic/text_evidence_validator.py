@@ -256,6 +256,12 @@ def _numeric_tokens_supported(text: str, evidence_text: str, projection: Authori
     # inside symbol identifiers are not mistaken for numeric claims that
     # require evidence support.
     cleaned = re.sub(r"sym:[0-9a-fA-F]+", "", text)
+    # Remove mathematical interval notation like (0,1) or [0,1] which
+    # describe output ranges implied by activation functions (e.g. Sigmoid
+    # → (0,1), Tanh → (-1,1)).  These are mathematical properties of the
+    # function, not standalone numeric claims that require literal code
+    # evidence.
+    cleaned = re.sub(r"[\[\(]\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*[\]\)]", "", cleaned)
     tokens = set(re.findall(r"\d+(?:\.\d+)?%?", cleaned))
     allowed = evidence_text + " " + json.dumps(projection.safe_numeric_facts, ensure_ascii=False)
     return all(token in allowed for token in tokens)
