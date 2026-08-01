@@ -203,8 +203,8 @@ run_project() {
     --author "${author_path}" \
     --out-root "${run_root}" \
     --project-id "${project_id}" \
-    --llm-provider openai \
-    --llm-model gemma4-31b-nvfp4 \
+    --llm-provider "${CODE2PAPER_LLM_PROVIDER}" \
+    --llm-model "${CODE2PAPER_LLM_MODEL}" \
     --run-id "${run_id}" \
     --checkpoint-backend sqlite \
     --checkpoint-db "${checkpoint_db}" \
@@ -230,8 +230,8 @@ run_project() {
       --author "${author_path}" \
       --out-root "${run_root}" \
       --project-id "${project_id}" \
-      --llm-provider openai \
-      --llm-model gemma4-31b-nvfp4 \
+      --llm-provider "${CODE2PAPER_LLM_PROVIDER}" \
+      --llm-model "${CODE2PAPER_LLM_MODEL}" \
       --run-id "${run_id}" \
       --checkpoint-backend sqlite \
       --checkpoint-db "${checkpoint_db}" \
@@ -284,10 +284,15 @@ run_static_tests() {
     -u CODE2PAPER_LLM_CACHE
     -u CODE2PAPER_LLM_TEMPERATURE
     -u CODE2PAPER_LLM_MAX_OUTPUT_TOKENS
+    -u CODE2PAPER_LLM_REASONING_EFFORT
+    -u CODE2PAPER_LLM_THINKING_TOKEN_BUDGET
+    -u CODE2PAPER_LLM_CAPABILITY_PROFILE
     -u CODE2PAPER_AGENTIC_RESEARCH_V3
     -u CODE2PAPER_R8_ACCEPTANCE
     -u CODE2PAPER_TP_SIZE
     -u CODE2PAPER_NUM_GPUS
+    -u CODE2PAPER_R8_EXPECT_TP_SIZE
+    -u CODE2PAPER_R8_EXPECT_NUM_GPUS
     -u CODE2PAPER_PARALLEL_PROJECTS
     -u CODE2PAPER_PAPER_READ_ONLY_AT_END
     -u CODE2PAPER_LIVE_PROFILE
@@ -303,12 +308,14 @@ run_static_tests() {
     -u CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_METHOD_WRITER_EXTENDED
   )
   local role
-  for role in INTENT_COMPILER CODE_INTAKE CODE_ANALYZER RESEARCH_SUPERVISOR AUTHORING_PLANNER METHOD_WRITER LOCAL_REWRITE SEMANTIC_VERIFIER; do
+  for role in INTENT_COMPILER INTENT_REPAIR CODE_INTAKE CODE_ANALYZER RESEARCH_SUPERVISOR AUTHORING_PLANNER METHOD_WRITER LOCAL_REWRITE SEMANTIC_VERIFIER; do
     clean_test_env+=(
       -u "CODE2PAPER_LLM_TEMPERATURE_${role}"
       -u "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_${role}"
       -u "CODE2PAPER_LLM_TOP_P_${role}"
       -u "CODE2PAPER_LLM_TOP_K_${role}"
+      -u "CODE2PAPER_LLM_REASONING_EFFORT_${role}"
+      -u "CODE2PAPER_LLM_THINKING_TOKEN_BUDGET_${role}"
     )
   done
   start_epoch="$(date +%s)"
@@ -333,9 +340,9 @@ set -a
 set +a
 export CODE2PAPER_AGENTIC_RESEARCH_V3=1
 export CODE2PAPER_R8_ACCEPTANCE=1
-export CODE2PAPER_TP_SIZE=2
-export CODE2PAPER_NUM_GPUS=2
-export CODE2PAPER_PARALLEL_PROJECTS=1
+export CODE2PAPER_TP_SIZE="${CODE2PAPER_TP_SIZE:-2}"
+export CODE2PAPER_NUM_GPUS="${CODE2PAPER_NUM_GPUS:-2}"
+export CODE2PAPER_PARALLEL_PROJECTS="${CODE2PAPER_PARALLEL_PROJECTS:-1}"
 export CODE2PAPER_PAPER_READ_ONLY_AT_END=1
 record_env
 

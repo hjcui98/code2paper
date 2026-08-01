@@ -5,9 +5,10 @@ from __future__ import annotations
 import ast
 import json
 import re
+from collections.abc import Iterable
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 ANALYSIS_NAVIGATION_PLAN_SCHEMA = "analysis_navigation_plan"
 TARGETED_CODE_TRACING_SCHEMA = "targeted_code_tracing"
@@ -15,8 +16,32 @@ CODE_METHOD_ANALYSIS_SCHEMA = "code_method_analysis"
 METHOD_OUTLINE_SCHEMA = "method_outline"
 METHOD_PLAN_SCHEMA = "method_plan"
 METHOD_DRAFT_SCHEMA = "method_draft"
+PUBLICATION_METHOD_SECTION_SCHEMA = "publication_method_section_v1"
+PUBLICATION_METHOD_EDITOR_SCHEMA = "publication_method_editor_v1"
 
 T = TypeVar("T", bound=BaseModel)
+
+
+class PublicationMethodSectionOutputV1(BaseModel):
+    """Content-first Writer response; ids are bindings, not prose substitutes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    section_id: str = ""
+    section_markdown: str
+    used_argument_unit_ids: list[str] = Field(default_factory=list)
+    used_claim_ids: list[str] = Field(default_factory=list)
+    used_equation_ids: list[str] = Field(default_factory=list)
+    new_research_requests: list[dict[str, Any]] = Field(default_factory=list)
+    self_identified_risks: list[str] = Field(default_factory=list)
+
+
+class PublicationMethodEditorOutputV1(BaseModel):
+    """Editor output is a list of complete, section-scoped generated patches."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    patches: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def json_schema_for(model_type: type[BaseModel]) -> dict:
@@ -52,11 +77,37 @@ def _loads_json_or_extract_object(text: str) -> object:
     if extracted and extracted != stripped:
         parse_attempts.append(extracted)
 
+    # Some models (e.g. Qwen3.6) add one extra opening or closing brace
+    # around otherwise valid JSON.  Add conservative one-brace repairs.
+    # The asymmetric ``{{...}`` form is observed in real provider output.
+    for candidate in list(parse_attempts):
+        repaired_braces: list[str] = []
+        if candidate.startswith("{{"):
+            repaired_braces.append(candidate[1:])
+        if candidate.endswith("}}"):
+            repaired_braces.append(candidate[:-1])
+        if candidate.startswith("{{") and candidate.endswith("}}"):
+            repaired_braces.append(candidate[1:-1])
+        for repaired in repaired_braces:
+            if repaired not in parse_attempts:
+                parse_attempts.append(repaired)
+            repaired_extracted = _extract_balanced_json_block(repaired)
+            if (
+                repaired_extracted
+                and repaired_extracted not in parse_attempts
+            ):
+                parse_attempts.append(repaired_extracted)
+
     repaired_candidates: list[str] = []
     for candidate in parse_attempts:
         repaired = _best_effort_json_text_repair(candidate)
         if repaired and repaired != candidate:
             repaired_candidates.append(repaired)
+        closed = _close_unambiguous_json_container_suffix(repaired)
+        if closed:
+            # Closing an otherwise complete container can expose a trailing
+            # comma immediately before the synthesized close token.
+            repaired_candidates.append(_best_effort_json_text_repair(closed))
         extracted_repaired = _extract_balanced_json_block(repaired) if repaired else ""
         if extracted_repaired and extracted_repaired != repaired:
             repaired_candidates.append(extracted_repaired)
@@ -75,10 +126,13 @@ def _loads_json_or_extract_object(text: str) -> object:
 
 
 def _strip_markdown_fence(text: str) -> str:
-    if not text.startswith("```"):
+    # Strip only an outer response fence.  Removing every fence marker would
+    # silently mutate valid JSON strings whose content contains Markdown.
+    opening = re.match(r"\A```(?:json)?[ \t]*(?:\r?\n)?", text, flags=re.IGNORECASE)
+    if opening is None:
         return text
-    stripped = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
-    stripped = re.sub(r"\s*```$", "", stripped)
+    stripped = text[opening.end() :]
+    stripped = re.sub(r"(?:\r?\n)?[ \t]*```\s*\Z", "", stripped)
     return stripped.strip()
 
 
@@ -96,6 +150,107 @@ def _best_effort_json_text_repair(text: str) -> str:
     # fix common missing comma between adjacent key-value pairs
     repaired = re.sub(r'([}\]"0-9])(\s*)("([^"\\]|\\.)+"\s*:)', r"\1,\2\3", repaired)
     return repaired
+
+
+def _close_unambiguous_json_container_suffix(text: str) -> str:
+    """Close only missing outer JSON containers after a complete value.
+
+    This intentionally refuses strings, scalar fragments, dangling commas,
+    mismatched delimiters, or output ending mid-field.  It handles the narrow
+    provider drift case where valid nested objects/arrays were emitted and
+    only one or more final ``]``/``}`` tokens are missing.
+    """
+
+    stripped = text.rstrip()
+    if not stripped or stripped[-1] not in "}]":
+        return ""
+    stack: list[str] = []
+    in_string = False
+    escape = False
+    for ch in stripped:
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            stack.append(ch)
+        elif ch in "}]":
+            if not stack:
+                return ""
+            opening = stack.pop()
+            if (opening, ch) not in {("{", "}"), ("[", "]")}:
+                return ""
+    if in_string or not stack:
+        return ""
+    closing = "".join("}" if opening == "{" else "]" for opening in reversed(stack))
+    return stripped + closing
+
+
+def repair_unambiguous_known_identifier(
+    value: str,
+    allowed_values: Iterable[str],
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Repair presentation-only suffix drift against a closed identifier set.
+
+    The repair is allowed only when trimming whitespace and terminal prose
+    punctuation maps to exactly one known identifier.  It never uses fuzzy
+    matching, edit distance, case folding, prefix matching, or content
+    deletion, so a semantic/reference error remains a validator failure.
+    """
+
+    allowed = tuple(dict.fromkeys(str(item) for item in allowed_values))
+    if value in allowed:
+        return value, None
+    stripped = value.strip()
+    normalized = stripped.rstrip(",;:，；：。.").rstrip()
+    matches = [item for item in allowed if item == normalized]
+    if len(matches) != 1:
+        return None, None
+    repaired = matches[0]
+    return repaired, {
+        "repair_kind": "known_identifier_terminal_punctuation",
+        "before": value,
+        "after": repaired,
+        "semantic_change": False,
+    }
+
+
+def structured_response_diagnostics(
+    text: str,
+    *,
+    excerpt_chars: int = 240,
+) -> dict[str, Any]:
+    """Return bounded diagnostics for a rejected structured response.
+
+    The prefix/suffix excerpts make truncation and repetition debuggable
+    without persisting an unbounded model response in the acceptance report.
+    They are diagnostics only and never participate in authorization.
+    """
+
+    stripped = text.strip()
+    limit = max(0, min(int(excerpt_chars), 1000))
+    lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+    unique_line_ratio = (
+        round(len(set(lines)) / len(lines), 4)
+        if lines
+        else 0.0
+    )
+    return {
+        "character_count": len(text),
+        "nonempty": bool(stripped),
+        "starts_with_json_container": stripped.startswith(("{", "[")),
+        "ends_with_json_container": stripped.endswith(("}", "]")),
+        "line_count": len(lines),
+        "unique_line_ratio": unique_line_ratio,
+        "prefix_excerpt": stripped[:limit] if limit else "",
+        "suffix_excerpt": stripped[-limit:] if limit else "",
+    }
 
 
 def _extract_balanced_json_block(text: str) -> str:
@@ -138,7 +293,7 @@ def _extract_balanced_json_block(text: str) -> str:
 def _try_literal_eval(text: str) -> object | None:
     try:
         parsed = ast.literal_eval(text)
-    except (SyntaxError, ValueError):
+    except (SyntaxError, ValueError, TypeError):
         return None
     if isinstance(parsed, (dict, list)):
         return parsed

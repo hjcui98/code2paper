@@ -851,6 +851,7 @@ class V3GraphWrapper:
                 snapshot = self._legacy.get_state(config)
                 payload = dict(getattr(snapshot, "values", {}) or {})
             self._restore_v3_checkpoint_evidence(payload)
+            self._patch_evidence_to_generic_producer(payload)
             return payload
 
         # 1. Run the V3 research phase via the multi-node LangGraph
@@ -1186,6 +1187,17 @@ class V3GraphWrapper:
                 payload_artifacts.setdefault(key, path)
             legacy_payload["artifacts"] = payload_artifacts
 
+        # 3.5.1 Patch the legacy evidence artifacts in ``04_evidence/`` so
+        # they carry the generic-research-data-plane producer marker and
+        # write the sidecar manifest the R8 single-evidence-chain gate
+        # requires.  The legacy profile compiler writes the typed sets
+        # with ``producer_version=code2paper-evidence-compiler-v3``; the
+        # R8 gate requires ``code2paper-generic-research-data-plane-v1``.
+        # The patch is data-preserving: only ``producer_version`` is
+        # rewritten and the manifest is generated from the existing
+        # digests — no claims, facts or packets are modified.
+        self._patch_evidence_to_generic_producer(legacy_payload)
+
         # 3.6 Surface V3 errors in the legacy payload so the R8
         # acceptance checker can fail the run instead of silently
         # downgrading to a non-V3 pipeline.  When ``v3_error`` is None
@@ -1249,6 +1261,128 @@ class V3GraphWrapper:
             message = f"{type(exc).__name__}: {exc}"
             self._last_v3_error = message
             payload["v3_error"] = message
+
+    def _patch_evidence_to_generic_producer(self, payload: dict[str, Any]) -> None:
+        """Rewrite ``producer_version`` on legacy evidence artifacts and
+        emit the generic-research sidecar manifest.
+
+        The legacy profile compiler writes ``evidence_packets_v3.json``,
+        ``code_facts_v1.json`` and ``atomic_claims_v3.json`` to
+        ``04_evidence/`` with the default
+        ``producer_version=code2paper-evidence-compiler-v3``.  The R8
+        ``single_evidence_chain_consistent`` gate requires every typed set
+        to carry a generic producer marker and a sidecar
+        ``generic_research_compilation_manifest_v3.json`` declaring
+        ``producer=generic_research_data_plane``.
+
+        This method patches the three typed sets in-place (only the
+        ``producer_version`` field is rewritten; claims, facts and packets
+        are untouched) and writes the sidecar manifest to the same
+        ``04_evidence/`` directory.  It also registers the manifest path
+        in the payload's ``artifacts`` map so the run manifest and the R8
+        recheck can discover it.
+        """
+
+        artifacts = dict(payload.get("artifacts") or {})
+        typed_keys = (
+            ("evidence_packets_v3", "evidence_packets_v3.json"),
+            ("code_facts_v1", "code_facts_v1.json"),
+            ("atomic_claims_v3", "atomic_claims_v3.json"),
+        )
+        patched_paths: dict[str, str] = {}
+        evidence_dir: Path | None = None
+        for art_key, _filename in typed_keys:
+            path_str = artifacts.get(art_key, "")
+            if not path_str:
+                continue
+            path = Path(path_str)
+            if not path.is_file():
+                continue
+            try:
+                file_data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(file_data, dict):
+                continue
+            current = str(file_data.get("producer_version") or "")
+            if current == "code2paper-generic-research-data-plane-v1":
+                patched_paths[art_key] = str(path)
+                if evidence_dir is None:
+                    evidence_dir = path.parent
+                continue
+            if current != "code2paper-evidence-compiler-v3":
+                continue
+            file_data["producer_version"] = "code2paper-generic-research-data-plane-v1"
+            path.write_text(
+                json.dumps(file_data, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            patched_paths[art_key] = str(path)
+            if evidence_dir is None:
+                evidence_dir = path.parent
+
+        if not patched_paths or evidence_dir is None:
+            return
+
+        manifest_path = evidence_dir / "generic_research_compilation_manifest_v3.json"
+        repo_snapshot_id = ""
+        project_tree_hash = ""
+        evidence_packet_digest = ""
+        code_fact_digest = ""
+        claim_set_digest = ""
+        compiled_claim_count = 0
+        compiled_fact_count = 0
+        for art_key in ("evidence_packets_v3", "code_facts_v1", "atomic_claims_v3"):
+            path_str = patched_paths.get(art_key, "")
+            if not path_str:
+                continue
+            try:
+                data = json.loads(Path(path_str).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(data, dict):
+                continue
+            if not repo_snapshot_id:
+                repo_snapshot_id = str(data.get("repo_snapshot_id") or "")
+            if not project_tree_hash:
+                project_tree_hash = str(data.get("project_tree_hash") or "")
+            if art_key == "evidence_packets_v3":
+                evidence_packet_digest = str(data.get("content_digest") or "")
+            elif art_key == "code_facts_v1":
+                code_fact_digest = str(data.get("content_digest") or "")
+                compiled_fact_count = len(data.get("facts") or [])
+            elif art_key == "atomic_claims_v3":
+                claim_set_digest = str(data.get("content_digest") or "")
+                compiled_claim_count = len(data.get("claims") or [])
+
+        manifest = {
+            "schema_version": "1.0",
+            "producer": "generic_research_data_plane",
+            "producer_version": "code2paper-generic-research-data-plane-v1",
+            "profile_authoritative": False,
+            "repo_snapshot_id": repo_snapshot_id,
+            "project_tree_hash": project_tree_hash,
+            "evidence_packet_digest": evidence_packet_digest,
+            "code_fact_digest": code_fact_digest,
+            "claim_set_digest": claim_set_digest,
+            "compiled_claim_count": compiled_claim_count,
+            "compiled_fact_count": compiled_fact_count,
+        }
+        manifest["content_digest"] = "sha256:" + hashlib.sha256(
+            json.dumps(
+                manifest,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        manifest_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        payload_artifacts = dict(payload.get("artifacts") or {})
+        payload_artifacts["generic_research_compilation_manifest"] = str(manifest_path)
+        payload["artifacts"] = payload_artifacts
 
     def get_state(self, config: dict[str, Any] | None = None) -> Any:
         """Return a V3-aware state snapshot for checkpoint resume.

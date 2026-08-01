@@ -1,11 +1,11 @@
-"""Effective sampling config trace (Phase 1 R8 protocol evidence).
+"""Effective LLM-call config trace (R8 API provenance and audit evidence).
 
 Records the *effective* sampling config that was actually applied to a
 single LLM call, plus token usage and finish reason.  This is the
-authoritative evidence used by the R8 acceptance checker to verify
-per-role protocol compliance (e.g., research_supervisor temperature
-== 0.20, semantic_verifier temperature == 0.00, method_writer did not
-exceed the 24576 cumulative Method budget).
+authoritative evidence used by the R8 acceptance checker to verify that
+required roles made real, non-cached API calls with non-empty responses.
+Sampling, output budgets, and thinking budgets are checked against the
+resolved run profile; deployment topology remains auditable metadata.
 
 The trace is intentionally a separate model from ``LLMCallLog`` so it
 can be emitted even when full call logging is disabled (e.g., during
@@ -20,10 +20,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.schemas import LLMConfig
 from code2paper.llm.client import LLMRequest, LLMResponse
+from code2paper.llm.capabilities import sanitized_origin
+from code2paper.llm.providers import openai_compatible_base_url
 
 
-# Runs are deliberately serialized by the R8 protocol.  A small process-local
-# collector therefore gives every LLM call site (legacy stages included) one
+# A small process-local collector gives every LLM call site (legacy stages
+# included) one
 # auditable trace channel without threading mutable state through every stage
 # tool signature.  The runner resets it at the start of each project run.
 _RUN_GENERATION_TRACES: list[dict[str, Any]] = []
@@ -49,6 +51,8 @@ class EffectiveSamplingConfig(BaseModel):
     role: str = ""
     temperature: float
     max_output_tokens: int
+    reasoning_effort: str = ""
+    thinking_token_budget: int | None = None
     top_p: float | None = None
     top_k: int | None = None
     seed: int | None = None
@@ -64,6 +68,9 @@ class GenerationCallTrace(BaseModel):
     call_id: str
     prompt_template_id: str
     role: str = ""
+    provider: str = ""
+    model: str = ""
+    endpoint_origin: str = ""
     effective_config: EffectiveSamplingConfig
     finish_reason: str = ""
     token_usage: dict[str, int] = Field(default_factory=dict)
@@ -98,6 +105,8 @@ def build_effective_sampling_config(config: LLMConfig) -> EffectiveSamplingConfi
         role=config.role,
         temperature=config.temperature,
         max_output_tokens=config.max_output_tokens,
+        reasoning_effort=config.reasoning_effort,
+        thinking_token_budget=config.thinking_token_budget,
         top_p=config.top_p,
         top_k=config.top_k,
         seed=config.seed,
@@ -127,6 +136,9 @@ def build_generation_call_trace(
         call_id=call_id,
         prompt_template_id=request.prompt_template_id,
         role=config.role,
+        provider=getattr(config.provider, "value", str(config.provider)),
+        model=config.model,
+        endpoint_origin=endpoint_origin_for_config(config),
         effective_config=build_effective_sampling_config(config),
         finish_reason=response.finish_reason,
         token_usage=response.token_usage or {},
@@ -139,6 +151,19 @@ def build_generation_call_trace(
         extended_budget_used=extended_budget_used,
         cumulative_budget_consumed=cumulative_budget_consumed,
     )
+
+
+def endpoint_origin_for_config(config: LLMConfig) -> str:
+    """Return a credential-free API origin for call provenance."""
+
+    provider = getattr(config.provider, "value", str(config.provider))
+    if provider in {"openai", "openrouter"}:
+        return sanitized_origin(openai_compatible_base_url(config))
+    if provider == "anthropic":
+        return "https://api.anthropic.com"
+    if provider == "google":
+        return "https://generativelanguage.googleapis.com"
+    return ""
 
 
 def trace_matches_role_protocol(
@@ -169,6 +194,7 @@ __all__ = [
     "GenerationCallTrace",
     "build_effective_sampling_config",
     "build_generation_call_trace",
+    "endpoint_origin_for_config",
     "get_run_generation_traces",
     "record_run_generation_trace",
     "reset_run_generation_traces",

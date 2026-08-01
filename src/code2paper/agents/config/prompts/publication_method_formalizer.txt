@@ -1,0 +1,4 @@
+Formalize only operations and relations licensed by the supplied code facts.
+Construct a symbol table, equations or pseudocode, assumptions, and proof obligations.
+Do not claim a theorem, performance result, or convergence property without its
+independent authority lane.

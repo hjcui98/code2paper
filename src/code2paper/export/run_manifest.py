@@ -60,6 +60,15 @@ def build_run_manifest(
     final_draft_path: str | Path | None = None,
     validator_reports: list[str] | None = None,
     agentic_budgets: dict[str, int] | None = None,
+    source_commit: str = "",
+    source_dirty: bool | None = None,
+    evidence_profile_digest: str = "",
+    run_summary_digest: str = "",
+    acceptance_report_digest: str = "",
+    checkpoint_digest: str = "",
+    terminal_state: str = "",
+    resume_model_call_delta: int | None = None,
+    execution_profile_digest: str = "",
 ) -> Code2PaperRunManifest:
     outputs = {
         name: ArtifactHash(path=str(path), hash=hash_file(path))
@@ -83,6 +92,15 @@ def build_run_manifest(
         final_draft_hash=final_draft_hash,
         validator_reports=validator_reports or [],
         agentic_budgets=agentic_budgets or {},
+        source_commit=source_commit,
+        source_dirty=source_dirty,
+        evidence_profile_digest=evidence_profile_digest,
+        run_summary_digest=run_summary_digest,
+        acceptance_report_digest=acceptance_report_digest,
+        checkpoint_digest=checkpoint_digest,
+        terminal_state=terminal_state,
+        resume_model_call_delta=resume_model_call_delta,
+        execution_profile_digest=execution_profile_digest,
     )
 
 

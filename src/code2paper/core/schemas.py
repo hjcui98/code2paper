@@ -1079,6 +1079,7 @@ class LLMConfig(StrictModel):
     max_output_tokens: int = Field(default=12000, ge=1)
     thinking_enabled: bool = False
     reasoning_effort: str = ""
+    thinking_token_budget: int | None = Field(default=None, ge=0)
     request_timeout_seconds: int = Field(default=300, ge=1)
     retry_max_attempts: int = Field(default=5, ge=1)
     retry_initial_delay_seconds: float = Field(default=2.0, ge=0.0)
@@ -1096,6 +1097,17 @@ class LLMConfig(StrictModel):
     top_k: int | None = Field(default=None, ge=0)
     seed: int | None = Field(default=None, ge=0)
     max_input_tokens: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def _thinking_budget_leaves_answer_tokens(self) -> "LLMConfig":
+        if (
+            self.thinking_token_budget is not None
+            and self.thinking_token_budget >= self.max_output_tokens
+        ):
+            raise ValueError(
+                "thinking_token_budget must be smaller than max_output_tokens"
+            )
+        return self
 
 
 class LLMCallLog(StrictModel):
@@ -1297,6 +1309,7 @@ class Phase5Manifest(StrictModel):
 
 
 class Code2PaperRunManifest(StrictModel):
+    manifest_schema_version: str = "2.0"
     run_id: str
     created_at: str
     project_root: str
@@ -1309,6 +1322,16 @@ class Code2PaperRunManifest(StrictModel):
     final_draft_hash: str = ""
     validator_reports: list[str] = Field(default_factory=list)
     agentic_budgets: dict[str, int] = Field(default_factory=dict)
+    # D0 reproducibility/termination metadata.  These fields are optional for
+    # legacy manifests, but a current R8 manifest records all of them.
+    source_commit: str = ""
+    source_dirty: bool | None = None
+    evidence_profile_digest: str = ""
+    run_summary_digest: str = ""
+    acceptance_report_digest: str = ""
+    checkpoint_digest: str = ""
+    terminal_state: str = ""
+    resume_model_call_delta: int | None = None
 
     @field_validator("run_id", "created_at", "project_root", "project_hash")
     @classmethod

@@ -37,6 +37,40 @@ class LLMCapabilityProfile(BaseModel):
     max_model_len: int = 0
 
 
+def builtin_capability_profile(*, provider: str, model: str) -> LLMCapabilityProfile:
+    """Return the conservative built-in profile for a second provider path.
+
+    Capability selection changes transport/response formatting only.  It does
+    not alter evidence, claim authorization, or final-text gates.
+    """
+
+    provider_value = str(provider or "").strip().lower()
+    model_value = str(model or "").strip()
+    if provider_value == "anthropic":
+        return LLMCapabilityProfile(
+            profile_name="anthropic-structured-json-v1",
+            provider=provider_value,
+            model=model_value,
+            response_mode=StructuredResponseMode.JSON_OBJECT,
+            source="builtin",
+        )
+    if provider_value in {"openrouter", "google"}:
+        return LLMCapabilityProfile(
+            profile_name=f"{provider_value}-prompt-json-v1",
+            provider=provider_value,
+            model=model_value,
+            response_mode=StructuredResponseMode.JSON_OBJECT,
+            source="builtin",
+        )
+    return LLMCapabilityProfile(
+        profile_name="default-native-json-v1",
+        provider=provider_value,
+        model=model_value,
+        response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA,
+        source="builtin",
+    )
+
+
 def load_capability_profile(*, provider: str, model: str) -> LLMCapabilityProfile:
     """Load an explicit JSON profile or use the conservative provider default."""
 
@@ -45,7 +79,7 @@ def load_capability_profile(*, provider: str, model: str) -> LLMCapabilityProfil
         path = Path(raw).expanduser()
         payload = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else json.loads(raw)
         return LLMCapabilityProfile.model_validate(_runtime_profile_payload(payload, source=str(path) if path.is_file() else "inline"))
-    return LLMCapabilityProfile(provider=provider, model=model)
+    return builtin_capability_profile(provider=provider, model=model)
 
 
 def _runtime_profile_payload(payload: object, *, source: str) -> object:
@@ -78,3 +112,13 @@ def sanitized_origin(url: str) -> str:
 def is_loopback_url(url: str) -> bool:
     host = (urlparse(url).hostname or "").lower()
     return host in {"127.0.0.1", "localhost", "::1"}
+
+
+__all__ = [
+    "LLMCapabilityProfile",
+    "StructuredResponseMode",
+    "builtin_capability_profile",
+    "is_loopback_url",
+    "load_capability_profile",
+    "sanitized_origin",
+]

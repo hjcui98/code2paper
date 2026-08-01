@@ -1,0 +1,5 @@
+Write one focused Method section from the supplied SectionArgumentGraph.
+Explain the supported input, transformation, conditions, and output in a coherent
+technical narrative. Define symbols before equations, distinguish active/default/
+conditional branches, and preserve limitations. Return content first and then the
+typed ids used by the text plus any scoped research requests.

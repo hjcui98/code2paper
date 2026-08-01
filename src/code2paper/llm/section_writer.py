@@ -51,6 +51,13 @@ from code2paper.llm.role_config import (
     apply_role_config,
     writer_cumulative_budget,
 )
+from code2paper.authoring.writer_skill import PublicationMethodWriterSkillV1
+from code2paper.llm.response_schemas import (
+    PUBLICATION_METHOD_SECTION_SCHEMA,
+    PublicationMethodSectionOutputV1,
+    json_schema_for,
+    try_parse_structured_response,
+)
 from code2paper.schemas import LLMConfig
 
 _logger = logging.getLogger(__name__)
@@ -77,6 +84,8 @@ class WriterSectionInput:
     heading: str
     prompt_payload: dict[str, Any]
     system_prompt: str = ""
+    publication_mode: bool = False
+    argument_graph: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -90,6 +99,9 @@ class WriterSectionResult:
     extended_budget_used: bool
     blocked_reason: str = ""
     trace: GenerationCallTrace | None = None
+    incomplete: bool = False
+    new_research_requests: list[dict[str, Any]] = field(default_factory=list)
+    self_identified_risks: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -102,6 +114,8 @@ class WriterAggregateResult:
     cumulative_budget_cap: int = 0
     cumulative_budget_exhausted: bool = False
     concatenated_markdown: str = ""
+    incomplete_sections: list[str] = field(default_factory=list)
+    research_requests: list[dict[str, Any]] = field(default_factory=list)
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -121,6 +135,8 @@ class WriterAggregateResult:
             "cumulative_budget_cap": self.cumulative_budget_cap,
             "cumulative_budget_exhausted": self.cumulative_budget_exhausted,
             "concatenated_markdown_length": len(self.concatenated_markdown),
+            "incomplete_sections": list(self.incomplete_sections),
+            "research_request_count": len(self.research_requests),
         }
 
 
@@ -152,17 +168,7 @@ def default_section_system_prompt() -> str:
     or reintroducing unsupported claims.
     """
 
-    return (
-        "You are the Method writer inside Code2Paper's robust LangGraph "
-        "research agent.  You are rendering ONE section of the Method "
-        "from the provided projection payload.\n\n"
-        "Hard constraints:\n"
-        "- Use ONLY claims and evidence present in the projection payload.\n"
-        "- Do NOT invent file paths, symbol names, span IDs or evidence IDs.\n"
-        "- Do NOT reintroduce text that was previously flagged as unsupported.\n"
-        "- Render the section as Markdown, starting with a level-2 heading.\n"
-        "- Keep the section focused; do not describe other sections.\n"
-    )
+    return PublicationMethodWriterSkillV1().system_prompt()
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +204,7 @@ def write_method_by_sections(
     call_id_prefix: str = "LLM-writer-section",
     schema_name: str = "DraftMarkdownOutput",
     response_json_schema: dict[str, Any] | None = None,
+    publication_mode: bool = False,
 ) -> WriterAggregateResult:
     """Render a Method document by calling the writer once per section.
 
@@ -226,8 +233,10 @@ def write_method_by_sections(
         # Stop issuing LLM calls once the cumulative budget is exhausted.
         if result.cumulative_budget_consumed >= cap:
             result.cumulative_budget_exhausted = True
-            placeholder = _placeholder_section(section, reason="cumulative_budget_exhausted")
-            rendered_sections.append(placeholder)
+            publication_section = publication_mode or section.publication_mode
+            placeholder = "" if publication_section else _placeholder_section(section, reason="cumulative_budget_exhausted")
+            if placeholder:
+                rendered_sections.append(placeholder)
             result.sections.append(
                 WriterSectionResult(
                     section_id=section.section_id,
@@ -235,15 +244,20 @@ def write_method_by_sections(
                     text=placeholder,
                     finish_reason="skipped_cumulative_budget_exhausted",
                     extended_budget_used=False,
+                    incomplete=True,
                 )
             )
+            result.incomplete_sections.append(section.section_id)
             continue
 
         system_prompt = section.system_prompt or default_section_system_prompt()
         request = LLMRequest(
             prompt_template_id=f"phase5_method_writer_section_v1",
             prompt=system_prompt,
-            input_payload=section.prompt_payload,
+            input_payload={
+                **section.prompt_payload,
+                "argument_graph": section.argument_graph,
+            },
             schema_name=schema_name,
             response_json_schema=response_json_schema,
         )
@@ -329,8 +343,13 @@ def write_method_by_sections(
                 accepted_trace = extended_trace
                 extended_used = True
 
-        section_text = accepted_response.text or _placeholder_section(section, reason="empty_response")
-        rendered_sections.append(section_text)
+        publication_section = publication_mode or section.publication_mode
+        section_text = accepted_response.text or (
+            "" if publication_section else _placeholder_section(section, reason="empty_response")
+        )
+        if section_text:
+            rendered_sections.append(section_text)
+        incomplete = not bool(section_text.strip()) or bool(accepted_response.blocked_reason)
         result.sections.append(
             WriterSectionResult(
                 section_id=section.section_id,
@@ -340,14 +359,101 @@ def write_method_by_sections(
                 extended_budget_used=extended_used,
                 blocked_reason=accepted_response.blocked_reason,
                 trace=accepted_trace,
+                incomplete=incomplete,
             )
         )
+        if incomplete:
+            result.incomplete_sections.append(section.section_id)
 
         if result.cumulative_budget_consumed >= cap:
             result.cumulative_budget_exhausted = True
 
     result.concatenated_markdown = "\n\n".join(rendered_sections)
     return result
+
+
+@dataclass
+class PublicationWriterResult:
+    """Publication-mode writer result with structured callback requests."""
+
+    aggregate: WriterAggregateResult
+    outputs: list[PublicationMethodSectionOutputV1] = field(default_factory=list)
+
+    @property
+    def incomplete_sections(self) -> list[str]:
+        return list(self.aggregate.incomplete_sections)
+
+
+def write_publication_method_by_sections(
+    base_config: LLMConfig,
+    sections: Iterable[WriterSectionInput],
+    *,
+    llm_caller: _LLMCaller | None = None,
+    call_id_prefix: str = "LLM-publication-method-section",
+) -> PublicationWriterResult:
+    """Run the content-first publication Writer contract.
+
+    A malformed structured response becomes an incomplete section.  The
+    harness never fills it with deterministic prose and never converts the
+    model's ids into substitute text.
+    """
+
+    caller = llm_caller or _default_llm_caller
+    parsed_outputs: list[PublicationMethodSectionOutputV1] = []
+
+    def structured_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        response = caller(config, request)
+        parsed, error = try_parse_structured_response(response.text, PublicationMethodSectionOutputV1)
+        if parsed is None:
+            return LLMResponse(
+                text="",
+                response_hash=response.response_hash,
+                blocked_reason=f"publication_section_schema_failed:{error}",
+                cached=response.cached,
+                response_mode=response.response_mode,
+                finish_reason=response.finish_reason,
+                token_usage=response.token_usage,
+            )
+        section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
+        parsed_outputs.append(parsed.model_copy(update={"section_id": section_id}))
+        return LLMResponse(
+            text=parsed.section_markdown,
+            response_hash=response.response_hash,
+            blocked_reason=response.blocked_reason,
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=response.token_usage,
+        )
+
+    normalized_sections = [
+        WriterSectionInput(
+            section_id=section.section_id,
+            heading=section.heading,
+            prompt_payload={
+                "section_id": section.section_id,
+                **section.prompt_payload,
+                "argument_graph": section.argument_graph,
+                "output_contract": "PublicationMethodSectionOutputV1",
+            },
+            system_prompt=section.system_prompt or PublicationMethodWriterSkillV1().system_prompt(),
+            publication_mode=True,
+            argument_graph=section.argument_graph,
+        )
+        for section in sections
+    ]
+    aggregate = write_method_by_sections(
+        base_config,
+        normalized_sections,
+        llm_caller=structured_caller,
+        call_id_prefix=call_id_prefix,
+        schema_name=PUBLICATION_METHOD_SECTION_SCHEMA,
+        response_json_schema=json_schema_for(PublicationMethodSectionOutputV1),
+        publication_mode=True,
+    )
+    for output in parsed_outputs:
+        aggregate.research_requests.extend(output.new_research_requests)
+    return PublicationWriterResult(aggregate=aggregate, outputs=parsed_outputs)
 
 
 def _safe_call(
@@ -383,9 +489,11 @@ def _placeholder_section(section: WriterSectionInput, *, reason: str) -> str:
 
 
 __all__ = [
+    "PublicationWriterResult",
     "WriterAggregateResult",
     "WriterSectionInput",
     "WriterSectionResult",
     "default_section_system_prompt",
     "write_method_by_sections",
+    "write_publication_method_by_sections",
 ]

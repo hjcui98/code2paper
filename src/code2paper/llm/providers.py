@@ -24,6 +24,8 @@ def load_llm_config_from_env(
     model: str | None = None,
     temperature: float | None = None,
     max_output_tokens: int | None = None,
+    reasoning_effort: str | None = None,
+    thinking_token_budget: int | None = None,
     prompt_template_version: str | None = None,
     role: str | None = None,
 ) -> LLMConfig:
@@ -40,6 +42,16 @@ def load_llm_config_from_env(
     max_tokens_value = max_output_tokens
     if max_tokens_value is None:
         max_tokens_value = _int_env("CODE2PAPER_LLM_MAX_OUTPUT_TOKENS", 12000)
+    reasoning_effort_value = (
+        reasoning_effort
+        if reasoning_effort is not None
+        else os.environ.get("CODE2PAPER_LLM_REASONING_EFFORT", "")
+    ).strip()
+    thinking_token_budget_value = thinking_token_budget
+    if thinking_token_budget_value is None:
+        thinking_token_budget_value = _int_env_or_none(
+            "CODE2PAPER_LLM_THINKING_TOKEN_BUDGET"
+        )
     top_p_value = _float_env_or_none("CODE2PAPER_LLM_TOP_P")
     top_k_value = _int_env_or_none("CODE2PAPER_LLM_TOP_K")
     seed_value = _int_env_or_none("CODE2PAPER_LLM_SEED")
@@ -50,6 +62,8 @@ def load_llm_config_from_env(
         model=model_value,
         temperature=temperature_value,
         max_output_tokens=max_tokens_value,
+        reasoning_effort=reasoning_effort_value,
+        thinking_token_budget=thinking_token_budget_value,
         request_timeout_seconds=_int_env("CODE2PAPER_LLM_TIMEOUT_SECONDS", 300),
         retry_max_attempts=_int_env("CODE2PAPER_LLM_RETRY_MAX_ATTEMPTS", 5),
         retry_initial_delay_seconds=_float_env("CODE2PAPER_LLM_RETRY_INITIAL_DELAY_SECONDS", 2.0),

@@ -1,0 +1,3 @@
+Edit section connections, terminology, notation, and transitions while preserving
+the lexical content provenance of Writer/Formalizer/Rewrite responses. Remove true
+repetition, never delete the only supported explanation, and return scoped patches.

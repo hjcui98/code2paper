@@ -912,6 +912,8 @@ _R8_ENV_VARS: tuple[str, ...] = (
     "CODE2PAPER_LLM_CACHE",
     "CODE2PAPER_TP_SIZE",
     "CODE2PAPER_NUM_GPUS",
+    "CODE2PAPER_R8_EXPECT_TP_SIZE",
+    "CODE2PAPER_R8_EXPECT_NUM_GPUS",
     "CODE2PAPER_PARALLEL_PROJECTS",
     "CODE2PAPER_LLM_TEMPERATURE",
     "CODE2PAPER_PAPER_READ_ONLY_AT_END",
@@ -1212,12 +1214,31 @@ def _build_r8_acceptance_report(
             if summary.resumed_from_final_state_digest
             else ""
         ),
-        protocol_settings=R8ProtocolSettings(),
+        protocol_settings=R8ProtocolSettings(
+            single_tp2_instance=(
+                "CODE2PAPER_R8_EXPECT_TP_SIZE" not in summary.environment
+                and "CODE2PAPER_R8_EXPECT_NUM_GPUS" not in summary.environment
+            ),
+            expected_tp_size=(
+                int(summary.environment["CODE2PAPER_R8_EXPECT_TP_SIZE"])
+                if summary.environment.get("CODE2PAPER_R8_EXPECT_TP_SIZE", "").isdigit()
+                else None
+            ),
+            expected_num_gpus=(
+                int(summary.environment["CODE2PAPER_R8_EXPECT_NUM_GPUS"])
+                if summary.environment.get("CODE2PAPER_R8_EXPECT_NUM_GPUS", "").isdigit()
+                else None
+            ),
+        ),
         run_environment=summary.environment,
         run_temperature=summary.temperature,
         source_authority_policy=summary.source_authority_policy,
         paper_read_only_at_end=summary.paper_read_only_at_end,
         generation_call_traces=summary.generation_call_traces,
+        temperature_by_role=summary.temperature_by_role,
+        top_p_by_role=summary.top_p_by_role,
+        top_k_by_role=summary.top_k_by_role,
+        max_output_tokens_by_role=summary.max_output_tokens_by_role,
         intent_target_proposal_report=intent_target_proposal_report,
         v3_error=summary.v3_error,
     )

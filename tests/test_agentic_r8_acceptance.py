@@ -86,6 +86,7 @@ from code2paper.llm.role_config import (
     CODE_ANALYZER,
     CODE_INTAKE,
     DETERMINISTIC_COMPILER,
+    INTENT_COMPILER,
     LLM_CALLING_ROLES,
     LOCAL_REWRITE,
     METHOD_WRITER,
@@ -259,6 +260,9 @@ def _trace(
         call_id=call_id or f"LLM-{role}-1",
         prompt_template_id=prompt_template_id,
         role=role,
+        provider="openai",
+        model="live-test-model",
+        endpoint_origin="http://127.0.0.1:8003",
         effective_config=EffectiveSamplingConfig(
             role=role,
             temperature=temperature,
@@ -267,6 +271,7 @@ def _trace(
             top_k=ROLE_GENERATION_CONFIGS[role].top_k,
         ),
         finish_reason="stop",
+        response_hash=f"sha256:response-{role}",
     )
 
 
@@ -274,6 +279,23 @@ def _compliant_traces_for_all_llm_roles() -> list[GenerationCallTrace]:
     """Return one trace per LLM-calling role, all temperature-compliant."""
 
     return [_trace(role) for role in LLM_CALLING_ROLES]
+
+
+def _qwen_resolved_profile_kwargs() -> dict[str, dict[str, Any]]:
+    """Return the frozen sampling envelope used by the live Qwen profile."""
+
+    return {
+        "temperature_by_role": {role: 0.6 for role in LLM_CALLING_ROLES},
+        "top_p_by_role": {role: 0.95 for role in LLM_CALLING_ROLES},
+        "top_k_by_role": {role: 20 for role in LLM_CALLING_ROLES},
+        "max_output_tokens_by_role": {
+            **{role: 4096 for role in LLM_CALLING_ROLES},
+            INTENT_COMPILER: 16384,
+            METHOD_WRITER: 8192,
+            "method_writer_extended": 12288,
+            "method_cumulative_budget": 24576,
+        },
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +404,7 @@ def test_passing_run_produces_accepted_report():
             f"criterion {key!r} status={criterion.status!r} reason={criterion.reason!r}"
         )
     assert report.content_digest.startswith("sha256:")
-    # All sixteen criteria must be present in the report.
+    # All seventeen criteria must be present in the report.
     expected_keys = {
         "gap_driven_tool_selection",
         "code_mainline_in_method",
@@ -392,7 +414,8 @@ def test_passing_run_produces_accepted_report():
         "no_evidence_free_equations",
         "trace_reproducible",
         "checkpoint_resume_consistent",
-        "per_role_sampling_config_evidenced",
+            "per_role_sampling_config_evidenced",
+            "real_api_calls_evidenced",
         "v3_research_succeeded",
         "typed_intent_proposal_accepted",
         "completion_complete",
@@ -974,6 +997,98 @@ def test_per_role_sampling_config_passes_with_compliant_traces_for_all_roles():
     assert report.accepted is True
 
 
+def test_per_role_sampling_config_uses_frozen_resolved_run_profile():
+    """A Qwen run is checked against its recorded profile, not Gemma defaults."""
+
+    traces = []
+    for role in LLM_CALLING_ROLES:
+        trace = _trace(role)
+        max_tokens = 16384 if role == INTENT_COMPILER else 4096
+        if role == METHOD_WRITER:
+            max_tokens = 8192
+        traces.append(trace.model_copy(update={
+            "effective_config": trace.effective_config.model_copy(update={
+                "temperature": 0.6,
+                "top_p": 0.95,
+                "top_k": 20,
+                "max_output_tokens": max_tokens,
+            })
+        }))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    kwargs.update(_qwen_resolved_profile_kwargs())
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "passed"
+    assert "resolved_run_profile" in criterion.reason
+    assert report.accepted is True
+
+
+def test_per_role_sampling_config_rejects_trace_outside_resolved_profile():
+    traces = []
+    for role in LLM_CALLING_ROLES:
+        trace = _trace(role)
+        traces.append(trace.model_copy(update={
+            "effective_config": trace.effective_config.model_copy(update={
+                "temperature": 0.6,
+                "top_p": 0.95,
+                "top_k": 20,
+                "max_output_tokens": 4096,
+            })
+        }))
+    bad_writer = next(item for item in traces if item.role == METHOD_WRITER)
+    traces = [item for item in traces if item.role != METHOD_WRITER]
+    traces.append(bad_writer.model_copy(update={
+        "effective_config": bad_writer.effective_config.model_copy(
+            update={"temperature": 0.7}
+        )
+    }))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+    kwargs.update(_qwen_resolved_profile_kwargs())
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "temperature_mismatch" in criterion.reason
+
+
+def test_per_role_sampling_config_rejects_incomplete_resolved_profile():
+    kwargs = _passing_report_kwargs()
+    profile = _qwen_resolved_profile_kwargs()
+    profile["temperature_by_role"].pop(METHOD_WRITER)
+    kwargs.update(profile)
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria["per_role_sampling_config_evidenced"]
+    assert criterion.status == "failed"
+    assert "resolved_run_profile_missing" in criterion.reason
+
+
+def test_profile_specific_topology_is_strictly_checked():
+    kwargs = _passing_report_kwargs()
+    kwargs["run_environment"] = {
+        **kwargs["run_environment"],
+        "CODE2PAPER_TP_SIZE": "1",
+        "CODE2PAPER_NUM_GPUS": "1",
+    }
+    kwargs["protocol_settings"] = R8ProtocolSettings(
+        single_tp2_instance=False,
+        expected_tp_size=1,
+        expected_num_gpus=1,
+    )
+    assert check_r8_acceptance(**kwargs).protocol_check_passed is True
+
+    kwargs["run_environment"]["CODE2PAPER_NUM_GPUS"] = "2"
+    report = check_r8_acceptance(**kwargs)
+    assert report.protocol_check_passed is False
+    assert report.accepted is False
+
+
 def test_per_role_sampling_config_fails_when_no_traces_provided():
     """No traces at all -> every unconditional live role is missing."""
 
@@ -992,6 +1107,37 @@ def test_per_role_sampling_config_fails_when_no_traces_provided():
     ):
         assert role in criterion.reason
     assert report.accepted is False
+
+
+def test_real_api_evidence_rejects_cached_required_role():
+    traces = _compliant_traces_for_all_llm_roles()
+    intake = next(item for item in traces if item.role == CODE_INTAKE)
+    traces = [item for item in traces if item.role != CODE_INTAKE]
+    traces.append(intake.model_copy(update={"cached": True}))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria["real_api_calls_evidenced"]
+    assert criterion.status == "failed"
+    assert "cached" in criterion.reason
+    assert CODE_INTAKE in criterion.reason
+
+
+def test_real_api_evidence_rejects_placeholder_provider():
+    traces = _compliant_traces_for_all_llm_roles()
+    writer = next(item for item in traces if item.role == METHOD_WRITER)
+    traces = [item for item in traces if item.role != METHOD_WRITER]
+    traces.append(writer.model_copy(update={"provider": "none"}))
+    kwargs = _passing_report_kwargs()
+    kwargs["generation_call_traces"] = traces
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria["real_api_calls_evidenced"]
+    assert criterion.status == "failed"
+    assert "provider=none" in criterion.reason
 
 
 def test_per_role_sampling_config_allows_uninvoked_conditional_role():
@@ -1404,12 +1550,12 @@ def test_protocol_check_fails_when_paper_read_only_at_end_violated():
 # ---------------------------------------------------------------------------
 
 
-def test_report_has_sixteen_criteria():
-    """The report has 16 criteria including the R8.2 subset, R8.1 protocol,
+def test_report_has_seventeen_criteria():
+    """The report has 17 criteria including the R8.2 subset, R8.1 protocol,
     V3 integrity, typed Intent Agent gate, and R8.3 completion/readiness gates."""
 
     report = check_r8_acceptance(**_passing_report_kwargs())
-    assert len(report.criteria) == 16
+    assert len(report.criteria) == 17
 
 
 def test_report_digest_is_stable():

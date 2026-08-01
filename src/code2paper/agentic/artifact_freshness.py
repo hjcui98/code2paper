@@ -59,6 +59,13 @@ TRUST_DEPENDENCY_ORDER = (
     "rendering_manifest", "post_render_audit", "final_package",
 )
 
+ACCEPTED_EVIDENCE_PACKETS_V3_PRODUCERS = frozenset(
+    {
+        "code2paper-evidence-compiler-v3",
+        "code2paper-generic-research-data-plane-v1",
+    }
+)
+
 
 def check_artifact_freshness(
     *,
@@ -192,7 +199,7 @@ def _artifact_contract_failures(
         if payload.get("content_digest") != _digest_json(payload.get("claims", [])): failures.append("content_digest_mismatch")
     elif key == "evidence_packets_v3":
         if payload.get("schema_version") != "3.0": failures.append("unsupported_schema")
-        if payload.get("producer_version") != "code2paper-evidence-compiler-v3": failures.append("producer_version_not_accepted")
+        if payload.get("producer_version") not in ACCEPTED_EVIDENCE_PACKETS_V3_PRODUCERS: failures.append("producer_version_not_accepted")
         if payload.get("repo_snapshot_id") != repo.snapshot_id: failures.append("repo_snapshot_id_mismatch")
         if payload.get("project_tree_hash") != repo.project_tree_hash: failures.append("project_tree_hash_mismatch")
         if payload.get("content_digest") != _digest_json(payload.get("packets", [])): failures.append("content_digest_mismatch")

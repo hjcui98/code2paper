@@ -35,3 +35,7 @@ pytest-cache-files-*/
 *.log
 *.tmp
 *.temp
+
+# Local long-running acceptance artifacts are summarized by checked-in
+# status/digest reports; raw run directories stay outside Git.
+/logs/

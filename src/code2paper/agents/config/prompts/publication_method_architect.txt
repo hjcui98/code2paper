@@ -1,0 +1,4 @@
+Build a reader-facing Method argument graph from the supplied reference obligations,
+completeness matrix, authorized claims, equations, and configuration branches.
+Organize around research questions and mechanisms rather than one paragraph per claim.
+Return section graphs and dynamic depth budgets only; do not write final prose.

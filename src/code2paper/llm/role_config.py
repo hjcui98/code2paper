@@ -29,8 +29,10 @@ Hard rules:
 - Only ``finish_reason == "length"`` permits a writer to escalate from
   the default (8192) to the extended (12288) budget or to continue a
   truncated section.
-- ``apply_role_config`` fills in role-specific defaults but NEVER
-  overrides explicit per-call kwargs (caller-supplied values win).
+- ``apply_role_config`` fills in role-specific defaults.  A role-specific
+  output-token environment override is the formal runtime envelope and wins
+  over the global/base output budget; callers that need a one-off derived
+  budget should apply it after resolving the role config.
 
 Environment variable overrides (per-role):
 
@@ -42,6 +44,8 @@ Environment variable overrides (per-role):
   normal per-call default)
 - ``CODE2PAPER_LLM_TOP_P_<ROLE>``
 - ``CODE2PAPER_LLM_TOP_K_<ROLE>``
+- ``CODE2PAPER_LLM_REASONING_EFFORT_<ROLE>``
+- ``CODE2PAPER_LLM_THINKING_TOKEN_BUDGET_<ROLE>``
 
 These overrides are read at call time so a single process can serve
 multiple projects without restart.
@@ -249,7 +253,7 @@ def apply_role_config(
     downstream tracing / R8 checks can attribute the call to the
     correct role.
 
-    Override precedence (highest first):
+    Override precedence for most fields (highest first):
 
     1. Explicit fields on ``base_config`` (caller-supplied values).
        A field is considered "explicit" when it differs from the
@@ -260,6 +264,14 @@ def apply_role_config(
     2. Per-role environment variable overrides
        (``CODE2PAPER_LLM_TEMPERATURE_<ROLE>`` etc.).
     3. Frozen role defaults from :data:`ROLE_GENERATION_CONFIGS`.
+
+    ``max_output_tokens`` is deliberately more specific: a per-role
+    environment override wins over the base value.  The base config is often
+    populated from the global ``CODE2PAPER_LLM_MAX_OUTPUT_TOKENS`` setting,
+    so treating every non-default base value as a call-site override would
+    silently disable the formal per-role envelopes.  A caller that needs a
+    derived one-off ceiling can ``model_copy(update=...)`` after this
+    function returns.
 
     For the ``method_writer`` role, ``extended_writer_budget=True``
     selects the extended (12288) budget; the default is 8192.
@@ -285,6 +297,8 @@ def apply_role_config(
                 "top_p": None,
                 "top_k": None,
                 "seed": None,
+                "reasoning_effort": "",
+                "thinking_token_budget": None,
             }
         )
 
@@ -292,6 +306,8 @@ def apply_role_config(
     env_max_tokens = _role_env_int(role, "MAX_OUTPUT_TOKENS")
     env_top_p = _role_env_float(role, "TOP_P")
     env_top_k = _role_env_int(role, "TOP_K")
+    env_reasoning_effort = _role_env_str(role, "REASONING_EFFORT")
+    env_thinking_token_budget = _role_env_int(role, "THINKING_TOKEN_BUDGET")
 
     # Resolve temperature: explicit base_config value wins, then env,
     # then role default.  We detect "explicit base_config" by checking
@@ -331,14 +347,14 @@ def apply_role_config(
         if role == METHOD_WRITER and extended_writer_budget
         else None
     )
-    if base_tokens_explicit:
-        final_max_tokens = base_config.max_output_tokens
-    elif writer_extended_env is not None:
+    if writer_extended_env is not None:
         final_max_tokens = writer_extended_env
     elif role == METHOD_WRITER and extended_writer_budget:
         final_max_tokens = role_cfg.max_output_tokens(extended=True)
     elif env_max_tokens is not None:
         final_max_tokens = env_max_tokens
+    elif base_tokens_explicit:
+        final_max_tokens = base_config.max_output_tokens
     else:
         final_max_tokens = role_cfg.max_output_tokens(extended=extended_writer_budget)
 
@@ -352,6 +368,29 @@ def apply_role_config(
     if final_top_k is None:
         final_top_k = env_top_k if env_top_k is not None else role_cfg.top_k
     final_seed = base_config.seed  # No env override for seed (yet).
+    # Per-role controls intentionally override their global counterparts:
+    # short decision/verifier calls need a much smaller thinking budget than
+    # analysis and writing calls.  ``reasoning_effort`` controls whether
+    # thinking is enabled on Qwen/vLLM; the token budget independently forces
+    # an end-of-thinking token when supported by the endpoint.
+    final_reasoning_effort = (
+        env_reasoning_effort
+        if env_reasoning_effort is not None
+        else base_config.reasoning_effort
+    )
+    final_thinking_token_budget = (
+        env_thinking_token_budget
+        if env_thinking_token_budget is not None
+        else base_config.thinking_token_budget
+    )
+    if (
+        final_thinking_token_budget is not None
+        and final_thinking_token_budget >= final_max_tokens
+    ):
+        raise ValueError(
+            f"thinking token budget for role {role!r} must be smaller than "
+            f"max_output_tokens ({final_max_tokens})"
+        )
 
     return base_config.model_copy(
         update={
@@ -361,6 +400,8 @@ def apply_role_config(
             "top_p": final_top_p,
             "top_k": final_top_k,
             "seed": final_seed,
+            "reasoning_effort": final_reasoning_effort,
+            "thinking_token_budget": final_thinking_token_budget,
         }
     )
 
@@ -406,6 +447,13 @@ def _role_env_float(role: str, suffix: str) -> float | None:
 def _role_env_int(role: str, suffix: str) -> int | None:
     name = _role_env_name(role, suffix)
     return _read_int(name)
+
+
+def _role_env_str(role: str, suffix: str) -> str | None:
+    value = os.environ.get(_role_env_name(role, suffix))
+    if value is None or not value.strip():
+        return None
+    return value.strip()
 
 
 def _role_env_name(role: str, suffix: str) -> str:

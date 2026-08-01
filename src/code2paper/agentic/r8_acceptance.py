@@ -70,6 +70,13 @@ R8.1 per-role sampling protocol check (Phase 1):
   must NOT have any trace — a trace tagged with a deterministic role
   is also a hard failure.
 
+R8.1 live API evidence check:
+
+- ``real_api_calls_evidenced`` -- every unconditional live role has at
+  least one non-cached, unblocked response with provider, model, endpoint and
+  non-empty response-hash provenance. Sampling metadata alone is not accepted
+  as evidence that a real provider call completed.
+
 R8.1 V3 research integrity check (Phase 2):
 
 - ``v3_research_succeeded`` -- the V3 research subgraph ran without
@@ -180,7 +187,12 @@ class R8ProtocolSettings(BaseModel):
     # authoritative values are the per-call role traces below.
     temperature: float | None = None
     llm_cache_env: str = "0"
+    # ``single_tp2_instance`` preserves the original Gemma R8 contract.  A
+    # model/profile may instead freeze an explicit deployment topology.  This
+    # keeps topology audited without hard-coding every future model to TP=2.
     single_tp2_instance: bool = True
+    expected_tp_size: int | None = None
+    expected_num_gpus: int | None = None
     serial_execution: bool = True
     paper_promoted_to_hard_evidence: bool = False
     paper_read_only_at_end: bool = True
@@ -620,6 +632,10 @@ def check_r8_acceptance(
     source_authority_policy: Mapping[str, Any] | None = None,
     paper_read_only_at_end: bool | None = None,
     generation_call_traces: Iterable[Any] | None = None,
+    temperature_by_role: Mapping[str, Any] | None = None,
+    top_p_by_role: Mapping[str, Any] | None = None,
+    top_k_by_role: Mapping[str, Any] | None = None,
+    max_output_tokens_by_role: Mapping[str, Any] | None = None,
     intent_target_proposal_report: Mapping[str, Any] | None = None,
     v3_error: str = "",
     completion_report: Any | None = None,
@@ -831,7 +847,13 @@ def check_r8_acceptance(
     # protocol-mandated effective temperature, and that no deterministic
     # role accidentally issued an LLM call.
     role_sampling_ok, role_sampling_reason, role_sampling_evidence = (
-        _check_per_role_sampling_config(traces_list)
+        _check_per_role_sampling_config(
+            traces_list,
+            temperature_by_role=temperature_by_role,
+            top_p_by_role=top_p_by_role,
+            top_k_by_role=top_k_by_role,
+            max_output_tokens_by_role=max_output_tokens_by_role,
+        )
     )
     criteria["per_role_sampling_config_evidenced"] = R8AcceptanceCriterion(
         criterion_id="per_role_sampling_config_evidenced",
@@ -844,7 +866,24 @@ def check_r8_acceptance(
         evidence=role_sampling_evidence,
     )
 
-    # 10. v3_research_succeeded (R8.1 Phase 2 V3 research integrity
+    # 10. real_api_calls_evidenced. Sampling metadata alone does not prove
+    # that a provider was called: dry-run, provider=none, cached and blocked
+    # responses can all emit traces.
+    real_api_ok, real_api_reason, real_api_evidence = (
+        _check_real_api_calls_evidenced(traces_list)
+    )
+    criteria["real_api_calls_evidenced"] = R8AcceptanceCriterion(
+        criterion_id="real_api_calls_evidenced",
+        description=(
+            "Every unconditional live role has a non-cached, unblocked "
+            "provider response trace."
+        ),
+        status="passed" if real_api_ok else "failed",
+        reason=real_api_reason,
+        evidence=real_api_evidence,
+    )
+
+    # 11. v3_research_succeeded (R8.1 Phase 2 V3 research integrity
     # check).  When the V3 research subgraph raised an exception, the
     # run was silently downgraded to a non-V3 pipeline -- the V3
     # evidence chain (behavior graph, packets, facts, claims) is broken
@@ -1286,8 +1325,90 @@ def _check_no_evidence_free_equations(
 # ---------------------------------------------------------------------------
 
 
+def _check_real_api_calls_evidenced(
+    traces: Iterable[Any],
+) -> tuple[bool, str, tuple[str, ...]]:
+    """Require successful, non-cached provider responses for live roles."""
+
+    empty_response_hash = "sha256:" + hashlib.sha256(b"").hexdigest()
+    qualifying_roles: set[str] = set()
+    rejected_by_role: dict[str, list[str]] = {}
+
+    def _field(trace: Any, name: str, default: Any = None) -> Any:
+        if isinstance(trace, Mapping):
+            return trace.get(name, default)
+        return getattr(trace, name, default)
+
+    for index, trace in enumerate(list(traces or [])):
+        role = str(_field(trace, "role", "") or "")
+        if role not in REQUIRED_LIVE_TRACE_ROLES:
+            continue
+        call_id = str(_field(trace, "call_id", "") or f"trace-{index}")
+        cached = _field(trace, "cached", None)
+        blocked_reason = str(_field(trace, "blocked_reason", "") or "").strip()
+        finish_reason = str(_field(trace, "finish_reason", "") or "").strip()
+        response_hash = str(_field(trace, "response_hash", "") or "").strip()
+        provider = str(_field(trace, "provider", "") or "").strip().lower()
+        model = str(_field(trace, "model", "") or "").strip()
+        endpoint_origin = str(_field(trace, "endpoint_origin", "") or "").strip()
+
+        trace_failures: list[str] = []
+        if cached is not False:
+            trace_failures.append(
+                "cached" if bool(cached) else "cache_status_not_recorded"
+            )
+        if blocked_reason:
+            trace_failures.append(f"blocked={blocked_reason}")
+        if provider in {"", "none", "offline", "mock", "fake", "fixture"}:
+            trace_failures.append(f"provider={provider or 'missing'}")
+        if not model or model.lower() in {"none", "mock", "fake", "fixture"}:
+            trace_failures.append("model_missing_or_placeholder")
+        if not re.match(r"^https?://[^/\s]+", endpoint_origin, re.IGNORECASE):
+            trace_failures.append("endpoint_origin_missing_or_invalid")
+        if not finish_reason:
+            trace_failures.append("finish_reason_missing")
+        if not response_hash or response_hash == empty_response_hash:
+            trace_failures.append("nonempty_response_not_evidenced")
+
+        if trace_failures:
+            rejected_by_role.setdefault(role, []).append(
+                f"role={role} call_id={call_id} " + ",".join(trace_failures)
+            )
+        else:
+            qualifying_roles.add(role)
+
+    missing_roles = [
+        role for role in REQUIRED_LIVE_TRACE_ROLES
+        if role not in qualifying_roles
+    ]
+    failures = [
+        failure
+        for role in missing_roles
+        for failure in rejected_by_role.get(role, [])
+    ]
+    if missing_roles:
+        failures.append(
+            "missing_real_api_role_traces:roles=" + ",".join(missing_roles)
+        )
+    if failures:
+        return False, (
+            f"{len(failures)} real API evidence failures: "
+            + "; ".join(failures[:5])
+            + (" ..." if len(failures) > 5 else "")
+        ), tuple(failures)
+    return True, (
+        "all unconditional live roles have non-cached, unblocked provider "
+        "response evidence with API provenance"
+    ), ()
+
+
 def _check_per_role_sampling_config(
     traces: Iterable[Any],
+    *,
+    temperature_by_role: Mapping[str, Any] | None = None,
+    top_p_by_role: Mapping[str, Any] | None = None,
+    top_k_by_role: Mapping[str, Any] | None = None,
+    max_output_tokens_by_role: Mapping[str, Any] | None = None,
 ) -> tuple[bool, str, tuple[str, ...]]:
     """Check that every LLM-calling role has compliant trace evidence.
 
@@ -1296,10 +1417,11 @@ def _check_per_role_sampling_config(
 
     A trace may be a :class:`GenerationCallTrace` instance or a JSON
     dict (loaded from disk).  Each trace's role, temperature, top-p/top-k,
-    and output ceiling are compared with the audited role envelope from
-    :data:`ROLE_GENERATION_CONFIGS`.  A smaller output ceiling is permitted
-    (for a short schema or remaining cumulative writer budget); a larger one
-    is not.
+    and output ceiling are compared with the resolved run profile recorded
+    before the calls.  Older artifacts that do not contain a resolved profile
+    retain the frozen :data:`ROLE_GENERATION_CONFIGS` protocol.  A smaller
+    output ceiling is permitted (for a short schema or remaining cumulative
+    writer budget); a larger one is not.
 
     Failure modes (all are hard failures):
 
@@ -1335,6 +1457,34 @@ def _check_per_role_sampling_config(
 
     failures: list[str] = list(parse_errors)
 
+    profile_maps = (
+        temperature_by_role,
+        top_p_by_role,
+        top_k_by_role,
+        max_output_tokens_by_role,
+    )
+    resolved_profile_supplied = any(item is not None for item in profile_maps)
+    resolved_profile_complete = all(item is not None for item in profile_maps)
+    if resolved_profile_supplied and not resolved_profile_complete:
+        failures.append("resolved_run_profile_incomplete:all four role maps are required")
+
+    resolved_temperatures = dict(temperature_by_role or {})
+    resolved_top_p = dict(top_p_by_role or {})
+    resolved_top_k = dict(top_k_by_role or {})
+    resolved_max_tokens = dict(max_output_tokens_by_role or {})
+    if resolved_profile_supplied and resolved_profile_complete:
+        for role in LLM_CALLING_ROLES:
+            for field_name, values in (
+                ("temperature", resolved_temperatures),
+                ("top_p", resolved_top_p),
+                ("top_k", resolved_top_k),
+                ("max_output_tokens", resolved_max_tokens),
+            ):
+                if role not in values:
+                    failures.append(
+                        f"resolved_run_profile_missing:role={role} field={field_name}"
+                    )
+
     # 1. No trace may be tagged with a deterministic role.
     for entry in normalized:
         role = entry["role"]
@@ -1368,7 +1518,36 @@ def _check_per_role_sampling_config(
             )
             continue
         role_config = ROLE_GENERATION_CONFIGS[role]
-        expected_temp = role_config.temperature
+        if resolved_profile_supplied:
+            if not resolved_profile_complete or any(
+                role not in values
+                for values in (
+                    resolved_temperatures,
+                    resolved_top_p,
+                    resolved_top_k,
+                    resolved_max_tokens,
+                )
+            ):
+                continue
+            try:
+                expected_temp = float(resolved_temperatures[role])
+                expected_top_p_raw = resolved_top_p[role]
+                expected_top_p = (
+                    None if expected_top_p_raw is None else float(expected_top_p_raw)
+                )
+                expected_top_k_raw = resolved_top_k[role]
+                expected_top_k = (
+                    None if expected_top_k_raw is None else int(expected_top_k_raw)
+                )
+                ceiling = int(resolved_max_tokens[role])
+            except (TypeError, ValueError):
+                failures.append(f"resolved_run_profile_invalid:role={role}")
+                continue
+        else:
+            expected_temp = role_config.temperature
+            expected_top_p = role_config.top_p
+            expected_top_k = role_config.top_k
+            ceiling = role_config.max_output_tokens_default
         for entry in entries:
             temperature = entry["temperature"]
             call_id = entry["call_id"]
@@ -1378,7 +1557,7 @@ def _check_per_role_sampling_config(
                     f"actual={temperature} expected={expected_temp}"
                 )
             actual_top_p = entry["top_p"]
-            if role_config.top_p is None:
+            if expected_top_p is None:
                 if actual_top_p is not None:
                     failures.append(
                         f"top_p_mismatch:role={role} call_id={call_id} "
@@ -1386,21 +1565,30 @@ def _check_per_role_sampling_config(
                     )
             elif (
                 actual_top_p is None
-                or abs(actual_top_p - role_config.top_p) > 1e-6
+                or abs(actual_top_p - expected_top_p) > 1e-6
             ):
                 failures.append(
                     f"top_p_mismatch:role={role} call_id={call_id} "
-                    f"actual={actual_top_p} expected={role_config.top_p}"
+                    f"actual={actual_top_p} expected={expected_top_p}"
                 )
             actual_top_k = entry["top_k"]
-            if actual_top_k != role_config.top_k:
+            if actual_top_k != expected_top_k:
                 failures.append(
                     f"top_k_mismatch:role={role} call_id={call_id} "
-                    f"actual={actual_top_k} expected={role_config.top_k}"
+                    f"actual={actual_top_k} expected={expected_top_k}"
                 )
-            ceiling = role_config.max_output_tokens_default
             if role == METHOD_WRITER and entry["extended_budget_used"]:
-                ceiling = role_config.max_output_tokens(extended=True)
+                if resolved_profile_supplied:
+                    try:
+                        ceiling = int(resolved_max_tokens["method_writer_extended"])
+                    except (KeyError, TypeError, ValueError):
+                        failures.append(
+                            "resolved_run_profile_missing:role=method_writer "
+                            "field=method_writer_extended"
+                        )
+                        continue
+                else:
+                    ceiling = role_config.max_output_tokens(extended=True)
             actual_max = entry["max_output_tokens"]
             if actual_max < 1 or actual_max > ceiling:
                 failures.append(
@@ -1417,7 +1605,12 @@ def _check_per_role_sampling_config(
     role_counts = ", ".join(
         f"{role}={len(traces_by_role.get(role, []))}" for role in LLM_CALLING_ROLES
     )
-    return True, f"all LLM-calling roles have compliant trace evidence ({role_counts})", ()
+    protocol_name = (
+        "resolved_run_profile" if resolved_profile_supplied else "frozen_role_protocol"
+    )
+    return True, (
+        f"all traced roles comply with {protocol_name} ({role_counts})"
+    ), ()
 
 
 def _extract_trace_role_temperature(
@@ -1548,21 +1741,31 @@ def _check_protocol_settings(
             f"llm_cache_mismatch:run={actual_cache!r} expected={settings.llm_cache_env!r}"
         )
 
-    # single_tp2_instance: enforced via env vars CODE2PAPER_TP_SIZE and
-    # CODE2PAPER_NUM_GPUS.  Both must be present and equal to "2".
-    # Missing values are failures (the run did not evidence TP=2 on 2
-    # GPUs).
+    # Deployment topology is checked against the profile-specific expected
+    # values when supplied.  Older Gemma artifacts retain the frozen TP=2
+    # contract through ``single_tp2_instance``.
     tp_size = env.get("CODE2PAPER_TP_SIZE", "")
     num_gpus = env.get("CODE2PAPER_NUM_GPUS", "")
-    if settings.single_tp2_instance:
+    expected_tp_size = settings.expected_tp_size
+    expected_num_gpus = settings.expected_num_gpus
+    if expected_tp_size is None and settings.single_tp2_instance:
+        expected_tp_size = 2
+    if expected_num_gpus is None and settings.single_tp2_instance:
+        expected_num_gpus = 2
+    if expected_tp_size is not None:
         if not tp_size:
-            failures.append("tp_size_not_recorded:expected=2")
-        elif tp_size != "2":
-            failures.append(f"tp_size_mismatch:run={tp_size} expected=2")
+            failures.append(f"tp_size_not_recorded:expected={expected_tp_size}")
+        elif tp_size != str(expected_tp_size):
+            failures.append(
+                f"tp_size_mismatch:run={tp_size} expected={expected_tp_size}"
+            )
+    if expected_num_gpus is not None:
         if not num_gpus:
-            failures.append("num_gpus_not_recorded:expected=2")
-        elif num_gpus != "2":
-            failures.append(f"num_gpus_mismatch:run={num_gpus} expected=2")
+            failures.append(f"num_gpus_not_recorded:expected={expected_num_gpus}")
+        elif num_gpus != str(expected_num_gpus):
+            failures.append(
+                f"num_gpus_mismatch:run={num_gpus} expected={expected_num_gpus}"
+            )
 
     # serial_execution: enforced via env var CODE2PAPER_PARALLEL_PROJECTS.
     # The value "1" means "run one project at a time" (i.e., strict
@@ -1862,6 +2065,17 @@ def check_r8_acceptance_from_run_dir(
     run_environment: dict[str, str] = dict(summary_data.get("environment", {}) or {})
     run_temperature_raw = summary_data.get("temperature")
     run_temperature = float(run_temperature_raw) if run_temperature_raw is not None else None
+    if protocol_settings is None and (
+        run_environment.get("CODE2PAPER_R8_EXPECT_TP_SIZE")
+        or run_environment.get("CODE2PAPER_R8_EXPECT_NUM_GPUS")
+    ):
+        expected_tp_raw = run_environment.get("CODE2PAPER_R8_EXPECT_TP_SIZE", "")
+        expected_gpus_raw = run_environment.get("CODE2PAPER_R8_EXPECT_NUM_GPUS", "")
+        protocol_settings = R8ProtocolSettings(
+            single_tp2_instance=False,
+            expected_tp_size=(int(expected_tp_raw) if expected_tp_raw.isdigit() else None),
+            expected_num_gpus=(int(expected_gpus_raw) if expected_gpus_raw.isdigit() else None),
+        )
 
     # Source authority policy from the summary (if any).
     source_authority_policy: dict[str, Any] = dict(summary_data.get("source_authority_policy", {}) or {})
@@ -1880,6 +2094,16 @@ def check_r8_acceptance_from_run_dir(
     generation_call_traces: list[Any] = list(
         summary_data.get("generation_call_traces", []) or []
     )
+    resolved_profile_maps = {
+        "temperature_by_role": summary_data.get("temperature_by_role"),
+        "top_p_by_role": summary_data.get("top_p_by_role"),
+        "top_k_by_role": summary_data.get("top_k_by_role"),
+        "max_output_tokens_by_role": summary_data.get("max_output_tokens_by_role"),
+    }
+    # Empty maps in pre-profile summaries mean that no resolved profile was
+    # recorded.  Preserve the frozen legacy protocol for those artifacts.
+    if not any(bool(value) for value in resolved_profile_maps.values()):
+        resolved_profile_maps = {key: None for key in resolved_profile_maps}
     intent_target_proposal_report: dict[str, Any] = {}
     intent_report_path = _resolve_artifact(
         "intent_target_proposal_report_v1",
@@ -1972,6 +2196,7 @@ def check_r8_acceptance_from_run_dir(
         source_authority_policy=source_authority_policy,
         paper_read_only_at_end=paper_read_only_at_end_evidence,
         generation_call_traces=generation_call_traces,
+        **resolved_profile_maps,
         intent_target_proposal_report=intent_target_proposal_report,
         v3_error=v3_error,
         completion_report=completion_report,

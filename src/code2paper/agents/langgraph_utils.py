@@ -15,6 +15,7 @@ from code2paper.llm.role_config import (
     CODE_INTAKE,
     apply_role_config,
 )
+from code2paper.llm.providers import load_llm_config_from_env
 
 
 class AgentResponse:
@@ -39,18 +40,15 @@ class LangGraphAgent:
     def step(self, message: str) -> AgentResponse:
         llm_config = _to_llm_config(self.config)
         # Embedded intake/analyzer agents are separate research-plane roles.
-        # Their legacy ModelConfig defaulted to writer-like sampling
-        # (0.7/4096); preserving the old role label hid those node budgets as
-        # supervisor calls in R8 artifacts.  Normalize the legacy sentinels,
-        # then apply the explicitly audited intake/analyzer role.
+        # Resolve the same environment/profile-backed base config as the
+        # agentic runtime, then apply the role-specific output and thinking
+        # budgets.  Constructing an LLMConfig from legacy ModelConfig fields
+        # alone would silently drop global top-p/top-k/reasoning settings.
         role = (
             CODE_ANALYZER if "code_analyzer" in self.agent_name
             else CODE_INTAKE
         )
-        research_config = apply_role_config(
-            llm_config.model_copy(update={"temperature": 0.0, "max_output_tokens": 12000}),
-            role,
-        )
+        research_config = apply_role_config(llm_config, role)
         response = LLMClient(research_config).complete(
             LLMRequest(
                 prompt_template_id=f"code2paper.agents.{self.agent_name}.v1",
@@ -137,11 +135,9 @@ def load_prompt(path: str) -> str:
 
 def _to_llm_config(config: ModelConfig) -> LLMConfig:
     provider = _provider(config.provider)
-    return LLMConfig(
-        provider=provider,
+    return load_llm_config_from_env(
+        provider=provider.value,
         model=config.model_name,
-        temperature=config.temperature,
-        max_output_tokens=config.max_tokens,
     )
 
 

@@ -64,7 +64,7 @@ class LLMResponse:
 
 @dataclass(frozen=True)
 class _ProviderResult:
-    text: str
+    text: str | None
     response_mode: str = ""
     finish_reason: str = ""
     token_usage: dict[str, int] | None = None
@@ -150,7 +150,7 @@ class LLMClient:
         last_error: ProviderRuntimeError | None = None
         for attempt in range(1, attempts + 1):
             result = self._complete_provider(request)
-            if result.text.strip():
+            if result.text is not None and result.text.strip():
                 return result
             last_error = ProviderRuntimeError("provider_response_empty_content")
             if attempt < attempts and delay_seconds > 0:
@@ -191,8 +191,38 @@ class LLMClient:
             payload["top_k"] = self.config.top_k
         if self.config.seed is not None:
             payload["seed"] = self.config.seed
-        response_mode = self.capability_profile.response_mode
-        if request.response_json_schema and response_mode == StructuredResponseMode.NATIVE_JSON_SCHEMA:
+        # ``reasoning_effort`` is supported by OpenAI reasoning models and
+        # by recent OpenAI-compatible vLLM servers.  In vLLM,
+        # ``reasoning_effort="none"`` maps to
+        # ``chat_template_kwargs.enable_thinking=false``.  Only send the
+        # field when explicitly configured so providers that do not support
+        # reasoning controls retain their existing request shape.
+        if self.config.reasoning_effort:
+            payload["reasoning_effort"] = self.config.reasoning_effort
+        # Local vLLM deployments do not all apply ``reasoning_effort=none``
+        # consistently when a long structured prompt is used.  Make the chat
+        # template choice explicit for loopback endpoints so Qwen writes the
+        # structured answer to ``message.content`` instead of ending after a
+        # reasoning-only turn.  Keep remote provider request shapes unchanged.
+        if self.config.reasoning_effort == "none" and is_loopback_url(base_url):
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
+        # Recent vLLM OpenAI-compatible servers expose a separate thinking
+        # budget.  At the limit the sampler forces the model's end-of-thinking
+        # token, leaving the remainder of ``max_tokens`` for the answer.
+        # This is an opt-in extension: omit it for providers that implement
+        # only the standard OpenAI request shape.
+        if self.config.thinking_token_budget is not None:
+            payload["thinking_token_budget"] = self.config.thinking_token_budget
+        configured_response_mode = self.capability_profile.response_mode
+        response_mode = (
+            configured_response_mode
+            if request.response_json_schema
+            else StructuredResponseMode.PROMPT_ONLY
+        )
+        if (
+            request.response_json_schema
+            and configured_response_mode == StructuredResponseMode.NATIVE_JSON_SCHEMA
+        ):
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
@@ -201,7 +231,10 @@ class LLMClient:
                     "strict": True,
                 },
             }
-        elif request.response_json_schema and response_mode == StructuredResponseMode.JSON_OBJECT:
+        elif (
+            request.response_json_schema
+            and configured_response_mode == StructuredResponseMode.JSON_OBJECT
+        ):
             payload["response_format"] = {"type": "json_object"}
             payload["messages"][0]["content"] += "\nReturn JSON matching this schema:\n" + _json_dumps(request.response_json_schema)
         elif request.response_json_schema:
@@ -440,6 +473,8 @@ def _cache_key(
                 "model": config.model,
                 "temperature": config.temperature,
                 "max_output_tokens": config.max_output_tokens,
+                "reasoning_effort": config.reasoning_effort,
+                "thinking_token_budget": config.thinking_token_budget,
                 "top_p": config.top_p,
                 "top_k": config.top_k,
                 "seed": config.seed,
@@ -498,6 +533,8 @@ def _write_cache(
                 "cache_schema_version": "2.0",
                 "provider": config.provider.value,
                 "model": config.model,
+                "reasoning_effort": config.reasoning_effort,
+                "thinking_token_budget": config.thinking_token_budget,
                 "prompt_template_version": config.prompt_template_version,
                 "capability_profile": capability_profile.model_dump(mode="json"),
                 "request_input_hash": request.input_hash,
