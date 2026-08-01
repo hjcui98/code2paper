@@ -1,10 +1,56 @@
 # Code2Paper R8 推进报告（Gemma-4 适配版）
 
+> **2026-08-01 状态：**本文是 Gemma 阶段的历史进度记录。六项目当前已 6/6
+> accepted；权威 matrix、统一 17 项 recheck 和 digest 见
+> [`r8_acceptance_status_2026-08-01.md`](r8_acceptance_status_2026-08-01.md)。下文
+> “正在运行/待验收”等措辞不再代表当前状态。
+
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 日期：2026-07-20  
 当前基线：commit `8741536`  
 适用模型：Gemma-4-31B-IT-NVFP4（物理 GPU 0/1，TP=2，max_model_len=131072）  
-验收状态：代码回归通过，架构验收不通过；不建议启动正式 R8 实跑。  
+验收状态：历史部署报告；自 2026-07-28 起不再定义正式 R8 的模型与拓扑要求。
 关联文档：`docs/agentic_method_quality_next_execution_plan_2026-07-19.md`、`docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md`
+
+---
+
+## 2026-07-28 协议覆盖
+
+本文保留 Gemma-4/TP=2/GPU=2 的参数、命令和结论，仅用于历史复现。当前规范允许
+任一可追踪的正式 API；模型、provider、TP/GPU/MTP 是 deployment metadata。
+sampling、正文输出预算与思考预算不需要等于历史 Gemma 数值，但必须记录为本次
+resolved role profile，并与每条实际 trace 严格一致。正式 acceptance 必须证明
+response cache 关闭，记录 provider、model、脱敏 endpoint、capability profile
+digest，并为每个实际参与角色保存未阻塞、非空且含 finish reason 的 API trace。
+profile 漂移、evidence、quality、holdout 和 `unsupported=0` 均为硬门。
+
+当前 Qwen3.6/vLLM 示例使用
+`tests/live/profiles/qwen36_vllm_budgeted.example.env` 与
+`tests/live/profiles/qwen36_vllm_budgeted_capabilities.json`。开启有界思考时采用：
+
+| 角色 | `thinking_token_budget` |
+|---|---:|
+| research_supervisor | 512 |
+| semantic_verifier | 256 |
+| intent_compiler / code_analyzer | 1024 |
+| code_intake / authoring_planner / local_rewrite | 512 |
+| method_writer | 1024 |
+
+预算到达后由服务端强制结束 reasoning 并继续正文；不得用 `stop=["</think>"]`
+截停整个请求。`thinking_token_budget` 必须小于该角色的
+`max_output_tokens`。
+
+该配置于 2026-07-28 在 Lookahead 正式 API 运行中完成了正文、completion 和
+readiness 验证。旧 checker 曾报告 `accepted=true`，但 resolved-profile 硬门随后
+发现 8 次 Intake 和 3 次 Analyzer 调用仍沿用旧 sampling 且遗漏 reasoning effort，
+共 44 项真实 mismatch；该旧报告现只保留为内容结果，不能作为当前协议 accepted
+证据。兼容层已经修复，等待重新 live 验收。Supervisor 的 52 次调用全部正常停止；
+intent、intake 和 analyzer 的正文达到输出 ceiling，仍应通过 owning Agent 的
+typed issue/有界修复闭环解决，不能用截断或放宽 schema 掩盖。
 
 ---
 
@@ -355,7 +401,7 @@ R8 summary 应记录：
 9. **最后执行** Lookahead 和新的 holdout。
 10. 每个项目执行 checkpoint/resume 对照运行。
 
-正式 R8 环境保持：见第 6 节。
+本报告所述历史 Gemma 环境见第 6 节；当前正式 R8 环境以可追踪 live API profile 为准。
 
 ---
 
@@ -417,11 +463,11 @@ export CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_LOCAL_REWRITE=3072
 export CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_SEMANTIC_VERIFIER=1024
 ```
 
-注意：
+历史部署注意：
 - `CUDA_VISIBLE_DEVICES=0,1` 应设置在 Gemma/vLLM 服务进程上。
 - Code2Paper 编排进程只通过 `127.0.0.1:8000` 调用，一般不需要占用 GPU。
 - 设置可见设备后，vLLM 日志里的 logical GPU 0/1 对应物理卡 0/1。
-- 正式六项目验收继续严格串行，避免两个 Code2Paper 任务同时请求这一个 TP=2 实例。
+- 该 Gemma 服务上的六项目验收应严格串行，避免两个任务同时请求同一 TP=2 实例；这不是当前 R8 的通用硬门。
 
 ---
 
@@ -435,8 +481,8 @@ export CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_SEMANTIC_VERIFIER=1024
 4. SQLite 跨实例恢复结果；
 5. uninterrupted/resumed digest 对照；
 6. 全量 pytest 结果；
-7. 至少一个真实 Gemma 项目的 `accepted=true` 报告；
-8. run summary 中完整记录 `temperature_by_role` / `top_p_by_role` / `top_k_by_role` / `max_output_tokens_by_role` 并通过 R8 protocol check（按角色协议）。
+7. 至少一个真实正式 API 项目的 `accepted=true` 报告；
+8. run summary 中完整记录 API provenance、逐角色 sampling、正文输出预算与思考预算；其中 provenance 和真实非空调用是硬门，其余为审计元数据。
 
 在 P0-0/P0-1/P0-2/P0-3 四个 P0 修复前，不建议消耗 GPU 进行六项目正式 R8。
 
@@ -453,7 +499,7 @@ export CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_SEMANTIC_VERIFIER=1024
 
 ## 9. 2026-07-21 接管后的实施与验收增量
 
-- 输出预算已收口为节点级 ceiling：intent full proposal 4096；每个被拒绝义务至多一次 1024 repair；supervisor 1536；planner 2048；writer 8192（仅 `finish_reason=length` 可到 12288）；local rewrite 3072；semantic verifier 1024；Method 累计 24576。128K 是输入上下文容量，绝不等价于 24576 单次安全输出。
-- Intent Agent 对空 target、遗漏 deterministic predicate/relation 的响应原子拒绝；一次短 repair 仍无效时，精确恢复原 deterministic target，并把 `fallback_obligation_ids` 与理由写入 `intent_target_proposal_report_v1.json`。这满足设计要求的 deterministic fallback，且不把模型失败伪装成模型 enrichment。
+- 输出预算按 live profile 收口为节点级 ceiling：历史 Gemma intent full proposal 4096；当前 Qwen intent full proposal 8192、repair 6144、thinking 1024；每个被拒绝义务至多两次 repair。其余为 supervisor 1536、planner 2048、writer 8192（仅 `finish_reason=length` 可到 12288）、local rewrite 3072、semantic verifier 1024、Method 累计 24576。128K 是输入上下文容量，不等价于任意单次安全输出。
+- Intent Agent 对空 target、遗漏 mandatory predicate/relation 的响应原子拒绝；validator 将精确 schema/semantic failure 写成 typed repair issue 返回同一 Intent Agent。两次有界纠正仍无效时，保留原图并写出 `intent_repair_exhausted:*` 拒绝报告，R8 硬失败；不再恢复 deterministic target 后冒充 Agent enrichment。
 - 旧 authoring wrapper 的 4096 stage clamp 已移除；role policy 现在能在生产 writer 实际生效。R8 不再把全局 temperature=0 当硬门槛，而是逐 trace 检查 role 温度、top-p/top-k 和不超过角色输出 ceiling。
 - 当前代码回归：`1930 passed, 3 skipped, 12 subtests passed`（2026-07-21）。Bootstrapping 的完整修复版正式 holdout `bootstrapping-live-r13` 正在 GPU 0/1 的 TP=2/MTP 服务上运行；最终结果应以该运行的 summary、intent report 和 R8 recheck 为准。

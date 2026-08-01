@@ -1,11 +1,29 @@
 # Code2Paper 下一步优化执行文件：鲁棒 LangGraph 研究写作 Agent
 
+> **进度状态说明（2026-07-31）：**本文保留 R0–R8 的原始实施分解和合同细节，
+> 但其“当前基线”和文件状态已经落后于工作区实现。R8 之后的实际进度、代码差距、
+> 修改模块和退出条件由
+> [`post_r8_research_agent_execution_plan_2026-07-31.md`](post_r8_research_agent_execution_plan_2026-07-31.md)
+> 跟踪；总体架构仍以本文所链接的鲁棒 Research Agent 总体设计为准。
+
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 状态：下一执行批次的规范性主计划  
 日期：2026-07-19  
-最后更新：2026-07-20（固定 `code2paper` Conda 环境）  
+最后更新：2026-07-28（正式 live API 与有界思考协议）
 总体设计：`docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md`  
 真实诊断：`docs/agentic_real_method_quality_gemma_expanded_eval_2026-07-19.json`  
 行为路径参考：`docs/agentic_behavior_template_transition_reference_2026-07-19.md`
+
+> **2026-07-28 协议优先级：**R8 正式验收改为模型、provider 和硬件拓扑无关。
+> 必须证明所有实际参与角色都调用了正式 API，并保存非缓存、未阻塞、非空响应的
+> trace；provider、model、脱敏 endpoint 与 capability profile digest 必须可审计。
+> TP/GPU/并发拓扑、temperature/top-p/top-k、正文输出预算与思考预算继续记录，
+> 但不再作为 acceptance 硬门。证据面、holdout 禁令、最终逐句可追溯和
+> `unsupported=0` 仍是硬门。
 
 ## 0. 本计划解决什么
 
@@ -17,7 +35,7 @@
 4. 把工具 observation 增量编译为通用 `CodeBehaviorGraph`；
 5. 从行为子图生成最小 `EvidencePacketV3 -> CodeFactV1 -> AtomicClaimV3`；
 6. 信息不足时自主换搜索策略、补 relation、拆 packet、拆 claim 或形成 explicit gap；
-7. 信息充分时规划并调用 Gemma 写出可用 Method；
+7. 信息充分时规划并调用已配置的正式 API 模型写出可用 Method；
 8. validator 失败时只修复相关 issue，不重跑整个流水线；
 9. 始终保证最终事实句只能由 executable code evidence 授权。
 
@@ -55,7 +73,7 @@
 - 用论文文本填补代码事实；
 - 在正文 contract 未通过前优化 figure；
 - 推进 benchmark observation extractor、cutover 或 default-ready；
-- 并发运行两个使用同一双卡 TP=2 Gemma 实例的质量任务。
+- 并发运行超过当前模型服务容量、会造成相互干扰的质量任务；具体拓扑是部署约束而非 R8 协议。
 
 ### 1.4 规范运行与测试环境
 
@@ -107,7 +125,7 @@ source /home/cuihengjia/miniconda3/etc/profile.d/conda.sh
 conda activate code2paper
 ```
 
-Gemma vLLM 服务继续使用独立的 `/data1/users/cuihengjia/.conda_envs/gemma4-vllm-cu128` 环境。Code2Paper Agent 在 `code2paper` 环境中通过本地 API 调用该服务；不要把 vLLM/CUDA 依赖复制进编排环境。双卡 TP=2 Gemma 质量运行仍严格串行。
+模型服务继续使用独立部署环境。Code2Paper Agent 在 `code2paper` 环境中通过正式 API 调用该服务；不要把 vLLM/CUDA 依赖复制进编排环境。当前 Qwen3.6/vLLM 单实例按容量串行运行，但模型、TP 和 GPU 数不是 R8 硬要求。
 
 ## 2. 目标代码结构
 
@@ -463,7 +481,7 @@ hard rules
 
 ### R3.3 模型决策与安全 merge
 
-Gemma 可以提议一到多个独立工具调用；CPU 只读检索可以并行执行，但 LLM inference 串行。policy merge 检查：
+已配置的正式 API 模型可以提议一到多个独立工具调用；CPU 只读检索可以并行执行，LLM inference 按服务容量调度。policy merge 检查：
 
 - action 与 issue 类型匹配；
 - tool 当前 ready；
@@ -524,7 +542,7 @@ tests/test_agentic_research_checkpoint_resume.py
 - 搜索充分仍无实现 -> explicit gap；
 - checkpoint 后从 active obligation 和 best state 恢复。
 
-退出条件：Gemma 在 fixture repo 中能自主完成至少三种不同工具序列，policy trace 可解释，且最终支持边界与工具顺序无关。
+退出条件：正式 API 模型在 fixture repo 中能自主完成至少三种不同工具序列，policy trace 可解释，且最终支持边界与工具顺序无关。
 
 ## 7. 实施批次 R4：通用 Evidence/Fact/Claim compiler
 
@@ -635,7 +653,7 @@ tests/test_agentic_equation_claims.py
 
 ### R5.1 intent compiler
 
-作者 YAML 先由 Gemma 提议 typed obligations，再确定性 normalize：
+作者 YAML 先由正式 API 模型提议 typed obligations，再确定性 normalize：
 
 ```text
 kind
@@ -696,7 +714,7 @@ Planner 使用：
 - explicit gaps；
 - stage hints。
 
-Gemma 决定论文组织，但 plan gate 确保：
+正式 API 模型决定论文组织，但 plan gate 确保：
 
 - must-cover terminal 或明确 incomplete；
 -每节有 unique claim；
@@ -784,16 +802,16 @@ sparse_bipartite_propagation_ppr
 
 退出条件：禁用所有模板时，generic compiler 仍能生成部分 supported claims；启用模板只提升路径发现和组织质量，不改变事实授权结果。
 
-## 11. 实施批次 R8：真实 Gemma 质量验收
+## 11. 实施批次 R8：真实 live API 质量验收
 
 ### R8.1 执行协议
 
 每个项目：
 
 1. 只读取代码和作者 YAML；
-2. Gemma temperature 0、cache off；
-3. 单个 TP=2 Gemma 实例使用两张 GPU；
-4. 所有项目严格串行；
+2. 使用正式 API 且 response cache off；
+3. 保存 provider、model、脱敏 endpoint、capability profile digest 和全部参与角色的非空调用 trace；
+4. 按模型服务容量安排串并行；TP、GPU、采样、正文输出预算和思考预算只记为执行元数据；
 5. 固定 tool trace、decision trace、behavior graph、packets、facts、claims、Method、validation、quality states 和 summary digest；
 6. 最后才读取原论文做 diagnostic comparison；
 7. paper/README/TeX/PDF 不升级为 hard evidence。
@@ -927,7 +945,7 @@ conda run -n code2paper python -m pytest -q \
 conda run -n code2paper python -m pytest -q
 ```
 
-真实 Gemma 运行不能被 deterministic fixture 替代。fixture 用于 contract 和 mutation；Gemma 用于观察实际研究决策、工具选择、正文组织和局部修复。
+真实 API 运行不能被 deterministic fixture 替代。fixture 用于 contract 和 mutation；正式 API 模型用于观察实际研究决策、工具选择、正文组织和局部修复。
 
 ## 14. 第一实施切片
 

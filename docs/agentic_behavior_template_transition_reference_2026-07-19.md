@@ -1,5 +1,10 @@
 # Code2Paper 行为模板过渡参考：真实项目 Evidence Compiler 与局部决策修复
 
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 状态：保留为真实项目行为路径和 mutation 参考；不再是规范性主执行计划  
 日期：2026-07-19  
 输入诊断：`docs/agentic_real_method_quality_gemma_expanded_eval_2026-07-19.json`  

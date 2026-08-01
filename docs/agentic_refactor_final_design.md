@@ -1,5 +1,10 @@
 # Code2Paper Agentic Refactor Final Design
 
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 > 2026-07-19 reassessment：本文保留为 M0--P3 和早期 P4 的设计/实现历史。V2 evidence-first 原则继续有效，但当前目标已进一步升级为通用 `CodeBehaviorGraph`、LLM Research Supervisor、细粒度 LangChain 工具和局部补证循环。规范性设计见 `docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md`，执行见 `docs/agentic_method_quality_next_execution_plan_2026-07-19.md`。
 
 更新时间：2026-07-16

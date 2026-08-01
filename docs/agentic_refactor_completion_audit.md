@@ -1,5 +1,15 @@
 # Code2Paper Agentic Refactor Completion Audit
 
+> **Historical audit:** this file records the 2026-07-18 P4 evidence and is not
+> the current project completion statement. See
+> [`project_status_and_gap_report_2026-07-31.md`](project_status_and_gap_report_2026-07-31.md)
+> for the current scope, the still-running R8 status, and remaining work.
+
+> **Normative self-repair rule:** validation failures must become typed repair
+> issues routed back to the owning Agent for bounded retry. Silent filtering,
+> pass-by-fallback, hard-gate weakening, and obligation reduction are forbidden.
+> See `docs/agentic_error_feedback_and_self_repair_principle.md`.
+
 > Reassessment notice (2026-07-18): the implementation history below remains useful,
 > but its P2/P4 “proven” conclusions are superseded by
 > `docs/agentic_research_writing_agent_v2_design.md`. Inspection of the five retained

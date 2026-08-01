@@ -1,5 +1,10 @@
 # Code2Paper Agentic 重构分阶段执行文档
 
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 > 2026-07-18 reassessment：本文保留为已执行工作的历史日志，不再追加新的 12.x 修补项。后续唯一执行计划为 `docs/agentic_research_writing_agent_v2_execution_plan.md`；P2 图语义/拓扑与 P4 gold/extractor/cutover 已重新打开。
 
 版本：2.6

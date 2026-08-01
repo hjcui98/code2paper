@@ -1,5 +1,10 @@
 # Code2Paper Agentic Migration Guide
 
+> **Normative self-repair rule:** validation failures must become typed repair
+> issues routed back to the owning Agent for bounded retry. Silent filtering,
+> pass-by-fallback, hard-gate weakening, and obligation reduction are forbidden.
+> See `docs/agentic_error_feedback_and_self_repair_principle.md`.
+
 This guide defines the P4 rollout boundary. It does not authorize weakening any
 Evidence V2 gate to improve completion rate.
 

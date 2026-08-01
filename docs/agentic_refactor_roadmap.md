@@ -1,5 +1,10 @@
 # Code2Paper Agentic Refactor Roadmap
 
+> **Normative self-repair rule:** validation failures must become typed repair
+> issues routed back to the owning Agent for bounded retry. Silent filtering,
+> pass-by-fallback, hard-gate weakening, and obligation reduction are forbidden.
+> See `docs/agentic_error_feedback_and_self_repair_principle.md`.
+
 ## One-Sentence Goal
 
 Upgrade Code2Paper from a fixed Python stage pipeline into an author-intent-guided, code-evidence-constrained, LangGraph-orchestrated research writing agent, while keeping every Method claim and figure element traceable to verified implementation evidence.

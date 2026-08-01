@@ -1,5 +1,10 @@
 # Code2Paper 可决策研究写作 Agent V2 设计
 
+> **Agent 自主修复原则（规范性）：**规则层发现格式、schema、证据或内容错误后，
+> 必须形成 typed repair issue 并返回 owning Agent 做有界重试；禁止用静默过滤、
+> deterministic fallback 冒充成功、放宽硬门或降低义务覆盖来换取通过。详见
+> `docs/agentic_error_feedback_and_self_repair_principle.md`。
+
 状态：保留为 V2 设计历史；2026-07-19 起由鲁棒 Research Agent 总体设计取代  
 适用分支：`codex/agentic-p4-benchmark-cutover` 及其后续分支  
 取代范围：`agentic_refactor_final_design.md` 中已经完成的实现历史仍保留，但其 P2/P4 完成结论和最短实施路径不再作为当前决策依据。

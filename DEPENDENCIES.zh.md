@@ -1,5 +1,10 @@
 # Code-to-Paper + PaperBanana 依赖汇总
 
+> **历史环境快照。** 本文记录 2026-04-17 的 legacy/PaperBanana 环境，包含
+> 不可移植的本机路径，也未覆盖当前 agentic/R8 开发依赖。当前依赖以
+> [`pyproject.toml`](pyproject.toml) 和 [`README.md`](README.md) 为准；
+> 文档分类见 [`docs/README.md`](docs/README.md)。
+
 生成日期：2026-04-17
 
 建议统一使用 Python 3.11。`code2paper_agent` 本身支持 Python 3.10+，但当前 `/home/cuihengjia/agent/PosterGen/PaperBanana` 已有 3.10/3.11 运行痕迹，Python 3.11 是比较稳的折中。

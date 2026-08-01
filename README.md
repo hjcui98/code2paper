@@ -8,7 +8,27 @@ The new agentic route keeps author intent and code evidence deliberately
 separate: intent controls what the graph investigates and emphasizes, while
 frozen code evidence and validators control what may be written or drawn.
 
-## Overview
+## Current scope and status
+
+This repository currently contains two routes:
+
+- the legacy story-first Phase 1-5 pipeline documented below;
+- the newer autonomous agentic research route, which investigates a repository,
+  builds code-grounded evidence, repairs typed failures, and authors a trusted
+  Method.
+
+The agentic route has completed real-project R8 validation on six repositories
+(6/6 accepted under the unified 17-criterion recheck). The legacy route remains
+the default until the enforced
+`shadow → opt-in → canary → default_ready` rollout is complete.
+
+Start with the [documentation map](docs/README.md) and the
+[current project status and gap report](docs/project_status_and_gap_report_2026-07-31.md).
+See the [R8 acceptance status](docs/r8_acceptance_status_2026-08-01.md) for the
+matrix and digest evidence; the project report explains why R8 completion does
+not yet imply publication-quality writing or default-product readiness.
+
+## Legacy/story-first overview
 
 Current end-to-end flow:
 
