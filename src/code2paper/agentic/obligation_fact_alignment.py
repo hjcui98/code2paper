@@ -41,6 +41,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     CodeFactSetV1,
     CodeFactV1,
     ExplicitCodeGapV1,
+    SemanticStageGroupV1,
 )
 from code2paper.agentic.behavior_graph import BehaviorRelationV1
 from code2paper.agentic.generic_fact_compiler import BEHAVIOR_PREDICATE_TO_FACT
@@ -106,6 +107,13 @@ BEHAVIOR_PREDICATE_ALIASES: dict[str, frozenset[str]] = {
     # CONSTRUCT = create a new object/instance; in Python code this is a
     # constructor call (tagged as CALL by the adapter) or a load.
     "CONSTRUCT": frozenset({"CALL", "LOAD"}),
+    # The intent vocabulary uses READ/TRANSFORM as semantic umbrellas while
+    # the AST adapter records the concrete operation performed.
+    "READ": frozenset({"LOAD"}),
+    "TRANSFORM": frozenset({"COMPUTE", "CONCAT", "NORMALIZE", "PROJECT", "RESHAPE"}),
+    # A learned projection is a concrete implementation of an abstract
+    # score/representation computation.
+    "COMPUTE": frozenset({"PROJECT"}),
 }
 
 
@@ -216,6 +224,7 @@ class TargetAlignmentV1(BaseModel):
     target_id: str
     target_scope: str = "any"
     desired_predicates: tuple[str, ...] = Field(default_factory=tuple)
+    predicate_groups: tuple[tuple[str, ...], ...] = Field(default_factory=tuple)
     matched_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     matched_predicates: tuple[str, ...] = Field(default_factory=tuple)
     unmatched_predicates: tuple[str, ...] = Field(default_factory=tuple)
@@ -326,6 +335,7 @@ def align_target_to_facts(
     target_scope = _target_scope(target)
     desired = set(target.desired_predicates)
     desired_expanded = _expand_desired_with_aliases(desired)
+    required_relations = set(target.required_relations)
     matched_fact_ids: list[str] = []
     matched_predicates: set[str] = set()
     scope_blocked_fact_ids: list[str] = []
@@ -334,7 +344,16 @@ def align_target_to_facts(
         if only_supported and fact.validation_status != "supported":
             continue
         behavior_pred = FACT_PREDICATE_TO_BEHAVIOR_FULL.get(fact.predicate)
-        if behavior_pred is None or behavior_pred not in desired_expanded:
+        relation_witness = bool(
+            required_relations
+            and (
+                behavior_pred in required_relations
+                or required_relations.intersection(fact.relation_kinds)
+            )
+        )
+        if behavior_pred is None or (
+            behavior_pred not in desired_expanded and not relation_witness
+        ):
             continue
         fact_scope = _fact_scope(list(fact.conditions))
         if not _scope_compatible(target_scope, fact_scope):
@@ -350,13 +369,22 @@ def align_target_to_facts(
     # Compute unmatched against the ORIGINAL desired set, considering
     # aliases: AGGREGATE is satisfied if CONCAT/STACK/REDUCE was matched,
     # CONSTRUCT is satisfied if CALL/LOAD was matched.
-    unmatched_set = {
-        pred
-        for pred in desired
-        if not _alias_satisfied(pred, matched_predicates)
-    }
+    if target.predicate_groups:
+        unmatched_set = {
+            group[0]
+            for group in target.predicate_groups
+            if group and not any(
+                _alias_satisfied(predicate, matched_predicates)
+                for predicate in group
+            )
+        }
+    else:
+        unmatched_set = {
+            pred
+            for pred in desired
+            if not _alias_satisfied(pred, matched_predicates)
+        }
     unmatched = sorted(unmatched_set)
-    required_relations = set(target.required_relations)
     available_relations = {
         relation.kind
         for relation in (behavior_relations or [])
@@ -386,20 +414,28 @@ def align_target_to_facts(
     unmatched_relations = sorted(required_relations - available_relations)
 
     semantic_requirements = _target_semantic_requirements(target)
-    fact_terms: set[str] = set()
+    semantic_witnesses: list[set[str]] = []
     for fact in facts:
         if fact.fact_id not in matched_fact_ids:
             continue
-        fact_terms.update(_semantic_terms(fact.object))
-        fact_terms.update(_semantic_terms(fact.conditions))
-        fact_terms.update(_semantic_terms(fact.subject))
-        fact_terms.update(_semantic_terms(fact.scope))
-        fact_terms.update(_semantic_terms(fact.semantic_context))
-    fact_terms.update(_semantic_terms(semantic_context))
+        witness_terms: set[str] = set()
+        witness_terms.update(_semantic_terms(fact.object))
+        witness_terms.update(_semantic_terms(fact.conditions))
+        witness_terms.update(_semantic_terms(fact.subject))
+        witness_terms.update(_semantic_terms(fact.scope))
+        witness_terms.update(_semantic_terms(fact.semantic_context))
+        semantic_witnesses.append(witness_terms)
+    # Candidate-time source descriptors may supplement persisted facts, but
+    # each descriptor must independently contain the complete semantic field.
+    # Unioning unrelated nodes lets ``dim=1`` from one operation and literal
+    # ``15`` from another falsely authorize "dimension 15".
+    semantic_witnesses.extend(
+        _semantic_terms(value) for value in semantic_context if value
+    )
     matched_semantic_fields = sorted(
         field
         for field, required_terms in semantic_requirements.items()
-        if required_terms <= fact_terms
+        if any(required_terms <= witness for witness in semantic_witnesses)
     )
     unmatched_semantic_fields = sorted(
         set(semantic_requirements) - set(matched_semantic_fields)
@@ -423,6 +459,7 @@ def align_target_to_facts(
         target_id=target.target_id,
         target_scope=target_scope,
         desired_predicates=tuple(sorted(desired)),
+        predicate_groups=target.predicate_groups,
         matched_fact_ids=tuple(matched_fact_ids),
         matched_predicates=tuple(matched_sorted),
         unmatched_predicates=tuple(unmatched),
@@ -438,9 +475,9 @@ def align_target_to_facts(
 
 
 _GENERIC_ROLES = frozenset({
-    "any", "control", "feature", "filter", "generation", "inference",
-    "io", "predictor", "ranking", "task_head", "temporal", "training",
-    "verification",
+    "any", "attention", "composition", "config", "control", "feature",
+    "filter", "generation", "graph_builder", "inference", "io", "predictor", "propagation",
+    "ranking", "task_head", "temporal", "training", "verification",
 })
 _SEMANTIC_STOP_WORDS = frozenset({
     "and", "before", "from", "into", "model", "result", "step", "the",
@@ -451,12 +488,57 @@ _SEMANTIC_FIELDS = (
 )
 
 
+def _decompose_role_into_generic_parts(role: str) -> tuple[str, ...] | None:
+    """Decompose a role string into generic role parts by longest match.
+
+    Role hints emitted by the intent compiler may join multiple generic
+    roles with underscores (e.g. ``feature_attention_task_head``), while
+    ``_GENERIC_ROLES`` stores multi-word entries with underscores (e.g.
+    ``task_head``).  Splitting only on ``+`` leaves the joined string
+    intact, so the whole token is never found in ``_GENERIC_ROLES`` and a
+    non-generic role requirement is added even though every constituent
+    is generic.  That spurious ``role`` requirement then fails to match
+    against fact witnesses (which carry code identifiers, not role
+    labels), downgrading the alignment to ``partial`` and ultimately
+    terminating the obligation as an explicit gap.
+
+    This helper tries ``+`` first (the canonical separator) and then
+    falls back to a longest-match scan against ``_GENERIC_ROLES`` so that
+    ``feature_attention_task_head`` decomposes into
+    ``("feature", "attention", "task_head")`` while a genuinely
+    descriptive role such as ``query_activation_engine`` returns ``None``.
+    """
+
+    if not role:
+        return ()
+    parts = tuple(part for part in role.split("+") if part)
+    if parts and all(part in _GENERIC_ROLES for part in parts):
+        return parts
+    sorted_roles = sorted(_GENERIC_ROLES, key=len, reverse=True)
+    remaining = role
+    decomposed: list[str] = []
+    while remaining:
+        remaining = remaining.lstrip("_")
+        if not remaining:
+            break
+        matched = next(
+            (entry for entry in sorted_roles if remaining.startswith(entry)),
+            None,
+        )
+        if matched is None:
+            return None
+        decomposed.append(matched)
+        remaining = remaining[len(matched):]
+    return tuple(decomposed) if decomposed else None
+
+
 def _target_semantic_requirements(
     target: TypedBehaviorTargetV1,
 ) -> dict[str, set[str]]:
     requirements: dict[str, set[str]] = {}
     role = target.role.strip().lower()
-    if role and role not in _GENERIC_ROLES:
+    is_generic_role = _decompose_role_into_generic_parts(role) is not None
+    if role and not is_generic_role:
         role_terms = _semantic_terms(role)
         if role_terms:
             requirements["role"] = role_terms
@@ -477,12 +559,21 @@ def _target_semantic_requirements(
 
 
 def _semantic_terms(value: Any) -> set[str]:
-    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", str(value))
-    raw = re.findall(r"[A-Za-z][A-Za-z0-9]+", text.replace("_", " ").lower())
-    return {
+    original = str(value).replace("top-k", "topk").replace("top_k", "topk")
+    compact_identifiers = {
+        token.lower()
+        for token in re.findall(
+            r"\b[A-Z][A-Za-z0-9]*(?:[A-Z][A-Za-z0-9]*)+\b", original
+        )
+        if len(token) >= 3
+    }
+    text = original
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+    raw = re.findall(r"[A-Za-z][A-Za-z0-9]+|\d+", text.replace("_", " ").lower())
+    return compact_identifiers | {
         normalized
         for token in raw
-        if len(token) >= 3 and token not in _SEMANTIC_STOP_WORDS
+        if (len(token) >= 3 or token.isdigit()) and token not in _SEMANTIC_STOP_WORDS
         if (normalized := _normalize_semantic_token(token))
     }
 
@@ -490,8 +581,23 @@ def _semantic_terms(value: Any) -> set[str]:
 def _normalize_semantic_token(token: str) -> str:
     aliases = {
         "generation": "generate", "generated": "generate", "generates": "generate",
+        "infer": "generate", "inference": "generate",
+        "propagate": "propagate", "propagates": "propagate",
+        "propagating": "propagate", "propagation": "propagate",
+        "filter": "filter", "filtering": "filter", "prune": "filter",
+        "pruned": "filter", "prunes": "filter", "pruning": "filter",
+        "threshold": "filter",
+        "score": "predict", "scores": "predict", "scoring": "predict",
+        "predict": "predict", "predicts": "predict", "prediction": "predict",
+        "predictor": "predict",
+        "infonce": "contrastive_objective", "contrastive": "contrastive_objective",
+        "logsumexp": "contrastive_objective",
         "verification": "verify", "verifier": "verify", "verified": "verify",
         "candidate": "draft", "reference": "target",
+        "dim": "dimension", "dims": "dimension", "dimensional": "dimension",
+        "mamba": "state_space", "ssm": "state_space",
+        "ppr": "pagerank", "pagerank": "pagerank",
+        "topk": "topk",
     }
     if token in aliases:
         return aliases[token]
@@ -709,6 +815,12 @@ def _resolve_coverage(
         t.status in {"resolved", "partial"} for t in target_alignments
     )
     if all_resolved:
+        if obligation.priority in {"must_cover", "should_cover"} and not matched_claim_ids:
+            return (
+                "partial",
+                "Every typed target has a matching fact, but no authorized atomic "
+                "claim is bound to this authoring obligation.",
+            )
         return (
             "supported",
             "Every typed behavior target is covered by supported code facts.",
@@ -820,6 +932,9 @@ def bind_claims_to_obligations(
     """
 
     fact_ids_by_obligation: dict[str, set[str]] = {}
+    obligation_by_id = {
+        obligation.obligation_id: obligation for obligation in graph.obligations
+    }
     for obligation in graph.obligations:
         matched: set[str] = set()
         for target in obligation.typed_behavior_targets:
@@ -828,6 +943,14 @@ def bind_claims_to_obligations(
         fact_ids_by_obligation[obligation.obligation_id] = matched
 
     rebound: list[AtomicClaimV3] = []
+    explicit_claim_ids_by_obligation: dict[str, set[str]] = {
+        obligation.obligation_id: {
+            claim.claim_id
+            for claim in claim_set.claims
+            if obligation.obligation_id in claim.covers_obligation_ids
+        }
+        for obligation in graph.obligations
+    }
     for claim in claim_set.claims:
         claim_facts = set(claim.fact_ids)
         derived = [
@@ -837,9 +960,43 @@ def bind_claims_to_obligations(
                 fact_ids_by_obligation.get(obligation.obligation_id, set())
             )
         ]
-        covers = list(dict.fromkeys([*claim.covers_obligation_ids, *derived]))
+        # Claims compiled inside the research loop already carry the exact
+        # obligation that owned the evidence packet.  Treat that producer
+        # binding as authoritative and do not broaden it merely because a
+        # common predicate (CALL/LOAD/COMPUTE) also appears in unrelated
+        # obligations.  The derived bridge exists only for legacy/profile
+        # claims that predate explicit obligation ownership.
+        explicit = [
+            obligation_id
+            for obligation_id in claim.covers_obligation_ids
+            if obligation_id in fact_ids_by_obligation
+        ]
+        # The method-mainline obligation is an umbrella over the authored
+        # pipeline.  When it was repaired only after aggregate evidence was
+        # merged, it has no producer-owned claims of its own; inherit only
+        # claims whose exact supporting facts align to its typed targets.
+        # Other stage/component obligations retain strict producer ownership
+        # so common CALL/COMPUTE facts cannot silently broaden authorship.
+        inherited_mainlines = [
+            obligation_id
+            for obligation_id in derived
+            if obligation_by_id[obligation_id].kind == "method_mainline"
+            and not explicit_claim_ids_by_obligation[obligation_id]
+            and any(
+                obligation_by_id.get(owner_id) is not None
+                and obligation_by_id[owner_id].priority in {"must_cover", "should_cover"}
+                for owner_id in claim.covers_obligation_ids
+            )
+        ]
+        covers = list(dict.fromkeys([*(explicit or derived), *inherited_mainlines]))
         rebound.append(claim.model_copy(update={"covers_obligation_ids": covers}))
 
+    intent_stage_groups = _intent_stage_groups(
+        graph=graph,
+        facts=fact_set.facts,
+        claims=rebound,
+    )
+    stage_groups = intent_stage_groups or claim_set.semantic_stage_groups
     payload = {
         "claims": [claim.model_dump(mode="json") for claim in rebound],
         "explicit_code_gaps": [
@@ -847,15 +1004,136 @@ def bind_claims_to_obligations(
         ],
         "semantic_stage_groups": [
             group.model_dump(mode="json")
-            for group in claim_set.semantic_stage_groups
+            for group in stage_groups
         ],
     }
     return claim_set.model_copy(
         update={
             "claims": rebound,
+            "semantic_stage_groups": stage_groups,
             "content_digest": _digest_payload(payload),
         }
     )
+
+
+def _intent_stage_groups(
+    *,
+    graph: IntentObligationGraphV2,
+    facts: list[CodeFactV1],
+    claims: list[AtomicClaimV3],
+) -> list[SemanticStageGroupV1]:
+    """Organize positive executable claims by author-authored pipeline stage."""
+
+    stages = sorted(
+        (item for item in graph.obligations if item.kind == "stage"),
+        key=lambda item: (item.source_index, item.obligation_id),
+    )
+    if not stages:
+        return []
+    obligation_by_id = {item.obligation_id: item for item in graph.obligations}
+    fact_by_id = {fact.fact_id: fact for fact in facts}
+    claim_by_id = {claim.claim_id: claim for claim in claims}
+    positive_claim_ids = {
+        claim.claim_id
+        for claim in claims
+        if any(
+            obligation_by_id.get(obligation_id) is not None
+            and obligation_by_id[obligation_id].priority in {"must_cover", "should_cover"}
+            for obligation_id in claim.covers_obligation_ids
+        )
+    }
+    assigned: set[str] = set()
+    # Pre-compute the set of all stage obligation IDs so the expansion
+    # logic can avoid absorbing claims that explicitly belong to a later
+    # stage.  Without this guard, a claim covering O-STAGE-03 whose fact
+    # subject overlaps with O-STAGE-01's anchor subjects would be pulled
+    # into SG-INTENT-01, leaving O-STAGE-03 empty and dropping a section
+    # from the method plan.
+    stage_obligation_ids = {stage.obligation_id for stage in stages}
+    groups: list[SemanticStageGroupV1] = []
+    for stage in stages:
+        explicit_ids = [
+            claim.claim_id
+            for claim in claims
+            if claim.claim_id in positive_claim_ids
+            and stage.obligation_id in claim.covers_obligation_ids
+            and claim.claim_id not in assigned
+        ]
+        anchor_subjects = {
+            fact_by_id[fact_id].subject
+            for claim_id in explicit_ids
+            for fact_id in claim_by_id[claim_id].fact_ids
+            if fact_id in fact_by_id
+        }
+        expanded_ids = [
+            claim.claim_id
+            for claim in claims
+            if claim.claim_id in positive_claim_ids
+            and claim.claim_id not in assigned
+            and claim.claim_id not in explicit_ids
+            # Do not expand a claim that explicitly covers another stage
+            # obligation into the current stage.  Such a claim has its
+            # own authored home and will form (or join) its own group when
+            # that stage is processed.  Only truly unstageed claims —
+            # those whose covers_obligation_ids contain no stage at all —
+            # are eligible for subject-based expansion.
+            and not any(
+                oid in stage_obligation_ids and oid != stage.obligation_id
+                for oid in claim.covers_obligation_ids
+            )
+            and anchor_subjects.intersection(
+                fact_by_id[fact_id].subject
+                for fact_id in claim.fact_ids
+                if fact_id in fact_by_id
+            )
+        ]
+        ordered_ids = list(dict.fromkeys([*explicit_ids, *expanded_ids]))
+        if not ordered_ids:
+            continue
+        assigned.update(ordered_ids)
+        heading = stage.author_text.split(":", 1)[0].strip()
+        if not heading or len(heading) > 120:
+            heading = f"Method stage {stage.source_index + 1}"
+        groups.append(SemanticStageGroupV1(
+            stage_id=f"SG-INTENT-{stage.source_index + 1:02d}-{stage.obligation_id.rsplit('-', 1)[-1]}",
+            name=heading,
+            purpose=stage.author_text,
+            ordered_claim_ids=ordered_ids,
+            covers_obligation_ids=[stage.obligation_id],
+            relation_evidence_ids=list(dict.fromkeys(
+                relation_id
+                for claim_id in ordered_ids
+                for relation_id in claim_by_id[claim_id].relation_evidence_ids
+            )),
+            organization_priority=stage.source_index + 1,
+        ))
+
+    remaining = [
+        claim_id for claim_id in positive_claim_ids
+        if claim_id not in assigned
+    ]
+    if remaining:
+        remaining.sort()
+        groups.append(SemanticStageGroupV1(
+            stage_id="SG-INTENT-ADDITIONAL",
+            name="Additional repository-verified mechanisms",
+            purpose="Executable details supporting the method beyond the named pipeline stages.",
+            ordered_claim_ids=remaining,
+            covers_obligation_ids=list(dict.fromkeys(
+                obligation_id
+                for claim_id in remaining
+                for obligation_id in claim_by_id[claim_id].covers_obligation_ids
+                if obligation_by_id.get(obligation_id) is not None
+                and obligation_by_id[obligation_id].priority in {"must_cover", "should_cover"}
+            )),
+            relation_evidence_ids=list(dict.fromkeys(
+                relation_id
+                for claim_id in remaining
+                for relation_id in claim_by_id[claim_id].relation_evidence_ids
+            )),
+            organization_priority=len(stages) + 1,
+        ))
+    return groups
 
 
 # ---------------------------------------------------------------------------

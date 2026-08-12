@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from code2paper.agentic.v3_runtime import V3GraphWrapper
 
 
@@ -37,14 +35,17 @@ def _write_typed_artifacts(tmp_path, producer_version: str) -> dict[str, str]:
     return artifacts
 
 
-@pytest.mark.parametrize("initial_producer", [LEGACY_PRODUCER, GENERIC_PRODUCER])
-def test_patch_evidence_writes_and_registers_manifest_on_run_and_resume(
-    tmp_path, initial_producer: str
+def test_already_generic_evidence_registers_manifest_without_rewriting(
+    tmp_path,
 ) -> None:
-    artifacts = _write_typed_artifacts(tmp_path, initial_producer)
+    artifacts = _write_typed_artifacts(tmp_path, GENERIC_PRODUCER)
     payload = {"artifacts": artifacts}
+    before = {
+        key: (tmp_path / f"{key}.json").read_bytes()
+        for key in artifacts
+    }
 
-    V3GraphWrapper._patch_evidence_to_generic_producer(object(), payload)
+    V3GraphWrapper._register_generic_research_manifest(object(), payload)
 
     manifest_path = tmp_path / "generic_research_compilation_manifest_v3.json"
     assert payload["artifacts"]["generic_research_compilation_manifest"] == str(
@@ -60,13 +61,29 @@ def test_patch_evidence_writes_and_registers_manifest_on_run_and_resume(
             (tmp_path / f"{key}.json").read_text(encoding="utf-8")
         )
         assert artifact["producer_version"] == GENERIC_PRODUCER
+        assert (tmp_path / f"{key}.json").read_bytes() == before[key]
+
+
+def test_legacy_profile_producer_is_not_laundered(tmp_path) -> None:
+    artifacts = _write_typed_artifacts(tmp_path, LEGACY_PRODUCER)
+    payload = {"artifacts": artifacts}
+
+    V3GraphWrapper._register_generic_research_manifest(object(), payload)
+
+    assert "generic_research_compilation_manifest" not in payload["artifacts"]
+    assert not (tmp_path / "generic_research_compilation_manifest_v3.json").exists()
+    for key in artifacts:
+        artifact = json.loads(
+            (tmp_path / f"{key}.json").read_text(encoding="utf-8")
+        )
+        assert artifact["producer_version"] == LEGACY_PRODUCER
 
 
 def test_patch_evidence_does_not_launder_unknown_producer(tmp_path) -> None:
     artifacts = _write_typed_artifacts(tmp_path, "code2paper-untrusted-generic-v1")
     payload = {"artifacts": artifacts}
 
-    V3GraphWrapper._patch_evidence_to_generic_producer(object(), payload)
+    V3GraphWrapper._register_generic_research_manifest(object(), payload)
 
     assert "generic_research_compilation_manifest" not in payload["artifacts"]
     assert not (tmp_path / "generic_research_compilation_manifest_v3.json").exists()

@@ -110,6 +110,10 @@ from code2paper.agentic.evidence_compiler_v3 import (
     AtomicClaimV3,
     load_atomic_claims_v3,
 )
+from code2paper.agentic.evidence_chain_integrity import (
+    EvidenceChainIntegrityReport,
+    inspect_evidence_chain_from_paths,
+)
 from code2paper.agentic.obligation_fact_alignment import (
     ObligationCoverageReportV2,
 )
@@ -125,6 +129,7 @@ from code2paper.llm.role_config import (
     RESEARCH_SUPERVISOR,
     ROLE_GENERATION_CONFIGS,
 )
+from code2paper.export.run_manifest import hash_file
 
 # These roles are unconditional in a formal V3 live run.  Local rewrite and
 # semantic verification are conditional: a clean deterministic reverse gate
@@ -638,10 +643,13 @@ def check_r8_acceptance(
     max_output_tokens_by_role: Mapping[str, Any] | None = None,
     intent_target_proposal_report: Mapping[str, Any] | None = None,
     v3_error: str = "",
+    v3_enabled: bool = True,
     completion_report: Any | None = None,
     readiness_report: Any | None = None,
     validation_manifest: Any | None = None,
     method_clean_path: str = "",
+    evidence_chain_integrity: EvidenceChainIntegrityReport | None = None,
+    publication_quality_report: Any | None = None,
 ) -> R8AcceptanceReport:
     """Check all R8 acceptance criteria for a single project run.
 
@@ -890,7 +898,11 @@ def check_r8_acceptance(
     # and the run cannot be accepted.  An empty ``v3_error`` means V3
     # research succeeded (or V3 was not enabled, in which case the
     # field is also empty).
-    if v3_error_normalized:
+    if not v3_enabled:
+        v3_status = "failed"
+        v3_reason = "V3 research was not explicitly enabled"
+        v3_evidence = ()
+    elif v3_error_normalized:
         v3_status: CriterionStatus = "failed"
         # Truncate very long error messages so the reason stays
         # readable in the report.  The full error is preserved in the
@@ -1058,17 +1070,18 @@ def check_r8_acceptance(
             for item in coverage_report.items
             if item.obligation_priority == "must_cover" and item.coverage_status == "supported"
         }
-        terminal_must_ids = {
+        positive_must_ids = {
             item.obligation_id
             for item in coverage_report.items
             if item.obligation_priority == "must_cover"
-            and item.coverage_status in {"supported", "partial", "explicit_gap", "blocked"}
+            and item.coverage_status in {"supported", "partial"}
+            and bool(item.matched_claim_ids)
         }
-        if claim_set is not None and terminal_must_ids:
+        if claim_set is not None and positive_must_ids:
             supported_claims_for_must = [
                 claim for claim in claim_set.claims
                 if claim.status == "supported"
-                and any(obl_id in terminal_must_ids for obl_id in claim.covers_obligation_ids)
+                and any(obl_id in positive_must_ids for obl_id in claim.covers_obligation_ids)
             ]
             if validation_report is not None and supported_claims_for_must:
                 validated_ids = {
@@ -1104,6 +1117,87 @@ def check_r8_acceptance(
         description="At least one must_cover obligation has a supported/partial mainline.",
         status="passed" if mainline_count > 0 else "failed",
         reason=mainline_reason,
+    )
+
+    # D0 cross-artifact gates.  Individual schema-valid files are not enough:
+    # packet, fact, claim and canonical coverage must form one digest-bound
+    # generic chain, and one obligation cannot be both a positive claim and a
+    # terminal gap.
+    integrity = evidence_chain_integrity
+    for criterion_id, description, passed in (
+        (
+            "single_evidence_chain_consistent",
+            "Packet, fact, claim and coverage artifacts form one snapshot-bound chain.",
+            bool(integrity and integrity.single_evidence_chain_consistent),
+        ),
+        (
+            "generic_research_compiled_claims",
+            "Positive claims were compiled by the generic research data plane.",
+            bool(integrity and integrity.generic_research_compiled_claims),
+        ),
+        (
+            "generic_provenance_profile_non_authoritative",
+            "Generic provenance is explicit and profiles have no fact authority.",
+            bool(
+                integrity
+                and integrity.generic_provenance_profile_non_authoritative
+            ),
+        ),
+        (
+            "gap_claim_noncontradiction",
+            "No obligation is simultaneously terminal-gap and positively supported.",
+            bool(integrity and integrity.gap_claim_noncontradiction),
+        ),
+    ):
+        criteria[criterion_id] = R8AcceptanceCriterion(
+            criterion_id=criterion_id,
+            description=description,
+            status="passed" if passed else "failed",
+            reason=(
+                "cross-artifact integrity check passed"
+                if passed
+                else ";".join(integrity.failures)
+                if integrity is not None and integrity.failures
+                else "cross-artifact integrity report missing"
+            ),
+            evidence=integrity.evidence if integrity is not None else (),
+        )
+
+    # D5 publication utility remains orthogonal to factual safety, but both
+    # must be positively evidenced for a release acceptance decision.
+    if publication_quality_report is not None:
+        quality = (
+            publication_quality_report.model_dump(mode="json")
+            if hasattr(publication_quality_report, "model_dump")
+            else dict(publication_quality_report)
+            if isinstance(publication_quality_report, Mapping)
+            else {}
+        )
+    else:
+        quality = {}
+    safety = quality.get("safety") or {}
+    utility = quality.get("utility") or {}
+    publication_ready = bool(
+        quality.get("status") == "publication_ready"
+        and quality.get("plan_gate_passed")
+        and quality.get("final_integrity_gate_passed")
+        and safety.get("hard_gate_passed")
+        and utility.get("utility_gate_passed")
+    )
+    criteria["publication_quality_passed"] = R8AcceptanceCriterion(
+        criterion_id="publication_quality_passed",
+        description=(
+            "Publication Method passed separate safety, argument-plan, "
+            "supported-unit recall, writing utility, and final integrity gates."
+        ),
+        status="passed" if publication_ready else "failed",
+        reason=(
+            "publication quality status=publication_ready"
+            if publication_ready
+            else "publication quality report missing or non-ready: "
+            + str(quality.get("status") or "missing")
+        ),
+        evidence=(str(quality.get("content_digest") or ""),) if quality else (),
     )
 
     # Protocol settings check
@@ -1887,7 +1981,45 @@ def check_r8_acceptance_from_run_dir(
     """
 
     run_path = Path(run_dir).resolve()
-    summary_path = run_path / "agentic_run_summary.json"
+    manifest_path = run_path / "artifacts" / "10_run" / "run_manifest.json"
+    if not manifest_path.is_file():
+        for candidate in (
+            run_path / "10_run" / "run_manifest.json",
+            run_path / "run_manifest.json",
+        ):
+            if candidate.is_file():
+                manifest_path = candidate
+                break
+    manifest_data: dict[str, Any] = {}
+    manifest_failures: list[str] = []
+    if manifest_path.is_file():
+        try:
+            loaded_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_manifest, dict):
+                manifest_data = loaded_manifest
+        except (OSError, json.JSONDecodeError):
+            manifest_failures.append("run_manifest_malformed")
+    else:
+        manifest_failures.append("run_manifest_missing")
+
+    manifest_outputs = manifest_data.get("phase_outputs") or {}
+    manifest_artifacts: dict[str, str] = {}
+    for name, record in manifest_outputs.items():
+        if not isinstance(record, dict) or not record.get("path"):
+            manifest_failures.append(f"manifest_artifact_invalid:{name}")
+            continue
+        artifact_path = Path(str(record["path"]))
+        manifest_artifacts[str(name)] = str(artifact_path)
+        expected_hash = str(record.get("hash") or "")
+        actual_hash = hash_file(artifact_path)
+        if not artifact_path.is_file():
+            manifest_failures.append(f"manifest_artifact_missing:{name}")
+        elif not expected_hash or actual_hash != expected_hash:
+            manifest_failures.append(f"manifest_artifact_digest_mismatch:{name}")
+
+    summary_path = Path(
+        manifest_artifacts.get("agentic_run_summary", run_path / "agentic_run_summary.json")
+    )
     if not summary_path.is_file():
         # Standard runner layout: summary is in artifacts/10_run/.
         for candidate in (
@@ -1905,12 +2037,15 @@ def check_r8_acceptance_from_run_dir(
     # The summary's ``artifacts`` map has full paths to files in
     # subdirectories.  Use it as the primary source, then fall back to
     # ``run_path / <filename>`` for flat layouts.
-    artifacts_map: dict[str, str] = {}
-    for name, record in (summary_data.get("artifacts") or {}).items():
-        if isinstance(record, dict) and "path" in record:
-            artifacts_map[name] = str(record["path"])
-        elif isinstance(record, str):
-            artifacts_map[name] = record
+    artifacts_map: dict[str, str] = dict(manifest_artifacts)
+    if not artifacts_map:
+        # Legacy diagnostic compatibility only.  A formal current run still
+        # fails below with ``run_manifest_missing``.
+        for name, record in (summary_data.get("artifacts") or {}).items():
+            if isinstance(record, dict) and "path" in record:
+                artifacts_map[name] = str(record["path"])
+            elif isinstance(record, str):
+                artifacts_map[name] = record
 
     def _resolve_artifact(key: str, filename: str = "") -> Path | None:
         """Locate an artifact file by map key or by filename."""
@@ -2170,6 +2305,19 @@ def check_r8_acceptance_from_run_dir(
         except Exception:
             validation_manifest = None
 
+    publication_quality_report: Any = None
+    quality_path = _resolve_artifact(
+        "publication_quality_report_v1",
+        "artifacts/07_validation/publication_quality_report_v1.json",
+    )
+    if quality_path is not None:
+        try:
+            publication_quality_report = json.loads(
+                quality_path.read_text(encoding="utf-8")
+            )
+        except Exception:
+            publication_quality_report = None
+
     # --- method_clean.md path ---
     method_clean_path = ""
     for key in ("text_clean_md", "text_md"):
@@ -2177,6 +2325,27 @@ def check_r8_acceptance_from_run_dir(
         if mp is not None:
             method_clean_path = str(mp)
             break
+
+    v3_enabled_value = str(
+        run_environment.get("CODE2PAPER_AGENTIC_RESEARCH_V3", "")
+        or summary_data.get("v3_enabled", "")
+    ).strip().lower()
+    v3_enabled = v3_enabled_value in {"1", "true", "yes", "on"}
+    # Formal R8 recheck is V3-only.  Missing enablement evidence therefore
+    # remains fail-closed instead of silently auditing a legacy chain.
+    evidence_chain_integrity = inspect_evidence_chain_from_paths(
+        artifacts_map,
+        v3_enabled=True,
+    )
+    if manifest_failures:
+        evidence_chain_integrity = evidence_chain_integrity.model_copy(
+            update={
+                "single_evidence_chain_consistent": False,
+                "failures": tuple(
+                    [*manifest_failures, *evidence_chain_integrity.failures]
+                ),
+            }
+        )
 
     return check_r8_acceptance(
         run_id=effective_run_id,
@@ -2199,10 +2368,13 @@ def check_r8_acceptance_from_run_dir(
         **resolved_profile_maps,
         intent_target_proposal_report=intent_target_proposal_report,
         v3_error=v3_error,
+        v3_enabled=v3_enabled,
         completion_report=completion_report,
         readiness_report=readiness_report,
         validation_manifest=validation_manifest,
         method_clean_path=method_clean_path,
+        evidence_chain_integrity=evidence_chain_integrity,
+        publication_quality_report=publication_quality_report,
     )
 
 

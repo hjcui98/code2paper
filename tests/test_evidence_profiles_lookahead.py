@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
+    compile_legacy_profile_evidence_v3,
     validate_evidence_compiler_v3,
 )
 from code2paper.agentic.evidence_profiles.lookahead_reasoning import (
@@ -189,7 +189,7 @@ def test_minimal_fixture_match_and_compile_positive(tmp_path: Path) -> None:
     assert match_result.matched, f"match failed: {match_result.reasons}"
     assert match_result.missing_required_fingerprints == []
 
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None, "compile returned None"
     assert result.profile_id == "lookahead_step_level_speculative_decoding"
     assert not validate_evidence_compiler_v3(result, snapshot)
@@ -199,7 +199,7 @@ def test_all_supported_claims_have_facts_and_spans(tmp_path: Path) -> None:
     """Every supported claim must have facts and direct spans from real code."""
     _write_minimal_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
 
     fact_by_id = {f.fact_id: f for f in result.facts.facts if f.validation_status == "supported"}
@@ -233,7 +233,7 @@ def test_missing_drafter_symbol_rejects(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_missing_targeter_symbol_rejects(tmp_path: Path) -> None:
@@ -248,7 +248,7 @@ def test_missing_targeter_symbol_rejects(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_missing_tree_node_traverse_rejects(tmp_path: Path) -> None:
@@ -263,7 +263,7 @@ def test_missing_tree_node_traverse_rejects(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_missing_asyncio_create_task_rejects_behavior(tmp_path: Path) -> None:
@@ -279,7 +279,7 @@ def test_missing_asyncio_create_task_rejects_behavior(tmp_path: Path) -> None:
     )
     assert not _behavior_contract_satisfied(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_missing_main_function_rejects(tmp_path: Path) -> None:
@@ -294,7 +294,7 @@ def test_missing_main_function_rejects(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_missing_text_accept_rejects_behavior(tmp_path: Path) -> None:
@@ -310,7 +310,7 @@ def test_missing_text_accept_rejects_behavior(tmp_path: Path) -> None:
     )
     assert not _behavior_contract_satisfied(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 # ---------------------------------------------------------------------------
@@ -410,4 +410,4 @@ def test_profile_does_not_activate_from_project_name_or_prose(tmp_path: Path) ->
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None

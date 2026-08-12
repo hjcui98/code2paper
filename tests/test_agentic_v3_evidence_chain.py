@@ -31,7 +31,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -47,6 +47,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     EvidencePacketSetV3,
     EvidencePacketV3,
 )
+from code2paper.agentic.evidence_chain_integrity import inspect_evidence_chain
 from code2paper.agentic.research_graph import CompiledEvidence
 from code2paper.agentic.v3_runtime import (
     V3GraphWrapper,
@@ -217,11 +218,16 @@ def _compiled_evidence(
     *,
     obligation_id: str = "obl-1",
 ) -> CompiledEvidence:
+    fact_id = f"fact-{obligation_id}-1"
     return CompiledEvidence(
         obligation_id=obligation_id,
         packet_set=_packet_set([_packet(obligation_tag=obligation_id)]),
-        fact_set=_fact_set([_fact(scope=f"sym:{obligation_id}")]),
-        claim_set=_claim_set([_claim(obligation_id=obligation_id)]),
+        fact_set=_fact_set([_fact(fact_id=fact_id, scope=f"sym:{obligation_id}")]),
+        claim_set=_claim_set([_claim(
+            claim_id=f"claim-{obligation_id}-1",
+            fact_id=fact_id,
+            obligation_id=obligation_id,
+        )]),
     )
 
 
@@ -272,6 +278,28 @@ class ExtractOutRootTests(unittest.TestCase):
         self.assertIsNone(result)
 
 
+def test_evidence_chain_rejects_forged_generic_producer_version() -> None:
+    """A producer marker must match the frozen generic data-plane version."""
+
+    compiled = _compiled_evidence(obligation_id="obl-forged")
+    forged = "code2paper-untrusted-generic-research-data-plane-v999"
+    report = inspect_evidence_chain(
+        repo_snapshot=None,
+        packet_set=compiled.packet_set.model_copy(update={"producer_version": forged}),
+        fact_set=compiled.fact_set.model_copy(update={"producer_version": forged}),
+        claim_set=compiled.claim_set.model_copy(update={"producer_version": forged}),
+        intent_graph=None,
+        coverage_report=None,
+        generic_manifest={
+            "producer": "generic_research_data_plane",
+            "profile_authoritative": False,
+        },
+        v3_enabled=False,
+    )
+    assert report.generic_research_compiled_claims is False
+    assert report.generic_provenance_profile_non_authoritative is False
+
+
 # ---------------------------------------------------------------------------
 # 2. merge_compiled_evidence
 # ---------------------------------------------------------------------------
@@ -316,6 +344,34 @@ class MergeCompiledEvidenceTests(unittest.TestCase):
         self.assertEqual(len(packets.packets), 2)
         self.assertEqual(len(facts.facts), 2)
         self.assertEqual(len(claims.claims), 2)
+
+    def test_same_operation_rediscovered_by_two_obligations_is_canonicalized(self) -> None:
+        ce1 = _compiled_evidence(obligation_id="obl-1")
+        second_fact = _fact(fact_id="fact-obl-2-1", scope="sym:obl-1")
+        ce2 = CompiledEvidence(
+            obligation_id="obl-2",
+            packet_set=_packet_set([_packet(packet_id="pkt-2", obligation_tag="obl-2")]),
+            fact_set=_fact_set([second_fact]),
+            claim_set=_claim_set([_claim(
+                claim_id="claim-obl-2-1",
+                fact_id=second_fact.fact_id,
+                obligation_id="obl-2",
+            )]),
+        )
+
+        _packets, facts, claims = merge_compiled_evidence(
+            {"obl-1": ce1, "obl-2": ce2},
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+        )
+
+        self.assertEqual(len(facts.facts), 1)
+        self.assertEqual(len(claims.claims), 1)
+        self.assertEqual(
+            claims.claims[0].covers_obligation_ids,
+            ["obl-1", "obl-2"],
+        )
+        self.assertEqual(claims.claims[0].fact_ids, [facts.facts[0].fact_id])
 
     def test_merged_sets_carry_content_digest(self) -> None:
         ce = _compiled_evidence(obligation_id="obl-1")
@@ -518,6 +574,29 @@ class WriteV3EvidenceArtifactsTests(unittest.TestCase):
             # Now it must exist.
             self.assertTrue((Path(tmp) / "artifacts").is_dir())
 
+    def test_artifact_serialization_does_not_use_direct_path_write(self) -> None:
+        """V3 hand-offs must use the crash-safe atomic writer boundary."""
+
+        ce = _compiled_evidence(obligation_id="obl-1")
+        packets, facts, claims = merge_compiled_evidence(
+            {"obl-1": ce},
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+        )
+        with tempfile.TemporaryDirectory() as tmp, patch.object(
+            Path,
+            "write_text",
+            side_effect=AssertionError("direct Path.write_text is not crash-safe"),
+        ):
+            paths = write_v3_evidence_artifacts(
+                tmp,
+                packet_set=packets,
+                fact_set=facts,
+                claim_set=claims,
+            )
+            self.assertEqual(len(paths), 4)
+            self.assertTrue(all(Path(path).is_file() for path in paths.values()))
+
 
 # ---------------------------------------------------------------------------
 # 4. V3GraphWrapper.invoke evidence chain injection
@@ -605,9 +684,8 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
             for key in ("evidence_packets_v3", "code_facts_v1", "atomic_claims_v3"):
                 self.assertTrue(Path(artifacts[key]).exists(), f"{key} file missing")
 
-    def test_invoke_does_not_overwrite_existing_artifact_paths(self) -> None:
-        """When the caller already pointed at a specific evidence file,
-        the wrapper must respect that choice (use ``setdefault``)."""
+    def test_invoke_replaces_profile_shadow_with_generic_artifact(self) -> None:
+        """The research owner's generic chain wins over same-key input."""
 
         ce = _compiled_evidence(obligation_id="obl-1")
         runtime = self._fake_runtime_with_compiled_evidence({"obl-1": ce})
@@ -631,10 +709,12 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
         v3_mod.run_v3_research_phase = lambda *a, **kw: self._make_fake_v3_result(
             {"obl-1": ce}
         )
-        # Pre-existing artifact path that must NOT be overwritten.
+        # Simulate a pre-existing legacy/profile artifact path.
         existing_path = "/custom/existing/evidence_packets_v3.json"
+        output_root = ""
         try:
             with tempfile.TemporaryDirectory() as tmp:
+                output_root = tmp
                 wrapper.invoke({
                     "out_root": tmp,
                     "artifacts": {"evidence_packets_v3": existing_path},
@@ -642,10 +722,11 @@ class V3GraphWrapperEvidenceChainTests(unittest.TestCase):
         finally:
             v3_mod.run_v3_research_phase = original
 
-        # The pre-existing path must be preserved.
+        # The generic V3 artifact must replace the profile shadow before the
+        # compatibility pipeline consumes it.
         self.assertEqual(
             captured_state["artifacts"]["evidence_packets_v3"],
-            existing_path,
+            str(Path(output_root) / "artifacts" / "evidence_packets_v3_v3.json"),
         )
 
     def test_invoke_merges_artifact_paths_into_legacy_payload(self) -> None:

@@ -36,14 +36,37 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import json
 import re
 import shlex
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from code2paper.agentic.repo_snapshot import RepoSnapshot
+from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+from code2paper.agentic.language_adapter_registry import (
+    LanguageAdapterRegistry,
+    default_language_adapter_registry,
+)
+from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
+    CodeFactSetV1,
+    EvidencePacketV3,
+)
+from code2paper.agentic.generic_claim_compiler import (
+    ClaimProposalV1,
+    compile_atomic_claims,
+)
+from code2paper.agentic.generic_evidence_compiler import (
+    EvidencePacketProposalV1,
+    compile_evidence_packet_proposal,
+)
+from code2paper.agentic.generic_fact_compiler import (
+    FactCompilerInputV1,
+    compile_facts_from_behavior_graph,
+)
 from code2paper.agentic.research_models import (
     ResearchObservationDiagnosticsV1,
     ResearchObservationV1,
@@ -58,6 +81,7 @@ from code2paper.agentic.source_authority import (
     classify_source_authority,
 )
 from code2paper.agentic.typed_refs import build_symbol_ref
+from code2paper.agentic.tool_runtime import atomic_write_json
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +168,10 @@ class ResearchToolContext(BaseModel):
 
     repo_snapshot: RepoSnapshot
     symbol_index: SymbolIndexReport | None = None
+    behavior_graph: CodeBehaviorGraphV1 | None = None
+    artifact_root: Path | None = None
+    adapter_registry: LanguageAdapterRegistry = Field(default_factory=default_language_adapter_registry)
+    adapter_language: str = ""
     max_indexed_files: int = 120
     max_indexed_symbols: int = 200
 
@@ -176,6 +204,46 @@ class ResearchToolContext(BaseModel):
         # Context is frozen; callers that want to reuse the index should
         # construct a new context via model_copy(update={"symbol_index": index}).
         return index
+
+    def language_adapter(self) -> Any:
+        if self.adapter_language.strip():
+            return self.adapter_registry.get(self.adapter_language)
+        paths = {item.path: "" for item in self.repo_snapshot.included_files if item.kind == "file"}
+        return self.adapter_registry.for_files(paths)
+
+    def adapter_symbol_index(self) -> Any:
+        files = {
+            item.path: (_read_snapshot_file(self.repo_snapshot, item.path)[0] or "")
+            for item in self.repo_snapshot.included_files
+            if item.kind == "file"
+        }
+        return self.language_adapter().index_symbols(
+            repo_snapshot_id=self.repo_snapshot.snapshot_id,
+            project_tree_hash=self.repo_snapshot.project_tree_hash,
+            files=files,
+        )
+
+    def artifact_path(self, kind: str, artifact_id: str) -> Path | None:
+        """Resolve a content artifact without allowing ids to become paths."""
+
+        if self.artifact_root is None:
+            return None
+        safe_id = hashlib.sha256(artifact_id.encode("utf-8")).hexdigest()
+        return self.artifact_root / "research_tool_artifacts" / kind / f"{safe_id}.json"
+
+    def write_artifact(self, kind: str, artifact_id: str, value: Any) -> Path | None:
+        path = self.artifact_path(kind, artifact_id)
+        if path is None:
+            return None
+        payload = value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+        atomic_write_json(path, payload)
+        return path
+
+    def read_artifact(self, kind: str, artifact_id: str) -> dict[str, Any] | None:
+        path = self.artifact_path(kind, artifact_id)
+        if path is None or not path.is_file():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
@@ -394,7 +462,15 @@ class ProposeEvidencePacketInput(_ResearchToolInputBase):
     """Input schema for ``propose_evidence_packet``."""
 
     obligation_tag: str = ""
+    packet_id: str = ""
+    scope: str = ""
     anchor_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    relation_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    semantic_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    behavior_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    behavior_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    conditions: tuple[str, ...] = Field(default_factory=tuple)
+    composition_rationale: str = ""
 
 
 class ValidateEvidencePacketInput(_ResearchToolInputBase):
@@ -413,18 +489,22 @@ class ValidateCodeFactsInput(_ResearchToolInputBase):
     """Input schema for ``validate_code_facts``."""
 
     fact_id: str = ""
+    fact_set_id: str = ""
 
 
 class DecomposeAtomicClaimsInput(_ResearchToolInputBase):
     """Input schema for ``decompose_atomic_claims``."""
 
     fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fact_set_id: str = ""
+    claim_proposals: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
 
 
 class AuthorizeAtomicClaimsInput(_ResearchToolInputBase):
     """Input schema for ``authorize_atomic_claims``."""
 
     claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    proposal_set_id: str = ""
 
 
 class RecordExplicitCodeGapInput(_ResearchToolInputBase):
@@ -432,6 +512,11 @@ class RecordExplicitCodeGapInput(_ResearchToolInputBase):
 
     obligation_id_ref: str = ""
     termination_reason: str = ""
+    search_scope: tuple[str, ...] = Field(default_factory=tuple)
+    attempted_tools: tuple[str, ...] = Field(default_factory=tuple)
+    missing_relations: tuple[str, ...] = Field(default_factory=tuple)
+    search_complete: bool = False
+    scope_exhausted: bool = False
 
 
 class CheckObligationCoverageInput(_ResearchToolInputBase):
@@ -449,6 +534,7 @@ _ENTRYPOINT_FILENAMES: tuple[str, ...] = (
     "main.py", "__main__.py", "app.py", "train.py", "eval.py",
     "infer.py", "run.py", "server.py", "cli.py", "predict.py",
     "demo.py", "serve.py",
+    "index.js", "index.ts", "main.js", "main.ts", "server.js", "server.ts",
 )
 
 _ENTRYPOINT_SHELL_MARKERS: tuple[str, ...] = (
@@ -534,31 +620,66 @@ def search_symbols(
     use_regex = bool(_arg_value(tool_call, "regex", default=False))
     top_k = tool_call.top_k or 10
 
-    index = ctx.ensure_symbol_index()
+    adapter = ctx.language_adapter()
+    if adapter.language == "python":
+        index = ctx.ensure_symbol_index()
+    else:
+        adapter_index = ctx.adapter_symbol_index()
+        index = SymbolIndexReport(
+            project_root=str(ctx.repo_snapshot.project_root),
+            indexed_files=adapter_index.indexed_files,
+            indexed_symbols=adapter_index.indexed_symbols,
+            candidates=[
+                SymbolIndexEntry(
+                    path=item.path,
+                    symbol=item.qualified_name,
+                    kind=item.kind,
+                    start_line=item.start_line,
+                    end_line=item.end_line,
+                    text_hash=item.text_hash,
+                    reasons=[f"language_adapter:{adapter.language}"],
+                )
+                for item in adapter_index.symbols
+            ],
+        )
     candidates = [
         entry
         for entry in index.candidates
         if _symbol_matches(entry, query, kind_filter, use_regex, scope_paths)
     ]
     if not candidates and not use_regex:
-        scored = [
-            (score, entry)
-            for entry in index.candidates
-            if (
-                (not scope_paths or any(
-                    entry.path == scope or entry.path.startswith(scope.rstrip("/") + "/")
-                    for scope in scope_paths
-                ))
-                and (not kind_filter or entry.kind in kind_filter)
-                and (score := _symbol_query_score(entry, query)) > 0
-            )
-        ]
+        source_cache: dict[str, list[str]] = {}
+        scored = []
+        for entry in index.candidates:
+            if scope_paths and not any(
+                entry.path == scope or entry.path.startswith(scope.rstrip("/") + "/")
+                for scope in scope_paths
+            ):
+                continue
+            if kind_filter and entry.kind not in kind_filter:
+                continue
+            identifier_score = _symbol_query_score(entry, query)
+            source_score = 0
+            if entry.kind != "class":
+                source_score = _symbol_source_query_score(
+                    ctx,
+                    entry,
+                    query,
+                    source_cache=source_cache,
+                )
+            score = identifier_score * 10 + source_score
+            if score > 0:
+                scored.append((score, entry))
         candidates = [
             entry
             for _score, entry in sorted(
                 scored,
                 key=lambda item: (
-                    -item[0], item[1].path, item[1].symbol, item[1].start_line
+                    -item[0],
+                    max(0, item[1].end_line - item[1].start_line),
+                    item[1].path,
+                    item[1].symbol,
+                    item[1].start_line,
                 ),
             )
         ]
@@ -625,8 +746,29 @@ def read_symbol(
             diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
         )
     if not rel_path.endswith(".py"):
-        # Non-Python files cannot be parsed for symbol spans; expose the
-        # whole file as a single span so the supervisor can still read it.
+        adapter = ctx.language_adapter()
+        if adapter.language != "python" and rel_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+            index = ctx.adapter_symbol_index()
+            matched = next((
+                item for item in index.symbols
+                if item.path == rel_path and item.qualified_name == symbol
+            ), None)
+            if matched is not None:
+                start_line = max(1, matched.start_line - context_lines)
+                end_line = matched.end_line + context_lines
+                return make_observation(
+                    tool_call=tool_call,
+                    status="success",
+                    source_authority=classify_source_authority(rel_path),
+                    result_refs=(build_symbol_ref(rel_path, symbol, matched.start_line),),
+                    exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
+                    diagnostics=ResearchObservationDiagnosticsV1(
+                        candidate_count=1,
+                        notes=(f"language_adapter={adapter.language}", f"symbol={symbol}", f"lines={start_line}-{end_line}"),
+                    ),
+                )
+        # Unsupported text files are exposed as a single span so the
+        # supervisor can still read them without inventing a symbol range.
         line_count = file_text.count("\n") + 1
         authority = classify_source_authority(rel_path)
         return make_observation(
@@ -939,11 +1081,16 @@ def inspect_configuration(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Find configuration keys, defaults and branches in Python code.
+    """Find configuration keys, defaults and build-entrypoint bindings.
 
     Scans for ``argparse`` defaults, dictionary literals assigned to
-    config variables, and ``if``/``elif`` branches that gate config
-    values.  Returns one ``config:`` result ref per detected binding.
+    config variables, and ``if``/``elif`` branches that gate config values
+    in Python.  JavaScript/TypeScript additionally records runtime config
+    reads (``process.env``, ``import.meta.env``, ``config``/``options``
+    access), package scripts/dependencies, and common build-config files.
+    Returns one ``config:`` result ref per detected binding.  These refs are
+    discovery anchors only; a positive configuration claim still requires a
+    packet, behavior relation and the generic fact/configuration compilers.
     """
 
     scope_paths = _scope_paths(ctx, tool_call)
@@ -952,20 +1099,24 @@ def inspect_configuration(
     config_key = str(_arg_value(tool_call, "config_key", default="") or "")
     top_k = tool_call.top_k or 20
 
-    bindings: list[tuple[str, int, SourceAuthorityV1]] = []
+    bindings: list[tuple[str, int, SourceAuthorityV1, str]] = []
     truncated = False
     for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
-        if not rel_path.endswith(".py"):
-            continue
         file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
         if read_error is not None:
             continue
-        try:
-            tree = ast.parse(file_text)
-        except SyntaxError:
-            continue
         authority = classify_source_authority(rel_path)
-        for line_no, key in _find_config_bindings(tree, config_key):
+        if rel_path.endswith(".py"):
+            try:
+                tree = ast.parse(file_text)
+            except SyntaxError:
+                continue
+            found = _find_config_bindings(tree, config_key)
+        elif rel_path.endswith((".js", ".jsx", ".ts", ".tsx", ".json", ".yaml", ".yml", ".toml", ".lock")):
+            found = _find_javascript_config_bindings(rel_path, file_text, config_key)
+        else:
+            continue
+        for line_no, key in found:
             bindings.append((rel_path, line_no, authority, key))
             if len(bindings) >= top_k:
                 truncated = True
@@ -986,6 +1137,16 @@ def inspect_configuration(
 
     weakest = _weakest_authority([auth for _, _, auth, _ in bindings])
     result_refs = tuple(f"config:{path}:{line}:{key}" for path, line, _, key in bindings)
+    build_count = sum(
+        1
+        for path, _line, _authority, key in bindings
+        if _is_build_configuration_binding(path, key)
+    )
+    runtime_count = sum(
+        1
+        for path, _line, _authority, key in bindings
+        if _is_runtime_configuration_binding(path, key)
+    )
     return make_observation(
         tool_call=tool_call,
         status="success" if not truncated else "truncated",
@@ -994,7 +1155,12 @@ def inspect_configuration(
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=len(bindings),
             truncated=truncated,
-            notes=(f"config_key={config_key or 'any'}", f"matches={len(bindings)}"),
+            notes=(
+                f"config_key={config_key or 'any'}",
+                f"matches={len(bindings)}",
+                f"build_bindings={build_count}",
+                f"runtime_bindings={runtime_count}",
+            ),
         ),
     )
 
@@ -1030,7 +1196,38 @@ def build_behavior_subgraph(
     rel_path = ctx.resolve_snapshot_path(target_path)
     if rel_path is None:
         return _invalid_request(tool_call, f"path is outside repo snapshot: {target_path}")
+    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
+    if read_error is not None:
+        return make_observation(
+            tool_call=tool_call,
+            status="parse_failed",
+            source_authority=classify_source_authority(rel_path),
+            error_message=read_error,
+            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
+        )
     if not rel_path.endswith(".py"):
+        adapter = ctx.language_adapter()
+        if adapter.language != "python" and rel_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+            index = ctx.adapter_symbol_index()
+            matched = next((
+                item for item in index.symbols
+                if item.path == rel_path and (not symbol or item.qualified_name == symbol)
+            ), None)
+            if matched is not None:
+                operations = adapter.extract_operations(matched, file_text)
+                descriptor = f"{rel_path}:{matched.qualified_name}:{matched.start_line}"
+                return make_observation(
+                    tool_call=tool_call,
+                    status="success" if len(operations) < node_budget else "truncated",
+                    source_authority=classify_source_authority(rel_path),
+                    result_refs=(f"behavior:{descriptor}",),
+                    exact_span_ids=(f"span:{rel_path}:{matched.start_line}:{matched.end_line}",),
+                    diagnostics=ResearchObservationDiagnosticsV1(
+                        candidate_count=min(len(operations), node_budget),
+                        truncated=len(operations) >= node_budget,
+                        notes=(f"language_adapter={adapter.language}", f"symbol={matched.qualified_name}"),
+                    ),
+                )
         return make_observation(
             tool_call=tool_call,
             status="success_empty",
@@ -1041,15 +1238,6 @@ def build_behavior_subgraph(
             ),
         )
 
-    file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
-    if read_error is not None:
-        return make_observation(
-            tool_call=tool_call,
-            status="parse_failed",
-            source_authority=classify_source_authority(rel_path),
-            error_message=read_error,
-            diagnostics=ResearchObservationDiagnosticsV1(notes=(f"path={rel_path}",)),
-        )
     try:
         tree = ast.parse(file_text)
     except SyntaxError as exc:
@@ -1621,20 +1809,7 @@ def propose_evidence_packet(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """LLM-proposed evidence packet with anchor spans.
-
-    Phase 5 note: this tool is a thin validator.  The actual packet
-    construction is handled by ``compile_candidate_node`` via
-    ``compile_evidence_packet_proposal`` in ``evidence_compiler_v3``.
-    This tool exists so the supervisor can propose a packet when the
-    evidence critic raises a ``missing_anchor`` issue, but in the
-    current V3 flow the critic routes directly to ``compile_candidate``
-    so this tool is rarely invoked.
-
-    Validates that anchor spans resolve to snapshot files.  The proposed
-    packet is returned as a ``packet:`` ref; ``validate_evidence_packet``
-    must be called before the packet enters the authorized evidence set.
-    """
+    """Persist an obligation-scoped packet proposal for deterministic validation."""
 
     obligation_tag = str(_arg_value(tool_call, "obligation_tag", default="") or "")
     anchor_span_ids = tuple(_arg_value(tool_call, "anchor_span_ids", default=()) or ())
@@ -1643,6 +1818,11 @@ def propose_evidence_packet(
         return _invalid_request(tool_call, "obligation_tag must not be empty")
     if not anchor_span_ids:
         return _invalid_request(tool_call, "anchor_span_ids must not be empty")
+    if ctx.behavior_graph is None or ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call,
+            "packet data plane requires behavior_graph and artifact_root",
+        )
 
     validated: list[str] = []
     for span_id in anchor_span_ids:
@@ -1665,15 +1845,58 @@ def propose_evidence_packet(
             ),
         )
 
+    node_ids = tuple(_arg_value(tool_call, "behavior_node_ids", default=()) or ())
+    if not node_ids:
+        anchor_set = set(validated)
+        node_ids = tuple(
+            node.node_id
+            for node in ctx.behavior_graph.nodes
+            if node.source_span_id in anchor_set
+        )
+    if not node_ids:
+        return _invalid_request(tool_call, "anchors have no behavior graph nodes")
+
+    packet_id = str(_arg_value(tool_call, "packet_id", default="") or "").strip()
+    if not packet_id:
+        identity = json.dumps(
+            [obligation_tag, sorted(validated), sorted(node_ids)],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        packet_id = "packet-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    proposal = EvidencePacketProposalV1(
+        packet_id=packet_id,
+        obligation_id=obligation_tag,
+        scope=str(_arg_value(tool_call, "scope", default="") or obligation_tag),
+        anchor_span_ids=list(validated),
+        relation_span_ids=list(_arg_value(tool_call, "relation_span_ids", default=()) or ()),
+        semantic_span_ids=list(_arg_value(tool_call, "semantic_span_ids", default=()) or ()),
+        behavior_node_ids=list(node_ids),
+        behavior_relation_ids=list(
+            _arg_value(tool_call, "behavior_relation_ids", default=()) or ()
+        ),
+        conditions=list(_arg_value(tool_call, "conditions", default=()) or ()),
+        composition_rationale=str(
+            _arg_value(tool_call, "composition_rationale", default="") or ""
+        ),
+    )
+    artifact_path = ctx.write_artifact("packet_proposals", packet_id, proposal)
+    assert artifact_path is not None
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=(f"packet:proposed:{obligation_tag}",),
+        result_refs=(f"packet:proposed:{packet_id}",),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=len(validated),
-            notes=(f"obligation={obligation_tag}", f"anchors={len(validated)}"),
+            notes=(
+                f"obligation={obligation_tag}",
+                f"anchors={len(validated)}",
+                f"artifact={artifact_path}",
+            ),
         ),
+        output_payload=proposal.model_dump(mode="json"),
     )
 
 
@@ -1686,25 +1909,85 @@ def validate_evidence_packet(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Deterministic validation of a proposed evidence packet.
-
-    Checks snapshot scope, span role, minimality.  Returns a
-    ``packet:validated:<id>`` ref on success.
-    """
+    """Compile and validate a persisted proposal against the frozen graph."""
 
     packet_id = str(_arg_value(tool_call, "packet_id", default="") or "")
     if not packet_id.strip():
         return _invalid_request(tool_call, "packet_id must not be empty")
 
+    packet_id = packet_id.removeprefix("packet:proposed:")
+    if ctx.behavior_graph is None or ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call,
+            "packet data plane requires behavior_graph and artifact_root",
+        )
+    raw = ctx.read_artifact("packet_proposals", packet_id)
+    if raw is None:
+        return _invalid_request(tool_call, f"unknown packet proposal: {packet_id}")
+    proposal = EvidencePacketProposalV1.model_validate(raw)
+    packet, report = compile_evidence_packet_proposal(
+        proposal,
+        ctx.behavior_graph,
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        project_tree_hash=ctx.repo_snapshot.project_tree_hash,
+        repo_snapshot=ctx.repo_snapshot,
+    )
+    # A validated packet is an immutable data-plane artifact.  Re-running the
+    # validator must replay the exact bytes produced from the proposal rather
+    # than silently replacing a tampered sidecar.  This keeps the packet
+    # digest/path in the observation trace meaningful across checkpoint
+    # resumes and process restarts.
+    persisted_packet = ctx.read_artifact("validated_packets", packet_id)
+    if persisted_packet is not None:
+        try:
+            persisted_model = EvidencePacketV3.model_validate(persisted_packet)
+        except Exception:
+            persisted_model = None
+            report = report.model_copy(
+                update={
+                    "failures": [*report.failures, "validated_packet_artifact_invalid"]
+                }
+            )
+        if persisted_model is not None and packet is not None:
+            if persisted_model.model_dump(mode="json") != packet.model_dump(mode="json"):
+                report = report.model_copy(
+                    update={
+                        "failures": [*report.failures, "validated_packet_artifact_drift"]
+                    }
+                )
+    report_path = ctx.write_artifact("packet_validation_reports", packet_id, report)
+    assert report_path is not None
+    if packet is None or not report.accepted:
+        failures = tuple(report.failures)
+        return make_observation(
+            tool_call=tool_call,
+            status="invalid_request",
+            source_authority="executable_hard",
+            error_message=";".join(failures) or "packet compilation failed",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=failures + (f"validator_report={report_path}",),
+            ),
+            output_payload=report.model_dump(mode="json"),
+        )
+    packet_path = ctx.write_artifact("validated_packets", packet_id, packet)
+    assert packet_path is not None
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=(f"packet:validated:{packet_id}",),
+        result_refs=(f"packet:validated:{packet.packet_id}",),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
-            notes=(f"packet_id={packet_id}", "validation_passed"),
+            notes=(
+                f"packet_id={packet_id}",
+                "validation_passed",
+                f"artifact={packet_path}",
+                f"validator_report={report_path}",
+            ),
         ),
+        output_payload=packet.model_dump(mode="json"),
     )
 
 
@@ -1713,37 +1996,170 @@ def validate_evidence_packet(
 # ---------------------------------------------------------------------------
 
 
+def _symbol_display_names_for_nodes(
+    ctx: ResearchToolContext,
+    node_ids: list[str],
+) -> dict[str, str]:
+    """Resolve opaque graph symbol ids to source-index-qualified names.
+
+    Two resolution paths are used:
+
+    1. **Adapter symbol index (primary)**: The language adapter's
+       :meth:`index_symbols` returns :class:`SymbolRefV1` records that
+       carry both ``symbol_id`` and ``qualified_name``.  Building a
+       direct ``symbol_id -> qualified_name`` map from these records is
+       the most reliable resolution, because ``symbol_id`` is derived
+       from ``(path, qualified_name, start_line)`` — the same triple the
+       adapter used to create it.
+
+    2. **SymbolIndexReport span lookup (fallback)**: The legacy
+       :class:`SymbolIndexReport` candidates are matched by ``path`` and
+       line range from the node's ``source_span_id``.  This path can
+       fail when the report's candidate list does not cover the node's
+       source span (e.g. due to ``max_indexed_symbols`` truncation or a
+       path-format mismatch), leaving ``fact.subject`` as the opaque
+       ``sym:<digest>`` identifier.  When that happens, the canonical
+       claim text becomes a mechanical template
+       (``sym:abc123 loads weights foo``) that the Writer copies
+       verbatim and the reverse validator rejects.
+    """
+
+    if ctx.behavior_graph is None:
+        return {}
+    requested = set(node_ids)
+    display: dict[str, str] = {}
+
+    # --- Path 1: adapter symbol index (direct symbol_id lookup) ------------
+    adapter_symbols: list[Any] = []
+    try:
+        adapter_index = ctx.adapter_symbol_index()
+        adapter_symbols = list(getattr(adapter_index, "symbols", None) or [])
+    except Exception:  # pragma: no cover - adapter failures are non-fatal
+        adapter_symbols = []
+    for sym in adapter_symbols:
+        sid = getattr(sym, "symbol_id", "") or ""
+        qname = getattr(sym, "qualified_name", "") or ""
+        if sid and qname and sid not in display:
+            display[sid] = qname
+
+    # Collect the set of symbol_ids that the adapter index already resolved
+    # so the fallback path only touches unresolved nodes.
+    resolved_by_adapter = set(display)
+
+    # --- Path 2: SymbolIndexReport span lookup (fallback) ------------------
+    index = ctx.ensure_symbol_index()
+    for node in ctx.behavior_graph.nodes:
+        if node.node_id not in requested or node.symbol_id in display:
+            continue
+        parts = node.source_span_id.rsplit(":", 2)
+        if len(parts) != 3 or not parts[0].startswith("span:"):
+            continue
+        path = parts[0].removeprefix("span:")
+        try:
+            line = int(parts[1])
+        except ValueError:
+            continue
+        matches = [
+            entry
+            for entry in index.candidates
+            if entry.path == path and entry.start_line <= line <= entry.end_line
+        ]
+        if not matches:
+            continue
+        owner = min(
+            matches,
+            key=lambda entry: (
+                entry.end_line - entry.start_line,
+                -entry.start_line,
+                entry.symbol,
+            ),
+        )
+        display[node.symbol_id] = owner.symbol
+
+    # If the adapter index resolved a symbol_id that the span lookup would
+    # have overwritten with a shorter/less-qualified name, keep the adapter's
+    # qualified_name (it includes class/module scope, e.g. ``Foo.bar``).
+    for sid in resolved_by_adapter:
+        if sid in display and display[sid] != _adapter_qualified_name(
+            adapter_symbols, sid
+        ):
+            display[sid] = _adapter_qualified_name(adapter_symbols, sid)
+
+    return display
+
+
+def _adapter_qualified_name(
+    adapter_symbols: list[Any],
+    symbol_id: str,
+) -> str:
+    """Return the qualified_name from adapter symbols, or empty string."""
+
+    for sym in adapter_symbols:
+        if getattr(sym, "symbol_id", "") == symbol_id:
+            return getattr(sym, "qualified_name", "") or ""
+    return ""
+
+
 def compile_code_facts(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Compile typed facts from a validated packet + behavior subgraph.
-
-    Phase 5 note: this tool is a placeholder.  The actual fact
-    compilation is handled by ``compile_candidate_node`` via
-    ``compile_facts_from_behavior_graph`` in ``evidence_compiler_v3``.
-    This tool exists for issue-driven fallback paths
-    (``no_semantically_matching_projected_claim`` / ``formula_unsupported``)
-    but the current V3 flow routes evidence compilation through
-    ``compile_candidate`` directly, so this tool is rarely invoked.
-
-    Delegates to the generic evidence compiler when available; otherwise
-    returns a ``fact:compiled:<packet_id>`` ref placeholder.
-    """
+    """Compile a real ``CodeFactSetV1`` from a validated packet and graph."""
 
     packet_id = str(_arg_value(tool_call, "packet_id", default="") or "")
     if not packet_id.strip():
         return _invalid_request(tool_call, "packet_id must not be empty")
 
+    packet_id = packet_id.removeprefix("packet:validated:")
+    if ctx.behavior_graph is None or ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call,
+            "fact data plane requires behavior_graph and artifact_root",
+        )
+    packet_raw = ctx.read_artifact("validated_packets", packet_id)
+    proposal_raw = ctx.read_artifact("packet_proposals", packet_id)
+    if packet_raw is None or proposal_raw is None:
+        return _invalid_request(tool_call, f"packet is not validated: {packet_id}")
+    packet = EvidencePacketV3.model_validate(packet_raw)
+    proposal = EvidencePacketProposalV1.model_validate(proposal_raw)
+    symbol_display_names = _symbol_display_names_for_nodes(
+        ctx,
+        proposal.behavior_node_ids,
+    )
+    fact_set = compile_facts_from_behavior_graph(
+        ctx.behavior_graph,
+        FactCompilerInputV1(
+            obligation_id=proposal.obligation_id,
+            behavior_node_ids=proposal.behavior_node_ids,
+            behavior_relation_ids=proposal.behavior_relation_ids,
+            evidence_span_ids=[span.span_id for span in packet.spans],
+            guards=proposal.conditions,
+            source_authority="executable_hard",
+            symbol_display_names=symbol_display_names,
+        ),
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        project_tree_hash=ctx.repo_snapshot.project_tree_hash,
+        evidence_packet_digest=packet.source_digest,
+    )
+    if not fact_set.facts:
+        return _invalid_request(tool_call, f"no facts compiled for packet: {packet_id}")
+    fact_path = ctx.write_artifact("fact_sets", packet_id, fact_set)
+    assert fact_path is not None
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=(f"fact:compiled:{packet_id}",),
+        result_refs=tuple(f"fact:compiled:{fact.fact_id}" for fact in fact_set.facts),
         diagnostics=ResearchObservationDiagnosticsV1(
-            candidate_count=1,
-            notes=(f"packet_id={packet_id}", "facts_compiled"),
+            candidate_count=len(fact_set.facts),
+            notes=(
+                f"packet_id={packet_id}",
+                f"fact_set_id={packet_id}",
+                f"artifact={fact_path}",
+            ),
         ),
+        output_payload=fact_set.model_dump(mode="json"),
     )
 
 
@@ -1756,21 +2172,131 @@ def validate_code_facts(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Replay predicate, guard and relation checks on compiled facts."""
+    """Replay provenance, span, guard and relation checks for a fact set."""
 
     fact_id = str(_arg_value(tool_call, "fact_id", default="") or "")
     if not fact_id.strip():
         return _invalid_request(tool_call, "fact_id must not be empty")
 
+    if ctx.behavior_graph is None or ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call,
+            "fact data plane requires behavior_graph and artifact_root",
+        )
+    requested_fact_set_id = str(_arg_value(tool_call, "fact_set_id", default="") or "")
+    lookup_id = requested_fact_set_id
+    if not lookup_id:
+        lookup_id = fact_id.removeprefix("fact:compiled:")
+    raw = ctx.read_artifact("fact_sets", lookup_id)
+    if raw is None:
+        # A caller may pass an individual fact id; locate its set without
+        # treating artifact filenames as semantic identifiers.
+        root = ctx.artifact_root / "research_tool_artifacts" / "fact_sets"
+        for path in sorted(root.glob("*.json")) if root.is_dir() else ():
+            candidate = CodeFactSetV1.model_validate_json(path.read_text(encoding="utf-8"))
+            if any(f.fact_id == lookup_id for f in candidate.facts):
+                raw = candidate.model_dump(mode="json")
+                break
+    if raw is None:
+        return _invalid_request(tool_call, f"unknown compiled fact or set: {fact_id}")
+    fact_set = CodeFactSetV1.model_validate(raw)
+    replay_failures: list[str] = []
+    proposal_raw = ctx.read_artifact("packet_proposals", lookup_id)
+    validated_packet_raw = ctx.read_artifact("validated_packets", lookup_id)
+    if requested_fact_set_id and (proposal_raw is None or validated_packet_raw is None):
+        replay_failures.append("fact_set_replay_inputs_missing")
+    if proposal_raw is not None and validated_packet_raw is not None:
+        try:
+            proposal = EvidencePacketProposalV1.model_validate(proposal_raw)
+            persisted_packet = EvidencePacketV3.model_validate(validated_packet_raw)
+            expected_packet, packet_report = compile_evidence_packet_proposal(
+                proposal,
+                ctx.behavior_graph,
+                repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+                project_tree_hash=ctx.repo_snapshot.project_tree_hash,
+                repo_snapshot=ctx.repo_snapshot,
+            )
+            if expected_packet is None or not packet_report.accepted:
+                replay_failures.extend(
+                    f"packet_replay:{failure}" for failure in packet_report.failures
+                )
+            elif persisted_packet.model_dump(mode="json") != expected_packet.model_dump(mode="json"):
+                replay_failures.append("validated_packet_replay_mismatch")
+            if expected_packet is not None:
+                symbol_display_names = _symbol_display_names_for_nodes(
+                    ctx,
+                    proposal.behavior_node_ids,
+                )
+                expected_fact_set = compile_facts_from_behavior_graph(
+                    ctx.behavior_graph,
+                    FactCompilerInputV1(
+                        obligation_id=proposal.obligation_id,
+                        behavior_node_ids=proposal.behavior_node_ids,
+                        behavior_relation_ids=proposal.behavior_relation_ids,
+                        evidence_span_ids=[span.span_id for span in expected_packet.spans],
+                        guards=proposal.conditions,
+                        source_authority="executable_hard",
+                        symbol_display_names=symbol_display_names,
+                    ),
+                    repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+                    project_tree_hash=ctx.repo_snapshot.project_tree_hash,
+                    evidence_packet_digest=expected_packet.source_digest,
+                )
+                if expected_fact_set.model_dump(mode="json") != fact_set.model_dump(mode="json"):
+                    replay_failures.append("fact_set_replay_mismatch")
+        except Exception as exc:
+            replay_failures.append(f"fact_set_replay_invalid:{type(exc).__name__}")
+    packet_span_ids: set[str] = set()
+    packet_root = ctx.artifact_root / "research_tool_artifacts" / "validated_packets"
+    for path in sorted(packet_root.glob("*.json")) if packet_root.is_dir() else ():
+        try:
+            packet = EvidencePacketV3.model_validate_json(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if packet.source_digest == fact_set.evidence_packet_digest:
+            packet_span_ids.update(span.span_id for span in packet.spans)
+    if not packet_span_ids:
+        return _invalid_request(
+            tool_call,
+            "fact set does not replay to its evidence packet digest",
+        )
+    graph_relation_ids = {relation.relation_id for relation in ctx.behavior_graph.relations}
+    failures: list[str] = [*replay_failures]
+    selected = [fact for fact in fact_set.facts if fact.fact_id == fact_id] or fact_set.facts
+    for fact in selected:
+        failures.extend(f"{fact.fact_id}:{failure}" for failure in fact.validation_failures)
+        for span_id in fact.direct_span_ids + fact.relation_span_ids:
+            if span_id not in packet_span_ids:
+                failures.append(f"{fact.fact_id}:unknown_packet_span:{span_id}")
+        for relation_id in fact.relation_evidence_ids:
+            if relation_id not in graph_relation_ids:
+                failures.append(f"{fact.fact_id}:unknown_graph_relation:{relation_id}")
+    report = {"fact_ids": [fact.fact_id for fact in selected], "failures": failures}
+    report_path = ctx.write_artifact("fact_validation_reports", fact_id, report)
+    assert report_path is not None
+    if failures:
+        return make_observation(
+            tool_call=tool_call,
+            status="invalid_request",
+            source_authority="executable_hard",
+            error_message=";".join(failures),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=tuple(failures) + (f"validator_report={report_path}",),
+            ),
+            output_payload=report,
+        )
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=(f"fact:validated:{fact_id}",),
+        result_refs=tuple(f"fact:validated:{fact.fact_id}" for fact in selected),
         diagnostics=ResearchObservationDiagnosticsV1(
-            candidate_count=1,
-            notes=(f"fact_id={fact_id}", "validation_passed"),
+            candidate_count=len(selected),
+            notes=(f"fact_id={fact_id}", "validation_passed", f"validator_report={report_path}"),
         ),
+        output_payload=report,
     )
 
 
@@ -1783,30 +2309,63 @@ def decompose_atomic_claims(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Decompose compiled facts into minimal writable claim candidates.
-
-    Phase 5 note: this tool is a placeholder.  The actual claim
-    decomposition is handled by ``compile_candidate_node`` via
-    ``compile_atomic_claims`` in ``evidence_compiler_v3``.  This tool
-    exists for the issue-driven fallback path
-    (``sentence_claim_atomicity``) but the current V3 flow routes claim
-    authorization through ``compile_candidate`` directly, so this tool
-    is rarely invoked.
-    """
+    """Persist Agent-proposed fact groupings as typed claim proposals."""
 
     fact_ids = tuple(_arg_value(tool_call, "fact_ids", default=()) or ())
     if not fact_ids:
         return _invalid_request(tool_call, "fact_ids must not be empty")
 
+    if ctx.artifact_root is None:
+        return _invalid_request(tool_call, "claim data plane requires artifact_root")
+    fact_set_id = str(_arg_value(tool_call, "fact_set_id", default="") or "")
+    raw = ctx.read_artifact("fact_sets", fact_set_id) if fact_set_id else None
+    if raw is None:
+        return _invalid_request(tool_call, "fact_set_id must name a compiled fact set")
+    fact_set = CodeFactSetV1.model_validate(raw)
+    facts_by_id = {fact.fact_id: fact for fact in fact_set.facts}
+    missing = [fact_id for fact_id in fact_ids if fact_id not in facts_by_id]
+    if missing:
+        return _invalid_request(tool_call, f"unknown facts: {','.join(missing)}")
+    proposal_payloads = list(_arg_value(tool_call, "claim_proposals", default=()) or ())
+    if not proposal_payloads:
+        return _invalid_request(tool_call, "claim_proposals must not be empty")
+    try:
+        proposals = [ClaimProposalV1.model_validate(value) for value in proposal_payloads]
+    except Exception as exc:
+        return _invalid_request(tool_call, f"invalid claim proposal: {exc}")
+    proposed_fact_ids = {fid for proposal in proposals for fid in proposal.proposed_fact_ids}
+    if not proposed_fact_ids.issubset(set(fact_ids)):
+        return _invalid_request(tool_call, "claim proposal references facts outside fact_ids")
+    proposal_set_id = "claim-proposals-" + hashlib.sha256(
+        json.dumps(
+            [proposal.model_dump(mode="json") for proposal in proposals],
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()[:16]
+    artifact = {
+        "proposal_set_id": proposal_set_id,
+        "fact_set_id": fact_set_id,
+        "proposals": [proposal.model_dump(mode="json") for proposal in proposals],
+    }
+    proposal_path = ctx.write_artifact("claim_proposal_sets", proposal_set_id, artifact)
+    assert proposal_path is not None
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=tuple(f"claim:decomposed:{fid}" for fid in fact_ids),
+        result_refs=tuple(f"claim:proposed:{proposal.claim_id}" for proposal in proposals),
         diagnostics=ResearchObservationDiagnosticsV1(
-            candidate_count=len(fact_ids),
-            notes=(f"facts={len(fact_ids)}", "claims_decomposed"),
+            candidate_count=len(proposals),
+            notes=(
+                f"facts={len(fact_ids)}",
+                f"proposal_set_id={proposal_set_id}",
+                f"artifact={proposal_path}",
+            ),
         ),
+        output_payload=artifact,
     )
 
 
@@ -1819,21 +2378,78 @@ def authorize_atomic_claims(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Deterministic check that claims do not exceed fact boundaries."""
+    """Authorize persisted claim proposals against their exact fact set."""
 
     claim_ids = tuple(_arg_value(tool_call, "claim_ids", default=()) or ())
     if not claim_ids:
         return _invalid_request(tool_call, "claim_ids must not be empty")
 
+    if ctx.artifact_root is None:
+        return _invalid_request(tool_call, "claim data plane requires artifact_root")
+    proposal_set_id = str(_arg_value(tool_call, "proposal_set_id", default="") or "")
+    raw = ctx.read_artifact("claim_proposal_sets", proposal_set_id)
+    if raw is None:
+        return _invalid_request(tool_call, "proposal_set_id must name claim proposals")
+    proposals = [ClaimProposalV1.model_validate(value) for value in raw["proposals"]]
+    requested = {claim_id.removeprefix("claim:proposed:") for claim_id in claim_ids}
+    proposals = [proposal for proposal in proposals if proposal.claim_id in requested]
+    if len(proposals) != len(requested):
+        return _invalid_request(tool_call, "one or more claim ids are not in proposal set")
+    fact_set_id = str(raw["fact_set_id"])
+    fact_raw = ctx.read_artifact("fact_sets", fact_set_id)
+    if fact_raw is None:
+        return _invalid_request(tool_call, f"missing fact set: {fact_set_id}")
+    facts = CodeFactSetV1.model_validate(fact_raw)
+    claim_set, reports = compile_atomic_claims(
+        proposals,
+        facts,
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        project_tree_hash=ctx.repo_snapshot.project_tree_hash,
+        evidence_packet_digest=facts.evidence_packet_digest,
+    )
+    report_payload = [report.model_dump(mode="json") for report in reports]
+    report_path = ctx.write_artifact(
+        "claim_authorization_reports", proposal_set_id, report_payload
+    )
+    assert report_path is not None
+    failures = [
+        failure
+        for report in reports
+        for failure in report.failures
+    ]
+    if failures and not claim_set.claims:
+        return make_observation(
+            tool_call=tool_call,
+            status="invalid_request",
+            source_authority="executable_hard",
+            error_message=";".join(failures),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=tuple(failures) + (f"validator_report={report_path}",),
+            ),
+            output_payload=report_payload,
+        )
+    claim_path = ctx.write_artifact("authorized_claim_sets", proposal_set_id, claim_set)
+    assert claim_path is not None
+
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=tuple(f"claim:authorized:{cid}" for cid in claim_ids),
-        diagnostics=ResearchObservationDiagnosticsV1(
-            candidate_count=len(claim_ids),
-            notes=(f"claims={len(claim_ids)}", "authorization_passed"),
+        result_refs=tuple(
+            f"claim:authorized:{claim.claim_id}" for claim in claim_set.claims
         ),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(claim_set.claims),
+            notes=(
+                f"claims={len(claim_set.claims)}",
+                f"rejected_claims={sum(bool(report.failures) for report in reports)}",
+                f"artifact={claim_path}",
+                f"validator_report={report_path}",
+                *(f"rejected:{failure}" for failure in failures),
+            ),
+        ),
+        output_payload=claim_set.model_dump(mode="json"),
     )
 
 
@@ -1846,25 +2462,153 @@ def record_explicit_code_gap(
     ctx: ResearchToolContext,
     tool_call: ResearchToolCallV1,
 ) -> ResearchObservationV1:
-    """Record an explicit code gap with search scope, attempts and reason."""
+    """Validate and persist one idempotent terminal gap per obligation."""
 
     obligation_id_ref = str(_arg_value(tool_call, "obligation_id_ref", default="") or "")
     termination_reason = str(_arg_value(tool_call, "termination_reason", default="") or "")
     if not obligation_id_ref.strip():
         return _invalid_request(tool_call, "obligation_id_ref must not be empty")
+    if obligation_id_ref != tool_call.obligation_id:
+        return _invalid_request(tool_call, "gap obligation does not match active obligation")
+    if not termination_reason.strip():
+        return _invalid_request(tool_call, "termination_reason must not be empty")
+    if ctx.artifact_root is None:
+        return _invalid_request(tool_call, "gap data plane requires artifact_root")
+    search_scope = tuple(
+        _arg_value(tool_call, "search_scope", default=())
+        or tool_call.path_scope
+        or ()
+    )
+    # ``search_scope`` is terminal-gap provenance. Normalize it through the
+    # frozen snapshot resolver instead of trusting an absolute/external path.
+    # Otherwise a caller could record an apparently exhaustive gap for files
+    # that were never part of the researched tree.
+    normalized_search_scope: list[str] = []
+    for candidate in search_scope:
+        normalized = ctx.resolve_snapshot_path(str(candidate))
+        if normalized is None:
+            failure = f"gap_search_scope_outside_snapshot:{candidate}"
+            return make_observation(
+                tool_call=tool_call,
+                status="invalid_request",
+                source_authority="executable_hard",
+                error_message=failure,
+                diagnostics=ResearchObservationDiagnosticsV1(
+                    candidate_count=0,
+                    notes=(failure,),
+                ),
+                output_payload={"failures": [failure]},
+            )
+        if normalized not in normalized_search_scope:
+            normalized_search_scope.append(normalized)
+    search_scope = tuple(normalized_search_scope)
+    attempted_tools = tuple(
+        _arg_value(tool_call, "attempted_tools", default=()) or ()
+    )
+    missing_relations = tuple(
+        _arg_value(tool_call, "missing_relations", default=()) or ()
+    )
+    search_complete = bool(
+        _arg_value(tool_call, "search_complete", default=False)
+    )
+    scope_exhausted = bool(
+        _arg_value(tool_call, "scope_exhausted", default=False)
+    )
+    failures: list[str] = []
+    if not search_scope:
+        failures.append("gap_search_scope_missing")
+    if not search_complete:
+        failures.append("gap_search_not_complete")
+    if not any(
+        name in attempted_tools
+        for name in ("search_code", "search_symbols", "find_entrypoints")
+    ):
+        failures.append("gap_search_strategy_missing_discovery")
+    if not scope_exhausted and not any(
+        name in attempted_tools
+        for name in ("read_symbol", "read_code_span", "build_behavior_subgraph")
+    ):
+        failures.append("gap_search_strategy_missing_read")
+    if missing_relations and not any(
+        name in attempted_tools
+        for name in (
+            "find_references",
+            "trace_call_path",
+            "trace_data_flow",
+            "inspect_control_flow",
+            "inspect_configuration",
+        )
+    ):
+        failures.append("gap_missing_relation_not_traced")
+
+    claim_root = (
+        ctx.artifact_root / "research_tool_artifacts" / "authorized_claim_sets"
+    )
+    for path in sorted(claim_root.glob("*.json")) if claim_root.is_dir() else ():
+        claim_set = AtomicClaimSetV3.model_validate_json(
+            path.read_text(encoding="utf-8")
+        )
+        if any(
+            obligation_id_ref in claim.covers_obligation_ids
+            and claim.status in {"supported", "partial"}
+            for claim in claim_set.claims
+        ):
+            failures.append("gap_contradicts_authorized_positive_claim")
+            break
+    if failures:
+        return make_observation(
+            tool_call=tool_call,
+            status="invalid_request",
+            source_authority="executable_hard",
+            error_message=";".join(failures),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=tuple(failures),
+            ),
+            output_payload={"failures": failures},
+        )
+
+    gap_id = "gap-" + hashlib.sha256(
+        f"{ctx.repo_snapshot.snapshot_id}:{obligation_id_ref}".encode("utf-8")
+    ).hexdigest()[:16]
+    payload = {
+        "gap_id": gap_id,
+        "obligation_id": obligation_id_ref,
+        "repo_snapshot_id": ctx.repo_snapshot.snapshot_id,
+        "project_tree_hash": ctx.repo_snapshot.project_tree_hash,
+        "search_scope": list(search_scope),
+        "attempted_tools": list(attempted_tools),
+        "missing_relations": list(missing_relations),
+        "termination_reason": termination_reason,
+        "search_complete": True,
+        "scope_exhausted": scope_exhausted,
+        "terminal": True,
+    }
+    existing = ctx.read_artifact("terminal_gaps", obligation_id_ref)
+    replayed = existing is not None
+    if existing is not None and existing != payload:
+        return _invalid_request(
+            tool_call,
+            "terminal gap already exists with different provenance",
+        )
+    gap_path = ctx.write_artifact("terminal_gaps", obligation_id_ref, payload)
+    assert gap_path is not None
 
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority="executable_hard",
-        result_refs=(f"gap:{obligation_id_ref}",),
+        result_refs=(f"gap:{gap_id}",),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
             notes=(
                 f"obligation={obligation_id_ref}",
-                f"reason={termination_reason or 'unspecified'}",
+                f"reason={termination_reason}",
+                f"artifact={gap_path}",
+                f"idempotent_replay={str(replayed).lower()}",
             ),
         ),
+        output_payload=payload,
     )
 
 
@@ -2079,7 +2823,7 @@ def _classify_entrypoint(
     name = PurePosixPath(rel_path).name
     lowered = rel_path.lower()
     if name in _ENTRYPOINT_FILENAMES:
-        return "python_entrypoint"
+        return "javascript_entrypoint" if lowered.endswith((".js", ".ts")) else "python_entrypoint"
     if include_shell and (lowered.endswith((".sh", ".bash", ".zsh", ".slurm", ".sbatch"))):
         return "shell_entrypoint"
     if include_shell and name.lower() in {"makefile", "dockerfile"}:
@@ -2123,11 +2867,16 @@ _SYMBOL_QUERY_STOP_WORDS = frozenset({
 
 def _identifier_tokens(value: str) -> tuple[str, ...]:
     expanded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", value)
-    return tuple(
-        token
-        for token in re.findall(r"[a-z0-9]+", expanded.casefold())
-        if len(token) >= 3 and token not in _SYMBOL_QUERY_STOP_WORDS
-    )
+    normalized: list[str] = []
+    for token in re.findall(r"[a-z0-9]+", expanded.casefold()):
+        if not (len(token) >= 3 or token.isdigit() or token == "qa"):
+            continue
+        if token in _SYMBOL_QUERY_STOP_WORDS:
+            continue
+        normalized.append(
+            "dimension" if token in {"dim", "dims", "dimensional"} else token
+        )
+    return tuple(normalized)
 
 
 def _common_prefix_length(left: str, right: str) -> int:
@@ -2160,19 +2909,69 @@ def _symbol_query_score(entry: SymbolIndexEntry, query: str) -> int:
         for symbol_token in symbol_tokens:
             if query_token == symbol_token:
                 best = max(best, 8)
-            elif query_token in symbol_token or symbol_token in query_token:
+            elif (
+                min(len(query_token), len(symbol_token)) >= 4
+                and (query_token in symbol_token or symbol_token in query_token)
+            ):
                 best = max(best, 5)
             elif _common_prefix_length(query_token, symbol_token) >= 4:
                 best = max(best, 3)
         if best == 0 and any(
             query_token == path_token
-            or query_token in path_token
-            or path_token in query_token
+            or (
+                min(len(query_token), len(path_token)) >= 4
+                and (query_token in path_token or path_token in query_token)
+            )
             or _common_prefix_length(query_token, path_token) >= 4
             for path_token in path_tokens
         ):
             best = 1
         score += best
+    return score
+
+
+def _symbol_source_query_score(
+    ctx: ResearchToolContext,
+    entry: SymbolIndexEntry,
+    query: str,
+    *,
+    source_cache: dict[str, list[str]],
+) -> int:
+    """Return a weak lexical retrieval score from one exact symbol body.
+
+    This score only ranks symbol hints.  ``search_symbols`` still emits no
+    exact spans, so positive evidence must pass through ``read_symbol``.
+    Source-body matching lets abstract queries such as ``CONCAT`` retrieve a
+    function implemented with ``torch.cat`` even when its identifier contains
+    no form of the word "concatenate".
+    """
+
+    query_tokens = _identifier_tokens(query)
+    if not query_tokens:
+        return 0
+    lines = source_cache.get(entry.path)
+    if lines is None:
+        text, error = _read_snapshot_file(ctx.repo_snapshot, entry.path)
+        lines = [] if error is not None else text.splitlines()
+        source_cache[entry.path] = lines
+    if not lines:
+        return 0
+    start = max(0, entry.start_line - 1)
+    end = min(len(lines), max(entry.end_line, entry.start_line))
+    body_tokens = set(_identifier_tokens("\n".join(lines[start:end])))
+    score = 0
+    for query_token in query_tokens:
+        if query_token in body_tokens:
+            score += 3
+        elif any(
+            (
+                min(len(query_token), len(token)) >= 4
+                and (query_token in token or token in query_token)
+            )
+            or _common_prefix_length(query_token, token) >= 4
+            for token in body_tokens
+        ):
+            score += 1
     return score
 
 
@@ -2281,6 +3080,121 @@ def _find_config_bindings(
                             if key_lower and key_lower not in k.lower():
                                 continue
                             yield int(getattr(key_node, "lineno", 0) or 0), k
+
+
+_JS_BUILD_CONFIG_NAMES = frozenset({
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "tsconfig.json",
+    "jsconfig.json",
+    "webpack.config.js",
+    "vite.config.js",
+    "vite.config.ts",
+    "rollup.config.js",
+    "rollup.config.ts",
+    "esbuild.config.js",
+    "babel.config.js",
+    "babel.config.cjs",
+    "jest.config.js",
+    "jest.config.ts",
+})
+
+
+def _find_javascript_config_bindings(
+    rel_path: str,
+    source: str,
+    config_key: str,
+) -> Iterable[tuple[int, str]]:
+    """Yield conservative JS/TS runtime and build configuration bindings.
+
+    This is deliberately lexical rather than a JavaScript evaluator.  The
+    returned key records the observable access (for example ``env:PORT`` or
+    ``config:batchSize``), while unresolved computed properties remain a
+    discovery result and cannot become a positive fact without a behavior
+    relation.  JSON build manifests are scanned by line so every result keeps
+    an exact source span anchor.
+    """
+
+    key_lower = config_key.strip().lower()
+    filename = Path(rel_path).name.lower()
+    lines = source.splitlines()
+    found: list[tuple[int, str]] = []
+
+    def emit(line_no: int, key: str) -> None:
+        clean = key.strip()
+        if not clean:
+            return
+        if key_lower and key_lower not in clean.lower():
+            return
+        item = (line_no, clean)
+        if item not in found:
+            found.append(item)
+
+    # JSON manifests/config files are executable build inputs under the
+    # source-authority policy.  Keep only semantically useful keys rather than
+    # every dependency leaf, which prevents a large package-lock from
+    # drowning out entrypoint/configuration evidence.
+    if rel_path.lower().endswith(".json"):
+        useful = re.compile(
+            r"\"(scripts|dependencies|devDependencies|peerDependencies|"
+            r"optionalDependencies|main|module|exports|bin|type|engines|"
+            r"build|compilerOptions|paths|baseUrl|target|module|jsx|include|"
+            r"exclude|rootDir|outDir|extends|alias|plugins|resolve|loader)\""
+            r"\s*:"
+        )
+        for line_no, line in enumerate(lines, start=1):
+            for match in useful.finditer(line):
+                emit(line_no, f"manifest:{match.group(1)}")
+        if filename in _JS_BUILD_CONFIG_NAMES and not found:
+            emit(1, f"build:{filename}")
+        return found
+
+    for line_no, line in enumerate(lines, start=1):
+        # Runtime environment/configuration reads.
+        for match in re.finditer(
+            r"\bprocess\.env(?:\.([A-Za-z_$][\w$]*)|\[\s*['\"]([^'\"]+)['\"]\s*\])",
+            line,
+        ):
+            emit(line_no, f"env:{match.group(1) or match.group(2)}")
+        for match in re.finditer(
+            r"\bimport\.meta\.env\.([A-Za-z_$][\w$]*)", line
+        ):
+            emit(line_no, f"env:{match.group(1)}")
+        for match in re.finditer(
+            r"\b(config|configuration|options?|argv|args)\s*\.\s*([A-Za-z_$][\w$]*)",
+            line,
+        ):
+            emit(line_no, f"{match.group(1).lower()}:{match.group(2)}")
+        if re.search(r"\bprocess\.argv\b|\bimport\.meta\.url\b", line):
+            emit(line_no, "runtime:argv_or_module_url")
+
+        # Common JS/TS configuration APIs and build entrypoint declarations.
+        if re.search(r"\bdefineConfig\s*\(|\bloadConfigFromFile\s*\(", line):
+            emit(line_no, f"build:{filename}:define_config")
+        if re.search(r"\bdotenv\s*\.\s*config\s*\(", line):
+            emit(line_no, "runtime:dotenv")
+        if re.search(r"\byargs(?:\.option|\.options)\s*\(", line):
+            emit(line_no, "runtime:cli_options")
+        if re.search(r"\b(webpack|vite|rollup|esbuild|babel|jest)\b", line):
+            emit(line_no, f"build:{filename}:tool_reference")
+
+    if filename in _JS_BUILD_CONFIG_NAMES and not found:
+        emit(1, f"build:{filename}")
+    return found
+
+
+def _is_build_configuration_binding(path: str, key: str) -> bool:
+    filename = Path(path).name.lower()
+    return filename in _JS_BUILD_CONFIG_NAMES or key.lower().startswith("build:") or key.lower().startswith("manifest:")
+
+
+def _is_runtime_configuration_binding(path: str, key: str) -> bool:
+    del path
+    lowered = key.lower()
+    return lowered.startswith(("env:", "runtime:", "config:", "configuration:", "option:", "options:", "argv:", "args:"))
 
 
 def _extract_behavior_nodes(

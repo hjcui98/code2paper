@@ -38,6 +38,7 @@ from code2paper.agentic.equation_claims import (
     EquationSymbolBindingV1,
     authorize_equation,
     compile_equation_claims,
+    derive_equation_proposals_from_facts,
 )
 from code2paper.agentic.evidence_compiler_v3 import (
     AtomicClaimSetV3,
@@ -175,6 +176,29 @@ class TestFactIdsSubset:
 
 
 class TestExpressionFromOperations:
+    def test_source_operator_derives_authorizable_equation(self) -> None:
+        fact = _fact(
+            fact_id="fact-add",
+            object=["left_operand", "right_operand"],
+        ).model_copy(update={"semantic_context": ["COMPUTE", "add"]})
+        facts = _fact_set([fact])
+
+        proposals = derive_equation_proposals_from_facts(facts)
+        equations, reports = compile_equation_claims(
+            proposals,
+            facts,
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+        )
+
+        assert len(proposals) == 1
+        assert all(report.authorized for report in reports)
+        assert len(equations.equations) == 1
+        equation = equations.equations[0]
+        assert equation.expression == "x + y"
+        assert equation.operation_descriptors == ["add"]
+        assert equation.exact_source_digests == ["sha256:exact"]
+
     def test_no_equation_licensing_predicate_rejected(self) -> None:
         # ``reads`` is not in ``_EQUATION_PREDICATES``.
         facts = _fact_set([_fact(fact_id="fact-1", predicate="reads")])

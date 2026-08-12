@@ -33,30 +33,40 @@ import hashlib
 import json
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1, make_symbol_id
 from code2paper.agentic.generic_claim_compiler import (
     ClaimProposalV1,
-    compile_atomic_claims,
 )
 from code2paper.agentic.generic_evidence_compiler import (
     EvidencePacketProposalV1,
-    compile_evidence_packet_proposal,
 )
-from code2paper.agentic.generic_fact_compiler import (
-    FactCompilerInputV1,
-    compile_facts_from_behavior_graph,
+from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
+    CodeFactSetV1,
+    EvidencePacketSetV3,
+    EvidencePacketV3,
+    GENERIC_RESEARCH_PRODUCER_VERSION,
 )
 from code2paper.agentic.obligation_fact_alignment import (
     BEHAVIOR_PREDICATE_ALIASES,
-    FACT_PREDICATE_TO_BEHAVIOR_FULL,
     align_target_to_facts,
 )
-from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
+from code2paper.agentic.language_adapter_registry import (
+    LanguageAdapterRegistry,
+    default_language_adapter_registry,
+)
+from code2paper.agentic.execution_profile import (
+    ExecutionProfileV1,
+    ExecutionRouteV1,
+    assert_evidence_policy_unchanged,
+    route_execution_profile,
+)
 from code2paper.agentic.research_models import (
     BUDGET_TOOL_KINDS,
     GapRequirementV1,
@@ -138,6 +148,12 @@ def _resolved_missing_information(
 
     unresolved: list[str] = []
     for requirement in missing:
+        if requirement.startswith("typed_semantic:"):
+            # Only target-to-fact alignment can discharge a semantic
+            # requirement.  A successful read may still contain unrelated
+            # code, so keep the requirement available for relevance ranking.
+            unresolved.append(requirement)
+            continue
         normalized = requirement.casefold()
         categories = {
             category
@@ -236,8 +252,11 @@ class InformationGainTracker:
         self._seen_symbols: dict[str, set[str]] = {}
         self._seen_predicates: dict[str, set[str]] = {}
         self._seen_relations: dict[str, set[str]] = {}
+        self._attempted_tools: dict[str, set[str]] = {}
+        self._exhausted_tools: dict[str, set[str]] = {}
         self._no_progress: dict[str, int] = {}
         self._gain_history: dict[str, list[str]] = {}
+        self._last_gain_items: dict[str, tuple[str, ...]] = {}
 
     def ingest(
         self,
@@ -259,6 +278,13 @@ class InformationGainTracker:
         predicates = self._seen_predicates.setdefault(obligation_id, set())
         relations = self._seen_relations.setdefault(obligation_id, set())
         history = self._gain_history.setdefault(obligation_id, [])
+        self._attempted_tools.setdefault(obligation_id, set()).add(
+            observation.tool_name
+        )
+        if observation.status in {"success_empty", "scope_exhausted"}:
+            self._exhausted_tools.setdefault(obligation_id, set()).add(
+                observation.tool_name
+            )
 
         gained_items: list[str] = []
         for span in observation.exact_span_ids:
@@ -284,6 +310,7 @@ class InformationGainTracker:
                 gained_items.append(f"relation:{rel}")
 
         gained = len(gained_items) > 0
+        self._last_gain_items[obligation_id] = tuple(gained_items)
         if gained:
             self._no_progress[obligation_id] = 0
             history.append(f"gain:{len(gained_items)}")
@@ -304,6 +331,28 @@ class InformationGainTracker:
     def may_record_gap(self, obligation_id: str) -> bool:
         return self.no_progress_counter(obligation_id) >= 3
 
+    def attempted_tools(self, obligation_id: str) -> tuple[str, ...]:
+        return tuple(sorted(self._attempted_tools.get(obligation_id, set())))
+
+    def has_exact_span(self, obligation_id: str) -> bool:
+        """Return whether code was actually read for this obligation.
+
+        Symbol-search hits are discovery hints.  They may seed behavior
+        parsing, but they cannot authorize compilation until a read tool has
+        returned an exact, snapshot-bound source span.
+        """
+
+        return bool(self._seen_spans.get(obligation_id))
+
+    def latest_gain_includes_exact_span(self, obligation_id: str) -> bool:
+        return any(
+            item.startswith("span:")
+            for item in self._last_gain_items.get(obligation_id, ())
+        )
+
+    def exhausted_tools(self, obligation_id: str) -> tuple[str, ...]:
+        return tuple(sorted(self._exhausted_tools.get(obligation_id, set())))
+
     def snapshot(self) -> dict[str, Any]:
         """Return a JSON-serializable snapshot (for checkpoint persistence)."""
 
@@ -312,8 +361,11 @@ class InformationGainTracker:
             "seen_symbols": {k: sorted(v) for k, v in self._seen_symbols.items()},
             "seen_predicates": {k: sorted(v) for k, v in self._seen_predicates.items()},
             "seen_relations": {k: sorted(v) for k, v in self._seen_relations.items()},
+            "attempted_tools": {k: sorted(v) for k, v in self._attempted_tools.items()},
+            "exhausted_tools": {k: sorted(v) for k, v in self._exhausted_tools.items()},
             "no_progress": dict(self._no_progress),
             "gain_history": {k: list(v) for k, v in self._gain_history.items()},
+            "last_gain_items": {k: list(v) for k, v in self._last_gain_items.items()},
         }
 
     @classmethod
@@ -334,8 +386,11 @@ class InformationGainTracker:
             ("seen_symbols", "_seen_symbols"),
             ("seen_predicates", "_seen_predicates"),
             ("seen_relations", "_seen_relations"),
+            ("attempted_tools", "_attempted_tools"),
+            ("exhausted_tools", "_exhausted_tools"),
             ("no_progress", "_no_progress"),
             ("gain_history", "_gain_history"),
+            ("last_gain_items", "_last_gain_items"),
         ):
             value = snapshot.get(key)
             if not isinstance(value, dict):
@@ -345,6 +400,12 @@ class InformationGainTracker:
                     tracker,
                     field,
                     {k: list(v) for k, v in value.items() if isinstance(v, list)},
+                )
+            elif key == "last_gain_items":
+                setattr(
+                    tracker,
+                    field,
+                    {k: tuple(v) for k, v in value.items() if isinstance(v, list)},
                 )
             elif key == "no_progress":
                 setattr(
@@ -384,6 +445,20 @@ class ResearchGraphRuntime(BaseModel):
     budget_policy: BudgetPolicyV1 = Field(default_factory=BudgetPolicyV1)
     global_safety_budget: GlobalSafetyBudgetV1 = Field(default_factory=GlobalSafetyBudgetV1)
     supervisor_backend: SupervisorBackend | None = None
+    artifact_root: Path | None = None
+    adapter_registry: LanguageAdapterRegistry = Field(default_factory=default_language_adapter_registry)
+    adapter_language: str = ""
+    # D6 execution routing is explicit runtime configuration.  It is kept
+    # separate from evidence artifacts and never changes their validators or
+    # authorization decisions.  With no profile the historical route remains
+    # the default, preserving backwards compatibility.
+    execution_profile: ExecutionProfileV1 | None = None
+    execution_route: ExecutionRouteV1 | None = None
+    execution_opt_in: bool = False
+    execution_canary_key: str = ""
+    execution_rollback: bool = False
+    execution_default_authorized: bool = False
+    evidence_policy_digest: str = ""
     ready_tools: tuple[str, ...] = (
         "find_entrypoints",
         "search_symbols",
@@ -406,6 +481,40 @@ class ResearchGraphRuntime(BaseModel):
         "fallback_must_be_safe",
     )
 
+    @model_validator(mode="after")
+    def _bind_execution_route(self) -> "ResearchGraphRuntime":
+        profile = self.execution_profile
+        if profile is None:
+            if self.execution_route is not None:
+                raise ValueError("execution_route requires execution_profile")
+            return self
+        expected_digest = self.evidence_policy_digest.strip() or profile.evidence_policy_digest
+        if profile.evidence_policy_digest != expected_digest:
+            raise ValueError("execution profile evidence policy digest mismatch")
+        expected_route = route_execution_profile(
+            profile,
+            opt_in=self.execution_opt_in,
+            canary_key=self.execution_canary_key or self.run_id,
+            rollback=self.execution_rollback,
+            default_authorized=self.execution_default_authorized,
+        )
+        if (
+            self.execution_route is not None
+            and self.execution_route.model_dump(mode="json")
+            != expected_route.model_dump(mode="json")
+        ):
+            raise ValueError("execution route does not match the selected profile and rollout inputs")
+        route = expected_route
+        assert_evidence_policy_unchanged(route, expected_digest)
+        # The model is frozen, so bind derived values through pydantic's
+        # documented post-validation escape hatch.  The route is now part of
+        # the runtime identity and can be serialized for rollout evidence.
+        object.__setattr__(self, "execution_route", route)
+        object.__setattr__(self, "evidence_policy_digest", expected_digest)
+        if not self.adapter_language.strip() and profile.language.strip():
+            object.__setattr__(self, "adapter_language", profile.language.strip().lower())
+        return self
+
     def supervisor(self) -> SupervisorBackend:
         return self.supervisor_backend or DeterministicSupervisorBackend(
             run_id=self.run_id,
@@ -414,11 +523,71 @@ class ResearchGraphRuntime(BaseModel):
             hard_rules=self.hard_rules,
         )
 
-    def tool_context(self) -> ResearchToolContext:
-        return ResearchToolContext(repo_snapshot=self.repo_snapshot)
+    @property
+    def execution_enabled(self) -> bool:
+        """Whether this configured route is allowed to execute agentic work."""
+
+        return self.execution_route.execute if self.execution_route is not None else True
+
+    @property
+    def execution_shadow(self) -> bool:
+        """Whether this run is a shadow observation rather than an opt-in run."""
+
+        return bool(self.execution_route and self.execution_route.shadow)
+
+    def execution_manifest(self) -> dict[str, Any]:
+        """Return route metadata without exposing a policy override surface."""
+
+        return {
+            "profile": self.execution_profile.model_dump(mode="json")
+            if self.execution_profile is not None
+            else {},
+            "route": self.execution_route.model_dump(mode="json")
+            if self.execution_route is not None
+            else {},
+            "evidence_policy_digest": self.evidence_policy_digest,
+        }
+
+    def tool_context(
+        self,
+        *,
+        behavior_graph: CodeBehaviorGraphV1 | None = None,
+    ) -> ResearchToolContext:
+        artifact_root = self.artifact_root
+        if artifact_root is None:
+            # The immutable checkpoint store must survive a process/runtime
+            # object restart.  PID/object identity made a fresh runtime point
+            # at a different directory, so a valid cross-instance snapshot
+            # looked missing and could not be resumed.  Run id + frozen
+            # snapshot identity are the stable namespace; callers that need
+            # isolation across repeated runs should provide artifact_root.
+            runtime_identity = hashlib.sha256(
+                (
+                    f"v3:{self.run_id}:{self.repo_snapshot.snapshot_id}:"
+                    f"{self.repo_snapshot.project_tree_hash}"
+                ).encode("utf-8")
+            ).hexdigest()[:20]
+            artifact_root = (
+                Path(tempfile.gettempdir())
+                / "code2paper-research-tool-runtime"
+                / runtime_identity
+            )
+        return ResearchToolContext(
+            repo_snapshot=self.repo_snapshot,
+            behavior_graph=behavior_graph,
+            artifact_root=artifact_root,
+            adapter_registry=self.adapter_registry,
+            adapter_language=self.adapter_language,
+        )
 
     def snapshot_paths(self) -> tuple[str, ...]:
         return tuple(f.path for f in self.repo_snapshot.included_files)
+
+    def language_adapter(self, files: dict[str, str] | None = None) -> Any:
+        if self.adapter_language.strip():
+            return self.adapter_registry.get(self.adapter_language)
+        candidates = files or {path: "" for path in self.snapshot_paths()}
+        return self.adapter_registry.for_files(candidates)
 
 
 # ---------------------------------------------------------------------------
@@ -488,9 +657,8 @@ def repository_indexer_node(
     LangGraph channels small.
     """
 
-    # Build a fresh PythonBehaviorAdapter index for the snapshot.
-    adapter = PythonBehaviorAdapter()
     files = _read_snapshot_files(runtime.repo_snapshot)
+    adapter = runtime.language_adapter(files)
     symbol_index = adapter.index_symbols(
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
@@ -499,7 +667,9 @@ def repository_indexer_node(
     symbol_index_digest = symbol_index.content_digest
     return {
         "symbol_index_ref": symbol_index_digest,
-        "behavior_graph_ref": _empty_behavior_graph_digest(runtime.repo_snapshot),
+        "behavior_graph_ref": _empty_behavior_graph_digest(
+            runtime.repo_snapshot, language=adapter.language
+        ),
         "status": "repository_indexed",
     }
 
@@ -611,6 +781,7 @@ def research_supervisor_node(
         hard_rules=runtime.hard_rules,
         current_supported_claim_ids=current_supported_claim_ids,
         behavior_template_search_hints=_behavior_template_search_hints(behavior_graph),
+        behavior_graph=behavior_graph,
     )
     proposal = backend.decide(context)
     merge_result = apply_policy_merge(
@@ -656,14 +827,17 @@ def _behavior_template_search_hints(graph: CodeBehaviorGraphV1 | None):
     ).strip().lower() in {"0", "false", "no", "off"}:
         return ()
     from code2paper.agentic.behavior_templates import (
-        DEFAULT_BEHAVIOR_TEMPLATES,
+        DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES,
         match_all_templates,
     )
     from code2paper.agentic.research_supervisor import BehaviorTemplateSearchHintV1
 
-    templates = {item.template_id: item for item in DEFAULT_BEHAVIOR_TEMPLATES}
+    templates = {
+        item.template_id: item
+        for item in DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES
+    }
     matches = sorted(
-        match_all_templates(DEFAULT_BEHAVIOR_TEMPLATES, graph),
+        match_all_templates(DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES, graph),
         key=lambda item: (not item.matched, -item.match_score, item.template_id),
     )
     hints = []
@@ -732,6 +906,8 @@ def research_tool_node(
 def execute_pending_tool_calls(
     runtime: ResearchGraphRuntime,
     pending: list[ResearchToolCallV1] | list[dict[str, Any]],
+    *,
+    behavior_graph: CodeBehaviorGraphV1 | None = None,
 ) -> tuple[list[ResearchObservationV1], list[str]]:
     """Execute a batch of tool calls and return (observations, trace_refs).
 
@@ -739,7 +915,7 @@ def execute_pending_tool_calls(
     without going through the LangGraph state.
     """
 
-    ctx = runtime.tool_context()
+    ctx = runtime.tool_context(behavior_graph=behavior_graph)
     observations: list[ResearchObservationV1] = []
     trace_refs: list[str] = []
     for call in pending:
@@ -805,8 +981,13 @@ def observation_ingest_node(
 
     # Track which observations are admissible for positive claims.
     admissible_refs: list[str] = []
-    new_symbol_refs: set[str] = set()
-    new_behavior_refs: set[str] = set()
+    # Preserve tool ranking.  Turning result refs into sets made the next
+    # READ_CANDIDATE target depend on hash iteration order rather than the
+    # deterministic search rank.  Candidate batches are merged in reverse
+    # because the compact supervisor intentionally reads the newest entry
+    # from the tail; therefore the tool's rank-1 result becomes that tail.
+    new_symbol_refs: list[str] = []
+    new_behavior_refs: list[str] = []
     for obs in observations:
         if obs.obligation_id != active_obligation_id:
             # Observations for other obligations are recorded but do not
@@ -825,8 +1006,12 @@ def observation_ingest_node(
         # The evidence_critic_node reads candidate_symbol_ids to decide
         # whether to route to compile_candidate; without this update
         # the loop never compiles evidence.
-        new_symbol_refs.update(symbol_refs(list(obs.result_refs)))
-        new_behavior_refs.update(behavior_refs(list(obs.result_refs)))
+        for ref in symbol_refs(list(obs.result_refs)):
+            if ref not in new_symbol_refs:
+                new_symbol_refs.append(ref)
+        for ref in behavior_refs(list(obs.result_refs)):
+            if ref not in new_behavior_refs:
+                new_behavior_refs.append(ref)
         if active_obligation is not None:
             active_obligation.missing_information = _resolved_missing_information(
                 active_obligation.missing_information,
@@ -842,7 +1027,7 @@ def observation_ingest_node(
     if active_obligation is not None:
         existing_symbols = set(active_obligation.candidate_symbol_ids)
         existing_behaviors = set(active_obligation.candidate_behavior_node_ids)
-        for ref in new_symbol_refs:
+        for ref in reversed(new_symbol_refs):
             if ref not in existing_symbols:
                 active_obligation.candidate_symbol_ids.append(ref)
                 existing_symbols.add(ref)
@@ -940,11 +1125,10 @@ def behavior_graph_updater_node(
 ) -> tuple[CodeBehaviorGraphV1, dict[str, Any]]:
     """Merge new behavior subgraphs extracted from observations.
 
-    For every ``search_symbols`` / ``read_symbol`` /
-    ``build_behavior_subgraph`` observation, the node re-parses the
-    cited symbol and merges the resulting nodes into the running
-    ``CodeBehaviorGraphV1``.  The merge is content-addressed so
-    duplicate reads do not duplicate nodes.
+    For every exact ``read_symbol`` / ``build_behavior_subgraph``
+    observation, the node re-parses the cited symbol and merges the resulting
+    nodes into the running ``CodeBehaviorGraphV1``.  ``search_symbols`` refs
+    remain discovery-only and never enter the executable evidence graph.
 
     Phase 3: ref filtering now uses ``typed_refs`` so both
     ``symbol:<path>:<name>:<line>`` refs (from ``search_symbols``) and
@@ -958,8 +1142,8 @@ def behavior_graph_updater_node(
     state) and a state update containing the new digest.
     """
 
-    adapter = PythonBehaviorAdapter()
     files = _read_snapshot_files(runtime.repo_snapshot)
+    adapter = runtime.language_adapter(files)
     symbol_index = adapter.index_symbols(
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
@@ -971,13 +1155,11 @@ def behavior_graph_updater_node(
     for obs in observations:
         if obs.obligation_id != active_obligation_id:
             continue
-        if obs.tool_name not in {
-            "search_symbols",
-            "read_symbol",
-            "build_behavior_subgraph",
-        }:
+        if obs.tool_name not in {"read_symbol", "build_behavior_subgraph"}:
             continue
         if obs.status not in {"success"}:
+            continue
+        if not obs.exact_span_ids and obs.tool_name == "read_symbol":
             continue
         # Phase 3: handle both ``symbol:`` and ``behavior:`` refs via
         # typed_refs.  Each ref carries a (path, name, line) location
@@ -1043,12 +1225,18 @@ def behavior_graph_updater_node(
             retained: list[str] = []
             for value in item.missing_information:
                 if value.startswith("typed_semantic:"):
-                    # A new candidate may satisfy the semantic binding; retry
-                    # compile_candidate, which will re-add an exact requirement
-                    # if the new fact slice still does not match.
+                    # Preserve the exact semantic miss so packet ranking can
+                    # prioritize the newly read node that satisfies it.  The
+                    # compile alignment, not the read itself, discharges it.
+                    retained.append(value)
                     continue
                 if value.startswith("typed_predicate:"):
-                    if value.split(":", 1)[1].upper() in new_predicates:
+                    desired = value.split(":", 1)[1].upper()
+                    if (
+                        desired in new_predicates
+                        or BEHAVIOR_PREDICATE_ALIASES.get(desired, frozenset())
+                        & new_predicates
+                    ):
                         continue
                 if value.startswith("typed_relation:"):
                     if value.split(":", 1)[1].upper() in available_relation_kinds:
@@ -1137,11 +1325,13 @@ def evidence_critic_node(
             return "record_gap", {"status": "researching"}
         return "search_more", {"status": "researching"}
 
-    # No active issue: if the obligation has candidate symbols and no
-    # missing information, attempt to compile.
+    # Recompile whenever exact evidence exists, even when an earlier compile
+    # recorded typed missing information. Search turns may add candidate
+    # symbols and read turns may add graph nodes; both need to replay typed
+    # alignment instead of searching until a false gap is emitted.
     if (
         active_obligation.candidate_symbol_ids
-        and not active_obligation.missing_information
+        and gain_tracker.has_exact_span(active_obligation_id)
     ):
         return "compile_candidate", {"status": "researching"}
 
@@ -1268,16 +1458,55 @@ _SEMANTIC_STOP_WORDS = frozenset({
 def _semantic_tokens(value: Any) -> set[str]:
     """Return conservative identifier-like terms for relevance matching."""
 
-    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", str(value))
+    original = str(value)
+    compact_identifiers = {
+        token.lower()
+        for token in re.findall(
+            r"\b[A-Z][A-Za-z0-9]*(?:[A-Z][A-Za-z0-9]*)+\b", original
+        )
+        if len(token) >= 3
+    }
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", original)
     tokens = {
         token.lower()
-        for token in re.findall(r"[A-Za-z][A-Za-z0-9]+", text.replace("_", " "))
+        for token in re.findall(r"[A-Za-z][A-Za-z0-9]+|\d+", text.replace("_", " "))
     }
-    return {
-        token[:-1] if len(token) > 4 and token.endswith("s") else token
-        for token in tokens
-        if len(token) >= 3 and token.lower() not in _SEMANTIC_STOP_WORDS
-    }
+    normalized: set[str] = set(compact_identifiers)
+    for token in tokens:
+        if not (len(token) >= 3 or token.isdigit()):
+            continue
+        if token.lower() in _SEMANTIC_STOP_WORDS:
+            continue
+        if token in {"dim", "dims", "dimensional"}:
+            normalized.add("dimension")
+        elif token in {"mamba", "ssm"}:
+            normalized.add("state_space")
+        elif token in {"ppr", "pagerank"}:
+            normalized.add("pagerank")
+        elif token in {"generation", "generated", "generates", "infer", "inference"}:
+            normalized.add("generate")
+        elif token in {"propagate", "propagates", "propagating", "propagation"}:
+            normalized.add("propagate")
+        elif token in {"filter", "filtering", "prune", "pruned", "prunes", "pruning", "threshold"}:
+            normalized.add("filter")
+        elif token in {
+            "score", "scores", "scoring", "predict", "predicts",
+            "prediction", "predictor",
+        }:
+            normalized.add("predict")
+        elif token in {"infonce", "contrastive", "logsumexp"}:
+            normalized.add("contrastive_objective")
+        elif token.endswith("ing") and len(token) > 6:
+            normalized.add(token[:-3])
+        elif token.endswith("ed") and len(token) > 5:
+            normalized.add(token[:-2])
+        elif len(token) > 4 and token.endswith("s"):
+            normalized.add(token[:-1])
+        else:
+            normalized.add(token)
+    if {"state", "space"} <= normalized:
+        normalized.add("state_space")
+    return normalized
 
 
 def _obligation_retrieval_terms(
@@ -1331,11 +1560,24 @@ def _rank_relevant_behavior_nodes(
     """
 
     terms, desired_predicates = _obligation_retrieval_terms(obligation)
+    missing_semantic_terms = {
+        term
+        for requirement in obligation.missing_information
+        if requirement.startswith("typed_semantic:")
+        for term in _semantic_tokens(requirement.split(":", 2)[-1])
+    }
     if limit is None:
         # Three is the normal minimality target.  A typed obligation may
         # require a few distinct predicates; allow a bounded larger slice
         # rather than mechanically deleting evidence needed to resolve it.
-        limit = min(_COMPILE_FACT_LIMIT, max(_COMPILE_NODE_LIMIT, len(desired_predicates)))
+        required_group_count = sum(
+            len(target.predicate_groups) if target.predicate_groups else len(target.desired_predicates)
+            for target in obligation.typed_behavior_targets
+        )
+        base_limit = max(_COMPILE_NODE_LIMIT, required_group_count)
+        if obligation.priority in {"must_cover", "should_cover"}:
+            base_limit += 5
+        limit = min(_COMPILE_FACT_LIMIT, base_limit)
     if not terms and not desired_predicates:
         return sorted(nodes, key=lambda node: node.node_id)[:limit]
 
@@ -1350,6 +1592,8 @@ def _rank_relevant_behavior_nodes(
         )
 
     ranked: list[tuple[int, str, Any]] = []
+    node_terms_by_id: dict[str, set[str]] = {}
+    local_node_terms_by_id: dict[str, set[str]] = {}
     for node in nodes:
         node_terms: set[str] = set()
         for value in (
@@ -1361,7 +1605,9 @@ def _rank_relevant_behavior_nodes(
             node.shape_or_type_hints,
         ):
             node_terms.update(_semantic_tokens(value))
+        local_node_terms_by_id[node.node_id] = set(node_terms)
         node_terms.update(symbol_terms.get(node.symbol_id, set()))
+        node_terms_by_id[node.node_id] = node_terms
         overlap = terms & node_terms
         predicate_match = node.predicate.upper() in desired_predicates
         # A single shared word (for example ``model`` or ``step``) is too
@@ -1377,10 +1623,180 @@ def _rank_relevant_behavior_nodes(
             relevant = len(overlap) >= 2
         if not relevant:
             continue
-        score = len(overlap) * 4 + (8 if predicate_match else 0)
+        score = (
+            len(overlap) * 4
+            + len(missing_semantic_terms & node_terms) * 12
+            + (8 if predicate_match else 0)
+        )
         ranked.append((score, node.node_id, node))
     ranked.sort(key=lambda item: (-item[0], item[1]))
-    return [item[2] for item in ranked[:limit]]
+    ranked_nodes = [item[2] for item in ranked]
+
+    # A strong semantic anchor (PageRank, state-space/Mamba, attention,
+    # adjacency construction, ...) defines a coherent symbol family.  Once a
+    # witness exists, do not mix earlier same-predicate candidates from an
+    # unrelated implementation into the same evidence packet.
+    anchor_requirements = [
+        _semantic_tokens(value)
+        for target in obligation.typed_behavior_targets
+        for value in target.transformations
+        if _semantic_tokens(value)
+    ]
+    anchor_symbols: set[str] = set()
+    for requirement in anchor_requirements:
+        anchor_symbols.update(
+            node.symbol_id
+            for node in ranked_nodes
+            if requirement <= node_terms_by_id.get(node.node_id, set())
+        )
+    if anchor_symbols:
+        requested_family_terms = terms & {
+            "attention", "pagerank", "state_space",
+        }
+        anchor_family_terms = {
+            term
+            for node in ranked_nodes
+            if node.symbol_id in anchor_symbols
+            for term in symbol_terms.get(node.symbol_id, set())
+            if term in requested_family_terms
+        }
+        if anchor_family_terms:
+            anchor_symbols.update(
+                node.symbol_id
+                for node in ranked_nodes
+                if anchor_family_terms
+                & symbol_terms.get(node.symbol_id, set())
+            )
+        ranked_nodes = [
+            node for node in ranked_nodes if node.symbol_id in anchor_symbols
+        ]
+
+    # Preserve typed predicate coverage under the bounded packet limit.  A
+    # plain top-N cut can spend all eight slots on repeated LOAD/CALL nodes
+    # from a long orchestration function and omit the one CONCAT or NORMALIZE
+    # node that the obligation explicitly requires.
+    desired_groups: list[tuple[tuple[str, ...], frozenset[str]]] = []
+    for target in obligation.typed_behavior_targets:
+        groups = target.predicate_groups or tuple(
+            (predicate,) for predicate in target.desired_predicates
+        )
+        target_semantic_terms = frozenset(
+            term
+            for values in (
+                target.inputs,
+                target.transformations,
+                target.decisions,
+                target.outputs,
+                tuple(
+                    value for value in target.conditions
+                    if value not in {"any", "training", "inference"}
+                ),
+            )
+            for value in values
+            for term in _semantic_tokens(value)
+        )
+        for group in groups:
+            normalized_group = tuple(
+                dict.fromkeys(predicate.upper() for predicate in group)
+            )
+            group_key = (normalized_group, target_semantic_terms)
+            if normalized_group and group_key not in desired_groups:
+                desired_groups.append(group_key)
+    selected: list[Any] = []
+    selected_ids: set[str] = set()
+    for group, target_semantic_terms in desired_groups:
+        equivalents: set[str] = set(group)
+        for desired in group:
+            equivalents.update(
+                BEHAVIOR_PREDICATE_ALIASES.get(desired, frozenset())
+            )
+        candidate = next(
+            (
+                node
+                for node in ranked_nodes
+                if node.node_id not in selected_ids
+                and node.predicate.upper() in equivalents
+                and (
+                    not target_semantic_terms
+                    or target_semantic_terms
+                    <= node_terms_by_id.get(node.node_id, set())
+                )
+            ),
+            None,
+        )
+        if candidate is not None:
+            selected.append(candidate)
+            selected_ids.add(candidate.node_id)
+        if len(selected) >= limit:
+            return selected
+
+    # Once an author-relevant symbol has been identified, retain a bounded
+    # method-completeness closure of high-information operations from that
+    # same executable symbol.  These operations are not authorized by a
+    # regression fixture or profile: they come from the exact source span
+    # already selected for the obligation.  This prevents minimal predicate
+    # coverage from dropping configuration branches, routing/top-k readouts,
+    # normalization, propagation, or the returned output that a Method
+    # section needs to form a closed mechanism description.
+    if obligation.priority in {"must_cover", "should_cover"} and selected:
+        selected_symbols = {node.symbol_id for node in selected}
+        completeness_predicates = (
+            "BRANCH",
+            "NORMALIZE",
+            "TOPK",
+            "SORT",
+            "PROPAGATE",
+            "ATTEND",
+            "REDUCE",
+            "RETURN",
+        )
+        same_symbol_nodes = sorted(
+            (
+                node
+                for node in nodes
+                if node.symbol_id in selected_symbols
+                and node.node_id not in selected_ids
+            ),
+            key=lambda node: node.node_id,
+        )
+        completeness_terms = {
+            term
+            for target in obligation.typed_behavior_targets
+            for value in (
+                *target.search_terms,
+                *target.transformations,
+                *target.conditions,
+                *target.decisions,
+            )
+            for term in _semantic_tokens(value)
+        }
+        for predicate in completeness_predicates:
+            predicate_candidates = [
+                node
+                for node in same_symbol_nodes
+                if node.node_id not in selected_ids
+                and node.predicate.upper() == predicate
+            ]
+            predicate_candidates.sort(key=lambda node: (
+                -len(completeness_terms & local_node_terms_by_id.get(node.node_id, set())),
+                -len(terms & local_node_terms_by_id.get(node.node_id, set())),
+                node.node_id,
+            ))
+            candidate = predicate_candidates[0] if predicate_candidates else None
+            if candidate is None:
+                continue
+            selected.append(candidate)
+            selected_ids.add(candidate.node_id)
+            if len(selected) >= limit:
+                return selected
+    for node in ranked_nodes:
+        if node.node_id in selected_ids:
+            continue
+        selected.append(node)
+        selected_ids.add(node.node_id)
+        if len(selected) >= limit:
+            break
+    return selected
 
 
 def _extract_path_component(candidate: str) -> str:
@@ -1439,13 +1855,15 @@ def _select_relations_among_nodes(
     behavior_graph: CodeBehaviorGraphV1,
     selected_node_ids: set[str],
 ) -> list[Any]:
-    """Return relations whose endpoints both fall in ``selected_node_ids``."""
+    """Return internal relations plus exact config dependencies of nodes."""
 
     out: list[Any] = []
     for rel in behavior_graph.relations:
         if not rel.source_node_id or not rel.target_node_id:
             continue
-        if rel.source_node_id in selected_node_ids and rel.target_node_id in selected_node_ids:
+        if rel.source_node_id in selected_node_ids and (
+            rel.target_node_id in selected_node_ids or rel.kind == "CONFIGURED_BY"
+        ):
             out.append(rel)
     return out
 
@@ -1465,6 +1883,15 @@ def _build_evidence_packet_proposal(
     anchor_span_ids: list[str] = []
     relation_span_ids: list[str] = []
     behavior_node_ids = [n.node_id for n in selected_nodes]
+    # CONFIGURED_BY deliberately permits a selected operation to point at an
+    # unselected configuration/default node.  Its target span is a relation
+    # span, so the packet must also carry that endpoint node; otherwise the
+    # compiler receives ``relation_span_ids`` that cannot be materialized and
+    # the EvidencePacket model rejects an otherwise exact proposal.
+    for relation in selected_relations:
+        for node_id in (relation.source_node_id, relation.target_node_id):
+            if node_id and node_id not in behavior_node_ids:
+                behavior_node_ids.append(node_id)
     behavior_relation_ids = [r.relation_id for r in selected_relations]
     conditions: list[str] = []
     for node in selected_nodes:
@@ -1526,7 +1953,79 @@ def _build_claim_proposals_for_facts(
     """
 
     proposals: list[ClaimProposalV1] = []
-    for fact in facts.facts[:_COMPILE_FACT_LIMIT]:
+    supported_facts = [
+        fact for fact in facts.facts if fact.validation_status == "supported"
+    ]
+    # Preserve at least one claim for each method-significant operation
+    # before filling the remaining bounded slots in source/compiler order.
+    # Relation closure can add LOAD/WRITE facts ahead of a later branch or
+    # top-k operation; a plain ``facts[:N]`` then makes executable content
+    # visible to coverage but unavailable to the Writer.
+    significant_predicates = (
+        "branches_on",
+        "normalizes",
+        "selects_top_k",
+        "sorts_by",
+        "propagates",
+        "attends",
+        "reduces",
+        "returns",
+        "computes_formula",
+    )
+    selected_facts: list[Any] = []
+    selected_fact_ids: set[str] = set()
+    for predicate in significant_predicates:
+        fact = next(
+            (item for item in supported_facts if item.predicate == predicate),
+            None,
+        )
+        if fact is None:
+            continue
+        selected_facts.append(fact)
+        selected_fact_ids.add(fact.fact_id)
+        if len(selected_facts) >= _COMPILE_FACT_LIMIT:
+            break
+    # Preserve a second executable implementation for predicates where
+    # method diversity changes the mechanism (most importantly propagation
+    # modes and configuration branches).  This second pass occurs only after
+    # every significant predicate had a chance to reserve one slot.
+    diversity_predicates = (
+        "propagates",
+        "branches_on",
+        "normalizes",
+        "selects_top_k",
+        "sorts_by",
+        "returns",
+        "computes_formula",
+    )
+    for predicate in diversity_predicates:
+        selected_subjects = {
+            item.subject for item in selected_facts if item.predicate == predicate
+        }
+        fact = next(
+            (
+                item for item in supported_facts
+                if item.predicate == predicate
+                and item.fact_id not in selected_fact_ids
+                and item.subject not in selected_subjects
+            ),
+            None,
+        )
+        if fact is None:
+            continue
+        selected_facts.append(fact)
+        selected_fact_ids.add(fact.fact_id)
+        if len(selected_facts) >= _COMPILE_FACT_LIMIT:
+            break
+    for fact in supported_facts:
+        if len(selected_facts) >= _COMPILE_FACT_LIMIT:
+            break
+        if fact.fact_id in selected_fact_ids:
+            continue
+        selected_facts.append(fact)
+        selected_fact_ids.add(fact.fact_id)
+
+    for fact in selected_facts:
         if fact.validation_status != "supported":
             continue
         obj = fact.object
@@ -1560,17 +2059,72 @@ def _alignment_semantic_context(
     obligation: ResearchAgendaItemV1,
     selected_nodes: list[Any],
 ) -> tuple[str, ...]:
-    """Expose only typed candidate names and parsed operation operands."""
+    """Expose only descriptors from exact behavior nodes in the packet.
+
+    ``candidate_symbol_ids`` also contains un-read symbol-search hints.  A
+    hint such as ``LLM.infer`` may route the next tool call, but it is not an
+    evidence span and must never lend its name to an unrelated fact (for
+    example making an indexing CALL satisfy a generation target).
+    """
 
     values: list[str] = []
-    for candidate in obligation.candidate_symbol_ids:
-        parsed = split_symbol_ref(candidate)
-        if parsed is not None:
-            values.extend((parsed[0], parsed[1]))
     for node in selected_nodes:
         values.extend((node.predicate, node.result, node.guard, node.iteration_context))
         values.extend(node.operands)
     return tuple(value for value in values if value)
+
+
+def _execute_compile_data_plane_tool(
+    *,
+    ctx: ResearchToolContext,
+    obligation_id: str,
+    packet_id: str,
+    tool_name: str,
+    arguments: dict[str, Any],
+) -> ResearchObservationV1:
+    """Execute one deterministic D1 tool call with a replay-stable identity."""
+
+    call = ResearchToolCallV1(
+        tool_call_id=f"compile:{obligation_id}:{packet_id}:{tool_name}",
+        tool_name=tool_name,
+        tool_kind=RESEARCH_TOOL_KINDS[tool_name],
+        obligation_id=obligation_id,
+        goal=f"compile validated evidence for {obligation_id}",
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        arguments=arguments,
+    )
+    return execute_research_tool(ctx, call)
+
+
+def _compile_data_plane_failure(
+    *,
+    state: AgentStateV3,
+    obligation: ResearchAgendaItemV1,
+    observation: ResearchObservationV1,
+) -> dict[str, Any]:
+    """Return a typed, retryable issue instead of converting tool failure to gap."""
+
+    issue_token = hashlib.sha256(
+        f"{observation.tool_name}:{observation.output_digest}".encode("utf-8")
+    ).hexdigest()[:16]
+    requirement = (
+        f"tool_data_plane:{observation.tool_name}:"
+        f"{observation.error_message or observation.status}"
+    )
+    if requirement not in obligation.missing_information:
+        obligation.missing_information.append(requirement)
+    return {
+        "status": "researching",
+        "active_issue_id": f"issue:data-plane:{issue_token}",
+        "tool_call_trace_refs": [
+            *list(state.get("tool_call_trace_refs", []) or []),
+            _observation_ref(observation),
+        ],
+        "candidate_symbol_ids": list(obligation.candidate_symbol_ids),
+        "candidate_behavior_node_ids": list(
+            obligation.candidate_behavior_node_ids
+        ),
+    }
 
 
 def compile_candidate_node(
@@ -1587,13 +2141,12 @@ def compile_candidate_node(
 
     1. Selects behavior nodes/relations for the active obligation from the
        live ``CodeBehaviorGraphV1``.
-    2. Builds an ``EvidencePacketProposalV1`` and calls
-       ``compile_evidence_packet_proposal`` (R4.1) to produce a validated
-       ``EvidencePacketV3``.
-    3. Calls ``compile_facts_from_behavior_graph`` (R4.2) to produce a
-       ``CodeFactSetV1`` with deterministic identities.
-    4. Builds conservative ``ClaimProposalV1`` per supported fact and calls
-       ``compile_atomic_claims`` (R4.3) to authorize them.
+    2. Submits the packet through ``propose_evidence_packet`` and
+       ``validate_evidence_packet``.
+    3. Runs ``compile_code_facts`` and ``validate_code_facts`` against the
+       persisted validated packet.
+    4. Submits Agent-scoped claim groupings through
+       ``decompose_atomic_claims`` and ``authorize_atomic_claims``.
     5. On success: marks the obligation ``supported`` with
        ``supported_claim_ids`` and returns the packet/fact/claim refs.
     6. On failure (no packet, no supported facts, or no authorized claims):
@@ -1665,43 +2218,107 @@ def compile_candidate_node(
             gain_tracker=gain_tracker,
         )
 
-    packet, packet_report = compile_evidence_packet_proposal(
-        proposal,
-        behavior_graph,
-        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
-        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        repo_snapshot=runtime.repo_snapshot,
+    tool_ctx = runtime.tool_context(behavior_graph=behavior_graph)
+    compile_observations: list[ResearchObservationV1] = []
+
+    propose_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
+        obligation_id=active_obligation_id,
+        packet_id=proposal.packet_id,
+        tool_name="propose_evidence_packet",
+        arguments={
+            "obligation_tag": proposal.obligation_id,
+            "packet_id": proposal.packet_id,
+            "scope": proposal.scope,
+            "anchor_span_ids": tuple(proposal.anchor_span_ids),
+            "relation_span_ids": tuple(proposal.relation_span_ids),
+            "semantic_span_ids": tuple(proposal.semantic_span_ids),
+            "behavior_node_ids": tuple(proposal.behavior_node_ids),
+            "behavior_relation_ids": tuple(proposal.behavior_relation_ids),
+            "conditions": tuple(proposal.conditions),
+            "composition_rationale": proposal.composition_rationale,
+        },
     )
-    if packet is None or not packet_report.accepted:
-        # Packet rejected: route to gap finalizer so the obligation gets a
-        # typed gap rather than spinning.
-        return gap_finalizer_node(
-            state,
-            runtime=runtime,
-            active_obligation_id=active_obligation_id,
-            gain_tracker=gain_tracker,
+    compile_observations.append(propose_observation)
+    if propose_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=propose_observation,
         )
 
-    # Build the FactCompilerInputV1 from the selected nodes/relations.
-    anchor_span_ids = list(packet.anchor_span_ids)
-    relation_span_ids = list(packet.relation_span_ids)
-    evidence_span_ids = anchor_span_ids + relation_span_ids
-    guards = list(packet.conditions)
-    fact_input = FactCompilerInputV1(
+    packet_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
         obligation_id=active_obligation_id,
-        behavior_node_ids=[n.node_id for n in selected_nodes],
-        behavior_relation_ids=[r.relation_id for r in selected_relations],
-        evidence_span_ids=evidence_span_ids,
-        guards=guards,
-        source_authority="executable_hard",
+        packet_id=proposal.packet_id,
+        tool_name="validate_evidence_packet",
+        arguments={"packet_id": proposal.packet_id},
     )
-    fact_set = compile_facts_from_behavior_graph(
-        behavior_graph,
-        fact_input,
-        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
-        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        evidence_packet_digest=packet.source_digest,
+    compile_observations.append(packet_observation)
+    if packet_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=packet_observation,
+        )
+    packet_payload = tool_ctx.read_artifact("validated_packets", proposal.packet_id)
+    if packet_payload is None:
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=packet_observation.model_copy(
+                update={
+                    "status": "invalid_request",
+                    "error_message": "validated packet artifact missing",
+                }
+            ),
+        )
+    packet = EvidencePacketV3.model_validate(packet_payload)
+
+    fact_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
+        obligation_id=active_obligation_id,
+        packet_id=proposal.packet_id,
+        tool_name="compile_code_facts",
+        arguments={"packet_id": proposal.packet_id},
     )
+    compile_observations.append(fact_observation)
+    if fact_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=fact_observation,
+        )
+    fact_payload = tool_ctx.read_artifact("fact_sets", proposal.packet_id)
+    if fact_payload is None:
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=fact_observation.model_copy(
+                update={
+                    "status": "invalid_request",
+                    "error_message": "compiled fact artifact missing",
+                }
+            ),
+        )
+    fact_set = CodeFactSetV1.model_validate(fact_payload)
+    validate_fact_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
+        obligation_id=active_obligation_id,
+        packet_id=proposal.packet_id,
+        tool_name="validate_code_facts",
+        arguments={
+            "fact_id": proposal.packet_id,
+            "fact_set_id": proposal.packet_id,
+        },
+    )
+    compile_observations.append(validate_fact_observation)
+    if validate_fact_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=validate_fact_observation,
+        )
     target_alignments = [
         align_target_to_facts(
             target,
@@ -1752,59 +2369,79 @@ def compile_candidate_node(
                 requirement = f"typed_semantic:{field}:{terms}"
                 if requirement not in active_obligation.missing_information:
                     active_obligation.missing_information.append(requirement)
+        # Persist validated packets/facts even while the obligation remains
+        # unresolved.  Fact authority is independent from claim coverage:
+        # dropping an exact, validated fact here makes configuration and
+        # completeness artifacts depend on whether an unrelated predicate
+        # happened to resolve in the same turn.
+        partial_packet_set = EvidencePacketSetV3(
+            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+            packets=[packet],
+            content_digest=packet.source_digest,
+        )
+        empty_claim_payload = {
+            "claims": [],
+            "explicit_code_gaps": [],
+            "semantic_stage_groups": [],
+        }
+        partial_claim_set = AtomicClaimSetV3(
+            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+            evidence_packet_digest=partial_packet_set.content_digest,
+            code_fact_digest=fact_set.content_digest,
+            claims=[],
+            content_digest=_digest_payload(empty_claim_payload),
+        )
         return {
             "status": "researching",
             "candidate_symbol_ids": list(active_obligation.candidate_symbol_ids),
             "candidate_behavior_node_ids": list(
                 active_obligation.candidate_behavior_node_ids
             ),
+            "evidence_packet_set_ref": partial_packet_set.content_digest,
+            "code_fact_set_ref": fact_set.content_digest,
+            "tool_call_trace_refs": [
+                *list(state.get("tool_call_trace_refs", []) or []),
+                *[_observation_ref(item) for item in compile_observations],
+            ],
+            "_partial_evidence": {
+                "obligation_id": active_obligation_id,
+                "packet_set": partial_packet_set,
+                "fact_set": fact_set,
+                "claim_set": partial_claim_set,
+            },
         }
     aligned_fact_ids = {
         fact_id
         for alignment in target_alignments
         for fact_id in alignment.matched_fact_ids
     }
-    required_predicates = {
-        predicate
+    required_group_count = sum(
+        len(target.predicate_groups) if target.predicate_groups else len(target.desired_predicates)
         for target in active_obligation.typed_behavior_targets
-        for predicate in target.desired_predicates
-    }
-    if len(required_predicates) > _COMPILE_FACT_LIMIT:
+    )
+    if required_group_count > _COMPILE_FACT_LIMIT:
         return gap_finalizer_node(
             state,
             runtime=runtime,
             active_obligation_id=active_obligation_id,
             gain_tracker=gain_tracker,
         )
-    # Keep one deterministic fact per required behavior predicate.  Extra
-    # same-predicate operations are related implementation detail, not proof
-    # of additional obligation coverage.
-    aligned_facts: list[Any] = []
-    covered_predicates: set[str] = set()
-    for fact in sorted(fact_set.facts, key=lambda item: item.fact_id):
-        if fact.fact_id not in aligned_fact_ids:
-            continue
-        behavior_predicate = FACT_PREDICATE_TO_BEHAVIOR_FULL.get(fact.predicate)
-        if not behavior_predicate or behavior_predicate in covered_predicates:
-            continue
-        aligned_facts.append(fact)
-        covered_predicates.add(behavior_predicate)
-    if aligned_facts != fact_set.facts:
-        bounded_facts = aligned_facts
-        fact_payload = [item.model_dump(mode="json") for item in bounded_facts]
-        fact_set = fact_set.model_copy(update={
-            "facts": bounded_facts,
-            "content_digest": "sha256:" + hashlib.sha256(
-                json.dumps(
-                    fact_payload,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                ).encode("utf-8")
-            ).hexdigest(),
-        })
+    # Preserve every bounded fact that participated in target alignment.
+    # Collapsing to one fact per predicate can discard the semantic witness
+    # (for example ``input_dim=15``) and retain an unrelated READ fact with
+    # the same predicate, leaving the final claim artifact unable to replay
+    # the semantic authorization that succeeded above.
+    aligned_facts = [
+        fact
+        for fact in sorted(fact_set.facts, key=lambda item: item.fact_id)
+        if fact.fact_id in aligned_fact_ids
+    ][:_COMPILE_FACT_LIMIT]
     supported_facts = [
-        f for f in fact_set.facts if f.validation_status == "supported"
+        f for f in aligned_facts if f.validation_status == "supported"
     ]
     if not supported_facts:
         return gap_finalizer_node(
@@ -1816,9 +2453,8 @@ def compile_candidate_node(
 
     # Build a single packet set carrying this packet so downstream writers
     # can consume the standard ``EvidencePacketSetV3`` shape.
-    from code2paper.agentic.evidence_compiler_v3 import EvidencePacketSetV3
-
     packet_set = EvidencePacketSetV3(
+        producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
         packets=[packet],
@@ -1827,15 +2463,90 @@ def compile_candidate_node(
 
     claim_proposals = _build_claim_proposals_for_facts(
         obligation_id=active_obligation_id,
-        facts=fact_set,
+        facts=fact_set.model_copy(update={"facts": aligned_facts}),
     )
-    claim_set, claim_reports = compile_atomic_claims(
-        claim_proposals,
-        fact_set,
-        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
-        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        evidence_packet_digest=packet.source_digest,
+    if not claim_proposals:
+        return gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id=active_obligation_id,
+            gain_tracker=gain_tracker,
+        )
+    claim_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
+        obligation_id=active_obligation_id,
+        packet_id=proposal.packet_id,
+        tool_name="decompose_atomic_claims",
+        arguments={
+            "fact_ids": tuple(
+                fact_id
+                for claim_proposal in claim_proposals
+                for fact_id in claim_proposal.proposed_fact_ids
+            ),
+            "fact_set_id": proposal.packet_id,
+            "claim_proposals": tuple(
+                item.model_dump(mode="json") for item in claim_proposals
+            ),
+        },
     )
+    compile_observations.append(claim_observation)
+    if claim_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=claim_observation,
+        )
+    proposal_set_id = next(
+        (
+            note.split("=", 1)[1]
+            for note in claim_observation.diagnostics.notes
+            if note.startswith("proposal_set_id=")
+        ),
+        "",
+    )
+    if not proposal_set_id:
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=claim_observation.model_copy(
+                update={
+                    "status": "invalid_request",
+                    "error_message": "claim proposal set id missing",
+                }
+            ),
+        )
+    authorize_observation = _execute_compile_data_plane_tool(
+        ctx=tool_ctx,
+        obligation_id=active_obligation_id,
+        packet_id=proposal.packet_id,
+        tool_name="authorize_atomic_claims",
+        arguments={
+            "claim_ids": tuple(item.claim_id for item in claim_proposals),
+            "proposal_set_id": proposal_set_id,
+        },
+    )
+    compile_observations.append(authorize_observation)
+    if authorize_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=authorize_observation,
+        )
+    claim_payload = tool_ctx.read_artifact(
+        "authorized_claim_sets", proposal_set_id
+    )
+    if claim_payload is None:
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=authorize_observation.model_copy(
+                update={
+                    "status": "invalid_request",
+                    "error_message": "authorized claim artifact missing",
+                }
+            ),
+        )
+    claim_set = AtomicClaimSetV3.model_validate(claim_payload)
     if not claim_set.claims:
         # No claim was authorized: route to gap finalizer.
         return gap_finalizer_node(
@@ -1855,6 +2566,10 @@ def compile_candidate_node(
         "code_fact_set_ref": fact_set.content_digest,
         "atomic_claim_set_ref": claim_set.content_digest,
         "status": "researching",  # the obligation is terminal but the run continues
+        "tool_call_trace_refs": [
+            *list(state.get("tool_call_trace_refs", []) or []),
+            *[_observation_ref(item) for item in compile_observations],
+        ],
         # Private channel: the driver pops this and stashes the objects in
         # the loop state sidecar so the writer can consume them.
         "_compiled_evidence": {
@@ -1931,9 +2646,86 @@ def gap_finalizer_node(
             "_gap_accepted": False,
         }
 
-    gap_ref = _gap_ref(runtime.run_id, active_obligation_id)
+    active_obligation = next(
+        (
+            item
+            for item in runtime.agenda.items
+            if item.obligation_id == active_obligation_id
+        ),
+        None,
+    )
+    if active_obligation is None:
+        return {
+            "status": "blocked",
+            "blocked_reason": "gap_obligation_not_in_agenda",
+            "_gap_accepted": False,
+        }
+    attempted_tools = tuple(
+        sorted(
+            {
+                *gain_tracker.attempted_tools(active_obligation_id),
+                *gap_search_attempts,
+            }
+        )
+    )
+    search_scope = tuple(
+        dict.fromkeys(
+            path
+            for candidate in active_obligation.candidate_symbol_ids
+            if (path := _extract_path_component(candidate))
+        )
+    )
+    if not search_scope:
+        search_scope = tuple(
+            entry.path
+            for entry in runtime.repo_snapshot.included_files
+            if entry.kind == "file"
+        )
+    missing_relations = tuple(
+        item.split(":", 1)[1]
+        for item in active_obligation.missing_information
+        if item.startswith("typed_relation:")
+    )
+    gap_observation = _execute_compile_data_plane_tool(
+        ctx=runtime.tool_context(),
+        obligation_id=active_obligation_id,
+        packet_id="terminal-gap",
+        tool_name="record_explicit_code_gap",
+        arguments={
+            "obligation_id_ref": active_obligation_id,
+            "termination_reason": (
+                f"No executable evidence satisfied the obligation after "
+                f"{gain_tracker.no_progress_counter(active_obligation_id)} "
+                "consecutive no-gain turns."
+            ),
+            "search_scope": search_scope,
+            "attempted_tools": attempted_tools,
+            "missing_relations": missing_relations,
+            "search_complete": True,
+            "scope_exhausted": bool(
+                gain_tracker.exhausted_tools(active_obligation_id)
+            ),
+        },
+    )
+    if gap_observation.status != "success":
+        return _compile_data_plane_failure(
+            state=state,
+            obligation=active_obligation,
+            observation=gap_observation,
+        ) | {"_gap_accepted": False}
+
+    gap_ref = gap_observation.result_refs[0]
     existing_gaps = state.get("explicit_gap_set_ref", "")
-    new_gaps = f"{existing_gaps};{gap_ref}" if existing_gaps else gap_ref
+    existing_gap_refs = tuple(
+        ref for ref in str(existing_gaps).split(";") if ref
+    )
+    # The tool artifact is idempotent; keep the state sidecar idempotent too
+    # when a resumed/replayed node receives the same terminal observation.
+    new_gaps = (
+        str(existing_gaps)
+        if gap_ref in existing_gap_refs
+        else f"{existing_gaps};{gap_ref}" if existing_gaps else gap_ref
+    )
 
     # Mark the agenda item as terminal (explicit_gap).  Without this
     # mutation, ``_next_unresolved_obligation`` would keep selecting the
@@ -1949,32 +2741,31 @@ def gap_finalizer_node(
             f"Exhaustive search for obligation {active_obligation_id} did not "
             f"yield sufficient executable evidence to compile a supported claim."
         ),
-        search_scope=state.get("active_obligation_id", active_obligation_id),
-        attempted_tools=tuple(
-            sorted({
-                call.tool_name
-                for call in gain_tracker.recent_tool_calls(active_obligation_id)
-            })
-        ) if hasattr(gain_tracker, "recent_tool_calls") else (),
+        # Preserve the actual frozen-source scope.  Recording the obligation
+        # id here loses the provenance needed to audit an explicit gap.
+        search_scope=",".join(search_scope) if search_scope else active_obligation_id,
+        attempted_tools=attempted_tools,
         terminal="explicit_gap",
         rationale=(
             f"Accepted after {gain_tracker.no_progress_counter(active_obligation_id)} "
             f"consecutive no-gain turns."
         ),
     )
-    for item in runtime.agenda.items:
-        if item.obligation_id == active_obligation_id:
-            # ``GapRequirementV1`` is frozen, but the item's
-            # ``gap_requirements`` list is mutable; we append in place
-            # and then set ``status`` (the item model is not frozen).
-            item.gap_requirements.append(gap_requirement)
-            item.status = "explicit_gap"
-            break
+    if not any(
+        requirement.requirement_id == gap_requirement.requirement_id
+        for requirement in active_obligation.gap_requirements
+    ):
+        active_obligation.gap_requirements.append(gap_requirement)
+    active_obligation.status = "explicit_gap"
 
     return {
         "explicit_gap_set_ref": new_gaps,
         "status": "researching",  # the obligation is terminal but the run continues
         "active_issue_id": "",
+        "tool_call_trace_refs": [
+            *list(state.get("tool_call_trace_refs", []) or []),
+            _observation_ref(gap_observation),
+        ],
         "_gap_accepted": True,
     }
 
@@ -2036,10 +2827,11 @@ def _digest_payload(payload: Any) -> str:
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
-def _empty_behavior_graph_digest(snapshot: RepoSnapshot) -> str:
+def _empty_behavior_graph_digest(snapshot: RepoSnapshot, *, language: str = "python") -> str:
     graph = CodeBehaviorGraphV1(
         repo_snapshot_id=snapshot.snapshot_id,
         project_tree_hash=snapshot.project_tree_hash,
+        language=language,
     )
     return graph.with_digest().content_digest
 

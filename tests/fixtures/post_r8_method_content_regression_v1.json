@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "prose_copied_from_paper": false,
+  "projects": {
+    "rap": {
+      "units": [
+        {"unit_id": "rap_feature_dimension", "required_alias_groups": [["15", "fifteen"], ["knn", "nearest neighbor"]]},
+        {"unit_id": "rap_predictor", "required_alias_groups": [["mlp", "multilayer perceptron", "fully connected", "nn.linear"]]},
+        {"unit_id": "rap_normalization", "required_alias_groups": [["normalization", "normalize", "normalized"]]}
+      ]
+    },
+    "ebcar": {
+      "units": [
+        {"unit_id": "ebcar_mask", "required_alias_groups": [["mask", "masked"]]},
+        {"unit_id": "ebcar_attention_roles", "required_alias_groups": [["attention"], ["shared"], ["dedicated", "separate"]]},
+        {"unit_id": "ebcar_objective", "required_alias_groups": [["infonce", "info nce", "contrastive", "logsumexp"]]},
+        {"unit_id": "ebcar_rerank", "required_alias_groups": [["rerank", "re-rank", "ranking"]]}
+      ]
+    },
+    "dyg": {
+      "units": [
+        {"unit_id": "dyg_time_branch", "required_alias_groups": [["time_mamba", "time mamba"], ["branch", "conditional", "condition"]]},
+        {"unit_id": "dyg_topk_readout", "required_alias_groups": [["top-k", "topk", "top k"], ["softmax"], ["renormal", "normalize", "routing_weights.sum"]]}
+      ]
+    },
+    "linearrag": {
+      "units": [
+        {"unit_id": "linearrag_propagation_modes", "required_alias_groups": [["bfs", "breadth first"], ["vectorized", "vectorised"]]},
+        {"unit_id": "linearrag_vertex_sentence_mapping", "required_alias_groups": [["vertex", "entity"], ["sentence"], ["mapping", "map", "node_name_to_vertex_idx"]]},
+        {"unit_id": "linearrag_index", "required_alias_groups": [["index", "indexing"]]},
+        {"unit_id": "linearrag_ppr", "required_alias_groups": [["ppr", "personalized pagerank", "personalized page rank"]]},
+        {"unit_id": "linearrag_answer_generation", "required_alias_groups": [["answer"], ["generation", "generate", "infer"]]}
+      ]
+    }
+  }
+}

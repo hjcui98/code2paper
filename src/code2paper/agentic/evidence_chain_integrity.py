@@ -24,6 +24,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     load_atomic_claims_v3_or_v2,
     load_code_facts_v1,
     load_evidence_packets_v3,
+    GENERIC_RESEARCH_PRODUCER_VERSION,
 )
 from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
 from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
@@ -32,6 +33,7 @@ from code2paper.agentic.repo_snapshot import RepoSnapshot, load_repo_snapshot
 
 GENERIC_PRODUCER_MARKER = "generic_research_data_plane"
 PROFILE_PRODUCER_MARKER = "profile_compatibility"
+GENERIC_PRODUCER_VERSION = GENERIC_RESEARCH_PRODUCER_VERSION
 
 
 class EvidenceChainIntegrityReport(BaseModel):
@@ -43,6 +45,7 @@ class EvidenceChainIntegrityReport(BaseModel):
     v3_enabled: bool = True
     single_evidence_chain_consistent: bool = False
     generic_research_compiled_claims: bool = False
+    generic_provenance_profile_non_authoritative: bool = False
     gap_claim_noncontradiction: bool = False
     failures: tuple[str, ...] = Field(default_factory=tuple)
     evidence: tuple[str, ...] = Field(default_factory=tuple)
@@ -195,10 +198,12 @@ def inspect_evidence_chain(
         for value in (packet_set, fact_set, claim_set)
         if value is not None
     }
-    generic_versioned = bool(producer_versions) and all(
-        "generic" in version.lower() or "research_data_plane" in version.lower()
-        for version in producer_versions
-    )
+    # Producer provenance is an authorization boundary, not a descriptive
+    # label.  A profile or an untrusted writer must not become generic merely
+    # by choosing a version string that contains ``generic`` or
+    # ``research_data_plane``; only the frozen data-plane producer version is
+    # accepted here.
+    generic_versioned = producer_versions == {GENERIC_PRODUCER_VERSION}
     # Current generic sets carry the producer marker themselves.  The sidecar
     # is still preferred when present, but a valid artifact written by an
     # older generic writer must not be rejected merely because the sidecar was
@@ -214,6 +219,11 @@ def inspect_evidence_chain(
         and generic_versioned
         and not profile_declared
         and not failures_for_generic_chain(failures)
+    )
+    profile_non_authoritative_ok = (
+        generic_declared
+        and generic_versioned
+        and not profile_declared
     )
     if v3_enabled and not generic_declared:
         failures.append("generic_producer_manifest_missing")
@@ -254,6 +264,9 @@ def inspect_evidence_chain(
         v3_enabled=v3_enabled,
         single_evidence_chain_consistent=chain_ok,
         generic_research_compiled_claims=generic_claims_ok,
+        generic_provenance_profile_non_authoritative=(
+            profile_non_authoritative_ok
+        ),
         gap_claim_noncontradiction=noncontradiction_ok,
         failures=chain_failures,
         evidence=tuple(evidence),
@@ -389,6 +402,7 @@ def inspect_evidence_chain_from_paths(
 __all__ = [
     "EvidenceChainIntegrityReport",
     "GENERIC_PRODUCER_MARKER",
+    "GENERIC_PRODUCER_VERSION",
     "PROFILE_PRODUCER_MARKER",
     "inspect_evidence_chain",
     "inspect_evidence_chain_from_paths",

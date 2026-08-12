@@ -41,7 +41,9 @@ from code2paper.agentic.research_tools import (
     find_references,
     read_symbol,
     search_symbols,
+    _symbol_query_score,
 )
+from code2paper.agentic.retrieval import SymbolIndexEntry
 from code2paper.agentic.source_authority import classify_source_authority
 
 
@@ -84,6 +86,9 @@ _LIB_MODEL_PY = """\
 class Model:
     def forward(self, batch: int) -> int:
         return batch * 2
+
+    def merge_features(self, left, right):
+        return torch.cat((left, right), dim=1)
 """
 
 
@@ -337,6 +342,42 @@ def test_search_symbols_ranks_natural_language_query_by_identifier_tokens(
 
     assert observation.status == "success"
     assert any("Trainer.train_loop" in ref for ref in observation.result_refs)
+
+
+def test_symbol_query_does_not_match_short_identifier_inside_long_word() -> None:
+    ner = SymbolIndexEntry(
+        path="ner.py",
+        symbol="SpacyNER.save_ner_results",
+        kind="method",
+        start_line=1,
+        end_line=2,
+        text_hash="sha256:test",
+        reasons=[],
+    )
+    inference = ner.model_copy(update={"symbol": "LLM.infer"})
+    qa = ner.model_copy(update={"symbol": "LinearRAG.qa"})
+    query = "generation generate infer answer qa"
+
+    assert _symbol_query_score(ner, query) == 0
+    assert _symbol_query_score(inference, query) > 0
+    assert _symbol_query_score(qa, "answer infer qa") > 0
+
+
+def test_search_symbols_uses_symbol_body_only_as_non_authorizing_retrieval(
+    ctx: ResearchToolContext,
+) -> None:
+    call = _tool_call(
+        tool_name="search_symbols",
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        arguments={"query": "cat concat concatenate"},
+        top_k=10,
+    )
+
+    observation = search_symbols(ctx, call)
+
+    assert observation.status == "success"
+    assert observation.result_refs[0].startswith("symbol:lib/model.py:Model.merge_features:")
+    assert observation.exact_span_ids == ()
 
 
 def test_search_symbols_filters_by_kind(ctx: ResearchToolContext) -> None:

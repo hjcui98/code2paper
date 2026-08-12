@@ -111,7 +111,7 @@ RHETORICAL_MOVES: tuple[RhetoricalMoveV1, ...] = (
     "transition_to_next_section",
 )
 
-ConfigurationStateV1 = Literal["actual", "default", "conditional", "unreachable"]
+ConfigurationStateV1 = Literal["actual", "default", "conditional", "unreachable", "unresolved"]
 
 
 class _MethodModel(BaseModel):
@@ -182,7 +182,15 @@ class ReferenceMethodAgendaV1(_MethodModel):
 
 
 class MethodCompletenessItemV1(_MethodModel):
-    """One row in the nine-state completeness matrix."""
+    """One row in the nine-state completeness matrix.
+
+    ``matched_fact_ids`` / ``matched_relation_ids`` / ``matched_span_ids``
+    preserve the coverage compiler's exact evidence handles for rows whose
+    claim ids are empty (typically ``partially_supported_by_repository`` and
+    other candidate rows).  They are backward compatible (default empty) and
+    give the Architect enough material to materialize candidate units that
+    are not empty prose shells.
+    """
 
     obligation_id: str
     role: str = ""
@@ -194,12 +202,19 @@ class MethodCompletenessItemV1(_MethodModel):
     claim_ids: tuple[str, ...] = Field(default_factory=tuple)
     equation_ids: tuple[str, ...] = Field(default_factory=tuple)
     configuration_ids: tuple[str, ...] = Field(default_factory=tuple)
+    matched_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    matched_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    matched_span_ids: tuple[str, ...] = Field(default_factory=tuple)
     reason: str = ""
     next_action: str = ""
 
     @property
     def terminal(self) -> bool:
-        return self.status != "unverified_by_repository"
+        # All nine values are explicit completeness classifications.  In
+        # particular, ``unverified_by_repository`` is a valid terminal report
+        # state even though it remains unresolved and should trigger more
+        # research (see ``unresolved_critical_ids`` below).
+        return self.status in REFERENCE_METHOD_STATUSES
 
 
 class MethodCompletenessMatrixV1(_MethodModel):
@@ -252,6 +267,7 @@ class ConfigurationClaimV1(_MethodModel):
     conditions: tuple[str, ...] = Field(default_factory=tuple)
     source_authority: SourceAuthorityV1 = "executable_hard"
     authority_lane: Literal["configuration_resolved"] = "configuration_resolved"
+    source_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     active: bool = True
     unresolved_reason: str = ""
     canonical_identity: str = ""
@@ -270,6 +286,10 @@ class ConfigurationClaimV1(_MethodModel):
             raise ValueError("actual configuration claims require an entrypoint span")
         if self.state == "unreachable" and self.active:
             raise ValueError("unreachable configuration claims cannot be active")
+        if self.state == "unresolved" and self.value is not None:
+            raise ValueError("unresolved configuration accesses cannot carry a resolved value")
+        if self.state == "unresolved" and not self.unresolved_reason:
+            raise ValueError("unresolved configuration accesses require an unresolved reason")
         identity = self.canonical_identity or _digest({
             "key": self.key,
             "value": self.value,
@@ -278,6 +298,7 @@ class ConfigurationClaimV1(_MethodModel):
             "entrypoints": self.entrypoint_span_ids,
             "overrides": self.override_chain,
             "conditions": self.conditions,
+            "source_facts": self.source_fact_ids,
         })
         object.__setattr__(self, "canonical_identity", identity)
         object.__setattr__(self, "content_digest", _digest(self.model_dump(mode="json", exclude={"content_digest"})))
@@ -297,6 +318,293 @@ class ConfigurationClaimSetV1(_MethodModel):
         return self
 
 
+class SemanticFlowSlotV1(_MethodModel):
+    """One closed semantic-flow slot: a single fact with its exact role.
+
+    The slot is a typed binding, not a sentence plan.  ``operands`` preserves
+    every scalar or list member of the fact's object; a list-valued
+    transformation may never become an empty operand list.  ``exact_relation_ids``
+    are only the relations closed-bound to this fact/claim, never the unit's
+    whole relation set.
+    """
+
+    slot_id: str
+    role: Literal["input", "transformation", "condition", "output"]
+    subject: str
+    predicate: str
+    operands: tuple[str, ...] = Field(default_factory=tuple)
+    produced_entities: tuple[str, ...] = Field(default_factory=tuple)
+    conditions: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    exact_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    authority_lanes: tuple[AuthorityLaneV1, ...] = ("executable_hard",)
+    content_digest: str = ""
+
+    @field_validator("slot_id", "subject", "predicate")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("semantic flow slot binding fields must not be empty")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _operand_closure(self) -> "SemanticFlowSlotV1":
+        if self.role == "transformation" and not self.operands:
+            raise ValueError("transformation slots must preserve every scalar/list operand")
+        if not self.fact_ids and not self.claim_ids:
+            raise ValueError("semantic flow slot must bind at least one fact or claim id")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
+class SemanticFlowEdgeV1(_MethodModel):
+    """One authorized typed relation between two closed semantic slots."""
+
+    relation_id: str
+    relation_type: Literal["call_flow", "data_flow", "control_flow", "writes"]
+    source_symbol: str
+    target_symbol: str
+    source_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    conditions: tuple[str, ...] = Field(default_factory=tuple)
+    direct_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @field_validator("relation_id", "source_symbol", "target_symbol")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("semantic flow edge binding fields must not be empty")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _digest(self) -> "SemanticFlowEdgeV1":
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
+class SemanticArgumentFrameV1(_MethodModel):
+    """Closed-ID semantic argument frame for one argument unit.
+
+    Built exactly once by the Architect and consumed by the Writer; both
+    sides must observe the same ``content_digest``.  Direction comes only
+    from predicate roles and authorized typed relations, never from scalar
+    JSON shape or token overlap.
+    """
+
+    frame_id: str
+    argument_unit_id: str
+    slots: tuple[SemanticFlowSlotV1, ...] = Field(default_factory=tuple)
+    edges: tuple[SemanticFlowEdgeV1, ...] = Field(default_factory=tuple)
+    ordered_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    configuration_ids: tuple[str, ...] = Field(default_factory=tuple)
+    configuration_binding_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unresolved_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    authority_lanes: tuple[AuthorityLaneV1, ...] = ("executable_hard",)
+    content_digest: str = ""
+
+    @field_validator("frame_id", "argument_unit_id")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("semantic argument frame identifiers must not be empty")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _closed_bindings(self) -> "SemanticArgumentFrameV1":
+        slot_ids = [item.slot_id for item in self.slots]
+        if len(slot_ids) != len(set(slot_ids)):
+            raise ValueError("semantic argument frame contains duplicate slot IDs")
+        known_slot_ids = set(slot_ids)
+        if len(self.ordered_slot_ids) != len(set(self.ordered_slot_ids)):
+            raise ValueError("semantic argument frame contains duplicate ordered slot IDs")
+        unknown_ordered = sorted(set(self.ordered_slot_ids) - known_slot_ids)
+        if unknown_ordered:
+            raise ValueError(
+                "semantic argument frame orders unknown slots: " + ",".join(unknown_ordered)
+            )
+        if known_slot_ids and set(self.ordered_slot_ids) != known_slot_ids:
+            raise ValueError("semantic argument frame must order every closed slot exactly once")
+        edge_relation_ids = [edge.relation_id for edge in self.edges]
+        if len(edge_relation_ids) != len(set(edge_relation_ids)):
+            raise ValueError("semantic argument frame contains duplicate edge relation IDs")
+        if len(self.unresolved_relation_ids) != len(set(self.unresolved_relation_ids)):
+            raise ValueError("semantic argument frame contains duplicate unresolved relation IDs")
+        overlap = set(edge_relation_ids).intersection(self.unresolved_relation_ids)
+        if overlap:
+            raise ValueError(
+                "semantic argument frame marks relations both resolved and unresolved: "
+                + ",".join(sorted(overlap))
+            )
+        known_fact_ids = set(self.fact_ids)
+        known_claim_ids = set(self.claim_ids)
+        known_relation_ids = {
+            edge.relation_id for edge in self.edges
+        }.union(self.unresolved_relation_ids).union(self.configuration_binding_relation_ids)
+        for slot in self.slots:
+            unknown_facts = set(slot.fact_ids) - known_fact_ids
+            if unknown_facts:
+                raise ValueError(
+                    f"semantic flow slot {slot.slot_id} binds unknown facts: "
+                    + ",".join(sorted(unknown_facts))
+                )
+            unknown_claims = set(slot.claim_ids) - known_claim_ids
+            if unknown_claims:
+                raise ValueError(
+                    f"semantic flow slot {slot.slot_id} binds unknown claims: "
+                    + ",".join(sorted(unknown_claims))
+                )
+            unknown_relations = set(slot.exact_relation_ids) - known_relation_ids
+            if unknown_relations:
+                raise ValueError(
+                    f"semantic flow slot {slot.slot_id} binds unknown relations: "
+                    + ",".join(sorted(unknown_relations))
+                )
+        for edge in self.edges:
+            if not edge.source_slot_ids or not edge.target_slot_ids:
+                raise ValueError(
+                    f"semantic flow edge {edge.relation_id} requires exact source and target slots"
+                )
+            unknown_sources = set(edge.source_slot_ids) - known_slot_ids
+            unknown_targets = set(edge.target_slot_ids) - known_slot_ids
+            if unknown_sources or unknown_targets:
+                raise ValueError(
+                    f"semantic flow edge {edge.relation_id} binds unknown slots: "
+                    + ",".join(sorted(unknown_sources | unknown_targets))
+                )
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
+class ObligationMoveAssignmentV1(_MethodModel):
+    """Exact placement of one completeness row onto a section/unit/move.
+
+    Every critical/high row occurs exactly once among the plan's assignments
+    with its full status, authority lane, sources, next action, and reason
+    intact.  ``assigned`` rows require a section/unit/move; ``external_pending``
+    rows keep the original lane and wait outside Writer input; ``unplaced``
+    rows carry the unresolved reason and fail the plan gate.
+    """
+
+    obligation_id: str
+    importance: Literal["critical", "high", "medium", "low"] = "medium"
+    status: ReferenceMethodStatusV1 = "unverified_by_repository"
+    authority_lane: AuthorityLaneV1 = "executable_hard"
+    source_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    next_action: str = ""
+    unresolved_reason: str = ""
+    section_id: str = ""
+    argument_unit_id: str = ""
+    required_move: str = ""
+    supporting_anchor_ids: tuple[str, ...] = Field(default_factory=tuple)
+    placement_state: Literal["assigned", "external_pending", "unplaced"] = "unplaced"
+    content_digest: str = ""
+
+    @field_validator("obligation_id")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("obligation assignment requires an obligation id")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _placement_closure(self) -> "ObligationMoveAssignmentV1":
+        if self.placement_state == "assigned" and (
+            not self.section_id or not self.argument_unit_id or not self.required_move
+        ):
+            raise ValueError(
+                "assigned obligation rows require a section, unit, and move target"
+            )
+        if self.placement_state == "external_pending" and not self.required_move:
+            raise ValueError(
+                "external_pending obligation rows require a move target"
+            )
+        if self.placement_state == "unplaced" and (
+            self.section_id or self.argument_unit_id or self.required_move
+        ):
+            raise ValueError(
+                "unplaced obligation rows must not carry placement targets"
+            )
+        if self.placement_state == "unplaced" and not self.unresolved_reason:
+            raise ValueError("unplaced obligation rows require an unresolved reason")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
+class MoveAuthorityProofV1(_MethodModel):
+    """Move-specific authority proof: exact anchors and callback ownership.
+
+    ``state`` transitions are monotone: an anchored/bridge move needs no
+    request; an ``open`` move has an exact unresolved assignment; ``fulfilled``
+    requires matching validated artifacts and a rebuilt digest; external
+    author/empirical/literature lanes stay ``external_pending``.
+    """
+
+    section_id: str
+    argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
+    move: RhetoricalMoveV1
+    required: bool = False
+    anchor_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unresolved_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_authority_lane: AuthorityLaneV1 = "executable_hard"
+    owner_route: str = ""
+    state: Literal["anchored", "bridge", "open", "fulfilled", "external_pending"] = "open"
+    request_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fulfillment_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fulfillment_artifact_digest: str = ""
+    content_digest: str = ""
+
+    @field_validator("section_id", "move")
+    @classmethod
+    def _nonempty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("move authority proof binding fields must not be empty")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _state_closure(self) -> "MoveAuthorityProofV1":
+        for label, values in (
+            ("argument unit", self.argument_unit_ids),
+            ("anchor", self.anchor_ids),
+            ("obligation", self.unresolved_obligation_ids),
+            ("request", self.request_ids),
+            ("artifact", self.fulfillment_artifact_ids),
+        ):
+            if len(values) != len(set(values)):
+                raise ValueError(f"move authority proof contains duplicate {label} IDs")
+        if self.state == "fulfilled":
+            if (
+                not self.request_ids
+                or not self.fulfillment_artifact_ids
+                or not self.fulfillment_artifact_digest
+            ):
+                raise ValueError("fulfilled move authority proofs require validated artifacts")
+            if not self.fulfillment_artifact_digest.startswith("sha256:"):
+                raise ValueError("fulfilled move authority proof requires a sha256 artifact digest")
+        elif self.fulfillment_artifact_ids or self.fulfillment_artifact_digest:
+            raise ValueError("non-fulfilled move authority proofs cannot carry artifacts")
+        if self.state in {"anchored", "bridge"} and self.unresolved_obligation_ids:
+            raise ValueError("anchored/bridge move authority proofs cannot carry unresolved rows")
+        if self.state == "open" and not self.unresolved_obligation_ids:
+            raise ValueError("open move authority proofs require an unresolved obligation id")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
 class MethodArgumentUnitV1(_MethodModel):
     """The smallest publication-level argument that can span several facts."""
 
@@ -313,14 +621,23 @@ class MethodArgumentUnitV1(_MethodModel):
     behavior_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
     allowed_expository_moves: tuple[RhetoricalMoveV1, ...] = Field(default_factory=tuple)
     unresolved_inputs: tuple[str, ...] = Field(default_factory=tuple)
-    authority_lanes: tuple[AuthorityLaneV1, ...] = Field(default_factory=("executable_hard",))
+    authority_lanes: tuple[AuthorityLaneV1, ...] = ("executable_hard",)
     source_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Exact authoring obligations carried by the compiler-authored semantic
+    # stage that produced this unit.  This is a planning binding, not factual
+    # authority; persisting it prevents later placement from guessing via an
+    # obligation-id prefix or vocabulary overlap.
+    source_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
     supported: bool = True
     information_weight: float = 1.0
+    semantic_frame: SemanticArgumentFrameV1 | None = None
+    obligation_assignments: tuple[ObligationMoveAssignmentV1, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
     @model_validator(mode="after")
     def _digest(self) -> "MethodArgumentUnitV1":
+        if len(self.source_obligation_ids) != len(set(self.source_obligation_ids)):
+            raise ValueError("argument unit contains duplicate source obligation ids")
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest(payload))
         return self
@@ -331,7 +648,7 @@ class SectionArgumentMoveV1(_MethodModel):
     argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
     paragraph_budget: int = 1
     information_budget: float = 1.0
-    allowed_authority_lanes: tuple[AuthorityLaneV1, ...] = Field(default_factory=("executable_hard",))
+    allowed_authority_lanes: tuple[AuthorityLaneV1, ...] = ("executable_hard",)
     required: bool = False
     notes: tuple[str, ...] = Field(default_factory=tuple)
 
@@ -384,9 +701,144 @@ class WritingResearchRequestV1(_MethodModel):
     fulfilled_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
+    @field_validator("request_id", "section_id", "argument_unit_id", "exact_question")
+    @classmethod
+    def _required_binding_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("writing research request binding text must not be empty")
+        return value.strip()
+
     @model_validator(mode="after")
     def _digest(self) -> "WritingResearchRequestV1":
         object.__setattr__(self, "content_digest", _digest(self.model_dump(mode="json", exclude={"content_digest"})))
+        return self
+
+
+class WritingResearchCallbackArtifactV1(_MethodModel):
+    """Validated artifact that authorizes resuming exactly one Writer request."""
+
+    artifact_id: str
+    request_id: str
+    section_id: str
+    argument_unit_id: str
+    authority_lane: AuthorityLaneV1
+    artifact_ref: str
+    artifact_digest: str
+    validated: bool = False
+
+    @model_validator(mode="after")
+    def _validated_binding(self) -> "WritingResearchCallbackArtifactV1":
+        if not all((
+            self.artifact_id.strip(), self.request_id.strip(), self.section_id.strip(),
+            self.argument_unit_id.strip(), self.artifact_ref.strip(),
+        )):
+            raise ValueError("writing callback artifact binding fields must not be empty")
+        if not self.artifact_digest.startswith("sha256:"):
+            raise ValueError("writing callback artifact requires a sha256 digest")
+        if not self.validated:
+            raise ValueError("writing callback artifact must pass its owning validator")
+        return self
+
+
+class WritingResearchCallbackBundleV1(_MethodModel):
+    """Persistent hand-off between a Writer turn and its owning researcher.
+
+    The bundle is deliberately an artifact rather than an in-memory callback
+    argument.  A blocked/incomplete authoring stage can therefore be resumed
+    after the owning authority has validated a result, while the Writer still
+    receives only the affected section and the exact request binding.
+    """
+
+    schema_version: str = "1.0"
+    requests: tuple[WritingResearchRequestV1, ...] = Field(default_factory=tuple)
+    artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] = Field(
+        default_factory=dict
+    )
+    requested_resume_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    resume_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @property
+    def _locally_owned_lanes(self) -> frozenset[str]:
+        return frozenset({
+            "executable_hard", "configuration_resolved", "formal_derivation",
+        })
+
+    @model_validator(mode="after")
+    def _validate_bindings(self) -> "WritingResearchCallbackBundleV1":
+        request_ids = [item.request_id for item in self.requests]
+        if len(request_ids) != len(set(request_ids)):
+            raise ValueError("writing callback bundle contains duplicate request IDs")
+        requests_by_id = {item.request_id: item for item in self.requests}
+        known_section_ids = {item.section_id for item in self.requests}
+        # ``requested_resume_section_ids`` is truthful telemetry of the set the
+        # previous run asked to resume; it may include sections without a
+        # current request entry, so only the admitted set is restricted to
+        # known sections.
+        unknown_admitted_sections = sorted(
+            set(self.resume_section_ids) - known_section_ids
+        )
+        if unknown_admitted_sections:
+            raise ValueError(
+                "writing callback bundle contains unknown resume sections: "
+                + ",".join(unknown_admitted_sections)
+            )
+        # A section is resume-eligible (admitted) only when every blocking
+        # locally owned request selected for it is fulfilled by a validated
+        # artifact.  The persisted ``resume_section_ids`` marker is the
+        # admission set: the writer clears it after a section is actually
+        # regenerated, and it is never derived from request status alone here
+        # (or fulfillment would force a full-document rewrite forever).
+        # Open requests must not populate the marker; external-pending rows
+        # stay pending and are never replayed as if fulfilled.
+        # ``requested_resume_section_ids`` records the sections the previous
+        # run asked to resume for truthful telemetry.
+        open_local_sections = {
+            item.section_id for item in self.requests
+            if item.status == "open"
+            and item.required_authority_lane in self._locally_owned_lanes
+        }
+        section_ids = set(self.resume_section_ids) - open_local_sections
+        for request_id, items in self.artifacts.items():
+            request = requests_by_id.get(request_id)
+            if request is None:
+                raise ValueError(f"callback artifact bundle contains unknown request: {request_id}")
+            if request.status == "open":
+                raise ValueError(
+                    f"open callback request cannot contain validated artifacts: {request_id}"
+                )
+            for artifact in items:
+                if (
+                    artifact.request_id != request.request_id
+                    or artifact.section_id != request.section_id
+                    or artifact.argument_unit_id != request.argument_unit_id
+                    or artifact.authority_lane != request.required_authority_lane
+                ):
+                    raise ValueError(
+                        f"callback artifact does not match request binding: {request_id}"
+                    )
+        for request in self.requests:
+            items = self.artifacts.get(request.request_id, ())
+            artifact_ids = tuple(item.artifact_id for item in items)
+            if request.status == "fulfilled":
+                if not items or not request.fulfilled_artifact_ids:
+                    raise ValueError(
+                        f"fulfilled callback request lacks validated artifacts: {request.request_id}"
+                    )
+                if set(artifact_ids) != set(request.fulfilled_artifact_ids):
+                    raise ValueError(
+                        f"fulfilled callback artifact IDs do not match request: {request.request_id}"
+                    )
+            elif request.fulfilled_artifact_ids:
+                raise ValueError(
+                    f"non-fulfilled callback request contains fulfilled artifact IDs: {request.request_id}"
+                )
+        object.__setattr__(self, "resume_section_ids", tuple(sorted(section_ids)))
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        computed_digest = _digest(payload)
+        if self.content_digest and self.content_digest != computed_digest:
+            raise ValueError("writing callback bundle content digest mismatch")
+        object.__setattr__(self, "content_digest", computed_digest)
         return self
 
 
@@ -411,7 +863,13 @@ class ProofObligationV1(_MethodModel):
 
 
 class MethodSectionPlanV2(_MethodModel):
-    """Architect output: section graph plus dynamic budget, no final text."""
+    """Architect output: section graph plus dynamic budget, no final text.
+
+    The plan binds every typed obligation assignment (assigned, external
+    pending, and unplaced) and every move-specific authority proof so the
+    digest covers the complete placement/authority surface, not only trace
+    dictionaries.
+    """
 
     plan_id: str
     method_name: str = ""
@@ -421,10 +879,123 @@ class MethodSectionPlanV2(_MethodModel):
     audience: str = ""
     total_page_budget: float = 0.0
     incomplete_sections: tuple[str, ...] = Field(default_factory=tuple)
+    obligation_assignments: tuple[ObligationMoveAssignmentV1, ...] = Field(default_factory=tuple)
+    move_authority_proofs: tuple[MoveAuthorityProofV1, ...] = Field(default_factory=tuple)
+    critical_high_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    completeness_digest: str = ""
     content_digest: str = ""
 
+    def assignments_by_obligation(self) -> dict[str, ObligationMoveAssignmentV1]:
+        return {item.obligation_id: item for item in self.obligation_assignments}
+
+    def proofs_by_key(self) -> dict[tuple[str, str], MoveAuthorityProofV1]:
+        return {(item.section_id, item.move): item for item in self.move_authority_proofs}
+
     @model_validator(mode="after")
-    def _digest(self) -> "MethodSectionPlanV2":
+    def _closed_bindings_and_digest(self) -> "MethodSectionPlanV2":
+        section_ids = [item.section_id for item in self.sections]
+        unit_ids = [item.argument_unit_id for item in self.argument_units]
+        if len(section_ids) != len(set(section_ids)):
+            raise ValueError("method section plan contains duplicate section IDs")
+        if len(unit_ids) != len(set(unit_ids)):
+            raise ValueError("method section plan contains duplicate argument unit IDs")
+        known_sections = set(section_ids)
+        known_units = set(unit_ids)
+        sections_by_unit: dict[str, set[str]] = {}
+        moves_by_section: dict[str, set[str]] = {}
+        for section in self.sections:
+            if len(section.argument_unit_ids) != len(set(section.argument_unit_ids)):
+                raise ValueError(f"section {section.section_id} contains duplicate unit IDs")
+            move_ids = [item.move for item in section.moves]
+            if len(move_ids) != len(set(move_ids)):
+                raise ValueError(f"section {section.section_id} contains duplicate moves")
+            unknown_units = set(section.argument_unit_ids) - known_units
+            if unknown_units:
+                raise ValueError(
+                    f"section {section.section_id} binds unknown units: "
+                    + ",".join(sorted(unknown_units))
+                )
+            for unit_id in section.argument_unit_ids:
+                sections_by_unit.setdefault(unit_id, set()).add(section.section_id)
+            moves_by_section[section.section_id] = {item.move for item in section.moves}
+
+        assignment_ids = [item.obligation_id for item in self.obligation_assignments]
+        if len(assignment_ids) != len(set(assignment_ids)):
+            raise ValueError("method section plan contains duplicate obligation assignments")
+        assignment_by_id = {
+            item.obligation_id: item for item in self.obligation_assignments
+        }
+        if len(self.critical_high_obligation_ids) != len(set(self.critical_high_obligation_ids)):
+            raise ValueError("method section plan contains duplicate critical/high obligation IDs")
+        if self.critical_high_obligation_ids:
+            if not self.completeness_digest.startswith("sha256:"):
+                raise ValueError("closed critical/high obligations require a completeness digest")
+            if set(assignment_ids) != set(self.critical_high_obligation_ids):
+                raise ValueError("method section plan obligation assignments are not complete")
+        for assignment in self.obligation_assignments:
+            if assignment.placement_state == "unplaced":
+                continue
+            if assignment.placement_state == "external_pending" and (
+                not assignment.section_id and not assignment.argument_unit_id
+            ):
+                # A genuinely external owner (author/empirical/literature) may
+                # wait outside the Writer input with no local section/unit
+                # binding; the required move and original authority lane stay
+                # intact so routing remains explicit.
+                continue
+            if assignment.section_id not in known_sections:
+                raise ValueError(
+                    f"obligation {assignment.obligation_id} binds unknown section"
+                )
+            if assignment.argument_unit_id not in known_units:
+                raise ValueError(
+                    f"obligation {assignment.obligation_id} binds unknown argument unit"
+                )
+            if assignment.section_id not in sections_by_unit.get(
+                assignment.argument_unit_id, set()
+            ):
+                raise ValueError(
+                    f"obligation {assignment.obligation_id} crosses its unit section binding"
+                )
+            if assignment.required_move not in moves_by_section.get(assignment.section_id, set()):
+                raise ValueError(
+                    f"obligation {assignment.obligation_id} binds an unknown section move"
+                )
+
+        proof_keys = [(item.section_id, item.move) for item in self.move_authority_proofs]
+        if len(proof_keys) != len(set(proof_keys)):
+            raise ValueError("method section plan contains duplicate move authority proofs")
+        for proof in self.move_authority_proofs:
+            if proof.section_id not in known_sections:
+                raise ValueError("move authority proof binds an unknown section")
+            if proof.move not in moves_by_section.get(proof.section_id, set()):
+                raise ValueError("move authority proof binds an unknown section move")
+            unknown_units = set(proof.argument_unit_ids) - known_units
+            if unknown_units:
+                raise ValueError(
+                    "move authority proof binds unknown units: "
+                    + ",".join(sorted(unknown_units))
+                )
+            if any(
+                proof.section_id not in sections_by_unit.get(unit_id, set())
+                for unit_id in proof.argument_unit_ids
+            ):
+                raise ValueError("move authority proof crosses a unit section binding")
+            unknown_obligations = set(proof.unresolved_obligation_ids) - set(assignment_by_id)
+            if unknown_obligations:
+                raise ValueError(
+                    "move authority proof binds unknown obligations: "
+                    + ",".join(sorted(unknown_obligations))
+                )
+            for obligation_id in proof.unresolved_obligation_ids:
+                assignment = assignment_by_id[obligation_id]
+                if (
+                    assignment.section_id != proof.section_id
+                    or assignment.required_move != proof.move
+                ):
+                    raise ValueError(
+                        f"move authority proof does not match obligation {obligation_id}"
+                    )
         object.__setattr__(self, "content_digest", _digest(self.model_dump(mode="json", exclude={"content_digest"})))
         return self
 
@@ -449,9 +1020,12 @@ def build_reference_method_agenda(
         target_queries = tuple(query for target in targets for query in getattr(target, "search_terms", ()))
         queries = tuple(dict.fromkeys([*getattr(item, "retrieval_queries", ()), *target_queries]))
         kind = str(getattr(item, "kind", "implementation"))
-        if kind in {"rationale_check", "high_risk_claim", "mismatch_check"}:
+        if kind in {"rationale_check", "mismatch_check"}:
             lane: AuthorityLaneV1 = "author_attested"
             obligation_class = "rationale" if kind == "rationale_check" else "capability"
+        elif kind == "high_risk_claim":
+            lane = "external_literature"
+            obligation_class = "capability"
         elif kind == "organization":
             lane = "expository_bridge"
             obligation_class = "capability"
@@ -503,14 +1077,15 @@ def build_completeness_matrix(
     for obligation in agenda.obligations:
         coverage = coverage_by_id.get(obligation.obligation_id)
         coverage_status = str(getattr(coverage, "coverage_status", "unresolved"))
-        status_map: dict[str, ReferenceMethodStatusV1] = {
-            "supported": "supported_by_repository",
-            "partial": "partially_supported_by_repository",
-            "explicit_gap": "explicit_code_gap",
-            "blocked": "unverified_by_repository",
-            "unresolved": "unverified_by_repository",
-        }
-        status = status_map.get(coverage_status, "unverified_by_repository")
+        status = _resolve_reference_status(
+            obligation,
+            coverage_status=coverage_status,
+            coverage_reason=str(
+                getattr(coverage, "rationale", "")
+                or getattr(coverage, "reason", "")
+            ),
+        )
+        matched_fact_ids, matched_relation_ids = _coverage_matched_evidence(coverage)
         claim_ids = tuple(
             str(claim.claim_id)
             for claim in claims
@@ -519,7 +1094,15 @@ def build_completeness_matrix(
         if status == "supported_by_repository" and not claim_ids:
             status = "partially_supported_by_repository"
         reason = str(getattr(coverage, "rationale", "")) if coverage is not None else "No coverage artifact is available."
-        next_action = "" if status != "unverified_by_repository" else "run scoped repository research"
+        next_action = {
+            "unverified_by_repository": "run scoped repository research",
+            "paper_code_mismatch": "ask the author to reconcile the paper statement with the active code path",
+            "author_confirmation_required": "request an explicit author confirmation artifact",
+            "external_evidence_required": "collect and validate the required external or empirical evidence",
+            "formalization_required": "run the Formalization Agent with explicit assumptions",
+            "explicit_code_gap": "ask the author to accept the scoped code gap or authorize a wider search scope",
+            "out_of_scope": "retain the unit in the review sidecar with its declared scope reason",
+        }.get(status, "")
         items.append(MethodCompletenessItemV1(
             obligation_id=obligation.obligation_id,
             role=obligation.role,
@@ -541,6 +1124,8 @@ def build_completeness_matrix(
             claim_ids=claim_ids,
             equation_ids=equations.get(obligation.obligation_id, ()),
             configuration_ids=configurations.get(obligation.obligation_id, ()),
+            matched_fact_ids=matched_fact_ids,
+            matched_relation_ids=matched_relation_ids,
             reason=reason,
             next_action=next_action,
         ))
@@ -550,6 +1135,67 @@ def build_completeness_matrix(
         agenda_digest=agenda.content_digest,
         items=tuple(items),
     )
+
+
+def _coverage_matched_evidence(coverage: Any | None) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Extract the coverage compiler's matched fact/relation handles.
+
+    The V2 coverage report carries per-target ``matched_fact_ids`` and
+    ``matched_relations``; claim-bearing rows already expose their evidence
+    through ``source_artifact_ids``, but claim-less partial/gap rows would
+    otherwise lose every evidence handle.  Empty when no coverage artifact is
+    available.
+    """
+
+    if coverage is None:
+        return (), ()
+    fact_ids: list[str] = []
+    relation_ids: list[str] = []
+    for target in getattr(coverage, "target_alignments", ()) or ():
+        fact_ids.extend(
+            str(item)
+            for item in (getattr(target, "matched_fact_ids", ()) or ())
+            if str(item)
+        )
+        relation_ids.extend(
+            str(item)
+            for item in (getattr(target, "matched_relations", ()) or ())
+            if str(item)
+        )
+    return (
+        tuple(dict.fromkeys(fact_ids)),
+        tuple(dict.fromkeys(relation_ids)),
+    )
+
+
+def _resolve_reference_status(
+    obligation: ReferenceMethodObligationV1,
+    *,
+    coverage_status: str,
+    coverage_reason: str,
+) -> ReferenceMethodStatusV1:
+    """Preserve the full nine-state contract without authority collapse."""
+
+    if obligation.status != "unverified_by_repository":
+        return obligation.status
+    if coverage_status == "supported":
+        return "supported_by_repository"
+    if coverage_status == "partial":
+        return "partially_supported_by_repository"
+    if coverage_status == "explicit_gap":
+        return "explicit_code_gap"
+    reason = coverage_reason.lower()
+    if "mismatch" in reason or "contradict" in reason:
+        return "paper_code_mismatch"
+    if obligation.authority_lane == "author_attested":
+        return "author_confirmation_required"
+    if obligation.authority_lane in {"external_literature", "empirical_artifact"}:
+        return "external_evidence_required"
+    if obligation.authority_lane == "formal_derivation" or obligation.obligation_class == "equation":
+        return "formalization_required"
+    if obligation.authority_lane == "expository_bridge":
+        return "out_of_scope"
+    return "unverified_by_repository"
 
 
 __all__ = [
@@ -573,6 +1219,8 @@ __all__ = [
     "SectionArgumentGraphV1",
     "SectionArgumentMoveV1",
     "WritingResearchRequestV1",
+    "WritingResearchCallbackArtifactV1",
+    "WritingResearchCallbackBundleV1",
     "build_completeness_matrix",
     "build_reference_method_agenda",
 ]

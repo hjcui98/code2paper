@@ -10,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.repo_snapshot import RepoSnapshot
 
+GENERIC_RESEARCH_PRODUCER_VERSION = "code2paper-generic-research-data-plane-v1"
+
 def _digest(value: Any) -> str:
     if not isinstance(value, str):
         value = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -37,14 +39,46 @@ class RejectedEvidenceCandidateV3(CompilerV3Model):
     reason: str
     allowed_scope: str = ""
 
+class RelationEndpointV3(CompilerV3Model):
+    """Exact operation-level endpoint of a relation edge.
+
+    Resolved through the behavior graph ``nodes_by_id`` at the relation
+    evidence boundary so the semantic frame can bind both endpoints to exact
+    slots.  ``operation_subject`` is the owning symbol, ``predicate`` the node
+    predicate, ``operands`` the exact operands, ``produced_entity`` the node's
+    result, and ``source_span_id`` the exact span.  An empty ``node_id`` means
+    the endpoint could not be resolved and the relation must stay unresolved.
+    """
+
+    node_id: str
+    symbol_id: str
+    operation_subject: str
+    predicate: str
+    operands: tuple[str, ...] = Field(default_factory=tuple)
+    produced_entity: str = ""
+    source_span_id: str = ""
+
+    @property
+    def resolved(self) -> bool:
+        return bool(self.node_id and self.source_span_id)
+
+
 class RelationEvidenceV3(CompilerV3Model):
     relation_id: str
-    relation_type: Literal["call_flow", "data_flow", "control_flow", "writes"]
+    relation_type: Literal["call_flow", "data_flow", "control_flow", "writes", "configuration_binding"]
     source_symbol: str
     target_symbol: str
+    source_endpoint: RelationEndpointV3 | None = None
+    target_endpoint: RelationEndpointV3 | None = None
     direct_span_ids: list[str] = Field(default_factory=list)
     conditions: list[str] = Field(default_factory=list)
     statement: str
+
+    @model_validator(mode="after")
+    def _endpoints_consistent(self) -> "RelationEvidenceV3":
+        if (self.source_endpoint is None) != (self.target_endpoint is None):
+            raise ValueError("relation endpoints must be resolved or unresolved together")
+        return self
 
 class EvidencePacketV3(CompilerV3Model):
     packet_id: str
@@ -80,7 +114,7 @@ class EvidencePacketSetV3(CompilerV3Model):
 
 FactPredicate = Literal[
     # First-batch predicates (preserved for backward compatibility with the
-    # project-specific profile in ``compile_evidence_v3``).
+    # archived profile fixtures in ``compile_legacy_profile_evidence_v3``).
     "reads", "transforms", "constructs", "loads_weights", "calls", "calls_in_order",
     "returns", "selects", "selects_column", "sorts_by", "selects_top_k",
     "constructs_mask", "filters_by", "writes", "writes_artifact", "branches_on",
@@ -259,20 +293,40 @@ class _SourceIndex:
         )
 
 def compile_evidence_v3(repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:
-    """Select a structure profile, compile it, and run common validation.
+    """Canonical D2 entry point: profiles cannot compile evidence.
 
-    Returning ``None`` is a fail-closed profile miss; callers may retain V2
-    diagnostics but must not authorize Method prose from the V2 fallback.
+    Evidence compilation requires an obligation-scoped behavior graph and
+    persisted packet proposal, neither of which this snapshot-only API owns.
+    Callers must use the generic research data plane instead.
+    """
+
+    del repo_snapshot
+    return None
+
+
+def compile_legacy_profile_evidence_v3(
+    repo_snapshot: RepoSnapshot,
+) -> EvidenceCompilerV3Result | None:
+    """Compile archived profile fixtures for migration diagnostics only.
+
+    Production code must not call this function.  Its producer versions and
+    profile manifest are rejected by the D2 acceptance boundary.
     """
 
     from code2paper.agentic.evidence_profiles.registry import (
         default_evidence_profile_registry,
     )
 
-    profile, matches = default_evidence_profile_registry().select(repo_snapshot)
+    # The ordinary registry selection exposes a discovery-only view.  Legacy
+    # profile compilation is deliberately available only through this named
+    # diagnostics route and never through the production selector.
+    profile, matches = default_evidence_profile_registry().select_legacy(repo_snapshot)
     if profile is None:
         return None
-    result = profile.compile(repo_snapshot)
+    legacy_compile = getattr(profile, "_compile_legacy", None)
+    if not callable(legacy_compile):
+        return None
+    result = legacy_compile(repo_snapshot)
     if result is None:
         return None
     if validate_evidence_compiler_v3(result, repo_snapshot):

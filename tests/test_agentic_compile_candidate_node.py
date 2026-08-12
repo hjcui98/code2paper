@@ -57,6 +57,9 @@ from code2paper.agentic.research_nodes import (
     BudgetPolicyV1,
     InformationGainTracker,
     ResearchGraphRuntime,
+    _alignment_semantic_context,
+    _build_evidence_packet_proposal,
+    _rank_relevant_behavior_nodes,
     compile_candidate_node,
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
@@ -69,6 +72,60 @@ from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
 
 _REPO_SNAPSHOT_ID = "repo:test-snapshot"
 _PROJECT_TREE_HASH = "sha256:tree"
+
+
+def test_unread_candidate_symbol_name_is_not_semantic_evidence() -> None:
+    obligation = _obligation(
+        "obl-candidate-hint",
+        candidate_symbol_ids=(
+            "symbol:model.py:LLM.infer:30",
+            "symbol:index.py:build_index:4",
+        ),
+    )
+    selected = _node(
+        node_id="node:index-call",
+        symbol_id="sym:index.build_index",
+        predicate="CALL",
+        operands=("store.write",),
+        source_span_id="span:index.py:4:8",
+    )
+
+    context = _alignment_semantic_context(obligation, [selected])
+
+    assert "LLM.infer" not in context
+    assert "model.py" not in context
+    assert "store.write" in context
+
+
+def test_packet_proposal_carries_unselected_configuration_relation_endpoint() -> None:
+    operation = _node(
+        node_id="node:operation",
+        symbol_id="sym:model.forward",
+        predicate="FILTER",
+        operands=("score < self.threshold",),
+        source_span_id="span:model.py:20:21",
+    )
+    relation = _relation(
+        relation_id="rel:configured",
+        kind="CONFIGURED_BY",
+        source_node_id=operation.node_id,
+        target_node_id="node:config-default",
+        source_span_id=operation.source_span_id,
+        target_span_id="span:model.py:5:5",
+    )
+
+    proposal = _build_evidence_packet_proposal(
+        obligation_id="obl-config",
+        selected_nodes=[operation],
+        selected_relations=[relation],
+    )
+
+    assert proposal is not None
+    assert proposal.behavior_node_ids == [
+        "node:operation",
+        "node:config-default",
+    ]
+    assert proposal.relation_span_ids == ["span:model.py:5:5"]
 
 
 _TRAIN_PY = """\
@@ -180,6 +237,142 @@ def _relation(
         target_span_id=target_span_id,
         guard=guard,
     )
+
+
+def test_strong_semantic_anchor_excludes_unrelated_same_predicate_symbol() -> None:
+    mamba_symbol = make_symbol_id("models.py", "MambaEncoder.forward", 1)
+    other_symbol = make_symbol_id("models.py", "OtherTemporalModel.forward", 20)
+    nodes = [
+        _node(
+            node_id="node:mamba",
+            symbol_id=mamba_symbol,
+            predicate="COMPUTE",
+            operands=("state space update",),
+        ),
+        _node(
+            node_id="node:other",
+            symbol_id=other_symbol,
+            predicate="COMPUTE",
+            operands=("temporal attention output",),
+        ),
+    ]
+    obligation = ResearchAgendaItemV1(
+        obligation_id="obl-state-space",
+        priority="must_cover",
+        author_text="Apply a continuous state space update.",
+        typed_behavior_targets=[TypedBehaviorTargetV1(
+            target_id="target-state-space",
+            role="temporal",
+            desired_predicates=("COMPUTE",),
+            transformations=("state space",),
+        )],
+        candidate_symbol_ids=[
+            "symbol:models.py:MambaEncoder.forward:1",
+            "symbol:models.py:OtherTemporalModel.forward:20",
+        ],
+    )
+
+    selected = _rank_relevant_behavior_nodes(nodes, obligation)
+
+    assert [node.node_id for node in selected] == ["node:mamba"]
+
+
+def test_relevant_symbol_adds_bounded_method_completeness_operations() -> None:
+    symbol = make_symbol_id("model.py", "NamedEncoder.forward", 1)
+    other_symbol = make_symbol_id("model.py", "Baseline.forward", 50)
+    nodes = [
+        _node(node_id="node:compute", symbol_id=symbol, predicate="COMPUTE"),
+        _node(
+            node_id="node:branch",
+            symbol_id=symbol,
+            predicate="BRANCH",
+            guard="special_mode",
+        ),
+        _node(
+            node_id="node:irrelevant-branch",
+            symbol_id=symbol,
+            predicate="BRANCH",
+            guard="cache_available",
+        ),
+        _node(node_id="node:norm", symbol_id=symbol, predicate="NORMALIZE"),
+        _node(node_id="node:topk", symbol_id=symbol, predicate="TOPK"),
+        _node(node_id="node:other-topk", symbol_id=other_symbol, predicate="TOPK"),
+    ]
+    obligation = ResearchAgendaItemV1(
+        obligation_id="obl-completeness",
+        priority="must_cover",
+        author_text="Compute an encoded representation in special mode.",
+        typed_behavior_targets=[TypedBehaviorTargetV1(
+            target_id="target-compute",
+            role="feature",
+            desired_predicates=("COMPUTE",),
+        )],
+    )
+
+    selected = _rank_relevant_behavior_nodes(nodes, obligation)
+    selected_ids = {node.node_id for node in selected}
+
+    assert {"node:compute", "node:branch", "node:norm", "node:topk"} <= selected_ids
+    assert "node:irrelevant-branch" not in selected_ids
+    assert "node:other-topk" not in selected_ids
+
+
+def test_disjoint_typed_targets_select_their_own_semantic_witnesses() -> None:
+    index_symbol = make_symbol_id("system.py", "Pipeline.index", 1)
+    infer_symbol = make_symbol_id("system.py", "LLM.infer", 20)
+    answer_helper_symbol = make_symbol_id("system.py", "normalize_answer", 40)
+    nodes = [
+        _node(
+            node_id="node:index-write",
+            symbol_id=index_symbol,
+            predicate="WRITE",
+            operands=("graph_store",),
+        ),
+        _node(
+            node_id="node:infer-call",
+            symbol_id=infer_symbol,
+            predicate="CALL",
+            operands=("client.infer",),
+        ),
+        _node(
+            node_id="node:answer-helper",
+            symbol_id=answer_helper_symbol,
+            predicate="CALL",
+            operands=("text.lower",),
+        ),
+    ]
+    obligation = ResearchAgendaItemV1(
+        obligation_id="obl-lifecycle",
+        priority="should_cover",
+        author_text="Index a graph and invoke generation.",
+        typed_behavior_targets=[
+            TypedBehaviorTargetV1(
+                target_id="target-index",
+                role="graph_builder",
+                desired_predicates=("CALL", "WRITE"),
+                predicate_groups=(("CALL", "WRITE"),),
+                transformations=("indexing",),
+            ),
+            TypedBehaviorTargetV1(
+                target_id="target-generation",
+                role="generation",
+                desired_predicates=("CALL", "RETURN"),
+                predicate_groups=(("CALL", "RETURN"),),
+                transformations=("generation",),
+            ),
+        ],
+        candidate_symbol_ids=[
+            "symbol:system.py:Pipeline.index:1",
+            "symbol:system.py:LLM.infer:20",
+            "symbol:system.py:normalize_answer:40",
+        ],
+    )
+
+    selected = _rank_relevant_behavior_nodes(nodes, obligation)
+    selected_ids = {node.node_id for node in selected}
+
+    assert {"node:index-write", "node:infer-call"} <= selected_ids
+    assert "node:answer-helper" not in selected_ids
 
 
 def _graph(
@@ -340,6 +533,23 @@ class TestCompileCandidateSuccess:
         assert isinstance(compiled["packet_set"], EvidencePacketSetV3)
         assert isinstance(compiled["fact_set"], CodeFactSetV1)
         assert isinstance(compiled["claim_set"], AtomicClaimSetV3)
+        # The compatibility node must replay through all six D1 tools rather
+        # than calling the generic compilers through a second implementation.
+        assert len(update["tool_call_trace_refs"]) == 6
+        artifact_root = runtime.tool_context(
+            behavior_graph=bg
+        ).artifact_root / "research_tool_artifacts"
+        for artifact_kind in (
+            "packet_proposals",
+            "packet_validation_reports",
+            "validated_packets",
+            "fact_sets",
+            "fact_validation_reports",
+            "claim_proposal_sets",
+            "claim_authorization_reports",
+            "authorized_claim_sets",
+        ):
+            assert list((artifact_root / artifact_kind).glob("*.json")), artifact_kind
 
     def test_obligation_marked_supported_with_claim_ids(
         self, snapshot: RepoSnapshot
@@ -815,6 +1025,41 @@ class TestGapFinalizerDelegation:
         assert "_compiled_evidence" not in update
         assert obl.status != "supported"
 
+    def test_validated_facts_survive_unresolved_semantic_detail(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        target = TypedBehaviorTargetV1(
+            target_id="target-dimension",
+            role="feature",
+            desired_predicates=("READ",),
+            outputs=("dimension 15",),
+        )
+        obl = _obligation(
+            "obl-partial-facts",
+            candidate_symbol_ids=("train.py",),
+            typed_behavior_targets=(target,),
+        )
+        runtime = _runtime(snapshot, _agenda("run-partial", snapshot, obl))
+        update = compile_candidate_node(
+            _state("obl-partial-facts"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[_node(
+                node_id="node:partial-read",
+                predicate="READ",
+                operands=("optimizer",),
+                result="optimizer_config",
+                source_span_id="span:train.py:9:10",
+            )]),
+            active_obligation_id="obl-partial-facts",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        assert "_compiled_evidence" not in update
+        partial = update["_partial_evidence"]
+        assert partial["fact_set"].facts
+        assert partial["claim_set"].claims == []
+        assert obl.status != "supported"
+
     def test_empty_behavior_graph_routes_to_gap_finalizer(
         self, snapshot: RepoSnapshot
     ) -> None:
@@ -835,6 +1080,36 @@ class TestGapFinalizerDelegation:
         )
         assert "_compiled_evidence" not in update
         assert update.get("_gap_accepted") is False
+
+    def test_packet_validator_failure_returns_retryable_owner_issue(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        obl = _obligation(
+            "obl-weak-anchor",
+            candidate_symbol_ids=("train.py:train",),
+        )
+        runtime = _runtime(snapshot, _agenda("run-weak", snapshot, obl))
+        node = _node(
+            node_id="node:weak-anchor",
+            source_span_id="span:train.py:9:10",
+            source_authority="semantic_hint",
+        )
+
+        update = compile_candidate_node(
+            _state("obl-weak-anchor"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[node]),
+            active_obligation_id="obl-weak-anchor",
+            gain_tracker=InformationGainTracker(),
+        )
+
+        assert "_compiled_evidence" not in update
+        assert "_gap_accepted" not in update
+        assert update["active_issue_id"].startswith("issue:data-plane:")
+        assert any(
+            item.startswith("tool_data_plane:validate_evidence_packet:")
+            for item in obl.missing_information
+        )
 
     def test_no_anchor_spans_routes_to_gap_finalizer(
         self, snapshot: RepoSnapshot

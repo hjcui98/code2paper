@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.text_evidence_validator import report_digest
 from code2paper.agentic.trust_contracts import (
     AuthoringInputProjection,
@@ -81,9 +82,13 @@ def build_final_text_trace(
 
 def write_final_text_trace(path: str | Path, trace: FinalTextTrace) -> Path:
     output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(trace.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return output
+    return atomic_write_bytes(
+        output,
+        (
+            json.dumps(trace.model_dump(mode="json"), ensure_ascii=False, indent=2)
+            + "\n"
+        ).encode("utf-8"),
+    )
 
 
 def load_final_text_trace(path: str | Path) -> FinalTextTrace:

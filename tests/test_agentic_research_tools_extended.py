@@ -21,10 +21,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
+from code2paper.agentic.behavior_graph import BehaviorNodeV1, CodeBehaviorGraphV1
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 from code2paper.agentic.research_models import ResearchToolCallV1
 from code2paper.agentic.research_tools import (
@@ -140,7 +142,27 @@ def rich_repo(tmp_path: Path) -> Path:
 @pytest.fixture()
 def ctx(rich_repo: Path) -> ResearchToolContext:
     snapshot = build_repo_snapshot(rich_repo)
-    return ResearchToolContext(repo_snapshot=snapshot)
+    graph = CodeBehaviorGraphV1(
+        repo_snapshot_id=snapshot.snapshot_id,
+        project_tree_hash=snapshot.project_tree_hash,
+        nodes=[
+            BehaviorNodeV1(
+                node_id="node:trainer-model",
+                symbol_id="sym:train.Trainer.__init__",
+                operation_id="op:trainer-model",
+                predicate="CONSTRUCT",
+                operands=("torch.nn.Linear",),
+                result="self.model",
+                source_span_id="span:train.py:15:18",
+                source_authority="executable_hard",
+            )
+        ],
+    ).with_digest()
+    return ResearchToolContext(
+        repo_snapshot=snapshot,
+        behavior_graph=graph,
+        artifact_root=rich_repo / ".research-artifacts",
+    )
 
 
 def _tool_call(
@@ -805,6 +827,112 @@ class TestCompareHintToCode:
 # ---------------------------------------------------------------------------
 
 
+def _run_real_evidence_chain(
+    ctx: ResearchToolContext,
+    *,
+    through: str,
+):
+    """Drive the D1 packet -> fact -> claim data plane without a facade."""
+
+    proposed = propose_evidence_packet(
+        ctx,
+        _tool_call(
+            tool_name="propose_evidence_packet",
+            tool_call_id="tc-chain-propose",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "obligation_tag": "obl-trainer",
+                "packet_id": "packet-trainer",
+                "anchor_span_ids": ("span:train.py:15:18",),
+                "behavior_node_ids": ("node:trainer-model",),
+            },
+        ),
+    )
+    assert proposed.status == "success", proposed
+    validated_packet = validate_evidence_packet(
+        ctx,
+        _tool_call(
+            tool_name="validate_evidence_packet",
+            tool_call_id="tc-chain-validate-packet",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={"packet_id": "packet-trainer"},
+        ),
+    )
+    assert validated_packet.status == "success", validated_packet
+    facts = compile_code_facts(
+        ctx,
+        _tool_call(
+            tool_name="compile_code_facts",
+            tool_call_id="tc-chain-compile-facts",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={"packet_id": "packet-trainer"},
+        ),
+    )
+    assert facts.status == "success", facts
+    if through == "facts":
+        return facts
+    fact_ids = tuple(ref.removeprefix("fact:compiled:") for ref in facts.result_refs)
+    validated_facts = validate_code_facts(
+        ctx,
+        _tool_call(
+            tool_name="validate_code_facts",
+            tool_call_id="tc-chain-validate-facts",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "fact_id": fact_ids[0],
+                "fact_set_id": "packet-trainer",
+            },
+        ),
+    )
+    assert validated_facts.status == "success", validated_facts
+    if through == "validated_facts":
+        return validated_facts
+    proposals = decompose_atomic_claims(
+        ctx,
+        _tool_call(
+            tool_name="decompose_atomic_claims",
+            tool_call_id="tc-chain-propose-claims",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "fact_ids": fact_ids,
+                "fact_set_id": "packet-trainer",
+                "claim_proposals": (
+                    {
+                        "claim_id": "claim-trainer-model",
+                        "canonical_text": "Trainer constructs its model.",
+                        "claim_kind": "implementation_behavior",
+                        "proposed_fact_ids": list(fact_ids),
+                        "covers_obligation_ids": ["obl-trainer"],
+                        "required_qualifiers": [],
+                        "unsupported_author_fragments": [],
+                        "allowed_wording_boundary": "Trainer constructs its model.",
+                    },
+                ),
+            },
+        ),
+    )
+    assert proposals.status == "success", proposals
+    if through == "proposed_claims":
+        return proposals
+    proposal_set_id = next(
+        note.split("=", 1)[1]
+        for note in proposals.diagnostics.notes
+        if note.startswith("proposal_set_id=")
+    )
+    return authorize_atomic_claims(
+        ctx,
+        _tool_call(
+            tool_name="authorize_atomic_claims",
+            tool_call_id="tc-chain-authorize-claims",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "claim_ids": ("claim-trainer-model",),
+                "proposal_set_id": proposal_set_id,
+            },
+        ),
+    )
+
+
 class TestProposeEvidencePacket:
     def test_proposes_packet_with_valid_anchors(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -812,14 +940,17 @@ class TestProposeEvidencePacket:
             repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
             arguments={
                 "obligation_tag": "obl-trainer",
-                "anchor_span_ids": ("span:train.py:10:20",),
+                "packet_id": "packet-trainer",
+                "anchor_span_ids": ("span:train.py:15:18",),
+                "behavior_node_ids": ("node:trainer-model",),
             },
             top_k=10,
         )
         obs = propose_evidence_packet(ctx, call)
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["packet:proposed:obl-trainer"]
+        assert refs == ["packet:proposed:packet-trainer"]
+        assert ctx.read_artifact("packet_proposals", "packet-trainer") is not None
 
     def test_invalid_request_on_empty_obligation(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -858,16 +989,29 @@ class TestProposeEvidencePacket:
 
 class TestValidateEvidencePacket:
     def test_validates_packet_id(self, ctx: ResearchToolContext) -> None:
+        proposed = _tool_call(
+            tool_name="propose_evidence_packet",
+            tool_call_id="tc-propose",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "obligation_tag": "obl-trainer",
+                "packet_id": "packet-trainer",
+                "anchor_span_ids": ("span:train.py:15:18",),
+                "behavior_node_ids": ("node:trainer-model",),
+            },
+        )
+        assert propose_evidence_packet(ctx, proposed).status == "success"
         call = _tool_call(
             tool_name="validate_evidence_packet",
             repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
-            arguments={"packet_id": "proposed:obl-trainer"},
+            arguments={"packet_id": "packet-trainer"},
             top_k=10,
         )
         obs = validate_evidence_packet(ctx, call)
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["packet:validated:proposed:obl-trainer"]
+        assert refs == ["packet:validated:packet-trainer"]
+        assert ctx.read_artifact("validated_packets", "packet-trainer") is not None
 
     def test_invalid_request_on_empty_packet_id(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -879,19 +1023,35 @@ class TestValidateEvidencePacket:
         obs = validate_evidence_packet(ctx, call)
         assert obs.status == "invalid_request"
 
+    def test_rejects_tampered_validated_packet_on_replay(self, ctx: ResearchToolContext) -> None:
+        assert _run_real_evidence_chain(ctx, through="validated_facts").status == "success"
+        path = ctx.artifact_path("validated_packets", "packet-trainer")
+        assert path is not None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["conditions"] = ["tampered-condition"]
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        obs = validate_evidence_packet(
+            ctx,
+            _tool_call(
+                tool_name="validate_evidence_packet",
+                tool_call_id="tc-tampered-packet",
+                repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+                arguments={"packet_id": "packet-trainer"},
+            ),
+        )
+        assert obs.status == "invalid_request"
+        assert "validated_packet_artifact_drift" in obs.error_message
+
 
 class TestCompileCodeFacts:
     def test_compiles_facts_from_packet(self, ctx: ResearchToolContext) -> None:
-        call = _tool_call(
-            tool_name="compile_code_facts",
-            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
-            arguments={"packet_id": "proposed:obl-1"},
-            top_k=10,
-        )
-        obs = compile_code_facts(ctx, call)
-        assert obs.status == "success"
+        obs = _run_real_evidence_chain(ctx, through="facts")
+        assert obs.status == "success", obs
         refs = list(obs.result_refs)
-        assert refs == ["fact:compiled:proposed:obl-1"]
+        assert refs and all(ref.startswith("fact:compiled:fact-") for ref in refs)
+        fact_set = ctx.read_artifact("fact_sets", "packet-trainer")
+        assert fact_set and fact_set["facts"][0]["validation_status"] == "supported"
+        assert fact_set["producer_version"] == "code2paper-generic-research-data-plane-v1"
 
     def test_invalid_request_on_empty_packet_id(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -906,16 +1066,10 @@ class TestCompileCodeFacts:
 
 class TestValidateCodeFacts:
     def test_validates_fact(self, ctx: ResearchToolContext) -> None:
-        call = _tool_call(
-            tool_name="validate_code_facts",
-            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
-            arguments={"fact_id": "fact:1"},
-            top_k=10,
-        )
-        obs = validate_code_facts(ctx, call)
+        obs = _run_real_evidence_chain(ctx, through="validated_facts")
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["fact:validated:fact:1"]
+        assert refs and all(ref.startswith("fact:validated:fact-") for ref in refs)
 
     def test_invalid_request_on_empty_fact_id(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -927,19 +1081,36 @@ class TestValidateCodeFacts:
         obs = validate_code_facts(ctx, call)
         assert obs.status == "invalid_request"
 
+    def test_rejects_tampered_fact_set_on_replay(self, ctx: ResearchToolContext) -> None:
+        assert _run_real_evidence_chain(ctx, through="validated_facts").status == "success"
+        path = ctx.artifact_path("fact_sets", "packet-trainer")
+        assert path is not None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["facts"][0]["object"] = ["tampered-object"]
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        fact_id = payload["facts"][0]["fact_id"]
+        obs = validate_code_facts(
+            ctx,
+            _tool_call(
+                tool_name="validate_code_facts",
+                tool_call_id="tc-tampered-fact",
+                repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+                arguments={
+                    "fact_id": fact_id,
+                    "fact_set_id": "packet-trainer",
+                },
+            ),
+        )
+        assert obs.status == "invalid_request"
+        assert "fact_set_replay_mismatch" in obs.error_message
+
 
 class TestDecomposeAtomicClaims:
     def test_decomposes_facts_into_claims(self, ctx: ResearchToolContext) -> None:
-        call = _tool_call(
-            tool_name="decompose_atomic_claims",
-            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
-            arguments={"fact_ids": ("fact:1", "fact:2")},
-            top_k=10,
-        )
-        obs = decompose_atomic_claims(ctx, call)
+        obs = _run_real_evidence_chain(ctx, through="proposed_claims")
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["claim:decomposed:fact:1", "claim:decomposed:fact:2"]
+        assert refs == ["claim:proposed:claim-trainer-model"]
 
     def test_invalid_request_on_empty_facts(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -954,16 +1125,15 @@ class TestDecomposeAtomicClaims:
 
 class TestAuthorizeAtomicClaims:
     def test_authorizes_claims(self, ctx: ResearchToolContext) -> None:
-        call = _tool_call(
-            tool_name="authorize_atomic_claims",
-            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
-            arguments={"claim_ids": ("claim:1", "claim:2")},
-            top_k=10,
-        )
-        obs = authorize_atomic_claims(ctx, call)
+        obs = _run_real_evidence_chain(ctx, through="authorized_claims")
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["claim:authorized:claim:1", "claim:authorized:claim:2"]
+        assert refs == ["claim:authorized:claim-trainer-model"]
+        artifact_note = next(
+            note for note in obs.diagnostics.notes if note.startswith("artifact=")
+        )
+        payload = json.loads(Path(artifact_note.split("=", 1)[1]).read_text(encoding="utf-8"))
+        assert payload["producer_version"] == "code2paper-generic-research-data-plane-v1"
 
     def test_invalid_request_on_empty_claims(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(
@@ -984,16 +1154,64 @@ class TestRecordExplicitCodeGap:
             arguments={
                 "obligation_id_ref": "obl-1",
                 "termination_reason": "no_evidence_after_exhaustive_search",
+                "search_scope": ("train.py",),
+                "attempted_tools": ("search_code", "read_symbol"),
+                "search_complete": True,
             },
             top_k=10,
         )
         obs = record_explicit_code_gap(ctx, call)
         assert obs.status == "success"
         refs = list(obs.result_refs)
-        assert refs == ["gap:obl-1"]
+        assert len(refs) == 1 and refs[0].startswith("gap:gap-")
         # termination_reason appears in diagnostics notes.
         notes = " ".join(obs.diagnostics.notes)
         assert "no_evidence_after_exhaustive_search" in notes
+        replay = record_explicit_code_gap(ctx, call)
+        assert replay.status == "success"
+        assert replay.result_refs == obs.result_refs
+        assert "idempotent_replay=true" in replay.diagnostics.notes
+
+    def test_rejects_missing_relation_without_relation_trace(
+        self, ctx: ResearchToolContext
+    ) -> None:
+        call = _tool_call(
+            tool_name="record_explicit_code_gap",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "obligation_id_ref": "obl-1",
+                "termination_reason": "required call edge not found",
+                "search_scope": ("train.py",),
+                "attempted_tools": ("search_code", "read_symbol"),
+                "missing_relations": ("CALLS",),
+                "search_complete": True,
+            },
+        )
+
+        obs = record_explicit_code_gap(ctx, call)
+
+        assert obs.status == "invalid_request"
+        assert "gap_missing_relation_not_traced" in obs.error_message
+
+    def test_rejects_scope_outside_frozen_snapshot(
+        self, ctx: ResearchToolContext
+    ) -> None:
+        call = _tool_call(
+            tool_name="record_explicit_code_gap",
+            repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+            arguments={
+                "obligation_id_ref": "obl-1",
+                "termination_reason": "no evidence",
+                "search_scope": ("/outside/frozen/repository.py",),
+                "attempted_tools": ("search_code", "read_symbol"),
+                "search_complete": True,
+            },
+        )
+
+        obs = record_explicit_code_gap(ctx, call)
+
+        assert obs.status == "invalid_request"
+        assert "gap_search_scope_outside_snapshot" in obs.error_message
 
     def test_invalid_request_on_empty_obligation(self, ctx: ResearchToolContext) -> None:
         call = _tool_call(

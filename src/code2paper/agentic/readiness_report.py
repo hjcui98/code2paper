@@ -26,6 +26,7 @@ def build_run_readiness_report(state: AgenticRunState) -> AgenticRunReadinessRep
         _check_retrieval_decision_context(state),
         check_decision_traces(state),
         check_authoring_context_contract(state),
+        _check_publication_quality_contract(state),
         check_traceability_ledger_contract(state),
         check_invariant_audit_contract(state),
     ]
@@ -214,6 +215,45 @@ def _check_retrieval_decision_context(state: AgenticRunState) -> ReadinessCheck:
             "symbol_index",
             *required,
         ],
+    )
+
+
+def _check_publication_quality_contract(state: AgenticRunState) -> ReadinessCheck:
+    if not artifact_exists(state, "publication_writer_result_v1"):
+        return ReadinessCheck(
+            name="publication_quality_contract",
+            passed=True,
+            blocking=False,
+            message="Publication Writer was not selected for this compatibility run.",
+            artifact_keys=[],
+        )
+    required = [
+        "publication_quality_report_v1",
+        "method_section_plan_v2",
+        "final_text_authorship_ledger_v1",
+        "publication_section_checkpoint_v1",
+    ]
+    missing = [key for key in required if not artifact_json(state, key)]
+    quality = artifact_json(state, "publication_quality_report_v1")
+    safety = quality.get("safety") or {}
+    utility = quality.get("utility") or {}
+    passed = not missing and bool(
+        quality.get("status") == "publication_ready"
+        and quality.get("plan_gate_passed")
+        and quality.get("final_integrity_gate_passed")
+        and safety.get("hard_gate_passed")
+        and utility.get("utility_gate_passed")
+    )
+    return ReadinessCheck(
+        name="publication_quality_contract",
+        passed=passed,
+        message=(
+            "Publication Writer plan, checkpoint, authorship, safety, and utility gates passed."
+            if passed else
+            "Publication Writer output is missing a required artifact or remains incomplete: "
+            + ", ".join(missing or [str(quality.get("status") or "missing_quality")])
+        ),
+        artifact_keys=required,
     )
 
 

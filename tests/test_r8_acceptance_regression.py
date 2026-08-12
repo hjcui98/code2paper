@@ -362,6 +362,63 @@ class TestSyntheticGapOnlyAcceptedGaps:
         assert gaps[0].gap_id == "gap:synthetic:obl_gap_01"
         assert "obl_gap_01" in bindings.get(gaps[0].gap_id, [])
 
+    def test_early_gap_is_dropped_when_final_aggregate_facts_resolve_target(self):
+        from dataclasses import dataclass
+
+        from code2paper.agentic.evidence_compiler_v3 import CodeFactSetV1, CodeFactV1
+        from code2paper.agentic.intent_compiler_v2 import (
+            IntentObligationGraphV2,
+            IntentObligationV2,
+        )
+        from code2paper.agentic.research_models import TypedBehaviorTargetV1
+        from code2paper.agentic.v3_runtime import _synthesize_terminal_gaps
+
+        runtime = self._make_minimal_runtime("explicit_gap", "obl_gap_repaired")
+        target = TypedBehaviorTargetV1(
+            target_id="target-repaired",
+            role="predictor",
+            desired_predicates=("CALL",),
+        )
+        runtime.agenda.items[0].typed_behavior_targets = [target]
+        graph = IntentObligationGraphV2(obligations=[IntentObligationV2(
+            obligation_id="obl_gap_repaired",
+            kind="method_mainline",
+            priority="must_cover",
+            source_field="method_mainline",
+            author_text="Call the predictor.",
+            typed_behavior_targets=(target,),
+        )])
+        fact = CodeFactV1(
+            fact_id="fact-repaired",
+            subject="Predictor.forward",
+            predicate="calls",
+            object="self.model(x)",
+            scope="Predictor.forward",
+            direct_span_ids=["span:model.py:1:2"],
+            exact_source_digest="sha256:source",
+            canonical_identity="sha256:fact",
+        )
+        facts = CodeFactSetV1(
+            repo_snapshot_id="repo:test",
+            project_tree_hash="sha256:tree",
+            evidence_packet_digest="sha256:packets",
+            facts=[fact],
+            content_digest="sha256:facts",
+        )
+
+        @dataclass
+        class RuntimeWithIntent:
+            agenda: object
+            intent_graph: object
+
+        gaps, bindings = _synthesize_terminal_gaps(
+            RuntimeWithIntent(runtime.agenda, graph),  # type: ignore[arg-type]
+            fact_set=facts,
+        )
+
+        assert gaps == []
+        assert bindings == {}
+
 
 class TestCheckR8AcceptanceFromRunDir:
     """Integration: check_r8_acceptance_from_run_dir with minimal artifacts."""

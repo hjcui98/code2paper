@@ -197,6 +197,47 @@ def test_extract_operations_config_access_is_tagged() -> None:
     assert config_loads
 
 
+def test_operation_using_config_value_emits_configured_by_relation() -> None:
+    source = textwrap.dedent(
+        """\
+        def filter_scores(scores, config):
+            return torch.where(scores >= config.threshold, scores, 0)
+        """
+    )
+    index = _index_files({"filter.py": source})
+    nodes, relations = _extract(_first_symbol(index, "filter_scores"), source)
+    by_id = {node.node_id: node for node in nodes}
+    relation = next(
+        item for item in relations
+        if item.kind == "CONFIGURED_BY"
+        and by_id[item.source_node_id].predicate == "MASK"
+    )
+
+    assert by_id[relation.source_node_id].predicate == "MASK"
+    assert by_id[relation.target_node_id].predicate == "LOAD"
+    assert "config_access" in by_id[relation.target_node_id].diagnostics
+
+
+def test_extract_operations_parameter_default_is_source_configuration() -> None:
+    source = textwrap.dedent(
+        """\
+        def build(input_dim=15, *, enabled=True):
+            return input_dim
+        """
+    )
+    index = _index_files({"model.py": source})
+    sym = _first_symbol(index, "build")
+    nodes, _ = _extract(sym, source)
+    defaults = [
+        node
+        for node in nodes
+        if node.predicate == "READ" and "parameter_default" in node.diagnostics
+    ]
+
+    assert {node.result for node in defaults} == {"input_dim=15", "enabled=True"}
+    assert all("config_access" in node.diagnostics for node in defaults)
+
+
 # ---------------------------------------------------------------------------
 # extract_operations: calls and specialized predicates
 # ---------------------------------------------------------------------------
@@ -290,6 +331,25 @@ def test_extract_operations_softmax_emits_normalize_predicate() -> None:
     assert norm_nodes
 
 
+def test_extract_operations_named_division_emits_normalize_predicate() -> None:
+    source = textwrap.dedent(
+        """\
+        def percentile_cutoff_normalize(clipped, lower, upper):
+            normalized = (clipped - lower) / (upper - lower)
+            return normalized
+        """
+    )
+    index = _index_files({"features.py": source})
+    sym = _first_symbol(index, "percentile_cutoff_normalize")
+
+    nodes, _ = _extract(sym, source)
+
+    normalized = [node for node in nodes if node.predicate == "NORMALIZE"]
+    assert len(normalized) == 1
+    assert normalized[0].result == "normalized"
+    assert normalized[0].source_span_id.endswith(":2:2")
+
+
 def test_extract_operations_sum_mean_emits_reduce_predicate() -> None:
     source = textwrap.dedent(
         """\
@@ -346,6 +406,33 @@ def test_extract_operations_matmul_emits_compute_predicate() -> None:
     assert compute_nodes
 
 
+def test_graph_matrix_multiply_emits_compute_and_propagate_predicates() -> None:
+    source = textwrap.dedent(
+        """\
+        def propagate(entity_scores, entity_to_sentence_sparse):
+            return entity_scores @ entity_to_sentence_sparse
+        """
+    )
+    index = _index_files({"graph.py": source})
+    nodes, _ = _extract(_first_symbol(index, "propagate"), source)
+    predicates = {node.predicate for node in nodes}
+    assert {"COMPUTE", "PROPAGATE"} <= predicates
+
+
+def test_sorted_and_pagerank_calls_emit_semantic_predicates() -> None:
+    source = textwrap.dedent(
+        """\
+        def rank(graph, seeds):
+            scores = nx.pagerank(graph, personalization=seeds)
+            return sorted(scores.items(), key=lambda item: item[1])
+        """
+    )
+    index = _index_files({"graph.py": source})
+    nodes, _ = _extract(_first_symbol(index, "rank"), source)
+    predicates = {node.predicate for node in nodes}
+    assert {"PROPAGATE", "SORT"} <= predicates
+
+
 def test_extract_operations_arithmetic_emits_compute_predicate() -> None:
     source = textwrap.dedent(
         """\
@@ -383,6 +470,47 @@ def test_extract_operations_if_emits_branch_with_guard() -> None:
     assert branches[0].guard == "x > 0"
 
 
+def test_guarded_continue_emits_filter_with_exact_guard() -> None:
+    source = textwrap.dedent(
+        """\
+        def retain(scores, threshold):
+            kept = []
+            for score in scores:
+                if score < threshold:
+                    continue
+                kept.append(score)
+            return kept
+        """
+    )
+    index = _index_files({"filter.py": source})
+    sym = _first_symbol(index, "retain")
+    nodes, _ = _extract(sym, source)
+
+    filters = [node for node in nodes if node.predicate == "FILTER"]
+
+    assert len(filters) == 1
+    assert filters[0].operands == ("score < threshold",)
+    assert filters[0].guard == "score < threshold"
+    assert filters[0].diagnostics == ("guarded_continue",)
+
+
+def test_selective_scan_primitive_emits_filter_operation() -> None:
+    source = textwrap.dedent(
+        """\
+        def forward(x, state):
+            return selective_scan_fn(x, state)
+        """
+    )
+    index = _index_files({"ssm.py": source})
+    sym = _first_symbol(index, "forward")
+    nodes, _ = _extract(sym, source)
+
+    filters = [node for node in nodes if node.predicate == "FILTER"]
+
+    assert len(filters) == 1
+    assert filters[0].operands[0] == "selective_scan_fn"
+
+
 def test_extract_operations_for_emits_loop_with_iteration_context() -> None:
     source = textwrap.dedent(
         """\
@@ -399,6 +527,31 @@ def test_extract_operations_for_emits_loop_with_iteration_context() -> None:
     assert "for item in items" in loops[0].iteration_context
 
 
+def test_current_next_assignment_emits_level_synchronous_propagation() -> None:
+    source = textwrap.dedent(
+        """\
+        def propagate(current_scores, steps):
+            for step in range(steps):
+                next_scores = update(current_scores)
+                current_scores = compact(next_scores)
+            return current_scores
+        """
+    )
+    index = _index_files({"propagate.py": source})
+    sym = _first_symbol(index, "propagate")
+    nodes, _ = _extract(sym, source)
+
+    propagation = [node for node in nodes if node.predicate == "PROPAGATE"]
+
+    assert len(propagation) == 1
+    assert propagation[0].operands == (
+        "breadth first level synchronous frontier propagation",
+        "current_scores",
+        "next_scores",
+    )
+    assert propagation[0].diagnostics == ("current_next_frontier",)
+
+
 def test_extract_operations_while_emits_loop_with_guard() -> None:
     source = textwrap.dedent(
         """\
@@ -413,6 +566,49 @@ def test_extract_operations_while_emits_loop_with_guard() -> None:
     loops = [n for n in nodes if n.predicate == "LOOP"]
     assert loops
     assert loops[0].guard == "x > 0"
+
+
+def test_extract_operations_recognizes_level_synchronous_frontier_propagation() -> None:
+    source = textwrap.dedent(
+        """\
+        def traverse(frontier):
+            while len(frontier) > 0:
+                next_frontier = {}
+                for key, value in frontier.items():
+                    next_frontier[key] = value + 1
+                frontier = next_frontier.copy()
+            return frontier
+        """
+    )
+    index = _index_files({"graph.py": source})
+    sym = _first_symbol(index, "traverse")
+    nodes, _ = _extract(sym, source)
+
+    propagation = [node for node in nodes if node.predicate == "PROPAGATE"]
+
+    assert len(propagation) == 1
+    assert propagation[0].operands == (
+        "breadth first frontier propagation",
+        "frontier",
+        "next_frontier",
+    )
+    assert propagation[0].diagnostics == ("level_synchronous_frontier",)
+
+
+def test_extract_operations_does_not_label_plain_while_loop_breadth_first() -> None:
+    source = textwrap.dedent(
+        """\
+        def countdown(x):
+            while x > 0:
+                x = x - 1
+            return x
+        """
+    )
+    index = _index_files({"plain.py": source})
+    sym = _first_symbol(index, "countdown")
+    nodes, _ = _extract(sym, source)
+
+    assert not [node for node in nodes if node.predicate == "PROPAGATE"]
 
 
 def test_extract_operations_return_emits_return_predicate() -> None:

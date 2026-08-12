@@ -43,6 +43,10 @@ from code2paper.agentic.behavior_graph import (
     BEHAVIOR_PREDICATES,
     BEHAVIOR_RELATION_KINDS,
 )
+from code2paper.agentic.method_product_models import (
+    AuthorStoryNodeV1,
+    MethodEvidenceLane,
+)
 from code2paper.agentic.research_models import TypedBehaviorTargetV1
 
 
@@ -103,16 +107,36 @@ class IntentConceptV1(BaseModel):
 INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
     IntentConceptV1(
         concept_id="feature_construction",
-        predicates=("READ", "CONSTRUCT", "TRANSFORM", "NORMALIZE", "CONCAT"),
+        predicates=("READ", "CONSTRUCT"),
         terms_en=(
-            "feature", "descriptor", "attribute", "embedding", "encode",
-            "construct", "build", "normalize", "transform", "augment",
+            "feature", "descriptor", "attribute", "embedding",
+            "construct", "build",
             "representation", "input",
         ),
         terms_cn=(
-            "特征", "描述符", "属性", "嵌入", "编码", "构造", "构建",
-            "归一化", "变换", "增强", "表示", "输入",
+            "特征", "描述符", "属性", "嵌入", "构造", "构建", "表示", "输入",
         ),
+        role_hint="feature",
+    ),
+    IntentConceptV1(
+        concept_id="feature_transform",
+        predicates=("TRANSFORM",),
+        terms_en=("encode", "encodes", "encoding", "transform", "augment"),
+        terms_cn=("编码", "变换", "增强"),
+        role_hint="feature",
+    ),
+    IntentConceptV1(
+        concept_id="feature_normalization",
+        predicates=("NORMALIZE",),
+        terms_en=("normalize", "normalizes", "normalized", "normalization"),
+        terms_cn=("归一化", "标准化"),
+        role_hint="feature",
+    ),
+    IntentConceptV1(
+        concept_id="feature_combination",
+        predicates=("CONCAT",),
+        terms_en=("concat", "concatenate", "concatenation", "combine"),
+        terms_cn=("拼接", "串联", "合并"),
         role_hint="feature",
     ),
     IntentConceptV1(
@@ -135,7 +159,7 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         terms_en=(
             "rank", "ranks", "ranked", "ranking", "sort", "sorts", "sorting",
             "sorted", "top-k", "topk", "select", "selects", "selecting",
-            "selected", "order", "ordering", "descending", "ascending",
+            "selected", "descending", "ascending",
         ),
         terms_cn=(
             "排序", "排名", "选择", "选取", "前k", "降序", "升序",
@@ -197,7 +221,7 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         predicates=("ATTEND", "COMPUTE", "MASK"),
         terms_en=(
             "attention", "attend", "self-attention", "cross-attention",
-            "query", "key", "value", "scaled dot-product",
+            "scaled dot-product",
         ),
         terms_cn=(
             "注意力", "关注", "自注意力", "交叉注意力",
@@ -206,12 +230,26 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         role_hint="attention",
     ),
     IntentConceptV1(
+        concept_id="graph_construction",
+        predicates=("CALL", "WRITE"),
+        terms_en=(
+            "graph construction", "graph index", "indexing", "adjacency",
+            "adjacency matrix", "adjacency matrices", "create nodes",
+            "build graph",
+        ),
+        terms_cn=(
+            "图构建", "图索引", "建立索引", "邻接矩阵", "创建节点",
+        ),
+        role_hint="graph_builder",
+    ),
+    IntentConceptV1(
         concept_id="propagation_message_passing",
         predicates=("PROPAGATE", "AGGREGATE", "SAMPLE"),
         terms_en=(
-            "propagate", "propagation", "message", "pass", "diffuse",
+            "propagate", "propagates", "propagating", "propagation",
+            "message passing", "diffuse",
             "ppr", "pagerank", "personalized pagerank", "random walk",
-            "bipartite", "sparse",
+            "bipartite",
         ),
         terms_cn=(
             "传播", "消息传递", "扩散", "随机游走",
@@ -223,7 +261,7 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         concept_id="temporal_sequence",
         predicates=("SAMPLE", "STACK", "CONCAT", "ATTEND", "COMPUTE"),
         terms_en=(
-            "temporal", "time", "sequence", "history", "neighbor",
+            "temporal", "timespan", "timestamp", "elapsed time", "history",
             "elapsed", "timestamp", "mamba", "ssm", "state space",
             "readout", "gate", "gated",
         ),
@@ -237,8 +275,8 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         concept_id="generation_invocation",
         predicates=("CALL", "RETURN"),
         terms_en=(
-            "generate", "generates", "generated", "generation",
-            "invoke", "invokes", "execute", "executes", "emit", "emits",
+            "generation", "invoke", "invokes", "execute", "executes",
+            "emit", "emits",
         ),
         terms_cn=(
             "生成", "产生", "调用", "执行", "输出结果",
@@ -251,10 +289,10 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         terms_en=(
             "verify", "verifies", "verification", "verifier",
             "compare", "compares", "comparison", "accept", "accepted",
-            "reject", "rejected", "similarity", "matching",
+            "reject", "rejected",
         ),
         terms_cn=(
-            "验证", "校验", "比较", "接受", "拒绝", "相似度", "匹配",
+            "验证", "校验", "比较", "接受", "拒绝",
         ),
         role_hint="verification",
     ),
@@ -312,7 +350,7 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
         concept_id="task_head_output",
         predicates=("PROJECT", "COMPUTE", "RETURN"),
         terms_en=(
-            "classifier", "regressor", "head", "link",
+            "classifier", "regressor", "head",
             "node classification", "link prediction", "output layer",
             "sigmoid", "logit",
         ),
@@ -445,6 +483,9 @@ class IntentObligationGraphV2(BaseModel):
                             "target_id": t.target_id,
                             "role": t.role,
                             "desired_predicates": sorted(t.desired_predicates),
+                            "predicate_groups": [
+                                sorted(group) for group in t.predicate_groups
+                            ],
                             "required_relations": sorted(t.required_relations),
                             "inputs": sorted(t.inputs),
                             "transformations": sorted(t.transformations),
@@ -547,62 +588,188 @@ def _build_typed_targets(
     concepts: list[IntentConceptV1],
     organization_preference: str = "",
 ) -> list[TypedBehaviorTargetV1]:
-    """Build typed behavior targets from matched concepts.
+    """Build one typed behavior target per matched semantic concept.
 
-    Concepts with the same scope are merged into one target so paraphrase
-    that hits multiple concepts in the same scope still yields a single
-    target.  Training and inference scopes are kept separate so the
-    alignment layer can distinguish them.
+    Keeping concepts separate prevents a broad author sentence from turning
+    into one permissive predicate union (for example, local TOPK plus an
+    unrelated CONCAT falsely satisfying a PageRank stage).  Scope remains a
+    condition on each target, and selected high-specificity author terms are
+    retained as semantic anchors that must replay from one source fact.
     """
 
     if not concepts:
         return []
-    by_scope: dict[str, dict[str, set[str]]] = {}
-    role_hints: dict[str, list[str]] = {}
+    targets: list[TypedBehaviorTargetV1] = []
+    seen: set[tuple[Any, ...]] = set()
     for concept in concepts:
         scope = concept.scope or "any"
-        bucket = by_scope.setdefault(scope, {"predicates": set(), "relations": set()})
-        bucket["predicates"].update(concept.predicates)
-        bucket["relations"].update(concept.relations)
-        if concept.role_hint:
-            role_hints.setdefault(scope, []).append(concept.role_hint)
-    targets: list[TypedBehaviorTargetV1] = []
-    for scope in sorted(by_scope):
-        bucket = by_scope[scope]
         conditions: tuple[str, ...] = (scope,) if scope in {"training", "inference"} else ()
-        role = "+".join(role_hints.get(scope, [])) if role_hints.get(scope) else scope
+        role = concept.role_hint or scope
+        predicate_group = tuple(sorted(set(concept.predicates)))
+        anchor = _concept_semantic_anchor(author_text, concept)
+        code_symbol = _author_code_symbol(author_text)
+        semantic_anchors = tuple(
+            value for value in (anchor, code_symbol) if value
+        )
+        signature = (
+            scope, role, predicate_group, tuple(sorted(concept.relations)),
+            semantic_anchors,
+        )
+        if signature in seen:
+            continue
+        seen.add(signature)
         target_id = _stable_id(
             "target",
             obligation_id,
+            concept.concept_id,
             scope,
-            "+".join(sorted(bucket["predicates"])),
-            "+".join(sorted(bucket["relations"])),
+            "+".join(predicate_group),
+            "+".join(sorted(concept.relations)),
+            "+".join(semantic_anchors),
         )
         targets.append(TypedBehaviorTargetV1(
             target_id=target_id,
             role=role,
-            desired_predicates=tuple(sorted(bucket["predicates"])),
-            required_relations=tuple(sorted(bucket["relations"])),
+            desired_predicates=predicate_group,
+            predicate_groups=(predicate_group,) if predicate_group else (),
+            required_relations=tuple(sorted(concept.relations)),
+            transformations=semantic_anchors,
             conditions=conditions,
-            search_terms=tuple(_search_terms_from(author_text, concepts)),
-            aliases=tuple(_aliases_from(concepts)),
+            search_terms=tuple(_search_terms_from(author_text, [concept])),
+            aliases=((concept.role_hint,) if concept.role_hint else ()),
+            outputs=tuple(_target_outputs(author_text, concept)),
             organization_preference=organization_preference,
             risk_level="high" if scope == "training" else "medium",
         ))
     return targets
 
 
+def _author_code_symbol(author_text: str) -> str:
+    """Extract an explicit ``path::Symbol`` author anchor, when present.
+
+    Generated component markers use this notation to identify the intended
+    implementation owner. Retaining the symbol as a semantic requirement
+    prevents a missing owner from being silently replaced by an operation in
+    an evaluator or an alternate model.
+    """
+
+    match = re.search(
+        r"(?:^|\s)[^\s:]+::([A-Za-z_][A-Za-z0-9_.]*)\s*:",
+        author_text,
+    )
+    return match.group(1) if match else ""
+
+
+_SEMANTIC_ANCHOR_TERMS: dict[str, tuple[str, ...]] = {
+    "training_objective": (
+        "infonce", "info nce", "contrastive", "cross-entropy",
+        "cross entropy", "bce",
+    ),
+    "score_prediction": (
+        "scores", "score", "similarities", "similarity",
+        "query–sentence similarities", "query-sentence similarities",
+    ),
+    "masking_filtering": (
+        "pruning", "threshold", "filtering", "filter", "dynamic pruning",
+    ),
+    "attention_mechanism": (
+        "scaled dot-product", "self-attention", "cross-attention", "attention",
+    ),
+    "graph_construction": (
+        "adjacency matrices", "adjacency matrix", "adjacency",
+        "graph construction", "graph index", "indexing",
+    ),
+    "propagation_message_passing": (
+        "personalized pagerank", "pagerank", "ppr", "random walk",
+        "message passing", "propagating", "propagation", "propagate",
+    ),
+    "temporal_sequence": (
+        "state space", "mamba", "ssm", "timespan", "elapsed time",
+        "timestamp", "temporal",
+    ),
+    "generation_invocation": (
+        "generation", "generate", "answer", "infer", "qa",
+    ),
+}
+
+
+def _concept_semantic_anchor(author_text: str, concept: IntentConceptV1) -> str:
+    """Return one strong author term that executable evidence must witness."""
+
+    normalized = _normalize_text(author_text)
+    for term in _SEMANTIC_ANCHOR_TERMS.get(concept.concept_id, ()):
+        if _term_present(term, normalized):
+            return term
+    return ""
+
+
+def _quantitative_outputs(author_text: str) -> list[str]:
+    """Retain explicit output dimensions as typed, code-verifiable detail."""
+
+    outputs: list[str] = []
+    for match in re.finditer(
+        r"\b(\d+)\s*(?:[-‐-―]\s*)?(?:dimensional|dimension|dims?)\b",
+        author_text,
+        flags=re.IGNORECASE,
+    ):
+        value = f"dimension {match.group(1)}"
+        if value not in outputs:
+            outputs.append(value)
+    return outputs
+
+
+def _target_outputs(
+    author_text: str,
+    concept: IntentConceptV1,
+) -> list[str]:
+    """Derive explicit, code-checkable outputs for one semantic target."""
+
+    outputs = _quantitative_outputs(author_text)
+    if (
+        concept.concept_id == "generation_invocation"
+        and re.search(
+            r"\b(?:query|queries|question|questions|retrieval[- ]augmented)\b",
+            author_text,
+            flags=re.IGNORECASE,
+        )
+        and "answer" not in outputs
+    ):
+        # A query-facing retrieval-augmented generation lifecycle is not
+        # complete at the model invocation; executable evidence must also
+        # expose the answer/result path consumed by the caller.
+        outputs.append("answer")
+    return outputs
+
+
 def _search_terms_from(author_text: str, concepts: list[IntentConceptV1]) -> list[str]:
     """Derive a compact set of search terms for the research tools."""
 
-    terms: list[str] = []
+    positioned: list[tuple[int, int, str]] = []
+    lowered = author_text.lower()
     for concept in concepts:
         for term in concept.terms_en:
-            if term in author_text.lower() and term not in terms:
-                terms.append(term)
+            term_lower = term.lower()
+            latin_term = bool(re.fullmatch(r"[a-z][a-z0-9 ]*", term_lower))
+            match = (
+                re.search(rf"\b{re.escape(term_lower)}\b", lowered)
+                if latin_term
+                else None
+            )
+            position = (
+                match.start()
+                if match is not None
+                else (-1 if latin_term else lowered.find(term_lower))
+            )
+            if position >= 0 and _term_present(term, lowered):
+                positioned.append((position, -len(term), term))
         for term in concept.terms_cn:
-            if term in author_text and term not in terms:
-                terms.append(term)
+            position = author_text.find(term)
+            if position >= 0:
+                positioned.append((position, -len(term), term))
+    terms: list[str] = []
+    for _position, _negative_length, term in sorted(positioned):
+        if term not in terms:
+            terms.append(term)
     return terms[:12]
 
 
@@ -743,6 +910,17 @@ def compile_intent_obligation_graph_v2(
             source_index=index,
             text=text,
         )
+    if summary.project_goal and _normalize_text(summary.project_goal) not in {
+        _normalize_text(summary.method_mainline),
+        _normalize_text(summary.method_goal),
+    }:
+        _add(
+            kind="component",
+            priority="should_cover",
+            source_field="project_goal",
+            source_index=0,
+            text=summary.project_goal,
+        )
     for index, text in enumerate(summary.module_roles):
         _add(
             kind="component",
@@ -751,6 +929,14 @@ def compile_intent_obligation_graph_v2(
             source_index=index,
             text=text,
             paths=_paths_from_module_role(text),
+        )
+    for index, text in enumerate(summary.key_building_blocks):
+        _add(
+            kind="component",
+            priority="should_cover",
+            source_field="key_building_blocks",
+            source_index=index,
+            text=text,
         )
     for index, text in enumerate(summary.story_order):
         _add(
@@ -794,6 +980,87 @@ def compile_intent_obligation_graph_v2(
         obligations=obligations,
         relations=relations,
     )
+
+
+# ---------------------------------------------------------------------------
+# Author story spine
+# ---------------------------------------------------------------------------
+
+
+def _story_role_for_kind(kind: str) -> str:
+    """Map an obligation kind onto the story node role vocabulary.
+
+    The mapping is project-agnostic and deterministic: ``method_mainline``
+    and ``stage`` are algorithm steps, ``component`` is setup, design
+    rationale is motivation, innovation claims are evaluation, and declared
+    potential mismatches are limitation nodes.
+    """
+
+    return {
+        "method_mainline": "algorithm_step",
+        "stage": "algorithm_step",
+        "component": "setup",
+        "organization": "setup",
+        "rationale_check": "motivation",
+        "high_risk_claim": "evaluation",
+        "mismatch_check": "limitation",
+    }.get(kind, "algorithm_step")
+
+
+def build_story_spine_from_intent_graph(
+    intent_graph: IntentObligationGraphV2,
+    *,
+    claim_set: Any | None = None,
+    evidence_lane: MethodEvidenceLane = "author_intent_unverified",
+) -> list[AuthorStoryNodeV1]:
+    """Compile the author story spine from the typed intent graph.
+
+    The spine preserves the author's own order of presentation (obligation
+    order and the ``organization`` obligations carry ``story_order`` text).
+    It is the organization authority for the Architect; it never claims
+    repository support.  ``evidence_lane`` defaults to
+    ``author_intent_unverified``; the projection layer refines it later with
+    actual claim/completeness evidence.  ``linked_claim_ids`` are filled from
+    the optional claim set through exact ``covers_obligation_ids`` members.
+    """
+
+    if not intent_graph.obligations:
+        return []
+    claims_by_obligation: dict[str, list[str]] = {}
+    if claim_set is not None:
+        for claim in getattr(claim_set, "claims", ()):
+            for obligation_id in getattr(claim, "covers_obligation_ids", ()) or ():
+                claims_by_obligation.setdefault(str(obligation_id), []).append(
+                    str(claim.claim_id)
+                )
+    nodes: list[AuthorStoryNodeV1] = []
+    for index, obligation in enumerate(intent_graph.obligations, start=1):
+        statement = _clean(obligation.author_text)
+        if not statement:
+            continue
+        title = " ".join(statement.split())[:96] or f"Story point {index}"
+        role = _story_role_for_kind(obligation.kind)
+        nodes.append(AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation.obligation_id}",
+            title=title,
+            author_statement=statement,
+            intended_role=role,  # type: ignore[arg-type]
+            source_refs=(
+                f"intent_graph_v2:{obligation.obligation_id}",
+                f"author_field:{obligation.source_field}",
+            ),
+            linked_obligation_ids=(obligation.obligation_id,),
+            linked_claim_ids=tuple(dict.fromkeys(
+                claims_by_obligation.get(obligation.obligation_id, ())
+            )),
+            evidence_lane=evidence_lane,
+            notes=(
+                (
+                    f"kind={obligation.kind}; priority={obligation.priority}"
+                ),
+            ),
+        ))
+    return nodes
 
 
 def _build_relations(
@@ -894,6 +1161,7 @@ __all__ = [
     "IntentObligationV2",
     "OBLIGATION_KINDS_V2",
     "OBLIGATION_PRIORITIES_V2",
+    "build_story_spine_from_intent_graph",
     "compile_intent_obligation_graph_v2",
     "typed_targets_signature",
 ]

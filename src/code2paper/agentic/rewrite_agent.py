@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable, Literal, Protocol
@@ -19,11 +20,15 @@ from typing import Any, Callable, Iterable, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.research_models import TextRepairIssueV1
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
 from code2paper.llm.generation_trace import build_generation_call_trace
 from code2paper.llm.role_config import LOCAL_REWRITE, apply_role_config
 from code2paper.llm.providers import load_llm_config_from_env
-from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
+from code2paper.llm.response_schemas import (
+    json_schema_for,
+    try_parse_structured_response_with_trace,
+)
 from code2paper.schemas import LLMConfig
 
 
@@ -38,7 +43,7 @@ class LocalRewritePatchV1(BaseModel):
     end: int
     original_text: str
     replacement_text: str
-    issue_ids: tuple[str, ...] = Field(default_factory=tuple)
+    issue_ids: tuple[str, ...] = Field(min_length=1)
     allowed_scope: Literal[
         "wording_only", "sentence_atomicity", "claim_decomposition", "drop_or_gap"
     ] = "wording_only"
@@ -61,7 +66,7 @@ class LocalRewriteOutputV1(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    patches: tuple[LocalRewritePatchV1, ...] = Field(default_factory=tuple)
+    patches: tuple[LocalRewritePatchV1, ...] = Field(default_factory=tuple, max_length=1)
     self_identified_risks: tuple[str, ...] = Field(default_factory=tuple)
     incomplete: bool = False
 
@@ -106,6 +111,7 @@ class RewriteCallResult(BaseModel):
     blocked_reason: str = ""
     patch_failures: tuple[str, ...] = Field(default_factory=tuple)
     generation_trace: dict[str, Any] = Field(default_factory=dict)
+    response_recovery_trace: dict[str, Any] = Field(default_factory=dict)
 
 
 class RewriteCaller(Protocol):
@@ -157,6 +163,94 @@ def apply_local_rewrite_patches(
     return candidate, ()
 
 
+def _repair_unique_patch_coordinates(
+    incumbent_text: str,
+    output: LocalRewriteOutputV1,
+) -> tuple[LocalRewriteOutputV1, bool]:
+    """Repair coordinate-only damage when the exact source span is unique.
+
+    The model remains the lexical owner: neither ``original_text`` nor
+    ``replacement_text`` is changed.  We only recompute start/end when the
+    supplied original span occurs exactly once in the frozen incumbent.  An
+    empty or ambiguous span is left untouched and will fail the normal patch
+    contract.
+    """
+
+    repaired = False
+    patches: list[LocalRewritePatchV1] = []
+    for patch in output.patches:
+        if incumbent_text[patch.start:patch.end] == patch.original_text:
+            patches.append(patch)
+            continue
+        if not patch.original_text or incumbent_text.count(patch.original_text) != 1:
+            patches.append(patch)
+            continue
+        start = incumbent_text.index(patch.original_text)
+        patches.append(patch.model_copy(update={
+            "start": start,
+            "end": start + len(patch.original_text),
+        }))
+        repaired = True
+    if not repaired:
+        return output, False
+    return output.model_copy(update={"patches": tuple(patches)}), True
+
+
+def _candidate_readability_failures(
+    incumbent_text: str,
+    candidate_text: str,
+    *,
+    section_context: dict[str, Any] | None,
+) -> tuple[str, ...]:
+    """Reject safe-looking edits that collapse a Method section into debris."""
+
+    def body(text: str) -> str:
+        lines = [line for line in text.splitlines() if not line.lstrip().startswith("#")]
+        return " ".join(" ".join(lines).split()).strip()
+
+    incumbent_body = body(incumbent_text)
+    candidate_body = body(candidate_text)
+    authority = (section_context or {}).get("writer_authority_context", {})
+    candidate_points = authority.get("section_candidate_points", ())
+    supported_claims = authority.get("reader_facing_claims", ())
+    protects_section_body = bool(
+        re.search(r"(?m)^#{1,6}\s+", incumbent_text)
+        or candidate_points
+        or supported_claims
+    )
+    failures: list[str] = []
+    incumbent_heading = incumbent_text.lstrip().splitlines()[:1]
+    incumbent_heading = (
+        incumbent_heading[0].strip()
+        if incumbent_heading and incumbent_heading[0].lstrip().startswith("#")
+        else ""
+    )
+    expected_heading = str((section_context or {}).get("writer_heading") or "").strip()
+    required_heading_line = incumbent_heading or (
+        f"## {expected_heading}" if expected_heading else ""
+    )
+    if required_heading_line:
+        first_line = candidate_text.lstrip().splitlines()[:1]
+        if not first_line or first_line[0].strip() != required_heading_line:
+            failures.append("candidate_removed_or_changed_section_heading")
+    if protects_section_body and incumbent_body and not candidate_body:
+        failures.append("candidate_body_empty")
+    debris = candidate_body.lower().strip(" ,.;:-")
+    if protects_section_body and debris in {"and", "or", "and and", "and or", "or and"}:
+        failures.append("candidate_body_is_connective_debris")
+    if protects_section_body and re.search(
+        r"(?:^|\n)\s*(?:,?\s*(?:and|or)\s*)+(?:$|\n)", candidate_text, re.I
+    ):
+        failures.append("candidate_contains_connective_debris")
+    if (
+        len(incumbent_body) >= 240
+        and len(candidate_body) < 80
+        and len(candidate_body) < int(len(incumbent_body) * 0.18)
+    ):
+        failures.append("candidate_body_collapsed")
+    return tuple(dict.fromkeys(failures))
+
+
 @dataclass
 class LocalRewriteAgent:
     """Call and validate a scoped Rewrite Agent response."""
@@ -182,6 +276,17 @@ class LocalRewriteAgent:
                 candidate_text=incumbent_text,
                 blocked_reason="no_rewrite_issues",
             )
+        if any(
+            issue.allowed_repair_scope in {"packet_relation", "code_search"}
+            for issue in issue_list
+        ):
+            return RewriteCallResult(
+                status="blocked",
+                incumbent_digest=incumbent_digest,
+                candidate_digest=incumbent_digest,
+                candidate_text=incumbent_text,
+                blocked_reason="rewrite_scope_not_owned_by_local_rewrite",
+            )
         base_config = self.config or load_llm_config_from_env()
         config = apply_role_config(base_config, LOCAL_REWRITE)
         payload = {
@@ -193,16 +298,68 @@ class LocalRewriteAgent:
                 "preserve_unaffected_text": True,
                 "do_not_invent_evidence": True,
                 "return_offsets_in_incumbent_text": True,
+                "repository_claims_may_be_positive": True,
+                "candidate_points_require_visible_epistemic_framing": True,
+                "unlisted_positive_details_must_be_removed": True,
             },
         }
+        method_language_instruction = (
+            " For method_language_style issues, rewrite the section as a paper Method "
+            "explanation: mechanisms and mathematical or data transformations are the "
+            "sentence subjects; raw code identifiers are never sentence subjects or an "
+            "execution inventory. Keep only the minimum exact identifiers needed as "
+            "parenthetical repository bindings. A cosmetic verb swap that leaves "
+            "identifier-dense prose does not resolve the issue."
+            if any(issue.failure_type == "method_language_style" for issue in issue_list)
+            else ""
+        )
         request = LLMRequest(
             prompt_template_id=self.prompt_template_id,
             prompt=(
-                "You are the owning local_rewrite Agent. Return only JSON matching the schema. "
-                "For each repair, return the exact incumbent character offsets and original_text, "
-                "then the complete replacement span. Never rewrite text outside those spans, add "
-                "evidence, or normalize unrelated punctuation. An empty replacement is allowed only "
-                "when the issue explicitly permits drop_or_gap."
+                "You are the owning academic Method Rewrite Agent. Return only JSON matching "
+                "the schema. Diagnose each assigned issue against "
+                "section_context.writer_authority_context before editing. That context is the "
+                "same authority surface supplied to Writer: reader_facing_claims, candidate "
+                "points, argument flow, formalization, validation constraints, and bindings. "
+                "Use reader_facing_claims whose may_enter_verified is true for positive "
+                "implementation statements, expressed once in natural academic Method language "
+                "with every required qualifier. A section_candidate_point is not repository "
+                "evidence: preserve it only as author-owned or candidate narrative using explicit "
+                "phrasing such as 'we aim', 'our intended design', 'repository evidence partially "
+                "supports', 'pending confirmation', or an explicit mismatch statement. If an "
+                "offending positive assertion maps to neither surface, remove it; do not make it "
+                "vague merely to evade validation. Use mechanisms, representations, mathematical "
+                "or data transformations, assumptions, and outputs as grammatical subjects. Put "
+                "only indispensable code identifiers in short parenthetical repository bindings, "
+                "never as an execution inventory. Use an equation or symbol only when supplied by "
+                "formalization, and never infer empirical benefit, novelty, complexity, or theory. "
+                "Remove generic section templates and avoid restating the complete pipeline in a "
+                "component-specific section. For supported_claim_not_rendered, replace one exact "
+                "existing paragraph (or the section when necessary) with a version that integrates "
+                "the supplied claim; never use a zero-width insertion. Do not solve unsupported "
+                "prose by deleting the whole section. If section_candidate_points are present, "
+                "replace the unsupported implementation story with a concise candidate paragraph "
+                "that states the relevant point using an explicit epistemic marker. If "
+                "reader_facing_claims are present, retain their supported semantic content in "
+                "natural prose. Never leave a heading followed only by whitespace, punctuation, "
+                "or connective words such as 'and'. Return exactly one patch when an edit is "
+                "needed: replace one complete paragraph or, when authority framing is wrong "
+                "throughout, the complete section. The patch may list every issue_id that it "
+                "resolves. Never return nested sentence patches. Return the exact incumbent "
+                "character offsets and original_text, then the complete replacement span. The "
+                "patch MUST include a non-empty issue_ids "
+                "array containing the exact atomic_claim_id from the repair issue, or its exact "
+                "sentence_id when atomic_claim_id is empty, plus patch_id and "
+                "allowed_scope. Never omit issue_ids or allowed_scope. Never rewrite text outside "
+                "those spans, add evidence, or normalize unrelated punctuation. For wording_only, "
+                "replacement_text must be non-empty and allowed_scope must be wording_only. For an "
+                "empty replacement, allowed_scope MUST be drop_or_gap and every issue_id must refer "
+                "only to an issue whose allowed_repair_scope is drop_or_gap. original_text must be "
+                "the exact non-empty incumbent slice. Example: {\"patches\":[{\"patch_id\":\"drop-FAC1\","
+                "\"section_id\":\"\",\"start\":0,\"end\":12,\"original_text\":\"...\","
+                "\"replacement_text\":\"\",\"issue_ids\":[\"FAC1\"],"
+                "\"allowed_scope\":\"drop_or_gap\"}]}."
+                + method_language_instruction
             ),
             input_payload=payload,
             schema_name="LocalRewriteOutputV1",
@@ -219,6 +376,12 @@ class LocalRewriteAgent:
                 candidate_text=incumbent_text,
                 blocked_reason=f"rewrite_agent_error:{exc.__class__.__name__}",
             )
+        trace = build_generation_call_trace(
+            call_id=f"{self.prompt_template_id}:{request.input_hash[7:19]}",
+            config=config,
+            request=request,
+            response=response,
+        ).model_dump(mode="json")
         if response.blocked_reason:
             return RewriteCallResult(
                 status="blocked",
@@ -227,14 +390,12 @@ class LocalRewriteAgent:
                 candidate_text=incumbent_text,
                 response_ref=response.response_hash,
                 blocked_reason=response.blocked_reason,
+                generation_trace=trace,
             )
-        parsed, error = try_parse_structured_response(response.text, LocalRewriteOutputV1)
-        trace = build_generation_call_trace(
-            call_id=f"{self.prompt_template_id}:{request.input_hash[7:19]}",
-            config=config,
-            request=request,
-            response=response,
-        ).model_dump(mode="json")
+        parsed, recovery, error = try_parse_structured_response_with_trace(
+            response.text,
+            LocalRewriteOutputV1,
+        )
         if parsed is None:
             return RewriteCallResult(
                 status="rejected",
@@ -245,6 +406,60 @@ class LocalRewriteAgent:
                 blocked_reason=f"rewrite_schema_failed:{error}",
                 patch_failures=("response_schema_invalid",),
                 generation_trace=trace,
+                response_recovery_trace=recovery.model_dump(mode="json"),
+            )
+        parsed, coordinates_repaired = _repair_unique_patch_coordinates(
+            incumbent_text, parsed
+        )
+        if coordinates_repaired:
+            recovery = recovery.model_copy(update={
+                "applied": True,
+                "operations": tuple(dict.fromkeys([
+                    *recovery.operations,
+                    "repair_unique_exact_span_coordinates",
+                ])),
+            })
+        scope_rank = {
+            "wording_only": 0,
+            "sentence_atomicity": 1,
+            "claim_decomposition": 2,
+            "packet_relation": 3,
+            "code_search": 4,
+            "drop_or_gap": 5,
+        }
+        issue_by_id: dict[str, list[TextRepairIssueV1]] = {}
+        for issue in issue_list:
+            for issue_id in (issue.atomic_claim_id, issue.sentence_id):
+                if issue_id:
+                    issue_by_id.setdefault(issue_id, []).append(issue)
+        scope_failures: list[str] = []
+        for patch in parsed.patches:
+            patch_scopes = [
+                scope_rank[issue.allowed_repair_scope]
+                for issue_id in patch.issue_ids
+                for issue in issue_by_id.get(issue_id, ())
+            ]
+            # The repair contract authorizes the most permissive scope among
+            # the issues it addresses (``derive_repair_issues`` /
+            # ``most_permissive_scope``): a sentence whose issues include
+            # ``direct_evidence_missing`` (drop_or_gap) may be dropped even
+            # when another issue on the same claim is narrower.  Comparing
+            # against ``min`` rejected legitimate drop repairs whenever a
+            # claim carried a second, narrower issue code.
+            if patch_scopes and scope_rank[patch.allowed_scope] > max(patch_scopes):
+                scope_failures.append(f"patch:{patch.patch_id}:scope_exceeded")
+        if scope_failures:
+            return RewriteCallResult(
+                status="rejected",
+                incumbent_digest=incumbent_digest,
+                candidate_digest=incumbent_digest,
+                candidate_text=incumbent_text,
+                output=parsed,
+                response_ref=response.response_hash,
+                blocked_reason="rewrite_patch_scope_failed",
+                patch_failures=tuple(scope_failures),
+                generation_trace=trace,
+                response_recovery_trace=recovery.model_dump(mode="json"),
             )
         candidate, failures = apply_local_rewrite_patches(
             incumbent_text,
@@ -267,6 +482,25 @@ class LocalRewriteAgent:
                 blocked_reason="rewrite_patch_contract_failed",
                 patch_failures=failures,
                 generation_trace=trace,
+                response_recovery_trace=recovery.model_dump(mode="json"),
+            )
+        readability_failures = _candidate_readability_failures(
+            incumbent_text,
+            candidate,
+            section_context=section_context,
+        )
+        if readability_failures:
+            return RewriteCallResult(
+                status="rejected",
+                incumbent_digest=incumbent_digest,
+                candidate_digest=incumbent_digest,
+                candidate_text=incumbent_text,
+                output=parsed,
+                response_ref=response.response_hash,
+                blocked_reason="rewrite_candidate_not_readable",
+                patch_failures=readability_failures,
+                generation_trace=trace,
+                response_recovery_trace=recovery.model_dump(mode="json"),
             )
         status: Literal["applied", "no_progress"] = "applied" if candidate != incumbent_text else "no_progress"
         return RewriteCallResult(
@@ -278,13 +512,16 @@ class LocalRewriteAgent:
             response_ref=response.response_hash,
             blocked_reason="" if status == "applied" else "rewrite_agent_no_progress",
             generation_trace=trace,
+            response_recovery_trace=recovery.model_dump(mode="json"),
         )
 
 
 def write_repair_transition(path: str | Path, transition: RepairTransitionV1) -> None:
     output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(transition.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    atomic_write_bytes(
+        output,
+        (transition.model_dump_json(indent=2) + "\n").encode("utf-8"),
+    )
 
 
 __all__ = [

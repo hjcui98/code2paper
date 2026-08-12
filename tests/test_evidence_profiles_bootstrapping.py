@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
+    compile_legacy_profile_evidence_v3,
     validate_evidence_compiler_v3,
 )
 from code2paper.agentic.evidence_profiles.bootstrapping_multiview import (
@@ -207,7 +207,7 @@ def test_minimal_fixture_match_and_compile_positive(tmp_path: Path) -> None:
     assert match_result.matched, f"match failed: {match_result.reasons}"
     assert match_result.missing_required_fingerprints == []
 
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None, "compile returned None"
     assert result.profile_id == "bootstrapping_multiview_tnc_reliability"
     assert not validate_evidence_compiler_v3(result, snapshot)
@@ -229,7 +229,7 @@ def test_no_late_fusion_text_but_weighted_fusion_passes(tmp_path: Path) -> None:
     snapshot = build_repo_snapshot(tmp_path)
     profile = BootstrappingMultiViewProfile()
     assert profile.match(snapshot).matched
-    assert profile.compile(snapshot) is not None
+    assert profile._compile_legacy(snapshot) is not None
 
 
 def test_remove_weighted_sum_rejects_behavior_contract(tmp_path: Path) -> None:
@@ -262,7 +262,7 @@ def test_remove_reliability_weight_multiplication_rejects(tmp_path: Path) -> Non
     )
     assert not _behavior_contract_satisfied(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_remove_torch_stack_rejects(tmp_path: Path) -> None:
@@ -278,7 +278,7 @@ def test_remove_torch_stack_rejects(tmp_path: Path) -> None:
     )
     assert not _behavior_contract_satisfied(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_same_name_symbols_no_behavior_no_match(tmp_path: Path) -> None:
@@ -331,7 +331,7 @@ def test_each_supported_claim_has_facts_and_direct_spans(tmp_path: Path) -> None
     """Every supported claim must have at least one fact and one direct span from real code."""
     _write_minimal_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None, "compile failed"
 
     fact_by_id = {f.fact_id: f for f in result.facts.facts if f.validation_status == "supported"}
@@ -353,7 +353,7 @@ def test_claim_c_bml_tnc_formalize_references_finalize_forward(tmp_path: Path) -
     """C-BML-TNC-FORMALIZE must directly reference F-BML-FINALIZE-FWD and its span."""
     _write_minimal_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
 
     claim = next((c for c in result.claims.claims if c.claim_id == "C-BML-TNC-FORMALIZE"), None)
@@ -371,7 +371,7 @@ def test_claim_c_bml_backbone_includes_finalize_fwd_fact_and_span(tmp_path: Path
     """C-BML-BACKBONE must reference F-BML-FINALIZE-FWD and its direct span."""
     _write_minimal_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
 
     claim = next((c for c in result.claims.claims if c.claim_id == "C-BML-BACKBONE"), None)
@@ -384,7 +384,7 @@ def test_finalize_fwd_fact_describes_weighted_fusion_operations(tmp_path: Path) 
     """F-BML-FINALIZE-FWD fact object must describe torch.stack, weight multiply, and sum."""
     _write_minimal_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
 
     fact = next((f for f in result.facts.facts if f.fact_id == "F-BML-FINALIZE-FWD"), None)
@@ -473,7 +473,7 @@ def test_profile_does_not_activate_from_project_name_or_prose(tmp_path: Path) ->
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 # ---------------------------------------------------------------------------

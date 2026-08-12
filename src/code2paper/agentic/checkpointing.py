@@ -31,6 +31,7 @@ class CheckpointMetadataV2(BaseModel):
     repo_snapshot_id: str
     thread_id: str
     checkpoint_backend: str
+    checkpoint_path: str = ""
     resumed: bool = False
     freshness_status: str = "not_checked"
     stale_artifact_keys: list[str] = Field(default_factory=list)
@@ -107,6 +108,7 @@ def validate_resume_state(payload: AgenticRunState | dict[str, Any]) -> tuple[Ag
         repo_snapshot_id=repo.snapshot_id,
         thread_id=thread_id,
         checkpoint_backend=str(state.checkpoint_metadata.get("checkpoint_backend") or "unknown"),
+        checkpoint_path=str(state.checkpoint_metadata.get("checkpoint_path") or ""),
         resumed=True,
         freshness_status=report.status,
         stale_artifact_keys=report.stale_artifact_keys,

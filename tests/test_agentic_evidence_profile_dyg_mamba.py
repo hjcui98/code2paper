@@ -4,7 +4,7 @@ from pathlib import Path
 
 from code2paper.agentic.authoring_projection import build_authoring_projection
 from code2paper.agentic.claim_verifier import build_claim_verification_report
-from code2paper.agentic.evidence_compiler_v3 import compile_evidence_v3
+from code2paper.agentic.evidence_compiler_v3 import compile_legacy_profile_evidence_v3
 from code2paper.agentic.evidence_profiles.dynamic_graph_mamba import (
     DynamicGraphMambaProfile,
 )
@@ -136,7 +136,7 @@ loss = loss_func(input=predicts, target=labels)
 
 def test_profile_compiles_time_conditioned_path_and_conflict_gaps(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
-    result = compile_evidence_v3(build_repo_snapshot(tmp_path))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path))
     assert result is not None
     assert result.profile_id == "temporal_graph_time_conditioned_sequence"
     assert [packet.packet_id for packet in result.packets.packets] == [
@@ -164,7 +164,7 @@ def test_profile_compiles_time_conditioned_path_and_conflict_gaps(tmp_path: Path
 
 def test_projection_keeps_conflicts_out_of_positive_prose(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
-    result = compile_evidence_v3(build_repo_snapshot(tmp_path))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path))
     assert result is not None
     evidence = MethodEvidence(project_id="fixture", method_name="Temporal model", method_goal="Describe code.", implementation_scope="fixture")
     claim_map = ClaimEvidenceMap(claims=[])
@@ -193,7 +193,7 @@ def test_removing_dts_delivery_disables_time_conditioned_profile(tmp_path: Path)
     snapshot = build_repo_snapshot(tmp_path)
     match = DynamicGraphMambaProfile().match(snapshot)
     assert "elapsed_time_to_encoder_dts" in match.missing_required_fingerprints
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_removing_topk_or_renormalization_disables_readout_claim(tmp_path: Path) -> None:
@@ -214,4 +214,4 @@ def test_paper_only_conflict_language_cannot_activate_profile(tmp_path: Path) ->
         "DyG-Mamba uses spectral normalization, MEAN pooling, robust continuous states, and low complexity.",
         encoding="utf-8",
     )
-    assert compile_evidence_v3(build_repo_snapshot(tmp_path)) is None
+    assert compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path)) is None

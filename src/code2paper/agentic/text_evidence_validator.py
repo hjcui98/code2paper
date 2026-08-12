@@ -15,12 +15,59 @@ from code2paper.agentic.trust_contracts import (
 )
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
 from code2paper.agentic.evidence_compiler_v3 import EvidencePacketSetV3
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.core.schemas import RawEvidencePack, SourceType
 
 
 SemanticVerifier = Callable[[dict[str, Any]], Mapping[str, Any] | None]
 _STRONG_WORDS = {"guarantee", "guarantees", "ensure", "ensures", "cause", "causes", "outperform", "outperforms"}
+
+# A comparison is an exact ``identifier operator value`` unit.  The
+# identifier and the value carry word boundaries so an authorized
+# ``discount > 0`` can never authorize ``count > 0`` (variable-suffix
+# collision) and an authorized ``count > 10`` can never authorize
+# ``count > 1`` (value-prefix collision).  The identifier grammar accepts
+# dotted attributes, bracket-indexed operands (``tensor.shape[0]``,
+# ``counts[i]``), and call suffixes so an authorized indexed threshold such
+# as ``tensor.shape[0] > 1`` is verified as a complete unit instead of
+# degrading to loose numeric membership.  Operators are the closed
+# comparison set; signed and scientific thresholds are parsed as part of
+# the value so ``count > -1``, ``count > 1``, and ``count > 1e5`` are
+# distinct units and an operator-only mutation cannot ride on a substring.
+_COMPARISON_UNIT = re.compile(
+    r"(?<![A-Za-z0-9_])"
+    r"([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[[^\[\]]*\]|\([^)]*\))*)"
+    r"\s*((?:>=|<=|!=|==|>|<))\s*"
+    r"([+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?%?)"
+    r"(?![A-Za-z0-9_])"
+)
+# A loose comparison-shaped ``operator value`` scanner used only to prove
+# coverage: every operator+value occurrence in the claim must be covered by
+# an exact parsed unit, otherwise the expression has a comparison shape the
+# parser cannot represent and the gate must fail closed instead of
+# downgrading to standalone numeric membership.
+_COMPARISON_SHAPE = re.compile(
+    r"((?:>=|<=|!=|==|>|<))\s*"
+    r"([+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?%?)"
+    r"(?![A-Za-z0-9_])"
+)
+
+
+def _comparison_units(text: str) -> set[tuple[str, str, str]]:
+    """Parse every comparison expression in ``text`` into exact normalized
+    ``(identifier, operator, value)`` units.
+
+    The identifier is whitespace-normalized so ``len (x) > 0`` and
+    ``len(x) > 0`` are the same unit; the operator and value are kept
+    verbatim (``>=`` differs from ``>``, ``-1`` differs from ``1``, and
+    ``1e5`` differs from ``1``).
+    """
+
+    units: set[tuple[str, str, str]] = set()
+    for identifier, operator, value in _COMPARISON_UNIT.findall(text):
+        units.add((re.sub(r"\s+", "", identifier), operator, value))
+    return units
 
 
 def validate_text_evidence(
@@ -51,10 +98,74 @@ def validate_text_evidence(
         for relation in packet.relations
     }
     projection_by_id = {claim.claim_id: claim for claim in projection.projected_claims}
+    author_attested_by_id = {
+        fragment.fragment_id: fragment
+        for fragment in projection.author_attested_fragments
+    }
+    candidate_narrative_by_id = {
+        str(item.get("point_id") or ""): item
+        for values in (
+            projection.author_intent_unverified_points,
+            projection.repository_mismatches,
+            projection.external_pending_points,
+            projection.formalization_needed_points,
+        )
+        for item in values
+        if isinstance(item, dict) and str(item.get("point_id") or "")
+    }
+    # Qualifier preservation is a sentence-level property: a conditional prefix
+    # such as "When self.time_mamba is active and dts is not None, ... computes
+    # rearrange(...)" scopes the whole sentence.  The atomic-fragment splitter
+    # breaks that sentence on the comma, detaching the qualifier from the
+    # formula fragment.  The qualifier check therefore consults the full unit
+    # (sentence) text; the fragment-level text remains authoritative for
+    # projection matching, wording strength, and numeric/formula token checks.
+    unit_text_by_id = {unit.unit_id: unit.text for unit in final_claims.units}
     verdicts: list[TextClaimEvidenceVerdict] = []
     verifier_calls = 0
     for claim in final_claims.atomic_claims:
         matches = [projection_by_id[item] for item in claim.candidate_projection_claim_ids if item in projection_by_id]
+        author_matches = [
+            author_attested_by_id[item]
+            for item in claim.candidate_author_attested_ids
+            if item in author_attested_by_id
+        ]
+        candidate_narrative_matches = [
+            candidate_narrative_by_id[item]
+            for item in claim.candidate_narrative_ids
+            if item in candidate_narrative_by_id
+        ]
+        # Author-owned statements are a separate lane.  They may be emitted
+        # as caveated prose only when the final fragment is a close match to
+        # the validated callback/MethodEvidence wording; they never receive
+        # repository evidence ids or satisfy a repository claim by accident.
+        if not matches and author_matches:
+            verdicts.append(TextClaimEvidenceVerdict(
+                atomic_claim_id=claim.atomic_claim_id,
+                status="caveated",
+                matched_projection_claim_ids=[item.fragment_id for item in author_matches],
+                supported_fragment=claim.text,
+                rationale="Author-attested fragment matched; not repository evidence.",
+                repair_action="",
+            ))
+            continue
+        if not matches and candidate_narrative_matches:
+            point_ids = [
+                str(item.get("point_id") or "")
+                for item in candidate_narrative_matches
+            ]
+            verdicts.append(TextClaimEvidenceVerdict(
+                atomic_claim_id=claim.atomic_claim_id,
+                status="caveated",
+                matched_projection_claim_ids=point_ids,
+                supported_fragment=claim.text,
+                rationale=(
+                    "Typed candidate narrative matched with explicit author/"
+                    "partial/pending framing; not repository evidence."
+                ),
+                repair_action="",
+            ))
+            continue
         failures: list[str] = []
         if not matches:
             failures.append("no_semantically_matching_projected_claim")
@@ -84,16 +195,53 @@ def validate_text_evidence(
                 for item in direct_ids
                 if item in evidence_by_id and is_direct_code_path(evidence_by_id[item].path)
             )
-        if matches and not _relevant_to_evidence(claim.text, evidence_text, matches):
-            failures.append("direct_evidence_semantically_unrelated")
+        if matches:
+            # Separate the two failure classes that the combined relevance
+            # check collapsed: a fragment whose wording drifted below the
+            # projection overlap is a Writer-wording failure (route to
+            # ``revise_authoring_wording``); only a fragment whose matched
+            # evidence genuinely cannot support it routes to the packet
+            # binding owner.
+            if not _projection_overlap_sufficient(claim.text, matches):
+                failures.append("no_semantically_matching_projected_claim")
+            if evidence_text and not _evidence_related(claim.text, evidence_text):
+                failures.append("direct_evidence_semantically_unrelated")
         required_qualifiers = _dedupe([qualifier for item in matches for qualifier in item.required_qualifiers])
-        if required_qualifiers and not _qualifier_preserved(claim.text, required_qualifiers):
+        if required_qualifiers and not _qualifier_preserved(
+            unit_text_by_id.get(claim.unit_id, claim.text), required_qualifiers
+        ):
             failures.append("required_qualifier_missing")
         if _wording_strength_exceeded(claim.text, matches):
             failures.append("allowed_wording_boundary_exceeded")
-        if "number" in claim.high_risk_markers and not _numeric_tokens_supported(claim.text, evidence_text, projection):
+        # Authorized projection fragments and wording boundaries carry the
+        # exact code expressions (e.g. ``dim=1``, ``node_memories[torch...]``)
+        # that the Writer was told to copy.  These are not free-form numeric
+        # or formula claims — they are pre-authorized wording, so they should
+        # be treated as an allowed source alongside direct evidence.
+        authorized_wording = " ".join(
+            str(item.supported_fragment) for item in matches
+        ) + " " + " ".join(str(item.allowed_wording_boundary) for item in matches)
+        # When direct evidence ids exist but the excerpt is empty (a D1
+        # evidence extraction gap), the claim cannot be verified against
+        # repository code.  This is an explicit failure: relying on other
+        # gates to indirectly block it lets a claim with an empty evidence
+        # excerpt slip through when no other failure fires.  Fail closed
+        # here so the gap is visible and must be repaired at the evidence
+        # layer.
+        _evidence_excerpt_empty = bool(direct_ids) and not evidence_text.strip()
+        if _evidence_excerpt_empty:
+            failures.append("direct_evidence_excerpt_empty")
+        if (
+            "number" in claim.high_risk_markers
+            and not _evidence_excerpt_empty
+            and not _numeric_tokens_supported(claim.text, evidence_text, projection, required_qualifiers, authorized_wording)
+        ):
             failures.append("numeric_token_not_in_direct_evidence")
-        if "formula" in claim.high_risk_markers and not _formula_tokens_supported(claim.text, evidence_text, projection):
+        if (
+            "formula" in claim.high_risk_markers
+            and not _evidence_excerpt_empty
+            and not _formula_tokens_supported(claim.text, evidence_text, projection, required_qualifiers, authorized_wording)
+        ):
             failures.append("formula_not_in_direct_evidence")
         if evidence_snapshot_v2 is None and direct_ids and any(
             evidence_by_id[item].source_type == SourceType.AUTHOR for item in direct_ids if item in evidence_by_id
@@ -178,11 +326,163 @@ def validate_text_evidence(
     )
 
 
+def _verdict_is_repository_supported(
+    verdict: TextClaimEvidenceVerdict,
+    *,
+    projection_claim_ids: set[str],
+    include_partial: bool,
+) -> bool:
+    """Whether one claim verdict may enter the repository-verified document.
+
+    ``supported`` verdicts always qualify.  ``caveated`` verdicts qualify
+    only when the caveat is a *partial repository support* (the matched ids
+    are projection claim ids) AND the caller permits partial lanes; a
+    caveat whose matched ids are author-attested fragment ids is
+    author-intent material and never enters verified.
+    """
+
+    if verdict.status == "supported":
+        return True
+    if verdict.status != "caveated" or not include_partial:
+        return False
+    return any(
+        str(item) in projection_claim_ids
+        for item in verdict.matched_projection_claim_ids
+    )
+
+
+def build_repository_verified_text(
+    *,
+    final_text: str,
+    final_claims: FinalTextClaims,
+    validation_report: TextEvidenceValidationReport,
+    projection: AuthoringInputProjection,
+    include_partial: bool = True,
+) -> tuple[str, dict[str, Any]]:
+    """Build the repository-verified document from a candidate text (G2).
+
+    Sentence-level, fail-closed filtering:
+
+    - non-factual units (headings, discourse, expository bridges) are kept as
+      structural scaffolding — they carry no implementation facts;
+    - factual units are kept only when *every* atomic claim in the unit
+      qualifies for verified inclusion (``supported``, or qualifier-guarded
+      partial when ``include_partial``);
+    - author-attested caveats, mismatches, review questions, literature/
+      formalization pending content, and unsupported positives are excluded
+      from verified and reported for review linking.
+
+    The text is reconstructed from the original source offsets so headings,
+    blank lines and markdown layout survive.  ``unsupported_positive`` spans
+    are never rewritten or invented.
+    """
+
+    projection_claim_ids = {claim.claim_id for claim in projection.projected_claims}
+    verdict_by_id = {item.atomic_claim_id: item for item in validation_report.verdicts}
+    claim_ids_by_unit: dict[str, list[str]] = {}
+    for claim in final_claims.atomic_claims:
+        claim_ids_by_unit.setdefault(claim.unit_id, []).append(claim.atomic_claim_id)
+
+    keep_unit: dict[str, bool] = {}
+    excluded_reasons: list[dict[str, Any]] = []
+    for unit in final_claims.units:
+        if not unit.factual or unit.kind in {
+            "heading", "discourse", "expository_bridge", "caption",
+        }:
+            keep_unit[unit.unit_id] = True
+            continue
+        claim_ids = claim_ids_by_unit.get(unit.unit_id, [])
+        if not claim_ids:
+            keep_unit[unit.unit_id] = False
+            excluded_reasons.append({
+                "unit_id": unit.unit_id,
+                "text": unit.text,
+                "char_start": unit.char_start,
+                "char_end": unit.char_end,
+                "reason": "factual_unit_without_extracted_claim",
+            })
+            continue
+        verdicts = [verdict_by_id[claim_id] for claim_id in claim_ids if claim_id in verdict_by_id]
+        missing_verdicts = [claim_id for claim_id in claim_ids if claim_id not in verdict_by_id]
+        if missing_verdicts:
+            keep_unit[unit.unit_id] = False
+            excluded_reasons.append({
+                "unit_id": unit.unit_id,
+                "text": unit.text,
+                "char_start": unit.char_start,
+                "char_end": unit.char_end,
+                "reason": "missing_claim_verdict:" + ",".join(sorted(missing_verdicts)),
+            })
+            continue
+        if all(
+            _verdict_is_repository_supported(
+                verdict,
+                projection_claim_ids=projection_claim_ids,
+                include_partial=include_partial,
+            )
+            for verdict in verdicts
+        ):
+            keep_unit[unit.unit_id] = True
+            continue
+        excluded_reasons.append({
+            "unit_id": unit.unit_id,
+            "text": unit.text,
+            "char_start": unit.char_start,
+            "char_end": unit.char_end,
+            "reason": ";".join(sorted({
+                verdict.status
+                for verdict in verdicts
+                if not _verdict_is_repository_supported(
+                    verdict,
+                    projection_claim_ids=projection_claim_ids,
+                    include_partial=include_partial,
+                )
+            })),
+        })
+        keep_unit[unit.unit_id] = False
+
+    ordered = sorted(final_claims.units, key=lambda item: item.char_start)
+    parts: list[str] = []
+    cursor = 0
+    for unit in ordered:
+        start = max(cursor, unit.char_start)
+        end = min(len(final_text), unit.char_end)
+        if end <= start:
+            continue
+        if keep_unit.get(unit.unit_id, False):
+            parts.append(final_text[cursor:end])
+        else:
+            # Keep the interstitial whitespace only (no replaced content).
+            parts.append(final_text[cursor:start])
+        cursor = end
+    parts.append(final_text[cursor:])
+    verified_text = "".join(parts)
+    # Rejoining on blank lines keeps markdown layout canonical.
+    verified_text = re.sub(r"\n{3,}", "\n\n", verified_text).strip()
+    excluded_unsupported = [
+        item for item in excluded_reasons
+        if not keep_unit.get(item["unit_id"], False)
+    ]
+    report = {
+        "split_mode": "sentence_reverse_validation",
+        "verified_unit_ids": [item.unit_id for item in ordered if keep_unit.get(item.unit_id, False)],
+        "excluded_units": excluded_unsupported,
+        "verified_positive_unit_count": sum(
+            keep_unit.get(item.unit_id, False)
+            and item.kind not in {"heading", "discourse", "expository_bridge", "caption"}
+            for item in ordered
+        ),
+        "unsupported_positive_units": len(excluded_unsupported),
+    }
+    return verified_text, report
+
+
 def write_text_evidence_validation(path: str | Path, report: TextEvidenceValidationReport) -> Path:
     output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return output
+    payload = (
+        json.dumps(report.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n"
+    ).encode("utf-8")
+    return atomic_write_bytes(output, payload)
 
 
 def load_text_evidence_validation(path: str | Path) -> TextEvidenceValidationReport:
@@ -232,6 +532,39 @@ def _relevant_to_evidence(text: str, evidence_text: str, matches: list[Any]) -> 
     return projection_overlap >= 0.45 and evidence_related
 
 
+def _projection_overlap_sufficient(text: str, matches: list[Any]) -> bool:
+    """Whether the final fragment still overlaps its matched projections.
+
+    A fragment whose wording drifted too far from the projection is a
+    Writer-wording failure, NOT an evidence-binding defect.  Separating the
+    two lets ``direct_evidence_semantically_unrelated`` route to the packet
+    owner only when the evidence itself genuinely cannot support the
+    fragment.
+    """
+
+    claim_tokens = _tokens(text)
+    projection_tokens = (
+        set().union(*(_tokens(item.supported_fragment) for item in matches))
+        if matches
+        else set()
+    )
+    if not projection_tokens:
+        return False
+    overlap = len(claim_tokens & projection_tokens)
+    return overlap / max(1, min(len(claim_tokens), len(projection_tokens))) >= 0.45
+
+
+def _evidence_related(text: str, evidence_text: str) -> bool:
+    claim_tokens = _tokens(text)
+    evidence_tokens = _tokens(evidence_text)
+    overlap = len(claim_tokens & evidence_tokens)
+    return (
+        overlap / max(1, min(len(claim_tokens), len(evidence_tokens))) >= 0.12
+        or overlap >= 2
+        or concepts_semantically_related(text, evidence_text)
+    )
+
+
 def _qualifier_preserved(text: str, qualifiers: list[str]) -> bool:
     text_tokens = _tokens(text)
     for qualifier in qualifiers:
@@ -251,7 +584,13 @@ def _wording_strength_exceeded(text: str, matches: list[Any]) -> bool:
     return bool(text_words - allowed_words)
 
 
-def _numeric_tokens_supported(text: str, evidence_text: str, projection: AuthoringInputProjection) -> bool:
+def _numeric_tokens_supported(
+    text: str,
+    evidence_text: str,
+    projection: AuthoringInputProjection,
+    required_qualifiers: list[str] | None = None,
+    authorized_wording: str = "",
+) -> bool:
     # Remove symbol references (e.g. sym:75d56395dcbb01a3) so hash digits
     # inside symbol identifiers are not mistaken for numeric claims that
     # require evidence support.
@@ -262,15 +601,78 @@ def _numeric_tokens_supported(text: str, evidence_text: str, projection: Authori
     # function, not standalone numeric claims that require literal code
     # evidence.
     cleaned = re.sub(r"[\[\(]\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*[\]\)]", "", cleaned)
-    tokens = set(re.findall(r"\d+(?:\.\d+)?%?", cleaned))
-    allowed = evidence_text + " " + json.dumps(projection.safe_numeric_facts, ensure_ascii=False)
+    # Remove numbers that are part of sequential labels (e.g. ``stage 1``,
+    # ``step 2``, ``phase 3``, ``layer 1``).  These are ordinal labels, not
+    # standalone numeric claims that require evidence support.
+    cleaned = re.sub(r"\b(?:stage|step|phase|layer|level|part|chapter|section)\s+\d+\b", "", cleaned, flags=re.I)
+
+    qualifier_text = " ".join(required_qualifiers or [])
+    allowed = (
+        evidence_text
+        + " "
+        + json.dumps(projection.safe_numeric_facts, ensure_ascii=False)
+        + " "
+        + qualifier_text
+        + " "
+        + authorized_wording
+    )
+
+    # Comparison expressions (``count > 0``, ``len(x) != 0``,
+    # ``entity_occurrences >= 1``, ``tensor.shape[0] > 1``) are conditional
+    # thresholds.  They must be verified as an exact
+    # ``identifier + operator + threshold`` unit against the authorized
+    # sources.  A threshold digit can never be dropped or matched as a
+    # substring: an authorized ``count > 0`` must not authorize
+    # ``count > 999``, ``discount > 0`` must not authorize ``count > 0``,
+    # and ``count > 10`` must not authorize ``count > 1``.
+    claim_units = _comparison_units(cleaned)
+    allowed_units = _comparison_units(allowed)
+    if not claim_units.issubset(allowed_units):
+        return False
+    # Fail closed for any comparison-shaped ``operator value`` that the exact
+    # parser could not represent as an identifier unit.  An authorized
+    # ``tensor.shape[0] > 1`` must not let a mutated ``tensor.shape[0] >= 1``
+    # fall through to loose standalone numeric membership: an unparseable
+    # comparison shape is an unsupported predicate, not a harmless number.
+    covered_operator_positions = {
+        match.start(2) for match in _COMPARISON_UNIT.finditer(cleaned)
+    }
+    for shape_match in _COMPARISON_SHAPE.finditer(cleaned):
+        operator_position = shape_match.start(1)
+        if operator_position not in covered_operator_positions:
+            return False
+    # All comparisons authorized: remove them so their threshold digits
+    # are not re-checked as standalone numeric tokens.
+    cleaned = _COMPARISON_UNIT.sub(" ", cleaned)
+
+    # Digits embedded in code identifiers (``get_prune_input_f15``) are not
+    # numeric claims.  Require numeric tokens to be delimited from letters
+    # and underscores while preserving standalone values such as
+    # ``input_dim=15`` and ``dim=1``.
+    tokens = set(re.findall(
+        r"(?<![A-Za-z0-9_])\d+(?:\.\d+)?%?(?![A-Za-z0-9_])",
+        cleaned,
+    ))
     return all(token in allowed for token in tokens)
 
 
-def _formula_tokens_supported(text: str, evidence_text: str, projection: AuthoringInputProjection) -> bool:
-    formulas = re.findall(r"\$([^$]+)\$|([A-Za-z]\s*=\s*[^,.;]+)", text)
-    needed = {"".join(item).replace(" ", "") for item in formulas}
-    allowed = (evidence_text + json.dumps(projection.safe_equations, ensure_ascii=False)).replace(" ", "")
+def _formula_tokens_supported(
+    text: str,
+    evidence_text: str,
+    projection: AuthoringInputProjection,
+    required_qualifiers: list[str] | None = None,
+    authorized_wording: str = "",
+) -> bool:
+    # Use the same pattern as the risk marker: match ``==`` comparisons and
+    # spaced ``=`` formulas, but NOT keyword arguments (``dim=1``) or code
+    # patterns (``x = ["..."]``, ``x = "..."``).
+    formulas = re.findall(r"\$([^$]+)\$|([A-Za-z]\s*==\s*[^,.;]+|[A-Za-z]\s+=\s+(?![\[\"'])[^,.;]+)", text)
+    needed = {"".join(item).replace(" ", "") for item in formulas if "".join(item).strip()}
+    # Formulas that appear inside authorized qualifiers or authorized
+    # projection fragments are already validated by ``_qualifier_preserved``
+    # or the projection itself; add them to the allowed source.
+    qualifier_text = " ".join(required_qualifiers or [])
+    allowed = (evidence_text + json.dumps(projection.safe_equations, ensure_ascii=False) + " " + qualifier_text + " " + authorized_wording).replace(" ", "")
     return bool(needed) and all(item in allowed for item in needed)
 
 
@@ -286,7 +688,7 @@ def _repair_action(failures: list[str]) -> str:
         return "revise_authoring_wording"
     if "direct_evidence_semantically_unrelated" in failures:
         return "return_to_packet_binding_repair"
-    if any("evidence" in item for item in failures):
+    if "direct_evidence_missing" in failures:
         return "return_to_analysis_for_direct_evidence"
     if failures:
         return "revise_authoring_wording"

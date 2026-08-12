@@ -110,6 +110,32 @@ def _check_method_text(state: AgenticRunState) -> CompletionCheck:
 
 
 def _check_method_usability(state: AgenticRunState) -> CompletionCheck:
+    publication_quality = artifact_json(state, "publication_quality_report_v1")
+    if publication_quality:
+        safety = publication_quality.get("safety") or {}
+        utility = publication_quality.get("utility") or {}
+        passed = bool(
+            publication_quality.get("status") == "publication_ready"
+            and publication_quality.get("plan_gate_passed")
+            and publication_quality.get("final_integrity_gate_passed")
+            and safety.get("hard_gate_passed")
+            and utility.get("utility_gate_passed")
+        )
+        return CompletionCheck(
+            name="method_usability",
+            passed=passed,
+            deliverable="method_usability",
+            message=(
+                "Method passed separate epistemic-safety and publication-utility gates."
+                if passed else
+                "Method is safe or partially authored but has not reached publication_ready utility."
+            ),
+            artifact_keys=[
+                "publication_quality_report_v1",
+                "method_section_plan_v2",
+                "final_text_authorship_ledger_v1",
+            ],
+        )
     coverage = artifact_json(state, "authoring_obligation_coverage")
     if not coverage:
         return CompletionCheck(

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import uuid
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
@@ -26,6 +27,10 @@ from code2paper.agentic.checkpointing import (
 )
 from code2paper.agentic.decision_core import DecisionProvider
 from code2paper.agentic.decision_policy import build_agentic_decision_policy, write_agentic_decision_policy
+from code2paper.agentic.execution_profile import (
+    execution_profile_from_env,
+    load_execution_profile,
+)
 from code2paper.agentic.evaluation_report import build_run_evaluation_report, write_run_evaluation_report
 from code2paper.agentic.graph import build_code2paper_graph
 from code2paper.agentic.graph_catalog import build_graph_catalog, write_graph_catalog
@@ -231,6 +236,7 @@ def run_agentic_code2paper(
             v3_node_trace = list(baseline_summary.v3_node_trace)
     final_state = AgenticRunState.model_validate(final_payload)
     final_state = _persist_freshness_report(final_state)
+    final_state = _reconcile_publication_quality_with_final_validation(final_state)
     policy = build_agentic_decision_policy()
     policy_path = artifact_dir(final_state.method_root, "10_run") / "agentic_decision_policy.json"
     write_agentic_decision_policy(policy_path, policy)
@@ -313,6 +319,7 @@ def run_agentic_code2paper(
         update={"artifacts": {**final_state.artifacts, "agentic_run_evaluation_report": str(evaluation_path)}}
     )
     summary = build_agentic_run_summary(final_state, tool_call_trace_refs=tool_call_trace_refs, v3_error=v3_error, v3_node_trace=v3_node_trace)
+    resume_model_call_delta = len(summary.generation_call_traces) if resume else None
     summary = _merge_resume_summary_evidence(summary, baseline_summary)
     summary_path = artifact_dir(final_state.method_root, "10_run") / "agentic_run_summary.json"
     write_agentic_run_summary(summary_path, summary)
@@ -320,7 +327,12 @@ def run_agentic_code2paper(
         update={"artifacts": {**final_state.artifacts, "agentic_run_summary": str(summary_path)}}
     )
     run_manifest_path = artifact_dir(final_state.method_root, "10_run") / "run_manifest.json"
-    write_agentic_run_manifest(run_manifest_path, final_state)
+    write_agentic_run_manifest(
+        run_manifest_path,
+        final_state,
+        summary_path=summary_path,
+        resume_model_call_delta=resume_model_call_delta,
+    )
     final_state = final_state.model_copy(
         update={"artifacts": {**final_state.artifacts, "run_manifest": str(run_manifest_path)}}
     )
@@ -339,6 +351,13 @@ def run_agentic_code2paper(
             write_r8_acceptance_report(r8_report_path, r8_report)
             final_state = final_state.model_copy(
                 update={"artifacts": {**final_state.artifacts, "r8_acceptance_report": str(r8_report_path)}}
+            )
+            write_agentic_run_manifest(
+                run_manifest_path,
+                final_state,
+                summary_path=summary_path,
+                acceptance_report_path=r8_report_path,
+                resume_model_call_delta=resume_model_call_delta,
             )
         except Exception:
             # R8 acceptance report generation must never block a run.
@@ -371,6 +390,148 @@ def _merge_resume_summary_evidence(
         "v3_error": baseline.v3_error,
         "v3_node_trace": list(baseline.v3_node_trace),
     })
+
+
+def _reconcile_publication_quality_with_final_validation(
+    state: AgenticRunState,
+) -> AgenticRunState:
+    """Upgrade pending Writer quality only from the final reverse validator."""
+
+    quality_value = state.artifacts.get("publication_quality_report_v1", "")
+    validation_value = state.artifacts.get("text_evidence_validation", "")
+    ledger_value = state.artifacts.get("final_text_authorship_ledger_v1", "")
+    if not quality_value or not validation_value or not ledger_value:
+        return state
+    quality_path = Path(quality_value)
+    validation_path = Path(validation_value)
+    ledger_path = Path(ledger_value)
+    if not all(path.is_file() for path in (quality_path, validation_path, ledger_path)):
+        return state
+    try:
+        from code2paper.agentic.final_text_authorship import FinalTextAuthorshipLedgerV1
+        from code2paper.agentic.publication_quality import PublicationQualityIssueV1, PublicationQualityReportV1
+        from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
+
+        quality = PublicationQualityReportV1.model_validate_json(quality_path.read_text(encoding="utf-8"))
+        validation = TextEvidenceValidationReport.model_validate_json(validation_path.read_text(encoding="utf-8"))
+        ledger = FinalTextAuthorshipLedgerV1.model_validate_json(ledger_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return state
+    checked = validation.checked_factual_claims
+    supported = validation.supported_claims + validation.caveated_claims
+    unsupported = validation.unsupported_claims + validation.unverified_claims
+    digest_bound = validation.input_text_digest == ledger.final_text_digest
+    validation_passed = validation.status == "passed" and unsupported == 0 and digest_bound
+    safety_payload = quality.safety.model_dump(mode="json")
+    safety_payload.update({
+        "unsupported_positive_claims": unsupported,
+        "support_precision": 1.0 if checked == 0 else round(supported / checked, 6),
+        "source_integrity": bool(quality.safety.source_integrity and digest_bound),
+        "final_text_validation_status": "passed" if validation_passed else "failed",
+    })
+    safety_payload["hard_gate_passed"] = bool(
+        safety_payload["authorship_gate_passed"]
+        and safety_payload["binding_gate_passed"]
+        and safety_payload["source_integrity"]
+        and unsupported == 0
+        and validation_passed
+    )
+    issues = [
+        item for item in quality.issues
+        if item.code not in {"final_text_validation_pending", "final_text_validation_failed"}
+    ]
+    if not validation_passed:
+        issues.append(PublicationQualityIssueV1(
+            issue_id="safety-final-text-validation",
+            axis="epistemic_safety",
+            scope="document",
+            code="final_text_validation_failed",
+            message=(
+                f"Final reverse validation status={validation.status}, unsupported={validation.unsupported_claims}, "
+                f"unverified={validation.unverified_claims}, digest_bound={digest_bound}."
+            ),
+        ))
+    final_gate = bool(
+        safety_payload["hard_gate_passed"]
+        and quality.plan_gate_passed
+        and quality.utility.utility_gate_passed
+    )
+    payload = quality.model_dump(mode="json")
+    payload.update({
+        "status": "blocked" if not safety_payload["hard_gate_passed"] else (
+            "publication_ready" if final_gate else "incomplete"
+        ),
+        "final_integrity_gate_passed": final_gate,
+        "safety": safety_payload,
+        "issues": [item.model_dump(mode="json") for item in issues],
+        "content_digest": "",
+    })
+    reconciled = PublicationQualityReportV1.model_validate(payload)
+    temporary = quality_path.with_suffix(quality_path.suffix + ".tmp")
+    temporary.write_text(reconciled.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    temporary.replace(quality_path)
+    _reconcile_publication_writer_result_with_quality(
+        state,
+        quality=reconciled,
+    )
+    return state
+
+
+def _reconcile_publication_writer_result_with_quality(
+    state: AgenticRunState,
+    *,
+    quality: Any,
+) -> None:
+    """Keep the Writer result status aligned with the final quality gate.
+
+    The Writer persists its result before the runner performs the final
+    evidence reconciliation.  Without this hand-off, a run can carry a
+    ``publication_writer_result_v1`` marked ``incomplete`` beside a quality
+    report marked ``blocked`` (or ``publication_ready``), which makes a stale
+    candidate appear resumable.  Only the typed terminal status is updated;
+    section text and generation provenance remain untouched.
+    """
+
+    result_value = state.artifacts.get("publication_writer_result_v1", "")
+    if not result_value:
+        return
+    result_path = Path(result_value)
+    if not result_path.is_file():
+        return
+    try:
+        from code2paper.agentic.publication_method_writer import PublicationWriterRunResultV1
+
+        result = PublicationWriterRunResultV1.model_validate_json(
+            result_path.read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError):
+        return
+    status = result.status
+    blocked_reason = result.blocked_reason
+    failures = list(result.binding_failures)
+    if quality.status == "blocked":
+        status = "blocked"
+        blocked_reason = "publication_final_reverse_validation_failed"
+        if "publication_final_reverse_validation_failed" not in failures:
+            failures.append("publication_final_reverse_validation_failed")
+    elif quality.status == "publication_ready":
+        status = "success"
+        blocked_reason = ""
+    elif status == "success":
+        status = "incomplete"
+    if status == result.status and blocked_reason == result.blocked_reason and tuple(failures) == result.binding_failures:
+        return
+    result_payload = result.model_dump(mode="json")
+    result_payload.update({
+        "status": status,
+        "blocked_reason": blocked_reason,
+        "binding_failures": failures,
+        "content_digest": "",
+    })
+    updated = PublicationWriterRunResultV1.model_validate(result_payload)
+    temporary = result_path.with_suffix(result_path.suffix + ".tmp")
+    temporary.write_text(updated.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    temporary.replace(result_path)
 
 
 def build_agentic_run_summary(
@@ -434,15 +595,27 @@ def write_agentic_run_summary(path: str | Path, summary: AgenticRunSummary) -> P
     return output
 
 
-def write_agentic_run_manifest(path: str | Path, state: AgenticRunState) -> Path:
+def write_agentic_run_manifest(
+    path: str | Path,
+    state: AgenticRunState,
+    *,
+    summary_path: str | Path | None = None,
+    acceptance_report_path: str | Path | None = None,
+    resume_model_call_delta: int | None = None,
+) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
+    source_commit, source_dirty = _source_git_metadata()
     manifest = build_run_manifest(
         project_root=state.project_root,
         author_input_path=state.effective_author_markers_path or state.intent_path or None,
         llm=load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model),
         phase_inputs=_agentic_phase_inputs(state),
-        output_paths={name: artifact_path for name, artifact_path in state.artifacts.items() if artifact_path},
+        output_paths={
+            name: artifact_path
+            for name, artifact_path in state.artifacts.items()
+            if artifact_path and name != "run_manifest"
+        },
         final_draft_path=_first_existing_artifact(state, "text_clean_tex", "text_tex", "text_clean_md", "text_md"),
         validator_reports=[
             path
@@ -462,9 +635,50 @@ def write_agentic_run_manifest(path: str | Path, state: AgenticRunState) -> Path
             and path
         ],
         agentic_budgets=state.budgets,
+        source_commit=source_commit,
+        source_dirty=source_dirty,
+        evidence_profile_digest=hash_file(
+            state.artifacts.get("evidence_profile_match", "")
+            or state.artifacts.get("generic_research_compilation_manifest", "")
+        ),
+        run_summary_digest=hash_file(summary_path) if summary_path else "",
+        acceptance_report_digest=(
+            hash_file(acceptance_report_path) if acceptance_report_path else ""
+        ),
+        checkpoint_digest=hash_file(
+            str(state.checkpoint_metadata.get("checkpoint_path") or "")
+        ),
+        terminal_state="BLOCKED" if state.blocked_reason else "COMPLETED",
+        resume_model_call_delta=resume_model_call_delta,
+        execution_profile_digest=hash_file(
+            state.artifacts.get("execution_profile", "")
+            or state.artifacts.get("execution_profile_v1", "")
+        ),
     )
     write_run_manifest(output, manifest)
     return output
+
+
+def _source_git_metadata() -> tuple[str, bool | None]:
+    """Return the Code2Paper source revision without consulting target code."""
+
+    source_root = Path(__file__).resolve().parents[3]
+    try:
+        commit = subprocess.run(
+            ["git", "-C", str(source_root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "-C", str(source_root), "status", "--porcelain", "--untracked-files=no"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return "", None
+    return commit, bool(status.strip())
 
 
 def load_agentic_run_summary(path: str | Path) -> AgenticRunSummary:
@@ -725,6 +939,7 @@ def _prepare_checkpoint_execution(
         repo_snapshot_id=repo_snapshot_id,
         thread_id=thread_id,
         checkpoint_backend=checkpoint_backend,
+        checkpoint_path=str(state.checkpoint_metadata.get("checkpoint_path") or ""),
         resumed=resume,
     )
     if resume and graph_app is not None and not hasattr(graph_app, "get_state"):
@@ -815,11 +1030,39 @@ def _build_v3_graph_for_state(
 
     run_id = state.run_id.strip() or str(uuid.uuid4())
     llm_config = load_llm_config_from_env(provider=state.llm_provider, model=state.llm_model)
+    execution_profile = _load_execution_profile_for_state(state)
+    # Once the wrapper has persisted a route artifact, the checkpointed state
+    # is authoritative.  Reading changed process environment variables during
+    # resume would otherwise silently move a run between shadow/opt-in/canary.
+    route_persisted = bool(
+        state.artifacts.get("execution_route")
+        or state.artifacts.get("execution_route_v1")
+    )
+    execution_opt_in = (
+        bool(state.execution_opt_in)
+        if route_persisted
+        else bool(state.execution_opt_in) or _env_flag("CODE2PAPER_EXECUTION_OPT_IN")
+    )
+    execution_rollback = (
+        bool(state.execution_rollback)
+        if route_persisted
+        else bool(state.execution_rollback) or _env_flag("CODE2PAPER_EXECUTION_ROLLBACK")
+    )
+    execution_canary_key = (
+        (state.execution_canary_key or run_id)
+        if route_persisted
+        else state.execution_canary_key
+        or os.environ.get("CODE2PAPER_EXECUTION_CANARY_KEY", run_id)
+    )
     v3_runtime = build_v3_research_runtime(
         project_root=state.project_root,
         intent_path=state.intent_path or state.effective_author_markers_path,
         run_id=run_id,
         llm_config=llm_config,
+        execution_profile=execution_profile,
+        execution_opt_in=execution_opt_in,
+        execution_canary_key=execution_canary_key,
+        execution_rollback=execution_rollback,
     )
     # Derive a stable V3 thread ID when one is not provided.  This
     # ensures the V3 research subgraph has a consistent checkpoint
@@ -844,6 +1087,23 @@ def _build_v3_graph_for_state(
         v3_checkpointer=v3_checkpointer,
         v3_thread_id=effective_v3_thread_id,
     )
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _load_execution_profile_for_state(state: AgenticRunState):
+    """Load an explicitly requested D6 profile; absent means legacy behavior."""
+
+    source = (
+        state.artifacts.get("execution_profile")
+        or state.artifacts.get("execution_profile_v1")
+        or os.environ.get("CODE2PAPER_EXECUTION_PROFILE", "")
+    )
+    if source:
+        return load_execution_profile(source)
+    return execution_profile_from_env()
 
 
 def _agentic_llm_decision_enabled(state: AgenticRunState) -> bool:

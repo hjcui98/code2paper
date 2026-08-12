@@ -11,6 +11,7 @@ from code2paper.core.author_questionnaire import load_author_markers
 from code2paper.core.schemas import (
     AuthorDesignIntent,
     AuthorInnovationClaim,
+    AuthorKeyBuildingBlock,
     AuthorMarkers,
     AuthorModuleRole,
     AuthorPipelineStep,
@@ -19,7 +20,12 @@ from code2paper.core.schemas import (
 
 
 MAX_ITEMS: Final = 12
-MAX_TEXT: Final = 240
+# Structured author fields are already bounded by MAX_ITEMS.  The previous
+# 240-character cap silently removed later pipeline mechanisms from real
+# mainlines/stages, changing the obligation graph rather than merely compacting
+# it.  Keep a defensive per-field bound while preserving normal questionnaire
+# entries in full.
+MAX_TEXT: Final = 2048
 
 
 class AuthorIntentSummary(BaseModel):
@@ -35,6 +41,7 @@ class AuthorIntentSummary(BaseModel):
     priority_files: list[str] = Field(default_factory=list)
     ignore_files: list[str] = Field(default_factory=list)
     module_roles: list[str] = Field(default_factory=list)
+    key_building_blocks: list[str] = Field(default_factory=list)
     pipeline_steps: list[str] = Field(default_factory=list)
     design_intents: list[str] = Field(default_factory=list)
     innovation_claims: list[str] = Field(default_factory=list)
@@ -52,6 +59,10 @@ def build_author_intent_summary(markers: AuthorMarkers) -> AuthorIntentSummary:
         priority_files=_limited_texts(markers.priority_files),
         ignore_files=_limited_texts(markers.ignore_files),
         module_roles=[_module_role_summary(role) for role in markers.module_roles[:MAX_ITEMS]],
+        key_building_blocks=[
+            _key_building_block_summary(block)
+            for block in markers.key_building_blocks[:MAX_ITEMS]
+        ],
         pipeline_steps=[_pipeline_step_summary(step) for step in markers.pipeline_steps[:MAX_ITEMS]],
         design_intents=[_design_intent_summary(intent) for intent in markers.design_intents[:MAX_ITEMS]],
         innovation_claims=[_innovation_claim_summary(claim) for claim in markers.innovation_claims[:MAX_ITEMS]],
@@ -79,6 +90,10 @@ def author_intent_summary_from_state(state: AgenticRunState) -> AuthorIntentSumm
 def _module_role_summary(role: AuthorModuleRole) -> str:
     symbol = f"::{role.symbol}" if role.symbol else ""
     return _trim(f"{role.path}{symbol}: {role.role}")
+
+
+def _key_building_block_summary(block: AuthorKeyBuildingBlock) -> str:
+    return _trim(f"{block.name}: {block.role}")
 
 
 def _pipeline_step_summary(step: AuthorPipelineStep) -> str:

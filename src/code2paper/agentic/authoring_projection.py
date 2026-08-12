@@ -11,8 +11,23 @@ from code2paper.agentic.atomic_claim_v2 import AtomicClaimSetV2
 from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, EvidencePacketSetV3
 from code2paper.agentic.equation_claims import EquationClaimSetV1
 from code2paper.agentic.evidence_v2 import EvidenceSnapshotV2, is_direct_code_path, is_direct_code_span
+from code2paper.agentic.intent_compiler_v2 import (
+    IntentObligationGraphV2,
+    build_story_spine_from_intent_graph,
+)
+from code2paper.agentic.method_argument_models import MethodCompletenessMatrixV1
+from code2paper.agentic.method_product_models import (
+    AuthorStoryNodeV1,
+    method_lane_from_authority_lane,
+    method_lane_from_reference_status,
+)
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
-from code2paper.agentic.trust_contracts import AuthoringInputProjection, ForbiddenClaim, ProjectedClaim
+from code2paper.agentic.trust_contracts import (
+    AuthorAttestedFragment,
+    AuthoringInputProjection,
+    ForbiddenClaim,
+    ProjectedClaim,
+)
 from code2paper.core.schemas import (
     AuthorLogicMapping,
     ClaimContract,
@@ -36,6 +51,8 @@ def build_authoring_projection(
     atomic_claims_v3: AtomicClaimSetV3 | None = None,
     evidence_packets_v3: EvidencePacketSetV3 | None = None,
     equation_claims_v1: EquationClaimSetV1 | None = None,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None = None,
+    completeness: MethodCompletenessMatrixV1 | None = None,
 ) -> AuthoringInputProjection:
     if atomic_claims_v3 is not None and evidence_packets_v3 is not None:
         return _build_v3_projection(
@@ -44,6 +61,8 @@ def build_authoring_projection(
             packets=evidence_packets_v3,
             evidence_snapshot_v2=evidence_snapshot_v2,
             equation_claims=equation_claims_v1,
+            intent_obligation_graph_v2=intent_obligation_graph_v2,
+            completeness=completeness,
         )
     claim_by_id = {claim.claim_id: claim for claim in claim_map.claims}
     contract_by_id = {contract.claim_id: contract for contract in method_evidence.claim_contracts}
@@ -192,12 +211,16 @@ def build_authoring_projection(
         source_digests["evidence_snapshot_v2"] = evidence_snapshot_v2.content_digest
     if atomic_claims_v2 is not None:
         source_digests["atomic_claims_v2"] = atomic_claims_v2.content_digest
+    author_attested_fragments = _author_attested_fragments(method_evidence)
     payload = {
         "project_id": method_evidence.project_id,
         "method_name": method_evidence.method_name,
         "author_goal": "Organize the Method around the projected code-supported claims.",
         "implementation_scope": method_evidence.implementation_scope,
         "projected_claims": [item.model_dump(mode="json") for item in projected],
+        "author_attested_fragments": [
+            item.model_dump(mode="json") for item in author_attested_fragments
+        ],
         "forbidden_claims": [item.model_dump(mode="json") for item in forbidden],
         "stage_packets": stage_packets,
         "safe_equations": safe_equations,
@@ -209,6 +232,7 @@ def build_authoring_projection(
             "Use only projected_claims and their direct_evidence_ids.",
             "When author-scoped stage packets exist, omit otherwise supported claims outside those stages.",
             "Partial claims must preserve every required qualifier.",
+            "Author-attested fragments remain caveated and never become repository evidence.",
             "Forbidden claim records contain no reusable claim wording.",
         ],
         "dropped_positive_fields": _dedupe([*dropped, *structural_dropped]),
@@ -218,12 +242,55 @@ def build_authoring_projection(
         "evidence_snapshot_id": evidence_snapshot_v2.evidence_snapshot_id if evidence_snapshot_v2 else "",
         "evidence_snapshot_digest": evidence_snapshot_v2.content_digest if evidence_snapshot_v2 else "",
         "hard_gate_passed": bool(projected),
+        "author_story_spine": [
+            node.model_dump(mode="json")
+            for node in _legacy_story_spine(method_evidence, intent_obligation_graph_v2)
+        ],
+        "repository_verified_facts": [
+            item.model_dump(mode="json") for item in projected
+            if item.support_status == "supported"
+        ],
+        "repository_partial_facts": [
+            item.model_dump(mode="json") for item in projected
+            if item.support_status == "partial"
+        ],
+        "repository_mismatches": _mismatch_points(completeness),
+        "author_intent_unverified_points": _legacy_unverified_points(
+            method_evidence,
+            projected,
+            intent_obligation_graph_v2,
+        ),
+        "external_pending_points": _external_pending_points(completeness),
+        "formalization_needed_points": _formalization_points(completeness),
+        "review_questions": _review_questions_from_points(
+            _legacy_unverified_points(method_evidence, projected, intent_obligation_graph_v2),
+        ),
+        "writing_policy": _WRITING_POLICY,
+        "projection_trace": [
+            {
+                "source": f"claim:{item.claim_id}",
+                "obligation_id": "",
+                "story_node_id": "",
+                "evidence_status": item.support_status,
+                "payload_field": (
+                    "repository_verified_facts"
+                    if item.support_status == "supported"
+                    else "repository_partial_facts"
+                ),
+            }
+            for item in projected
+        ],
     }
     return AuthoringInputProjection(**payload, projection_digest=_digest(payload))
 
 
 def projection_writer_payload(projection: AuthoringInputProjection) -> dict[str, Any]:
-    """Return the only positive factual payload exposed to the writer."""
+    """Return the lane-aware author-intent-first payload exposed to the writer.
+
+    Repository facts are the only positive factual authority; the author story
+    spine is the organization/candidate authority; unverified author,
+    external and formalization points are the review/callback authority.
+    """
 
     return {
         "method_name": projection.method_name,
@@ -236,6 +303,17 @@ def projection_writer_payload(projection: AuthoringInputProjection) -> dict[str,
         "aliases": projection.safe_aliases,
         "intent_spine": projection.safe_intent_spine,
         "writing_rules": projection.writing_rules,
+        "author_story_spine": [
+            node.model_dump(mode="json") for node in projection.author_story_spine
+        ],
+        "repository_verified_facts": projection.repository_verified_facts,
+        "repository_partial_facts": projection.repository_partial_facts,
+        "repository_mismatches": projection.repository_mismatches,
+        "author_intent_unverified_points": projection.author_intent_unverified_points,
+        "external_pending_points": projection.external_pending_points,
+        "formalization_needed_points": projection.formalization_needed_points,
+        "review_questions": projection.review_questions,
+        "writing_policy": projection.writing_policy,
         "projection_digest": projection.projection_digest,
     }
 
@@ -247,8 +325,17 @@ def _build_v3_projection(
     packets: EvidencePacketSetV3,
     evidence_snapshot_v2: EvidenceSnapshotV2 | None,
     equation_claims: EquationClaimSetV1 | None = None,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None = None,
+    completeness: MethodCompletenessMatrixV1 | None = None,
 ) -> AuthoringInputProjection:
-    """Project only compiler-validated V3 behaviors into the writer view."""
+    """Project compiler-validated V3 behaviors into the author-intent view.
+
+    The writer payload is no longer a single "positive facts only" surface:
+    repository facts remain the only repository-positive authority, the author
+    story spine becomes the organization authority, and unverified author /
+    external / formalization points survive into the candidate/review surface
+    instead of disappearing.
+    """
 
     projected: list[ProjectedClaim] = []
     for claim in claims.claims:
@@ -313,6 +400,7 @@ def _build_v3_projection(
         "code_facts_v1": claims.code_fact_digest,
         "atomic_claims_v3": claims.content_digest,
     }
+    author_attested_fragments = _author_attested_fragments(method_evidence)
     safe_equations: list[dict[str, Any]] = []
     if (
         equation_claims is not None
@@ -332,12 +420,87 @@ def _build_v3_projection(
         source_digests["equation_claims_v1"] = equation_claims.content_digest
     if evidence_snapshot_v2 is not None:
         source_digests["evidence_snapshot_v2"] = evidence_snapshot_v2.content_digest
+
+    author_goal, goal_trace = _author_goal(
+        method_evidence=method_evidence,
+        intent_obligation_graph_v2=intent_obligation_graph_v2,
+    )
+    story_spine = _refined_story_spine(
+        intent_obligation_graph_v2=intent_obligation_graph_v2,
+        claims=claims,
+        completeness=completeness,
+        projected=projected,
+    )
+    unverified_points = _unverified_author_points(
+        intent_obligation_graph_v2=intent_obligation_graph_v2,
+        completeness=completeness,
+        projected=projected,
+    )
+    external_points = _external_pending_points(completeness)
+    formalization_points = _formalization_points(completeness)
+    mismatch_points = _mismatch_points(completeness)
+    projection_trace = [
+        *goal_trace,
+        *[
+            {
+                "source": f"claim:{item.claim_id}",
+                "story_node_id": "",
+                "obligation_id": "",
+                "evidence_status": item.support_status,
+                "payload_field": (
+                    "repository_verified_facts"
+                    if item.support_status == "supported"
+                    else "repository_partial_facts"
+                ),
+            }
+            for item in projected
+        ],
+        *[
+            {
+                "source": "intent_graph_v2:" + obligation.obligation_id,
+                "story_node_id": f"story:{obligation.obligation_id}",
+                "obligation_id": obligation.obligation_id,
+                "evidence_status": "unverified_by_repository",
+                "payload_field": "author_intent_unverified_points",
+            }
+            for obligation in (
+                intent_obligation_graph_v2.obligations
+                if intent_obligation_graph_v2 is not None
+                else ()
+            )
+            if obligation.kind in {"rationale_check", "high_risk_claim", "mismatch_check"}
+        ],
+        *[
+            {
+                "source": f"completeness:{item.obligation_id}",
+                "story_node_id": "",
+                "obligation_id": item.obligation_id,
+                "evidence_status": str(item.status),
+                "payload_field": {
+                    "paper_code_mismatch": "repository_mismatches",
+                    "external_evidence_required": "external_pending_points",
+                    "formalization_required": "formalization_needed_points",
+                    "unverified_by_repository": "author_intent_unverified_points",
+                }.get(str(item.status), "review_questions"),
+            }
+            for item in (completeness.items if completeness is not None else ())
+            if str(item.status) in {
+                "paper_code_mismatch",
+                "external_evidence_required",
+                "formalization_required",
+                "unverified_by_repository",
+            }
+        ],
+    ]
     payload = {
         "project_id": method_evidence.project_id,
         "method_name": method_evidence.method_name,
-        "author_goal": "Explain the compiled inference mainline in code order while preserving explicit code gaps.",
+        "author_goal": author_goal,
         "implementation_scope": method_evidence.implementation_scope,
         "projected_claims": [item.model_dump(mode="json") for item in projected],
+        "author_attested_fragments": [
+            item.model_dump(mode="json") for item in author_attested_fragments
+        ],
         "forbidden_claims": [item.model_dump(mode="json") for item in forbidden],
         "stage_packets": stage_packets,
         "safe_equations": safe_equations,
@@ -348,6 +511,7 @@ def _build_v3_projection(
             "The projection is the writer's only positive method-fact input.",
             "Follow semantic stage groups in organization_priority order.",
             "Use only each stage group's ordered authorized claims and relation evidence.",
+            "Author-attested fragments remain caveated and never become repository evidence.",
             "Do not introduce explicit gaps or unsupported author fragments as positive prose.",
         ],
         "dropped_positive_fields": ["legacy_v2_claim_projection", "author_stage_scaffold"],
@@ -361,15 +525,405 @@ def _build_v3_projection(
             and bool(stage_packets)
             and assigned_claim_ids == set(by_id)
         ),
+        "author_story_spine": [
+            node.model_dump(mode="json") for node in story_spine
+        ],
+        "repository_verified_facts": [
+            item.model_dump(mode="json") for item in projected
+            if item.support_status == "supported"
+        ],
+        "repository_partial_facts": [
+            item.model_dump(mode="json") for item in projected
+            if item.support_status == "partial"
+        ],
+        "repository_mismatches": mismatch_points,
+        "author_intent_unverified_points": unverified_points,
+        "external_pending_points": external_points,
+        "formalization_needed_points": formalization_points,
+        "review_questions": _review_questions_from_points(unverified_points),
+        "writing_policy": _WRITING_POLICY,
+        "projection_trace": projection_trace,
     }
     return AuthoringInputProjection(**payload, projection_digest=_digest(payload))
 
 
+def _author_attested_fragments(method_evidence: MethodEvidence) -> list[AuthorAttestedFragment]:
+    """Project MethodEvidence's author goal without granting code authority."""
+
+    goal = method_evidence.method_goal.strip()
+    if not goal:
+        return []
+    payload = {
+        "fragment_id": "author:method_goal",
+        "supported_fragment": goal,
+        "allowed_wording_boundary": goal,
+        "source_ref": "method_evidence:method_goal",
+    }
+    return [AuthorAttestedFragment(**payload, input_digest=_digest(payload))]
+
+
+_AUTHOR_INTENT_GOAL = (
+    "Organize the Method around the author's intended contribution story, "
+    "using repository evidence to verify implementation facts and marking "
+    "unresolved author/literature/formalization points for review."
+)
+
+_REPOSITORY_BEHAVIOR_FALLBACK_GOAL = (
+    "Organize the Method around the repository's compiled behavior order; "
+    "no author intent was supplied, so the repository behavior order is used "
+    "as a recorded fallback."
+)
+
+_WRITING_POLICY: list[str] = [
+    "Repository-verified facts are the only authority for positive implementation claims in the verified output.",
+    "The author story spine organizes the Method narrative; author intent never authorizes repository facts.",
+    "Author-intent, literature, empirical and formalization points stay in the candidate/review surface with explicit markers.",
+    "Mismatch and forbidden claims never enter verified positive output.",
+    "Missing evidence is a review/callback item, not a reason to silently omit the author's point.",
+    "Author intent may guide scope, organization and review questions; it cannot authorize implementation facts.",
+]
+
+
+def _author_goal(
+    *,
+    method_evidence: MethodEvidence,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Derive the author-intent-first writer goal with a recorded fallback.
+
+    The author's own goal (intent graph / method evidence) wins.  Only when no
+    author intent exists at all does the projection fall back to the
+    repository behavior order, and that fallback is recorded in the trace so
+    acceptance can see it was a fallback, never the default.
+    """
+
+    if intent_obligation_graph_v2 is not None:
+        goal = " ".join((
+            intent_obligation_graph_v2.method_goal or "",
+            intent_obligation_graph_v2.project_goal or "",
+        )).strip()
+        if goal:
+            return goal, [{
+                "source": "intent_graph_v2:method_goal",
+                "obligation_id": "",
+                "story_node_id": "",
+                "evidence_status": "author_intent",
+                "payload_field": "author_goal",
+            }]
+    goal = method_evidence.method_goal.strip()
+    if goal:
+        return goal, [{
+            "source": "method_evidence:method_goal",
+            "obligation_id": "",
+            "story_node_id": "",
+            "evidence_status": "author_intent",
+            "payload_field": "author_goal",
+        }]
+    return _REPOSITORY_BEHAVIOR_FALLBACK_GOAL, [{
+        "source": "no_author_intent",
+        "obligation_id": "",
+        "story_node_id": "",
+        "evidence_status": "fallback_repository_behavior_order",
+        "payload_field": "author_goal",
+    }]
+
+
+def _refined_story_spine(
+    *,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None,
+    claims: AtomicClaimSetV3,
+    completeness: MethodCompletenessMatrixV1 | None,
+    projected: list[ProjectedClaim],
+) -> list[AuthorStoryNodeV1]:
+    """Build the story spine and refine each node's evidence lane.
+
+    Every node starts as ``author_intent_unverified`` (author wording is never
+    a repository fact).  Exact completeness-row statuses and projected-claim
+    statuses refine the lane: supported rows plus projected claims become
+    ``repository_verified``, partial rows become ``repository_partial``,
+    mismatch/external/formalization rows map to their own lanes.
+    """
+
+    if intent_obligation_graph_v2 is None:
+        return []
+    projected_by_claim_id = {item.claim_id: item for item in projected}
+    claim_ids_by_obligation: dict[str, list[str]] = {}
+    for claim in claims.claims:
+        for obligation_id in getattr(claim, "covers_obligation_ids", ()) or ():
+            claim_ids_by_obligation.setdefault(str(obligation_id), []).append(
+                str(claim.claim_id)
+            )
+    matrix_by_id = completeness.by_id() if completeness is not None else {}
+    spine = build_story_spine_from_intent_graph(
+        intent_obligation_graph_v2,
+        claim_set=claims,
+    )
+    refined: list[AuthorStoryNodeV1] = []
+    for node in spine:
+        linked_claim_ids = tuple(
+            claim_id
+            for claim_id in node.linked_claim_ids
+            if claim_id in projected_by_claim_id
+        )
+        lane = _story_node_lane(
+            node=node,
+            matrix_by_id=matrix_by_id,
+            linked_claim_ids=linked_claim_ids,
+            projected_by_claim_id=projected_by_claim_id,
+        )
+        notes = list(node.notes)
+        if not linked_claim_ids:
+            notes.append("no repository-backed claim is linked; author review required")
+        refined.append(node.model_copy(update={
+            "linked_claim_ids": linked_claim_ids,
+            "evidence_lane": lane,
+            "notes": tuple(notes),
+        }))
+    return refined
+
+
+def _story_node_lane(
+    *,
+    node: AuthorStoryNodeV1,
+    matrix_by_id: dict[str, Any],
+    linked_claim_ids: tuple[str, ...],
+    projected_by_claim_id: dict[str, ProjectedClaim],
+) -> str:
+    """Refine one story node's evidence lane from exact evidence records."""
+
+    bound_rows = [
+        matrix_by_id[obligation_id]
+        for obligation_id in node.linked_obligation_ids
+        if obligation_id in matrix_by_id
+    ]
+    if bound_rows:
+        statuses = {str(item.status) for item in bound_rows}
+        if "paper_code_mismatch" in statuses:
+            return "repository_mismatch"
+        if "external_evidence_required" in statuses:
+            return "literature_pending"
+        if "formalization_required" in statuses:
+            return "formalization_pending"
+        if statuses == {"supported_by_repository"} and linked_claim_ids:
+            return "repository_verified"
+        if statuses <= {"supported_by_repository", "partially_supported_by_repository"} and linked_claim_ids:
+            if "partially_supported_by_repository" in statuses:
+                return "repository_partial"
+            return "repository_verified"
+        return "author_intent_unverified"
+    if linked_claim_ids:
+        statuses = {projected_by_claim_id[claim_id].support_status for claim_id in linked_claim_ids}
+        if statuses == {"partial"}:
+            return "repository_partial"
+        if "partial" in statuses:
+            return "repository_partial"
+        return "repository_verified"
+    return "author_intent_unverified"
+
+
+def _unverified_author_points(
+    *,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None,
+    completeness: MethodCompletenessMatrixV1 | None,
+    projected: list[ProjectedClaim],
+) -> list[dict[str, Any]]:
+    """Collect author-intent points that lack verified repository support.
+
+    verify-only obligations (rationale, innovation, mismatch) and completeness
+    rows that are unverified / author-confirmation-required / explicit gaps
+    are preserved as candidate/review material, never as repository facts.
+    """
+
+    points: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    obligations = (
+        intent_obligation_graph_v2.obligations
+        if intent_obligation_graph_v2 is not None
+        else ()
+    )
+    for obligation in obligations:
+        if obligation.kind not in {"rationale_check", "high_risk_claim", "mismatch_check", "organization"}:
+            continue
+        statement = str(getattr(obligation, "author_text", "") or "").strip()
+        if not statement:
+            continue
+        points.append({
+            "point_id": f"author_point:{obligation.obligation_id}",
+            "statement": statement,
+            "source_obligation_id": obligation.obligation_id,
+            "kind": obligation.kind,
+            "lane": "author_intent_unverified",
+            "linked_claim_ids": (),
+        })
+        seen.add(obligation.obligation_id)
+    projected_ids = {item.claim_id for item in projected}
+    for item in (completeness.items if completeness is not None else ()):
+        status = str(item.status)
+        # A partially-supported row with a real projected claim already has a
+        # repository-partial authoring surface.  Rows with no projected claim,
+        # plus explicit gaps and author-confirmation rows, remain candidate
+        # narrative points.  Keeping them here lets Editor/Rewrite preserve the
+        # author's story with visible caveats instead of either hallucinating a
+        # positive implementation or erasing the point.
+        candidate_only_partial = (
+            status == "partially_supported_by_repository"
+            and not set(item.claim_ids).intersection(projected_ids)
+        )
+        if status not in {
+            "unverified_by_repository",
+            "author_confirmation_required",
+            "explicit_code_gap",
+        } and not candidate_only_partial:
+            continue
+        if item.obligation_id in seen:
+            continue
+        points.append({
+            "point_id": f"author_point:{item.obligation_id}",
+            "statement": str(item.statement or "").strip() or str(item.role or "").strip(),
+            "source_obligation_id": item.obligation_id,
+            "kind": status or "unverified_by_repository",
+            "lane": (
+                "repository_partial"
+                if candidate_only_partial
+                else "author_intent_unverified"
+            ),
+            "linked_claim_ids": tuple(item.claim_ids),
+            "matched_fact_ids": tuple(item.matched_fact_ids),
+            "reason": str(item.reason or ""),
+        })
+        seen.add(item.obligation_id)
+    return points
+
+
+def _external_pending_points(
+    completeness: MethodCompletenessMatrixV1 | None,
+) -> list[dict[str, Any]]:
+    """External (literature/empirical) pending points from exact matrix rows."""
+
+    points: list[dict[str, Any]] = []
+    for item in (completeness.items if completeness is not None else ()):
+        if str(item.status) != "external_evidence_required":
+            continue
+        points.append({
+            "point_id": f"external_point:{item.obligation_id}",
+            "statement": str(item.statement or "").strip() or str(item.role or "").strip(),
+            "source_obligation_id": item.obligation_id,
+            "lane": method_lane_from_authority_lane(str(item.authority_lane)),
+            "next_action": str(item.next_action or ""),
+        })
+    return points
+
+
+def _formalization_points(
+    completeness: MethodCompletenessMatrixV1 | None,
+) -> list[dict[str, Any]]:
+    """Formalization-needed points from exact matrix rows."""
+
+    points: list[dict[str, Any]] = []
+    for item in (completeness.items if completeness is not None else ()):
+        if str(item.status) != "formalization_required":
+            continue
+        points.append({
+            "point_id": f"formalization_point:{item.obligation_id}",
+            "statement": str(item.statement or "").strip() or str(item.role or "").strip(),
+            "source_obligation_id": item.obligation_id,
+            "lane": "formalization_pending",
+            "equation_ids": tuple(item.equation_ids),
+            "next_action": str(item.next_action or ""),
+        })
+    return points
+
+
+def _mismatch_points(
+    completeness: MethodCompletenessMatrixV1 | None,
+) -> list[dict[str, Any]]:
+    """Mismatch points from exact matrix rows (never positive facts)."""
+
+    points: list[dict[str, Any]] = []
+    for item in (completeness.items if completeness is not None else ()):
+        if str(item.status) != "paper_code_mismatch":
+            continue
+        points.append({
+            "point_id": f"mismatch_point:{item.obligation_id}",
+            "statement": str(item.statement or "").strip() or str(item.role or "").strip(),
+            "source_obligation_id": item.obligation_id,
+            "lane": "repository_mismatch",
+            "reason": str(item.reason or ""),
+            "next_action": str(item.next_action or ""),
+        })
+    return points
+
+
+def _review_questions_from_points(points: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One exact author review question per unverified point."""
+
+    questions: list[dict[str, Any]] = []
+    for point in points:
+        obligation_id = str(point.get("source_obligation_id") or "")
+        statement = str(point.get("statement") or "").strip()
+        questions.append({
+            "question_id": f"review_question:{obligation_id}",
+            "question": (
+                f"Should the Method claim that {statement.rstrip('.').lower()}?"
+                if statement
+                else f"Confirm the author-intended method point for obligation {obligation_id}."
+            ),
+            "point_ref": str(point.get("point_id") or ""),
+            "lane": str(point.get("lane") or "author_intent_unverified"),
+        })
+    return questions
+
+
+def _legacy_story_spine(
+    method_evidence: MethodEvidence,
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None,
+) -> list[AuthorStoryNodeV1]:
+    """Legacy-path story spine: intent graph only, no claim refinement."""
+
+    if intent_obligation_graph_v2 is None:
+        return []
+    return build_story_spine_from_intent_graph(intent_obligation_graph_v2)
+
+
+def _legacy_unverified_points(
+    method_evidence: MethodEvidence,
+    projected: list[ProjectedClaim],
+    intent_obligation_graph_v2: IntentObligationGraphV2 | None,
+) -> list[dict[str, Any]]:
+    """Legacy-path unverified author points from intent graph obligations."""
+
+    points: list[dict[str, Any]] = []
+    if intent_obligation_graph_v2 is None:
+        return points
+    for obligation in intent_obligation_graph_v2.obligations:
+        if obligation.kind not in {"rationale_check", "high_risk_claim", "mismatch_check", "organization"}:
+            continue
+        statement = str(getattr(obligation, "author_text", "") or "").strip()
+        if not statement:
+            continue
+        points.append({
+            "point_id": f"author_point:{obligation.obligation_id}",
+            "statement": statement,
+            "source_obligation_id": obligation.obligation_id,
+            "kind": obligation.kind,
+            "lane": "author_intent_unverified",
+            "linked_claim_ids": (),
+        })
+    return points
+
+
 def projection_writer_brief(projection: AuthoringInputProjection) -> str:
     lines = [
-        "Authoring input projection (the only positive method-fact source):",
+        "Authoring input projection (repository-positive facts + author story spine):",
         f"- projection_digest={projection.projection_digest}",
     ]
+    if projection.author_story_spine:
+        lines.append("- author story spine:")
+        for node in projection.author_story_spine:
+            lines.append(
+                f"  * {node.story_node_id} [{node.intended_role} / {node.evidence_lane}]: "
+                f"{node.title}"
+            )
     for claim in projection.projected_claims:
         lines.append(
             f"- {claim.claim_id}: {claim.supported_fragment}; "
@@ -377,6 +931,14 @@ def projection_writer_brief(projection: AuthoringInputProjection) -> str:
         )
         if claim.required_qualifiers:
             lines.append("  qualifiers: " + "; ".join(claim.required_qualifiers))
+    if projection.author_intent_unverified_points:
+        lines.append("- author-intent points awaiting verification (candidate/review):")
+        for point in projection.author_intent_unverified_points:
+            lines.append(f"  * {point.get('point_id')}: {point.get('statement')}")
+    if projection.review_questions:
+        lines.append("- review questions:")
+        for question in projection.review_questions:
+            lines.append(f"  * {question.get('question_id')}: {question.get('question')}")
     lines.extend(f"- rule: {rule}" for rule in projection.writing_rules)
     return "\n".join(lines)
 
@@ -401,6 +963,7 @@ def restrict_projection_for_authoring_revision(
     allowed_evidence = {
         evidence_id for claim in kept for evidence_id in claim.direct_evidence_ids
     }
+    kept_ids = {claim.claim_id for claim in kept}
     update = {
         "projected_claims": kept,
         "stage_packets": packets,
@@ -413,6 +976,23 @@ def restrict_projection_for_authoring_revision(
         "safe_aliases": _filter_projection_safe_objects(
             projection.safe_aliases, allowed_evidence
         ),
+        "repository_verified_facts": [
+            item for item in projection.repository_verified_facts
+            if item.get("claim_id") in kept_ids
+        ],
+        "repository_partial_facts": [
+            item for item in projection.repository_partial_facts
+            if item.get("claim_id") in kept_ids
+        ],
+        "author_story_spine": [
+            node.model_copy(update={
+                "linked_claim_ids": tuple(
+                    claim_id for claim_id in node.linked_claim_ids
+                    if claim_id in kept_ids
+                ),
+            })
+            for node in projection.author_story_spine
+        ],
     }
     payload = projection.model_dump(mode="json")
     payload.update(
@@ -473,6 +1053,41 @@ def projected_writer_inputs(
 
     def compatible(values: list[str]) -> list[str]:
         return [compatibility_ids.get(value, value) for value in values]
+
+    def compatible_equation_candidates(values: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Convert V3 equation-claim payloads to legacy writer candidates."""
+
+        candidates: list[dict[str, Any]] = []
+        for index, item in enumerate(values, start=1):
+            native_id = str(item.get("equation_id") or f"equation:{index}")
+            equation_id = (
+                native_id
+                if native_id.startswith("EQ")
+                else "EQ-V3-" + hashlib.sha256(native_id.encode("utf-8")).hexdigest()[:16]
+            )
+            expression = str(
+                item.get("concrete_expression")
+                or item.get("latex")
+                or item.get("expression")
+                or native_id
+            ).strip()
+            evidence_refs = [
+                str(value)
+                for key in ("evidence_ids", "fact_ids", "relation_evidence_ids")
+                for value in (item.get(key) or ())
+                if str(value) in compatibility_ids
+            ]
+            candidates.append({
+                "equation_id": equation_id,
+                "name": str(item.get("name") or item.get("prose_claim_id") or native_id),
+                "latex": expression,
+                "evidence_ids": [
+                    compatibility_ids[value]
+                    for value in dict.fromkeys(evidence_refs)
+                ],
+                "caveats": list(item.get("conditions") or ()),
+            })
+        return candidates
 
     compatibility_stage_packets: list[dict[str, Any]] = []
     for packet in projection.stage_packets:
@@ -535,7 +1150,9 @@ def projected_writer_inputs(
                 for index, packet in enumerate(compatibility_stage_packets, start=1)
             ],
             "behavior_patterns": [],
-            "equation_candidates": projection.safe_equations,
+            "equation_candidates": compatible_equation_candidates(
+                projection.safe_equations
+            ),
             "architecture_parameters": projection.safe_numeric_facts,
             "tensor_roles": [],
             "innovation_candidates": [],

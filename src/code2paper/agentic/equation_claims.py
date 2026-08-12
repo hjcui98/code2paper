@@ -35,9 +35,11 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.evidence_compiler_v3 import (
+    AtomicClaimSetV3,
     CodeFactSetV1,
     CodeFactV1,
 )
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +69,10 @@ class EquationClaimV1(BaseModel):
     fact_ids: list[str]
     symbol_bindings: list[EquationSymbolBindingV1]
     conditions: list[str] = Field(default_factory=list)
+    operation_predicates: list[str] = Field(default_factory=list)
+    operation_descriptors: list[str] = Field(default_factory=list)
+    relation_evidence_ids: list[str] = Field(default_factory=list)
+    exact_source_digests: list[str] = Field(default_factory=list)
     canonical_identity: str
     validation_status: str = "supported"  # "supported" | "rejected"
     validation_failures: list[str] = Field(default_factory=list)
@@ -280,11 +286,130 @@ def authorize_equation(
         fact_ids=list(proposal.fact_ids),
         symbol_bindings=list(proposal.proposed_symbol_bindings),
         conditions=list(proposal.conditions),
+        operation_predicates=list(dict.fromkeys(f.predicate for f in selected_facts)),
+        operation_descriptors=list(dict.fromkeys(
+            value
+            for fact in selected_facts
+            for value in fact.semantic_context
+            if value.lower() in _BINARY_OPERATOR_BY_DIAGNOSTIC
+        )),
+        relation_evidence_ids=list(dict.fromkeys(
+            relation_id
+            for fact in selected_facts
+            for relation_id in fact.relation_evidence_ids
+        )),
+        exact_source_digests=list(dict.fromkeys(
+            fact.exact_source_digest for fact in selected_facts
+        )),
         canonical_identity=identity,
         validation_status="supported",
         validation_failures=[],
     )
     return equation, report
+
+
+_BINARY_OPERATOR_BY_DIAGNOSTIC: dict[str, str] = {
+    "add": "+",
+    "sub": "-",
+    "mult": "*",
+    "div": "/",
+    "floordiv": "/",
+    "mod": "%",
+    "pow": "^",
+    "matmul": "*",
+}
+
+
+def derive_equation_proposals_from_facts(
+    facts: CodeFactSetV1,
+) -> list[EquationProposalV1]:
+    """Derive conservative binary-operation equations from exact facts.
+
+    No algebra is invented: the operator must be present in source-derived
+    semantic context and both operands must be carried by the same supported
+    fact.  Synthetic symbols ``x``/``y`` are explicitly bound to those exact
+    operands before authorization.
+    """
+
+    proposals: list[EquationProposalV1] = []
+    for fact in facts.facts:
+        if fact.validation_status != "supported" or not isinstance(fact.object, list):
+            continue
+        if len(fact.object) < 2:
+            continue
+        diagnostic = next(
+            (
+                value.lower()
+                for value in fact.semantic_context
+                if value.lower() in _BINARY_OPERATOR_BY_DIAGNOSTIC
+            ),
+            "",
+        )
+        if not diagnostic:
+            continue
+        left, right = str(fact.object[0]), str(fact.object[1])
+        operator = _BINARY_OPERATOR_BY_DIAGNOSTIC[diagnostic]
+        proposals.append(EquationProposalV1(
+            equation_id=f"equation:{fact.fact_id}",
+            expression=f"x {operator} y",
+            fact_ids=[fact.fact_id],
+            proposed_symbol_bindings=[
+                EquationSymbolBindingV1(
+                    symbol="x",
+                    fact_id=fact.fact_id,
+                    operand_role="object",
+                    operand_value=left,
+                ),
+                EquationSymbolBindingV1(
+                    symbol="y",
+                    fact_id=fact.fact_id,
+                    operand_role="object",
+                    operand_value=right,
+                ),
+            ],
+            conditions=list(fact.conditions),
+        ))
+    return proposals
+
+
+def bind_equations_to_claims(
+    equations: EquationClaimSetV1,
+    claims: AtomicClaimSetV3,
+) -> EquationClaimSetV1:
+    """Bind each equation to a supported prose claim using the same facts."""
+
+    rebound: list[EquationClaimV1] = []
+    for equation in equations.equations:
+        if equation.prose_claim_id:
+            rebound.append(equation)
+            continue
+        equation_facts = set(equation.fact_ids)
+        candidates = sorted(
+            (
+                claim
+                for claim in claims.claims
+                if claim.status in {"supported", "partial"}
+                and equation_facts
+                and equation_facts.issubset(set(claim.fact_ids))
+            ),
+            key=lambda claim: claim.claim_id,
+        )
+        rebound.append(
+            equation.model_copy(
+                update={
+                    "prose_claim_id": (
+                        candidates[0].claim_id if candidates else ""
+                    )
+                }
+            )
+        )
+    payload = [item.model_dump(mode="json") for item in rebound]
+    return equations.model_copy(
+        update={
+            "equations": rebound,
+            "content_digest": _digest(payload),
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +464,7 @@ def compile_equation_claims(
 def write_equation_claims(path: str | Path, equations: EquationClaimSetV1) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(equations.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    atomic_write_bytes(output, (equations.model_dump_json(indent=2) + "\n").encode("utf-8"))
     return output
 
 
@@ -354,7 +479,9 @@ __all__ = [
     "EquationProposalV1",
     "EquationSymbolBindingV1",
     "authorize_equation",
+    "bind_equations_to_claims",
     "compile_equation_claims",
+    "derive_equation_proposals_from_facts",
     "load_equation_claims",
     "write_equation_claims",
 ]

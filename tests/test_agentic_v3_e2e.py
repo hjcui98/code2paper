@@ -575,6 +575,38 @@ class TestV3GraphWrapperInvokeE2E:
 class TestV3CompiledEvidenceSerialization:
     """Verify compiled evidence (when produced) serializes to artifacts/."""
 
+    def test_config_words_do_not_bypass_generic_compile_route(
+        self,
+        llm_config_none: LLMConfig,
+        tmp_path: Path,
+    ) -> None:
+        """A config-heavy obligation must still search/read before compiling."""
+
+        fixture_root = Path(__file__).parent / "fixtures" / "research_loop_project"
+        intent_path = Path(__file__).parent / "fixtures" / (
+            "research_loop_project_author_markers.yaml"
+        )
+        runtime = build_v3_research_runtime(
+            project_root=fixture_root,
+            intent_path=intent_path,
+            run_id="run-e2e-config-generic-chain",
+            llm_config=llm_config_none,
+        ).model_copy(update={"artifact_root": tmp_path / "research-tools"})
+        result = run_v3_research_phase(runtime, max_turns=30)
+
+        selected_tools = [
+            call.tool_name
+            for decision in result.decision_trace
+            for call in decision.selected_tool_calls
+        ]
+        assert "search_symbols" in selected_tools
+        assert "read_symbol" in selected_tools
+        assert "compile_candidate" in result.evidence_critic_routes
+        assert result.loop_state.compiled_evidence
+        assert result.loop_state.behavior_graph.nodes
+        assert (tmp_path / "research-tools" / "research_tool_artifacts" / "validated_packets").is_dir()
+        assert (tmp_path / "research-tools" / "research_tool_artifacts" / "authorized_claim_sets").is_dir()
+
     def test_compiled_evidence_can_be_merged_and_serialized(
         self,
         ml_repo: Path,

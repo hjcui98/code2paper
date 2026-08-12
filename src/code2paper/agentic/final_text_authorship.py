@@ -149,6 +149,80 @@ def ledger_from_section_outputs(
     )
 
 
+def rewrite_final_text_authorship_ledger(
+    *,
+    incumbent_text: str,
+    candidate_text: str,
+    incumbent_ledger: FinalTextAuthorshipLedgerV1,
+    patches: list[Any] | tuple[Any, ...],
+    response_ref: str,
+    generation_trace_id: str = "",
+    owner: GenerationOwnerV1 = "rewrite",
+) -> FinalTextAuthorshipLedgerV1:
+    """Carry incumbent ownership through a verbatim owning-agent patch.
+
+    Unaffected lexical fragments retain their original generation owner and
+    response reference.  Replacement bytes are owned by the supplied response.
+    The function rebuilds the ledger from exact fragments and fails closed if
+    either the incumbent ledger or the candidate bytes do not authenticate.
+    """
+
+    if incumbent_ledger.final_text_digest != _digest(incumbent_text):
+        raise ValueError("incumbent_authorship_digest_mismatch")
+    if not incumbent_ledger.hard_gate_passed:
+        raise ValueError("incumbent_authorship_gate_failed")
+    if not response_ref.strip():
+        raise ValueError("rewrite_response_ref_missing")
+    ordered = sorted(patches, key=lambda item: (item.start, item.end, item.patch_id))
+    cursor = 0
+    rebuilt_text = incumbent_text
+    for patch in reversed(ordered):
+        rebuilt_text = rebuilt_text[:patch.start] + patch.replacement_text + rebuilt_text[patch.end:]
+    if rebuilt_text != candidate_text:
+        raise ValueError("rewrite_candidate_bytes_mismatch")
+
+    generated: list[GeneratedTextSpanV1] = []
+    fragment_index = 0
+
+    def retain_interval(start: int, end: int) -> None:
+        nonlocal fragment_index
+        for span in incumbent_ledger.spans:
+            left = max(start, span.final_start)
+            right = min(end, span.final_end)
+            if right <= left:
+                continue
+            text = incumbent_text[left:right]
+            if not text:
+                continue
+            fragment_index += 1
+            generated.append(GeneratedTextSpanV1(
+                span_id=f"{span.source_span_id}:retained:{fragment_index}",
+                text=text,
+                owner=span.owner,
+                response_ref=span.response_ref,
+                section_id=span.section_id,
+                generation_trace_id=span.generation_trace_id,
+            ))
+
+    for patch in ordered:
+        retain_interval(cursor, patch.start)
+        if patch.replacement_text:
+            generated.append(GeneratedTextSpanV1(
+                span_id=f"rewrite:{patch.patch_id}",
+                text=patch.replacement_text,
+                owner=owner,
+                response_ref=response_ref,
+                section_id=patch.section_id,
+                generation_trace_id=generation_trace_id or response_ref,
+            ))
+        cursor = patch.end
+    retain_interval(cursor, len(incumbent_text))
+    ledger = build_final_text_authorship_ledger(candidate_text, generated)
+    if not ledger.hard_gate_passed:
+        raise ValueError("rewrite_authorship_gate_failed:" + ",".join(ledger.failures))
+    return ledger
+
+
 def _digest(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -175,4 +249,5 @@ __all__ = [
     "GenerationOwnerV1",
     "build_final_text_authorship_ledger",
     "ledger_from_section_outputs",
+    "rewrite_final_text_authorship_ledger",
 ]

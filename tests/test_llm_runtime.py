@@ -7,7 +7,13 @@ import unittest
 from unittest.mock import patch
 
 from code2paper.export.run_manifest import hash_text
-from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse, _ProviderResult
+from code2paper.llm.client import (
+    LLMClient,
+    LLMRequest,
+    LLMResponse,
+    _ProviderResult,
+    _first_complete_json,
+)
 from code2paper.agentic.semantic_verifier_provider import LLMSemanticEvidenceVerifier
 from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode, load_capability_profile
 from code2paper.llm.providers import has_provider_api_key
@@ -41,7 +47,97 @@ class _FakeHTTPResponse:
         return json.dumps(self.payload).encode("utf-8")
 
 
+class _FakeStreamingResponse(_FakeHTTPResponse):
+    def __iter__(self):
+        for item in self.payload["events"]:
+            yield f"data: {json.dumps(item)}\n".encode("utf-8")
+
+
 class LLMRuntimeTests(unittest.TestCase):
+    def test_complete_json_detector_ignores_braces_inside_strings(self) -> None:
+        text = 'prefix [note] {"markdown":"a } and \\\"{\\\"", "ids":["x"]}{"repeat":true}'
+        self.assertEqual(
+            _first_complete_json(text),
+            '{"markdown":"a } and \\\"{\\\"", "ids":["x"]}',
+        )
+
+    def test_complete_json_detector_never_promotes_nested_array(self) -> None:
+        self.assertIsNone(_first_complete_json('{"ids":[1]'))
+        self.assertEqual(_first_complete_json('{"ids":[1]}'), '{"ids":[1]}')
+
+    def test_loopback_structured_stream_stops_after_first_json(self) -> None:
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeStreamingResponse({"events": [
+                {"choices": [{"delta": {"content": '{"ok":'}}]},
+                {"choices": [{"delta": {"content": "true}"}}]},
+                {"choices": [{"delta": {"content": '{"repeat":true}'}}]},
+            ]})
+
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", cache=False)
+        profile = LLMCapabilityProfile(response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA)
+        request = LLMRequest(
+            prompt_template_id="unit-stream",
+            prompt="Return JSON.",
+            input_payload={},
+            response_json_schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
+        )
+        env = {
+            "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8003/v1",
+            "CODE2PAPER_LLM_STREAM_STRUCTURED": "1",
+        }
+        with patch.dict(os.environ, env, clear=True), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            response = LLMClient(config, capability_profile=profile).complete(request)
+
+        self.assertTrue(captured["payload"]["stream"])
+        self.assertEqual(response.text, '{"ok":true}')
+        self.assertEqual(response.finish_reason, "structured_complete")
+
+    def test_loopback_structured_stream_preserves_partial_text_on_premature_end(self) -> None:
+        """When the provider ends the stream before a complete JSON value,
+        the client must return the model's own accumulated bytes so the
+        writer's representation recovery (e.g. closing an unambiguous
+        container suffix) can attempt them, instead of discarding the text
+        as a hard transport block.
+
+        Regression: MA-S2 in the live RAP run ended with
+        ``provider_stream_finished_before_complete_json`` and empty text;
+        the owning Writer never saw the partial response."""
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeStreamingResponse({"events": [
+                {"choices": [{"delta": {"content": '{"ok":'}}]},
+                {"choices": [{"delta": {"content": "true"}}]},
+                {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+            ]})
+
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", cache=False)
+        profile = LLMCapabilityProfile(response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA)
+        request = LLMRequest(
+            prompt_template_id="unit-stream",
+            prompt="Return JSON.",
+            input_payload={},
+            response_json_schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
+        )
+        env = {
+            "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8003/v1",
+            "CODE2PAPER_LLM_STREAM_STRUCTURED": "1",
+        }
+        with patch.dict(os.environ, env, clear=True), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            response = LLMClient(config, capability_profile=profile).complete(request)
+
+        # The accumulated model bytes are preserved, not discarded.
+        self.assertEqual(response.text, '{"ok":true')
+        self.assertFalse(response.blocked_reason)
+
     def test_runtime_loads_tracked_nested_deployment_profile(self) -> None:
         profile_path = "tests/baselines/agentic/gemma4_mtp_vllm.profile.json"
 
@@ -159,6 +255,91 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertEqual(response.response_mode, "native_json_schema")
         self.assertEqual(response.finish_reason, "stop")
         self.assertEqual(response.token_usage, {"prompt_tokens": 10, "completion_tokens": 4})
+
+    def test_loopback_openai_endpoint_strips_unique_items_from_json_schema(self) -> None:
+        """Loopback vLLM rejects ``uniqueItems``; the client strips it while
+        preserving ``enum``/``const`` so guided decoding still enforces the
+        closed-set binding (preventing representation errors such as field
+        names emitted as claim ids).
+        """
+
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeHTTPResponse(
+                {"choices": [{"message": {"content": '{"section_id": "MA-S1"}'}, "finish_reason": "stop"}]}
+            )
+
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", max_output_tokens=100, cache=False)
+        request = LLMRequest(
+            prompt_template_id="unit",
+            prompt="Return JSON.",
+            input_payload={"x": 1},
+            schema_name="unit_schema",
+            response_json_schema={
+                "type": "object",
+                "properties": {
+                    "section_id": {"type": "string", "const": "MA-S1"},
+                    "used_claim_ids": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": ["C1", "C2"]},
+                        "maxItems": 2,
+                        "uniqueItems": True,
+                    },
+                },
+            },
+        )
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "dummy-local-vllm",
+                "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8003/v1",
+            },
+        ), patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            LLMClient(config).complete(request)
+
+        schema = captured["payload"]["response_format"]["json_schema"]["schema"]
+        # uniqueItems is stripped everywhere.
+        self.assertNotIn("uniqueItems", schema["properties"]["used_claim_ids"])
+        # enum/const are preserved so guided decoding still enforces the binding.
+        self.assertEqual(schema["properties"]["section_id"]["const"], "MA-S1")
+        self.assertEqual(schema["properties"]["used_claim_ids"]["items"]["enum"], ["C1", "C2"])
+        self.assertEqual(schema["properties"]["used_claim_ids"]["maxItems"], 2)
+
+    def test_remote_openai_endpoint_preserves_unique_items(self) -> None:
+        """Remote (non-loopback) endpoints keep ``uniqueItems`` unchanged."""
+
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeHTTPResponse(
+                {"choices": [{"message": {"content": '{"ok": true}'}, "finish_reason": "stop"}]}
+            )
+
+        config = LLMConfig(provider=LLMProvider.OPENAI, model="gpt-test", max_output_tokens=100, cache=False)
+        request = LLMRequest(
+            prompt_template_id="unit",
+            prompt="Return JSON.",
+            input_payload={"x": 1},
+            schema_name="unit_schema",
+            response_json_schema={
+                "type": "object",
+                "properties": {
+                    "ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": True},
+                },
+            },
+        )
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            LLMClient(config).complete(request)
+
+        schema = captured["payload"]["response_format"]["json_schema"]["schema"]
+        self.assertTrue(schema["properties"]["ids"]["uniqueItems"])
 
     def test_openai_compatible_runtime_downgrades_to_json_object_mode(self) -> None:
         captured = {}

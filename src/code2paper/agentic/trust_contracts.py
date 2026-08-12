@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from code2paper.agentic.method_product_models import AuthorStoryNodeV1
+
 
 class TrustModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -30,6 +32,33 @@ class ProjectedClaim(TrustModel):
         return self
 
 
+class AuthorAttestedFragment(TrustModel):
+    """A bounded author-owned statement that is not repository evidence.
+
+    Author-attested prose may be rendered as a caveated statement after an
+    owning callback has validated it, but it must never acquire executable
+    evidence ids or be treated as a supported repository claim.
+    """
+
+    fragment_id: str
+    supported_fragment: str
+    allowed_wording_boundary: str
+    source_ref: str
+    input_digest: str
+
+    @model_validator(mode="after")
+    def _nonempty(self) -> "AuthorAttestedFragment":
+        if not all((
+            self.fragment_id.strip(),
+            self.supported_fragment.strip(),
+            self.allowed_wording_boundary.strip(),
+            self.source_ref.strip(),
+            self.input_digest.startswith("sha256:"),
+        )):
+            raise ValueError("author-attested fragment binding fields must not be empty")
+        return self
+
+
 class ForbiddenClaim(TrustModel):
     claim_id: str
     reason: str
@@ -44,6 +73,7 @@ class AuthoringInputProjection(TrustModel):
     author_goal: str
     implementation_scope: str
     projected_claims: list[ProjectedClaim] = Field(default_factory=list)
+    author_attested_fragments: list[AuthorAttestedFragment] = Field(default_factory=list)
     forbidden_claims: list[ForbiddenClaim] = Field(default_factory=list)
     stage_packets: list[dict[str, Any]] = Field(default_factory=list)
     safe_equations: list[dict[str, Any]] = Field(default_factory=list)
@@ -59,11 +89,26 @@ class AuthoringInputProjection(TrustModel):
     evidence_snapshot_digest: str = ""
     projection_digest: str
     hard_gate_passed: bool = True
+    # Author-intent-first projection fields (reorientation C).  The author
+    # story spine is the organization authority; the lane-aware facts below
+    # separate repository-verified content from partial, mismatch,
+    # author-intent-unverified, external-pending and formalization content so
+    # the Writer/Architect never mistake author intent for repository fact.
+    author_story_spine: list[AuthorStoryNodeV1] = Field(default_factory=list)
+    repository_verified_facts: list[dict[str, Any]] = Field(default_factory=list)
+    repository_partial_facts: list[dict[str, Any]] = Field(default_factory=list)
+    repository_mismatches: list[dict[str, Any]] = Field(default_factory=list)
+    author_intent_unverified_points: list[dict[str, Any]] = Field(default_factory=list)
+    external_pending_points: list[dict[str, Any]] = Field(default_factory=list)
+    formalization_needed_points: list[dict[str, Any]] = Field(default_factory=list)
+    review_questions: list[dict[str, Any]] = Field(default_factory=list)
+    writing_policy: list[str] = Field(default_factory=list)
+    projection_trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class FinalTextUnit(TrustModel):
     unit_id: str
-    kind: Literal["heading", "sentence", "list_item", "formula", "caption", "discourse"]
+    kind: Literal["heading", "sentence", "list_item", "formula", "caption", "discourse", "expository_bridge"]
     text: str
     line_start: int
     line_end: int
@@ -84,6 +129,14 @@ class FinalAtomicClaim(TrustModel):
     char_start: int
     char_end: int
     candidate_projection_claim_ids: list[str] = Field(default_factory=list)
+    candidate_author_attested_ids: list[str] = Field(default_factory=list)
+    # Candidate-only narrative points come from the author-intent,
+    # repository-partial, mismatch, literature-pending, or formalization
+    # lanes of ``AuthoringInputProjection``.  They are deliberately separate
+    # from ``candidate_author_attested_ids``: a narrative point may authorize
+    # a visibly caveated candidate sentence, but it never becomes repository
+    # evidence and can never enter the verified Method.
+    candidate_narrative_ids: list[str] = Field(default_factory=list)
     candidate_direct_evidence_ids: list[str] = Field(default_factory=list)
     high_risk_markers: list[str] = Field(default_factory=list)
     claim_digest: str

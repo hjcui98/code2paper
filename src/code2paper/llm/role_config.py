@@ -12,13 +12,20 @@ code_intake                0.20   2048                0.90        40
 code_analyzer              0.20   4096                0.90        40
 research_supervisor        0.20   1536                0.90        40
 authoring_planner          0.40   2048                None        None
-method_writer              0.70   8192 (default)      0.95        50
-                                  12288 (extended)
-                                  24576 (cumulative Method cap)
+method_writer              0.70   8192 (default)      0.90        50
+                                   12288 (extended)
+                                   24576 (cumulative Method cap)
 local_rewrite              0.35   3072                None        None
 semantic_verifier          0.00   1024                None        None
 deterministic_compiler     n/a    n/a                 n/a         n/a
 ===========  ============  =================  ===========  ========
+
+The ``method_writer`` role is the *prose* owner and therefore samples
+creatively: ``temperature=0.70``, ``top_p=0.90``, ``seed=42`` (bounded
+creative sampling per the reorientation plan §5.6).  Decision roles
+(verifier, formalizer, architect, supervisors) stay at low/greedy
+temperature.  The seed is only applied when the caller did not set one
+explicitly.
 
 Hard rules:
 
@@ -121,6 +128,9 @@ class RoleGenerationConfig:
     cumulative_budget: int | None = None
     top_p: float | None = None
     top_k: int | None = None
+    #: Bounded creative sampling for prose roles; applied only when the
+    #: caller left ``LLMConfig.seed`` unset.
+    seed: int | None = None
     # When True, callers MUST NOT issue LLM requests for this role.
     deterministic: bool = False
 
@@ -178,8 +188,9 @@ ROLE_GENERATION_CONFIGS: Final[dict[str, RoleGenerationConfig]] = {
         max_output_tokens_default=8192,
         max_output_tokens_extended=12288,
         cumulative_budget=24576,
-        top_p=0.95,
+        top_p=0.90,
         top_k=50,
+        seed=42,
     ),
     LOCAL_REWRITE: RoleGenerationConfig(
         role=LOCAL_REWRITE,
@@ -309,8 +320,8 @@ def apply_role_config(
     env_reasoning_effort = _role_env_str(role, "REASONING_EFFORT")
     env_thinking_token_budget = _role_env_int(role, "THINKING_TOKEN_BUDGET")
 
-    # Resolve temperature: explicit base_config value wins, then env,
-    # then role default.  We detect "explicit base_config" by checking
+    # Resolve temperature: explicit base_config value wins, then per-role
+    # env, then role default.  We detect "explicit base_config" by checking
     # whether the value differs from BOTH sentinel values:
     #
     # - 0.2 is the ``LLMConfig`` default (caller did not set it).
@@ -319,17 +330,26 @@ def apply_role_config(
     #   the per-role sampling protocol is honored during formal R8
     #   verification).
     #
-    # Treating both as sentinels lets the R8 protocol's global
-    # ``CODE2PAPER_LLM_TEMPERATURE=0`` coexist with per-role
-    # temperatures (0.20 / 0.40 / 0.70 / 0.35 / 0.00).  Callers that
-    # genuinely need to override a role's temperature to 0.0 should
-    # use the per-role env var
-    # ``CODE2PAPER_LLM_TEMPERATURE_<ROLE>=0.0``.
+    # A base value that equals the *global* ``CODE2PAPER_LLM_TEMPERATURE``
+    # environment value is env-derived, not a caller-supplied override: the
+    # global variable is a deployment baseline and the role default must
+    # win, exactly like the R8 ``0`` sentinel.  Callers that genuinely need
+    # to override a role's temperature should use the per-role env var
+    # ``CODE2PAPER_LLM_TEMPERATURE_<ROLE>=<value>``.
     base_temp_explicit = (
         abs(base_config.temperature - 0.0) > 1e-9
         and abs(base_config.temperature - 0.2) > 1e-9
     )
-    if base_temp_explicit:
+    global_temp_raw = os.environ.get("CODE2PAPER_LLM_TEMPERATURE", "").strip()
+    try:
+        global_temp_value = float(global_temp_raw) if global_temp_raw else None
+    except ValueError:
+        global_temp_value = None
+    base_from_global_env = (
+        global_temp_value is not None
+        and abs(base_config.temperature - global_temp_value) < 1e-9
+    )
+    if base_temp_explicit and not base_from_global_env:
         final_temperature = base_config.temperature
     elif env_temp is not None:
         final_temperature = env_temp
@@ -368,6 +388,8 @@ def apply_role_config(
     if final_top_k is None:
         final_top_k = env_top_k if env_top_k is not None else role_cfg.top_k
     final_seed = base_config.seed  # No env override for seed (yet).
+    if final_seed is None:
+        final_seed = role_cfg.seed
     # Per-role controls intentionally override their global counterparts:
     # short decision/verifier calls need a much smaller thinking budget than
     # analysis and writing calls.  ``reasoning_effort`` controls whether
@@ -383,6 +405,8 @@ def apply_role_config(
         if env_thinking_token_budget is not None
         else base_config.thinking_token_budget
     )
+    if final_reasoning_effort == "none":
+        final_thinking_token_budget = None
     if (
         final_thinking_token_budget is not None
         and final_thinking_token_budget >= final_max_tokens

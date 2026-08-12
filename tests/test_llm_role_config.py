@@ -154,10 +154,12 @@ class RoleGenerationConfigTableTests(unittest.TestCase):
     def test_method_writer_cumulative_budget_is_24576(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[METHOD_WRITER].cumulative_budget, 24576)
 
-    def test_method_writer_sampling_defaults_are_gemma_tuned(self) -> None:
+    def test_method_writer_sampling_defaults_are_prose_creative(self) -> None:
         config = ROLE_GENERATION_CONFIGS[METHOD_WRITER]
-        self.assertEqual(config.top_p, 0.95)
+        self.assertEqual(config.temperature, 0.70)
+        self.assertEqual(config.top_p, 0.90)
         self.assertEqual(config.top_k, 50)
+        self.assertEqual(config.seed, 42)
 
     def test_local_rewrite_default_budget_is_3072(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[LOCAL_REWRITE].max_output_tokens_default, 3072)
@@ -284,6 +286,21 @@ class ApplyRoleConfigTests(unittest.TestCase):
             cfg = apply_role_config(_base_config(), METHOD_WRITER)
         self.assertEqual(cfg.max_output_tokens, 10000)
 
+    def test_apply_role_config_global_env_temperature_is_baseline_role_default_wins(self) -> None:
+        env = {"CODE2PAPER_LLM_TEMPERATURE": "0.6"}
+        with patch.dict("os.environ", env, clear=False):
+            cfg = apply_role_config(_base_config(temperature=0.6), METHOD_WRITER)
+        self.assertEqual(cfg.temperature, 0.70)
+
+    def test_apply_role_config_per_role_env_still_wins_over_global_baseline(self) -> None:
+        env = {
+            "CODE2PAPER_LLM_TEMPERATURE": "0.6",
+            "CODE2PAPER_LLM_TEMPERATURE_METHOD_WRITER": "0.05",
+        }
+        with patch.dict("os.environ", env, clear=False):
+            cfg = apply_role_config(_base_config(temperature=0.6), METHOD_WRITER)
+        self.assertEqual(cfg.temperature, 0.05)
+
     def test_apply_role_config_explicit_base_temperature_beats_env_override(self) -> None:
         env = {"CODE2PAPER_LLM_TEMPERATURE_RESEARCH_SUPERVISOR": "0.10"}
         with patch.dict("os.environ", env, clear=False):
@@ -301,6 +318,16 @@ class ApplyRoleConfigTests(unittest.TestCase):
         with patch.dict("os.environ", env, clear=False):
             cfg = apply_role_config(_base_config(), METHOD_WRITER)
         self.assertEqual(cfg.top_k, 20)
+
+    def test_reasoning_none_clears_incompatible_thinking_budget(self) -> None:
+        env = {
+            "CODE2PAPER_LLM_REASONING_EFFORT_METHOD_WRITER": "none",
+            "CODE2PAPER_LLM_THINKING_TOKEN_BUDGET_METHOD_WRITER": "1024",
+        }
+        with patch.dict("os.environ", env, clear=False):
+            cfg = apply_role_config(_base_config(), METHOD_WRITER)
+        self.assertEqual(cfg.reasoning_effort, "none")
+        self.assertIsNone(cfg.thinking_token_budget)
 
     def test_apply_role_config_deterministic_role_forces_provider_none(self) -> None:
         cfg = apply_role_config(_base_config(), DETERMINISTIC_COMPILER)
@@ -348,13 +375,13 @@ class ApplyRoleConfigTests(unittest.TestCase):
         env = {"CODE2PAPER_LLM_TOP_P_METHOD_WRITER": ""}
         with patch.dict("os.environ", env, clear=False):
             cfg = apply_role_config(_base_config(), METHOD_WRITER)
-        self.assertEqual(cfg.top_p, 0.95)
+        self.assertEqual(cfg.top_p, 0.90)
 
     def test_apply_role_config_env_top_p_invalid_string_is_ignored(self) -> None:
         env = {"CODE2PAPER_LLM_TOP_P_METHOD_WRITER": "not-a-number"}
         with patch.dict("os.environ", env, clear=False):
             cfg = apply_role_config(_base_config(), METHOD_WRITER)
-        self.assertEqual(cfg.top_p, 0.95)
+        self.assertEqual(cfg.top_p, 0.90)
 
     # ------------------------------------------------------------------
     # R8 acceptance coexistence: ``CODE2PAPER_LLM_TEMPERATURE=0`` must

@@ -290,7 +290,7 @@ class BuildResearchAgendaFromIntentGraphTests(unittest.TestCase):
     ) -> None:
         graph = _intent_graph_with_one_obligation(
             retrieval_queries=("train", "main"),
-            candidate_paths=("train.py", "model.py"),
+            candidate_paths=("train.py", "configs/base.yaml"),
         )
         snapshot = _repo_snapshot()
         agenda = build_research_agenda_from_intent_graph(
@@ -300,7 +300,7 @@ class BuildResearchAgendaFromIntentGraphTests(unittest.TestCase):
         self.assertIn("train", missing)
         self.assertIn("main", missing)
         self.assertIn("candidate_path:train.py", missing)
-        self.assertIn("candidate_path:model.py", missing)
+        self.assertIn("candidate_path:configs/base.yaml", missing)
 
     def test_missing_information_deduplicated(self) -> None:
         graph = _intent_graph_with_one_obligation(
@@ -355,14 +355,39 @@ class BuildResearchAgendaFromIntentGraphTests(unittest.TestCase):
 
     def test_candidate_symbol_ids_seeded_from_candidate_paths(self) -> None:
         graph = _intent_graph_with_one_obligation(
-            candidate_paths=("train.py", "model.py"),
+            candidate_paths=("train.py", "configs/base.yaml"),
         )
         snapshot = _repo_snapshot()
         agenda = build_research_agenda_from_intent_graph(
             graph, run_id="run-1", repo_snapshot=snapshot
         )
         item = agenda.items[0]
-        self.assertEqual(item.candidate_symbol_ids, ["train.py", "model.py"])
+        self.assertEqual(item.candidate_symbol_ids, ["train.py", "configs/base.yaml"])
+
+    def test_candidate_paths_normalize_in_snapshot_absolute_paths_and_drop_external(
+        self,
+    ) -> None:
+        graph = _intent_graph_with_one_obligation(
+            candidate_paths=(
+                str((TOY_PROJECT / "train.py").resolve()),
+                "/outside/snapshot/baseline.py",
+                "configs/base.yaml",
+            ),
+        )
+        snapshot = _repo_snapshot()
+
+        agenda = build_research_agenda_from_intent_graph(
+            graph, run_id="run-1", repo_snapshot=snapshot
+        )
+
+        item = agenda.items[0]
+        self.assertEqual(
+            item.candidate_symbol_ids, ["train.py", "configs/base.yaml"]
+        )
+        self.assertNotIn(
+            "candidate_path:/outside/snapshot/baseline.py",
+            item.missing_information,
+        )
 
     def test_multiple_obligations_preserved(self) -> None:
         obl1 = IntentObligationV2(

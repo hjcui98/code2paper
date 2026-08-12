@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import hashlib
 import json
 
 from code2paper.agentic.authoring_projection import (
@@ -16,18 +17,16 @@ from code2paper.agentic.authoring_plan_v3 import (
 )
 from code2paper.agentic.evidence_v2 import load_evidence_snapshot_v2
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
     load_atomic_claims_v3,
-    load_code_facts_v1,
     load_evidence_packets_v3,
-    write_compiler_v3_artifacts,
 )
-from code2paper.agentic.equation_claims import (
-    compile_equation_claims,
-    write_equation_claims,
-)
+from code2paper.agentic.equation_claims import load_equation_claims
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.final_text_claims import extract_final_text_claims, load_final_text_claims, write_final_text_claims
+from code2paper.agentic.final_text_authorship import (
+    FinalTextAuthorshipLedgerV1,
+    rewrite_final_text_authorship_ledger,
+)
 from code2paper.agentic.text_evidence_validator import (
     SemanticVerifier,
     load_text_evidence_validation,
@@ -37,17 +36,17 @@ from code2paper.agentic.text_evidence_validator import (
 from code2paper.agentic.text_trace_builder import build_final_text_trace, write_final_text_trace
 from code2paper.agentic.text_repair_supervisor import derive_repair_issues
 from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
-from code2paper.agentic.obligation_fact_alignment import (
-    bind_claims_to_obligations,
-    build_obligation_coverage_v2,
-)
-from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
 from code2paper.agentic.quality_state_v2 import compute_quality_state, select_best_state
 from code2paper.agentic.research_models import PacketRepairRequestV1, QualityStateV2
-from code2paper.agentic.repo_snapshot import load_repo_snapshot, snapshot_is_current
+from code2paper.agentic.rewrite_agent import (
+    LocalRewriteAgent,
+    RepairTransitionV1,
+)
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.trust_contracts import TextClaimEvidenceVerdict
 from code2paper.core.output_names import artifact_dir, method_output
 from code2paper.core.schemas import ClaimEvidenceMap, MethodEvidence, RawEvidencePack
+from code2paper.llm.providers import load_llm_config_from_env
 
 
 def final_text_claim_extractor_node(raw_state: dict[str, Any]) -> dict[str, Any]:
@@ -148,7 +147,10 @@ def text_evidence_validator_node(
     traces = list(getattr(semantic_verifier, "traces", []) or []) if semantic_verifier is not None else []
     if traces:
         trace_output = artifact_dir(state.method_root, "07_validation") / "agentic_semantic_verifier_call_trace.json"
-        trace_output.write_text(json.dumps({"calls": traces}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        _atomic_write_text(
+            trace_output,
+            json.dumps({"calls": traces}, ensure_ascii=False, indent=2) + "\n",
+        )
         artifacts["semantic_verifier_call_trace"] = str(trace_output)
     counters = dict(state.loop_counters)
     counters["semantic_verifier"] = verifier_calls_used + report.semantic_verifier_calls
@@ -216,7 +218,7 @@ def text_trace_builder_node(raw_state: dict[str, Any]) -> dict[str, Any]:
                 ],
             }
         ).model_dump(mode="json")
-    next_node, blocked_reason = _next_after_text_gate(state, validation.status, validation.recommended_actions)
+    next_node, blocked_reason = _next_after_text_gate(state, validation)
     updated = state.model_copy(
         update={
             "artifacts": artifacts,
@@ -236,25 +238,75 @@ def text_trace_builder_node(raw_state: dict[str, Any]) -> dict[str, Any]:
     return updated.model_dump(mode="json")
 
 
-def _next_after_text_gate(state: AgenticRunState, status: str, actions: list[str]) -> tuple[str, str]:
-    if status == "passed":
+def _next_after_text_gate(
+    state: AgenticRunState,
+    validation,
+) -> tuple[str, str]:
+    """Route only when at least one failed claim retains its own budget.
+
+    ``max_authoring_revision_rounds`` is an envelope per failed atomic claim,
+    not a run-global sentence-count cap.  The aggregate counter remains for
+    telemetry, while ``local_text_repair:<claim-id>`` counters carry authority.
+    """
+
+    if validation.status == "passed":
         return "validation", ""
+    actions = validation.recommended_actions
+    eligible = _eligible_repair_claim_ids(state, validation)
     if any("packet_binding_repair" in action for action in actions):
-        if int(state.loop_counters.get("local_text_repair") or 0) < state.max_authoring_revision_rounds:
+        if eligible:
             return "local_text_repair", ""
         return "blocked", "text_claim_packet_binding_repair_budget_exhausted"
     needs_evidence = any("analysis" in action or "direct_evidence" in action for action in actions)
     if needs_evidence:
-        if int(state.loop_counters.get("local_text_repair") or 0) < state.max_authoring_revision_rounds:
+        if eligible:
             return "local_text_repair", ""
         return "blocked", "text_claim_direct_evidence_missing_budget_exhausted"
-    if int(state.loop_counters.get("local_text_repair") or 0) < state.max_authoring_revision_rounds:
+    if eligible:
         return "local_text_repair", ""
     return "blocked", "text_claim_authoring_revision_budget_exhausted"
 
 
-def local_text_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
-    """Apply only sentence/claim-scoped safe repairs to the current Method text."""
+def _repair_claim_id(verdict) -> str:
+    return str(verdict.atomic_claim_id or "").strip()
+
+
+def _eligible_repair_claim_ids(state: AgenticRunState, validation) -> list[str]:
+    if state.max_authoring_revision_rounds <= 0:
+        return []
+    claim_ids = sorted({
+        _repair_claim_id(verdict)
+        for verdict in validation.verdicts
+        if verdict.deterministic_failures and _repair_claim_id(verdict)
+    })
+    return [
+        claim_id for claim_id in claim_ids
+        if int(state.loop_counters.get(f"local_text_repair:{claim_id}") or 0)
+        < state.max_authoring_revision_rounds
+    ]
+
+
+def _select_round_robin_claim(
+    state: AgenticRunState,
+    validation,
+) -> tuple[str, int]:
+    eligible = _eligible_repair_claim_ids(state, validation)
+    if not eligible:
+        return "", int(state.loop_counters.get("local_text_repair_cursor") or 0)
+    cursor = int(state.loop_counters.get("local_text_repair_cursor") or 0)
+    return eligible[cursor % len(eligible)], cursor + 1
+
+
+def local_text_repair_node(
+    raw_state: dict[str, Any],
+    *,
+    rewrite_agent: LocalRewriteAgent | None = None,
+) -> dict[str, Any]:
+    """Delegate lexical mutation to the owning Rewrite Agent.
+
+    The harness derives typed issues, validates exact response spans, and
+    applies the returned bytes verbatim.  It never authors replacement prose.
+    """
 
     state = AgenticRunState.model_validate(raw_state)
     try:
@@ -269,43 +321,28 @@ def local_text_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
             update={"blocked_reason": "local_text_repair_inputs_missing", "next_node": "blocked"}
         ).model_dump(mode="json")
 
-    attempt = int(state.loop_counters.get("local_text_repair") or 0) + 1
+    selected_claim_id, next_cursor = _select_round_robin_claim(state, validation)
+    if not selected_claim_id:
+        return state.model_copy(update={
+            "blocked_reason": "text_claim_authoring_revision_budget_exhausted",
+            "next_node": "blocked",
+        }).model_dump(mode="json")
+    attempt = int(state.loop_counters.get(f"local_text_repair:{selected_claim_id}") or 0) + 1
     sentence_ids = {claim.atomic_claim_id: claim.unit_id for claim in final_claims.atomic_claims}
-    issues = [issue.model_copy(update={"attempt": attempt}) for issue in derive_repair_issues(
-        validation, sentence_id_by_claim=sentence_ids
-    )]
-    claim_by_id = {claim.atomic_claim_id: claim for claim in final_claims.atomic_claims}
+    issues = [
+        issue.model_copy(update={"attempt": attempt})
+        for issue in derive_repair_issues(validation, sentence_id_by_claim=sentence_ids)
+        if issue.atomic_claim_id == selected_claim_id
+    ]
     projected_by_id = {claim.claim_id: claim for claim in projection.projected_claims}
     packet_requests: list[PacketRepairRequestV1] = []
-    replacements: dict[tuple[int, int], str] = {}
-    insertions: list[tuple[str, str]] = []
-
+    plan_payload: dict[str, Any] = {}
     plan_path = state.artifacts.get("authoring_plan_v3", "")
     if plan_path and Path(plan_path).exists():
         try:
             plan_payload = json.loads(Path(plan_path).read_text(encoding="utf-8"))
-            section_by_claim = {
-                claim_id: str(section.get("heading") or "Method")
-                for section in plan_payload.get("sections", [])
-                for claim_id in section.get("claim_ids", [])
-            }
-            for action in validation.recommended_actions:
-                prefix = "insert_planned_claim_locally:"
-                if not action.startswith(prefix):
-                    continue
-                claim_id = action[len(prefix):]
-                projected = projected_by_id.get(claim_id)
-                if projected is not None:
-                    fragment = projected.supported_fragment.strip()
-                    missing = [
-                        qualifier for qualifier in projected.required_qualifiers
-                        if qualifier.lower() not in fragment.lower()
-                    ]
-                    if missing:
-                        fragment = f"{fragment.rstrip('.')} under {'; '.join(missing)}."
-                    insertions.append((section_by_claim.get(claim_id, "Method"), fragment))
         except (OSError, json.JSONDecodeError):
-            insertions = []
+            plan_payload = {}
 
     packets = None
     if state.artifacts.get("evidence_packets_v3"):
@@ -314,72 +351,152 @@ def local_text_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
         except (OSError, ValueError):
             packets = None
 
-    verdict_by_id = {item.atomic_claim_id: item for item in validation.verdicts}
+    rewrite_issues = []
     for issue in issues:
-        claim = claim_by_id.get(issue.atomic_claim_id)
-        verdict = verdict_by_id.get(issue.atomic_claim_id)
-        if claim is None or verdict is None:
+        verdict = next(
+            (item for item in validation.verdicts if item.atomic_claim_id == issue.atomic_claim_id),
+            None,
+        )
+        if verdict is None:
             continue
         if issue.allowed_repair_scope in {"packet_relation", "code_search"}:
             packet_requests.append(_packet_repair_request(issue, verdict, packets))
             continue
-        replacement = ""
-        if issue.allowed_repair_scope == "wording_only" and issue.matched_claim_ids:
-            matched_ids = set(issue.matched_claim_ids)
-            supported_sibling_exists = any(
-                sibling.atomic_claim_id != claim.atomic_claim_id
-                and sibling.unit_id == claim.unit_id
-                and (sibling_verdict := verdict_by_id.get(sibling.atomic_claim_id)) is not None
-                and sibling_verdict.status in {"supported", "caveated"}
-                and bool(matched_ids.intersection(sibling_verdict.matched_projection_claim_ids))
-                for sibling in final_claims.atomic_claims
-            )
-            # Compound-sentence extraction can expose a redundant unsupported
-            # sub-clause beside an already supported sub-clause for the same
-            # projected claim. Replacing that small span with the whole
-            # projected fragment duplicates the sentence on every repair
-            # round. In this case exact deletion is the only monotonic local
-            # repair: the supported sibling retains the claim and its trace.
-            if not supported_sibling_exists:
-                projected = projected_by_id.get(issue.matched_claim_ids[0])
-                if projected is not None:
-                    replacement = projected.supported_fragment.strip()
-                    missing = [
-                        qualifier for qualifier in projected.required_qualifiers
-                        if qualifier.lower() not in replacement.lower()
-                    ]
-                    if missing:
-                        replacement = f"{replacement.rstrip('.')} under {'; '.join(missing)}."
-        # For unsupported formulae, missing evidence, or an unsafe decomposition,
-        # deletion of the exact atomic fragment is the only deterministic local
-        # action that cannot invent a new positive claim.
-        replacements[(claim.char_start, claim.char_end)] = replacement
+        rewrite_issues.append(issue)
 
     repair_dir = artifact_dir(state.method_root, "07_validation")
     requests_path = repair_dir / "agentic_packet_repair_requests_v1.json"
-    requests_path.write_text(
+    _atomic_write_text(
+        requests_path,
         json.dumps({"attempt": attempt, "requests": [item.model_dump(mode="json") for item in packet_requests]}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
     issues_path = repair_dir / "agentic_text_repair_issues_v1.json"
-    issues_path.write_text(
+    _atomic_write_text(
+        issues_path,
         json.dumps({"attempt": attempt, "issues": [item.model_dump(mode="json") for item in issues]}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
     )
     artifacts = {
         **state.artifacts,
         "text_repair_issues_v1": str(issues_path),
         "packet_repair_requests_v1": str(requests_path),
     }
-    counters = {**state.loop_counters, "local_text_repair": attempt}
+    counters = {
+        **state.loop_counters,
+        "local_text_repair": int(state.loop_counters.get("local_text_repair") or 0) + 1,
+        f"local_text_repair:{selected_claim_id}": attempt,
+        "local_text_repair_cursor": next_cursor,
+    }
 
-    if replacements or insertions:
-        text = text_path.read_text(encoding="utf-8")
-        for (start, end), replacement in sorted(replacements.items(), reverse=True):
-            text = text[:start] + replacement + text[end:]
-        for heading, fragment in insertions:
-            text = _insert_into_markdown_section(text, heading, fragment)
-        text_path.write_text(_clean_local_repair_text(text), encoding="utf-8")
+    if rewrite_issues:
+        incumbent_text = text_path.read_text(encoding="utf-8")
+        agent = rewrite_agent or LocalRewriteAgent(config=load_llm_config_from_env(
+            provider=state.llm_provider,
+            model=state.llm_model,
+        ))
+        rewrite_result = agent.rewrite(
+            incumbent_text,
+            issues=rewrite_issues,
+            section_context={
+                "authoring_plan": plan_payload,
+                "authorized_claims": [
+                    projected.model_dump(mode="json")
+                    for projected in projected_by_id.values()
+                    if any(projected.claim_id in issue.matched_claim_ids for issue in rewrite_issues)
+                ],
+                "hard_rule": "Return exact replacement text; the harness will not edit it.",
+            },
+        )
+        result_path = repair_dir / f"agentic_local_rewrite_result_attempt_{attempt}.json"
+        _atomic_write_text(result_path, rewrite_result.model_dump_json(indent=2) + "\n")
+        transition = RepairTransitionV1(
+            transition_id=f"repair:local_rewrite:{attempt}",
+            strategy=(
+                "claim_decomposition"
+                if any(issue.allowed_repair_scope == "claim_decomposition" for issue in rewrite_issues)
+                else "local_rewrite"
+            ),
+            owner="rewrite",
+            attempt=attempt,
+            issue_ids=tuple(issue.atomic_claim_id or issue.sentence_id for issue in rewrite_issues),
+            incumbent_digest=rewrite_result.incumbent_digest,
+            candidate_digest=rewrite_result.candidate_digest,
+            status=rewrite_result.status,
+            reason=rewrite_result.blocked_reason or ";".join(rewrite_result.patch_failures),
+            artifact_refs=(str(result_path),),
+        )
+        transition_path = repair_dir / f"agentic_repair_transition_attempt_{attempt}.json"
+        _atomic_write_text(transition_path, transition.model_dump_json(indent=2) + "\n")
+        artifacts.update({
+            "local_rewrite_result_v1": str(result_path),
+            "repair_transition_v1": str(transition_path),
+        })
+        if rewrite_result.status == "applied":
+            gate_failures = _rewrite_candidate_gate_failures(
+                state=state,
+                candidate_text=rewrite_result.candidate_text,
+                incumbent_validation=validation,
+            )
+            if gate_failures:
+                rewrite_result = rewrite_result.model_copy(update={
+                    "status": "rejected",
+                    "candidate_text": incumbent_text,
+                    "blocked_reason": "rewrite_candidate_hard_gate_failed",
+                    "patch_failures": tuple(gate_failures),
+                })
+                _atomic_write_text(result_path, rewrite_result.model_dump_json(indent=2) + "\n")
+                transition = transition.model_copy(update={
+                    "status": "rejected",
+                    "reason": ";".join(gate_failures),
+                })
+                _atomic_write_text(transition_path, transition.model_dump_json(indent=2) + "\n")
+        rewritten_ledger = None
+        ledger_path_value = state.artifacts.get("final_text_authorship_ledger_v1", "")
+        if rewrite_result.status == "applied" and ledger_path_value:
+            try:
+                incumbent_ledger = FinalTextAuthorshipLedgerV1.model_validate_json(
+                    Path(ledger_path_value).read_text(encoding="utf-8")
+                )
+                rewritten_ledger = rewrite_final_text_authorship_ledger(
+                    incumbent_text=incumbent_text,
+                    candidate_text=rewrite_result.candidate_text,
+                    incumbent_ledger=incumbent_ledger,
+                    patches=list(rewrite_result.output.patches if rewrite_result.output else ()),
+                    response_ref=rewrite_result.response_ref,
+                    generation_trace_id=str(rewrite_result.generation_trace.get("call_id") or ""),
+                )
+            except (OSError, ValueError) as exc:
+                ledger_failure = f"authorship:{exc}"
+                rewrite_result = rewrite_result.model_copy(update={
+                    "status": "rejected",
+                    "candidate_text": incumbent_text,
+                    "blocked_reason": "rewrite_authorship_hard_gate_failed",
+                    "patch_failures": (*rewrite_result.patch_failures, ledger_failure),
+                })
+                _atomic_write_text(result_path, rewrite_result.model_dump_json(indent=2) + "\n")
+                transition = transition.model_copy(update={
+                    "status": "rejected",
+                    "reason": ledger_failure,
+                })
+                _atomic_write_text(transition_path, transition.model_dump_json(indent=2) + "\n")
+        if rewrite_result.status != "applied":
+            return state.model_copy(update={
+                "artifacts": artifacts,
+                "loop_counters": counters,
+                "next_node": "blocked",
+                "blocked_reason": rewrite_result.blocked_reason or "local_rewrite_not_applied",
+                "decisions": [*state.decisions, AgentDecision(
+                    node="local_text_repair",
+                    decision="rewrite_candidate_rejected",
+                    rationale="The owning Rewrite Agent did not produce a valid exact-span patch; the incumbent text was preserved.",
+                    artifact_keys=["text_repair_issues_v1", "local_rewrite_result_v1", "repair_transition_v1"],
+                )],
+            }).model_dump(mode="json")
+        _atomic_write_text(text_path, rewrite_result.candidate_text)
+        if rewritten_ledger is not None:
+            _atomic_write_text(
+                Path(ledger_path_value),
+                rewritten_ledger.model_dump_json(indent=2) + "\n",
+            )
         return state.model_copy(
             update={
                 "artifacts": artifacts,
@@ -388,12 +505,12 @@ def local_text_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
                 "blocked_reason": "",
                 "decisions": [*state.decisions, AgentDecision(
                     node="local_text_repair",
-                    decision="local_text_rewritten",
+                    decision="local_rewrite_applied",
                     rationale=(
-                        f"Applied {len(replacements)} exact-span repairs and "
-                        f"{len(insertions)} authorized planned-claim insertions; unaffected Method text was not regenerated."
+                        f"Applied {len(rewrite_result.output.patches) if rewrite_result.output else 0} "
+                        "verbatim exact-span patches from the owning Rewrite Agent."
                     ),
-                    artifact_keys=["text_repair_issues_v1", "packet_repair_requests_v1", "final_text_candidate"],
+                    artifact_keys=["text_repair_issues_v1", "local_rewrite_result_v1", "repair_transition_v1", "final_text_candidate"],
                 )],
             }
         ).model_dump(mode="json")
@@ -412,191 +529,225 @@ def local_text_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
     }).model_dump(mode="json")
 
 
-def packet_binding_repair_node(raw_state: dict[str, Any]) -> dict[str, Any]:
-    """Recompile only the requested packet dependency slice.
+def _rewrite_candidate_gate_failures(
+    *,
+    state: AgenticRunState,
+    candidate_text: str,
+    incumbent_validation,
+) -> list[str]:
+    """Run deterministic atomic text gates before mutating the draft."""
 
-    The profile/generic compiler may inspect the frozen repository snapshot,
-    but the repair is accepted only when every packet, fact and claim outside
-    the requested dependency slice is byte-for-byte unchanged.  This provides
-    a real success path without silently expanding into intake, analysis or a
-    whole-Method rewrite.
-    """
+    try:
+        projection = load_authoring_projection(state.artifacts["authoring_projection"])
+        raw_evidence = RawEvidencePack.model_validate_json(
+            Path(state.artifacts["evidence_raw"]).read_text(encoding="utf-8")
+        )
+        evidence_snapshot_v2 = (
+            load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"])
+            if state.artifacts.get("evidence_snapshot_v2") else None
+        )
+        evidence_packets_v3 = (
+            load_evidence_packets_v3(state.artifacts["evidence_packets_v3"])
+            if state.artifacts.get("evidence_packets_v3") else None
+        )
+    except (KeyError, OSError, ValueError):
+        return ["candidate_gate_inputs_missing"]
+    claims = extract_final_text_claims(candidate_text, projection)
+    if not claims.deterministic_completeness_passed:
+        return ["candidate_claim_extraction_incomplete"]
+    report = validate_text_evidence(
+        final_claims=claims,
+        projection=projection,
+        raw_evidence=raw_evidence,
+        evidence_snapshot_v2=evidence_snapshot_v2,
+        evidence_packets_v3=evidence_packets_v3,
+        semantic_verifier=None,
+        max_semantic_verifier_calls=0,
+        require_semantic_verifier=False,
+    )
+    report = _enforce_planned_claim_coverage(state=state, report=report, projection=projection)
+    failures: list[str] = []
+    incumbent_failed = incumbent_validation.unsupported_claims + incumbent_validation.unverified_claims
+    candidate_failed = report.unsupported_claims + report.unverified_claims
+    if candidate_failed >= incumbent_failed:
+        failures.append("candidate_does_not_reduce_atomic_hard_gate_failures")
+    if report.supported_claims < incumbent_validation.supported_claims:
+        failures.append("candidate_loses_supported_claim")
+    incumbent_claims = load_final_text_claims(state.artifacts["final_text_claims"])
+    incumbent_duplicates = _duplicate_atomic_claim_count(incumbent_claims)
+    candidate_duplicates = _duplicate_atomic_claim_count(claims)
+    if candidate_duplicates > incumbent_duplicates:
+        failures.append("candidate_adds_duplicate_claim")
+    if any(
+        failure in {"required_qualifier_missing", "allowed_wording_boundary_exceeded"}
+        for verdict in report.verdicts
+        for failure in verdict.deterministic_failures
+    ):
+        failures.append("candidate_has_qualifier_or_wording_failure")
+    return list(dict.fromkeys(failures))
+
+
+def _duplicate_atomic_claim_count(final_claims) -> int:
+    counts: dict[str, int] = {}
+    for claim in final_claims.atomic_claims:
+        normalized = " ".join(claim.normalized_text.split())
+        if normalized:
+            counts[normalized] = counts.get(normalized, 0) + 1
+    return sum(count - 1 for count in counts.values() if count > 1)
+
+
+def packet_binding_repair_node(
+    raw_state: dict[str, Any],
+    *,
+    repair_owner=None,
+) -> dict[str, Any]:
+    """Invoke the owning repository loop for the exact rejected packet."""
 
     state = AgenticRunState.model_validate(raw_state)
     request_path = state.artifacts.get("packet_repair_requests_v1", "")
-    if not request_path or not Path(request_path).exists():
-        return _blocked_packet_repair(state, "packet_repair_request_missing")
+    if not request_path or not Path(request_path).is_file():
+        return _blocked_packet_repair(state, "packet_repair_requests_missing")
     try:
         request_payload = json.loads(Path(request_path).read_text(encoding="utf-8"))
-        requests = [PacketRepairRequestV1.model_validate(item) for item in request_payload.get("requests", [])]
+        requests = tuple(
+            PacketRepairRequestV1.model_validate(item)
+            for item in request_payload.get("requests", [])
+        )
     except (OSError, ValueError, json.JSONDecodeError):
-        return _blocked_packet_repair(state, "packet_scoped_repair_inputs_invalid")
-    if not requests or any(not item.packet_id for item in requests):
-        return _blocked_packet_repair(state, "packet_scoped_repair_target_unknown")
-    required = ("repo_snapshot", "evidence_packets_v3", "code_facts_v1", "atomic_claims_v3", "evidence")
-    if any(not state.artifacts.get(key) for key in required):
-        return _blocked_packet_repair(state, "packet_scoped_repair_inputs_missing")
+        return _blocked_packet_repair(state, "packet_repair_requests_invalid")
+    if not requests:
+        return _blocked_packet_repair(state, "packet_repair_requests_empty")
+    if repair_owner is None:
+        return _blocked_packet_repair(
+            state,
+            "packet_scoped_repair_requires_research_owner",
+        )
     try:
-        snapshot = load_repo_snapshot(state.artifacts["repo_snapshot"])
-        if not snapshot_is_current(snapshot):
-            return _blocked_packet_repair(state, "packet_scoped_repair_snapshot_stale")
-        old_packets = load_evidence_packets_v3(state.artifacts["evidence_packets_v3"])
-        old_facts = load_code_facts_v1(state.artifacts["code_facts_v1"])
-        old_claims = load_atomic_claims_v3(state.artifacts["atomic_claims_v3"])
-        fresh = compile_evidence_v3(snapshot)
-    except (OSError, ValueError, json.JSONDecodeError):
-        return _blocked_packet_repair(state, "packet_scoped_repair_inputs_invalid")
-    if fresh is None:
-        return _blocked_packet_repair(state, "packet_scoped_repair_compiler_unavailable")
-    intent_graph = None
-    intent_path = state.artifacts.get("intent_obligation_graph_v2", "")
-    if intent_path and Path(intent_path).exists():
-        try:
-            intent_graph = IntentObligationGraphV2.model_validate_json(
-                Path(intent_path).read_text(encoding="utf-8")
-            )
-            fresh = fresh.model_copy(update={
-                "claims": bind_claims_to_obligations(
-                    intent_graph,
-                    fact_set=fresh.facts,
-                    claim_set=fresh.claims,
-                )
-            })
-        except (OSError, ValueError):
-            return _blocked_packet_repair(state, "packet_scoped_repair_intent_rebind_failed")
-
-    target_packet_ids = {item.packet_id for item in requests}
-    old_packet_by_id = {item.packet_id: item for item in old_packets.packets}
-    fresh_packet_by_id = {item.packet_id: item for item in fresh.packets.packets}
-    if not target_packet_ids.issubset(old_packet_by_id) or not target_packet_ids.issubset(fresh_packet_by_id):
-        return _blocked_packet_repair(state, "packet_scoped_repair_target_missing")
-    affected_span_ids = {
-        span.span_id
-        for packet_id in target_packet_ids
-        for span in old_packet_by_id[packet_id].spans
-    }
-    affected_fact_ids = {
-        fact.fact_id
-        for fact in old_facts.facts
-        if affected_span_ids.intersection([*fact.direct_span_ids, *fact.relation_span_ids])
-    }
-    affected_claim_ids = {
-        claim.claim_id
-        for claim in old_claims.claims
-        if affected_fact_ids.intersection(claim.fact_ids)
-    }
-    if not _unaffected_items_equal(old_packets.packets, fresh.packets.packets, "packet_id", target_packet_ids):
-        return _blocked_packet_repair(state, "packet_scoped_repair_would_modify_unrelated_packets")
-    if not _unaffected_items_equal(old_facts.facts, fresh.facts.facts, "fact_id", affected_fact_ids):
-        return _blocked_packet_repair(state, "packet_scoped_repair_would_modify_unrelated_facts")
-    if not _unaffected_items_equal(old_claims.claims, fresh.claims.claims, "claim_id", affected_claim_ids):
-        return _blocked_packet_repair(state, "packet_scoped_repair_would_modify_unrelated_claims")
-    if all(
-        old_packet_by_id[item].model_dump(mode="json") == fresh_packet_by_id[item].model_dump(mode="json")
-        for item in target_packet_ids
-    ):
-        return _blocked_packet_repair(state, "packet_scoped_repair_no_progress")
-
-    attempt = max(item.attempt for item in requests)
-    repair_dir = artifact_dir(state.method_root, "07_validation")
-    written = write_compiler_v3_artifacts(repair_dir, fresh, suffix=f"_repair{attempt}")
-    repaired_equations, _equation_reports = compile_equation_claims(
-        [],
-        fresh.facts,
-        repo_snapshot_id=fresh.facts.repo_snapshot_id,
-        project_tree_hash=fresh.facts.project_tree_hash,
+        result = repair_owner(state, requests)
+    except Exception as exc:  # noqa: BLE001 - owner failure preserves incumbent
+        return _blocked_packet_repair(
+            state,
+            f"packet_repair_owner_error:{exc.__class__.__name__}",
+        )
+    result_payload = (
+        result.model_dump(mode="json")
+        if hasattr(result, "model_dump")
+        else dict(result or {})
     )
-    equation_path = repair_dir / f"equation_claims_v1_repair{attempt}.json"
-    write_equation_claims(equation_path, repaired_equations)
-    written["equation_claims_v1"] = str(equation_path)
+    status = str(result_payload.get("status") or "blocked")
+    reason = str(result_payload.get("reason") or "")
+    artifacts = {**state.artifacts, **dict(result_payload.get("artifact_paths") or {})}
+    repair_dir = artifact_dir(state.method_root, "07_validation")
+    result_path = repair_dir / "agentic_packet_repair_owner_result_v1.json"
+    _atomic_write_text(
+        result_path,
+        json.dumps(result_payload, ensure_ascii=False, indent=2) + "\n",
+    )
+    artifacts["packet_repair_owner_result_v1"] = str(result_path)
+    incumbent_chain_digest = _json_content_digest(state.artifacts.get("atomic_claims_v3", ""))
+    candidate_chain_digest = _json_content_digest(artifacts.get("atomic_claims_v3", ""))
+    transition = RepairTransitionV1(
+        transition_id=f"repair:packet_relation:{int(state.loop_counters.get('local_text_repair') or 0)}",
+        strategy="packet_relation",
+        owner="repository_tools",
+        attempt=int(state.loop_counters.get("local_text_repair") or 0),
+        issue_ids=tuple(request.claim_id for request in requests),
+        incumbent_digest=incumbent_chain_digest,
+        candidate_digest=candidate_chain_digest,
+        status=(status if status in {"applied", "no_progress", "blocked"} else "rejected"),
+        reason=reason,
+        artifact_refs=(str(result_path),),
+    )
+    transition_path = repair_dir / (
+        f"agentic_packet_repair_transition_attempt_{transition.attempt}.json"
+    )
+    _atomic_write_text(transition_path, transition.model_dump_json(indent=2) + "\n")
+    artifacts["repair_transition_v1"] = str(transition_path)
+    if status == "applied":
+        refreshed = _refresh_authoring_projection_after_packet_repair(state, artifacts)
+        if refreshed:
+            artifacts["authoring_projection"] = refreshed
+            updated = state.model_copy(update={
+                "artifacts": artifacts,
+                "next_node": "final_text_claim_extractor",
+                "blocked_reason": "",
+                "decisions": [*state.decisions, AgentDecision(
+                    node="packet_binding_repair",
+                    decision="scoped_repository_repair_applied",
+                    rationale="The owning repository loop produced a changed validated packet/fact/claim chain; the original atomic text gate will rerun.",
+                    evidence_ids=list(result_payload.get("tool_call_trace_refs") or []),
+                    artifact_keys=["packet_repair_owner_result_v1", "evidence_packets_v3", "code_facts_v1", "atomic_claims_v3", "authoring_projection"],
+                )],
+            })
+            return updated.model_dump(mode="json")
+        reason = "packet_repair_projection_refresh_failed"
+    return _blocked_packet_repair(
+        state.model_copy(update={"artifacts": artifacts}),
+        reason or f"packet_repair_owner_{status}",
+    )
+
+
+def _json_content_digest(path_value: str) -> str:
+    if path_value and Path(path_value).is_file():
+        try:
+            payload = json.loads(Path(path_value).read_text(encoding="utf-8"))
+            digest = str(payload.get("content_digest") or "")
+            if digest.startswith("sha256:"):
+                return digest
+        except (OSError, json.JSONDecodeError):
+            pass
+    return "sha256:" + hashlib.sha256(b"").hexdigest()
+
+
+def _refresh_authoring_projection_after_packet_repair(
+    state: AgenticRunState,
+    artifacts: dict[str, str],
+) -> str:
     try:
-        method_payload = MethodEvidence.model_validate_json(Path(state.artifacts["evidence"]).read_text(encoding="utf-8"))
-        evidence_snapshot = (
-            load_evidence_snapshot_v2(state.artifacts["evidence_snapshot_v2"])
-            if state.artifacts.get("evidence_snapshot_v2")
-            else None
+        method_evidence = MethodEvidence.model_validate(
+            _read_json(method_output(state.method_root, "evidence"))
+        )
+        claim_map = ClaimEvidenceMap.model_validate(
+            _read_json(method_output(state.method_root, "claims"))
+        )
+        verification_path = artifacts.get("claim_verification", "")
+        if not verification_path:
+            verification_path = str(
+                artifact_dir(state.method_root, "04_evidence")
+                / "agentic_claim_verification.json"
+            )
+        verification = ClaimVerificationReport.model_validate_json(
+            Path(verification_path).read_text(encoding="utf-8")
         )
         projection = build_authoring_projection(
-            method_evidence=method_payload,
-            claim_map=ClaimEvidenceMap(claims=[]),
-            verification=ClaimVerificationReport(claims=[]),
-            evidence_snapshot_v2=evidence_snapshot,
-            atomic_claims_v3=fresh.claims,
-            evidence_packets_v3=fresh.packets,
-            equation_claims_v1=repaired_equations,
-        )
-        projection_path = repair_dir / f"agentic_authoring_input_projection_repair{attempt}.json"
-        write_authoring_projection(projection_path, projection)
-    except (OSError, ValueError):
-        return _blocked_packet_repair(state, "packet_scoped_repair_projection_failed")
-    report_path = repair_dir / f"agentic_packet_scoped_repair_report_v1_r{attempt}.json"
-    report_path.write_text(json.dumps({
-        "status": "repaired",
-        "attempt": attempt,
-        "packet_ids": sorted(target_packet_ids),
-        "affected_fact_ids": sorted(affected_fact_ids),
-        "affected_claim_ids": sorted(affected_claim_ids),
-        "forbidden_global_reruns": ["intake", "analysis", "authoring"],
-    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    artifacts = {
-        **state.artifacts,
-        **written,
-        "authoring_projection": str(projection_path),
-        "packet_scoped_repair_report_v1": str(report_path),
-    }
-    if intent_graph is not None:
-        coverage = build_obligation_coverage_v2(
-            intent_graph,
-            fact_set=fresh.facts,
-            claim_set=fresh.claims,
-            explicit_gaps=fresh.claims.explicit_code_gaps,
-        )
-        coverage_path = repair_dir / f"obligation_coverage_v2_repair{attempt}.json"
-        coverage_path.write_text(coverage.model_dump_json(indent=2) + "\n", encoding="utf-8")
-        artifacts["obligation_coverage_v2"] = str(coverage_path)
-        if state.artifacts.get("authoring_plan_v3"):
-            plan = build_authoring_plan_v3(
-                run_id=state.run_id or "packet-scoped-repair",
-                repo_snapshot_id=snapshot.snapshot_id,
-                project_tree_hash=snapshot.project_tree_hash,
-                intent_graph=intent_graph,
-                coverage_report=coverage,
-                claim_set=fresh.claims,
-                explicit_gaps=fresh.claims.explicit_code_gaps,
-                method_name=method_payload.method_name,
-                author_goal=method_payload.method_goal,
-            )
-            plan_path = repair_dir / f"agentic_authoring_plan_v3_repair{attempt}.json"
-            write_authoring_plan_v3(str(plan_path), plan)
-            artifacts["authoring_plan_v3"] = str(plan_path)
-    legacy_plan_path = state.artifacts.get("authoring_plan", "")
-    if legacy_plan_path and Path(legacy_plan_path).exists():
-        try:
-            legacy_plan = json.loads(Path(legacy_plan_path).read_text(encoding="utf-8"))
-            legacy_plan["projection_digest"] = projection.projection_digest
-            repaired_plan_path = repair_dir / f"agentic_authoring_plan_repair{attempt}.json"
-            repaired_plan_path.write_text(
-                json.dumps(legacy_plan, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            artifacts["authoring_plan"] = str(repaired_plan_path)
-        except (OSError, json.JSONDecodeError):
-            return _blocked_packet_repair(state, "packet_scoped_repair_legacy_plan_failed")
-    return state.model_copy(update={
-        "artifacts": artifacts,
-        "next_node": "final_text_claim_extractor",
-        "blocked_reason": "",
-        "decisions": [*state.decisions, AgentDecision(
-            node="packet_binding_repair",
-            decision="scoped_packet_recompiled",
-            rationale=(
-                f"Recompiled packets {sorted(target_packet_ids)} and their dependency slice; "
-                "all unrelated packets, facts and claims were unchanged."
+            method_evidence=method_evidence,
+            claim_map=claim_map,
+            verification=verification,
+            raw_evidence=(
+                RawEvidencePack.model_validate_json(
+                    Path(artifacts["evidence_raw"]).read_text(encoding="utf-8")
+                )
+                if artifacts.get("evidence_raw") else None
             ),
-            artifact_keys=["packet_repair_requests_v1", "packet_scoped_repair_report_v1", "authoring_projection"],
-        )],
-    }).model_dump(mode="json")
-
+            evidence_snapshot_v2=(
+                load_evidence_snapshot_v2(artifacts["evidence_snapshot_v2"])
+                if artifacts.get("evidence_snapshot_v2") else None
+            ),
+            atomic_claims_v3=load_atomic_claims_v3(artifacts["atomic_claims_v3"]),
+            evidence_packets_v3=load_evidence_packets_v3(artifacts["evidence_packets_v3"]),
+            equation_claims_v1=(
+                load_equation_claims(artifacts["equation_claims_v1"])
+                if artifacts.get("equation_claims_v1") else None
+            ),
+        )
+        output = Path(artifacts.get("authoring_projection") or (
+            artifact_dir(state.method_root, "06_authoring")
+            / "agentic_authoring_input_projection.json"
+        ))
+        write_authoring_projection(output, projection)
+        return str(output)
+    except (KeyError, OSError, ValueError):
+        return ""
 
 def _unaffected_items_equal(old_items, fresh_items, identity_field: str, affected_ids: set[str]) -> bool:
     old = {getattr(item, identity_field): item.model_dump(mode="json") for item in old_items if getattr(item, identity_field) not in affected_ids}
@@ -605,7 +756,44 @@ def _unaffected_items_equal(old_items, fresh_items, identity_field: str, affecte
 
 
 def _blocked_packet_repair(state: AgenticRunState, reason: str) -> dict[str, Any]:
+    artifacts = dict(state.artifacts)
+    if artifacts.get("repair_transition_v1") and Path(artifacts["repair_transition_v1"]).is_file():
+        return state.model_copy(update={
+            "artifacts": artifacts,
+            "next_node": "blocked",
+            "blocked_reason": reason,
+            "decisions": [*state.decisions, AgentDecision(
+                node="packet_binding_repair",
+                decision="scoped_repair_blocked",
+                rationale=f"{reason}; the typed owner transition was retained.",
+                artifact_keys=["packet_repair_requests_v1", "repair_transition_v1"],
+            )],
+        }).model_dump(mode="json")
+    request_ref = str(artifacts.get("packet_repair_requests_v1") or "")
+    attempt = int(state.loop_counters.get("local_text_repair") or 0)
+    text_path = _final_text_path(state)
+    incumbent = text_path.read_text(encoding="utf-8") if text_path is not None else ""
+    incumbent_digest = "sha256:" + hashlib.sha256(incumbent.encode("utf-8")).hexdigest()
+    transition = RepairTransitionV1(
+        transition_id=f"repair:packet_relation:{attempt}",
+        strategy="packet_relation",
+        owner="repository_tools",
+        attempt=attempt,
+        issue_ids=(),
+        incumbent_digest=incumbent_digest,
+        candidate_digest=incumbent_digest,
+        status="blocked",
+        reason=reason,
+        artifact_refs=(request_ref,) if request_ref else (),
+    )
+    transition_path = (
+        artifact_dir(state.method_root, "07_validation")
+        / f"agentic_packet_repair_transition_attempt_{attempt}.json"
+    )
+    _atomic_write_text(transition_path, transition.model_dump_json(indent=2) + "\n")
+    artifacts["repair_transition_v1"] = str(transition_path)
     return state.model_copy(update={
+        "artifacts": artifacts,
         "next_node": "blocked",
         "blocked_reason": reason,
         "decisions": [*state.decisions, AgentDecision(
@@ -631,6 +819,7 @@ def _packet_repair_request(issue, verdict, packets) -> PacketRepairRequestV1:
                 break
     return PacketRepairRequestV1(
         claim_id=issue.atomic_claim_id,
+        source_claim_ids=tuple(verdict.matched_projection_claim_ids),
         packet_id=packet_id,
         failure_type=issue.failure_type,
         offending_span_ids=span_ids,
@@ -727,7 +916,7 @@ def _retain_best_text_state(*, state: AgenticRunState, validation) -> tuple[dict
     )
     quality_dir = artifact_dir(state.method_root, "07_validation")
     current_path = quality_dir / "agentic_quality_state_current_v2.json"
-    current_path.write_text(candidate.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    _atomic_write_text(current_path, candidate.model_dump_json(indent=2) + "\n")
     best_path = quality_dir / "agentic_quality_state_best_v2.json"
     best_text_path = quality_dir / "agentic_best_final_text_candidate.md"
     replaced = False
@@ -736,42 +925,19 @@ def _retain_best_text_state(*, state: AgenticRunState, validation) -> tuple[dict
         incumbent = QualityStateV2.model_validate_json(best_path.read_text(encoding="utf-8"))
         best, replaced = select_best_state(candidate, incumbent)
         if replaced:
-            best_path.write_text(best.model_dump_json(indent=2) + "\n", encoding="utf-8")
-            best_text_path.write_text(text_path.read_text(encoding="utf-8"), encoding="utf-8")
+            _atomic_write_text(best_path, best.model_dump_json(indent=2) + "\n")
+            _atomic_write_text(best_text_path, text_path.read_text(encoding="utf-8"))
         elif text_path.read_text(encoding="utf-8") != best_text_path.read_text(encoding="utf-8"):
-            text_path.write_text(best_text_path.read_text(encoding="utf-8"), encoding="utf-8")
+            _atomic_write_text(text_path, best_text_path.read_text(encoding="utf-8"))
             restored = True
     else:
-        best_path.write_text(candidate.model_dump_json(indent=2) + "\n", encoding="utf-8")
-        best_text_path.write_text(text_path.read_text(encoding="utf-8"), encoding="utf-8")
+        _atomic_write_text(best_path, candidate.model_dump_json(indent=2) + "\n")
+        _atomic_write_text(best_text_path, text_path.read_text(encoding="utf-8"))
     return {
         "quality_state_current_v2": str(current_path),
         "quality_state_best_v2": str(best_path),
         "best_final_text_candidate": str(best_text_path),
     }, restored
-
-
-def _clean_local_repair_text(text: str) -> str:
-    lines = [line.rstrip() for line in text.splitlines()]
-    return "\n".join(line for line in lines if line.strip()) + "\n"
-
-
-def _insert_into_markdown_section(text: str, heading: str, fragment: str) -> str:
-    lines = text.splitlines()
-    target = f"## {heading}".strip().lower()
-    start = next(
-        (index for index, line in enumerate(lines) if line.strip().lower() == target),
-        None,
-    )
-    if start is None:
-        return text.rstrip() + f"\n\n## {heading}\n{fragment}\n"
-    end = len(lines)
-    for index in range(start + 1, len(lines)):
-        if lines[index].startswith("## "):
-            end = index
-            break
-    lines.insert(end, fragment)
-    return "\n".join(lines) + "\n"
 
 
 def _final_text_path(state: AgenticRunState) -> Path | None:
@@ -784,3 +950,11 @@ def _final_text_path(state: AgenticRunState) -> Path | None:
         if candidate.exists():
             return candidate
     return None
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    atomic_write_bytes(path, content.encode("utf-8"))

@@ -8,9 +8,69 @@ actually running the full matrix.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import signal
+import subprocess
+import time
 
 import pytest
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MATRIX_SCRIPT = REPO_ROOT / "scripts" / "run_r8_gemma_matrix.sh"
+
+
+def _read_status(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    return dict(
+        line.split("=", 1)
+        for line in path.read_text().splitlines()
+        if "=" in line
+    )
+
+
+def _wait_for_status(
+    path: Path,
+    expected: str,
+    *,
+    timeout: float = 8.0,
+) -> dict[str, str]:
+    deadline = time.monotonic() + timeout
+    last: dict[str, str] = {}
+    while time.monotonic() < deadline:
+        last = _read_status(path)
+        if last.get("state") == expected:
+            return last
+        time.sleep(0.05)
+    pytest.fail(f"status never reached {expected}: {last}")
+
+
+def _start_governance_probe(tmp_path: Path) -> tuple[subprocess.Popen[bytes], Path]:
+    log_root = tmp_path / "logs"
+    out_root = tmp_path / "out"
+    env = os.environ.copy()
+    env.update(
+        {
+            "CODE2PAPER_R8_GOVERNANCE_PROBE": "1",
+            "CODE2PAPER_R8_HEARTBEAT_SECONDS": "1",
+            "CODE2PAPER_R8_MATRIX_ID": f"probe-{tmp_path.name}",
+            "CODE2PAPER_R8_LOG_ROOT": str(log_root),
+            "CODE2PAPER_R8_OUT_ROOT": str(out_root),
+        }
+    )
+    process = subprocess.Popen(
+        ["bash", str(MATRIX_SCRIPT), "--foreground"],
+        cwd=REPO_ROOT,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    status_path = log_root / "status.env"
+    _wait_for_status(status_path, "RUNNING")
+    return process, status_path
 
 
 # ---------------------------------------------------------------------------
@@ -281,3 +341,50 @@ class TestBackgroundStartupHandshake:
         # Simulate file appearing after a few polls
         (log_root / "status.env").write_text("state=RUNNING\n")
         assert (log_root / "status.env").exists()
+
+
+class TestLeaseAndInterruptionGovernance:
+    """Exercise the real foreground lease, signal traps, and watchdog."""
+
+    @pytest.mark.parametrize(
+        ("sent_signal", "recorded_signal", "expected_exit"),
+        [
+            (signal.SIGTERM, "TERM", 143),
+            (signal.SIGHUP, "HUP", 143),
+        ],
+    )
+    def test_signal_records_terminal_interrupted_state(
+        self,
+        tmp_path,
+        sent_signal: signal.Signals,
+        recorded_signal: str,
+        expected_exit: int,
+    ):
+        process, status_path = _start_governance_probe(tmp_path)
+        try:
+            os.killpg(process.pid, sent_signal)
+            assert process.wait(timeout=8) == expected_exit
+            status = _wait_for_status(status_path, "INTERRUPTED")
+            assert status["interrupt_signal"] == recorded_signal
+            assert status["exit_code"] == str(expected_exit)
+            assert status["driver_pid"] == str(process.pid)
+            assert status.get("finished_at")
+        finally:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait(timeout=5)
+
+    def test_watchdog_records_driver_disappearance(self, tmp_path):
+        process, status_path = _start_governance_probe(tmp_path)
+        try:
+            process.kill()
+            assert process.wait(timeout=5) == -signal.SIGKILL
+            status = _wait_for_status(status_path, "INTERRUPTED")
+            assert status["interrupt_signal"] == "DRIVER_DISAPPEARED"
+            assert status["exit_code"] == "137"
+            assert status["driver_pid"] == str(process.pid)
+            assert status.get("finished_at")
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=5)

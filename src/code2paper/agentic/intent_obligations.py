@@ -9,6 +9,13 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.author_intent_summary import AuthorIntentSummary
+from code2paper.agentic.method_product_models import (
+    MethodEvidenceLane,
+    MethodOutputPolicyV1,
+    MethodReviewCandidateV1,
+    build_default_method_output_policy,
+    method_lane_from_reference_status,
+)
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
 from code2paper.agentic.trust_contracts import AuthoringInputProjection
 
@@ -167,6 +174,14 @@ def compile_intent_obligation_graph(summary: AuthorIntentSummary | None) -> Inte
             source_index=index,
             text=text,
             paths=_paths_from_module_role(text),
+        )
+    for index, text in enumerate(summary.key_building_blocks):
+        add(
+            kind="component",
+            priority="should_cover",
+            source_field="key_building_blocks",
+            source_index=index,
+            text=text,
         )
     for index, text in enumerate(summary.story_order):
         add(kind="organization", priority="preference", source_field="story_order", source_index=index, text=text)
@@ -354,6 +369,69 @@ def write_authoring_obligation_coverage(
     report: AuthoringObligationCoverageReport,
 ) -> Path:
     return _write_model(path, report)
+
+
+def build_review_candidates_from_coverage(
+    graph: IntentObligationGraphV1,
+    coverage: AuthoringObligationCoverageReport,
+    *,
+    policy: MethodOutputPolicyV1 | None = None,
+) -> tuple[MethodReviewCandidateV1, ...]:
+    """Turn uncovered author obligations into actionable author review items.
+
+    Every obligation that the research/projection loop could not cover with
+    verified repository support becomes a review candidate with non-empty
+    editable ``proposed_body`` and an exact confirmation question.  These
+    items block verified inclusion but never candidate generation, so an
+    author point that lacks code evidence survives into the review loop
+    instead of disappearing.
+    """
+
+    policy = policy or build_default_method_output_policy()
+    if coverage is None:
+        return ()
+    obligations_by_id = {item.obligation_id: item for item in graph.obligations}
+    candidates: list[MethodReviewCandidateV1] = []
+    for item in coverage.items:
+        if item.status in {"candidate_covered", "organization_available"}:
+            continue
+        obligation = obligations_by_id.get(item.obligation_id)
+        statement = (
+            str(getattr(obligation, "author_text", "") or "").strip()
+            or str(item.rationale or "").strip()
+        )
+        if not statement:
+            statement = f"Author-intended method point {item.obligation_id}."
+        lane: MethodEvidenceLane
+        if item.status == "partially_covered":
+            lane = "repository_partial"
+        elif item.status == "not_implemented_in_repo":
+            lane = "author_intent_unverified"
+        else:
+            lane = "author_intent_unverified"
+        if lane not in policy.review_required_lanes and lane not in policy.verified_positive_lanes:
+            lane = "author_intent_unverified"
+        proposed_body = (
+            "The method is intended to address the following point, which "
+            "currently awaits repository or author confirmation: "
+            + statement.rstrip(".") + "."
+        )
+        candidates.append(MethodReviewCandidateV1(
+            candidate_id=f"review:{item.obligation_id}",
+            source_obligation_id=item.obligation_id,
+            lane=lane,
+            status=str(item.status),
+            proposed_body=proposed_body,
+            confirmation_question=(
+                f"Should the Method confirm that {statement.rstrip('.').lower()}?"
+            ),
+            needed_evidence=tuple(_dedupe([*item.projected_claim_ids, item.rationale])),
+            suggested_action="confirm_author_intent_or_provide_evidence",
+            blocks_verified=True,
+            blocks_candidate=False,
+            trace_refs=(item.obligation_id,),
+        ))
+    return tuple(candidates)
 
 
 def _match_stages(text: str, packets: list[dict]) -> tuple[list[str], float]:

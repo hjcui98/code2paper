@@ -52,6 +52,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     EvidencePacketV3,
     EvidenceSpanV3,
     RejectedEvidenceCandidateV3,
+    RelationEndpointV3,
     RelationEvidenceV3,
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot
@@ -151,7 +152,12 @@ def _digest(value: Any) -> str:
 
 
 def _relation_type_for(kind: str) -> str:
-    """Map a ``BehaviorRelationKind`` to an ``EvidenceRelationType``."""
+    """Map a ``BehaviorRelationKind`` to an ``EvidenceRelationType``.
+
+    ``CONFIGURED_BY`` is a configuration binding between the consuming
+    operation and the exact configuration access, not a guessed data-flow
+    edge.  All other kinds keep their flow semantics.
+    """
 
     mapping = {
         "CALLS": "call_flow",
@@ -163,7 +169,7 @@ def _relation_type_for(kind: str) -> str:
         "TRUE_BRANCH": "control_flow",
         "FALSE_BRANCH": "control_flow",
         "CONTROL_DEPENDS_ON": "control_flow",
-        "CONFIGURED_BY": "data_flow",
+        "CONFIGURED_BY": "configuration_binding",
         "CONTAINS": "control_flow",
         "ALIAS_OF": "data_flow",
         "OVERRIDES": "call_flow",
@@ -310,14 +316,49 @@ def _relation_evidence_from_relation(
     statement = f"{relation.kind}: {source_symbol} -> {target_symbol}"
     if relation.guard:
         statement += f" when {relation.guard}"
+    # Operation-level endpoints are resolved through the behavior graph nodes
+    # so the semantic frame can bind both sides of the edge to exact slots.
+    # A missing endpoint node (intra-symbol CONFIGURED_BY relations lose the
+    # config-access LOAD node when the graph is truncated) leaves the relation
+    # unresolved; the exact-endpoint gate rejects it instead of guessing.
+    source_node = nodes_by_id.get(relation.source_node_id)
+    target_node = nodes_by_id.get(relation.target_node_id) if relation.target_node_id else None
+    if source_node is not None and target_node is not None:
+        source_endpoint = _endpoint_from_node(source_node, relation.source_span_id)
+        target_endpoint = _endpoint_from_node(target_node, relation.target_span_id)
+        if not source_endpoint.resolved or not target_endpoint.resolved:
+            source_endpoint = None
+            target_endpoint = None
+    else:
+        source_endpoint = None
+        target_endpoint = None
     return RelationEvidenceV3(
         relation_id=relation.relation_id,
         relation_type=_relation_type_for(relation.kind),  # type: ignore[arg-type]
         source_symbol=source_symbol,
         target_symbol=target_symbol,
+        source_endpoint=source_endpoint,
+        target_endpoint=target_endpoint,
         direct_span_ids=direct_span_ids,
         conditions=[relation.guard] if relation.guard else [],
         statement=statement,
+    )
+
+
+def _endpoint_from_node(
+    node: BehaviorNodeV1,
+    span_id: str,
+) -> RelationEndpointV3:
+    """Build the exact operation endpoint record from a behavior node."""
+
+    return RelationEndpointV3(
+        node_id=node.node_id,
+        symbol_id=node.symbol_id,
+        operation_subject=str(node.symbol_id),
+        predicate=str(node.predicate),
+        operands=tuple(str(item) for item in node.operands if str(item).strip()),
+        produced_entity=str(node.result or ""),
+        source_span_id=span_id or node.source_span_id,
     )
 
 

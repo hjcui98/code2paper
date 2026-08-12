@@ -111,6 +111,44 @@ def test_v2_priorities_match_v1_obligation_structure() -> None:
     )
 
 
+def test_v2_compiler_keeps_named_building_blocks_as_components() -> None:
+    summary = _rap_style_summary().model_copy(update={
+        "key_building_blocks": [
+            "Lightweight MLP: three linear hidden layers map features to scores",
+        ]
+    })
+
+    graph = compile_intent_obligation_graph_v2(summary)
+
+    block = next(
+        obligation
+        for obligation in graph.obligations
+        if obligation.source_field == "key_building_blocks"
+    )
+    assert block.kind == "component"
+    assert block.priority == "should_cover"
+    assert block.typed_behavior_targets
+    assert block.typed_behavior_targets[0].search_terms[0].lower() == "mlp"
+
+
+def test_v2_compiler_retains_explicit_output_dimension_as_typed_detail() -> None:
+    summary = _rap_style_summary().model_copy(update={
+        "key_building_blocks": [
+            "Feature encoder produces a compact 15-dimensional feature vector",
+        ]
+    })
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    block = next(
+        obligation
+        for obligation in graph.obligations
+        if obligation.source_field == "key_building_blocks"
+    )
+
+    assert block.typed_behavior_targets
+    assert block.typed_behavior_targets[0].outputs == ("dimension 15",)
+
+
 # ---------------------------------------------------------------------------
 # Typed behavior target tests
 # ---------------------------------------------------------------------------
@@ -251,6 +289,199 @@ def test_intent_concepts_have_both_en_and_cn_terms_for_parity() -> None:
         assert concept.terms_cn, f"concept {concept.concept_id} has no Chinese terms"
 
 
+def test_ambiguous_domain_nouns_do_not_invent_unrelated_behavior_targets() -> None:
+    """Generic domain nouns must not be treated as executable operators."""
+
+    summary = AuthorIntentSummary(
+        project_goal="Build a retrieval method.",
+        method_goal="Describe its stages.",
+        implementation_scope="Repository code.",
+        method_mainline="Build graph links for a query and preserve sentence order.",
+        pipeline_steps=[
+            "Generate a compact feature vector from attributes.",
+            "Run a forward pass over sparse inputs.",
+        ],
+        priority_files=[],
+        module_roles=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    stages = [item for item in graph.obligations if item.kind == "stage"]
+    mainline_predicates = {
+        predicate
+        for target in mainline.typed_behavior_targets
+        for predicate in target.desired_predicates
+    }
+    stage_predicates = [
+        {
+            predicate
+            for target in item.typed_behavior_targets
+            for predicate in target.desired_predicates
+        }
+        for item in stages
+    ]
+
+    assert "ATTEND" not in mainline_predicates  # query is not attention
+    assert "PROJECT" not in mainline_predicates  # graph link is not link prediction
+    assert "SORT" not in mainline_predicates  # sentence order is not ranking
+    assert "RETURN" not in stage_predicates[0]  # generic generate is not generation
+    assert "PROPAGATE" not in stage_predicates[1]  # forward pass/sparse are not propagation
+
+
+def test_similarity_encoding_is_feature_transform_not_verification() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Encode structural context.",
+        method_goal="Represent shared-neighbor frequency.",
+        implementation_scope="Repository code.",
+        method_mainline="Capture structural similarity by encoding shared-neighbor frequency.",
+        priority_files=[],
+        module_roles=[],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    roles = {target.role for target in mainline.typed_behavior_targets}
+
+    assert "feature" in roles
+    assert "verification" not in roles
+
+
+def test_distinct_concepts_remain_distinct_targets_with_strong_dynamic_anchor() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Retrieve passages.",
+        method_goal="Rank graph results.",
+        implementation_scope="Repository code.",
+        method_mainline="Propagate entity scores with personalized PageRank, then sort the passages.",
+        priority_files=[],
+        module_roles=[],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    propagation = next(target for target in mainline.typed_behavior_targets if target.role == "propagation")
+    ranking = next(target for target in mainline.typed_behavior_targets if target.role == "ranking")
+
+    assert propagation.target_id != ranking.target_id
+    assert propagation.predicate_groups == (("AGGREGATE", "PROPAGATE", "SAMPLE"),)
+    assert propagation.transformations == ("personalized pagerank",)
+    assert ranking.predicate_groups == (("SELECT", "SORT", "TOPK"),)
+
+
+def test_generation_concept_keeps_semantic_anchor_for_executable_replay() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Build a retrieval-augmented generation system.",
+        method_goal="Retrieve relevant passages.",
+        implementation_scope="Repository code.",
+        method_mainline="Retrieve and rank passages.",
+        priority_files=[],
+        module_roles=[],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    project_goal = next(
+        item for item in graph.obligations if item.source_field == "project_goal"
+    )
+    generation = next(
+        target for target in project_goal.typed_behavior_targets
+        if target.role == "generation"
+    )
+
+    assert generation.transformations == ("generation",)
+    assert generation.outputs == ("answer",)
+
+
+def test_propagating_inflection_compiles_propagation_target() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Retrieve passages.",
+        method_goal="Activate entities.",
+        implementation_scope="Repository code.",
+        method_mainline="Iteratively propagating scores through a graph.",
+        priority_files=[],
+        module_roles=[],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    propagation = next(
+        target for target in mainline.typed_behavior_targets
+        if target.role == "propagation"
+    )
+
+    assert propagation.transformations == ("propagating",)
+
+
+def test_infonce_objective_retains_executable_semantic_anchor() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Rerank passages.",
+        method_goal="Learn contextual embeddings.",
+        implementation_scope="Repository code.",
+        method_mainline="Optimize an InfoNCE contrastive loss.",
+        priority_files=[],
+        module_roles=[],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    objective = next(
+        target for target in mainline.typed_behavior_targets
+        if target.role == "training"
+    )
+
+    assert objective.transformations == ("infonce",)
+
+
+def test_explicit_component_symbol_is_retained_as_semantic_anchor() -> None:
+    summary = AuthorIntentSummary(
+        project_goal="Encode dynamic interactions.",
+        method_goal="Build node features.",
+        implementation_scope="Repository code.",
+        method_mainline="Encode temporal features.",
+        priority_files=[],
+        module_roles=[
+            "evaluate_models_utils.py::MemoryModel: Encode shared-neighbor frequency."
+        ],
+        pipeline_steps=[],
+        story_order=[],
+        design_intents=[],
+        innovation_claims=[],
+    )
+
+    graph = compile_intent_obligation_graph_v2(summary)
+    component = next(
+        item for item in graph.obligations
+        if item.source_field == "module_roles"
+    )
+
+    assert all(
+        "MemoryModel" in target.transformations
+        for target in component.typed_behavior_targets
+    )
+
+
 # ---------------------------------------------------------------------------
 # Signature / equivalence tests
 # ---------------------------------------------------------------------------
@@ -291,3 +522,68 @@ def test_v2_graph_relations_link_stages_and_mainline() -> None:
     # Stages should precede each other in order.
     precedes = [r for r in graph.relations if r.relation == "precedes"]
     assert len(precedes) >= len(stage_ids) - 1
+
+
+# ---------------------------------------------------------------------------
+# Author story spine (reorientation C)
+# ---------------------------------------------------------------------------
+
+
+def test_story_spine_preserves_author_order_and_maps_roles() -> None:
+    from code2paper.agentic.intent_compiler_v2 import build_story_spine_from_intent_graph
+
+    graph = compile_intent_obligation_graph_v2(_rap_style_summary())
+    spine = build_story_spine_from_intent_graph(graph)
+    assert len(spine) >= 8
+    # Author order (obligation order) is the spine order.
+    assert spine[0].story_node_id == f"story:{graph.obligations[0].obligation_id}"
+    assert spine[0].intended_role == "algorithm_step"
+    # role mapping per kind
+    roles = {node.intended_role for node in spine}
+    assert "algorithm_step" in roles
+    assert "motivation" in roles  # design_intents -> rationale_check
+    assert "evaluation" in roles  # innovation_claims -> high_risk_claim
+    # Default lane is unverified author intent, never repository fact.
+    assert all(node.evidence_lane == "author_intent_unverified" for node in spine)
+    # Source refs and linked obligations are exact.
+    assert all(node.linked_obligation_ids for node in spine)
+    assert all(node.source_refs for node in spine)
+    assert all(node.author_statement for node in spine)
+
+
+def test_story_spine_is_empty_without_obligations() -> None:
+    from code2paper.agentic.intent_compiler_v2 import build_story_spine_from_intent_graph
+
+    assert build_story_spine_from_intent_graph(IntentObligationGraphV2()) == []
+
+
+def test_story_spine_links_claims_through_exact_obligation_ids() -> None:
+    from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, AtomicClaimV3
+    from code2paper.agentic.intent_compiler_v2 import build_story_spine_from_intent_graph
+
+    summary = _rap_style_summary()
+    graph = compile_intent_obligation_graph_v2(summary)
+    stage_obligation = next(item for item in graph.obligations if item.kind == "stage")
+    claim = AtomicClaimV3(
+        claim_id="spine-claim-1",
+        canonical_text="The implementation builds per-primitive descriptors.",
+        fact_ids=["spine-fact-1"],
+        covers_obligation_ids=[stage_obligation.obligation_id],
+        direct_evidence_ids=["span:spine.py:1:2"],
+        allowed_wording_boundary="builds per-primitive descriptors only",
+        canonical_identity="sha256:spine-claim-1",
+        status="supported",
+    )
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:spine",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[claim],
+        content_digest="sha256:claims",
+    )
+    spine = build_story_spine_from_intent_graph(graph, claim_set=claim_set)
+    stage_node = next(node for node in spine if stage_obligation.obligation_id in node.linked_obligation_ids)
+    assert stage_node.linked_claim_ids == ("spine-claim-1",)
+    other = next(node for node in spine if node is not stage_node)
+    assert not set(other.linked_claim_ids).intersection(stage_node.linked_claim_ids)

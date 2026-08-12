@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import re
 from collections.abc import Iterable
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -23,7 +24,14 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class PublicationMethodSectionOutputV1(BaseModel):
-    """Content-first Writer response; ids are bindings, not prose substitutes."""
+    """Content-first Writer response; ids are bindings, not prose substitutes.
+
+    ``section_markdown`` is the only required prose field.  The ``used_*``
+    and ``completed_rhetorical_moves`` bindings are auxiliary metadata: the
+    Writer may omit them (post-processing binds prose against facts), but it
+    may never invent an id.  ``unresolved_points`` lets the Writer surface
+    points it could not write safely; they become review/callback items.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -32,16 +40,45 @@ class PublicationMethodSectionOutputV1(BaseModel):
     used_argument_unit_ids: list[str] = Field(default_factory=list)
     used_claim_ids: list[str] = Field(default_factory=list)
     used_equation_ids: list[str] = Field(default_factory=list)
+    used_configuration_ids: list[str] = Field(default_factory=list)
+    completed_rhetorical_moves: list[str] = Field(default_factory=list)
     new_research_requests: list[dict[str, Any]] = Field(default_factory=list)
     self_identified_risks: list[str] = Field(default_factory=list)
+    unresolved_points: list[str] = Field(default_factory=list)
 
 
-class PublicationMethodEditorOutputV1(BaseModel):
-    """Editor output is a list of complete, section-scoped generated patches."""
+class PublicationMethodEditorPatchV1(BaseModel):
+    """Bounded patch contract exposed to the publication Editor."""
 
     model_config = ConfigDict(extra="forbid")
 
-    patches: list[dict[str, Any]] = Field(default_factory=list)
+    patch_id: str = Field(min_length=1, max_length=160)
+    section_id: str = Field(min_length=1, max_length=160)
+    before_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    before_text: str = Field(default="", max_length=12000)
+    replacement_text: str = Field(min_length=1, max_length=12000)
+    generation_source: Literal["editor"] = "editor"
+    reason: str = Field(min_length=1, max_length=800)
+    scoped: Literal[True] = True
+
+
+class PublicationMethodEditorOutputV1(BaseModel):
+    """Editor output is a short list of complete, section-scoped patches."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    patches: list[PublicationMethodEditorPatchV1] = Field(default_factory=list, max_length=8)
+
+
+class StructuredResponseRecoveryTraceV1(BaseModel):
+    """Auditable record of representation-only response recovery."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    applied: bool = False
+    operations: tuple[str, ...] = ()
+    original_text_digest: str
+    parsed_payload_digest: str = ""
 
 
 def json_schema_for(model_type: type[BaseModel]) -> dict:
@@ -64,8 +101,66 @@ def parse_structured_response(text: str, model_type: type[T]) -> T:
 def try_parse_structured_response(text: str, model_type: type[T]) -> tuple[T | None, str]:
     try:
         return parse_structured_response(text, model_type), ""
-    except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+    except (json.JSONDecodeError, ValidationError, ValueError, RecursionError) as exc:
         return None, f"schema_validation_failed:{exc.__class__.__name__}:{str(exc)[:500]}"
+
+
+def try_parse_structured_response_with_trace(
+    text: str,
+    model_type: type[T],
+) -> tuple[T | None, StructuredResponseRecoveryTraceV1, str]:
+    """Parse and disclose any representation-only recovery operations."""
+
+    stripped = text.strip()
+    operations: list[str] = []
+    strict_payload: object | None = None
+    try:
+        strict_payload = json.loads(stripped)
+    except json.JSONDecodeError:
+        if re.match(r"\A```(?:json)?", stripped, flags=re.IGNORECASE):
+            operations.append("strip_outer_markdown_fence")
+        if re.search(r",\s*[}\]]", stripped):
+            operations.append("remove_trailing_comma")
+        if any(token in stripped for token in ("\u201c", "\u201d", "\u2018", "\u2019")):
+            operations.append("normalize_smart_punctuation")
+        if stripped.startswith("{{") or stripped.endswith("}}"):
+            operations.append("remove_single_extra_brace")
+        repaired = _best_effort_json_text_repair(_strip_markdown_fence(stripped))
+        if _close_unambiguous_json_container_suffix(repaired):
+            operations.append("close_unambiguous_container_suffix")
+        if not operations:
+            operations.append("extract_or_repair_json_container")
+    try:
+        parsed = parse_structured_response(text, model_type)
+    except (json.JSONDecodeError, ValidationError, ValueError, RecursionError) as exc:
+        trace = StructuredResponseRecoveryTraceV1(
+            applied=bool(operations),
+            operations=tuple(dict.fromkeys(operations)),
+            original_text_digest=_text_digest(text),
+        )
+        return None, trace, f"schema_validation_failed:{exc.__class__.__name__}:{str(exc)[:500]}"
+    if strict_payload is not None:
+        try:
+            model_type.model_validate(strict_payload)
+        except ValidationError:
+            operations.append("known_schema_shape_repair")
+    payload_json = json.dumps(
+        parsed.model_dump(mode="json"),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    trace = StructuredResponseRecoveryTraceV1(
+        applied=bool(operations),
+        operations=tuple(dict.fromkeys(operations)),
+        original_text_digest=_text_digest(text),
+        parsed_payload_digest=_text_digest(payload_json),
+    )
+    return parsed, trace, ""
+
+
+def _text_digest(text: str) -> str:
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _loads_json_or_extract_object(text: str) -> object:
@@ -116,7 +211,7 @@ def _loads_json_or_extract_object(text: str) -> object:
     for candidate in _dedupe_candidates(parse_attempts):
         try:
             return json.loads(candidate)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, RecursionError):
             pass
         python_obj = _try_literal_eval(candidate)
         if python_obj is not None:

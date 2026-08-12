@@ -1,0 +1,25 @@
+project_goal: "Run a small training computation from executable source code."
+paper_method_goal: "Describe the code-backed aggregation, computation, and branch output."
+implementation_scope: "research_loop_project current codebase only."
+priority_files:
+  - "compute.py"
+module_roles:
+  - path: "compute.py"
+    symbol: "run_training"
+    role: "training computation entrypoint"
+    importance: "core"
+    is_novel: false
+    notes: "Aggregates values, computes a scaled score, and returns a guarded result."
+pipeline_steps:
+  - name: "Training computation"
+    purpose: "Aggregate input values, compute a scaled score, and branch to a result."
+    input:
+      - "values"
+    output:
+      - "result"
+    related_files:
+      - "compute.py"
+    highlight_level: "main"
+    omit_from_main_figure: false
+innovation_claims: []
+potential_mismatches: []

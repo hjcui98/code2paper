@@ -184,6 +184,161 @@ def test_claims_bind_to_typed_obligations_through_authorized_fact_ids() -> None:
     assert rebound.content_digest != claim_set.content_digest
 
 
+def test_explicit_claim_owner_is_not_broadened_by_common_predicates() -> None:
+    graph = compile_intent_obligation_graph_v2(_inference_summary())
+    obligations = [
+        item for item in graph.obligations if item.typed_behavior_targets
+    ]
+    owner = obligations[0]
+    target = owner.typed_behavior_targets[0]
+    facts = [
+        _inference_fact(f"fact-owned-{index}", predicate=_fact_predicate_for(predicate))
+        for index, predicate in enumerate(target.desired_predicates, start=1)
+    ]
+    fact_set = CodeFactSetV1(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        facts=facts,
+        content_digest="sha256:facts",
+    )
+    claim = AtomicClaimV3(
+        claim_id="claim-owned",
+        canonical_text="The owned packet records the executable behavior.",
+        fact_ids=[item.fact_id for item in facts],
+        direct_evidence_ids=["span-1"],
+        allowed_wording_boundary="Only describe the owned packet.",
+        canonical_identity="test:explicit-owner",
+        covers_obligation_ids=[owner.obligation_id],
+    )
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[claim],
+        content_digest="sha256:claims",
+    )
+
+    rebound = bind_claims_to_obligations(
+        graph, fact_set=fact_set, claim_set=claim_set
+    )
+
+    assert rebound.claims[0].covers_obligation_ids == [owner.obligation_id]
+
+
+def test_claim_binding_rebuilds_author_stages_and_excludes_verify_only_groups() -> None:
+    graph = compile_intent_obligation_graph_v2(AuthorIntentSummary(
+        method_mainline="Compute and sort scores.",
+        pipeline_steps=["Passage ranking: compute scores and sort passages."],
+        design_intents=["Sort scores to improve relevance."],
+    ))
+    stage = next(item for item in graph.obligations if item.kind == "stage")
+    rationale = next(item for item in graph.obligations if item.kind == "rationale_check")
+    facts = [
+        _make_fact("stage-fact", predicate="sorts_by"),
+        _make_fact("rationale-fact", predicate="sorts_by"),
+    ]
+    fact_set = CodeFactSetV1(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        facts=facts,
+        content_digest="sha256:facts",
+    )
+    claims = [
+        AtomicClaimV3(
+            claim_id="claim-stage",
+            canonical_text="Ranker sorts passage scores.",
+            fact_ids=["stage-fact"],
+            covers_obligation_ids=[stage.obligation_id],
+            direct_evidence_ids=["span-1"],
+            allowed_wording_boundary="sorting only",
+            canonical_identity="sha256:stage",
+        ),
+        AtomicClaimV3(
+            claim_id="claim-rationale",
+            canonical_text="Ranker sorts another score vector.",
+            fact_ids=["rationale-fact"],
+            covers_obligation_ids=[rationale.obligation_id],
+            direct_evidence_ids=["span-1"],
+            allowed_wording_boundary="sorting only",
+            canonical_identity="sha256:rationale",
+        ),
+    ]
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=claims,
+        content_digest="sha256:claims",
+    )
+
+    rebound = bind_claims_to_obligations(graph, fact_set=fact_set, claim_set=claim_set)
+
+    assert len(rebound.semantic_stage_groups) == 1
+    assert rebound.semantic_stage_groups[0].name == "Passage ranking"
+    assert rebound.semantic_stage_groups[0].ordered_claim_ids == ["claim-stage"]
+
+
+def test_numeric_dimension_semantics_align_with_parameter_default() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="target-dimension",
+        role="feature",
+        desired_predicates=("READ",),
+        outputs=("dimension 15",),
+    )
+    fact = _make_fact(
+        "fact-dimension",
+        predicate="reads",
+        object_value="input_dim=15",
+        semantic_context=["config_access", "parameter_default"],
+    )
+
+    alignment = align_target_to_facts(target, [fact])
+
+    assert alignment.status == "resolved"
+    assert alignment.matched_semantic_fields == ("outputs",)
+
+
+def test_numeric_dimension_terms_cannot_be_composed_across_unrelated_facts() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="target-no-cross-fact-composition",
+        role="feature",
+        desired_predicates=("READ",),
+        outputs=("dimension 15",),
+    )
+    facts = [
+        _make_fact("fact-dimension-one", predicate="reads", object_value="dim=1"),
+        _make_fact("fact-unrelated-list", predicate="reads", object_value="indices include 15"),
+    ]
+
+    alignment = align_target_to_facts(target, facts)
+
+    assert alignment.status == "partial"
+    assert alignment.unmatched_semantic_fields == ("outputs",)
+
+
+def test_concept_predicate_group_accepts_one_concrete_alternative() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="target-ranking-alternatives",
+        role="ranking",
+        desired_predicates=("SELECT", "SORT", "TOPK"),
+        predicate_groups=(("SELECT", "SORT", "TOPK"),),
+    )
+    fact = _make_fact(
+        "fact-topk",
+        predicate="selects_top_k",
+        object_value="top_indices",
+    )
+
+    alignment = align_target_to_facts(target, [fact])
+
+    assert alignment.status == "resolved"
+    assert alignment.unmatched_predicates == ()
+
+
 # ---------------------------------------------------------------------------
 # R5.3 core: training obligation not covered by inference facts
 # ---------------------------------------------------------------------------
@@ -841,6 +996,42 @@ def test_rich_target_requires_role_inputs_and_outputs_not_only_predicates() -> N
     assert "outputs" in alignment.unmatched_semantic_fields
 
 
+def test_composed_generic_roles_are_not_source_lexical_requirements() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-GENERIC-COMPOSED",
+        role="predictor+ranking+propagation",
+        desired_predicates=("CALL", "SORT", "PROPAGATE"),
+    )
+    facts = [
+        _make_fact("call", predicate=_fact_predicate_for("CALL")),
+        _make_fact("sort", predicate=_fact_predicate_for("SORT")),
+        _make_fact("propagate", predicate=_fact_predicate_for("PROPAGATE")),
+    ]
+
+    alignment = align_target_to_facts(target, facts)
+
+    assert alignment.status == "resolved"
+    assert "role" not in alignment.required_semantic_fields
+
+
+def test_relation_only_configuration_target_resolves_from_configured_fact() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-CONFIG-RELATION",
+        role="config",
+        required_relations=("CONFIGURED_BY",),
+    )
+    fact = _make_fact(
+        "configured",
+        predicate="configured_by",
+        relation_kinds=["CONFIGURED_BY"],
+    )
+
+    alignment = align_target_to_facts(target, [fact])
+
+    assert alignment.status == "resolved"
+    assert alignment.matched_relations == ("CONFIGURED_BY",)
+
+
 def test_rich_target_resolves_with_matching_semantic_context_and_relation() -> None:
     target = TypedBehaviorTargetV1(
         target_id="T-RICH-TARGET",
@@ -992,6 +1183,87 @@ def test_construct_predicate_satisfied_by_call_alias() -> None:
     assert "CONSTRUCT" not in alignment.unmatched_predicates
 
 
+def test_read_and_transform_semantic_predicates_accept_concrete_operations() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-SEMANTIC-OPS-01",
+        role="feature",
+        desired_predicates=("READ", "TRANSFORM"),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    facts = [
+        _unconditional_fact("f1", predicate=_fact_predicate_for("LOAD")),
+        _unconditional_fact("f2", predicate=_fact_predicate_for("NORMALIZE")),
+    ]
+
+    alignment = align_target_to_facts(target, facts)
+
+    assert alignment.status == "resolved"
+    assert alignment.unmatched_predicates == ()
+
+
+def test_generation_semantic_anchor_accepts_exact_infer_invocation() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-GENERATION-01",
+        role="generation",
+        desired_predicates=("CALL", "RETURN"),
+        predicate_groups=(("CALL", "RETURN"),),
+        transformations=("generation",),
+    )
+    fact = _make_fact(
+        "f-infer",
+        predicate=_fact_predicate_for("CALL"),
+        object_value="self.llm_model.infer",
+        semantic_context=["attr:infer"],
+    )
+
+    alignment = align_target_to_facts(target, [fact])
+
+    assert alignment.status == "resolved"
+    assert alignment.matched_semantic_fields == ("transformations",)
+
+
+def test_camel_case_symbol_anchor_rejects_neighboring_model_operation() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-SYMBOL-ANCHOR-01",
+        role="feature",
+        desired_predicates=("TRANSFORM",),
+        transformations=("MemoryModel",),
+    )
+    unrelated = _make_fact(
+        "f-unrelated",
+        predicate=_fact_predicate_for("TRANSFORM"),
+        semantic_context=["evaluate_model", "DyGFormer"],
+    )
+    exact = _make_fact(
+        "f-exact",
+        predicate=_fact_predicate_for("TRANSFORM"),
+        semantic_context=["MemoryModel.encode"],
+    )
+
+    assert align_target_to_facts(target, [unrelated]).status == "partial"
+    assert align_target_to_facts(target, [exact]).status == "resolved"
+
+
+def test_abstract_compute_accepts_learned_projection() -> None:
+    target = TypedBehaviorTargetV1(
+        target_id="T-COMPUTE-PROJECT-01",
+        role="predictor",
+        desired_predicates=("COMPUTE",),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+
+    alignment = align_target_to_facts(
+        target,
+        [_unconditional_fact("f1", predicate=_fact_predicate_for("PROJECT"))],
+    )
+
+    assert alignment.status == "resolved"
+
+
 def test_aggregate_not_satisfied_when_no_alias_predicate_present() -> None:
     """AGGREGATE remains unmatched when no CONCAT/STACK/REDUCE fact exists."""
 
@@ -1011,3 +1283,97 @@ def test_aggregate_not_satisfied_when_no_alias_predicate_present() -> None:
     assert alignment.status == "partial"
     assert "AGGREGATE" in alignment.unmatched_predicates
     assert "COMPUTE" not in alignment.unmatched_predicates
+
+
+# ---------------------------------------------------------------------------
+# Regression: underscore-joined generic roles must not add a spurious
+# ``role`` semantic requirement (LinearRAG D1 claim decomposition).
+# ---------------------------------------------------------------------------
+
+
+def test_underscore_joined_generic_role_decomposes_into_generic_parts() -> None:
+    """``feature_attention_task_head`` is a composition of generic roles.
+
+    The intent compiler emits role hints joined with underscores, while
+    ``_GENERIC_ROLES`` stores multi-word entries (``task_head``) with an
+    underscore.  The previous ``split("+")`` check left the joined string
+    intact, so the whole token was never found in ``_GENERIC_ROLES`` and a
+    non-generic ``role`` requirement was added.  The longest-match
+    decomposition must recognise the composition so no ``role`` requirement
+    is added.
+    """
+
+    from code2paper.agentic.obligation_fact_alignment import (
+        _decompose_role_into_generic_parts,
+    )
+
+    assert _decompose_role_into_generic_parts("feature_attention_task_head") == (
+        "feature",
+        "attention",
+        "task_head",
+    )
+    assert _decompose_role_into_generic_parts("predictor_ranking_propagation") == (
+        "predictor",
+        "ranking",
+        "propagation",
+    )
+    # ``+`` separator continues to work.
+    assert _decompose_role_into_generic_parts("feature+attention+task_head") == (
+        "feature",
+        "attention",
+        "task_head",
+    )
+    # A genuinely descriptive role is not generic.
+    assert _decompose_role_into_generic_parts("query_activation_engine") is None
+
+
+def test_underscore_joined_generic_role_resolves_when_predicates_match() -> None:
+    """LinearRAG mainline obligation must not gap on a spurious role check.
+
+    Before the fix, ``role='feature_attention_task_head'`` added a ``role``
+    semantic requirement whose terms (feature/attention/task/head) never
+    appeared in code-identifier fact witnesses, downgrading the alignment to
+    ``partial`` and ultimately terminating the obligation as an explicit
+    gap even though every predicate and relation was matched.
+    """
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-MAINLINE-UNDERSCORE",
+        role="feature_attention_task_head",
+        desired_predicates=("CALL", "COMPUTE", "LOAD", "MASK", "RETURN"),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    facts = [
+        _unconditional_fact("f1", predicate=_fact_predicate_for("CALL")),
+        _unconditional_fact("f2", predicate=_fact_predicate_for("COMPUTE")),
+        _unconditional_fact("f3", predicate=_fact_predicate_for("LOAD")),
+        _unconditional_fact("f4", predicate=_fact_predicate_for("MASK")),
+        _unconditional_fact("f5", predicate=_fact_predicate_for("RETURN")),
+    ]
+    alignment = align_target_to_facts(target, facts)
+    assert alignment.status == "resolved"
+    assert "role" not in alignment.unmatched_semantic_fields
+
+
+def test_descriptive_non_generic_role_still_adds_role_requirement() -> None:
+    """A genuinely descriptive role still produces a ``role`` requirement.
+
+    ``query_activation_engine`` is not a composition of generic roles, so
+    the alignment layer must keep enforcing it as a semantic witness.
+    """
+
+    target = TypedBehaviorTargetV1(
+        target_id="T-DESCRIPTIVE",
+        role="query_activation_engine",
+        desired_predicates=("CALL",),
+        required_relations=(),
+        conditions=(),
+        risk_level="medium",
+    )
+    facts = [_unconditional_fact("f1", predicate=_fact_predicate_for("CALL"))]
+    alignment = align_target_to_facts(target, facts)
+    # Predicates match but the descriptive role witness is absent.
+    assert "role" in alignment.unmatched_semantic_fields
+    assert alignment.status == "partial"

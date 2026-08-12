@@ -8,14 +8,110 @@ from unittest.mock import patch
 
 from code2paper.agentic.contracts import AgentDecision, AgenticRunState
 from code2paper.agentic.runner import (
+    _reconcile_publication_quality_with_final_validation,
     build_agentic_run_summary,
     load_agentic_run_summary,
     run_agentic_code2paper,
 )
+from code2paper.agentic.publication_quality import (
+    EpistemicSafetyMetricsV1,
+    PublicationQualityReportV1,
+    PublicationUtilityMetricsV1,
+)
+from code2paper.agentic.final_text_authorship import FinalTextAuthorshipLedgerV1
+from code2paper.agentic.publication_method_writer import PublicationWriterRunResultV1
+from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
 from code2paper.core.output_names import artifact_dir
 
 
 class AgenticRunnerTests(unittest.TestCase):
+    def test_runner_reconciles_pending_publication_quality_from_final_reverse_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            quality_path = root / "quality.json"
+            validation_path = root / "validation.json"
+            ledger_path = root / "ledger.json"
+            writer_result_path = root / "writer_result.json"
+            quality = PublicationQualityReportV1(
+                status="incomplete",
+                plan_gate_passed=True,
+                final_integrity_gate_passed=False,
+                safety=EpistemicSafetyMetricsV1(
+                    authorship_gate_passed=True,
+                    binding_gate_passed=True,
+                    final_text_validation_status="pending",
+                    hard_gate_passed=False,
+                ),
+                utility=PublicationUtilityMetricsV1(utility_gate_passed=True),
+            )
+            ledger = FinalTextAuthorshipLedgerV1(
+                final_text_digest="sha256:final",
+                hard_gate_passed=True,
+            )
+            validation = TextEvidenceValidationReport(
+                status="passed",
+                input_text_digest=ledger.final_text_digest,
+                projection_digest="sha256:projection",
+                checked_factual_claims=1,
+                supported_claims=1,
+            )
+            quality_path.write_text(quality.model_dump_json(), encoding="utf-8")
+            validation_path.write_text(validation.model_dump_json(), encoding="utf-8")
+            ledger_path.write_text(ledger.model_dump_json(), encoding="utf-8")
+            writer_result_path.write_text(
+                PublicationWriterRunResultV1(
+                    status="incomplete",
+                    plan_digest="sha256:plan",
+                    claim_digest="sha256:claims",
+                ).model_dump_json(),
+                encoding="utf-8",
+            )
+            state = AgenticRunState(
+                project_root=Path("."),
+                out_root=root,
+                artifacts={
+                    "publication_quality_report_v1": str(quality_path),
+                    "text_evidence_validation": str(validation_path),
+                    "final_text_authorship_ledger_v1": str(ledger_path),
+                    "publication_writer_result_v1": str(writer_result_path),
+                },
+            )
+
+            _reconcile_publication_quality_with_final_validation(state)
+            reconciled = PublicationQualityReportV1.model_validate_json(
+                quality_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(reconciled.status, "publication_ready")
+            self.assertEqual(reconciled.safety.final_text_validation_status, "passed")
+            self.assertTrue(reconciled.safety.hard_gate_passed)
+            self.assertTrue(reconciled.final_integrity_gate_passed)
+            writer_ready = PublicationWriterRunResultV1.model_validate_json(
+                writer_result_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(writer_ready.status, "success")
+
+            validation_path.write_text(validation.model_copy(update={
+                "status": "failed",
+                "supported_claims": 0,
+                "unsupported_claims": 1,
+            }).model_dump_json(), encoding="utf-8")
+            quality_path.write_text(quality.model_dump_json(), encoding="utf-8")
+            _reconcile_publication_quality_with_final_validation(state)
+            failed = PublicationQualityReportV1.model_validate_json(
+                quality_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(failed.status, "blocked")
+            self.assertEqual(failed.safety.unsupported_positive_claims, 1)
+            self.assertFalse(failed.final_integrity_gate_passed)
+            writer_blocked = PublicationWriterRunResultV1.model_validate_json(
+                writer_result_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(writer_blocked.status, "blocked")
+            self.assertIn(
+                "publication_final_reverse_validation_failed",
+                writer_blocked.binding_failures,
+            )
+
     def test_runner_blocks_when_invariant_audit_fails(self) -> None:
         def fake_graph(payload):
             state = AgenticRunState.model_validate(payload)
@@ -42,6 +138,10 @@ class AgenticRunnerTests(unittest.TestCase):
             loaded = load_agentic_run_summary(result.summary_path)
             self.assertTrue(Path(result.state.artifacts["run_manifest"]).exists())
             run_manifest = json.loads(Path(result.state.artifacts["run_manifest"]).read_text(encoding="utf-8"))
+            self.assertEqual(run_manifest["terminal_state"], "BLOCKED")
+            self.assertTrue(run_manifest["source_commit"])
+            self.assertIsInstance(run_manifest["source_dirty"], bool)
+            self.assertTrue(run_manifest["run_summary_digest"].startswith("sha256:"))
 
         self.assertEqual(result.summary.status, "blocked")
         self.assertEqual(result.summary.blocked_reason, "invariant_audit_failed")

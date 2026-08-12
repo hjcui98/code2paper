@@ -3,7 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from code2paper.agentic.authoring_projection import build_authoring_projection
-from code2paper.agentic.evidence_compiler_v3 import compile_evidence_v3, validate_evidence_compiler_v3
+from code2paper.agentic.evidence_compiler_v3 import (
+    compile_evidence_v3,
+    compile_legacy_profile_evidence_v3,
+    validate_evidence_compiler_v3,
+)
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 from code2paper.core.schemas import MethodEvidence
 
@@ -86,10 +90,17 @@ def percentile_cutoff_normalize(x): return x
     )
 
 
+def test_canonical_snapshot_only_entrypoint_cannot_authorize_profile_facts(
+    tmp_path: Path,
+) -> None:
+    _write_fixture(tmp_path)
+    assert compile_evidence_v3(build_repo_snapshot(tmp_path)) is None
+
+
 def test_v3_compiles_packets_facts_claims_and_gaps_from_executable_behavior(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
 
     assert result is not None
     assert validate_evidence_compiler_v3(result, snapshot) == []
@@ -111,7 +122,7 @@ def test_v3_compiles_packets_facts_claims_and_gaps_from_executable_behavior(tmp_
 def test_v3_projection_replaces_legacy_wide_claims_and_groups_semantic_stages(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
     method = MethodEvidence(
         project_id="fixture",

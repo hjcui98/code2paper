@@ -55,18 +55,82 @@ if [[ "${MODE}" != "--foreground" ]]; then
 fi
 
 mkdir -p "${LOG_ROOT}" "${OUT_ROOT}"
-printf 'state=RUNNING\nstarted_at=%s\n' "$(date -u +%FT%TZ)" > "${LOG_ROOT}/status.env"
+STATUS_PATH="${LOG_ROOT}/status.env"
+HEARTBEAT_PATH="${LOG_ROOT}/heartbeat.env"
+LEASE_ID="${RUN_STAMP}-$$"
+MATRIX_DRIVER_PID="$$"
+INTERRUPT_SIGNAL=""
+HEARTBEAT_PID=""
+HEARTBEAT_SECONDS="${CODE2PAPER_R8_HEARTBEAT_SECONDS:-15}"
+if [[ ! "${HEARTBEAT_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
+  printf 'invalid CODE2PAPER_R8_HEARTBEAT_SECONDS=%s\n' "${HEARTBEAT_SECONDS}" >&2
+  exit 2
+fi
+
+write_status() {
+  local state="$1"
+  local finished_at="${2:-}"
+  local exit_code="${3:-}"
+  local temporary="${STATUS_PATH}.tmp.$$"
+  {
+    printf 'state=%s\n' "${state}"
+    printf 'lease_id=%s\n' "${LEASE_ID}"
+    printf 'driver_pid=%s\n' "${MATRIX_DRIVER_PID}"
+    printf 'started_at=%s\n' "${MATRIX_STARTED_AT}"
+    [[ -n "${finished_at}" ]] && printf 'finished_at=%s\n' "${finished_at}"
+    [[ -n "${exit_code}" ]] && printf 'exit_code=%s\n' "${exit_code}"
+    [[ -n "${INTERRUPT_SIGNAL}" ]] && printf 'interrupt_signal=%s\n' "${INTERRUPT_SIGNAL}"
+  } > "${temporary}"
+  mv -f -- "${temporary}" "${STATUS_PATH}"
+}
+
+heartbeat_loop() {
+  while true; do
+    if ! kill -0 "${MATRIX_DRIVER_PID}" 2>/dev/null; then
+      INTERRUPT_SIGNAL="DRIVER_DISAPPEARED"
+      write_status "INTERRUPTED" "$(date -u +%FT%TZ)" "137"
+      return 0
+    fi
+    local temporary="${HEARTBEAT_PATH}.tmp.$$"
+    printf 'lease_id=%s\ndriver_pid=%s\nupdated_at=%s\n' \
+      "${LEASE_ID}" "${MATRIX_DRIVER_PID}" "$(date -u +%FT%TZ)" > "${temporary}"
+    mv -f -- "${temporary}" "${HEARTBEAT_PATH}"
+    sleep "${HEARTBEAT_SECONDS}"
+  done
+}
+
+handle_interrupt() {
+  INTERRUPT_SIGNAL="$1"
+  case "$1" in
+    INT) exit 130 ;;
+    TERM|HUP) exit 143 ;;
+    *) exit 1 ;;
+  esac
+}
+
+MATRIX_STARTED_AT="$(date -u +%FT%TZ)"
+write_status "RUNNING"
+heartbeat_loop &
+HEARTBEAT_PID="$!"
 finish_matrix() {
   local exit_code=$?
   local state="COMPLETED"
-  if [[ "${exit_code}" -ne 0 ]]; then
+  if [[ -n "${HEARTBEAT_PID}" ]]; then
+    kill "${HEARTBEAT_PID}" 2>/dev/null || true
+    wait "${HEARTBEAT_PID}" 2>/dev/null || true
+  fi
+  if [[ -n "${INTERRUPT_SIGNAL}" ]]; then
+    state="INTERRUPTED"
+  elif [[ "${exit_code}" -ne 0 ]]; then
     state="FAILED"
   fi
-  printf 'state=%s\nfinished_at=%s\nexit_code=%s\n' \
-    "${state}" "$(date -u +%FT%TZ)" "${exit_code}" > "${LOG_ROOT}/status.env"
+  write_status "${state}" "$(date -u +%FT%TZ)" "${exit_code}"
   exit "${exit_code}"
 }
 trap finish_matrix EXIT
+trap 'handle_interrupt INT' INT
+trap 'handle_interrupt TERM' TERM
+trap 'handle_interrupt HUP' HUP
 exec 9>/tmp/code2paper-r8-gemma-matrix.lock
 if ! flock -n 9; then
   echo "another R8 matrix is already active; exiting" >&2
@@ -76,6 +140,16 @@ fi
 log() {
   printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "${LOG_ROOT}/matrix.log"
 }
+
+# Deterministic governance probe used by the D0 interruption fixture.  It
+# exercises the real lease/heartbeat/trap implementation without loading a
+# model profile or starting the expensive matrix body.
+if [[ "${CODE2PAPER_R8_GOVERNANCE_PROBE:-0}" == "1" ]]; then
+  log "governance probe ready lease_id=${LEASE_ID}"
+  while true; do
+    sleep "${HEARTBEAT_SECONDS}"
+  done
+fi
 
 record_env() {
   local name

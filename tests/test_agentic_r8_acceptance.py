@@ -52,6 +52,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     AtomicClaimSetV3,
     AtomicClaimV3,
 )
+from code2paper.agentic.evidence_chain_integrity import EvidenceChainIntegrityReport
 from code2paper.agentic.obligation_fact_alignment import (
     ObligationAlignmentV1,
     ObligationCoverageReportV2,
@@ -363,6 +364,23 @@ def _passing_report_kwargs() -> dict[str, Any]:
         "readiness_report": _fake_readiness_report(passed=True),
         "validation_manifest": {"status": "passed"},
         "method_clean_path": __file__,
+        "evidence_chain_integrity": EvidenceChainIntegrityReport(
+            single_evidence_chain_consistent=True,
+            generic_research_compiled_claims=True,
+            generic_provenance_profile_non_authoritative=True,
+            gap_claim_noncontradiction=True,
+            positive_claim_count=1,
+            supported_fact_count=1,
+            producer="generic_research_data_plane",
+        ),
+        "publication_quality_report": {
+            "status": "publication_ready",
+            "plan_gate_passed": True,
+            "final_integrity_gate_passed": True,
+            "safety": {"hard_gate_passed": True},
+            "utility": {"utility_gate_passed": True},
+            "content_digest": "sha256:publication-quality",
+        },
     }
 
 
@@ -404,7 +422,7 @@ def test_passing_run_produces_accepted_report():
             f"criterion {key!r} status={criterion.status!r} reason={criterion.reason!r}"
         )
     assert report.content_digest.startswith("sha256:")
-    # All seventeen criteria must be present in the report.
+    # All criteria, including the D0 cross-artifact gates, must be present.
     expected_keys = {
         "gap_driven_tool_selection",
         "code_mainline_in_method",
@@ -423,8 +441,51 @@ def test_passing_run_produces_accepted_report():
         "validation_manifest_passed",
         "method_clean_exists",
         "method_has_supported_mainline",
+        "single_evidence_chain_consistent",
+        "generic_research_compiled_claims",
+        "generic_provenance_profile_non_authoritative",
+        "gap_claim_noncontradiction",
+        "publication_quality_passed",
     }
     assert set(report.criteria.keys()) == expected_keys
+
+
+def test_safe_but_publication_incomplete_method_fails_acceptance() -> None:
+    kwargs = _passing_report_kwargs()
+    kwargs["publication_quality_report"] = {
+        "status": "incomplete",
+        "plan_gate_passed": True,
+        "final_integrity_gate_passed": False,
+        "safety": {"hard_gate_passed": True},
+        "utility": {"utility_gate_passed": False},
+        "content_digest": "sha256:incomplete-quality",
+    }
+
+    report = check_r8_acceptance(**kwargs)
+
+    assert report.accepted is False
+    assert report.criteria["unsupported_final_sentences_zero"].passed
+    assert not report.criteria["publication_quality_passed"].passed
+
+
+def test_profile_authority_fails_d2_generic_provenance_gate() -> None:
+    kwargs = _passing_report_kwargs()
+    integrity = kwargs["evidence_chain_integrity"]
+    kwargs["evidence_chain_integrity"] = integrity.model_copy(
+        update={
+            "generic_provenance_profile_non_authoritative": False,
+            "profile_id": "diagnostic-profile",
+            "failures": ("profile_is_authoritative",),
+        }
+    )
+
+    report = check_r8_acceptance(**kwargs)
+
+    criterion = report.criteria[
+        "generic_provenance_profile_non_authoritative"
+    ]
+    assert criterion.status == "failed"
+    assert report.accepted is False
 
 
 # ---------------------------------------------------------------------------
@@ -1550,12 +1611,11 @@ def test_protocol_check_fails_when_paper_read_only_at_end_violated():
 # ---------------------------------------------------------------------------
 
 
-def test_report_has_seventeen_criteria():
-    """The report has 17 criteria including the R8.2 subset, R8.1 protocol,
-    V3 integrity, typed Intent Agent gate, and R8.3 completion/readiness gates."""
+def test_report_has_twenty_two_criteria():
+    """The report includes D0 integrity and D2 profile-authority gates."""
 
     report = check_r8_acceptance(**_passing_report_kwargs())
-    assert len(report.criteria) == 17
+    assert len(report.criteria) == 22
 
 
 def test_report_digest_is_stable():

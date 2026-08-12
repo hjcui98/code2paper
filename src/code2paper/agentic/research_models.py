@@ -154,6 +154,8 @@ TextRepairFailureType = Literal[
     "formula_unsupported",
     "branch_ambiguity",
     "semantic_verifier_exhausted",
+    "method_language_style",
+    "supported_claim_not_rendered",
 ]
 
 
@@ -177,6 +179,8 @@ TEXT_REPAIR_FAILURE_TYPES: tuple[TextRepairFailureType, ...] = (
     "formula_unsupported",
     "branch_ambiguity",
     "semantic_verifier_exhausted",
+    "method_language_style",
+    "supported_claim_not_rendered",
 )
 
 
@@ -224,6 +228,11 @@ class TypedBehaviorTargetV1(_ResearchModel):
     target_id: str
     role: str = ""
     desired_predicates: tuple[str, ...] = Field(default_factory=tuple)
+    # Concept-level alternatives. Every group must be satisfied, while any
+    # predicate (or registered concrete alias) inside one group is enough.
+    # Empty keeps the legacy meaning: every ``desired_predicates`` item is
+    # independently required.
+    predicate_groups: tuple[tuple[str, ...], ...] = Field(default_factory=tuple)
     required_relations: tuple[str, ...] = Field(default_factory=tuple)
     inputs: tuple[str, ...] = Field(default_factory=tuple)
     transformations: tuple[str, ...] = Field(default_factory=tuple)
@@ -637,6 +646,7 @@ class PacketRepairRequestV1(_ResearchModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     claim_id: str
+    source_claim_ids: tuple[str, ...] = Field(default_factory=tuple)
     packet_id: str = ""
     failure_type: TextRepairFailureType
     offending_span_ids: tuple[str, ...] = Field(default_factory=tuple)

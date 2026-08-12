@@ -452,6 +452,119 @@ class TestAgendaBuilderResume:
 
 
 class TestDriverResumeFromInitialState:
+    def test_completed_resume_returns_before_any_supervisor_model_call(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            initial_loop_state,
+            snapshot_loop_state,
+        )
+
+        class ExplodingSupervisor:
+            def propose(self, *_args, **_kwargs):
+                raise AssertionError("terminal resume must make zero model calls")
+
+        obligation = _obligation(
+            "obl-terminal", search_terms=("train",), status="explicit_gap"
+        )
+        agenda = _agenda("run-zero-call", snapshot, obligation)
+        runtime = _runtime(snapshot, agenda, run_id="run-zero-call").model_copy(
+            update={"supervisor_backend": ExplodingSupervisor()}
+        )
+        loop = initial_loop_state(runtime)
+        loop.terminated = True
+        loop.termination_reason = "all_obligations_terminal"
+        state = empty_agent_state_v3(
+            run_id=runtime.run_id,
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        ).model_copy(update={"status": "trusted"}).to_state_dict()
+        state["loop_state_snapshot"] = snapshot_loop_state(loop)
+
+        result = run_research_loop(runtime, initial_state=state, max_turns=10)
+
+        assert result.terminated is True
+        assert result.turns_executed == 0
+        assert result.termination_reason == "all_obligations_terminal"
+        assert result.decision_trace == []
+
+    def test_corrupt_checkpoint_fails_closed_before_supervisor_call(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import snapshot_loop_state
+
+        class ExplodingSupervisor:
+            def propose(self, *_args, **_kwargs):
+                raise AssertionError("corrupt checkpoint must not start a fresh run")
+
+        obligation = _obligation("obl-corrupt", search_terms=("train",))
+        agenda = _agenda("run-corrupt", snapshot, obligation)
+        runtime = _runtime(snapshot, agenda, run_id="run-corrupt").model_copy(
+            update={"supervisor_backend": ExplodingSupervisor()}
+        )
+        loop = initial_loop_state(runtime)
+        checkpoint = snapshot_loop_state(loop)
+        Path(checkpoint["immutable_payload_ref"]).write_text("{}\n", encoding="utf-8")
+        state = empty_agent_state_v3(
+            run_id=runtime.run_id,
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+        ).to_state_dict()
+        state["status"] = "researching"
+        state["loop_state_snapshot"] = checkpoint
+
+        with pytest.raises(ValueError, match="invalid_loop_state_snapshot:immutable_payload"):
+            run_research_loop(runtime, initial_state=state, max_turns=5)
+
+    def test_interrupted_and_uninterrupted_runs_reach_same_support_boundary(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import snapshot_loop_state
+
+        def runtime_for(run_id: str) -> ResearchGraphRuntime:
+            return _runtime(
+                snapshot,
+                _agenda(
+                    run_id,
+                    snapshot,
+                    _obligation("obl-train", search_terms=("train",)),
+                    _obligation("obl-eval", search_terms=("evaluate",)),
+                ),
+                run_id=run_id,
+            )
+
+        uninterrupted_runtime = runtime_for("run-boundary")
+        uninterrupted = run_research_loop(uninterrupted_runtime, max_turns=20)
+
+        resumed_runtime = runtime_for("run-boundary")
+        interrupted = run_research_loop(resumed_runtime, max_turns=1)
+        resume_state = dict(interrupted.final_state)
+        resume_state["status"] = "researching"
+        resume_state["blocked_reason"] = ""
+        resume_state["loop_state_snapshot"] = snapshot_loop_state(interrupted.loop_state)
+        resumed = run_research_loop(
+            resumed_runtime,
+            initial_state=resume_state,
+            max_turns=20,
+        )
+
+        def boundary(result):
+            return {
+                obligation_id: {
+                    claim.canonical_identity
+                    for claim in compiled.claim_set.claims
+                    if claim.status == "supported"
+                }
+                for obligation_id, compiled in result.loop_state.compiled_evidence.items()
+            }
+
+        assert boundary(resumed) == boundary(uninterrupted)
+        assert {
+            item.obligation_id: item.status for item in resumed_runtime.agenda.items
+        } == {
+            item.obligation_id: item.status for item in uninterrupted_runtime.agenda.items
+        }
+
     def test_resume_from_second_obligation_processes_that_obligation(
         self, snapshot: RepoSnapshot
     ) -> None:
@@ -990,6 +1103,50 @@ class TestSnapshotLoopStateRoundTrip:
         # Gain tracker
         assert restored.gain_tracker.no_progress_counter("obl-rt") == 0
         assert restored.gain_tracker.gain_history("obl-rt") == ("gain:1",)
+
+    def test_new_checkpoint_channel_contains_only_compact_state_and_immutable_ref(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import initial_loop_state, snapshot_loop_state
+
+        obligation = _obligation("obl-compact", search_terms=("train",))
+        runtime = _runtime(snapshot, _agenda("run-compact", snapshot, obligation), run_id="run-compact")
+        loop = initial_loop_state(runtime)
+        observation = _observation(
+            observation_id="obs-large",
+            tool_call_id="tc-large",
+            obligation_id="obl-compact",
+            exact_span_ids=("span:train.py:1:5",),
+        )
+        loop.recent_observations = [observation] * 200
+
+        payload = snapshot_loop_state(loop)
+
+        assert payload["snapshot_version"] == "2.0"
+        assert payload["immutable_payload_digest"].startswith("sha256:")
+        assert Path(payload["immutable_payload_ref"]).is_file()
+        assert payload["behavior_graph"] == {}
+        assert payload["recent_observations"] == []
+        assert payload["decision_trace"] == []
+        assert payload["compiled_evidence"] == {}
+        # The repeated observation bodies live outside the LangGraph channel.
+        assert len(json.dumps(payload)) < 5000
+
+    def test_tampered_immutable_checkpoint_payload_fails_closed(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            initial_loop_state,
+            restore_loop_state_from_snapshot,
+            snapshot_loop_state,
+        )
+
+        obligation = _obligation("obl-tamper", search_terms=("train",))
+        runtime = _runtime(snapshot, _agenda("run-tamper", snapshot, obligation), run_id="run-tamper")
+        payload = snapshot_loop_state(initial_loop_state(runtime))
+        Path(payload["immutable_payload_ref"]).write_text("{}\n", encoding="utf-8")
+
+        assert restore_loop_state_from_snapshot(runtime, payload) is None
 
     def test_round_trip_through_json_preserves_state(
         self, snapshot: RepoSnapshot

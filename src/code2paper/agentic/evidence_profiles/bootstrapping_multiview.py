@@ -553,7 +553,8 @@ class BootstrappingMultiViewProfile:
             reasons=reasons,
         )
 
-    def compile(self, repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:
+    def _compile_legacy(self, repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:
+        """Archived migration fixture; never exposed by the production view."""
         return _compile_bootstrapping_evidence(repo_snapshot)
 
 

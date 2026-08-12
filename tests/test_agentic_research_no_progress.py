@@ -92,6 +92,7 @@ def _obligation(
     obligation_id: str,
     *,
     search_terms: tuple[str, ...] = (),
+    desired_predicates: tuple[str, ...] = (),
     candidate_symbol_ids: tuple[str, ...] = (),
     missing_information: tuple[str, ...] = (),
 ) -> ResearchAgendaItemV1:
@@ -101,6 +102,7 @@ def _obligation(
             TypedBehaviorTargetV1(
                 target_id=f"target-{obligation_id}",
                 search_terms=search_terms,
+                desired_predicates=desired_predicates,
             )
         )
     return ResearchAgendaItemV1(
@@ -541,6 +543,7 @@ class TestGapFinalizerAcceptance:
             runtime=runtime,
             active_obligation_id="obl-gap",
             gain_tracker=tracker,
+            gap_search_attempts=("read_symbol",),
         )
         assert update["_gap_accepted"] is False
         assert update["status"] == "researching"
@@ -565,6 +568,7 @@ class TestGapFinalizerAcceptance:
             runtime=runtime,
             active_obligation_id="obl-gap",
             gain_tracker=tracker,
+            gap_search_attempts=("read_symbol",),
         )
         assert update["_gap_accepted"] is True
         assert update["status"] == "researching"
@@ -606,10 +610,47 @@ class TestGapFinalizerAcceptance:
             runtime=runtime,
             active_obligation_id="obl-gap",
             gain_tracker=tracker,
+            gap_search_attempts=("read_symbol",),
         )
         assert update["_gap_accepted"] is True
         assert "gap:existing:obl-prev" in update["explicit_gap_set_ref"]
-        assert "obl-gap" in update["explicit_gap_set_ref"]
+        assert update["explicit_gap_set_ref"].count("gap:") == 2
+
+    def test_replayed_terminal_gap_does_not_duplicate_state_ref(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        tracker = InformationGainTracker()
+        obs = _observation(
+            observation_id="obs-1",
+            tool_call_id="tc-1",
+            obligation_id="obl-gap",
+            exact_span_ids=("span:train.py:1:5",),
+        )
+        tracker.ingest("obl-gap", obs)
+        for _ in range(3):
+            tracker.ingest("obl-gap", obs)
+        runtime = self._runtime(snapshot)
+        first = gap_finalizer_node(
+            self._state(snapshot),
+            runtime=runtime,
+            active_obligation_id="obl-gap",
+            gain_tracker=tracker,
+            gap_search_attempts=("read_symbol",),
+        )
+        state = self._state(snapshot)
+        state["explicit_gap_set_ref"] = first["explicit_gap_set_ref"]
+        replay = gap_finalizer_node(
+            state,
+            runtime=runtime,
+            active_obligation_id="obl-gap",
+            gain_tracker=tracker,
+            gap_search_attempts=("read_symbol",),
+        )
+
+        assert replay["_gap_accepted"] is True
+        assert replay["explicit_gap_set_ref"] == first["explicit_gap_set_ref"]
+        assert replay["explicit_gap_set_ref"].count("gap:") == 1
+        assert runtime.agenda.items[0].gap_requirements[0].search_scope == "train.py"
 
 
 # ---------------------------------------------------------------------------
@@ -660,6 +701,13 @@ class TestEndToEndNoProgressTermination:
         # rejects the first RECORD_GAP proposal).
         routes = set(result.evidence_critic_routes)
         assert routes & {"record_gap", "record_gap_rejected"}, routes
+        gap_dir = (
+            runtime.tool_context().artifact_root
+            / "research_tool_artifacts"
+            / "terminal_gaps"
+        )
+        gap_artifacts = list(gap_dir.glob("*.json"))
+        assert len(gap_artifacts) == 1
 
     def test_obligation_with_matching_symbol_does_not_terminate_via_gap(
         self, snapshot: RepoSnapshot
@@ -670,6 +718,7 @@ class TestEndToEndNoProgressTermination:
         obl = _obligation(
             "obl-match",
             search_terms=("train",),  # matches train.py
+            desired_predicates=("WRITE",),
         )
         agenda = _agenda("run-match", snapshot, obl)
         runtime = _runtime(snapshot, agenda, run_id="run-match")
@@ -687,6 +736,18 @@ class TestEndToEndNoProgressTermination:
         assert "record_gap" not in result.evidence_critic_routes or (
             result.evidence_critic_routes[0] != "record_gap"
         )
+        compiled = result.loop_state.compiled_evidence.get("obl-match")
+        assert compiled is not None
+        assert compiled.packet_set.packets
+        assert compiled.fact_set.facts
+        assert compiled.claim_set.claims
+        # The exact span is source-addressable and the facade has appended
+        # the six persisted data-plane tool observations after discovery.
+        span = compiled.packet_set.packets[0].spans[0]
+        assert span.path == "train.py"
+        assert span.exact_excerpt
+        assert span.excerpt_digest.startswith("sha256:")
+        assert len(result.final_state.get("tool_call_trace_refs", ())) >= 7
 
     def test_per_obligation_isolation_in_multi_obligation_run(
         self, snapshot: RepoSnapshot

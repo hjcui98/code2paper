@@ -104,6 +104,12 @@ class AgenticRunState(BaseModel):
     model_profile_ref: str = ""
     llm_provider: str | None = None
     llm_model: str | None = None
+    # D6 rollout controls are execution configuration, not evidence.  They
+    # are checkpoint-safe so an interrupted run resumes with the same route
+    # decision instead of silently reading a different process environment.
+    execution_opt_in: bool = False
+    execution_rollback: bool = False
+    execution_canary_key: str = ""
     core_top_k: int = 12
     skip_draft_bootstrap: bool = False
     max_retrieval_rounds: int = 0

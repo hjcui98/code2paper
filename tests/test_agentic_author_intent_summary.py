@@ -114,6 +114,22 @@ class AgenticAuthorIntentSummaryTests(unittest.TestCase):
         self.assertEqual(summary.design_intents[0], "Keep the paper centered on implementation behavior.")
         self.assertEqual(summary.innovation_claims[0], "Config-driven training is the central method claim.")
 
+    def test_summary_preserves_late_mechanisms_in_structured_author_fields(self) -> None:
+        mainline = (
+            "Build an index from entities and sentences. "
+            + "Describe intermediate transformations. " * 20
+            + "Finally invoke answer generation from the ranked passages."
+        )
+        markers = AuthorMarkers(
+            project_goal="Build a retrieval method.",
+            method_mainline=mainline,
+        )
+
+        summary = build_author_intent_summary(markers)
+
+        self.assertEqual(summary.method_mainline, mainline)
+        self.assertTrue(summary.method_mainline.endswith("ranked passages."))
+
     def test_coverage_trace_exposes_author_intent_summary(self) -> None:
         summary = AuthorIntentSummary(method_goal="Explain config-driven training.", priority_files=["train.py"])
         coverage = RetrievalCoverageReport(

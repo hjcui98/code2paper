@@ -32,6 +32,7 @@ from code2paper.agentic.evidence_compiler_v3 import load_atomic_claims_v3, load_
 from code2paper.agentic.equation_claims import load_equation_claims
 from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
 from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
+from code2paper.agentic.publication_method_writer import run_publication_method_writer
 from code2paper.agentic.claim_verifier import (
     build_claim_verification_report,
     load_claim_verification_report,
@@ -263,6 +264,100 @@ def run_authoring(state: AgenticRunState) -> StageToolResult:
             artifacts=pre_authoring_artifacts,
             blocked_reason="authoring_plan_projection_digest_mismatch",
             summary="Authoring plan is not bound to the current authoring projection.",
+        )
+    publication_setting = os.environ.get("CODE2PAPER_PUBLICATION_WRITER_V1", "").strip().lower()
+    publication_inputs = (
+        "atomic_claims_v3", "code_facts_v1", "equation_claims_v1",
+        "configuration_claims_v1", "method_completeness_matrix_v1",
+        "method_section_plan_v2",
+    )
+    publication_writer_enabled = (
+        publication_setting in {"1", "true", "yes", "on"}
+        or (
+            publication_setting not in {"0", "false", "no", "off"}
+            and all(
+                (path := state.artifacts.get(key, "")) and Path(path).is_file()
+                for key in publication_inputs
+            )
+        )
+    )
+    if publication_writer_enabled:
+        publication_result, publication_paths = run_publication_method_writer(
+            out_root=state.out_root,
+            artifact_paths={**state.artifacts, **pre_authoring_artifacts},
+            llm_config=_llm_config(state),
+        )
+        publication_artifacts = {
+            **state.artifacts,
+            **pre_authoring_artifacts,
+            **publication_paths,
+        }
+        if publication_result.status == "blocked":
+            # A rerun may share an output directory with an earlier accepted
+            # Writer result.  Do not let old candidate paths survive in the
+            # current blocked state; the durable Writer result/review sidecar
+            # are the only consumable outputs for a blocked stage.
+            for key in (
+                "repository_verified_method",
+                "publication_candidate_method",
+                "text_md",
+                "text_clean_md",
+            ):
+                publication_artifacts.pop(key, None)
+            return StageToolResult(
+                stage="authoring",
+                status=StageStatus.BLOCKED,
+                artifacts=publication_artifacts,
+                blocked_reason=publication_result.blocked_reason or "publication_writer_blocked",
+                summary="Publication Method Writer did not pass binding and lexical-authorship gates.",
+                decisions=[AgentDecision(
+                    node="publication_method_writer",
+                    decision="blocked",
+                    rationale="; ".join(publication_result.binding_failures) or publication_result.blocked_reason,
+                    artifact_keys=[
+                        "publication_writer_result_v1",
+                        "author_review_candidates",
+                        "writing_research_routes_v1",
+                        "writing_research_callback_artifacts_v1",
+                    ],
+                )],
+            )
+        return StageToolResult(
+            stage="authoring",
+            status=StageStatus.SUCCESS,
+            artifacts=publication_artifacts,
+            summary=(
+                "Wrote publication Method sections with complete claim/equation/configuration bindings."
+                if publication_result.status == "success"
+                else "Wrote the validated publication Method subset and recorded incomplete sections for review."
+            ),
+            decisions=[AgentDecision(
+                node="publication_method_writer",
+                decision=publication_result.status,
+                rationale=(
+                    f"accepted_sections={len(publication_result.accepted_section_ids)}, "
+                    f"incomplete_sections={len(publication_result.incomplete_section_ids)}, "
+                    f"authorship={publication_result.authorship_ledger_digest}"
+                ),
+                artifact_keys=[
+                    "method_section_plan_v2",
+                    "publication_writer_result_v1",
+                    "repository_verified_method",
+                    "publication_candidate_method",
+                    "author_review_candidates",
+                    "final_text_authorship_ledger_v1",
+                    "final_text_claims",
+                    "text_evidence_validation",
+                    "publication_quality_report_v1",
+                    "publication_section_checkpoint_v1",
+                    "writing_research_routes_v1",
+                    "writing_research_callback_artifacts_v1",
+                ],
+            )],
+            metrics={
+                "publication_sections": len(publication_result.accepted_section_ids),
+                "publication_incomplete_sections": len(publication_result.incomplete_section_ids),
+            },
         )
     alignment_path = method_output(state.method_root, "alignment")
     alignment = CodeAlignmentIR.model_validate(_read_json(alignment_path)) if alignment_path.exists() else None

@@ -87,6 +87,13 @@ def route_after_local_text_repair(raw_state: dict) -> str:
     } else "blocked"
 
 
+def route_after_packet_binding_repair(raw_state: dict) -> str:
+    state = AgenticRunState.model_validate(raw_state)
+    return state.next_node if state.next_node in {
+        "final_text_claim_extractor", "blocked"
+    } else "blocked"
+
+
 def route_after_figure_planner(raw_state: dict) -> str:
     state = AgenticRunState.model_validate(raw_state)
     return state.next_node if state.next_node in {"invariant_audit", "blocked"} else "blocked"

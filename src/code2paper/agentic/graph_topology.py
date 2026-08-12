@@ -56,7 +56,6 @@ DIRECT_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
     DirectEdgeSpec(source="authoring", target="final_text_claim_extractor"),
     DirectEdgeSpec(source="final_text_claim_extractor", target="text_evidence_validator"),
     DirectEdgeSpec(source="text_evidence_validator", target="text_trace_builder"),
-    DirectEdgeSpec(source="packet_binding_repair", target="blocked"),
     DirectEdgeSpec(source="validation", target="revision_router"),
 )
 TERMINAL_EDGE_SPECS: Final[tuple[DirectEdgeSpec, ...]] = (
@@ -115,6 +114,12 @@ CONDITIONAL_ROUTE_SPECS: Final[tuple[ConditionalRouteSpec, ...]] = (
         router="_route_after_local_text_repair",
         routes=(("final_text_claim_extractor", "final_text_claim_extractor"), ("packet_binding_repair", "packet_binding_repair"), ("blocked", "blocked")),
         safety_note="Local repair may rewrite only exact final-text spans or emit a typed packet repair request; it cannot restart a global pipeline stage.",
+    ),
+    ConditionalRouteSpec(
+        source="packet_binding_repair",
+        router="_route_after_packet_binding_repair",
+        routes=(("final_text_claim_extractor", "final_text_claim_extractor"), ("blocked", "blocked")),
+        safety_note="A scoped repository-owner repair may only rerun the original atomic text gate; failure preserves the incumbent and blocks.",
     ),
     ConditionalRouteSpec(
         source="revision_router",

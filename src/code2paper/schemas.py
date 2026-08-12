@@ -766,6 +766,16 @@ class MethodModule(StrictModel):
     is_novel: bool = False
 
 
+class PaperModuleAlias(StrictModel):
+    alias: str
+    expansion: str
+    matched_name: str = ""
+    matched_role: str = ""
+    source_ids: list[str] = Field(default_factory=list)
+    evidence_span_ids: list[str] = Field(default_factory=list)
+    confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
+
+
 class MethodBehaviorPattern(StrictModel, EvidenceRefMixin):
     behavior_id: str
     behavior_type: str
@@ -964,6 +974,7 @@ class MethodEvidence(StrictModel):
     architecture_parameters: list[ArchitectureParameter] = Field(default_factory=list)
     tensor_roles: list[TensorRole] = Field(default_factory=list)
     innovation_candidates: list[dict] = Field(default_factory=list)
+    paper_module_aliases: list[PaperModuleAlias] = Field(default_factory=list)
     method_overview: dict = Field(default_factory=dict)
     stage_packets: list[dict] = Field(default_factory=list)
     writing_constraints: list[str] = Field(default_factory=list)

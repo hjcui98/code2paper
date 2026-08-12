@@ -62,9 +62,9 @@ _PREDICATE_SEARCH_QUERIES: dict[str, str] = {
     "BRANCH": "condition branch fallback",
     "CALL": "call invoke forward",
     "COMPUTE": "compute loss score formula",
-    "CONCAT": "concat concatenate",
+    "CONCAT": "cat concat concatenate",
     "CONSTRUCT": "build construct initialize",
-    "FILTER": "filter prune retain",
+    "FILTER": "filter prune retain selective scan",
     "LOAD": "load checkpoint weights",
     "LOOP": "loop iterate epoch",
     "MASK": "mask threshold",
@@ -84,6 +84,108 @@ _PREDICATE_SEARCH_QUERIES: dict[str, str] = {
     "TRANSFORM": "transform encode convert",
     "WRITE": "write save store",
 }
+
+
+_AUTHOR_SEARCH_STOP_WORDS = frozenset({
+    "about", "after", "also", "and", "are", "before", "between", "each",
+    "for", "from", "into", "method", "module", "other", "that", "the",
+    "their", "then", "these", "this", "through", "using", "with",
+})
+
+_SEMANTIC_SEARCH_EXPANSIONS: dict[str, tuple[str, ...]] = {
+    "score": ("score", "predict", "prediction", "predictor"),
+    "scores": ("scores", "score", "predict", "prediction", "predictor"),
+    "dimension": ("dimension", "dim", "input_dim", "feature_size", "shape"),
+    "infonce": ("infonce", "contrastive", "logsumexp"),
+    "contrastive": ("contrastive", "infonce", "logsumexp"),
+    # Public lifecycle endpoints are frequently named ``qa`` while the
+    # executable invocation is ``infer`` and the author describes the stage
+    # as generation.  These are retrieval aliases only; positive claims still
+    # require exact source spans and typed semantic replay.
+    "generation": ("generation", "generate", "infer", "answer", "qa"),
+    "generate": ("generation", "generate", "infer", "answer", "qa"),
+    "answer": ("answer", "infer", "qa"),
+    "filtering": ("filter", "prune", "threshold", "selective", "scan"),
+    "filter": ("filter", "prune", "threshold", "selective", "scan"),
+}
+
+
+def _expand_semantic_search_terms(values: tuple[str, ...]) -> tuple[str, ...]:
+    expanded: list[str] = []
+    for value in values:
+        pieces = [value, *re.findall(r"[A-Za-z0-9_]+", value)]
+        for piece in pieces:
+            aliases = _SEMANTIC_SEARCH_EXPANSIONS.get(piece.casefold(), (piece,))
+            if piece.isdigit():
+                aliases = (*aliases, f"f{piece}")
+            for alias in aliases:
+                if alias and alias not in expanded:
+                    expanded.append(alias)
+    return tuple(expanded)
+
+
+def _identifier_author_search_terms(text: str) -> tuple[str, ...]:
+    """Return concrete identifier-shaped names supplied by the author."""
+
+    terms: list[str] = []
+    raw_tokens = re.findall(r"[A-Za-z][A-Za-z0-9_-]+", text)
+    code_like = [
+        token
+        for token in raw_tokens
+        if (
+            "_" in token
+            # All-lowercase hyphenated phrases are ordinary prose
+            # (``retrieval-augmented``, ``large-scale``), not implementation
+            # identifiers.  Retain hyphenated names only when their casing
+            # carries an identifier signal such as ``Acme-StateEncoder``.
+            or ("-" in token and any(char.isupper() for char in token[1:]))
+            or re.search(r"[a-z0-9][A-Z]", token)
+            or (len(token) >= 3 and token.isupper())
+        )
+    ]
+    for token in code_like:
+        normalized = token.casefold().strip("-_")
+        if len(normalized) < 3 or normalized in _AUTHOR_SEARCH_STOP_WORDS:
+            continue
+        if normalized not in terms:
+            terms.append(normalized)
+    return tuple(terms)
+
+
+def _explicit_author_symbol(text: str) -> str:
+    """Return the symbol from an explicit ``path::Symbol`` marker."""
+
+    match = re.search(
+        r"(?:^|\s|:)(?:[^\s:]+\.(?:py|js|ts|java|go|rs))::([A-Za-z_][\w.]*)",
+        text,
+    )
+    return match.group(1).rsplit(".", 1)[-1] if match else ""
+
+
+def _salient_author_search_terms(text: str) -> tuple[str, ...]:
+    """Keep implementation names before generic prose retrieval terms.
+
+    Method descriptions often introduce the concrete implementation family
+    after a sentence of domain prose (for example ``... pass it through
+    FooEncoder ...``).  Taking only the first twelve ordinary words makes a
+    multi-model repository rank a baseline with a generic method name ahead
+    of the author-named implementation.  Identifier-shaped tokens are search
+    hints, not factual authority, so prefer them without hard-coding any
+    project vocabulary.
+    """
+
+    terms = list(_identifier_author_search_terms(text))
+
+    expanded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text.replace("_", " "))
+    for token in re.findall(r"[A-Za-z][A-Za-z0-9-]+", expanded):
+        normalized = token.casefold().strip("-")
+        if len(normalized) < 4 or normalized in _AUTHOR_SEARCH_STOP_WORDS:
+            continue
+        if normalized not in terms:
+            terms.append(normalized)
+        if len(terms) >= 12:
+            break
+    return tuple(terms)
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +214,7 @@ class RecentObservationSummaryV1(BaseModel):
     ambiguous: bool = False
     candidate_count: int = 0
     obligation_id: str = ""
+    query: str = ""
 
 
 class BehaviorTemplateSearchHintV1(BaseModel):
@@ -393,6 +496,20 @@ class DeterministicSupervisorBackend:
                 return ("TRACE_CALLS", "RECORD_GAP")
             return ("SEARCH_HINTS", "RECORD_GAP")
 
+        if (
+            context.active_issue is not None
+            and context.active_issue.issue_kind == "truncated_observation"
+            and context.recent_observations
+            and context.recent_observations[-1].tool_name == "search_symbols"
+            and any(
+                is_symbol_ref(ref)
+                for ref in context.recent_observations[-1].result_refs
+            )
+        ):
+            # Truncation means there are more ranked candidates, not that the
+            # top candidate is unusable.  Read it before broadening/repeating
+            # the same search; the exact read remains the authority boundary.
+            return ("READ_CANDIDATE", "RECORD_GAP")
         if context.active_issue is not None:
             return fallback_action_for_issue(context.active_issue)
 
@@ -409,9 +526,59 @@ class DeterministicSupervisorBackend:
             for value in obl.missing_information
             if not value.startswith("candidate_path:")
         ]
+        searched_candidate_ready = self._latest_search_symbol_ref(context) is not None
+        has_exact_source_span = (
+            self._has_exact_source_span(context)
+            # A pre-populated graph is sufficient for the legacy compile-node
+            # unit path only when this obligation has no unresolved semantic
+            # repair.  If semantic information is still missing, nodes from a
+            # prior obligation on the same file must not suppress a fresh
+            # search/read witness for that obligation.
+            or (bool(context.top_candidate_behavior_node_ids) and not semantic_missing)
+        )
+        if semantic_missing and any(
+            value.startswith("typed_predicate:") for value in semantic_missing
+        ):
+            # A failed compile adds the precise missing predicate.  Search
+            # for that predicate, then read the top result on the next turn.
+            # Previously the mere presence of an old candidate forced
+            # READ_CANDIDATE forever, so the loop reread one symbol until it
+            # recorded an explicit gap even when other symbols implemented
+            # the missing operation.
+            if searched_candidate_ready or self._predicate_candidate_ref(context) is not None:
+                return ("READ_CANDIDATE", "RECORD_GAP")
+            return ("SEARCH_SYMBOLS", "RECORD_GAP")
         if semantic_missing and any(
             value.startswith("typed_semantic:") for value in semantic_missing
         ):
+            semantic_requirement = next(
+                value.split(":", 2)[-1]
+                for value in semantic_missing
+                if value.startswith("typed_semantic:")
+            )
+            expected_query = " ".join(
+                _expand_semantic_search_terms((semantic_requirement,))
+            ).casefold()
+            latest_query = self._latest_search_query(context).casefold()
+            if searched_candidate_ready and (
+                not latest_query or latest_query == expected_query
+            ):
+                return ("READ_CANDIDATE", "RECORD_GAP")
+            return ("SEARCH_SYMBOLS", "RECORD_GAP")
+        # Author text and candidate-path hints often contain words such as
+        # ``config`` or ``training``.  They are discovery constraints, not a
+        # reason to inspect configuration before the executable owner has
+        # been found and read.  The old ordering sent path-seeded obligations
+        # into repeated INSPECT_CONFIG/TRACE_CALLS turns and never populated a
+        # behavior graph, so the critic could only synthesize a gap.  Force
+        # the first two steps of the authority boundary here: search, then
+        # read an exact symbol span; only after that may config/relation
+        # diagnostics take priority.  Typed predicate/semantic repairs stay
+        # above this gate because their search cursor and candidate selection
+        # are intentionally more specific.
+        if not has_exact_source_span:
+            if searched_candidate_ready:
+                return ("READ_CANDIDATE", "RECORD_GAP")
             return ("SEARCH_SYMBOLS", "RECORD_GAP")
         if semantic_missing and any(
             value.startswith("typed_relation:data_")
@@ -541,6 +708,26 @@ class DeterministicSupervisorBackend:
                 return ()
             arguments["fact_ids"] = list(obl.candidate_behavior_node_ids)
 
+        path_scope = self._candidate_path_scope(context)
+        if tool_name == "search_symbols" and any(
+            value.startswith(("typed_predicate:", "typed_semantic:"))
+            for value in context.missing_information
+        ) and not any(
+            value.startswith("candidate_path:")
+            or (
+                value in context.top_candidate_symbol_ids
+                and not is_symbol_ref(value)
+                and ":" not in value
+            )
+            for value in (*context.missing_information, *context.top_candidate_symbol_ids)
+        ):
+            # Candidate paths describe where the first retrieval landed, not
+            # a repository boundary unless they were supplied by the author
+            # intent as an explicit candidate-path allow-list.  A typed miss
+            # may broaden beyond merely discovered paths to find a cooperating
+            # module, but it must not escape an author-provided implementation
+            # scope and silently select a sibling/baseline model.
+            path_scope = ()
         call = ResearchToolCallV1(
             tool_call_id=tool_call_id,
             tool_name=tool_name,
@@ -548,7 +735,7 @@ class DeterministicSupervisorBackend:
             obligation_id=obligation_id,
             goal=self._goal_for(action, context),
             repo_snapshot_id=self._repo_snapshot_id,
-            path_scope=self._candidate_path_scope(context),
+            path_scope=path_scope,
             top_k=int(arguments.get("top_k", 0)),
             depth=int(arguments.get("depth", 0)),
             node_budget=int(arguments.get("node_budget", 0)),
@@ -599,7 +786,8 @@ class DeterministicSupervisorBackend:
             if requirement.startswith("typed_semantic:"):
                 _prefix, _field, terms = requirement.split(":", 2)
                 if terms.strip():
-                    return terms.strip()
+                    expanded = _expand_semantic_search_terms((terms.strip(),))
+                    return " ".join(expanded)
         # Entry-point obligations need the executable symbol (normally
         # ``main``), not a broad domain term such as ``train`` that also
         # matches unrelated configuration keys like ``trainer``.
@@ -611,8 +799,32 @@ class DeterministicSupervisorBackend:
         # Prefer typed behavior target search terms, then fall back to the
         # obligation id's trailing slug.
         for target in obl.typed_behavior_targets:
-            if target.search_terms:
-                return target.search_terms[0]
+            implementation_terms = _identifier_author_search_terms(obl.author_text)
+            # A semantic anchor is deliberately strict: it is the compiler's
+            # executable discriminator (for example ``indexing``, PageRank,
+            # or a named state-space family).  Adding broad project prose or
+            # a generic role such as ``graph_builder`` can rank a graph helper
+            # ahead of the actual lifecycle endpoint and exhaust the read
+            # budget.  Concrete author-supplied identifiers remain valid
+            # prefixes because they are even more specific than the anchor.
+            if target.transformations:
+                retrieval_terms = [term for term in dict.fromkeys([
+                    *implementation_terms,
+                    *_expand_semantic_search_terms(target.transformations),
+                ]) if term]
+            else:
+                retrieval_terms = [term for term in dict.fromkeys([
+                    *implementation_terms,
+                    *target.search_terms,
+                    *target.aliases,
+                    *target.role.split("+"),
+                    *_salient_author_search_terms(obl.author_text),
+                ]) if term]
+            if retrieval_terms:
+                # Combining a few intent-derived terms lets an author-facing
+                # name such as "MLP" retrieve an implementation-facing class
+                # named ``PrunePredictor`` without a project dictionary.
+                return " ".join(retrieval_terms[:12])
         # Author markers commonly carry an explicit ``path::symbol`` binding
         # even when no typed behavior target was inferred.  It is strictly
         # better than an obligation id whose final component is a content
@@ -642,6 +854,21 @@ class DeterministicSupervisorBackend:
         obl = context.active_obligation
         if obl is None:
             return None
+        latest_search_ref = self._latest_search_symbol_ref(context)
+        if latest_search_ref is not None:
+            parsed = split_symbol_ref(latest_search_ref)
+            if parsed is not None:
+                return parsed[1]
+        if _explicit_author_symbol(obl.author_text) and self._has_active_symbol_search(context):
+            # The author named an implementation owner and the latest search
+            # did not return that exact symbol. Do not substitute a fuzzy
+            # neighbor (for example MemoryBank for missing MemoryModel).
+            return None
+        predicate_candidate = self._predicate_candidate_ref(context)
+        if predicate_candidate is not None:
+            parsed = split_symbol_ref(predicate_candidate)
+            if parsed is not None:
+                return parsed[1]
         if obl.candidate_symbol_ids:
             first = next(
                 (value for value in reversed(obl.candidate_symbol_ids) if is_symbol_ref(value)),
@@ -665,6 +892,18 @@ class DeterministicSupervisorBackend:
         obl = context.active_obligation
         if obl is None:
             return None
+        latest_search_ref = self._latest_search_symbol_ref(context)
+        if latest_search_ref is not None:
+            parsed = split_symbol_ref(latest_search_ref)
+            if parsed is not None:
+                return parsed[0]
+        if _explicit_author_symbol(obl.author_text) and self._has_active_symbol_search(context):
+            return None
+        predicate_candidate = self._predicate_candidate_ref(context)
+        if predicate_candidate is not None:
+            parsed = split_symbol_ref(predicate_candidate)
+            if parsed is not None:
+                return parsed[0]
         if obl.candidate_symbol_ids:
             first = next(
                 (value for value in reversed(obl.candidate_symbol_ids) if is_symbol_ref(value)),
@@ -678,6 +917,163 @@ class DeterministicSupervisorBackend:
             # Legacy fallback: ``<path>:<symbol>`` -> ``<path>``.
             if ":" in first:
                 return first.split(":", 1)[0]
+        return None
+
+    @staticmethod
+    def _latest_search_symbol_ref(
+        context: ResearchDecisionContextV1,
+    ) -> str | None:
+        """Return the highest-ranked not-yet-read symbol from the latest search."""
+
+        if not context.recent_observations:
+            return None
+        active_obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None
+            else ""
+        )
+        search_index = next(
+            (
+                index
+                for index in range(len(context.recent_observations) - 1, -1, -1)
+                if context.recent_observations[index].tool_name == "search_symbols"
+                and context.recent_observations[index].status in {"success", "truncated"}
+                and (
+                    not active_obligation_id
+                    or context.recent_observations[index].obligation_id
+                    == active_obligation_id
+                )
+            ),
+            None,
+        )
+        if search_index is None:
+            return None
+        observation = context.recent_observations[search_index]
+        previously_read = {
+            ref
+            for prior in context.recent_observations
+            if prior.tool_name == "read_symbol"
+            and prior.status == "success"
+            and (
+                not active_obligation_id
+                or prior.obligation_id == active_obligation_id
+            )
+            for ref in prior.result_refs
+            if is_symbol_ref(ref)
+        }
+        ranked = [ref for ref in observation.result_refs if is_symbol_ref(ref)]
+        explicit_symbol = _explicit_author_symbol(
+            context.active_obligation.author_text
+            if context.active_obligation is not None
+            else ""
+        )
+        if explicit_symbol:
+            ranked = [
+                ref for ref in ranked
+                if (
+                    (parsed := split_symbol_ref(ref)) is not None
+                    and (
+                        parsed[1].casefold() == explicit_symbol.casefold()
+                        or parsed[1].casefold().startswith(
+                            explicit_symbol.casefold() + "."
+                        )
+                    )
+                )
+            ]
+        return next(
+            (ref for ref in ranked if ref not in previously_read),
+            ranked[0] if ranked else None,
+        )
+
+    @staticmethod
+    def _has_active_symbol_search(context: ResearchDecisionContextV1) -> bool:
+        obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None
+            else ""
+        )
+        return any(
+            observation.tool_name == "search_symbols"
+            and observation.status in {"success", "truncated"}
+            and (not obligation_id or observation.obligation_id == obligation_id)
+            for observation in context.recent_observations
+        )
+
+    @staticmethod
+    def _has_exact_source_span(context: ResearchDecisionContextV1) -> bool:
+        """Return whether this obligation has a successful exact source read."""
+
+        active_obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None
+            else ""
+        )
+        return any(
+            observation.tool_name in {"read_symbol", "read_code_span"}
+            and observation.status == "success"
+            and bool(observation.exact_span_ids)
+            and (
+                not active_obligation_id
+                or observation.obligation_id == active_obligation_id
+            )
+            for observation in context.recent_observations
+        )
+
+    @staticmethod
+    def _latest_search_query(context: ResearchDecisionContextV1) -> str:
+        active_obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None
+            else ""
+        )
+        return next(
+            (
+                observation.query
+                for observation in reversed(context.recent_observations)
+                if observation.tool_name == "search_symbols"
+                and (
+                    not active_obligation_id
+                    or observation.obligation_id == active_obligation_id
+                )
+            ),
+            "",
+        )
+
+    @staticmethod
+    def _predicate_candidate_ref(
+        context: ResearchDecisionContextV1,
+    ) -> str | None:
+        """Find a discovered symbol whose identifier matches a typed miss."""
+
+        obligation = context.active_obligation
+        if obligation is None:
+            return None
+        query_terms: set[str] = set()
+        for requirement in obligation.missing_information:
+            if not requirement.startswith("typed_predicate:"):
+                continue
+            predicate = requirement.split(":", 1)[1].upper()
+            query = _PREDICATE_SEARCH_QUERIES.get(predicate, predicate.lower())
+            query_terms.update(re.findall(r"[a-z0-9]+", query.casefold()))
+            break
+        if not query_terms:
+            return None
+        for candidate in reversed(obligation.candidate_symbol_ids):
+            parsed = split_symbol_ref(candidate) if is_symbol_ref(candidate) else None
+            if parsed is None:
+                continue
+            identifier_terms = set(
+                re.findall(r"[a-z0-9]+", re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", parsed[1]).replace("_", " ").casefold())
+            )
+            if any(
+                query_term == identifier_term
+                or query_term in identifier_term
+                or identifier_term in query_term
+                for query_term in query_terms
+                for identifier_term in identifier_terms
+                if len(query_term) >= 4 or len(identifier_term) >= 4
+            ):
+                return candidate
         return None
 
     # --- rationale / goal / stop condition ------------------------------
@@ -826,6 +1222,7 @@ def build_decision_context(
     current_supported_claim_ids: tuple[str, ...] = (),
     unresolved_must_cover_ids: tuple[str, ...] | None = None,
     behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = (),
+    behavior_graph: Any | None = None,
 ) -> ResearchDecisionContextV1:
     """Assemble a ``ResearchDecisionContextV1`` from graph state.
 
@@ -850,6 +1247,33 @@ def build_decision_context(
                 top_nodes = tuple(item.candidate_behavior_node_ids)
                 break
 
+    # A resumed loop may already carry an exact behavior graph even though
+    # the compact recent-observation window no longer contains the read that
+    # produced it.  Project only nodes whose source span is inside the active
+    # obligation's candidate paths; unrelated graph nodes must not discharge
+    # the authority boundary for the current obligation.
+    if active_obligation is not None and behavior_graph is not None:
+        candidate_paths: set[str] = set()
+        for candidate in active_obligation.candidate_symbol_ids:
+            parsed = split_symbol_ref(candidate) if is_symbol_ref(candidate) else None
+            if parsed is not None:
+                candidate_paths.add(parsed[0])
+            elif candidate.startswith("candidate_path:"):
+                candidate_paths.add(candidate.split(":", 1)[1])
+            elif ":" in candidate:
+                candidate_paths.add(candidate.split(":", 1)[0])
+            elif "/" in candidate or "." in candidate:
+                candidate_paths.add(candidate)
+        graph_node_ids = tuple(
+            node.node_id
+            for node in getattr(behavior_graph, "nodes", ())
+            if any(
+                (node.source_span_id or "").startswith(f"span:{path}:")
+                for path in candidate_paths
+            )
+        )
+        top_nodes = tuple(dict.fromkeys((*top_nodes, *graph_node_ids)))
+
     recent_summaries = tuple(
         RecentObservationSummaryV1(
             observation_id=obs.observation_id,
@@ -863,6 +1287,14 @@ def build_decision_context(
             ambiguous=obs.diagnostics.ambiguous,
             candidate_count=obs.diagnostics.candidate_count,
             obligation_id=obs.obligation_id,
+            query=next(
+                (
+                    note.split("=", 1)[1]
+                    for note in obs.diagnostics.notes
+                    if note.startswith("query=")
+                ),
+                "",
+            ),
         )
         for obs in recent_observations
     )

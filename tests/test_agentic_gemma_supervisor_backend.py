@@ -595,7 +595,7 @@ def test_successful_search_symbols_proposal(monkeypatch: pytest.MonkeyPatch) -> 
     assert call.tool_name == "search_symbols"
     assert call.tool_kind == "symbol_search"
     assert call.obligation_id == "obl-1"
-    assert call.arguments["query"] == "score"  # first typed_target search term
+    assert call.arguments["query"] == "score predictor"
     assert call.arguments["top_k"] == 10
     assert call.repo_snapshot_id == _SNAPSHOT_ID
     # LLM was actually invoked once.

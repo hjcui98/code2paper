@@ -17,15 +17,11 @@ from code2paper.agentic.evidence_v2 import (
     write_evidence_snapshot_v2,
 )
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
+    EvidenceCompilerV3Result,
+    load_atomic_claims_v3,
+    load_code_facts_v1,
+    load_evidence_packets_v3,
     validate_evidence_compiler_v3,
-    write_compiler_v3_artifacts,
-)
-from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
-from code2paper.agentic.obligation_fact_alignment import (
-    ObligationCoverageReportV2,
-    bind_claims_to_obligations,
-    build_obligation_coverage_v2,
 )
 from code2paper.agentic.repo_snapshot import load_repo_snapshot
 from code2paper.core.output_names import artifact_dir, method_output
@@ -102,41 +98,12 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
     artifacts["evidence_snapshot_v2"] = str(evidence_v2_path)
     artifacts["atomic_claims_v2"] = str(atomic_claims_v2_path)
     artifacts["atomic_claims_v2_unverified"] = str(atomic_claims_v2_unverified_path)
-    compiler_v3 = compile_evidence_v3(repo_snapshot)
+    # D2 authority cutover: the legacy stage may consume the canonical
+    # generic research chain, but it must never synthesize facts or claims
+    # from a project profile.  The V3 research owner has already persisted
+    # these artifacts before this compatibility stage runs.
+    compiler_v3 = _load_generic_research_chain(state, repo_snapshot)
     if compiler_v3 is not None:
-        intent_v2_path = state.artifacts.get("intent_obligation_graph_v2", "")
-        coverage_path: Path | None = None
-        if intent_v2_path and Path(intent_v2_path).exists():
-            intent_v2 = IntentObligationGraphV2.model_validate_json(
-                Path(intent_v2_path).read_text(encoding="utf-8")
-            )
-            rebound_claims = bind_claims_to_obligations(
-                intent_v2,
-                fact_set=compiler_v3.facts,
-                claim_set=compiler_v3.claims,
-            )
-            compiler_v3 = compiler_v3.model_copy(
-                update={"claims": rebound_claims}
-            )
-            coverage = build_obligation_coverage_v2(
-                intent_v2,
-                fact_set=compiler_v3.facts,
-                claim_set=compiler_v3.claims,
-                explicit_gaps=compiler_v3.claims.explicit_code_gaps,
-            )
-            coverage_path = (
-                artifact_dir(state.method_root, "04_evidence")
-                / f"obligation_coverage_v2{version_suffix}.json"
-            )
-            coverage_path.write_text(
-                json.dumps(
-                    coverage.model_dump(mode="json"),
-                    ensure_ascii=False,
-                    indent=2,
-                )
-                + "\n",
-                encoding="utf-8",
-            )
         compiler_failures = validate_evidence_compiler_v3(compiler_v3, repo_snapshot)
         if compiler_failures:
             return StageToolResult(
@@ -146,31 +113,20 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                 summary="; ".join(compiler_failures),
             )
         artifacts.update(
-            write_compiler_v3_artifacts(
-                artifact_dir(state.method_root, "04_evidence"),
-                compiler_v3,
-                suffix=version_suffix,
-            )
+            {
+                key: state.artifacts[key]
+                for key in (
+                    "evidence_packets_v3",
+                    "code_facts_v1",
+                    "atomic_claims_v3",
+                    "generic_research_compilation_manifest",
+                )
+                if state.artifacts.get(key)
+            }
         )
-        if coverage_path is not None:
-            # When the V3 runtime already produced a coverage report with
-            # synthetic gaps, preserve that path so the authoring plan gate
-            # does not block on unresolved must_cover obligations that have
-            # already been accepted as explicit gaps.
-            v3_coverage = state.artifacts.get("obligation_coverage_v2", "")
-            if v3_coverage and Path(v3_coverage).exists():
-                try:
-                    v3_report = ObligationCoverageReportV2.model_validate_json(
-                        Path(v3_coverage).read_text(encoding="utf-8")
-                    )
-                    if v3_report.unresolved_must_cover_ids != coverage.unresolved_must_cover_ids:
-                        artifacts["obligation_coverage_v2"] = v3_coverage
-                    else:
-                        artifacts["obligation_coverage_v2"] = str(coverage_path)
-                except Exception:
-                    artifacts["obligation_coverage_v2"] = str(coverage_path)
-            else:
-                artifacts["obligation_coverage_v2"] = str(coverage_path)
+        canonical_coverage = state.artifacts.get("obligation_coverage_v2", "")
+        if canonical_coverage and Path(canonical_coverage).is_file():
+            artifacts["obligation_coverage_v2"] = canonical_coverage
     if parent_path:
         artifacts["previous_evidence_snapshot_v2"] = str(parent_path)
     decision = "claims_verified" if verification.hard_gate_passed else "claims_need_caveats_or_more_evidence"
@@ -190,7 +146,7 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
                         "evidence_packets_v3",
                         "code_facts_v1",
                         "atomic_claims_v3",
-                        "evidence_profile_match",
+                        "generic_research_compilation_manifest",
                     )) if compiler_v3 else []),
                     "claims", "evidence",
                 ],
@@ -203,9 +159,50 @@ def run_evidence(state: AgenticRunState) -> StageToolResult:
             "unsupported_claims": verification.unsupported_claims,
             "compiled_v3_facts": len(compiler_v3.facts.facts) if compiler_v3 else 0,
             "compiled_v3_claims": len(compiler_v3.claims.claims) if compiler_v3 else 0,
-            "compiled_v3_profile_id": compiler_v3.profile_id if compiler_v3 else "",
+            "compiled_v3_profile_id": "",
         },
     )
+
+
+def _load_generic_research_chain(
+    state: AgenticRunState,
+    repo_snapshot,
+) -> EvidenceCompilerV3Result | None:
+    """Load only the V3 research owner's persisted generic chain.
+
+    Absence is not repaired here: the owning research agent must produce or
+    repair the chain.  This prevents the legacy evidence stage from silently
+    replacing it with profile-authored facts.
+    """
+
+    paths = {
+        key: state.artifacts.get(key, "")
+        for key in (
+            "evidence_packets_v3",
+            "code_facts_v1",
+            "atomic_claims_v3",
+        )
+    }
+    if any(not value or not Path(value).is_file() for value in paths.values()):
+        return None
+    try:
+        result = EvidenceCompilerV3Result(
+            packets=load_evidence_packets_v3(paths["evidence_packets_v3"]),
+            facts=load_code_facts_v1(paths["code_facts_v1"]),
+            claims=load_atomic_claims_v3(paths["atomic_claims_v3"]),
+        )
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    if validate_evidence_compiler_v3(result, repo_snapshot):
+        return None
+    producer_versions = {
+        result.packets.producer_version,
+        result.facts.producer_version,
+        result.claims.producer_version,
+    }
+    if not all("generic" in value.lower() for value in producer_versions):
+        return None
+    return result
 
 
 def run_grounding(state: AgenticRunState) -> StageToolResult:

@@ -40,9 +40,12 @@ properties are verified by ``tests/test_agentic_research_*``.
 from __future__ import annotations
 
 import functools
+import hashlib
+import json
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Iterator
 
 from langgraph.graph import END, START, StateGraph
@@ -92,6 +95,7 @@ from code2paper.agentic.research_supervisor import (
     build_decision_context,
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.state_v3 import (
     AgentStateV3,
     AgentStateV3Record,
@@ -118,6 +122,104 @@ class CompiledEvidence:
     packet_set: Any  # EvidencePacketSetV3
     fact_set: Any  # CodeFactSetV1
     claim_set: Any  # AtomicClaimSetV3
+
+
+def _store_evidence_sidecar(
+    loop: "ResearchLoopState",
+    payload: dict[str, Any],
+) -> None:
+    """Accumulate validated evidence without promoting partial facts to claims."""
+
+    obligation_id = payload["obligation_id"]
+    incoming = CompiledEvidence(
+        obligation_id=obligation_id,
+        packet_set=payload["packet_set"],
+        fact_set=payload["fact_set"],
+        claim_set=payload["claim_set"],
+    )
+    current = loop.compiled_evidence.get(obligation_id)
+    if current is None:
+        loop.compiled_evidence[obligation_id] = incoming
+        return
+
+    def unique(items: list[Any], identity: str) -> list[Any]:
+        result: dict[str, Any] = {}
+        for item in items:
+            result.setdefault(str(getattr(item, identity)), item)
+        return list(result.values())
+
+    packets = unique(
+        [*current.packet_set.packets, *incoming.packet_set.packets],
+        "packet_id",
+    )
+    packet_digest = _sidecar_digest(
+        [item.model_dump(mode="json") for item in packets]
+    )
+    packet_set = incoming.packet_set.model_copy(update={
+        "packets": packets,
+        "content_digest": packet_digest,
+    })
+    facts = unique(
+        [*current.fact_set.facts, *incoming.fact_set.facts],
+        "canonical_identity",
+    )
+    fact_digest = _sidecar_digest(
+        [item.model_dump(mode="json") for item in facts]
+    )
+    fact_set = incoming.fact_set.model_copy(update={
+        "facts": facts,
+        "evidence_packet_digest": packet_digest,
+        "content_digest": fact_digest,
+    })
+    claims = unique(
+        [*current.claim_set.claims, *incoming.claim_set.claims],
+        "canonical_identity",
+    )
+    gaps = unique(
+        [
+            *current.claim_set.explicit_code_gaps,
+            *incoming.claim_set.explicit_code_gaps,
+        ],
+        "gap_id",
+    )
+    stage_groups = unique(
+        [
+            *current.claim_set.semantic_stage_groups,
+            *incoming.claim_set.semantic_stage_groups,
+        ],
+        "stage_id",
+    )
+    claim_payload = {
+        "claims": [item.model_dump(mode="json") for item in claims],
+        "explicit_code_gaps": [item.model_dump(mode="json") for item in gaps],
+        "semantic_stage_groups": [
+            item.model_dump(mode="json") for item in stage_groups
+        ],
+    }
+    claim_set = incoming.claim_set.model_copy(update={
+        "claims": claims,
+        "explicit_code_gaps": gaps,
+        "semantic_stage_groups": stage_groups,
+        "evidence_packet_digest": packet_digest,
+        "code_fact_digest": fact_digest,
+        "content_digest": _sidecar_digest(claim_payload),
+    })
+    loop.compiled_evidence[obligation_id] = CompiledEvidence(
+        obligation_id=obligation_id,
+        packet_set=packet_set,
+        fact_set=fact_set,
+        claim_set=claim_set,
+    )
+
+
+def _sidecar_digest(payload: Any) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +251,12 @@ class LoopStateSnapshot(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    snapshot_version: str = "2.0"
+    immutable_payload_ref: str = ""
+    immutable_payload_digest: str = ""
+    # The fields below are retained only to read pre-D4 checkpoints.  New
+    # snapshots leave every large inline field empty and persist the payload
+    # in the immutable content-addressed store above.
     behavior_graph: dict[str, Any] = Field(default_factory=dict)
     agenda_items: list[dict[str, Any]] = Field(default_factory=list)
     gain_tracker: dict[str, Any] = Field(default_factory=dict)
@@ -182,10 +290,33 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
     ``restore_loop_state_from_snapshot``.
     """
 
+    immutable_payload = {
+        "behavior_graph": loop.behavior_graph.model_dump(mode="json"),
+        "agenda_items": [item.model_dump(mode="json") for item in loop.runtime.agenda.items],
+        "gain_tracker": loop.gain_tracker.snapshot(),
+        "recent_observations": [item.model_dump(mode="json") for item in loop.recent_observations],
+        "active_issue": (loop.active_issue.model_dump(mode="json") if loop.active_issue else None),
+        "current_quality_state": loop.current_quality_state.model_dump(mode="json"),
+        "best_quality_state": loop.best_quality_state.model_dump(mode="json"),
+        "decision_trace": [item.model_dump(mode="json") for item in loop.decision_trace],
+        "policy_merge_trace": [item.model_dump(mode="json") for item in loop.policy_merge_trace],
+        "compiled_evidence": {
+            key: {
+                "obligation_id": value.obligation_id,
+                "packet_set": value.packet_set.model_dump(mode="json"),
+                "fact_set": value.fact_set.model_dump(mode="json"),
+                "claim_set": value.claim_set.model_dump(mode="json"),
+            }
+            for key, value in loop.compiled_evidence.items()
+        },
+    }
+    payload_ref, payload_digest = _write_immutable_loop_payload(
+        loop.runtime,
+        immutable_payload,
+    )
     snapshot = LoopStateSnapshot(
-        behavior_graph=loop.behavior_graph.model_dump(mode="json"),
-        agenda_items=[item.model_dump(mode="json") for item in loop.runtime.agenda.items],
-        gain_tracker=loop.gain_tracker.snapshot(),
+        immutable_payload_ref=payload_ref,
+        immutable_payload_digest=payload_digest,
         per_obligation_budgets={
             obl_id: budget.model_dump(mode="json")
             for obl_id, budget in loop.per_obligation_budgets.items()
@@ -196,70 +327,136 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
         evidence_critic_route=loop.evidence_critic_route,
         terminated=loop.terminated,
         termination_reason=loop.termination_reason,
-        recent_observations=[item.model_dump(mode="json") for item in loop.recent_observations],
-        active_issue=(loop.active_issue.model_dump(mode="json") if loop.active_issue else None),
-        current_quality_state=loop.current_quality_state.model_dump(mode="json"),
-        best_quality_state=loop.best_quality_state.model_dump(mode="json"),
-        decision_trace=[item.model_dump(mode="json") for item in loop.decision_trace],
-        policy_merge_trace=[item.model_dump(mode="json") for item in loop.policy_merge_trace],
-        compiled_evidence={
-            key: {
-                "obligation_id": value.obligation_id,
-                "packet_set": value.packet_set.model_dump(mode="json"),
-                "fact_set": value.fact_set.model_dump(mode="json"),
-                "claim_set": value.claim_set.model_dump(mode="json"),
-            }
-            for key, value in loop.compiled_evidence.items()
-        },
     )
     return snapshot.to_state_dict()
+
+
+def _checkpoint_store_root(runtime: "ResearchGraphRuntime") -> Path:
+    artifact_root = runtime.artifact_root or runtime.tool_context().artifact_root
+    return Path(artifact_root).resolve() / "immutable_checkpoints"
+
+
+def _write_immutable_loop_payload(
+    runtime: "ResearchGraphRuntime",
+    payload: dict[str, Any],
+) -> tuple[str, str]:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    root = _checkpoint_store_root(runtime)
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / f"{digest.removeprefix('sha256:')}.json"
+    if not path.exists():
+        # Content-addressed checkpoint payloads are immutable.  Use the same
+        # fsync + replace boundary as every other research artifact so a
+        # process crash cannot leave a partially-written JSON body at the
+        # digest path.
+        atomic_write_bytes(path, encoded + b"\n")
+    return str(path), digest
+
+
+def load_immutable_loop_payload(
+    runtime: "ResearchGraphRuntime",
+    snapshot_payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Load and authenticate a D4 snapshot payload without widening scope."""
+
+    try:
+        snapshot = LoopStateSnapshot.model_validate(snapshot_payload)
+    except Exception:
+        return None
+    if not snapshot.immutable_payload_ref:
+        # Backward-compatible read path for pre-D4 checkpoints only.
+        return snapshot.model_dump(mode="json")
+    root = _checkpoint_store_root(runtime)
+    path = Path(snapshot.immutable_payload_ref).resolve()
+    if path.parent != root or not path.is_file():
+        return None
+    encoded = path.read_bytes().rstrip(b"\n")
+    actual = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    if actual != snapshot.immutable_payload_digest:
+        return None
+    try:
+        payload = json.loads(encoded)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def restore_loop_state_from_snapshot(
     runtime: "ResearchGraphRuntime",
     snapshot_payload: dict[str, Any] | None,
+    *,
+    strict: bool = False,
 ) -> "ResearchLoopState | None":
     """Rebuild a ``ResearchLoopState`` from a ``loop_state_snapshot`` dict.
 
-    Returns ``None`` when ``snapshot_payload`` is empty/invalid so the
-    caller falls back to ``initial_loop_state(runtime)``.  The rebuilt
-    state carries the persisted behavior graph, gain tracker, budgets
-    and tool-call id sets so the resumed loop continues from where it
+    Returns ``None`` when ``snapshot_payload`` is empty/invalid for the
+    backwards-compatible inspection API.  Production resume callers pass
+    ``strict=True``: a non-empty but invalid/tampered snapshot then raises
+    instead of silently falling back to a fresh loop, which would erase the
+    checkpoint's progress and violate fail-closed recovery.
+
+    The rebuilt state carries the persisted behavior graph, gain tracker,
+    budgets and tool-call id sets so the resumed loop continues from where it
     left off instead of restarting from the linear prefix.
     """
 
     if not isinstance(snapshot_payload, dict) or not snapshot_payload:
+        if strict and snapshot_payload:
+            raise ValueError("invalid_loop_state_snapshot:payload_not_mapping")
         return None
     try:
         snapshot = LoopStateSnapshot.model_validate(snapshot_payload)
-    except Exception:  # noqa: BLE001 — fail-soft to fresh loop state
+    except Exception as exc:  # noqa: BLE001 — compatibility API remains fail-soft
+        if strict:
+            raise ValueError("invalid_loop_state_snapshot:schema") from exc
+        return None
+    immutable = load_immutable_loop_payload(runtime, snapshot_payload)
+    if immutable is None:
+        if strict:
+            raise ValueError("invalid_loop_state_snapshot:immutable_payload")
         return None
     loop = initial_loop_state(runtime)
-    if snapshot.agenda_items:
+    agenda_items = immutable.get("agenda_items") or snapshot.agenda_items
+    if agenda_items:
         restored_items: list[ResearchAgendaItemV1] = []
-        for payload in snapshot.agenda_items:
+        for payload in agenda_items:
             try:
                 restored_items.append(ResearchAgendaItemV1.model_validate(payload))
-            except Exception:
+            except Exception as exc:
+                if strict:
+                    raise ValueError("invalid_loop_state_snapshot:agenda_items") from exc
                 pass
         if restored_items:
             runtime.agenda.items[:] = restored_items
-    if snapshot.behavior_graph:
+    behavior_graph = immutable.get("behavior_graph") or snapshot.behavior_graph
+    if behavior_graph:
         try:
             loop.behavior_graph = CodeBehaviorGraphV1.model_validate(
-                snapshot.behavior_graph
+                behavior_graph
             )
-        except Exception:  # noqa: BLE001 — keep the fresh empty graph
+        except Exception as exc:  # noqa: BLE001 — compatibility API keeps fresh graph
+            if strict:
+                raise ValueError("invalid_loop_state_snapshot:behavior_graph") from exc
             pass
     from code2paper.agentic.research_nodes import InformationGainTracker
 
-    loop.gain_tracker = InformationGainTracker.from_snapshot(snapshot.gain_tracker)
+    loop.gain_tracker = InformationGainTracker.from_snapshot(
+        immutable.get("gain_tracker") or snapshot.gain_tracker
+    )
     if snapshot.per_obligation_budgets:
         restored_budgets: dict[str, PerObligationBudgetV1] = {}
         for obl_id, payload in snapshot.per_obligation_budgets.items():
             try:
                 restored_budgets[obl_id] = PerObligationBudgetV1.model_validate(payload)
-            except Exception:  # noqa: BLE001 — keep seeded budget on failure
+            except Exception as exc:  # noqa: BLE001 — compatibility API keeps seeded budget
+                if strict:
+                    raise ValueError(f"invalid_loop_state_snapshot:budget:{obl_id}") from exc
                 pass
         if restored_budgets:
             loop.per_obligation_budgets = restored_budgets
@@ -271,28 +468,34 @@ def restore_loop_state_from_snapshot(
     loop.termination_reason = snapshot.termination_reason
     loop.recent_observations = [
         ResearchObservationV1.model_validate(payload)
-        for payload in snapshot.recent_observations
+        for payload in (immutable.get("recent_observations") or snapshot.recent_observations)
     ]
-    if snapshot.active_issue:
-        loop.active_issue = ResearchIssueV1.model_validate(snapshot.active_issue)
+    active_issue = immutable.get("active_issue") or snapshot.active_issue
+    if active_issue:
+        loop.active_issue = ResearchIssueV1.model_validate(active_issue)
     quality_type = type(loop.current_quality_state)
-    if snapshot.current_quality_state:
-        loop.current_quality_state = quality_type.model_validate(snapshot.current_quality_state)
-    if snapshot.best_quality_state:
-        loop.best_quality_state = quality_type.model_validate(snapshot.best_quality_state)
+    current_quality = immutable.get("current_quality_state") or snapshot.current_quality_state
+    best_quality = immutable.get("best_quality_state") or snapshot.best_quality_state
+    if current_quality:
+        loop.current_quality_state = quality_type.model_validate(current_quality)
+    if best_quality:
+        loop.best_quality_state = quality_type.model_validate(best_quality)
     loop.decision_trace = [
-        ResearchDecisionV1.model_validate(payload) for payload in snapshot.decision_trace
+        ResearchDecisionV1.model_validate(payload)
+        for payload in (immutable.get("decision_trace") or snapshot.decision_trace)
     ]
     loop.policy_merge_trace = [
-        PolicyMergeResult.model_validate(payload) for payload in snapshot.policy_merge_trace
+        PolicyMergeResult.model_validate(payload)
+        for payload in (immutable.get("policy_merge_trace") or snapshot.policy_merge_trace)
     ]
-    if snapshot.compiled_evidence:
+    compiled_evidence = immutable.get("compiled_evidence") or snapshot.compiled_evidence
+    if compiled_evidence:
         from code2paper.agentic.evidence_compiler_v3 import (
             AtomicClaimSetV3,
             CodeFactSetV1,
             EvidencePacketSetV3,
         )
-        for key, payload in snapshot.compiled_evidence.items():
+        for key, payload in compiled_evidence.items():
             try:
                 loop.compiled_evidence[key] = CompiledEvidence(
                     obligation_id=str(payload["obligation_id"]),
@@ -300,7 +503,9 @@ def restore_loop_state_from_snapshot(
                     fact_set=CodeFactSetV1.model_validate(payload["fact_set"]),
                     claim_set=AtomicClaimSetV3.model_validate(payload["claim_set"]),
                 )
-            except Exception:
+            except Exception as exc:
+                if strict:
+                    raise ValueError(f"invalid_loop_state_snapshot:compiled_evidence:{key}") from exc
                 pass
     return loop
 
@@ -354,7 +559,7 @@ def initial_loop_state(
     graph = CodeBehaviorGraphV1(
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        language="python",
+        language=runtime.language_adapter().language,
     )
     initial_quality = empty_quality_state(
         run_id=runtime.run_id,
@@ -460,7 +665,28 @@ class ResearchLoopDriver:
         if loop_state is not None:
             loop = loop_state
         else:
-            loop = initial_loop_state(runtime)
+            restored = restore_loop_state_from_snapshot(
+                runtime,
+                state.get("loop_state_snapshot") if isinstance(state, dict) else None,
+                strict=True,
+            )
+            loop = restored or initial_loop_state(runtime)
+
+        # A content-authenticated terminal snapshot is a completed execution,
+        # not a hint to rerun the prefix.  Validate identity and return before
+        # the Intent/Supervisor backends (and therefore before any model call).
+        if loop.terminated:
+            _validate_terminal_resume(runtime=runtime, state=state, loop=loop)
+            return ResearchLoopResult(
+                loop_state=loop,
+                final_state=state,
+                turns_executed=0,
+                terminated=True,
+                termination_reason=loop.termination_reason,
+                decision_trace=loop.decision_trace,
+                policy_merge_trace=loop.policy_merge_trace,
+                evidence_critic_routes=[],
+            )
 
         # --- linear prefix --------------------------------------------------
         state.update(input_resolution_node(state, runtime=runtime))
@@ -578,7 +804,11 @@ class ResearchLoopDriver:
                 break
 
             # Tool execution.
-            observations, trace_refs = execute_pending_tool_calls(runtime, pending)
+            observations, trace_refs = execute_pending_tool_calls(
+                runtime,
+                pending,
+                behavior_graph=loop.behavior_graph,
+            )
             loop.recent_observations.extend(observations)
             for call in pending:
                 loop.recent_tool_call_ids.add(call.tool_call_id)
@@ -679,15 +909,13 @@ class ResearchLoopDriver:
                     gain_tracker=loop.gain_tracker,
                 )
                 compiled_evidence = compile_update.pop("_compiled_evidence", None)
+                partial_evidence = compile_update.pop("_partial_evidence", None)
                 gap_accepted = compile_update.pop("_gap_accepted", None)
                 state.update(compile_update)
+                if partial_evidence is not None:
+                    _store_evidence_sidecar(loop, partial_evidence)
                 if compiled_evidence is not None:
-                    loop.compiled_evidence[compiled_evidence["obligation_id"]] = CompiledEvidence(
-                        obligation_id=compiled_evidence["obligation_id"],
-                        packet_set=compiled_evidence["packet_set"],
-                        fact_set=compiled_evidence["fact_set"],
-                        claim_set=compiled_evidence["claim_set"],
-                    )
+                    _store_evidence_sidecar(loop, compiled_evidence)
                     # Move to the next unresolved obligation.
                     next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
                     if next_obl is None:
@@ -698,6 +926,12 @@ class ResearchLoopDriver:
                     state["active_obligation_id"] = next_obl
                     loop.active_issue = None
                     loop.recent_observations.clear()
+                    turns_executed += 1
+                    loop.turn_index += 1
+                    continue
+                if partial_evidence is not None:
+                    # Validated facts were retained, but no claim was
+                    # authorized. Keep researching this obligation.
                     turns_executed += 1
                     loop.turn_index += 1
                     continue
@@ -733,6 +967,9 @@ class ResearchLoopDriver:
             state["status"] = "incomplete"
             state["blocked_reason"] = "max_turns_reached"
 
+        loop.terminated = terminated
+        loop.termination_reason = termination_reason
+
         return ResearchLoopResult(
             loop_state=loop,
             final_state=state,
@@ -743,6 +980,24 @@ class ResearchLoopDriver:
             policy_merge_trace=loop.policy_merge_trace,
             evidence_critic_routes=routes,
         )
+
+
+def _validate_terminal_resume(
+    *,
+    runtime: ResearchGraphRuntime,
+    state: AgentStateV3,
+    loop: "ResearchLoopState",
+) -> None:
+    if state.get("run_id") != runtime.run_id:
+        raise ValueError("terminal_resume_run_id_mismatch")
+    if state.get("repo_snapshot_id") != runtime.repo_snapshot.snapshot_id:
+        raise ValueError("terminal_resume_snapshot_id_mismatch")
+    if state.get("project_tree_hash") != runtime.repo_snapshot.project_tree_hash:
+        raise ValueError("terminal_resume_project_tree_hash_mismatch")
+    if not loop.termination_reason:
+        raise ValueError("terminal_resume_reason_missing")
+    if state.get("status") not in {"trusted", "incomplete", "blocked"}:
+        raise ValueError("terminal_resume_status_not_terminal")
 
 
 # ---------------------------------------------------------------------------
@@ -798,7 +1053,7 @@ def _ensure_ctx_loop(
 
     if ctx.loop_state is None:
         payload = state.get("loop_state_snapshot") if isinstance(state, dict) else None
-        restored = restore_loop_state_from_snapshot(ctx.runtime, payload)
+        restored = restore_loop_state_from_snapshot(ctx.runtime, payload, strict=True)
         ctx.loop_state = restored or initial_loop_state(ctx.runtime)
         if restored is not None:
             ctx.turns_executed = restored.turn_index
@@ -823,7 +1078,7 @@ def _ctx_linear_prefix(
     runtime = ctx.runtime
     if ctx.loop_state is None:
         snapshot_payload = state.get("loop_state_snapshot") if isinstance(state, dict) else None
-        restored = restore_loop_state_from_snapshot(runtime, snapshot_payload)
+        restored = restore_loop_state_from_snapshot(runtime, snapshot_payload, strict=True)
         ctx.loop_state = restored or initial_loop_state(runtime)
         if restored is not None:
             ctx.turns_executed = restored.turn_index
@@ -932,7 +1187,11 @@ def _ctx_tool(
     runtime = ctx.runtime
     loop = _ensure_ctx_loop(state, ctx)
     pending = ctx._pending or list(state.get("pending_tool_calls", []) or [])
-    observations, trace_refs = execute_pending_tool_calls(runtime, pending)
+    observations, trace_refs = execute_pending_tool_calls(
+        runtime,
+        pending,
+        behavior_graph=loop.behavior_graph,
+    )
     loop.recent_observations.extend(observations)
     for call in pending:
         loop.recent_tool_call_ids.add(call.tool_call_id)
@@ -1076,18 +1335,21 @@ def _ctx_compile(
         gain_tracker=loop.gain_tracker,
     )
     compiled_evidence = compile_update.pop("_compiled_evidence", None)
+    partial_evidence = compile_update.pop("_partial_evidence", None)
     gap_accepted = compile_update.pop("_gap_accepted", None)
 
+    if partial_evidence is not None:
+        _store_evidence_sidecar(loop, partial_evidence)
     if compiled_evidence is not None:
-        loop.compiled_evidence[compiled_evidence["obligation_id"]] = CompiledEvidence(
-            obligation_id=compiled_evidence["obligation_id"],
-            packet_set=compiled_evidence["packet_set"],
-            fact_set=compiled_evidence["fact_set"],
-            claim_set=compiled_evidence["claim_set"],
-        )
+        _store_evidence_sidecar(loop, compiled_evidence)
         # Success: route to advancer.  The advancer increments
         # turns_executed only when a next obligation exists.
         ctx.compile_route = "compiled"
+        return compile_update
+    if partial_evidence is not None:
+        ctx.compile_route = "rejected"
+        ctx.turns_executed += 1
+        loop.turn_index += 1
         return compile_update
 
     # No compiled evidence: compile_candidate_node already called

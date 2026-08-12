@@ -47,6 +47,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     CodeFactSetV1,
     CodeFactV1,
     ExplicitCodeGapV1,
+    GENERIC_RESEARCH_PRODUCER_VERSION,
     SemanticStageGroupV1,
 )
 
@@ -375,6 +376,7 @@ def compile_atomic_claims(
         ],
     }
     claim_set = AtomicClaimSetV3(
+        producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
         repo_snapshot_id=repo_snapshot_id,
         project_tree_hash=project_tree_hash,
         evidence_packet_digest=evidence_packet_digest,

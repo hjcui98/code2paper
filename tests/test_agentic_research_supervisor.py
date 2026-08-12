@@ -49,6 +49,7 @@ from code2paper.agentic.research_supervisor import (
     build_decision_context,
     fallback_action_for_issue,
     supervisor_node,
+    _salient_author_search_terms,
 )
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 
@@ -61,6 +62,113 @@ from code2paper.agentic.repo_snapshot import build_repo_snapshot
 _RUN_ID = "run-supervisor-test"
 _SNAPSHOT_ID = "repo:abc123"
 _TREE_HASH = "sha256:tree"
+
+
+def test_salient_author_search_terms_prioritize_named_implementation_family() -> None:
+    terms = _salient_author_search_terms(
+        "Extract a long interaction sequence with temporal context and then "
+        "pass it through Acme-StateEncoder before an MLP head."
+    )
+
+    assert terms[:2] == ("acme-stateencoder", "mlp")
+    assert "extract" in terms
+
+
+def test_search_query_prefers_active_typed_target_before_project_goal_prose() -> None:
+    obligation = ResearchAgendaItemV1(
+        obligation_id="obl-lifecycle",
+        priority="should_cover",
+        author_text=(
+            "Develop a retrieval augmented generation system that handles "
+            "large corpora using entity graph indexing."
+        ),
+        typed_behavior_targets=[
+            TypedBehaviorTargetV1(
+                target_id="target-index",
+                role="graph_builder",
+                desired_predicates=("CALL", "WRITE"),
+                predicate_groups=(("CALL", "WRITE"),),
+                search_terms=("graph index", "indexing"),
+                aliases=("graph_builder",),
+                transformations=("indexing",),
+            )
+        ],
+    )
+    context = ResearchDecisionContextV1(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+        turn_index=0,
+        active_obligation=obligation,
+        allowed_actions=("SEARCH_SYMBOLS",),
+    )
+
+    query = DeterministicSupervisorBackend(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )._search_query(context)
+
+    assert query == "indexing"
+
+
+def test_search_query_expands_generation_semantic_repair_aliases() -> None:
+    obligation = _obligation(
+        missing_information=("typed_semantic:transformations:generation",),
+    )
+    context = ResearchDecisionContextV1(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+        turn_index=0,
+        active_obligation=obligation,
+        allowed_actions=("SEARCH_SYMBOLS",),
+    )
+
+    query = DeterministicSupervisorBackend(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )._search_query(context)
+
+    assert query == "generation generate infer answer qa"
+
+
+def test_search_query_expands_numeric_dimension_semantics_to_code_identifiers() -> None:
+    obligation = _obligation(
+        missing_information=("typed_semantic:outputs:dimension 15",),
+    )
+    context = ResearchDecisionContextV1(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+        turn_index=0,
+        active_obligation=obligation,
+        allowed_actions=("SEARCH_SYMBOLS",),
+    )
+
+    query = DeterministicSupervisorBackend(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )._search_query(context)
+
+    assert "input_dim" in query
+    assert "f15" in query
+
+
+def test_search_query_routes_answer_output_repair_to_qa_endpoint() -> None:
+    obligation = _obligation(
+        missing_information=("typed_semantic:outputs:answer",),
+    )
+    context = ResearchDecisionContextV1(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+        turn_index=0,
+        active_obligation=obligation,
+        allowed_actions=("SEARCH_SYMBOLS",),
+    )
+
+    query = DeterministicSupervisorBackend(
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )._search_query(context)
+
+    assert query == "answer infer qa"
 
 
 def _agenda(*items: ResearchAgendaItemV1) -> ResearchAgendaV1:
@@ -352,6 +460,30 @@ class TestDeterministicSupervisorBackend:
         assert call.arguments.get("path") == "train.py"
         assert call.arguments.get("symbol") == "train"
 
+    def test_truncated_ranked_search_reads_top_candidate(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:features.py:normalize_features:21",),
+            missing_information=("typed_predicate:NORMALIZE",),
+        )
+        search_call = _tool_call(tool_call_id="tc-truncated", tool_name="search_symbols")
+        observation = _observation(
+            search_call,
+            status="truncated",
+            result_refs=("symbol:features.py:normalize_features:21",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            active_issue=_issue("truncated_observation"),
+            recent_observations=(observation,),
+        )
+
+        decision = backend.decide(ctx)
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "normalize_features"
+
     def test_backend_returns_record_gap_after_three_no_progress_turns(self) -> None:
         backend = _backend()
         obl = _obligation()
@@ -390,6 +522,263 @@ class TestDeterministicSupervisorBackend:
         ctx = _context(active_obligation=obl)
         decision = backend.decide(ctx)
         assert decision.action == "SEARCH_SYMBOLS"
+
+    def test_config_words_do_not_skip_search_and_exact_read(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("train.py", "configs/base.yaml"),
+            missing_information=(
+                "Describe the code-backed configuration fields and training entrypoint.",
+                "candidate_path:train.py",
+                "candidate_path:configs/base.yaml",
+            ),
+        )
+
+        first = backend.decide(_context(active_obligation=obl))
+        assert first.action == "SEARCH_SYMBOLS"
+        assert first.selected_tool_calls[0].tool_name == "search_symbols"
+
+        search_call = first.selected_tool_calls[0]
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:main:1",),
+        )
+        second = backend.decide(
+            _context(active_obligation=obl, recent_observations=(search_observation,))
+        )
+        assert second.action == "READ_CANDIDATE"
+        assert second.selected_tool_calls[0].tool_name == "read_symbol"
+
+    def test_missing_typed_predicate_searches_beyond_old_candidate(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:old.py:unrelated:3",),
+            missing_information=("typed_predicate:NORMALIZE",),
+        )
+
+        decision = backend.decide(_context(active_obligation=obl))
+
+        assert decision.action == "SEARCH_SYMBOLS"
+        assert decision.selected_tool_calls[0].arguments["query"] == "normalize norm"
+        assert decision.selected_tool_calls[0].path_scope == ()
+
+    def test_missing_typed_predicate_stays_inside_author_candidate_paths(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("models/NamedEncoder.py", "utils/ops.py"),
+            missing_information=(
+                "typed_predicate:ATTEND",
+                "candidate_path:models/NamedEncoder.py",
+                "candidate_path:utils/ops.py",
+            ),
+        )
+
+        decision = backend.decide(_context(active_obligation=obl))
+
+        assert decision.action == "SEARCH_SYMBOLS"
+        assert decision.selected_tool_calls[0].path_scope == (
+            "models/NamedEncoder.py",
+            "utils/ops.py",
+        )
+
+    def test_missing_typed_predicate_reads_top_result_after_search(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:old.py:unrelated:3",),
+            missing_information=("typed_predicate:NORMALIZE",),
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="truncated",
+            result_refs=(
+                "symbol:features.py:normalize_features:21",
+                "symbol:old.py:unrelated:3",
+            ),
+            exact_span_ids=(),
+        )
+
+        decision = backend.decide(
+            _context(active_obligation=obl, recent_observations=(search_observation,))
+        )
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["path"] == "features.py"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "normalize_features"
+
+    def test_read_candidate_advances_to_next_result_from_latest_search(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:old.py:unrelated:3",),
+            missing_information=("typed_predicate:NORMALIZE",),
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="truncated",
+            result_refs=(
+                "symbol:features.py:normalize_features:21",
+                "symbol:ops.py:stable_norm:8",
+            ),
+            exact_span_ids=(),
+        )
+        first_read_call = _tool_call(
+            tool_call_id="tc-read-first",
+            tool_name="read_symbol",
+            tool_kind="code_read",
+        )
+        first_read_observation = _observation(
+            first_read_call,
+            result_refs=("symbol:features.py:normalize_features:21",),
+        )
+
+        decision = backend.decide(_context(
+            active_obligation=obl,
+            recent_observations=(search_observation, first_read_observation),
+        ))
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["path"] == "ops.py"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "stable_norm"
+
+    def test_explicit_author_symbol_rejects_fuzzy_search_neighbor(self) -> None:
+        backend = _backend()
+        obl = ResearchAgendaItemV1(
+            obligation_id="obl-1",
+            priority="should_cover",
+            status="in_progress",
+            author_text=(
+                "evaluate_models_utils.py::MemoryModel: Encode shared-neighbor frequency."
+            ),
+            missing_information=["typed_semantic:transformations:memorymodel"],
+        )
+        search_observation = _observation(
+            _tool_call(tool_call_id="tc-search", tool_name="search_symbols"),
+            status="truncated",
+            result_refs=(
+                "symbol:models/DyGMamba.py:MemoryBank:925",
+                "symbol:evaluate_models_utils.py:evaluate_model:19",
+            ),
+            exact_span_ids=(),
+        )
+        context = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+        )
+
+        assert backend._latest_search_symbol_ref(context) is None
+        assert backend._read_symbol_target(context) is None
+        assert backend._read_symbol_path(context) is None
+
+    def test_candidate_read_in_other_obligation_does_not_skip_current_result(self) -> None:
+        backend = _backend()
+        target_ref = "symbol:graph.py:build_index:21"
+        obl = _obligation(
+            candidate_symbol_ids=(target_ref,),
+            missing_information=("typed_semantic:transformations:adjacency",),
+        )
+        other_read = _observation(
+            _tool_call(
+                tool_call_id="tc-other-read",
+                tool_name="read_symbol",
+                tool_kind="code_read",
+                obligation_id="obl-other",
+            ),
+            result_refs=(target_ref,),
+        )
+        current_search = _observation(
+            _tool_call(tool_call_id="tc-current-search", tool_name="search_symbols"),
+            result_refs=(target_ref,),
+            exact_span_ids=(),
+        )
+
+        decision = backend.decide(_context(
+            active_obligation=obl,
+            recent_observations=(other_read, current_search),
+        ))
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "build_index"
+
+    def test_new_semantic_target_replaces_stale_ranked_search_cursor(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:graph.py:build_index:21",),
+            missing_information=("typed_semantic:transformations:generation",),
+        )
+        search_call = _tool_call(
+            tool_call_id="tc-index-search",
+            tool_name="search_symbols",
+        )
+        stale_search = make_observation(
+            tool_call=search_call,
+            status="success",
+            source_authority="executable_hard",
+            result_refs=(
+                "symbol:graph.py:build_index:21",
+                "symbol:graph.py:add_nodes:40",
+            ),
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=2,
+                notes=("query=indexing",),
+            ),
+        )
+
+        decision = backend.decide(_context(
+            active_obligation=obl,
+            recent_observations=(stale_search,),
+        ))
+
+        assert decision.action == "SEARCH_SYMBOLS"
+        assert decision.selected_tool_calls[0].arguments["query"] == (
+            "generation generate infer answer qa"
+        )
+
+    def test_repeated_ranked_search_reads_next_unseen_candidate(self) -> None:
+        backend = _backend()
+        first_ref = "symbol:features.py:get_feature_vector:21"
+        second_ref = "symbol:model.py:Predictor.__init__:6"
+        obl = _obligation(
+            candidate_symbol_ids=(first_ref, second_ref),
+            missing_information=("typed_semantic:outputs:dimension 15",),
+        )
+        read_observation = _observation(
+            _tool_call(tool_call_id="tc-read", tool_name="read_symbol"),
+            status="success",
+            result_refs=(first_ref,),
+        )
+        search_observation = _observation(
+            _tool_call(tool_call_id="tc-search-next", tool_name="search_symbols"),
+            status="truncated",
+            result_refs=(first_ref, second_ref),
+            exact_span_ids=(),
+        )
+
+        decision = backend.decide(_context(
+            active_obligation=obl,
+            recent_observations=(read_observation, search_observation),
+        ))
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["path"] == "model.py"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "Predictor.__init__"
+
+    def test_interleaved_loop_reads_discovered_predicate_candidate(self) -> None:
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=(
+                "symbol:model.py:forward:3",
+                "symbol:features.py:percentile_cutoff_normalize:21",
+            ),
+            missing_information=("typed_predicate:NORMALIZE",),
+        )
+
+        decision = backend.decide(_context(active_obligation=obl))
+
+        assert decision.action == "READ_CANDIDATE"
+        assert decision.selected_tool_calls[0].arguments["path"] == "features.py"
+        assert decision.selected_tool_calls[0].arguments["symbol"] == "percentile_cutoff_normalize"
 
     def test_backend_uses_typed_target_search_terms(self) -> None:
         backend = _backend()

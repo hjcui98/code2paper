@@ -35,8 +35,8 @@ from code2paper.agentic.behavior_graph import (
     SymbolRefV1,
     UnresolvedRelationV1,
     make_span_id,
+    LanguageBehaviorAdapter,
 )
-from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
 from code2paper.agentic.source_authority import classify_source_authority
 
 
@@ -88,7 +88,7 @@ class BuildBehaviorSubgraphInput(BaseModel):
 
 def build_behavior_subgraph(
     *,
-    adapter: PythonBehaviorAdapter,
+    adapter: LanguageBehaviorAdapter,
     repo_snapshot_id: str,
     project_tree_hash: str,
     files: dict[str, str],

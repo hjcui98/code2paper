@@ -1,7 +1,8 @@
 """R4.2 generic fact compiler: ``CodeBehaviorGraphV1`` -> ``CodeFactV1``.
 
 This module implements design section 9.1 (``FactCompilerV2``).  Unlike the
-project-specific profile in ``evidence_compiler_v3.compile_evidence_v3``,
+archived profile fixture in
+``evidence_compiler_v3.compile_legacy_profile_evidence_v3``,
 the generic compiler never hardcodes fact ids, subjects or objects: every
 ``CodeFactV1`` is derived from a ``BehaviorNodeV1`` or a typed
 ``BehaviorRelationV1`` in the supplied behavior graph.
@@ -58,6 +59,7 @@ from code2paper.agentic.evidence_compiler_v3 import (
     CodeFactSetV1,
     CodeFactV1,
     FactPredicate,
+    GENERIC_RESEARCH_PRODUCER_VERSION,
 )
 from code2paper.agentic.source_authority import SourceAuthorityV1
 
@@ -165,6 +167,10 @@ class FactCompilerInputV1(BaseModel):
     evidence_span_ids: list[str] = Field(default_factory=list)
     guards: list[str] = Field(default_factory=list)
     source_authority: SourceAuthorityV1 = "executable_hard"
+    # Source-index-derived display names.  Keys are stable ``sym:<hash>``
+    # ids; values are repository-qualified symbols.  This improves Method
+    # readability without changing scope/provenance identity.
+    symbol_display_names: dict[str, str] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -190,10 +196,13 @@ def _normalize_text(value: str) -> str:
     return " ".join(re.findall(r"[a-z0-9_]+", value.lower()))
 
 
-def _node_subject(node: BehaviorNodeV1) -> str:
+def _node_subject(
+    node: BehaviorNodeV1,
+    symbol_display_names: dict[str, str] | None = None,
+) -> str:
     """Subject for a node-derived fact: the symbol that owns the node."""
 
-    return node.symbol_id
+    return (symbol_display_names or {}).get(node.symbol_id, node.symbol_id)
 
 
 def _node_object(node: BehaviorNodeV1) -> str | list[str]:
@@ -238,6 +247,7 @@ def _node_semantic_context(node: BehaviorNodeV1) -> list[str]:
         node.guard,
         node.iteration_context,
         *node.operands,
+        *node.diagnostics,
     ]
     return [value for value in values if value]
 
@@ -375,7 +385,7 @@ def compile_facts_from_behavior_graph(
         if node.predicate == "CALL" and node.node_id in call_chain_node_ids:
             continue  # will be emitted as part of a calls_in_order fact
         predicate = BEHAVIOR_PREDICATE_TO_FACT[node.predicate]
-        subject = _node_subject(node)
+        subject = _node_subject(node, compiler_input.symbol_display_names)
         obj = _node_object(node)
         conditions = _node_conditions(node, compiler_input.guards)
         identity = _digest({
@@ -437,7 +447,7 @@ def compile_facts_from_behavior_graph(
     # 2) calls_in_order facts (one per detected chain).
     for chain in _calls_in_order_chain(graph, selected_nodes):
         first = chain[0]
-        subject = first.symbol_id
+        subject = _node_subject(first, compiler_input.symbol_display_names)
         obj = [n.result or n.operands[0] if n.operands else n.node_id for n in chain]
         conditions = _node_conditions(first, compiler_input.guards)
         identity = _digest({
@@ -512,8 +522,23 @@ def compile_facts_from_behavior_graph(
             # Unresolved relations can never anchor a positive fact.
             continue
         predicate = RELATION_KIND_TO_FACT[rel.kind]
-        subject = rel.source_symbol_id
-        obj = rel.target_symbol_id or rel.target_node_id
+        source_node = next(
+            (node for node in graph.nodes if node.node_id == rel.source_node_id),
+            None,
+        )
+        target_node = next(
+            (node for node in graph.nodes if node.node_id == rel.target_node_id),
+            None,
+        )
+        subject = (
+            _node_subject(source_node, compiler_input.symbol_display_names)
+            if source_node is not None else rel.source_symbol_id
+        )
+        obj = (
+            _node_object(target_node)
+            if target_node is not None
+            else rel.target_symbol_id or rel.target_node_id
+        )
         if not obj:
             continue
         conditions = list(compiler_input.guards)
@@ -551,6 +576,7 @@ def compile_facts_from_behavior_graph(
                     rel.target_symbol_id,
                     rel.target_node_id,
                     rel.guard,
+                    *(_node_semantic_context(target_node) if target_node is not None else ()),
                 )
                 if value
             ],
@@ -562,6 +588,7 @@ def compile_facts_from_behavior_graph(
 
     payload = [item.model_dump(mode="json") for item in facts]
     return CodeFactSetV1(
+        producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
         repo_snapshot_id=repo_snapshot_id,
         project_tree_hash=project_tree_hash,
         evidence_packet_digest=evidence_packet_digest,

@@ -130,7 +130,8 @@ class DynamicGraphMambaProfile:
             ],
         )
 
-    def compile(self, repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:
+    def _compile_legacy(self, repo_snapshot: RepoSnapshot) -> EvidenceCompilerV3Result | None:
+        """Archived migration fixture; never exposed by the production view."""
         if not self.match(repo_snapshot).matched:
             return None
         index = _SourceIndex(Path(repo_snapshot.project_root).resolve(), repo_snapshot)

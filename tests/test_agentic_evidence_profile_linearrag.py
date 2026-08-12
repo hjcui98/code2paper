@@ -6,7 +6,7 @@ import pytest
 
 from code2paper.agentic.authoring_projection import build_authoring_projection
 from code2paper.agentic.claim_verifier import build_claim_verification_report
-from code2paper.agentic.evidence_compiler_v3 import compile_evidence_v3
+from code2paper.agentic.evidence_compiler_v3 import compile_legacy_profile_evidence_v3
 from code2paper.agentic.evidence_profiles.linear_graph_retrieval import (
     LinearGraphRetrievalProfile,
 )
@@ -139,7 +139,7 @@ class SpacyNER:
 
 def test_profile_compiles_atomic_sparse_retrieval_path(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
-    result = compile_evidence_v3(build_repo_snapshot(tmp_path))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path))
     assert result is not None
     assert result.profile_id == "sparse_entity_sentence_ppr_retrieval"
     assert [packet.packet_id for packet in result.packets.packets] == [
@@ -157,7 +157,7 @@ def test_profile_compiles_atomic_sparse_retrieval_path(tmp_path: Path) -> None:
 
 def test_projection_is_prose_first_and_excludes_rationale_gaps(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
-    result = compile_evidence_v3(build_repo_snapshot(tmp_path))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path))
     assert result is not None
     evidence = MethodEvidence(project_id="fixture", method_name="Sparse retrieval", method_goal="Describe code.", implementation_scope="fixture")
     claims = ClaimEvidenceMap(claims=[])
@@ -196,7 +196,7 @@ def test_required_operation_mutation_disables_claim(
     path.write_text(source.replace(old, new), encoding="utf-8")
     match = LinearGraphRetrievalProfile().match(build_repo_snapshot(tmp_path))
     assert missing in match.missing_required_fingerprints
-    assert compile_evidence_v3(build_repo_snapshot(tmp_path)) is None
+    assert compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path)) is None
 
 
 def test_paper_rationale_and_project_name_cannot_activate_profile(tmp_path: Path) -> None:
@@ -204,4 +204,4 @@ def test_paper_rationale_and_project_name_cannot_activate_profile(tmp_path: Path
         "LinearRAG Tri-Graph pruning prevents exponential growth, improves efficiency, and reduces noise.",
         encoding="utf-8",
     )
-    assert compile_evidence_v3(build_repo_snapshot(tmp_path)) is None
+    assert compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path)) is None

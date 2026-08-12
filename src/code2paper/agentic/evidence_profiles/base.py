@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,12 +24,21 @@ class ProfileMatch(BaseModel):
 
 
 @runtime_checkable
-class EvidenceCompilerProfile(Protocol):
-    """A structure-triggered compiler profile with no project-name trigger."""
+class EvidenceDiscoveryProfile(Protocol):
+    """A non-authoritative structural discovery profile.
+
+    Profiles may select search direction.  They intentionally expose no
+    public ``compile`` method, so facts and claims can only be authorized by
+    the generic research data plane after snapshot-bound reads.  Archived
+    implementations may retain a private ``_compile_legacy`` hook for the
+    explicit migration-diagnostics route only.
+    """
 
     profile_id: str
 
     def match(self, repo_snapshot: RepoSnapshot) -> ProfileMatch: ...
 
-    def compile(self, repo_snapshot: RepoSnapshot) -> Any | None: ...
 
+# Compatibility name for callers that only depend on structural matching.
+# The protocol no longer grants compilation authority.
+EvidenceCompilerProfile = EvidenceDiscoveryProfile

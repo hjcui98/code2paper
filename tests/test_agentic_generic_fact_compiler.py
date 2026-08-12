@@ -367,6 +367,33 @@ class TestConfiguredByFacts:
         assert cfg_facts[0].object == "sym:config.flags"
         assert "use_feature_x=True" in cfg_facts[0].conditions
 
+    def test_configured_by_fact_preserves_exact_target_load_object(self) -> None:
+        operation = _node(node_id="node:mask", predicate="MASK")
+        config_load = _node(
+            node_id="node:config-load",
+            predicate="LOAD",
+            operands=("self.config.iteration_threshold",),
+        )
+        rel = _relation(
+            relation_id="rel:exact-config",
+            kind="CONFIGURED_BY",
+            source_node_id=operation.node_id,
+            target_node_id=config_load.node_id,
+            source_symbol_id=operation.symbol_id,
+            target_symbol_id=config_load.symbol_id,
+        )
+        graph = _graph(nodes=[operation, config_load], relations=[rel])
+
+        result = _compile(
+            graph,
+            node_ids=[operation.node_id],
+            relation_ids=[rel.relation_id],
+        )
+
+        fact = next(item for item in result.facts if item.predicate == "configured_by")
+        assert fact.object == ["self.config.iteration_threshold"]
+        assert "self.config.iteration_threshold" in fact.semantic_context
+
 
 # ---------------------------------------------------------------------------
 # Fact id / predicate structure

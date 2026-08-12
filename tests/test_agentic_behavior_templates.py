@@ -38,6 +38,8 @@ from code2paper.agentic.behavior_templates import (
     BehaviorTemplateQueryV1,
     BehaviorTemplateRegistry,
     BehaviorTemplateV1,
+    BehaviorDiscoveryTemplateV2,
+    DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES,
     RoleAliasV1,
     StageHintV1,
     assert_all_templates_free_of_project_literals,
@@ -712,6 +714,40 @@ def test_template_model_forbids_extra_fields() -> None:
             description="d",
             query=BehaviorTemplateQueryV1(),
             surprise_field="not allowed",
+        )
+
+
+def test_d2_production_templates_expose_discovery_fields_only() -> None:
+    assert DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES
+    for template in DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES:
+        assert isinstance(template, BehaviorDiscoveryTemplateV2)
+        payload = template.model_dump(mode="json")
+        assert set(payload) == {
+            "template_id",
+            "query",
+            "role_aliases",
+            "stage_hints",
+            "query_hints",
+            "composable_with",
+        }
+        assert all("description" not in role for role in payload["role_aliases"])
+        assert all("purpose" not in stage for stage in payload["stage_hints"])
+
+
+@pytest.mark.parametrize(
+    "forbidden_field",
+    ["path", "symbol", "fact_text", "claim_text", "gap_text"],
+)
+def test_d2_discovery_schema_rejects_authority_fields(
+    forbidden_field: str,
+) -> None:
+    with pytest.raises(ValidationError):
+        BehaviorDiscoveryTemplateV2(
+            template_id="generic_discovery",
+            query=BehaviorTemplateQueryV1(
+                required_predicates=frozenset({"COMPUTE"})
+            ),
+            **{forbidden_field: "forbidden"},
         )
 
 

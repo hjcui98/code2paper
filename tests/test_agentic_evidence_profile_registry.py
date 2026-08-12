@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
+    compile_legacy_profile_evidence_v3,
     write_compiler_v3_artifacts,
 )
 import code2paper.agentic.evidence_compiler_v3 as compiler_v3_module
@@ -26,8 +26,24 @@ def test_registry_selects_profile_from_executable_structure(tmp_path: Path) -> N
     profile, matches = default_evidence_profile_registry().select(snapshot)
     assert profile is not None
     assert profile.profile_id == "feature_predict_score_rank_filter"
+    assert not hasattr(profile, "compile")
     assert matches[0].matched
     assert not matches[0].missing_required_fingerprints
+
+
+def test_legacy_selector_is_explicitly_separate_from_discovery_view(
+    tmp_path: Path,
+) -> None:
+    _write_fixture(tmp_path)
+    snapshot = build_repo_snapshot(tmp_path)
+    registry = default_evidence_profile_registry()
+
+    discovery, _ = registry.select(snapshot)
+    legacy, _ = registry.select_legacy(snapshot)
+
+    assert discovery is not None and discovery.profile_id == legacy.profile_id
+    assert not hasattr(discovery, "compile")
+    assert hasattr(legacy, "_compile_legacy")
 
 
 def test_profile_does_not_activate_from_project_name_only(tmp_path: Path) -> None:
@@ -51,7 +67,7 @@ def test_required_symbol_mutation_prevents_profile_activation(tmp_path: Path) ->
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_registry_rejects_duplicate_profile_ids() -> None:
@@ -65,7 +81,7 @@ def test_selected_profile_and_match_are_persisted(tmp_path: Path) -> None:
     project = tmp_path / "project"
     artifacts = tmp_path / "artifacts"
     _write_fixture(project)
-    result = compile_evidence_v3(build_repo_snapshot(project))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(project))
     assert result is not None
     assert result.profile_id == "feature_predict_score_rank_filter"
     assert result.profile_match["matched"] is True

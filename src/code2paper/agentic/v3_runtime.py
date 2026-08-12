@@ -53,6 +53,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -69,13 +70,17 @@ from code2paper.agentic.evidence_compiler_v3 import (
     EvidencePacketSetV3,
     EvidencePacketV3,
     ExplicitCodeGapV1,
+    GENERIC_RESEARCH_PRODUCER_VERSION,
 )
 from code2paper.agentic.gemma_supervisor_backend import GemmaSupervisorBackend
 from code2paper.agentic.equation_claims import (
     EquationClaimSetV1,
+    bind_equations_to_claims,
     compile_equation_claims,
+    derive_equation_proposals_from_facts,
     write_equation_claims,
 )
+from code2paper.agentic.execution_profile import ExecutionProfileV1
 from code2paper.agentic.graph import build_code2paper_graph
 from code2paper.agentic.intent_compiler_v2 import (
     IntentObligationGraphV2,
@@ -87,6 +92,7 @@ from code2paper.agentic.research_graph import (
     CompiledResearchSubgraph,
     ResearchLoopResult,
     build_research_subgraph,
+    load_immutable_loop_payload,
     run_research_loop,
 )
 from code2paper.agentic.research_models import (
@@ -107,10 +113,17 @@ from code2paper.agentic.state_v3 import (
 from code2paper.agentic.tools import Code2PaperStageTool
 from code2paper.agentic.decision_core import DecisionProvider
 from code2paper.agentic.text_evidence_validator import SemanticVerifier
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.schemas import LLMConfig
 
 _logger = logging.getLogger(__name__)
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Write a V3 hand-off artifact with a crash-safe replacement boundary."""
+
+    atomic_write_bytes(path, content.encode("utf-8"))
 
 
 def _extract_out_root(state: Any) -> Path | None:
@@ -131,6 +144,55 @@ def _extract_out_root(state: Any) -> Path | None:
     if out_root is None or str(out_root).strip() == "":
         return None
     return Path(out_root)
+
+
+def _persist_execution_profile_artifacts(
+    out_root: Path,
+    runtime: ResearchGraphRuntime,
+) -> dict[str, str]:
+    """Persist the selected D6 route without granting it evidence authority."""
+
+    if not isinstance(runtime.execution_profile, ExecutionProfileV1):
+        return {}
+    artifacts_dir = Path(out_root) / "artifacts" / "10_run"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    profile_path = artifacts_dir / "execution_profile_v1.json"
+    route_path = artifacts_dir / "execution_route_v1.json"
+    _atomic_write_text(
+        profile_path,
+        json.dumps(
+            runtime.execution_profile.model_dump(mode="json"),
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+    )
+    _atomic_write_text(
+        route_path,
+        json.dumps(runtime.execution_manifest(), ensure_ascii=False, indent=2) + "\n",
+    )
+    return {
+        "execution_profile": str(profile_path),
+        "execution_route": str(route_path),
+    }
+
+
+def _execution_control_payload(runtime: ResearchGraphRuntime) -> dict[str, Any]:
+    """Carry resolved rollout inputs through the legacy checkpoint state.
+
+    Environment variables are useful for the first invocation, but must not
+    silently change a resumed route.  The resolved values therefore travel in
+    the typed state returned by the wrapper; the next invocation can reuse
+    them without consulting a changed process environment.
+    """
+
+    if runtime.execution_profile is None:
+        return {}
+    return {
+        "execution_opt_in": bool(runtime.execution_opt_in),
+        "execution_rollback": bool(runtime.execution_rollback),
+        "execution_canary_key": runtime.execution_canary_key or runtime.run_id,
+    }
 
 
 def _recompute_claim_set_digest(claim_set: AtomicClaimSetV3) -> None:
@@ -182,13 +244,40 @@ def build_research_agenda_from_intent_graph(
     detectable.
     """
 
+    snapshot_root = Path(repo_snapshot.project_root).resolve()
+    snapshot_paths = {entry.path for entry in repo_snapshot.included_files}
+
+    def _snapshot_candidate_paths(paths: tuple[str, ...]) -> list[str]:
+        normalized: list[str] = []
+        for raw in paths:
+            candidate = str(raw or "").strip()
+            if not candidate:
+                continue
+            path = Path(candidate)
+            if path.is_absolute():
+                try:
+                    candidate = path.resolve().relative_to(snapshot_root).as_posix()
+                except (OSError, ValueError):
+                    continue
+            else:
+                candidate = candidate.replace("\\", "/").lstrip("./")
+            if candidate not in snapshot_paths and not any(
+                value.startswith(candidate.rstrip("/") + "/")
+                for value in snapshot_paths
+            ):
+                continue
+            if candidate not in normalized:
+                normalized.append(candidate)
+        return normalized
+
     items: list[ResearchAgendaItemV1] = []
     for obl in intent_graph.obligations:
+        candidate_paths = _snapshot_candidate_paths(obl.candidate_paths)
         missing_info: list[str] = []
         for query in obl.retrieval_queries:
             if query and query not in missing_info:
                 missing_info.append(query)
-        for path in obl.candidate_paths:
+        for path in candidate_paths:
             label = f"candidate_path:{path}"
             if label not in missing_info:
                 missing_info.append(label)
@@ -209,7 +298,7 @@ def build_research_agenda_from_intent_graph(
                 ],
                 status="pending",  # type: ignore[arg-type]
                 missing_information=missing_info,
-                candidate_symbol_ids=list(obl.candidate_paths),
+                candidate_symbol_ids=candidate_paths,
             )
         )
 
@@ -254,6 +343,12 @@ def build_v3_research_runtime(
         "budgets_must_be_available",
         "fallback_must_be_safe",
     ),
+    execution_profile: ExecutionProfileV1 | None = None,
+    execution_opt_in: bool = False,
+    execution_canary_key: str = "",
+    execution_rollback: bool = False,
+    execution_default_authorized: bool = False,
+    evidence_policy_digest: str = "",
 ) -> ResearchGraphRuntime:
     """Build a ``ResearchGraphRuntime`` configured with ``GemmaSupervisorBackend``.
 
@@ -283,6 +378,19 @@ def build_v3_research_runtime(
         intent_summary = load_author_intent_summary(intent_path)
     intent_graph = compile_intent_obligation_graph_v2(intent_summary)
     effective_llm_config = llm_config or load_llm_config_from_env()
+    if execution_profile is not None:
+        # Provider/model selection is an execution concern only.  Rebuild the
+        # typed config so capability negotiation can choose a different
+        # transport while all evidence/authorization gates remain unchanged.
+        updates: dict[str, Any] = {}
+        if execution_profile.provider.strip():
+            updates["provider"] = execution_profile.provider.strip().lower()
+        if execution_profile.model.strip():
+            updates["model"] = execution_profile.model.strip()
+        if updates:
+            effective_llm_config = LLMConfig.model_validate(
+                {**effective_llm_config.model_dump(mode="json"), **updates}
+            )
     intent_graph, intent_proposal_report = enrich_intent_graph_with_llm(
         intent_graph,
         effective_llm_config,
@@ -311,6 +419,13 @@ def build_v3_research_runtime(
         supervisor_backend=supervisor_backend,
         ready_tools=ready_tools,
         hard_rules=hard_rules,
+        adapter_language=execution_profile.language if execution_profile is not None else "",
+        execution_profile=execution_profile,
+        execution_opt_in=execution_opt_in,
+        execution_canary_key=execution_canary_key,
+        execution_rollback=execution_rollback,
+        execution_default_authorized=execution_default_authorized,
+        evidence_policy_digest=evidence_policy_digest,
     )
 
 
@@ -416,10 +531,114 @@ def merge_compiled_evidence(
         encoded = _json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
+    # Research is obligation-scoped, so the same executable operation may be
+    # rediscovered for a stage, a component, and an organization preference.
+    # Evidence authority belongs to the operation, not to the search route.
+    # Collapse exact canonical facts before authoring and remap/merge claims;
+    # otherwise downstream plans repeat the same sentence once per obligation.
+    canonical_facts: list[CodeFactV1] = []
+    fact_index_by_identity: dict[str, int] = {}
+    canonical_fact_id_by_input_id: dict[str, str] = {}
+    for fact in all_facts:
+        # Include the semantic payload alongside the producer identity so a
+        # malformed/colliding identity can never merge different operations.
+        identity = _digest({
+            "canonical_identity": fact.canonical_identity,
+            "subject": fact.subject,
+            "predicate": fact.predicate,
+            "object": fact.object,
+            "conditions": fact.conditions,
+            "scope": fact.scope,
+            "exact_source_digest": fact.exact_source_digest,
+        })
+        existing_index = fact_index_by_identity.get(identity)
+        if existing_index is None:
+            fact_index_by_identity[identity] = len(canonical_facts)
+            canonical_facts.append(fact)
+            canonical_fact_id_by_input_id[fact.fact_id] = fact.fact_id
+            continue
+        existing = canonical_facts[existing_index]
+        canonical_fact_id_by_input_id[fact.fact_id] = existing.fact_id
+        canonical_facts[existing_index] = existing.model_copy(update={
+            "direct_span_ids": list(dict.fromkeys([
+                *existing.direct_span_ids, *fact.direct_span_ids,
+            ])),
+            "relation_evidence_ids": list(dict.fromkeys([
+                *existing.relation_evidence_ids, *fact.relation_evidence_ids,
+            ])),
+            "relation_kinds": list(dict.fromkeys([
+                *existing.relation_kinds, *fact.relation_kinds,
+            ])),
+            "semantic_context": list(dict.fromkeys([
+                *existing.semantic_context, *fact.semantic_context,
+            ])),
+        })
+    all_facts = canonical_facts
+
+    canonical_claims: list[AtomicClaimV3] = []
+    claim_index_by_identity: dict[str, int] = {}
+    canonical_claim_id_by_input_id: dict[str, str] = {}
+    for claim in all_claims:
+        remapped_fact_ids = list(dict.fromkeys(
+            canonical_fact_id_by_input_id.get(fact_id, fact_id)
+            for fact_id in claim.fact_ids
+        ))
+        identity_payload = {
+            "text": " ".join(re.findall(r"[a-z0-9_]+", claim.canonical_text.lower())),
+            "fact_ids": sorted(remapped_fact_ids),
+            "claim_kind": claim.claim_kind,
+            "required_qualifiers": sorted(claim.required_qualifiers),
+            "status": claim.status,
+        }
+        identity = _digest(identity_payload)
+        existing_index = claim_index_by_identity.get(identity)
+        if existing_index is None:
+            claim_index_by_identity[identity] = len(canonical_claims)
+            canonical_claim_id_by_input_id[claim.claim_id] = claim.claim_id
+            canonical_claims.append(claim.model_copy(update={
+                "fact_ids": remapped_fact_ids,
+                "canonical_identity": identity,
+            }))
+            continue
+        existing = canonical_claims[existing_index]
+        canonical_claim_id_by_input_id[claim.claim_id] = existing.claim_id
+        canonical_claims[existing_index] = existing.model_copy(update={
+            "covers_obligation_ids": list(dict.fromkeys([
+                *existing.covers_obligation_ids, *claim.covers_obligation_ids,
+            ])),
+            "direct_evidence_ids": list(dict.fromkeys([
+                *existing.direct_evidence_ids, *claim.direct_evidence_ids,
+            ])),
+            "relation_evidence_ids": list(dict.fromkeys([
+                *existing.relation_evidence_ids, *claim.relation_evidence_ids,
+            ])),
+            "unsupported_author_fragments": list(dict.fromkeys([
+                *existing.unsupported_author_fragments,
+                *claim.unsupported_author_fragments,
+            ])),
+        })
+    all_claims = canonical_claims
+
+    remapped_stage_groups: list[Any] = []
+    for group in all_stage_groups:
+        ordered_claim_ids = list(dict.fromkeys(
+            canonical_claim_id_by_input_id.get(claim_id, claim_id)
+            for claim_id in group.ordered_claim_ids
+            if canonical_claim_id_by_input_id.get(claim_id, claim_id)
+            in {claim.claim_id for claim in all_claims}
+        ))
+        if not ordered_claim_ids:
+            continue
+        remapped_stage_groups.append(group.model_copy(update={
+            "ordered_claim_ids": ordered_claim_ids,
+        }))
+    all_stage_groups = remapped_stage_groups
+
     packet_set: EvidencePacketSetV3 | None = None
     if all_packets:
         packet_payload = [p.model_dump(mode="json") for p in all_packets]
         packet_set = EvidencePacketSetV3(
+            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
             repo_snapshot_id=repo_snapshot_id,
             project_tree_hash=project_tree_hash,
             packets=all_packets,
@@ -431,6 +650,7 @@ def merge_compiled_evidence(
     if all_facts:
         fact_payload = [f.model_dump(mode="json") for f in all_facts]
         fact_set = CodeFactSetV1(
+            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
             repo_snapshot_id=repo_snapshot_id,
             project_tree_hash=project_tree_hash,
             evidence_packet_digest=evidence_packet_digest,
@@ -440,7 +660,7 @@ def merge_compiled_evidence(
         code_fact_digest = fact_set.content_digest
 
     claim_set: AtomicClaimSetV3 | None = None
-    if all_claims:
+    if all_claims or all_gaps or all_facts:
         claim_payload = {
             "claims": [c.model_dump(mode="json") for c in all_claims],
             "explicit_code_gaps": [g.model_dump(mode="json") for g in all_gaps],
@@ -449,6 +669,7 @@ def merge_compiled_evidence(
             ],
         }
         claim_set = AtomicClaimSetV3(
+            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
             repo_snapshot_id=repo_snapshot_id,
             project_tree_hash=project_tree_hash,
             evidence_packet_digest=evidence_packet_digest,
@@ -464,6 +685,8 @@ def merge_compiled_evidence(
 
 def _synthesize_terminal_gaps(
     runtime: ResearchGraphRuntime,
+    *,
+    fact_set: CodeFactSetV1 | None = None,
 ) -> tuple[list[ExplicitCodeGapV1], dict[str, list[str]]]:
     """Synthesize explicit gaps for must_cover obligations the gap_finalizer accepted.
 
@@ -485,6 +708,10 @@ def _synthesize_terminal_gaps(
 
     gaps: list[ExplicitCodeGapV1] = []
     bindings: dict[str, list[str]] = {}
+    intent_by_id = {
+        obligation.obligation_id: obligation
+        for obligation in getattr(runtime, "intent_graph", None).obligations
+    } if getattr(runtime, "intent_graph", None) is not None else {}
     for item in runtime.agenda.items:
         if item.priority != "must_cover":
             continue
@@ -495,6 +722,21 @@ def _synthesize_terminal_gaps(
             # appear as unresolved in the coverage report and block
             # the authoring gate.
             continue
+        # An obligation can gap early and later be repaired indirectly by
+        # evidence gathered for its child stages/components.  Recompute the
+        # exact typed boundary against the final aggregate facts before
+        # serializing a terminal absence claim.
+        obligation = intent_by_id.get(item.obligation_id)
+        if fact_set is not None and obligation is not None and obligation.typed_behavior_targets:
+            from code2paper.agentic.obligation_fact_alignment import (
+                align_target_to_facts,
+            )
+
+            if all(
+                align_target_to_facts(target, fact_set.facts).status == "resolved"
+                for target in obligation.typed_behavior_targets
+            ):
+                continue
         gap_id = f"gap:synthetic:{item.obligation_id}"
         predicates = sorted(
             {
@@ -544,32 +786,29 @@ def write_v3_evidence_artifacts(
     paths: dict[str, str] = {}
     if packet_set is not None:
         path = artifacts_dir / f"evidence_packets_v3{suffix}.json"
-        path.write_text(
+        _atomic_write_text(
+            path,
             json.dumps(packet_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
         )
         paths["evidence_packets_v3"] = str(path)
     if fact_set is not None:
         path = artifacts_dir / f"code_facts_v1{suffix}.json"
-        path.write_text(
+        _atomic_write_text(
+            path,
             json.dumps(fact_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
         )
         paths["code_facts_v1"] = str(path)
     if claim_set is not None:
         path = artifacts_dir / f"atomic_claims_v3{suffix}.json"
-        path.write_text(
+        _atomic_write_text(
+            path,
             json.dumps(claim_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
         )
         paths["atomic_claims_v3"] = str(path)
     if equation_set is None and fact_set is not None:
-        # Production is prose-first unless an upstream proposer supplies a
-        # deterministically authorized set.  Persisting the empty set makes
-        # that fail-closed decision explicit and auditable instead of relying
-        # on the absence of an artifact.
+        proposals = derive_equation_proposals_from_facts(fact_set)
         equation_set, _reports = compile_equation_claims(
-            [],
+            proposals,
             fact_set,
             repo_snapshot_id=fact_set.repo_snapshot_id,
             project_tree_hash=fact_set.project_tree_hash,
@@ -578,6 +817,88 @@ def write_v3_evidence_artifacts(
         path = artifacts_dir / f"equation_claims_v1{suffix}.json"
         write_equation_claims(path, equation_set)
         paths["equation_claims_v1"] = str(path)
+    return paths
+
+
+def write_d25_method_research_artifacts(
+    out_root: str | Path,
+    *,
+    intent_graph: IntentObligationGraphV2,
+    coverage_report: Any,
+    fact_set: CodeFactSetV1,
+    claim_set: AtomicClaimSetV3,
+    equation_set: EquationClaimSetV1,
+    method_name: str = "",
+) -> dict[str, str]:
+    """Persist the D2.5 reference/completeness/configuration/plan chain."""
+
+    from code2paper.agentic.configuration_claims import (
+        compile_configuration_claims,
+    )
+    from code2paper.agentic.method_architect import build_method_section_plan
+    from code2paper.agentic.method_argument_models import (
+        build_completeness_matrix,
+        build_reference_method_agenda,
+    )
+
+    artifacts_dir = Path(out_root) / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    agenda = build_reference_method_agenda(
+        intent_graph,
+        repo_snapshot_id=claim_set.repo_snapshot_id,
+        project_tree_hash=claim_set.project_tree_hash,
+        author_goal=str(getattr(intent_graph, "method_goal", "")),
+    )
+    configurations = compile_configuration_claims(fact_set)
+
+    equation_ids_by_obligation: dict[str, list[str]] = {}
+    configuration_ids_by_obligation: dict[str, list[str]] = {}
+    for claim in claim_set.claims:
+        claim_facts = set(claim.fact_ids)
+        claim_relations = set(claim.relation_evidence_ids)
+        for obligation_id in claim.covers_obligation_ids:
+            equation_ids_by_obligation.setdefault(obligation_id, []).extend(
+                equation.equation_id
+                for equation in equation_set.equations
+                if claim_facts.intersection(equation.fact_ids)
+            )
+            configuration_ids_by_obligation.setdefault(obligation_id, []).extend(
+                configuration.configuration_id
+                for configuration in configurations.claims
+                if claim_facts.intersection(configuration.source_fact_ids)
+                or claim_relations.intersection(configuration.override_chain)
+            )
+    completeness = build_completeness_matrix(
+        agenda,
+        coverage_report,
+        claim_set=claim_set,
+        equation_ids_by_obligation={
+            key: tuple(dict.fromkeys(value))
+            for key, value in equation_ids_by_obligation.items()
+        },
+        configuration_ids_by_obligation={
+            key: tuple(dict.fromkeys(value))
+            for key, value in configuration_ids_by_obligation.items()
+        },
+    )
+    section_plan = build_method_section_plan(
+        claims=claim_set,
+        completeness=completeness,
+        equations=equation_set,
+        configurations=configurations,
+        method_name=method_name,
+    )
+    values = {
+        "reference_method_agenda_v1": agenda,
+        "method_completeness_matrix_v1": completeness,
+        "configuration_claims_v1": configurations,
+        "method_section_plan_v2": section_plan,
+    }
+    paths: dict[str, str] = {}
+    for key, value in values.items():
+        path = artifacts_dir / f"{key}.json"
+        _atomic_write_text(path, value.model_dump_json(indent=2) + "\n")
+        paths[key] = str(path)
     return paths
 
 
@@ -785,6 +1106,7 @@ class V3GraphWrapper:
         max_research_turns: int = 50,
         v3_checkpointer: Any = None,
         v3_thread_id: str | None = None,
+        packet_repair_owner: Any | None = None,
     ) -> None:
         self._runtime = v3_runtime
         self._legacy = legacy_graph
@@ -793,6 +1115,7 @@ class V3GraphWrapper:
         self._last_v3_error: str | None = None
         self._v3_checkpointer = v3_checkpointer
         self._v3_thread_id = v3_thread_id
+        self._packet_repair_owner = packet_repair_owner
 
     @property
     def v3_runtime(self) -> ResearchGraphRuntime:
@@ -851,7 +1174,7 @@ class V3GraphWrapper:
                 snapshot = self._legacy.get_state(config)
                 payload = dict(getattr(snapshot, "values", {}) or {})
             self._restore_v3_checkpoint_evidence(payload)
-            self._patch_evidence_to_generic_producer(payload)
+            self._register_generic_research_manifest(payload)
             return payload
 
         # 1. Run the V3 research phase via the multi-node LangGraph
@@ -862,6 +1185,35 @@ class V3GraphWrapper:
         v3_artifact_paths: dict[str, str] = {}
         v3_error: str | None = None
         v3_node_trace: list[dict[str, Any]] = []
+        out_root_for_tools = _extract_out_root(state)
+        if out_root_for_tools is not None and self._runtime.artifact_root is None:
+            self._runtime = self._runtime.model_copy(
+                update={"artifact_root": Path(out_root_for_tools) / "artifacts"}
+            )
+        execution_artifact_paths = (
+            _persist_execution_profile_artifacts(out_root_for_tools, self._runtime)
+            if out_root_for_tools is not None
+            else {}
+        )
+
+        # Opt-in and rollback routes that are not authorized to execute must
+        # leave the legacy default untouched.  Shadow routes still execute so
+        # their observations can be compared, while the route artifact makes
+        # the distinction explicit to rollout tooling.
+        if (
+            self._runtime.execution_profile is not None
+            and not self._runtime.execution_enabled
+            and not self._runtime.execution_shadow
+        ):
+            legacy_payload = self._legacy.invoke(state, *args, config=config, **kwargs)
+            if not isinstance(legacy_payload, dict):
+                legacy_payload = dict(legacy_payload or {})
+            legacy_payload.update(_execution_control_payload(self._runtime))
+            if execution_artifact_paths:
+                payload_artifacts = dict(legacy_payload.get("artifacts") or {})
+                payload_artifacts.update(execution_artifact_paths)
+                legacy_payload["artifacts"] = payload_artifacts
+            return legacy_payload
         try:
             v3_result = run_v3_research_phase(
                 self._runtime,
@@ -870,6 +1222,8 @@ class V3GraphWrapper:
                 thread_id=self._v3_thread_id,
             )
             self._last_v3_result = v3_result
+            if self._packet_repair_owner is not None:
+                self._packet_repair_owner.bind_loop_state(v3_result.loop_state)
             v3_decisions = list(v3_result.decision_trace)
             v3_tool_call_refs = extract_v3_tool_call_trace_refs(v3_decisions)
             # Phase 2.5: collect the formal node execution trace for
@@ -883,14 +1237,14 @@ class V3GraphWrapper:
             packet_set: EvidencePacketSetV3 | None = None
             fact_set: CodeFactSetV1 | None = None
             claim_set: AtomicClaimSetV3 | None = None
+            equation_set: EquationClaimSetV1 | None = None
             # Synthesize terminal gaps for must_cover obligations the
             # research loop did not resolve (e.g. max_turns reached
             # before gap_finalizer accepted a gap).  This prevents
             # non-terminal ``unresolved`` must_cover items from blocking
             # the authoring plan gate.
-            synthetic_gaps, synthetic_gap_bindings = _synthesize_terminal_gaps(
-                self._runtime
-            )
+            synthetic_gaps: list[ExplicitCodeGapV1] = []
+            synthetic_gap_bindings: dict[str, list[str]] = {}
             if compiled_evidence:
                 packet_set, fact_set, claim_set = merge_compiled_evidence(
                     compiled_evidence,
@@ -908,6 +1262,10 @@ class V3GraphWrapper:
                         fact_set=fact_set,
                         claim_set=claim_set,
                     )
+                synthetic_gaps, synthetic_gap_bindings = _synthesize_terminal_gaps(
+                    self._runtime,
+                    fact_set=fact_set,
+                )
                 # Append synthetic gaps to the claim_set so the coverage
                 # report marks unresolved must_cover obligations as
                 # ``explicit_gap`` (terminal).  The content_digest must be
@@ -918,6 +1276,18 @@ class V3GraphWrapper:
                 if synthetic_gaps and claim_set is not None:
                     claim_set.explicit_code_gaps.extend(synthetic_gaps)
                     _recompute_claim_set_digest(claim_set)
+                if fact_set is not None:
+                    equation_set, _equation_reports = compile_equation_claims(
+                        derive_equation_proposals_from_facts(fact_set),
+                        fact_set,
+                        repo_snapshot_id=fact_set.repo_snapshot_id,
+                        project_tree_hash=fact_set.project_tree_hash,
+                    )
+                    if claim_set is not None:
+                        equation_set = bind_equations_to_claims(
+                            equation_set,
+                            claim_set,
+                        )
                 out_root = _extract_out_root(state)
                 if out_root is not None:
                     v3_artifact_paths = write_v3_evidence_artifacts(
@@ -925,6 +1295,7 @@ class V3GraphWrapper:
                         packet_set=packet_set,
                         fact_set=fact_set,
                         claim_set=claim_set,
+                        equation_set=equation_set,
                     )
                     # source_authority_policy is written unconditionally
                     # below (outside the ``if compiled_evidence`` block)
@@ -934,14 +1305,14 @@ class V3GraphWrapper:
                     artifacts_dir.mkdir(parents=True, exist_ok=True)
                     if intent_graph is not None:
                         intent_path = artifacts_dir / "intent_obligation_graph_v2.json"
-                        intent_path.write_text(
+                        _atomic_write_text(
+                            intent_path,
                             json.dumps(
                                 intent_graph.model_dump(mode="json"),
                                 ensure_ascii=False,
                                 indent=2,
                             )
                             + "\n",
-                            encoding="utf-8",
                         )
                         v3_artifact_paths["intent_obligation_graph_v2"] = str(intent_path)
                         if fact_set is not None and claim_set is not None:
@@ -957,31 +1328,43 @@ class V3GraphWrapper:
                                 gap_obligation_bindings=synthetic_gap_bindings or None,
                             )
                             coverage_path = artifacts_dir / "obligation_coverage_v2.json"
-                            coverage_path.write_text(
+                            _atomic_write_text(
+                                coverage_path,
                                 json.dumps(
                                     coverage.model_dump(mode="json"),
                                     ensure_ascii=False,
                                     indent=2,
                                 )
                                 + "\n",
-                                encoding="utf-8",
                             )
                             v3_artifact_paths["obligation_coverage_v2"] = str(coverage_path)
+                            if equation_set is not None:
+                                v3_artifact_paths.update(
+                                    write_d25_method_research_artifacts(
+                                        out_root,
+                                        intent_graph=intent_graph,
+                                        coverage_report=coverage,
+                                        fact_set=fact_set,
+                                        claim_set=claim_set,
+                                        equation_set=equation_set,
+                                    )
+                                )
                     if os.environ.get(
                         "CODE2PAPER_AGENTIC_BEHAVIOR_TEMPLATES", "1"
                     ).strip().lower() not in {"0", "false", "no", "off"}:
                         from code2paper.agentic.behavior_templates import (
-                            DEFAULT_BEHAVIOR_TEMPLATES,
+                            DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES,
                             match_all_templates,
                         )
 
                         behavior_graph = v3_result.loop_state.behavior_graph
                         matches = match_all_templates(
-                            DEFAULT_BEHAVIOR_TEMPLATES, behavior_graph
+                            DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES,
+                            behavior_graph,
                         )
                         templates_by_id = {
                             item.template_id: item
-                            for item in DEFAULT_BEHAVIOR_TEMPLATES
+                            for item in DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES
                         }
                         template_payload = {
                             "mode": "behavior-template-organization-hints-v1",
@@ -1000,9 +1383,9 @@ class V3GraphWrapper:
                             ],
                         }
                         template_path = artifacts_dir / "behavior_template_matches_v1.json"
-                        template_path.write_text(
+                        _atomic_write_text(
+                            template_path,
                             json.dumps(template_payload, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8",
                         )
                         v3_artifact_paths["behavior_template_matches_v1"] = str(template_path)
             # Intent proposal provenance is required even when every generic
@@ -1039,30 +1422,30 @@ class V3GraphWrapper:
                         )
                     if source_policy:
                         policy_path = artifacts_dir / "source_authority_policy_v1.json"
-                        policy_path.write_text(
+                        _atomic_write_text(
+                            policy_path,
                             json.dumps(source_policy, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8",
                         )
                         v3_artifact_paths["source_authority_policy"] = str(policy_path)
                 intent_graph = getattr(self._runtime, "intent_graph", None)
                 if intent_graph is not None and "intent_obligation_graph_v2" not in v3_artifact_paths:
                     intent_path = artifacts_dir / "intent_obligation_graph_v2.json"
-                    intent_path.write_text(
+                    _atomic_write_text(
+                        intent_path,
                         json.dumps(
                             intent_graph.model_dump(mode="json"),
                             ensure_ascii=False,
                             indent=2,
                         ) + "\n",
-                        encoding="utf-8",
                     )
                     v3_artifact_paths["intent_obligation_graph_v2"] = str(intent_path)
                 proposal_report = dict(
                     getattr(self._runtime, "intent_target_proposal_report", {}) or {}
                 )
                 proposal_path = artifacts_dir / "intent_target_proposal_report_v1.json"
-                proposal_path.write_text(
+                _atomic_write_text(
+                    proposal_path,
                     json.dumps(proposal_report, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8",
                 )
                 v3_artifact_paths["intent_target_proposal_report_v1"] = str(proposal_path)
                 # Fallback: when no obligation compiled successfully
@@ -1092,6 +1475,7 @@ class V3GraphWrapper:
                         # freshness check passes on resume.
                         if packet_set is None:
                             packet_set = EvidencePacketSetV3(
+                                producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
                                 repo_snapshot_id=self._runtime.repo_snapshot.snapshot_id,
                                 project_tree_hash=self._runtime.repo_snapshot.project_tree_hash,
                                 packets=[],
@@ -1104,6 +1488,7 @@ class V3GraphWrapper:
                             "semantic_stage_groups": [],
                         }
                         claim_set = AtomicClaimSetV3(
+                            producer_version=GENERIC_RESEARCH_PRODUCER_VERSION,
                             repo_snapshot_id=self._runtime.repo_snapshot.snapshot_id,
                             project_tree_hash=self._runtime.repo_snapshot.project_tree_hash,
                             evidence_packet_digest=packet_set.content_digest,
@@ -1134,14 +1519,14 @@ class V3GraphWrapper:
                         coverage_path = (
                             artifacts_dir / "obligation_coverage_v2.json"
                         )
-                        coverage_path.write_text(
+                        _atomic_write_text(
+                            coverage_path,
                             json.dumps(
                                 coverage.model_dump(mode="json"),
                                 ensure_ascii=False,
                                 indent=2,
                             )
                             + "\n",
-                            encoding="utf-8",
                         )
                         v3_artifact_paths["obligation_coverage_v2"] = str(
                             coverage_path
@@ -1151,20 +1536,20 @@ class V3GraphWrapper:
             self._last_v3_error = v3_error
             _logger.warning("v3_research_phase_failed: %s", exc)
 
-        # 1.5 Inject V3 evidence artifacts into the legacy input state so
-        # the legacy writer can consume them.  We do NOT overwrite existing
-        # artifact paths: if the caller already pointed at a specific
-        # evidence file we respect that choice.
+        # 1.5 Inject the authoritative generic V3 artifacts before the
+        # compatibility pipeline runs.  Existing same-key profile artifacts
+        # are diagnostics only and cannot shadow the research owner.
         if v3_artifact_paths and isinstance(state, dict):
             existing_artifacts = dict(state.get("artifacts") or {})
             for key, path in v3_artifact_paths.items():
-                existing_artifacts.setdefault(key, path)
+                existing_artifacts[key] = path
             state["artifacts"] = existing_artifacts
 
         # 2. Run the legacy pipeline.
         legacy_payload = self._legacy.invoke(state, *args, config=config, **kwargs)
         if not isinstance(legacy_payload, dict):
             legacy_payload = dict(legacy_payload or {})
+        legacy_payload.update(_execution_control_payload(self._runtime))
 
         # 3. Merge V3 decisions and tool-call trace refs.
         if v3_decisions:
@@ -1184,19 +1569,21 @@ class V3GraphWrapper:
         if v3_artifact_paths:
             payload_artifacts = dict(legacy_payload.get("artifacts") or {})
             for key, path in v3_artifact_paths.items():
-                payload_artifacts.setdefault(key, path)
+                # The V3 research owner is authoritative for canonical
+                # research artifacts.  A legacy checkpoint/profile artifact
+                # with the same key must not shadow the generic chain.
+                payload_artifacts[key] = path
             legacy_payload["artifacts"] = payload_artifacts
 
-        # 3.5.1 Patch the legacy evidence artifacts in ``04_evidence/`` so
-        # they carry the generic-research-data-plane producer marker and
-        # write the sidecar manifest the R8 single-evidence-chain gate
-        # requires.  The legacy profile compiler writes the typed sets
-        # with ``producer_version=code2paper-evidence-compiler-v3``; the
-        # R8 gate requires ``code2paper-generic-research-data-plane-v1``.
-        # The patch is data-preserving: only ``producer_version`` is
-        # rewritten and the manifest is generated from the existing
-        # digests — no claims, facts or packets are modified.
-        self._patch_evidence_to_generic_producer(legacy_payload)
+        if execution_artifact_paths:
+            payload_artifacts = dict(legacy_payload.get("artifacts") or {})
+            payload_artifacts.update(execution_artifact_paths)
+            legacy_payload["artifacts"] = payload_artifacts
+
+        # 3.5.1 Register a provenance sidecar only when the canonical typed
+        # sets already identify the generic research data plane.  Legacy or
+        # profile-produced artifacts are never relabelled.
+        self._register_generic_research_manifest(legacy_payload)
 
         # 3.6 Surface V3 errors in the legacy payload so the R8
         # acceptance checker can fail the run instead of silently
@@ -1239,7 +1626,12 @@ class V3GraphWrapper:
             )
             values = dict(getattr(snapshot, "values", {}) or {})
             loop_snapshot = dict(values.get("loop_state_snapshot") or {})
-            raw_decisions = list(loop_snapshot.get("decision_trace") or [])
+            immutable = load_immutable_loop_payload(self._runtime, loop_snapshot) or {}
+            raw_decisions = list(
+                immutable.get("decision_trace")
+                or loop_snapshot.get("decision_trace")
+                or []
+            )
             v3_decisions = [
                 item
                 if isinstance(item, ResearchDecisionV1)
@@ -1262,111 +1654,74 @@ class V3GraphWrapper:
             self._last_v3_error = message
             payload["v3_error"] = message
 
-    def _patch_evidence_to_generic_producer(self, payload: dict[str, Any]) -> None:
-        """Rewrite ``producer_version`` on legacy evidence artifacts and
-        emit the generic-research sidecar manifest.
+    def _register_generic_research_manifest(self, payload: dict[str, Any]) -> None:
+        """Register provenance only for already-generic typed artifacts.
 
-        The legacy profile compiler writes ``evidence_packets_v3.json``,
-        ``code_facts_v1.json`` and ``atomic_claims_v3.json`` to
-        ``04_evidence/`` with the default
-        ``producer_version=code2paper-evidence-compiler-v3``.  The R8
-        ``single_evidence_chain_consistent`` gate requires every typed set
-        to carry a generic producer marker and a sidecar
-        ``generic_research_compilation_manifest_v3.json`` declaring
-        ``producer=generic_research_data_plane``.
-
-        This method patches the three typed sets in-place (only the
-        ``producer_version`` field is rewritten; claims, facts and packets
-        are untouched) and writes the sidecar manifest to the same
-        ``04_evidence/`` directory.  It also registers the manifest path
-        in the payload's ``artifacts`` map so the run manifest and the R8
-        recheck can discover it.
+        D2 forbids producer laundering: a legacy/profile producer is never
+        rewritten into a generic producer.  The manifest is emitted only when
+        all three canonical sets already carry the exact generic data-plane
+        version and agree on snapshot identity.
         """
 
         artifacts = dict(payload.get("artifacts") or {})
         typed_keys = (
-            ("evidence_packets_v3", "evidence_packets_v3.json"),
-            ("code_facts_v1", "code_facts_v1.json"),
-            ("atomic_claims_v3", "atomic_claims_v3.json"),
+            ("evidence_packets_v3", "packets"),
+            ("code_facts_v1", "facts"),
+            ("atomic_claims_v3", "claims"),
         )
-        patched_paths: dict[str, str] = {}
+        loaded: dict[str, dict[str, Any]] = {}
         evidence_dir: Path | None = None
-        for art_key, _filename in typed_keys:
-            path_str = artifacts.get(art_key, "")
-            if not path_str:
-                continue
-            path = Path(path_str)
-            if not path.is_file():
-                continue
+        for artifact_key, _collection_key in typed_keys:
+            path_value = str(artifacts.get(artifact_key) or "")
+            path = Path(path_value) if path_value else None
+            if path is None or not path.is_file():
+                return
             try:
-                file_data = json.loads(path.read_text(encoding="utf-8"))
+                value = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
-                continue
-            if not isinstance(file_data, dict):
-                continue
-            current = str(file_data.get("producer_version") or "")
-            if current == "code2paper-generic-research-data-plane-v1":
-                patched_paths[art_key] = str(path)
-                if evidence_dir is None:
-                    evidence_dir = path.parent
-                continue
-            if current != "code2paper-evidence-compiler-v3":
-                continue
-            file_data["producer_version"] = "code2paper-generic-research-data-plane-v1"
-            path.write_text(
-                json.dumps(file_data, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            patched_paths[art_key] = str(path)
-            if evidence_dir is None:
-                evidence_dir = path.parent
+                return
+            if not isinstance(value, dict):
+                return
+            if (
+                str(value.get("producer_version") or "")
+                != GENERIC_RESEARCH_PRODUCER_VERSION
+            ):
+                return
+            loaded[artifact_key] = value
+            evidence_dir = evidence_dir or path.parent
 
-        if not patched_paths or evidence_dir is None:
+        snapshot_ids = {
+            str(value.get("repo_snapshot_id") or "")
+            for value in loaded.values()
+        }
+        tree_hashes = {
+            str(value.get("project_tree_hash") or "")
+            for value in loaded.values()
+        }
+        if (
+            len(snapshot_ids) != 1
+            or "" in snapshot_ids
+            or len(tree_hashes) != 1
+            or "" in tree_hashes
+            or evidence_dir is None
+        ):
             return
 
-        manifest_path = evidence_dir / "generic_research_compilation_manifest_v3.json"
-        repo_snapshot_id = ""
-        project_tree_hash = ""
-        evidence_packet_digest = ""
-        code_fact_digest = ""
-        claim_set_digest = ""
-        compiled_claim_count = 0
-        compiled_fact_count = 0
-        for art_key in ("evidence_packets_v3", "code_facts_v1", "atomic_claims_v3"):
-            path_str = patched_paths.get(art_key, "")
-            if not path_str:
-                continue
-            try:
-                data = json.loads(Path(path_str).read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            if not isinstance(data, dict):
-                continue
-            if not repo_snapshot_id:
-                repo_snapshot_id = str(data.get("repo_snapshot_id") or "")
-            if not project_tree_hash:
-                project_tree_hash = str(data.get("project_tree_hash") or "")
-            if art_key == "evidence_packets_v3":
-                evidence_packet_digest = str(data.get("content_digest") or "")
-            elif art_key == "code_facts_v1":
-                code_fact_digest = str(data.get("content_digest") or "")
-                compiled_fact_count = len(data.get("facts") or [])
-            elif art_key == "atomic_claims_v3":
-                claim_set_digest = str(data.get("content_digest") or "")
-                compiled_claim_count = len(data.get("claims") or [])
-
+        packets = loaded["evidence_packets_v3"]
+        facts = loaded["code_facts_v1"]
+        claims = loaded["atomic_claims_v3"]
         manifest = {
             "schema_version": "1.0",
             "producer": "generic_research_data_plane",
-            "producer_version": "code2paper-generic-research-data-plane-v1",
+            "producer_version": GENERIC_RESEARCH_PRODUCER_VERSION,
             "profile_authoritative": False,
-            "repo_snapshot_id": repo_snapshot_id,
-            "project_tree_hash": project_tree_hash,
-            "evidence_packet_digest": evidence_packet_digest,
-            "code_fact_digest": code_fact_digest,
-            "claim_set_digest": claim_set_digest,
-            "compiled_claim_count": compiled_claim_count,
-            "compiled_fact_count": compiled_fact_count,
+            "repo_snapshot_id": next(iter(snapshot_ids)),
+            "project_tree_hash": next(iter(tree_hashes)),
+            "evidence_packet_digest": str(packets.get("content_digest") or ""),
+            "code_fact_digest": str(facts.get("content_digest") or ""),
+            "claim_set_digest": str(claims.get("content_digest") or ""),
+            "compiled_claim_count": len(claims.get("claims") or []),
+            "compiled_fact_count": len(facts.get("facts") or []),
         }
         manifest["content_digest"] = "sha256:" + hashlib.sha256(
             json.dumps(
@@ -1376,13 +1731,15 @@ class V3GraphWrapper:
                 separators=(",", ":"),
             ).encode("utf-8")
         ).hexdigest()
-        manifest_path.write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
+        manifest_path = (
+            evidence_dir / "generic_research_compilation_manifest_v3.json"
         )
-        payload_artifacts = dict(payload.get("artifacts") or {})
-        payload_artifacts["generic_research_compilation_manifest"] = str(manifest_path)
-        payload["artifacts"] = payload_artifacts
+        _atomic_write_text(
+            manifest_path,
+            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        )
+        artifacts["generic_research_compilation_manifest"] = str(manifest_path)
+        payload["artifacts"] = artifacts
 
     def get_state(self, config: dict[str, Any] | None = None) -> Any:
         """Return a V3-aware state snapshot for checkpoint resume.
@@ -1463,11 +1820,15 @@ def build_code2paper_v3_graph(
     works for the V3 research phase.
     """
 
+    from code2paper.agentic.packet_repair_owner import ScopedPacketRepairOwner
+
+    packet_repair_owner = ScopedPacketRepairOwner(v3_runtime)
     legacy_graph = build_code2paper_graph(
         tool_registry,
         decision_provider=decision_provider,
         semantic_verifier=semantic_verifier,
         checkpointer=checkpointer,
+        packet_repair_owner=packet_repair_owner,
     )
     return V3GraphWrapper(
         v3_runtime=v3_runtime,
@@ -1475,6 +1836,7 @@ def build_code2paper_v3_graph(
         max_research_turns=max_research_turns,
         v3_checkpointer=v3_checkpointer,
         v3_thread_id=v3_thread_id,
+        packet_repair_owner=packet_repair_owner,
     )
 
 

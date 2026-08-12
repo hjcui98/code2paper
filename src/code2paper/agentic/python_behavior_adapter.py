@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -65,10 +66,13 @@ _METHOD_PREDICATES: dict[str, str] = {
     "topk": "TOPK",
     "sort": "SORT",
     "argsort": "SORT",
+    "sorted": "SORT",
     "masked_fill": "MASK",
     "mask": "MASK",
     "where": "MASK",
     "filter": "FILTER",
+    "selective_scan_fn": "FILTER",
+    "selective_scan_ref": "FILTER",
     "select": "SELECT",
     "index_select": "SELECT",
     "gather": "SELECT",
@@ -105,6 +109,9 @@ _METHOD_PREDICATES: dict[str, str] = {
     "scaled_dot_product_attention": "ATTEND",
     "propagate": "PROPAGATE",
     "message": "PROPAGATE",
+    "pagerank": "PROPAGATE",
+    "pagerank_scipy": "PROPAGATE",
+    "personalized_pagerank": "PROPAGATE",
     # sampling
     "sample": "SAMPLE",
     "randn": "SAMPLE",
@@ -122,6 +129,15 @@ _METHOD_PREDICATES: dict[str, str] = {
     "transform": "TRANSFORM",
 }
 
+# Bare function calls are normally repository-defined helpers and must remain
+# CALL nodes. Only well-known function-level primitives belong here; method
+# names such as ``normalize`` are intentionally excluded because a local
+# ``normalize(...)`` helper is not necessarily the underlying operation.
+_BARE_FUNCTION_PREDICATES: dict[str, str] = {
+    "selective_scan_fn": "FILTER",
+    "selective_scan_ref": "FILTER",
+}
+
 
 # Module-qualified function -> predicate (e.g. torch.save, json.dump)
 _QUALIFIED_PREDICATES: dict[str, str] = {
@@ -131,6 +147,7 @@ _QUALIFIED_PREDICATES: dict[str, str] = {
     "torch.sort": "SORT",
     "torch.topk": "TOPK",
     "torch.argsort": "SORT",
+    "sorted": "SORT",
     "torch.where": "MASK",
     "torch.masked_fill": "MASK",
     "torch.randn": "SAMPLE",
@@ -288,6 +305,7 @@ class PythonBehaviorAdapter:
             return []
         visitor = _BehaviorRelationVisitor(symbol=symbol, nodes=nodes)
         visitor.visit(tree)
+        visitor.add_configuration_relations()
         return visitor.relations
 
     # ------------------------------------------------------------------
@@ -469,6 +487,103 @@ def _symbol_end_line(node: ast.AST) -> int:
 # ---------------------------------------------------------------------------
 
 
+def _breadth_first_frontier_transition(
+    node: ast.While,
+) -> tuple[str, str] | None:
+    """Recognize a conservative level-synchronous frontier swap.
+
+    The pattern requires all of the following executable structure inside
+    one ``while`` loop: the current container occurs in the loop guard, a
+    nested loop consumes that container, a distinct next container is reset
+    to an empty collection, and the current container is finally replaced by
+    ``next.copy()``.  This is strong enough to describe breadth-first frontier
+    propagation without trusting comments, docstrings, or project names.
+    """
+
+    guard_names = {
+        child.id for child in ast.walk(node.test) if isinstance(child, ast.Name)
+    }
+    consumed_names: set[str] = set()
+    empty_names: set[str] = set()
+    transitions: list[tuple[str, str]] = []
+    for child in ast.walk(ast.Module(body=node.body, type_ignores=[])):
+        if isinstance(child, (ast.For, ast.comprehension)):
+            iterator = child.iter
+            if (
+                isinstance(iterator, ast.Call)
+                and isinstance(iterator.func, ast.Attribute)
+                and iterator.func.attr in {"items", "keys", "values"}
+                and isinstance(iterator.func.value, ast.Name)
+            ):
+                consumed_names.add(iterator.func.value.id)
+            elif isinstance(iterator, ast.Name):
+                consumed_names.add(iterator.id)
+        if not isinstance(child, ast.Assign) or len(child.targets) != 1:
+            continue
+        target = child.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        if isinstance(child.value, (ast.List, ast.Set)) and not child.value.elts:
+            empty_names.add(target.id)
+        elif isinstance(child.value, ast.Dict) and not child.value.keys:
+            empty_names.add(target.id)
+        elif (
+            isinstance(child.value, ast.Call)
+            and isinstance(child.value.func, ast.Name)
+            and child.value.func.id in {"dict", "list", "set"}
+            and not child.value.args
+            and not child.value.keywords
+        ):
+            empty_names.add(target.id)
+        if (
+            isinstance(child.value, ast.Call)
+            and isinstance(child.value.func, ast.Attribute)
+            and child.value.func.attr == "copy"
+            and isinstance(child.value.func.value, ast.Name)
+            and not child.value.args
+            and not child.value.keywords
+        ):
+            transitions.append((target.id, child.value.func.value.id))
+    for current_name, next_name in transitions:
+        if (
+            current_name != next_name
+            and current_name in guard_names
+            and current_name in consumed_names
+            and next_name in empty_names
+        ):
+            return current_name, next_name
+    return None
+
+
+def _level_synchronous_frontier_transition(
+    node: ast.For,
+) -> tuple[str, tuple[str, ...]] | None:
+    """Recognize a current/next frontier swap in a bounded iteration loop."""
+
+    module = ast.Module(body=node.body, type_ignores=[])
+    loaded_names = {
+        child.id
+        for child in ast.walk(module)
+        if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load)
+    }
+    for child in ast.walk(module):
+        if not isinstance(child, ast.Assign) or len(child.targets) != 1:
+            continue
+        target = child.targets[0]
+        if not isinstance(target, ast.Name) or "current" not in target.id.casefold():
+            continue
+        next_names = tuple(sorted({
+            name.id
+            for name in ast.walk(child.value)
+            if isinstance(name, ast.Name)
+            and isinstance(name.ctx, ast.Load)
+            and "next" in name.id.casefold()
+        }))
+        if target.id in loaded_names and next_names:
+            return target.id, next_names
+    return None
+
+
 @dataclass
 class _BehaviorNodeVisitor(ast.NodeVisitor):
     """Walk a symbol's AST slice and emit BehaviorNodeV1 records."""
@@ -525,6 +640,49 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
         return bn
 
     # ------------------------------------------------------------------
+    # Function parameters -> source-defined configuration defaults
+    # ------------------------------------------------------------------
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_parameter_defaults(node.args)
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for statement in node.body:
+            self.visit(statement)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._visit_parameter_defaults(node.args)
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for statement in node.body:
+            self.visit(statement)
+
+    def _visit_parameter_defaults(self, arguments: ast.arguments) -> None:
+        positional = [*arguments.posonlyargs, *arguments.args]
+        offset = len(positional) - len(arguments.defaults)
+        pairs = [
+            (argument, default)
+            for argument, default in zip(positional[offset:], arguments.defaults)
+        ]
+        pairs.extend(
+            (argument, default)
+            for argument, default in zip(arguments.kwonlyargs, arguments.kw_defaults)
+            if default is not None
+        )
+        for argument, default in pairs:
+            # A definition-time default is executable source evidence, but it
+            # is not proof that an entrypoint uses the value.  Emit a READ
+            # node tagged as a configuration default so the downstream
+            # configuration compiler preserves the distinction.
+            self._add_node(
+                node=default,
+                predicate="READ",
+                operands=(argument.arg, _expr_to_str(default)),
+                result=f"{argument.arg}={_expr_to_str(default)}",
+                diagnostics=("config_access", "parameter_default"),
+            )
+
+    # ------------------------------------------------------------------
     # Assign / AugAssign -> WRITE (+ COMPUTE for the RHS)
     # ------------------------------------------------------------------
 
@@ -534,6 +692,22 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
         rhs_expr = _expr_to_str(node.value)
         for target in node.targets:
             target_str = _target_to_str(target)
+            if (
+                "normaliz" in target_str.casefold()
+                and isinstance(node.value, ast.BinOp)
+                and isinstance(node.value.op, ast.Div)
+            ):
+                # A named normalization result backed by an exact division
+                # operation is stronger than name-only inference: both the
+                # semantic role and executable transform are present in the
+                # same source span.
+                self._add_node(
+                    node=node,
+                    predicate="NORMALIZE",
+                    operands=(rhs_expr,),
+                    result=target_str,
+                    diagnostics=("normalized_assignment",),
+                )
             if isinstance(target, ast.Attribute):
                 self._add_node(
                     node=target,
@@ -649,6 +823,18 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
             guard=guard,
             diagnostics=("if",),
         )
+        if not node.orelse and any(
+            isinstance(child, ast.Continue)
+            for statement in node.body
+            for child in ast.walk(statement)
+        ):
+            self._add_node(
+                node=node,
+                predicate="FILTER",
+                operands=(guard,),
+                guard=guard,
+                diagnostics=("guarded_continue",),
+            )
         for stmt in node.body:
             self.visit(stmt)
         for stmt in node.orelse:
@@ -669,6 +855,20 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
             iteration_context=f"for {target_str} in {iter_str}",
             diagnostics=("for",),
         )
+        frontier_transition = _level_synchronous_frontier_transition(node)
+        if frontier_transition is not None:
+            current_name, next_names = frontier_transition
+            self._add_node(
+                node=node,
+                predicate="PROPAGATE",
+                operands=(
+                    "breadth first level synchronous frontier propagation",
+                    current_name,
+                    *next_names,
+                ),
+                iteration_context=f"for {target_str} in {iter_str}",
+                diagnostics=("current_next_frontier",),
+            )
         for stmt in node.body:
             self.visit(stmt)
         for stmt in node.orelse:
@@ -685,6 +885,21 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
             iteration_context=f"while {guard}",
             diagnostics=("while",),
         )
+        frontier_transition = _breadth_first_frontier_transition(node)
+        if frontier_transition is not None:
+            current_name, next_name = frontier_transition
+            self._add_node(
+                node=node,
+                predicate="PROPAGATE",
+                operands=(
+                    "breadth first frontier propagation",
+                    current_name,
+                    next_name,
+                ),
+                guard=guard,
+                iteration_context=f"while {guard}",
+                diagnostics=("level_synchronous_frontier",),
+            )
         for stmt in node.body:
             self.visit(stmt)
         for stmt in node.orelse:
@@ -729,6 +944,13 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
             operands=operands,
             diagnostics=diagnostics,
         )
+        if isinstance(node.op, ast.MatMult) and _looks_like_graph_propagation(operands):
+            self._add_node(
+                node=node,
+                predicate="PROPAGATE",
+                operands=operands,
+                diagnostics=("graph_matrix_propagation",),
+            )
 
     # ------------------------------------------------------------------
     # UnaryOp -> TRANSFORM (generic)
@@ -904,6 +1126,40 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
         self.relations.append(rel)
         return rel
 
+    def add_configuration_relations(self) -> None:
+        """Link an operation to exact config loads it consumes on its span."""
+
+        existing = {
+            (relation.kind, relation.source_node_id, relation.target_node_id)
+            for relation in self.relations
+        }
+        for line_nodes in self._node_by_line.values():
+            config_nodes = [
+                node for node in line_nodes
+                if node.predicate == "LOAD" and "config_access" in node.diagnostics
+            ]
+            if not config_nodes:
+                continue
+            for source in line_nodes:
+                if source.predicate == "LOAD":
+                    continue
+                source_text = " ".join((
+                    *source.operands, source.result, source.guard,
+                ))
+                for target in config_nodes:
+                    config_text = " ".join((*target.operands, target.result))
+                    if config_text and config_text not in source_text:
+                        continue
+                    key = ("CONFIGURED_BY", source.node_id, target.node_id)
+                    if key in existing:
+                        continue
+                    self._add_relation(
+                        kind="CONFIGURED_BY",
+                        source=source,
+                        target=target,
+                    )
+                    existing.add(key)
+
     def visit_If(self, node: ast.If) -> None:
         # TRUE_BRANCH / FALSE_BRANCH from the BRANCH node at this line.
         branch_nodes = [
@@ -1046,6 +1302,9 @@ def _classify_call(func: ast.AST, call: ast.Call) -> tuple[str, tuple[str, ...]]
     # Bare call: name(...)
     if isinstance(func, ast.Name):
         name = func.id
+        if name in _BARE_FUNCTION_PREDICATES:
+            pred = _BARE_FUNCTION_PREDICATES[name]
+            return pred, (f"function:{name}",)
         if name in _QUALIFIED_PREDICATES:
             pred = _QUALIFIED_PREDICATES[name]
             return pred, (f"name:{name}",)
@@ -1086,6 +1345,20 @@ def _looks_like_concat(node: ast.BinOp) -> bool:
         if isinstance(operand, ast.Call) and isinstance(operand.func, ast.Name) and operand.func.id == "list":
             return True
     return False
+
+
+def _looks_like_graph_propagation(operands: tuple[str, ...]) -> bool:
+    """Recognize matrix message passing without relying on project symbols."""
+
+    tokens = {
+        token
+        for operand in operands
+        for token in re.findall(r"[a-z][a-z0-9]+", operand.lower())
+    }
+    return bool(tokens & {
+        "adj", "adjacency", "graph", "incidence", "message", "messages",
+        "propagation", "sparse", "transition",
+    })
 
 
 def _looks_like_config_access(node: ast.Subscript) -> bool:

@@ -758,3 +758,225 @@ def test_projection_model_writer_drops_repeated_verifier_rejected_sentence() -> 
     assert markdown is not None
     assert "The encoder reads configured features." in markdown
     assert "resolve all training settings" not in markdown
+
+
+# ---------------------------------------------------------------------------
+# Author-intent-first projection (reorientation C)
+# ---------------------------------------------------------------------------
+
+from code2paper.agentic.intent_compiler_v2 import (
+    IntentObligationGraphV2,
+    IntentObligationV2,
+)
+
+
+def _v3_evidence_and_claims() -> tuple[MethodEvidence, ClaimEvidenceMap, AtomicClaimSetV3, EvidencePacketSetV3]:
+    from code2paper.agentic.evidence_compiler_v3 import (
+        AtomicClaimSetV3,
+        AtomicClaimV3,
+        EvidencePacketSetV3,
+        SemanticStageGroupV1,
+    )
+
+    evidence = MethodEvidence(
+        project_id="projection-v3",
+        method_name="Encoder Method",
+        method_goal="Encode inputs for scoring.",
+        implementation_scope="test",
+    )
+    claim_map = ClaimEvidenceMap(claims=[])
+    claim = AtomicClaimV3(
+        claim_id="v3-claim-1",
+        canonical_text="The encoder reads the configured input.",
+        fact_ids=["v3-fact-1"],
+        covers_obligation_ids=["obl-encode"],
+        direct_evidence_ids=["span:encoder.py:1:2"],
+        allowed_wording_boundary="encoder reads configured input only",
+        canonical_identity="sha256:v3-claim-1",
+        status="supported",
+    )
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:v3-projection",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[claim],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="sg-encode",
+                name="Encoding stage",
+                purpose="Explain the encoding.",
+                ordered_claim_ids=["v3-claim-1"],
+                covers_obligation_ids=["obl-encode"],
+                organization_priority=0,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    packets = EvidencePacketSetV3(
+        repo_snapshot_id=claims.repo_snapshot_id,
+        project_tree_hash=claims.project_tree_hash,
+        packets=[],
+        content_digest="sha256:packets",
+    )
+    return evidence, claim_map, claims, packets
+
+
+def _intent_graph() -> IntentObligationGraphV2:
+    return IntentObligationGraphV2(
+        method_goal="Score and prune low-importance primitives.",
+        obligations=[
+            IntentObligationV2(
+                obligation_id="obl-encode",
+                kind="stage",
+                priority="must_cover",
+                source_field="pipeline_steps",
+                source_index=0,
+                author_text="Encoding: read the configured input.",
+            ),
+            IntentObligationV2(
+                obligation_id="obl-innovation",
+                kind="high_risk_claim",
+                priority="verify_only",
+                source_field="innovation_claims",
+                source_index=0,
+                author_text="Three training losses learn the importance predictor.",
+            ),
+            IntentObligationV2(
+                obligation_id="obl-mismatch",
+                kind="mismatch_check",
+                priority="verify_only",
+                source_field="potential_mismatches",
+                source_index=0,
+                author_text="The paper claims rendering-free inference but the code renders.",
+            ),
+        ],
+    )
+
+
+def test_v3_projection_uses_author_intent_goal_not_code_order_goal() -> None:
+    from code2paper.agentic.intent_compiler_v2 import (
+        IntentObligationGraphV2,
+        IntentObligationV2,
+    )
+
+    evidence, claim_map, claims, packets = _v3_evidence_and_claims()
+    graph = _intent_graph()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+        intent_obligation_graph_v2=graph,
+    )
+    assert projection.author_goal == "Score and prune low-importance primitives."
+    assert "compiled inference mainline in code order" not in projection.author_goal
+    assert "compiled inference mainline in code order" not in json.dumps(
+        projection_writer_payload(projection), ensure_ascii=False
+    )
+    assert any(
+        row.get("payload_field") == "author_goal"
+        and row.get("source") == "intent_graph_v2:method_goal"
+        for row in projection.projection_trace
+    )
+
+
+def test_v3_projection_falls_back_to_repository_order_only_without_author_intent() -> None:
+    evidence, claim_map, claims, packets = _v3_evidence_and_claims()
+    evidence = evidence.model_copy(update={"method_goal": ""})
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+    )
+    assert "compiled behavior order" in projection.author_goal
+    assert any(
+        row.get("evidence_status") == "fallback_repository_behavior_order"
+        for row in projection.projection_trace
+    )
+
+
+def test_unverified_author_point_survives_into_candidate_review_lane() -> None:
+    evidence, claim_map, claims, packets = _v3_evidence_and_claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+        intent_obligation_graph_v2=_intent_graph(),
+    )
+    payload = projection_writer_payload(projection)
+    unverified = {point["point_id"] for point in projection.author_intent_unverified_points}
+    assert "author_point:obl-innovation" in unverified
+    assert "author_point:obl-mismatch" in unverified
+    assert payload["author_intent_unverified_points"]
+    assert projection.review_questions
+    assert any(
+        "obl-innovation" in question["question_id"]
+        for question in projection.review_questions
+    )
+    # The unverified point never becomes a repository fact.
+    assert all(
+        point["lane"] == "author_intent_unverified"
+        for point in projection.author_intent_unverified_points
+    )
+
+
+def test_story_spine_orders_by_author_intent_and_refines_lanes() -> None:
+    evidence, claim_map, claims, packets = _v3_evidence_and_claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+        intent_obligation_graph_v2=_intent_graph(),
+    )
+    assert projection.author_story_spine
+    nodes = {node.story_node_id: node for node in projection.author_story_spine}
+    # The repository-backed stage node is refined by projected claim evidence.
+    assert nodes["story:obl-encode"].evidence_lane == "repository_verified"
+    assert nodes["story:obl-encode"].linked_claim_ids == ("v3-claim-1",)
+    # Author-only nodes stay unverified.
+    assert nodes["story:obl-innovation"].evidence_lane == "author_intent_unverified"
+    assert nodes["story:obl-innovation"].linked_claim_ids == ()
+    # The spine is part of the writer payload.
+    payload = projection_writer_payload(projection)
+    assert [node["story_node_id"] for node in payload["author_story_spine"]]
+    # Same evidence, different author intent -> different spine order.
+    graph_reordered = IntentObligationGraphV2(
+        method_goal="Score and prune low-importance primitives.",
+        obligations=list(reversed(_intent_graph().obligations)),
+    )
+    reordered = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+        intent_obligation_graph_v2=graph_reordered,
+    )
+    assert [node.story_node_id for node in projection.author_story_spine] != [
+        node.story_node_id for node in reordered.author_story_spine
+    ]
+
+
+def test_projection_partitions_repository_facts_by_lane() -> None:
+    evidence, claim_map, claims, packets = _v3_evidence_and_claims()
+    projection = build_authoring_projection(
+        method_evidence=evidence,
+        claim_map=claim_map,
+        verification=build_claim_verification_report(evidence, claim_map),
+        atomic_claims_v3=claims,
+        evidence_packets_v3=packets,
+        intent_obligation_graph_v2=_intent_graph(),
+    )
+    assert [item["claim_id"] for item in projection.repository_verified_facts] == ["v3-claim-1"]
+    assert projection.repository_partial_facts == []
+    assert projection.repository_mismatches == []
+    # Writing policy is explicit about the authority split.
+    assert any("never authorizes repository facts" in rule for rule in projection.writing_policy)

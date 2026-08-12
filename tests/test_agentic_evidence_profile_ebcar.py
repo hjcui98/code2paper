@@ -6,7 +6,7 @@ import json
 from code2paper.agentic.authoring_projection import build_authoring_projection
 from code2paper.agentic.claim_verifier import build_claim_verification_report
 from code2paper.agentic.evidence_compiler_v3 import (
-    compile_evidence_v3,
+    compile_legacy_profile_evidence_v3,
     validate_evidence_compiler_v3,
     write_compiler_v3_artifacts,
 )
@@ -140,7 +140,7 @@ def evaluate_EBCAR(cfg):
 def test_profile_compiles_four_supported_semantic_stages(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
     snapshot = build_repo_snapshot(tmp_path)
-    result = compile_evidence_v3(snapshot)
+    result = compile_legacy_profile_evidence_v3(snapshot)
     assert result is not None
     assert result.profile_id == "hybrid_attention_context_reranker"
     assert [packet.packet_id for packet in result.packets.packets] == [
@@ -170,7 +170,7 @@ def test_profile_compiles_four_supported_semantic_stages(tmp_path: Path) -> None
 
 def test_v3_projection_is_prose_first_and_has_no_equations(tmp_path: Path) -> None:
     _write_fixture(tmp_path)
-    result = compile_evidence_v3(build_repo_snapshot(tmp_path))
+    result = compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path))
     assert result is not None
     evidence = MethodEvidence(
         project_id="fixture",
@@ -192,12 +192,14 @@ def test_v3_projection_is_prose_first_and_has_no_equations(tmp_path: Path) -> No
     assert len({claim.supported_fragment for claim in projection.projected_claims}) == 9
 
 
-def test_packet_scoped_repair_recompiles_only_target_dependency_slice(tmp_path: Path) -> None:
+def test_legacy_text_stage_cannot_recompile_packet_with_profile_authority(
+    tmp_path: Path,
+) -> None:
     project = tmp_path / "project"
     run_root = tmp_path / "run"
     _write_fixture(project)
     snapshot = build_repo_snapshot(project)
-    fresh = compile_evidence_v3(snapshot)
+    fresh = compile_legacy_profile_evidence_v3(snapshot)
     assert fresh is not None
 
     target = fresh.packets.packets[0]
@@ -249,11 +251,11 @@ def test_packet_scoped_repair_recompiles_only_target_dependency_slice(tmp_path: 
     repaired = AgenticRunState.model_validate(
         packet_binding_repair_node(state.model_dump(mode="json"))
     )
-    assert repaired.next_node == "final_text_claim_extractor"
-    assert not repaired.blocked_reason
-    report = json.loads(Path(repaired.artifacts["packet_scoped_repair_report_v1"]).read_text())
-    assert report["packet_ids"] == [target.packet_id]
-    assert report["forbidden_global_reruns"] == ["intake", "analysis", "authoring"]
+    assert repaired.next_node == "blocked"
+    assert (
+        repaired.blocked_reason
+        == "packet_scoped_repair_requires_research_owner"
+    )
 
 
 def test_same_document_mask_mutation_prevents_attention_claims(tmp_path: Path) -> None:
@@ -271,7 +273,7 @@ def test_same_document_mask_mutation_prevents_attention_claims(tmp_path: Path) -
     assert profile is None
     ebcar_match = next(item for item in matches if item.profile_id == "hybrid_attention_context_reranker")
     assert "same_document_query_mask" in ebcar_match.missing_required_fingerprints
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_ascending_sort_mutation_prevents_rerank_claim(tmp_path: Path) -> None:
@@ -282,7 +284,7 @@ def test_ascending_sort_mutation_prevents_rerank_claim(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     snapshot = build_repo_snapshot(tmp_path)
-    assert compile_evidence_v3(snapshot) is None
+    assert compile_legacy_profile_evidence_v3(snapshot) is None
 
 
 def test_project_name_and_paper_prose_cannot_activate_profile(tmp_path: Path) -> None:
@@ -290,4 +292,4 @@ def test_project_name_and_paper_prose_cannot_activate_profile(tmp_path: Path) ->
         "EBCAR uses document IDs, hybrid attention, InfoNCE, and descending reranking.",
         encoding="utf-8",
     )
-    assert compile_evidence_v3(build_repo_snapshot(tmp_path)) is None
+    assert compile_legacy_profile_evidence_v3(build_repo_snapshot(tmp_path)) is None

@@ -44,7 +44,8 @@ The four templates required by R7 are registered in
 
 from __future__ import annotations
 
-from typing import Iterable
+import re
+from typing import Iterable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -169,6 +170,88 @@ class BehaviorTemplateV1(BaseModel):
     def _nonempty(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("template_id must not be empty")
+        return value
+
+
+class DiscoveryQueryHintV2(BaseModel):
+    """A vocabulary-bound search hint with no free-form factual prose."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    hint_kind: Literal["predicate", "relation", "role", "stage"]
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def _identifier_only(cls, value: str) -> str:
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", value):
+            raise ValueError("discovery hint must be a generic identifier")
+        return value
+
+
+class DiscoveryRoleHintV2(BaseModel):
+    """Generic role resolved only through behavior predicates."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    role: str
+    required_predicates: frozenset[str] = Field(default_factory=frozenset)
+    optional_predicates: frozenset[str] = Field(default_factory=frozenset)
+
+    @field_validator("role")
+    @classmethod
+    def _generic_role(cls, value: str) -> str:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", value):
+            raise ValueError("role must be a generic identifier")
+        return value
+
+    @field_validator("required_predicates", "optional_predicates")
+    @classmethod
+    def _validate_predicates(cls, value: frozenset[str]) -> frozenset[str]:
+        for predicate in value:
+            assert_valid_predicate(predicate)
+        return value
+
+
+class DiscoveryStageHintV2(BaseModel):
+    """Ordering-only stage metadata with no purpose/claim text field."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    stage_name: str
+    role_order: tuple[str, ...] = Field(default_factory=tuple)
+    organization_priority: int = 0
+
+    @field_validator("stage_name")
+    @classmethod
+    def _generic_stage(cls, value: str) -> str:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", value):
+            raise ValueError("stage_name must be a generic identifier")
+        return value
+
+
+class BehaviorDiscoveryTemplateV2(BaseModel):
+    """D2 discovery-only template schema.
+
+    The allowed fields are closed over predicates, relations, generic roles,
+    generic stages, and vocabulary-bound query hints.  There is deliberately
+    no path, symbol, fact, claim, gap-text, or free-form description field.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    template_id: str
+    query: BehaviorTemplateQueryV1
+    role_aliases: tuple[DiscoveryRoleHintV2, ...] = Field(default_factory=tuple)
+    stage_hints: tuple[DiscoveryStageHintV2, ...] = Field(default_factory=tuple)
+    query_hints: tuple[DiscoveryQueryHintV2, ...] = Field(default_factory=tuple)
+    composable_with: frozenset[str] = Field(default_factory=frozenset)
+
+    @field_validator("template_id")
+    @classmethod
+    def _generic_template_id(cls, value: str) -> str:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", value):
+            raise ValueError("template_id must be a generic identifier")
         return value
 
 
@@ -634,6 +717,47 @@ DEFAULT_BEHAVIOR_TEMPLATES: tuple[BehaviorTemplateV1, ...] = (
 )
 
 
+def _to_discovery_template_v2(
+    template: BehaviorTemplateV1,
+) -> BehaviorDiscoveryTemplateV2:
+    """Strip every prose-bearing V1 field at the production boundary."""
+
+    query_hints = tuple(
+        DiscoveryQueryHintV2(hint_kind="predicate", value=predicate)
+        for predicate in sorted(template.query.required_predicates)
+    ) + tuple(
+        DiscoveryQueryHintV2(hint_kind="relation", value=relation)
+        for relation in sorted(template.query.required_relation_kinds)
+    )
+    return BehaviorDiscoveryTemplateV2(
+        template_id=template.template_id,
+        query=template.query,
+        role_aliases=tuple(
+            DiscoveryRoleHintV2(
+                role=alias.role,
+                required_predicates=alias.required_predicates,
+                optional_predicates=alias.optional_predicates,
+            )
+            for alias in template.role_aliases
+        ),
+        stage_hints=tuple(
+            DiscoveryStageHintV2(
+                stage_name=hint.stage_name,
+                role_order=hint.role_order,
+                organization_priority=hint.organization_priority,
+            )
+            for hint in template.stage_hints
+        ),
+        query_hints=query_hints,
+        composable_with=template.composable_with,
+    )
+
+
+DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES: tuple[
+    BehaviorDiscoveryTemplateV2, ...
+] = tuple(_to_discovery_template_v2(item) for item in DEFAULT_BEHAVIOR_TEMPLATES)
+
+
 # ---------------------------------------------------------------------------
 # Template registry
 # ---------------------------------------------------------------------------
@@ -798,8 +922,13 @@ __all__ = [
     "RoleAliasV1",
     "StageHintV1",
     "BehaviorTemplateV1",
+    "DiscoveryQueryHintV2",
+    "DiscoveryRoleHintV2",
+    "DiscoveryStageHintV2",
+    "BehaviorDiscoveryTemplateV2",
     "BehaviorTemplateMatchV1",
     "DEFAULT_BEHAVIOR_TEMPLATES",
+    "DEFAULT_BEHAVIOR_DISCOVERY_TEMPLATES",
     "BehaviorTemplateRegistry",
     "match_template",
     "match_all_templates",

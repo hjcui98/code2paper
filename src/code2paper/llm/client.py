@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import http.client
 import json
 import os
+import select
 import socket
 import tempfile
 import time
@@ -223,11 +224,22 @@ class LLMClient:
             request.response_json_schema
             and configured_response_mode == StructuredResponseMode.NATIVE_JSON_SCHEMA
         ):
+            # Loopback vLLM deployments use xgrammar for guided decoding, which
+            # rejects the ``uniqueItems`` keyword that the publication writer
+            # emits for callback-required sections.  ``uniqueItems`` is a
+            # grammar hint only; the binding/authorship gate already enforces
+            # identifier uniqueness, so stripping it for loopback endpoints does
+            # not weaken the contract and preserves the ``enum``/``const``
+            # enforcement that prevents representation errors (e.g. field names
+            # emitted as claim ids).  Remote provider schemas are unchanged.
+            schema_to_send = request.response_json_schema
+            if is_loopback_url(base_url):
+                schema_to_send = _strip_unique_items(schema_to_send)
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": _schema_name(request),
-                    "schema": request.response_json_schema,
+                    "schema": schema_to_send,
                     "strict": True,
                 },
             }
@@ -239,6 +251,30 @@ class LLMClient:
             payload["messages"][0]["content"] += "\nReturn JSON matching this schema:\n" + _json_dumps(request.response_json_schema)
         elif request.response_json_schema:
             payload["messages"][0]["content"] += "\nReturn only JSON matching this schema:\n" + _json_dumps(request.response_json_schema)
+        if (
+            request.response_json_schema
+            and response_mode in {
+                StructuredResponseMode.NATIVE_JSON_SCHEMA,
+                StructuredResponseMode.JSON_OBJECT,
+            }
+            and is_loopback_url(base_url)
+            and os.environ.get("CODE2PAPER_LLM_STREAM_STRUCTURED", "").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ):
+            payload["stream"] = True
+            text = _post_openai_stream_until_complete_json(
+                base_url,
+                payload,
+                headers=_auth_headers(self.config.provider, self.config),
+                timeout_seconds=self.config.request_timeout_seconds,
+                retry_policy=_retry_policy(self.config),
+            )
+            return _ProviderResult(
+                text=text,
+                response_mode=response_mode.value,
+                finish_reason="structured_complete",
+                token_usage=None,
+            )
         response = _post_json(
             base_url,
             payload,
@@ -410,6 +446,186 @@ def _post_json(
     raise ProviderRuntimeError("provider_unknown_error")
 
 
+def _post_openai_stream_until_complete_json(
+    url: str,
+    payload: dict,
+    *,
+    headers: dict[str, str],
+    timeout_seconds: int,
+    retry_policy: RetryPolicy,
+) -> str:
+    """Read an OpenAI SSE stream only until its first complete JSON value.
+
+    Some local guided-decoding stacks repeat an already complete JSON object
+    instead of emitting EOS. Closing the stream after the first balanced outer
+    value preserves the model-authored response and prevents that repetition
+    from consuming the full output budget.
+    """
+
+    delay_seconds = max(0.0, retry_policy.initial_delay_seconds)
+    attempts = max(1, retry_policy.max_attempts)
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(
+            url,
+            data=_json_dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json", **headers},
+            method="POST",
+        )
+        try:
+            accumulated = ""
+            with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+                iterator = iter(response)
+                last_content_at = time.monotonic()
+                received_progress = False
+                while True:
+                    inactivity_limit = min(timeout_seconds, 30 if received_progress else 120)
+                    inactivity_remaining = inactivity_limit - (
+                        time.monotonic() - last_content_at
+                    )
+                    if inactivity_remaining <= 0:
+                        complete = _first_complete_json(accumulated)
+                        if complete is not None:
+                            return complete
+                        raise ProviderTimeoutError(
+                            "provider_timeout_error:stream_inactivity"
+                        )
+                    try:
+                        descriptor = response.fileno()
+                    except (AttributeError, OSError, TypeError, ValueError):
+                        descriptor = None
+                    if descriptor is not None:
+                        ready, _, _ = select.select(
+                            [descriptor], [], [], inactivity_remaining
+                        )
+                        if not ready:
+                            complete = _first_complete_json(accumulated)
+                            if complete is not None:
+                                return complete
+                            raise ProviderTimeoutError(
+                                "provider_timeout_error:stream_inactivity"
+                            )
+                        raw_line = response.readline()
+                        if not raw_line:
+                            break
+                    else:
+                        try:
+                            raw_line = next(iterator)
+                        except StopIteration:
+                            break
+                    line = raw_line.decode("utf-8", errors="replace").strip()
+                    if not line.startswith("data:"):
+                        continue
+                    data = line[5:].strip()
+                    if not data or data == "[DONE]":
+                        continue
+                    try:
+                        event = json.loads(data)
+                        choice = event["choices"][0]
+                        delta = choice.get("delta") or {}
+                    except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                        continue
+                    content = delta.get("content")
+                    reasoning_content = delta.get("reasoning_content")
+                    if isinstance(reasoning_content, str) and reasoning_content:
+                        last_content_at = time.monotonic()
+                        received_progress = True
+                    if isinstance(content, str):
+                        accumulated += content
+                        if content:
+                            last_content_at = time.monotonic()
+                            received_progress = True
+                        complete = _first_complete_json(accumulated)
+                        if complete is not None:
+                            return complete
+                    if choice.get("finish_reason"):
+                        complete = _first_complete_json(accumulated)
+                        if complete is not None:
+                            return complete
+                        # The provider finished the stream before a complete
+                        # JSON value arrived.  Preserve the model's own bytes
+                        # instead of discarding them: the writer's recovery
+                        # layer may close an unambiguous container suffix
+                        # (representation-only repair).  Only a truly empty
+                        # accumulation is a hard transport failure.
+                        if accumulated.strip():
+                            return accumulated
+                        raise ProviderRuntimeError(
+                            "provider_stream_finished_before_complete_json"
+                        )
+            complete = _first_complete_json(accumulated)
+            if complete is not None:
+                return complete
+            if accumulated.strip():
+                return accumulated
+            last_error = ProviderRuntimeError("provider_stream_ended_before_complete_json")
+            if attempt >= attempts:
+                raise last_error
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            last_error = ProviderRuntimeError(f"provider_http_error:{exc.code}:{detail}")
+            if exc.code not in {408, 409, 429, 500, 502, 503, 504} or attempt >= attempts:
+                raise last_error from exc
+        except urllib.error.URLError as exc:
+            last_error = ProviderRuntimeError(f"provider_network_error:{exc.reason}")
+            if attempt >= attempts:
+                raise last_error from exc
+        except (TimeoutError, socket.timeout) as exc:
+            complete = _first_complete_json(accumulated)
+            if complete is not None:
+                return complete
+            last_error = ProviderTimeoutError("provider_timeout_error:read_timeout")
+            if attempt >= attempts:
+                raise last_error from exc
+        if attempt < attempts and delay_seconds > 0:
+            time.sleep(delay_seconds)
+            delay_seconds *= max(1.0, retry_policy.backoff_multiplier)
+    if last_error is not None:
+        raise last_error
+    raise ProviderRuntimeError("provider_unknown_error")
+
+
+def _first_complete_json(text: str) -> str | None:
+    start = text.find("{")
+    if start < 0:
+        return None
+    candidate = _balanced_json_candidate(text, start)
+    if candidate is None:
+        return None
+    try:
+        json.loads(candidate)
+    except json.JSONDecodeError:
+        return None
+    return candidate
+
+
+def _balanced_json_candidate(text: str, start: int) -> str | None:
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+        elif char in "]}":
+            depth -= 1
+            if depth == 0:
+                return text[start:index + 1]
+            if depth < 0:
+                return None
+    return None
+
+
 def _auth_headers(provider: LLMProvider, config: LLMConfig) -> dict[str, str]:
     provider_value = getattr(provider, "value", str(provider))
     if provider_value in {"openai", "openrouter"}:
@@ -447,6 +663,27 @@ def _normalized_usage(value: object) -> dict[str, int] | None:
 def _schema_name(request: LLMRequest) -> str:
     name = request.schema_name or "structured_response"
     return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in name)
+
+
+def _strip_unique_items(schema: object) -> object:
+    """Recursively remove ``uniqueItems`` keys from a JSON schema.
+
+    xgrammar (used by loopback vLLM) rejects ``uniqueItems``.  The keyword is a
+    grammar hint only; downstream binding/authorship gates enforce uniqueness,
+    so removing it does not weaken the contract.  ``enum``/``const``/``minLength``
+    and other supported constraints are preserved so guided decoding still
+    prevents representation errors.
+    """
+
+    if isinstance(schema, dict):
+        return {
+            key: _strip_unique_items(value)
+            for key, value in schema.items()
+            if key != "uniqueItems"
+        }
+    if isinstance(schema, list):
+        return [_strip_unique_items(item) for item in schema]
+    return schema
 
 
 def _json_dumps(payload: object) -> str:
