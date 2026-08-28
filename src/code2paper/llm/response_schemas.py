@@ -41,7 +41,7 @@ class PublicationContentWitnessV1(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    witness_kind: Literal["facet", "slot", "edge", "formula", "claim", "equation"]
+    witness_kind: Literal["facet", "field", "slot", "edge", "formula", "claim", "equation"]
     target_id: str = Field(min_length=1, max_length=240)
     exact_text: str = Field(min_length=1, max_length=4000)
 
@@ -54,6 +54,7 @@ class PublicationMethodParagraphOutputV1(BaseModel):
     paragraph_id: str = Field(min_length=1, max_length=240)
     paragraph_markdown: str = Field(min_length=1, max_length=16000)
     rendered_from_facet_ids: list[str] = Field(default_factory=list, max_length=32)
+    rendered_field_candidate_ids: list[str] = Field(default_factory=list, max_length=64)
     rendered_slot_ids: list[str] = Field(default_factory=list, max_length=64)
     rendered_edge_ids: list[str] = Field(default_factory=list, max_length=32)
     used_formula_package_ids: list[str] = Field(default_factory=list, max_length=8)
@@ -87,6 +88,7 @@ class PublicationMethodSectionOutputV1(BaseModel):
     rendered_brief_ids: list[str] = Field(default_factory=list)
     deferred_brief_ids: list[str] = Field(default_factory=list)
     rendered_from_facet_ids: list[str] = Field(default_factory=list)
+    rendered_field_candidate_ids: list[str] = Field(default_factory=list)
     deferred_facet_ids: list[str] = Field(default_factory=list)
     # Paragraph/slot/formula witnesses make content coverage auditable.  They
     # are optional for backward-compatible replay; the harness validates any

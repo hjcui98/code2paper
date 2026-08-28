@@ -21,6 +21,8 @@ from code2paper.agentic.method_argument_models import (
     SectionArgumentGraphV1,
     SectionArgumentMoveV1,
     SectionParagraphPlanV1,
+    ParagraphWitnessContractV1,
+    ParagraphWitnessTargetV1,
     SectionContentOpenSlotV1,
     SemanticArgumentFrameV1,
     SemanticFlowEdgeV1,
@@ -56,6 +58,10 @@ class MethodArchitect:
         audience: str = "method readers",
         page_budget: float = 0.0,
         story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
+        publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+        argument_facets: tuple[Any, ...] | list[Any] = (),
+        facet_alignments: tuple[Any, ...] | list[Any] = (),
+        unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
     ) -> MethodSectionPlanV2:
         return build_method_section_plan(
             claims=claims,
@@ -67,6 +73,10 @@ class MethodArchitect:
             audience=audience,
             page_budget=page_budget,
             story_spine=story_spine,
+            publication_field_candidates=publication_field_candidates,
+            argument_facets=argument_facets,
+            facet_alignments=facet_alignments,
+            unit_frames=unit_frames,
         )
 
 
@@ -81,6 +91,10 @@ def build_method_section_plan(
     audience: str = "method readers",
     page_budget: float = 0.0,
     story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> MethodSectionPlanV2:
     plan, _trace = build_method_section_plan_with_trace(
         claims=claims,
@@ -92,6 +106,10 @@ def build_method_section_plan(
         audience=audience,
         page_budget=page_budget,
         story_spine=story_spine,
+        publication_field_candidates=publication_field_candidates,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        unit_frames=unit_frames,
     )
     return plan
 
@@ -111,6 +129,10 @@ def build_method_section_plan_with_trace(
     concept_cards: Any | None = None,
     argument_briefs: Any | None = None,
     prior_plan: MethodSectionPlanV2 | None = None,
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
     """Create argument units and section graphs from authorized artifacts.
 
@@ -440,6 +462,10 @@ def build_method_section_plan_with_trace(
                 section_id=section_id,
                 section_units=section_units,
                 move_objects=move_objects,
+                unit_frames=unit_frames,
+                argument_facets=argument_facets,
+                facet_alignments=facet_alignments,
+                publication_field_candidates=publication_field_candidates,
             ),
         ))
 
@@ -552,7 +578,11 @@ def build_method_section_plan_with_trace(
         story_spine=story_spine,
         concept_cards=concept_cards,
         argument_briefs=argument_briefs,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
         equations=equations,
+        unit_frames=unit_frames,
     )
     if prior_plan is not None:
         units, graphs = _stabilize_plan_section_ids(
@@ -566,6 +596,10 @@ def build_method_section_plan_with_trace(
         "completeness": completeness.content_digest if completeness else "",
         "equations": equations.content_digest if equations else "",
         "configurations": configurations.content_digest if configurations else "",
+        "publication_field_candidates": _digest([
+            item.model_dump(mode="json") if hasattr(item, "model_dump") else item
+            for item in publication_field_candidates
+        ]),
         "story_spine": [node.story_node_id for node in story_spine],
     })[7:]
     story_usage = _story_spine_usage_trace(story_spine, graphs, units)
@@ -578,6 +612,10 @@ def build_method_section_plan_with_trace(
             "completeness": completeness.content_digest if completeness else "",
             "equations": equations.content_digest if equations else "",
             "configurations": configurations.content_digest if configurations else "",
+            "publication_field_candidates": _digest([
+                item.model_dump(mode="json") if hasattr(item, "model_dump") else item
+                for item in publication_field_candidates
+            ]),
             "story_spine": {
                 "used": bool(spine_obligation_order),
                 "node_ids": [node.story_node_id for node in story_spine],
@@ -1098,6 +1136,7 @@ def _enrich_section_content_contracts(
     argument_briefs: Any | None = None,
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
     equations: EquationClaimSetV1 | None = None,
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> list[SectionArgumentGraphV1]:
@@ -1123,6 +1162,14 @@ def _enrich_section_content_contracts(
         for alignment in (facet_alignments or ())
         if str(getattr(alignment, "facet_id", "") or "").strip()
     }
+    field_candidates_by_facet: dict[str, tuple[Any, ...]] = {}
+    for candidate in publication_field_candidates or ():
+        facet_id = str(getattr(candidate, "facet_id", "") or "").strip()
+        if facet_id:
+            field_candidates_by_facet.setdefault(facet_id, ())
+            field_candidates_by_facet[facet_id] = (
+                *field_candidates_by_facet[facet_id], candidate,
+            )
     story_by_id = {node.story_node_id: node for node in story_spine}
     story_order = {node.story_node_id: index for index, node in enumerate(story_spine)}
     units_by_id = {unit.argument_unit_id: unit for unit in units}
@@ -1327,6 +1374,7 @@ def _enrich_section_content_contracts(
                 unit_frames=unit_frames,
                 argument_facets=argument_facets,
                 facet_alignments=facet_alignments,
+                publication_field_candidates=publication_field_candidates,
             ),
         }))
     return enriched
@@ -2013,6 +2061,10 @@ def build_method_section_plan_with_product_readiness(
     concept_cards: Any | None = None,
     argument_briefs: Any | None = None,
     prior_plan: MethodSectionPlanV2 | None = None,
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> tuple[MethodSectionPlanV2, MethodPlanProductReadinessV1, dict[str, Any]]:
     """Build the section plan together with its graded product readiness.
 
@@ -2041,6 +2093,10 @@ def build_method_section_plan_with_product_readiness(
         concept_cards=concept_cards,
         argument_briefs=argument_briefs,
         prior_plan=prior_plan,
+        publication_field_candidates=publication_field_candidates,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        unit_frames=unit_frames,
     )
     readiness = assess_plan_product_readiness(
         plan=plan,
@@ -2894,6 +2950,7 @@ def replan_moves_with_trace(
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
     facet_policies: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
     """Re-derive the typed semantic graph on the frozen plan's structure.
 
@@ -3258,6 +3315,7 @@ def replan_moves_with_trace(
             unit_frames=unit_frames,
             argument_facets=argument_facets,
             facet_alignments=facet_alignments,
+            publication_field_candidates=publication_field_candidates,
         ))
     rebuilt_sections = _enrich_section_content_contracts(
         rebuilt_sections,
@@ -3267,6 +3325,7 @@ def replan_moves_with_trace(
         argument_briefs=argument_briefs,
         argument_facets=argument_facets,
         facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
         equations=equations,
         unit_frames=unit_frames,
     )
@@ -3515,6 +3574,7 @@ def _rebuild_section(
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
 ) -> SectionArgumentGraphV1:
     """Apply reader-facing planning and move objects to one section graph."""
 
@@ -3557,6 +3617,7 @@ def _rebuild_section(
         unit_frames=unit_frames,
         argument_facets=argument_facets,
         facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
     )
     return section.model_copy(update={
         "heading": heading,
@@ -3579,6 +3640,7 @@ def _build_section_paragraph_plans(
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[SectionParagraphPlanV1, ...]:
     """Build deterministic paragraph contracts from ordered semantic slots.
 
@@ -3588,6 +3650,20 @@ def _build_section_paragraph_plans(
     the same move graph but emits small ordered clusters; it is purely
     organizational and does not create evidence.
     """
+
+    # Keep the lookup local to this pure planner helper.  A previous partial
+    # integration created this map only in ``_enrich_section_content_contracts``
+    # but still used it here, so any section plan with a facet raised a
+    # ``NameError`` before the Writer received a paragraph contract.
+    field_candidates_by_facet: dict[str, tuple[Any, ...]] = {}
+    for candidate in publication_field_candidates or ():
+        facet_id = str(getattr(candidate, "facet_id", "") or "").strip()
+        if not facet_id:
+            continue
+        field_candidates_by_facet[facet_id] = (
+            *field_candidates_by_facet.get(facet_id, ()),
+            candidate,
+        )
 
     plans: list[SectionParagraphPlanV1] = []
     paragraph_index = 0
@@ -3653,18 +3729,31 @@ def _build_section_paragraph_plans(
                 if set(edge.source_slot_ids).intersection(chunk)
                 or set(edge.target_slot_ids).intersection(chunk)
             )
+            # Formula obligations are canonical IDs.  Bind an equation-scoped
+            # obligation only to a unit that owns that exact equation; any
+            # section-scoped/deferred obligation is routed once below.  This
+            # prevents every equation-bearing unit from becoming a consumer of
+            # the whole section formula set.
+            unit_formula_ids: tuple[str, ...] = ()
+            if chunk_index == len(ordered_chunks) and unit.equation_ids:
+                unit_equation_ids = {str(value).strip() for value in unit.equation_ids}
+                unit_formula_ids = tuple(
+                    obligation_id
+                    for obligation_id in formula_obligation_ids
+                    if (
+                        str(obligation_id).strip().removeprefix("formula:")
+                        in unit_equation_ids
+                        or str(obligation_id).strip().removeprefix("formula:equation:")
+                        in unit_equation_ids
+                    )
+                )
             plans.append(SectionParagraphPlanV1(
                 paragraph_id=f"paragraph:{section_id}:{paragraph_index}",
                 paragraph_role=role,  # type: ignore[arg-type]
                 argument_unit_ids=(unit.argument_unit_id,),
                 ordered_semantic_slot_ids=tuple(chunk),
                 required_edge_ids=required_edges,
-                formula_obligation_ids=(
-                    tuple(formula_obligation_ids)
-                    if chunk_index == len(ordered_chunks)
-                    and unit.equation_ids
-                    else ()
-                ),
+                formula_obligation_ids=unit_formula_ids,
                 expected_sentence_range=(1, max(2, min(5, len(chunk) + 1))),
                 transition_from=(
                     plans[-1].paragraph_id if plans else ""
@@ -3697,14 +3786,30 @@ def _build_section_paragraph_plans(
             for value in (unit.brief_order or unit.brief_ids or ())
             if str(value).strip()
         }
-        unit_facets = [
-            facet for facet in facet_by_id.values()
-            if getattr(facet, "required", False)
-            and (
-                not str(getattr(facet, "brief_id", "") or "").strip()
-                or str(getattr(facet, "brief_id", "") or "").strip() in brief_ids
-            )
-        ]
+        unit_facets = []
+        for facet in facet_by_id.values():
+            if (
+                str(getattr(facet, "brief_id", "") or "").strip()
+                and str(getattr(facet, "brief_id", "") or "").strip() not in brief_ids
+            ):
+                continue
+            candidates = field_candidates_by_facet.get(str(facet.facet_id), ())
+            if candidates:
+                if any(str(getattr(item, "render_policy", "")) == "required" for item in candidates):
+                    unit_facets.append(facet)
+                continue
+            # Compatibility for frozen callers that pass only aligned facets:
+            # an aggregate ``facet.required`` flag is not enough to create a
+            # hard target once an alignment is available.
+            alignment = alignment_by_facet_id.get(str(facet.facet_id))
+            if alignment is None:
+                continue
+            if (
+                str(getattr(alignment, "status", "")) == "entailed"
+                and bool(getattr(alignment, "exact_excerpts", ()))
+                and bool(getattr(alignment, "bound_claim_ids", ()))
+            ):
+                unit_facets.append(facet)
         frame = (
             unit_frames.get(unit.argument_unit_id)
             if unit_frames is not None
@@ -3800,33 +3905,234 @@ def _build_section_paragraph_plans(
                 ]
                 target_index = overview[0] if overview else paragraph_indexes[0]
             target = plans[target_index]
+            required_candidates = tuple(
+                str(getattr(item, "candidate_id", "") or "")
+                for item in field_candidates_by_facet.get(facet_id, ())
+                if str(getattr(item, "render_policy", "")) == "required"
+                and str(getattr(item, "candidate_id", "") or "").strip()
+            )
+            facet_formula_ids = (
+                (f"formula:facet:{facet_id}",)
+                if str(getattr(facet, "formula_expectation", "none") or "none") == "required"
+                else ()
+            )
             plans[target_index] = target.model_copy(update={
-                "required_facet_ids": tuple(dict.fromkeys([
-                    *target.required_facet_ids,
-                    facet_id,
+                "required_facet_ids": (
+                    target.required_facet_ids
+                    if required_candidates
+                    else tuple(dict.fromkeys([
+                        *target.required_facet_ids,
+                        facet_id,
+                    ]))
+                ),
+                "required_field_candidate_ids": tuple(dict.fromkeys([
+                    *target.required_field_candidate_ids,
+                    *required_candidates,
+                ])),
+                "formula_obligation_ids": tuple(dict.fromkeys([
+                    *target.formula_obligation_ids,
+                    *facet_formula_ids,
                 ])),
             })
-    # A formula consumer is explicit and follows the mechanism paragraph. If
-    # an unbound frame leaves the final chunk without a consumer, add exactly
-    # one at the end of that unit.  Do not walk paragraph-by-paragraph: the
-    # old loop propagated the same formula obligation to every later chunk.
-    for unit in section_units:
-        if not unit.equation_ids:
-            continue
-        unit_indexes = [
+    # A formula consumer is explicit and unique.  First preserve any
+    # facet-scoped formula obligations that were placed with their field
+    # candidate; then attach each remaining section/equation obligation to
+    # one final mechanism paragraph.  The previous implementation copied the
+    # complete section obligation set to every equation-bearing unit, which
+    # made one obligation appear to have several consumers and prevented
+    # package consumption from closing.
+    assigned_formula_ids = {
+        str(obligation_id)
+        for paragraph in plans
+        for obligation_id in paragraph.formula_obligation_ids
+        if str(obligation_id).strip()
+    }
+    remaining_formula_ids = [
+        str(obligation_id).strip()
+        for obligation_id in formula_obligation_ids
+        if str(obligation_id).strip() and str(obligation_id).strip() not in assigned_formula_ids
+    ]
+    if remaining_formula_ids and plans:
+        eligible_indexes = [
             index for index, paragraph in enumerate(plans)
-            if paragraph.argument_unit_ids == (unit.argument_unit_id,)
+            if paragraph.argument_unit_ids
+            and any(
+                unit.argument_unit_id in paragraph.argument_unit_ids
+                and (
+                    bool(unit.equation_ids)
+                    or any(move.move == "equation_or_derivation" and move.required for move in unit_moves)
+                )
+                for unit in section_units
+                for unit_moves in ([move for move in move_objects if unit.argument_unit_id in (move.argument_unit_ids or ())],)
+            )
         ]
-        if not unit_indexes or any(
-            plans[index].formula_obligation_ids for index in unit_indexes
-        ):
-            continue
-        index = unit_indexes[-1]
-        plans[index] = plans[index].model_copy(update={
+        target_index = eligible_indexes[-1] if eligible_indexes else len(plans) - 1
+        target = plans[target_index]
+        plans[target_index] = target.model_copy(update={
             "paragraph_role": "formula",
-            "formula_obligation_ids": tuple(formula_obligation_ids),
+            "formula_obligation_ids": tuple(dict.fromkeys([
+                *target.formula_obligation_ids,
+                *remaining_formula_ids,
+            ])),
         })
-    return tuple(plans)
+    # Split low-level slots into support evidence and reader-facing
+    # publication slots.  A semantic slot is publication-required only when
+    # it carries a meaningful operation/input/output/condition and is not an
+    # implementation-only residue.  The split is deterministic and keeps the
+    # old ordered list for compatibility.
+    for index, plan in enumerate(plans):
+        frame = None
+        for unit in section_units:
+            if unit.argument_unit_id in plan.argument_unit_ids:
+                frame = unit_frames.get(unit.argument_unit_id) if unit_frames is not None else unit.semantic_frame
+                break
+        slot_by_id_local = {slot.slot_id: slot for slot in (frame.slots if frame is not None else ())}
+        role_slots: dict[str, list[str]] = {role: [] for role in ("input", "transformation", "condition", "output")}
+        for slot_id in plan.ordered_semantic_slot_ids:
+            role = str(getattr(slot_by_id_local.get(slot_id), "role", ""))
+            if role in role_slots and slot_by_id_local.get(slot_id) is not None:
+                role_slots[role].append(slot_id)
+        # Publication obligations are a compact reader-facing spine: retain
+        # the first input/condition/output and the endpoints of a multi-step
+        # transformation chain.  All intermediate implementation atoms stay
+        # in support_slot_ids and remain available to the Writer without
+        # making every low-level slot a hard sentence obligation.
+        required_slot_list: list[str] = []
+        for role in ("input", "transformation", "condition", "output"):
+            values = role_slots[role]
+            if not values:
+                continue
+            selected = values if role == "transformation" and len(values) <= 2 else (
+                values[:1] + (values[-1:] if role == "transformation" and len(values) > 1 else [])
+            )
+            # ``SemanticFlowSlotV1`` already requires an exact fact/claim
+            # binding.  Keep this check explicit at the projection boundary so
+            # low-level or partially reconstructed frames cannot become hard
+            # publication obligations merely because they have a role label.
+            required_slot_list.extend(
+                slot_id for slot_id in selected
+                if slot_by_id_local[slot_id].fact_ids or slot_by_id_local[slot_id].claim_ids
+            )
+        required_slots = tuple(dict.fromkeys(required_slot_list))
+        support_slots = tuple(plan.ordered_semantic_slot_ids)
+        plans[index] = plan.model_copy(update={
+            "support_slot_ids": support_slots,
+            "required_publication_slot_ids": required_slots,
+        })
+
+    # Build one paragraph-local witness contract from the exact same targets
+    # used by the transaction assessor.  Exact source excerpts are anchors,
+    # not prose; the Writer sees them as allowed semantic evidence and must
+    # still rewrite them in reader-facing language.
+    final_plans: list[SectionParagraphPlanV1] = []
+    for plan in plans:
+        targets: list[ParagraphWitnessTargetV1] = []
+        for facet_id in plan.required_facet_ids:
+            facet = facet_by_id.get(facet_id)
+            candidates = field_candidates_by_facet.get(facet_id, ())
+            excerpts = tuple(dict.fromkeys(
+                str(value)
+                for candidate in candidates
+                for value in (getattr(candidate, "exact_excerpts", ()) or ())
+                if str(value).strip()
+            ))
+            if not excerpts:
+                alignment = alignment_by_facet_id.get(facet_id)
+                excerpts = tuple(dict.fromkeys(
+                    str(getattr(item, "exact_excerpt", "") or "")
+                    for item in (getattr(alignment, "exact_excerpts", ()) or ())
+                    if str(getattr(item, "exact_excerpt", "") or "").strip()
+                ))
+            targets.append(ParagraphWitnessTargetV1(
+                target_id=facet_id,
+                target_kind="facet",
+                semantic_atom=(
+                    " ".join(str(value) for value in (getattr(facet, "semantic_fields", {}) or {}).values())
+                    if facet is not None else facet_id
+                )[:1200],
+                paper_role=str(getattr(facet, "facet_kind", "mechanism") or "mechanism") if facet is not None else "mechanism",
+                allowed_anchor_ids=tuple(
+                    span_id
+                    for candidate in candidates
+                    for span_id in (getattr(candidate, "bound_span_ids", ()) or ())
+                ),
+                allowed_exact_excerpts=excerpts,
+                authority_lane="executable_hard",
+            ))
+        for candidate_id in plan.required_field_candidate_ids:
+            candidate = next(
+                (item for values in field_candidates_by_facet.values() for item in values
+                 if str(getattr(item, "candidate_id", "")) == candidate_id),
+                None,
+            )
+            if candidate is None:
+                continue
+            targets.append(ParagraphWitnessTargetV1(
+                target_id=candidate_id,
+                target_kind="field",
+                semantic_atom=str(getattr(candidate, "semantic_atom", "") or ""),
+                paper_role=str(getattr(candidate, "field_name", "") or "mechanism"),
+                required_polarity=str(getattr(candidate, "polarity", "unknown") or "unknown"),
+                required_conditions=tuple(getattr(candidate, "conditions", ()) or ()),
+                allowed_anchor_ids=tuple(getattr(candidate, "bound_span_ids", ()) or ()),
+                allowed_exact_excerpts=tuple(getattr(candidate, "exact_excerpts", ()) or ()),
+                authority_lane=str(getattr(candidate, "authority_lane", "executable_hard") or "executable_hard"),
+            ))
+        for slot_id in plan.required_publication_slot_ids:
+            slot = next(
+                (slot for unit in section_units
+                 for slot in ((unit_frames.get(unit.argument_unit_id) if unit_frames is not None else unit.semantic_frame).slots
+                              if (unit_frames.get(unit.argument_unit_id) if unit_frames is not None else unit.semantic_frame) is not None else ())
+                 if slot.slot_id == slot_id),
+                None,
+            )
+            if slot is None:
+                continue
+            targets.append(ParagraphWitnessTargetV1(
+                target_id=slot_id,
+                target_kind="slot",
+                semantic_atom=" ".join((slot.subject, slot.predicate, *slot.operands)).strip(),
+                paper_role=str(slot.role),
+                required_conditions=tuple(slot.conditions),
+                allowed_anchor_ids=tuple((*slot.fact_ids, *slot.claim_ids)),
+                allowed_exact_excerpts=(),
+                authority_lane=(slot.authority_lanes[0] if slot.authority_lanes else "executable_hard"),
+            ))
+        for edge_id in plan.required_edge_ids:
+            edge = next(
+                (edge for unit in section_units
+                 for frame in ((unit_frames.get(unit.argument_unit_id) if unit_frames is not None else unit.semantic_frame),)
+                 if frame is not None for edge in frame.edges if edge.relation_id == edge_id),
+                None,
+            )
+            if edge is None:
+                continue
+            targets.append(ParagraphWitnessTargetV1(
+                target_id=edge_id,
+                target_kind="edge",
+                semantic_atom=f"{edge.source_symbol} {edge.relation_type} {edge.target_symbol}",
+                paper_role="data_flow",
+                required_conditions=tuple(edge.conditions),
+                allowed_anchor_ids=tuple(edge.direct_span_ids),
+                authority_lane="executable_hard",
+            ))
+        for obligation_id in plan.formula_obligation_ids:
+            targets.append(ParagraphWitnessTargetV1(
+                target_id=obligation_id,
+                target_kind="formula",
+                semantic_atom="formal expression",
+                paper_role="formula",
+                allowed_anchor_ids=(obligation_id,),
+                authority_lane="formal_derivation",
+            ))
+        final_plans.append(plan.model_copy(update={
+            "witness_contract": ParagraphWitnessContractV1(
+                paragraph_id=plan.paragraph_id,
+                rhetorical_goal=str(plan.paragraph_role),
+                targets=tuple(targets),
+            ) if targets else None,
+        }))
+    return tuple(final_plans)
 
 
 def _moves_from_frame(

@@ -65,6 +65,7 @@ def _transaction_has_valid_witnesses(
     *,
     required_targets: Mapping[str, tuple[str, ...]] | None = None,
     formula_routes: Mapping[str, Any] | None = None,
+    required_anchors: Mapping[tuple[str, str], tuple[str, ...]] | None = None,
 ) -> bool:
     """Return whether one persisted paragraph transaction has valid witnesses.
 
@@ -87,7 +88,8 @@ def _transaction_has_valid_witnesses(
 
         plan_row = {
             "required_facet_ids": tuple((required_targets or {}).get("facet", ())),
-            "ordered_semantic_slot_ids": tuple((required_targets or {}).get("slot", ())),
+            "required_publication_slot_ids": tuple((required_targets or {}).get("slot", ())),
+            "required_field_candidate_ids": tuple((required_targets or {}).get("field", ())),
             "required_edge_ids": tuple((required_targets or {}).get("edge", ())),
             "formula_obligation_ids": tuple((required_targets or {}).get("formula", ())),
         }
@@ -95,6 +97,7 @@ def _transaction_has_valid_witnesses(
             item,
             plan_row=plan_row,
             formula_routes=formula_routes,
+            required_anchors=required_anchors,
         ).valid
     except (ImportError, TypeError, ValueError, AttributeError):
         pass
@@ -119,6 +122,7 @@ def _transaction_has_valid_witnesses(
         witness_texts[key] = exact
     for field_name, kind in (
         ("rendered_from_facet_ids", "facet"),
+        ("rendered_field_candidate_ids", "field"),
         ("rendered_slot_ids", "slot"),
         ("rendered_edge_ids", "edge"),
         ("used_formula_package_ids", "formula"),
@@ -159,8 +163,10 @@ class MethodContentTraceRowV1(BaseModel):
     source_facet_ids: tuple[str, ...] = Field(default_factory=tuple)
     source_authority_lane: str = ""
     field_bindings: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    required_field_candidate_ids: tuple[str, ...] = Field(default_factory=tuple)
     semantic_frame_id: str = ""
     ordered_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_publication_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
     required_edge_ids: tuple[str, ...] = Field(default_factory=tuple)
     argument_unit_id: str = ""
     section_id: str = ""
@@ -168,6 +174,7 @@ class MethodContentTraceRowV1(BaseModel):
     formula_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
     accepted_formula_package_ids: tuple[str, ...] = Field(default_factory=tuple)
     writer_rendered_span_refs: tuple[str, ...] = Field(default_factory=tuple)
+    writer_rendered_field_candidate_refs: tuple[str, ...] = Field(default_factory=tuple)
     writer_rendered_edge_refs: tuple[str, ...] = Field(default_factory=tuple)
     final_validation_refs: tuple[str, ...] = Field(default_factory=tuple)
     terminal_state: TraceTerminalStateV1 = "planned"
@@ -213,7 +220,13 @@ class MethodContentTraceV1(BaseModel):
             slot_id
             for row in self.rows
             if row.terminal_state == "rendered"
-            for slot_id in row.ordered_slot_ids
+            for slot_id in row.required_publication_slot_ids
+        }
+        rendered_field_ids = {
+            field_id
+            for row in self.rows
+            if row.terminal_state == "rendered"
+            for field_id in row.writer_rendered_field_candidate_refs
         }
         planned_edge_ids = {
             edge_id
@@ -236,6 +249,12 @@ class MethodContentTraceV1(BaseModel):
             for row in self.rows
             for package_id in row.accepted_formula_package_ids
         }
+        formula_consumer_counts: dict[str, int] = {}
+        for row in self.rows:
+            if row.terminal_state != "rendered":
+                continue
+            for obligation_id in row.formula_obligation_ids:
+                formula_consumer_counts[obligation_id] = formula_consumer_counts.get(obligation_id, 0) + 1
         field_bound_rows = sum(
             any(binding.get("status") in {"entailed", "partial"}
                 for binding in row.field_bindings)
@@ -255,10 +274,14 @@ class MethodContentTraceV1(BaseModel):
             "planned_paragraphs": len(paragraph_ids),
             "rendered_paragraphs": len(rendered_paragraph_ids),
             "rendered_slots": len(rendered_slot_ids),
+            "rendered_field_candidates": len(rendered_field_ids),
             "planned_edges": len(planned_edge_ids),
             "rendered_edges": len(planned_edge_ids & rendered_edge_ids),
             "formula_obligations": len(formula_obligation_ids),
             "consumed_formula_packages": len(consumed_formula_package_ids),
+            "duplicate_formula_consumers": sum(
+                count - 1 for count in formula_consumer_counts.values() if count > 1
+            ),
             "field_bound_rows": field_bound_rows,
             "condition_polarity_witness_rows": condition_witness_rows,
             **{
@@ -371,12 +394,27 @@ def build_method_content_trace_from_artifact_paths(
             row = plan_by_id.get(paragraph_id, {})
             return {
                 "facet": _ids(row.get("required_facet_ids")),
-                "slot": _ids(row.get("ordered_semantic_slot_ids")),
+                "field": _ids(row.get("required_field_candidate_ids")),
+                "slot": _ids(
+                    row.get("required_publication_slot_ids")
+                    or row.get("ordered_semantic_slot_ids")
+                ),
                 "edge": _ids(row.get("required_edge_ids")),
                 "formula": _ids(row.get("formula_obligation_ids")),
             }
 
+        def _required_anchors(paragraph_id: str) -> dict[tuple[str, str], tuple[str, ...]]:
+            from code2paper.agentic.publication_transaction_contract import (
+                required_anchors_from_plan_row,
+            )
+            return required_anchors_from_plan_row(plan_by_id.get(paragraph_id, {}))
+
         formula_routes: dict[str, dict[str, Any]] = {}
+        has_explicit_package_routes = any(
+            isinstance(package, Mapping)
+            and str(package.get("obligation_id") or "").strip()
+            for package in packages
+        )
         for obligation in (section_formalization.get("formula_obligations") or ()):
             if not isinstance(obligation, Mapping):
                 continue
@@ -386,12 +424,19 @@ def build_method_content_trace_from_artifact_paths(
             matches = [
                 package for package in packages
                 if isinstance(package, Mapping)
-                and (
-                    str(package.get("obligation_id") or "").strip() == obligation_id
-                    or set(_ids(obligation.get("facet_ids")))
-                    & set(_ids(package.get("bound_facet_ids")))
-                )
+                and str(package.get("obligation_id") or "").strip() == obligation_id
             ]
+            if not matches and not has_explicit_package_routes:
+                matches = [
+                    package for package in packages
+                    if isinstance(package, Mapping)
+                    and (
+                        not _ids(obligation.get("facet_ids"))
+                        or set(_ids(obligation.get("facet_ids"))).intersection(
+                            set(_ids(package.get("bound_facet_ids")))
+                        )
+                    )
+                ]
             formula_routes[obligation_id] = {
                 "package_ids": tuple(
                     str(package.get("package_id") or "")
@@ -420,6 +465,7 @@ def build_method_content_trace_from_artifact_paths(
                     item,
                     required_targets=_required_targets(paragraph_id),
                     formula_routes=formula_routes,
+                    required_anchors=_required_anchors(paragraph_id),
                 )
                 for value in _ids(item.get("rendered_slot_ids"))
             }
@@ -429,6 +475,7 @@ def build_method_content_trace_from_artifact_paths(
                     item,
                     required_targets=_required_targets(paragraph_id),
                     formula_routes=formula_routes,
+                    required_anchors=_required_anchors(paragraph_id),
                 )
                 for value in _ids(item.get("rendered_edge_ids"))
             }
@@ -438,6 +485,7 @@ def build_method_content_trace_from_artifact_paths(
                     item,
                     required_targets=_required_targets(paragraph_id),
                     formula_routes=formula_routes,
+                    required_anchors=_required_anchors(paragraph_id),
                 )
                 for value in _ids(item.get("used_formula_package_ids"))
             }
@@ -447,6 +495,7 @@ def build_method_content_trace_from_artifact_paths(
                     item,
                     required_targets=_required_targets(paragraph_id),
                     formula_routes=formula_routes,
+                    required_anchors=_required_anchors(paragraph_id),
                 )
                 for value in _ids(item.get("used_claim_ids"))
             }
@@ -455,6 +504,7 @@ def build_method_content_trace_from_artifact_paths(
                     item,
                     required_targets=_required_targets(paragraph_id),
                     formula_routes=formula_routes,
+                    required_anchors=_required_anchors(paragraph_id),
                 )
                 transaction_validity[paragraph_id] = valid
                 if valid:
@@ -478,6 +528,11 @@ def build_method_content_trace_from_artifact_paths(
             # A missing placement is a traceable authoring defect, not proof
             # that the first paragraph rendered the entire section.
             slot_ids = _ids(paragraph.get("ordered_semantic_slot_ids"))
+            publication_slot_ids = _ids(
+                paragraph.get("required_publication_slot_ids")
+                or paragraph.get("ordered_semantic_slot_ids")
+            )
+            field_candidate_ids = _ids(paragraph.get("required_field_candidate_ids"))
             edge_ids = _ids(paragraph.get("required_edge_ids"))
             obligation_ids = _ids(paragraph.get("formula_obligation_ids"))
             unit_id = unit_ids[0] if unit_ids else ""
@@ -523,9 +578,22 @@ def build_method_content_trace_from_artifact_paths(
                 state = "deferred_with_reason"
             else:
                 state = "planned"
-            consumed = tuple(
-                package_id for package_id in package_ids if package_id in used_packages
-            ) if obligation_ids else ()
+            if obligation_ids:
+                if has_explicit_package_routes:
+                    consumed = tuple(
+                        str(package.get("package_id") or "")
+                        for package in packages
+                        if isinstance(package, Mapping)
+                        and str(package.get("package_id") or "") in used_packages
+                        and str(package.get("obligation_id") or "").strip() in set(obligation_ids)
+                        and str(package.get("consumer_paragraph_id") or "").strip() == paragraph_id
+                    )
+                else:
+                    consumed = tuple(
+                        package_id for package_id in package_ids if package_id in used_packages
+                    )
+            else:
+                consumed = ()
             if obligation_ids and package_ids and not consumed and state == "rendered":
                 state = "rendered_invalid"
             rows.append(MethodContentTraceRowV1(
@@ -534,8 +602,10 @@ def build_method_content_trace_from_artifact_paths(
                 source_facet_ids=tuple(source_facets),
                 source_authority_lane=next((lane for lane in lanes if lane), ""),
                 field_bindings=tuple(dict(item) for item in field_bindings),
+                required_field_candidate_ids=field_candidate_ids,
                 semantic_frame_id=semantic_frame_id,
                 ordered_slot_ids=slot_ids,
+                required_publication_slot_ids=publication_slot_ids,
                 required_edge_ids=edge_ids,
                 argument_unit_id=unit_id,
                 section_id=section_id,
@@ -544,6 +614,17 @@ def build_method_content_trace_from_artifact_paths(
                 accepted_formula_package_ids=consumed,
                 writer_rendered_span_refs=tuple(
                     sorted(writer_claim_refs)
+                ),
+                writer_rendered_field_candidate_refs=tuple(
+                    sorted(
+                        set(field_candidate_ids)
+                        & set(_ids(
+                            paragraph_transactions.get(paragraph_id, {}).get(
+                                "rendered_field_candidate_ids"
+                            ) if paragraph_transactions else ()
+                        ))
+                    )
+                    if state == "rendered" else ()
                 ),
                 writer_rendered_edge_refs=tuple(sorted(
                     set(edge_ids).intersection(rendered_edges)

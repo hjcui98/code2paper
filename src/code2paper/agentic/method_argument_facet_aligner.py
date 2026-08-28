@@ -40,8 +40,11 @@ from code2paper.agentic.method_argument_brief_models import (
     MechanismAuthoringPacketV1,
     MethodArgumentBriefSetV1,
     MethodArgumentBriefV1,
+    PublicationFieldCandidateV1,
+    TypedFieldDeferredV1,
 )
 from code2paper.agentic.method_argument_brief_compiler import _stable_id
+from code2paper.agentic.implementation_scope import scope_role_for_candidate
 from code2paper.agentic.method_proposition_models import (
     MethodPropositionProposalBatchV1,
     MethodPropositionProposalV1,
@@ -687,9 +690,53 @@ def _candidate_evidence(
         for fact_id in (getattr(equation_by_id[equation_id], "fact_ids", ()) or ())
         if fact_id in fact_by_id
     )
-    span_ids: list[str] = [
+    # Rebind from the complete frozen authority ledger, not only the packet
+    # ids attached to the brief.  A broad research obligation may have
+    # selected a call site while the atomic field needs a threshold, guard, or
+    # internal operation in another validated packet.  We expose only a
+    # bounded, semantically ranked envelope to the owner; all ids still come
+    # from closed artifacts and are resolved below.
+    brief_terms = _tokens(
+        " ".join([
+            _author_brief_text(brief),
+            *(str(getattr(clause, "text", "") or "") for clause in brief.clauses),
+        ])
+    )
+    explicit_span_ids = [
         span_id for span_id in brief.span_ids if span_id in span_by_id
     ]
+    span_scores: list[tuple[int, str]] = []
+    for span_id, span in span_by_id.items():
+        related_fact_ids = _span_fact_ids(
+            span_id=span_id,
+            claims=claims,
+            facts=facts,
+            equations=equations,
+        )
+        related_equation_ids = _span_equation_ids(
+            span_id=span_id,
+            equations=equations,
+            facts=facts,
+        )
+        related_text = " ".join([
+            str(getattr(span, "exact_excerpt", "") or ""),
+            str(getattr(span, "path", "") or ""),
+            str(getattr(span, "symbol", "") or ""),
+            " ".join(
+                f"{getattr(fact_by_id.get(fact_id), 'subject', '')} "
+                f"{getattr(fact_by_id.get(fact_id), 'predicate', '')} "
+                f"{getattr(fact_by_id.get(fact_id), 'object', '')}"
+                for fact_id in related_fact_ids
+                if fact_id in fact_by_id
+            ),
+        ])
+        score = len(brief_terms.intersection(_tokens(related_text)))
+        if span_id in explicit_span_ids:
+            score += 1000
+        if score > 0:
+            span_scores.append((score, span_id))
+    span_scores.sort(key=lambda item: (-item[0], item[1]))
+    span_ids = [span_id for _score, span_id in span_scores[:64]]
     for claim_id in claim_ids:
         for span_id in (getattr(claim_by_id[claim_id], "direct_evidence_ids", ()) or ()):
             if span_id in span_by_id:
@@ -709,15 +756,20 @@ def _candidate_evidence(
     rows: list[dict[str, Any]] = []
     for index, span_id in enumerate(span_ids):
         span = span_by_id[span_id]
+        row_claim_ids = tuple(
+            claim_id
+            for claim_id, claim in claim_by_id.items()
+            if span_id in set(getattr(claim, "direct_evidence_ids", ()) or ())
+        )
         span_fact_ids = _span_fact_ids(
             span_id=span_id,
-            claims=(claim_by_id[item] for item in claim_ids),
+            claims=claims,
             facts=facts,
-            equations=(equation_by_id[item] for item in equation_ids),
+            equations=equations,
         )
         span_equation_ids = _span_equation_ids(
             span_id=span_id,
-            equations=(equation_by_id[item] for item in equation_ids),
+            equations=equations,
             facts=facts,
         )
         excerpt = _span_excerpt(
@@ -730,21 +782,11 @@ def _candidate_evidence(
                 "evidence_index": index,
                 "claim_ids": list(
                     claim_id
-                    for claim_id in claim_ids
-                    if span_id
-                    in set(
-                        getattr(claim_by_id[claim_id], "direct_evidence_ids", ())
-                        or ()
-                    )
+                    for claim_id in row_claim_ids
                 ),
                 "claim_texts": [
                     str(getattr(claim_by_id[claim_id], "canonical_text", "") or "")
-                    for claim_id in claim_ids
-                    if span_id
-                    in set(
-                        getattr(claim_by_id[claim_id], "direct_evidence_ids", ())
-                        or ()
-                    )
+                    for claim_id in row_claim_ids
                 ],
                 "fact_ids": list(span_fact_ids),
                 "fact_atoms": [
@@ -1292,6 +1334,58 @@ def _select_evidence_rows(
     return tuple(row for score, row in scored if score == maximum)
 
 
+def _atom_text(value: Any) -> str:
+    if isinstance(value, Mapping):
+        return " ".join(f"{key} {value[key]}" for key in sorted(value))
+    if isinstance(value, (tuple, list, set)):
+        return " ".join(str(item) for item in value)
+    return str(value or "")
+
+
+def _field_evidence_score(
+    facet: AuthorMechanismFacetV1,
+    field_name: str,
+    row: Mapping[str, Any],
+) -> int:
+    """Score one evidence row against one semantic atom.
+
+    Field-local scoring is used only to repair an omitted ordinal excerpt from
+    the already closed evidence envelope; it never creates an id or promotes
+    an alignment.
+    """
+
+    value = (facet.semantic_fields or {}).get(field_name, "")
+    field_aliases = {
+        "inputs": "input",
+        "outputs": "output",
+        "conditions": "condition",
+        "effects": "effect",
+        "formula_goal": "formula equation",
+        "operation": "operation transformation",
+    }
+    target = _tokens(" ".join((
+        field_name,
+        field_aliases.get(field_name, ""),
+        _atom_text(value),
+    )))
+    evidence = _tokens(_row_text(row))
+    return len(target.intersection(evidence))
+
+
+def _select_field_evidence_rows(
+    facet: AuthorMechanismFacetV1,
+    field_name: str,
+    rows: tuple[dict[str, Any], ...],
+) -> tuple[dict[str, Any], ...]:
+    if not rows:
+        return ()
+    scored = [(_field_evidence_score(facet, field_name, row), row) for row in rows]
+    maximum = max(score for score, _row in scored)
+    if maximum <= 0:
+        return ()
+    return tuple(row for score, row in scored if score == maximum)
+
+
 def _row_text(row: Mapping[str, Any]) -> str:
     """Bounded textual view used only for polarity consistency checks."""
 
@@ -1393,15 +1487,19 @@ def _alignment_from_owner(
         selected = _select_evidence_rows(facet, rows)
         if selected:
             selected_indices = [int(row["evidence_index"]) for row in selected]
-            field_rows = [
-                {
+            field_rows = []
+            for field_name in facet.semantic_fields:
+                field_selected = _select_field_evidence_rows(
+                    facet, _canonical_facet_field_name(field_name), rows
+                ) or selected
+                field_rows.append({
                     "field_name": field_name,
                     "status": "partial",
                     "polarity": "unknown",
-                    "bound_span_indices": selected_indices,
-                }
-                for field_name in facet.semantic_fields
-            ]
+                    "bound_span_indices": [
+                        int(row["evidence_index"]) for row in field_selected
+                    ],
+                })
             raw = {
                 "status": "partial",
                 "supported_fields": list(facet.semantic_fields),
@@ -1884,6 +1982,8 @@ class MethodArgumentFacetAlignmentResultV1(BaseModel):
     facets: tuple[AuthorMechanismFacetV1, ...] = Field(default_factory=tuple)
     alignments: tuple[FacetEvidenceAlignmentV1, ...] = Field(default_factory=tuple)
     policies: tuple[CandidateFacetPolicyV1, ...] = Field(default_factory=tuple)
+    publication_field_candidates: tuple[PublicationFieldCandidateV1, ...] = Field(default_factory=tuple)
+    typed_field_deferred: tuple[TypedFieldDeferredV1, ...] = Field(default_factory=tuple)
     schema_failures: tuple[str, ...] = Field(default_factory=tuple)
     traces: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     content_digest: str = ""
@@ -1897,6 +1997,13 @@ class MethodArgumentFacetAlignmentResultV1(BaseModel):
             raise ValueError("facet alignment result contains an unknown facet")
         if set(item.facet_id for item in self.policies) - set(facet_ids):
             raise ValueError("facet policy result contains an unknown facet")
+        if any(item.facet_id not in set(facet_ids) for item in self.publication_field_candidates):
+            raise ValueError("field candidate references an unknown facet")
+        if any(item.facet_id not in set(facet_ids) for item in self.typed_field_deferred):
+            raise ValueError("deferred field references an unknown facet")
+        candidate_ids = [item.candidate_id for item in self.publication_field_candidates]
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("facet alignment result contains duplicate field candidate ids")
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest(payload))
         return self
@@ -1913,6 +2020,13 @@ class MethodArgumentFacetAlignmentResultV1(BaseModel):
     @property
     def policy_by_facet_id(self) -> dict[str, CandidateFacetPolicyV1]:
         return {item.facet_id: item for item in self.policies}
+
+    @property
+    def field_candidates_by_facet_id(self) -> dict[str, tuple[PublicationFieldCandidateV1, ...]]:
+        result: dict[str, list[PublicationFieldCandidateV1]] = {}
+        for item in self.publication_field_candidates:
+            result.setdefault(item.facet_id, []).append(item)
+        return {key: tuple(value) for key, value in result.items()}
 
 
 def _known_ids(
@@ -2366,6 +2480,253 @@ def _merge_facet_alignment_policy(
     )
 
 
+def compile_publication_field_candidates(
+    facets: Iterable[AuthorMechanismFacetV1],
+    alignments: Iterable[FacetEvidenceAlignmentV1],
+    *,
+    ownership_roles_by_facet_field: Mapping[tuple[str, str], Iterable[str]] | None = None,
+    ownership_roles_by_symbol: Mapping[str, str] | None = None,
+    implementation_scope: Any | None = None,
+    behavior_graph: Any | None = None,
+) -> tuple[tuple[PublicationFieldCandidateV1, ...], tuple[TypedFieldDeferredV1, ...]]:
+    """Split aligned facets into atomic publication candidates and deferrals.
+
+    The aggregate facet status is never used as a hard publication target.
+    Each semantic field must carry its own typed binding and exact excerpt.
+    ``entailed`` fields with safe ownership become required candidates;
+    partial but evidenced fields remain optional Candidate material; all
+    unresolved/mismatched fields become typed deferrals for the research or
+    review queue.
+    """
+
+    role_overrides = ownership_roles_by_facet_field or {}
+    role_by_symbol = ownership_roles_by_symbol or {}
+    align_by_id = {item.facet_id: item for item in alignments}
+    candidates: list[PublicationFieldCandidateV1] = []
+    deferred: list[TypedFieldDeferredV1] = []
+
+    def _atom(value: Any) -> str:
+        if isinstance(value, Mapping):
+            return "; ".join(f"{key}: {value[key]}" for key in sorted(value))
+        if isinstance(value, (tuple, list, set)):
+            return ", ".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "").strip()
+
+    def _role_for_symbol(symbol: str) -> str:
+        raw = str(symbol or "").strip()
+        if implementation_scope is not None:
+            role = scope_role_for_candidate(
+                implementation_scope,
+                raw,
+                behavior_graph=behavior_graph,
+            )
+            if role != "unknown":
+                return role
+        if raw in role_by_symbol:
+            return str(role_by_symbol[raw] or "unknown")
+        folded = raw.casefold()
+        for key, role in role_by_symbol.items():
+            if str(key).casefold() == folded:
+                return str(role or "unknown")
+        return "unknown"
+
+    def _excerpt_score(field_name: str, semantic_atom: str, excerpt: Any) -> int:
+        aliases = {
+            "inputs": "input",
+            "outputs": "output",
+            "conditions": "condition",
+            "effects": "effect",
+            "formula_goal": "formula equation",
+            "operation": "operation transformation",
+        }
+        target = _tokens(" ".join((
+            field_name,
+            aliases.get(field_name, ""),
+            semantic_atom,
+        )))
+        evidence = _tokens(" ".join(
+            str(getattr(excerpt, name, "") or "")
+            for name in (
+                "exact_excerpt", "path", "symbol", "fact_atoms",
+                "equation_atoms", "operation_atoms",
+            )
+        ))
+        return len(target.intersection(evidence))
+
+    def _closed_field_excerpts(
+        *,
+        alignment: Any | None,
+        binding: Any | None,
+        field_name: str,
+        semantic_atom: str,
+    ) -> tuple[Any, ...]:
+        direct = tuple(getattr(binding, "exact_excerpts", ()) or ()) if binding is not None else ()
+        aggregate = tuple(getattr(alignment, "exact_excerpts", ()) or ()) if alignment is not None else ()
+        if direct:
+            return tuple(dict.fromkeys(direct))
+        if not aggregate:
+            return ()
+        span_ids = {
+            str(item).strip()
+            for item in (getattr(binding, "bound_span_ids", ()) or ())
+            if str(item).strip()
+        }
+        if span_ids:
+            selected = tuple(
+                item for item in aggregate
+                if str(getattr(item, "span_id", "") or "") in span_ids
+            )
+            if selected:
+                return selected
+        scored = [(_excerpt_score(field_name, semantic_atom, item), item) for item in aggregate]
+        maximum = max((score for score, _item in scored), default=0)
+        if maximum <= 0:
+            return ()
+        return tuple(item for score, item in scored if score == maximum)
+
+    for facet in facets:
+        alignment = align_by_id.get(facet.facet_id)
+        bindings = {
+            _canonical_facet_field_name(item.field_name): item
+            for item in (getattr(alignment, "field_bindings", ()) or ())
+        }
+        field_names = tuple(dict.fromkeys(
+            _canonical_facet_field_name(name)
+            for name in (
+                *(facet.semantic_fields or {}).keys(),
+                *bindings.keys(),
+            )
+            if str(name).strip()
+        ))
+        for field_name in field_names:
+            binding = bindings.get(field_name)
+            semantic_atom = _atom((facet.semantic_fields or {}).get(field_name, field_name))
+            if not semantic_atom:
+                semantic_atom = field_name
+            selected_excerpts = _closed_field_excerpts(
+                alignment=alignment,
+                binding=binding,
+                field_name=field_name,
+                semantic_atom=semantic_atom,
+            )
+            exact_excerpts = tuple(
+                str(getattr(excerpt, "exact_excerpt", "") or "").strip()
+                for excerpt in selected_excerpts
+                if str(getattr(excerpt, "exact_excerpt", "") or "").strip()
+            )
+            bound_claim_ids = tuple(getattr(binding, "bound_claim_ids", ()) or ()) if binding is not None else ()
+            bound_fact_ids = tuple(getattr(binding, "bound_fact_ids", ()) or ()) if binding is not None else ()
+            bound_span_ids = tuple(getattr(binding, "bound_span_ids", ()) or ()) if binding is not None else ()
+            bound_equation_ids = tuple(getattr(binding, "bound_equation_ids", ()) or ()) if binding is not None else ()
+            bound_span_ids = tuple(dict.fromkeys((
+                *bound_span_ids,
+                *(
+                    str(getattr(excerpt, "span_id", "") or "")
+                    for excerpt in selected_excerpts
+                    if str(getattr(excerpt, "span_id", "") or "").strip()
+                ),
+            )))
+            bound_fact_ids = tuple(dict.fromkeys((
+                *bound_fact_ids,
+                *(
+                    str(value)
+                    for excerpt in selected_excerpts
+                    for value in (getattr(excerpt, "fact_ids", ()) or ())
+                    if str(value).strip()
+                ),
+            )))
+            bound_equation_ids = tuple(dict.fromkeys((
+                *bound_equation_ids,
+                *(
+                    str(value)
+                    for excerpt in selected_excerpts
+                    for value in (getattr(excerpt, "equation_ids", ()) or ())
+                    if str(value).strip()
+                ),
+            )))
+            conditions = tuple(getattr(binding, "active_path_conditions", ()) or ()) if binding is not None else ()
+            if not conditions:
+                raw_conditions = (facet.semantic_fields or {}).get("conditions", ())
+                conditions = _clean_strings(
+                    raw_conditions if isinstance(raw_conditions, (tuple, list, set)) else (raw_conditions,)
+                ) if raw_conditions else ()
+            roles = tuple(dict.fromkeys(
+                str(item).strip()
+                for item in (
+                    role_overrides.get((facet.facet_id, field_name), ())
+                    or role_overrides.get((facet.facet_id, ""), ())
+                    or ()
+                )
+                if str(item).strip()
+            ))
+            if not roles and binding is not None:
+                symbols = [
+                    str(getattr(excerpt, "symbol", "") or "").strip()
+                    for excerpt in selected_excerpts
+                    if str(getattr(excerpt, "symbol", "") or "").strip()
+                ]
+                roles = tuple(dict.fromkeys(
+                    _role_for_symbol(symbol)
+                    for symbol in symbols
+                    if _role_for_symbol(symbol)
+                ))
+            if not roles:
+                roles = ("unknown",)
+            status = str(getattr(binding, "status", "unresolved") or "unresolved") if binding is not None else "unresolved"
+            evidence = bool(bound_claim_ids or bound_fact_ids or bound_span_ids or bound_equation_ids)
+            safe_roles = not set(roles).intersection({"comparand", "evaluation", "unknown"})
+            has_exact = bool(exact_excerpts)
+            if status == "entailed" and evidence and has_exact and safe_roles:
+                render_policy = "required"
+                reason = ""
+            elif status in {"entailed", "partial"} and evidence and has_exact and not set(roles).intersection({"comparand", "evaluation", "unknown"}):
+                render_policy = "optional"
+                reason = "partial_or_unresolved_ownership"
+            else:
+                render_policy = "deferred"
+                if status in {"mismatch", "unresolved"}:
+                    reason = str(getattr(binding, "unsupported_reason", "") or "") if binding is not None else "field_alignment_missing"
+                    reason = reason or f"field_status_{status}"
+                elif not evidence:
+                    reason = "field_has_no_exact_evidence"
+                elif not has_exact:
+                    reason = "field_has_no_exact_excerpt"
+                elif not safe_roles:
+                    reason = "field_ownership_not_target_method"
+                else:
+                    reason = "field_not_consumable"
+            if render_policy == "deferred":
+                deferred.append(TypedFieldDeferredV1(
+                    facet_id=facet.facet_id,
+                    field_name=field_name,
+                    unsupported_atom=semantic_atom,
+                    reason_code=reason,
+                    requested_search_terms=tuple(dict.fromkeys((
+                        *facet.search_terms,
+                        *directed_search_terms_from_texts(semantic_atom),
+                    ))),
+                ))
+                continue
+            candidates.append(PublicationFieldCandidateV1(
+                candidate_id=f"field:{facet.facet_id}:{field_name}",
+                facet_id=facet.facet_id,
+                field_name=field_name,
+                semantic_atom=semantic_atom,
+                authority_lane="formal_derivation" if bound_equation_ids else "executable_hard",
+                polarity=getattr(binding, "polarity", "unknown") if binding is not None else "unknown",
+                conditions=conditions,
+                bound_claim_ids=bound_claim_ids,
+                bound_fact_ids=bound_fact_ids,
+                bound_span_ids=bound_span_ids,
+                bound_equation_ids=bound_equation_ids,
+                exact_excerpts=exact_excerpts,
+                ownership_roles=roles,
+                render_policy=render_policy,  # type: ignore[arg-type]
+                defer_reason=reason,
+            ))
+    return tuple(candidates), tuple(deferred)
+
+
 def merge_facet_alignment_policy(
     facets: Iterable[AuthorMechanismFacetV1],
     alignments: Iterable[FacetEvidenceAlignmentV1],
@@ -2469,6 +2830,8 @@ def build_mechanism_authoring_packet(
     facets: Iterable[AuthorMechanismFacetV1] = (),
     policies: Iterable[CandidateFacetPolicyV1] = (),
     alignments: Iterable[FacetEvidenceAlignmentV1] = (),
+    publication_field_candidates: Iterable[PublicationFieldCandidateV1] = (),
+    typed_field_deferred: Iterable[TypedFieldDeferredV1] = (),
     story_node_id: str = "",
     formula_packages: Iterable[Mapping[str, Any]] = (),
     required_facet_ids: Iterable[str] = (),
@@ -2480,6 +2843,8 @@ def build_mechanism_authoring_packet(
     facet_items = tuple(facets)
     policy_items = tuple(policies)
     alignment_items = tuple(alignments)
+    candidate_items = tuple(publication_field_candidates)
+    deferred_items = tuple(typed_field_deferred)
     policy_by_facet = {item.facet_id: item for item in policy_items}
     excerpt_by_key: dict[tuple[str, str], FacetEvidenceExcerptV1] = {}
     for alignment in alignment_items:
@@ -2508,9 +2873,17 @@ def build_mechanism_authoring_packet(
             values = value if isinstance(value, (list, tuple, set)) else (value,)
             interfaces.extend(str(item) for item in values)
         search_terms[facet.facet_id] = facet.search_terms
-    required = _clean_strings(required_facet_ids) or tuple(
-        facet.facet_id for facet in facet_items if facet.required
-    )
+    required = _clean_strings(required_facet_ids)
+    if not required:
+        if candidate_items:
+            required = tuple(dict.fromkeys(
+                item.facet_id for item in candidate_items
+                if item.render_policy == "required"
+            ))
+        else:
+            # Frozen pre-field-candidate packets retain their historical
+            # behavior.  New packets use only consumable atomic candidates.
+            required = tuple(facet.facet_id for facet in facet_items if facet.required)
     brief_ids = _clean_strings(
         item.brief_id for item in brief_items if item.brief_id
     ) or _clean_strings(
@@ -2525,6 +2898,8 @@ def build_mechanism_authoring_packet(
             for facet in facet_items
             if facet.facet_id in policy_by_facet
         ),
+        publication_field_candidates=candidate_items,
+        typed_field_deferred=deferred_items,
         exact_evidence_excerpts=tuple(excerpt_by_key.values()),
         formula_packages=tuple(dict(item) for item in formula_packages),
         applicable_conditions=_clean_strings(conditions),
@@ -2559,6 +2934,10 @@ def decompose_and_align_argument_facets(
     | Iterable[AuthorClauseLicenseV1]
     | None = None,
     intent_graph: IntentObligationGraphV2 | None = None,
+    ownership_roles_by_facet_field: Mapping[tuple[str, str], Iterable[str]] | None = None,
+    ownership_roles_by_symbol: Mapping[str, str] | None = None,
+    implementation_scope: Any | None = None,
+    behavior_graph: Any | None = None,
 ) -> MethodArgumentFacetAlignmentResultV1:
     """Decompose briefs, align fields to exact evidence, and merge policy."""
 
@@ -2748,10 +3127,20 @@ def decompose_and_align_argument_facets(
         known_equation_ids=(),
     )
     schema_failures.extend(merge_failures)
+    publication_field_candidates, typed_field_deferred = compile_publication_field_candidates(
+        tuple(facets),
+        normalized_alignments,
+        ownership_roles_by_facet_field=ownership_roles_by_facet_field,
+        ownership_roles_by_symbol=ownership_roles_by_symbol,
+        implementation_scope=implementation_scope,
+        behavior_graph=behavior_graph,
+    )
     return MethodArgumentFacetAlignmentResultV1(
         facets=tuple(facets),
         alignments=normalized_alignments,
         policies=policies,
+        publication_field_candidates=publication_field_candidates,
+        typed_field_deferred=typed_field_deferred,
         schema_failures=_clean_strings(schema_failures),
         traces=tuple(traces),
     )
@@ -2762,6 +3151,7 @@ __all__ = [
     "bind_facets_to_argument_briefs",
     "build_mechanism_authoring_packet",
     "build_method_argument_facet_evidence_aligner",
+    "compile_publication_field_candidates",
     "decompose_and_align_argument_facets",
     "merge_facet_alignment_policy",
 ]

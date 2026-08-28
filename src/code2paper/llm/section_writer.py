@@ -299,6 +299,32 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
             "prose_mode": policies_by_facet.get(facet_id, ""),
             "required": bool(facet.get("required", False)),
         })
+    field_candidates = [
+        {
+            "candidate_id": item.get("candidate_id"),
+            "facet_id": item.get("facet_id"),
+            "field_name": item.get("field_name"),
+            "semantic_atom": item.get("semantic_atom"),
+            "render_policy": item.get("render_policy"),
+            "polarity": item.get("polarity", "unknown"),
+            "conditions": list(item.get("conditions") or ()),
+            "allowed_anchor_ids": list(item.get("bound_span_ids") or ()),
+            "allowed_exact_excerpts": list(item.get("exact_excerpts") or ()),
+        }
+        for item in (packet.get("publication_field_candidates") or ())
+        if isinstance(item, Mapping)
+    ]
+    deferred_fields = [
+        {
+            "facet_id": item.get("facet_id"),
+            "field_name": item.get("field_name"),
+            "unsupported_atom": item.get("unsupported_atom"),
+            "reason_code": item.get("reason_code"),
+            "requested_search_terms": list(item.get("requested_search_terms") or ()),
+        }
+        for item in (packet.get("typed_field_deferred") or ())
+        if isinstance(item, Mapping)
+    ]
     seed = str(packet.get("organization_seed") or "")
     return {
         "organization_seed": seed[:4000],
@@ -312,6 +338,8 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
             for item in (packet.get("facet_policies") or ())
             if isinstance(item, Mapping)
         ],
+        "publication_field_candidates": field_candidates,
+        "typed_field_deferred": deferred_fields,
         "brief_ids": list(packet.get("brief_ids") or ()),
     }
 
@@ -592,6 +620,7 @@ def _merge_publication_partition_outputs(
         if str(part.section_markdown or "").strip()
     ]
     rendered_facets: set[str] = set()
+    rendered_field_candidates: set[str] = set()
     deferred_facets: set[str] = set()
     rendered_briefs: set[str] = set()
     deferred_briefs: set[str] = set()
@@ -609,6 +638,7 @@ def _merge_publication_partition_outputs(
     callbacks: list[Any] = []
     for part in outputs:
         rendered_facets.update(str(v) for v in part.rendered_from_facet_ids)
+        rendered_field_candidates.update(str(v) for v in part.rendered_field_candidate_ids)
         deferred_facets.update(str(v) for v in part.deferred_facet_ids)
         rendered_briefs.update(str(v) for v in part.rendered_brief_ids)
         deferred_briefs.update(str(v) for v in part.deferred_brief_ids)
@@ -632,6 +662,7 @@ def _merge_publication_partition_outputs(
         update={
             "section_markdown": "\n\n".join(markdown_parts),
             "rendered_from_facet_ids": tuple(sorted(rendered_facets)),
+            "rendered_field_candidate_ids": tuple(sorted(rendered_field_candidates)),
             "deferred_facet_ids": tuple(sorted(deferred_facets)),
             "rendered_brief_ids": tuple(dict.fromkeys(rendered_briefs)),
             "deferred_brief_ids": tuple(sorted(deferred_briefs)),
@@ -1641,6 +1672,7 @@ def _closed_set_publication_schema(
             if isinstance(paragraph_properties, dict):
                 for field_name, plan_key in (
                     ("rendered_from_facet_ids", "required_facet_ids"),
+                    ("rendered_field_candidate_ids", "required_field_candidate_ids"),
                     ("rendered_slot_ids", "ordered_semantic_slot_ids"),
                     ("rendered_edge_ids", "required_edge_ids"),
                     ("used_formula_package_ids", "formula_obligation_ids"),
@@ -1651,9 +1683,37 @@ def _closed_set_publication_schema(
                     values = list(dict.fromkeys(
                         str(value)
                         for item in paragraph_plans
-                        for value in (item.get(plan_key) or ())
+                        for value in (
+                            item.get(plan_key)
+                            or (
+                                item.get("required_publication_slot_ids")
+                                if plan_key == "ordered_semantic_slot_ids"
+                                else ()
+                            )
+                            or ()
+                        )
                         if str(value).strip()
                     ))
+                    if field_name == "rendered_field_candidate_ids":
+                        # Keep the enum paragraph-local.  The packet may
+                        # contain candidates for several paragraphs, but a
+                        # transaction must not bind a sibling field merely
+                        # because its id is visible in the section packet.
+                        if not any(
+                            "required_field_candidate_ids" in item
+                            for item in paragraph_plans
+                            if isinstance(item, dict)
+                        ):
+                            values.extend(
+                                str(item.get("candidate_id") or "")
+                                for item in (
+                                    ((mechanism_packet_early or {}).get("publication_field_candidates") or ())
+                                    if isinstance(mechanism_packet_early, dict)
+                                    else ()
+                                )
+                                if isinstance(item, dict) and str(item.get("candidate_id") or "").strip()
+                            )
+                            values = list(dict.fromkeys(values))
                     # A paragraph may bind either the Architect's obligation
                     # id or the Formalizer's package id.  Keep both in the
                     # native closed set; otherwise a valid package consumer
@@ -1780,6 +1840,7 @@ def _closed_set_publication_schema(
                 properties[field]["minItems"] = 1
     for field, contract_key in (
         ("rendered_from_facet_ids", "allowed_facet_ids"),
+        ("rendered_field_candidate_ids", "allowed_field_candidate_ids"),
         ("deferred_facet_ids", "allowed_facet_ids"),
         ("rendered_paragraph_ids", "allowed_paragraph_ids"),
         ("rendered_slot_ids", "allowed_slot_ids"),
@@ -2035,7 +2096,7 @@ def _closed_set_publication_schema(
         *(("rendered_proposition_ids", "deferred_proposition_ids") if proposition_mode else ()),
         *(("rendered_concept_keys", "deferred_concept_keys") if concept_mode else ()),
         *(("rendered_brief_ids", "deferred_brief_ids") if brief_mode else ()),
-        *(("rendered_from_facet_ids", "deferred_facet_ids") if facet_mode else ()),
+        *(("rendered_from_facet_ids", "rendered_field_candidate_ids", "deferred_facet_ids") if facet_mode else ()),
         *(("completed_rhetorical_moves",) if not proposition_mode else ()),
         "new_research_requests",
         "self_identified_risks",
@@ -2069,6 +2130,7 @@ def _closed_set_publication_schema(
         schema["required"] = list(dict.fromkeys([
             *(schema.get("required") or ()),
             "rendered_from_facet_ids",
+            "rendered_field_candidate_ids",
             "deferred_facet_ids",
         ]))
     return schema
@@ -2133,6 +2195,7 @@ def _normalize_publication_paragraph_transaction(
     }
     aggregate_fields = {
         "rendered_from_facet_ids": set(),
+        "rendered_field_candidate_ids": set(),
         "rendered_slot_ids": set(),
         "rendered_edge_ids": set(),
         "used_formula_package_ids": set(),
@@ -2169,21 +2232,50 @@ def _normalize_publication_paragraph_transaction(
             for item in (packet.get("facets") or ())
             if isinstance(item, dict) and str(item.get("facet_id") or "").strip()
         }
+        section_field_candidate_ids = {
+            str(item.get("candidate_id") or "")
+            for item in (packet.get("publication_field_candidates") or ())
+            if isinstance(item, Mapping) and str(item.get("candidate_id") or "").strip()
+        }
         section_formula_package_ids = {
             str(item.get("package_id") or "")
             for item in (section.prompt_payload.get("formula_packages") or ())
             if isinstance(item, dict) and str(item.get("package_id") or "").strip()
         }
+        plan_field_ids = set(str(value) for value in (plan_row.get("required_field_candidate_ids") or ()))
+        plan_facet_ids = set(str(value) for value in (plan_row.get("required_facet_ids") or ()))
+        plan_formula_ids = set(str(value) for value in (plan_row.get("formula_obligation_ids") or ()))
+        if "required_field_candidate_ids" in plan_row:
+            allowed_field_ids = plan_field_ids
+        else:
+            allowed_field_ids = plan_field_ids | section_field_candidate_ids
+        if "required_facet_ids" in plan_row:
+            allowed_facet_ids = plan_facet_ids
+        else:
+            allowed_facet_ids = plan_facet_ids | section_facet_ids
+        route_packages = {
+            str(package.get("package_id") or "")
+            for package in (section.prompt_payload.get("formula_packages") or ())
+            if isinstance(package, Mapping)
+            and str(package.get("package_id") or "").strip()
+            and (
+                not plan_formula_ids
+                or str(package.get("obligation_id") or "").strip() in plan_formula_ids
+                and str(package.get("consumer_paragraph_id") or "").strip() == paragraph_id
+            )
+        }
         allowed = {
-            "facet": (
-                set(str(value) for value in (plan_row.get("required_facet_ids") or ()))
-                | section_facet_ids
-            ),
-            "slot": set(str(value) for value in (plan_row.get("ordered_semantic_slot_ids") or ())),
+            "facet": allowed_facet_ids,
+            "field": allowed_field_ids,
+            "slot": set(str(value) for value in (
+                plan_row.get("required_publication_slot_ids")
+                or plan_row.get("ordered_semantic_slot_ids")
+                or ()
+            )),
             "edge": set(str(value) for value in (plan_row.get("required_edge_ids") or ())),
             "formula": (
-                set(str(value) for value in (plan_row.get("formula_obligation_ids") or ()))
-                | section_formula_package_ids
+                plan_formula_ids
+                | (route_packages if plan_formula_ids else section_formula_package_ids)
             ),
             "claim": section_claim_ids,
             "equation": section_equation_ids,
@@ -2203,6 +2295,7 @@ def _normalize_publication_paragraph_transaction(
             witnessed.add(key)
         for field_name, kind in (
             ("rendered_from_facet_ids", "facet"),
+            ("rendered_field_candidate_ids", "field"),
             ("rendered_slot_ids", "slot"),
             ("rendered_edge_ids", "edge"),
             ("used_formula_package_ids", "formula"),
@@ -2226,42 +2319,58 @@ def _normalize_publication_paragraph_transaction(
         # preserving one implementation for runtime/trace validation.
         from code2paper.agentic.publication_transaction_contract import (
             assess_paragraph_transaction,
+            required_anchors_from_plan_row,
         )
+        formula_packages = tuple(
+            package for package in (section.prompt_payload.get("formula_packages") or ())
+            if isinstance(package, Mapping)
+        )
+        has_explicit_package_routes = any(
+            str(package.get("obligation_id") or "").strip()
+            for package in formula_packages
+        )
+
+        def _packages_for_obligation(obligation: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
+            obligation_id = str(obligation.get("obligation_id") or "").strip()
+            exact = tuple(
+                package for package in formula_packages
+                if str(package.get("obligation_id") or "").strip() == obligation_id
+            )
+            if exact or has_explicit_package_routes:
+                return exact
+            facet_ids = set(str(item) for item in (obligation.get("facet_ids") or ()))
+            return tuple(
+                package for package in formula_packages
+                if not facet_ids
+                or facet_ids.intersection(
+                    set(str(item) for item in (package.get("bound_facet_ids") or ()))
+                )
+            )
+
+        formula_routes = {}
+        for obligation in (section.prompt_payload.get("formula_obligations") or ()):
+            if not isinstance(obligation, Mapping):
+                continue
+            obligation_id = str(obligation.get("obligation_id") or "").strip()
+            if not obligation_id:
+                continue
+            matches = _packages_for_obligation(obligation)
+            formula_routes[obligation_id] = {
+                "package_ids": tuple(
+                    str(package.get("package_id") or "")
+                    for package in matches
+                    if str(package.get("package_id") or "").strip()
+                ),
+                "latex": (
+                    str(matches[0].get("latex") or matches[0].get("markdown_block") or "")
+                    if matches else ""
+                ),
+            }
         assessment = assess_paragraph_transaction(
             transaction,
             plan_row=plan_row,
-            formula_routes={
-                str(obligation.get("obligation_id") or ""): {
-                    "package_ids": tuple(
-                        str(package.get("package_id") or "")
-                        for package in (section.prompt_payload.get("formula_packages") or ())
-                        if isinstance(package, Mapping)
-                        and str(package.get("package_id") or "").strip()
-                        and (
-                            not obligation.get("facet_ids")
-                            or set(str(item) for item in (obligation.get("facet_ids") or ()))
-                            & set(str(item) for item in (package.get("bound_facet_ids") or ()))
-                        )
-                    ),
-                    "latex": next(
-                        (
-                            str(package.get("latex") or package.get("markdown_block") or "")
-                            for package in (section.prompt_payload.get("formula_packages") or ())
-                            if isinstance(package, Mapping)
-                            and str(package.get("package_id") or "").strip()
-                            and (
-                                not obligation.get("facet_ids")
-                                or set(str(item) for item in (obligation.get("facet_ids") or ()))
-                                & set(str(item) for item in (package.get("bound_facet_ids") or ()))
-                            )
-                        ),
-                        "",
-                    ),
-                }
-                for obligation in (section.prompt_payload.get("formula_obligations") or ())
-                if isinstance(obligation, Mapping)
-                and str(obligation.get("obligation_id") or "").strip()
-            },
+            formula_routes=formula_routes,
+            required_anchors=required_anchors_from_plan_row(plan_row),
         )
         if not assessment.valid:
             failures.extend(
@@ -2306,6 +2415,7 @@ def _normalize_publication_paragraph_transaction(
         "section_markdown": section_markdown,
         "rendered_paragraph_ids": list(expected_ids or tuple(by_id)),
         "rendered_from_facet_ids": sorted(aggregate_fields["rendered_from_facet_ids"]),
+        "rendered_field_candidate_ids": sorted(aggregate_fields["rendered_field_candidate_ids"]),
         "rendered_slot_ids": sorted(aggregate_fields["rendered_slot_ids"]),
         "rendered_edge_ids": sorted(aggregate_fields["rendered_edge_ids"]),
         "used_formula_package_ids": sorted(aggregate_fields["used_formula_package_ids"]),

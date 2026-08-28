@@ -36,7 +36,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -119,6 +119,7 @@ from code2paper.agentic.research_graph import (
     build_research_subgraph,
     initial_loop_state,
 )
+from code2paper.agentic.implementation_scope import scope_role_for_candidate
 from code2paper.agentic.research_models import (
     ResearchDecisionV1,
     ResearchAgendaItemV1,
@@ -880,6 +881,8 @@ def build_product_planning(
     facet_decomposer: Any | None = None,
     facet_evidence_aligner: Any | None = None,
     prior_plan: MethodSectionPlanV2 | None = None,
+    implementation_scope: Any | None = None,
+    behavior_graph: Any | None = None,
 ) -> dict[str, Any]:
     """Compile coverage, completeness, equations, configs, plan, readiness.
 
@@ -1031,6 +1034,29 @@ def build_product_planning(
         # Candidate semantic alignment is a sidecar.  It receives the frozen
         # research evidence but never mutates the deterministic clause
         # licenses or the brief set's Verified digest.
+        ownership_roles_by_symbol: dict[str, str] = {}
+        loop_scope = implementation_scope
+        loop_behavior_graph = behavior_graph
+        if loop_scope is not None and loop_behavior_graph is not None:
+            for node in getattr(loop_behavior_graph, "nodes", ()) or ():
+                node_symbol = str(getattr(node, "symbol_id", "") or "").strip()
+                if not node_symbol:
+                    continue
+                role = scope_role_for_candidate(
+                    loop_scope,
+                    node_symbol,
+                    behavior_graph=loop_behavior_graph,
+                )
+                span_id = str(getattr(node, "source_span_id", "") or "")
+                ownership_roles_by_symbol[node_symbol] = role
+                if span_id.startswith("span:"):
+                    parts = span_id.rsplit(":", 2)
+                    if len(parts) == 3:
+                        path = parts[0].removeprefix("span:")
+                        # Evidence spans carry the owning symbol separately;
+                        # path-only aliases are still useful for adapters that
+                        # expose a short symbol name.
+                        ownership_roles_by_symbol[path] = role
         facet_alignment_result = decompose_and_align_argument_facets(
             briefs=argument_briefs,
             claims=claim_set,
@@ -1045,6 +1071,9 @@ def build_product_planning(
                 else None
             ),
             intent_graph=intent_graph,
+            implementation_scope=loop_scope,
+            behavior_graph=loop_behavior_graph,
+            ownership_roles_by_symbol=ownership_roles_by_symbol,
         )
         if hasattr(argument_briefs, "model_copy"):
             argument_briefs = bind_facets_to_argument_briefs(
@@ -1112,6 +1141,21 @@ def build_product_planning(
             concept_cards=concept_cards,
             argument_briefs=argument_briefs,
             prior_plan=prior_plan,
+            publication_field_candidates=(
+                facet_alignment_result.publication_field_candidates
+                if facet_alignment_result is not None
+                else ()
+            ),
+            argument_facets=(
+                facet_alignment_result.facets
+                if facet_alignment_result is not None
+                else ()
+            ),
+            facet_alignments=(
+                facet_alignment_result.alignments
+                if facet_alignment_result is not None
+                else ()
+            ),
         )
     review_candidates = build_review_candidates_from_completeness(
         completeness,
@@ -1151,6 +1195,16 @@ def build_product_planning(
         ),
         "facet_policies": (
             facet_alignment_result.policies
+            if facet_alignment_result is not None
+            else ()
+        ),
+        "publication_field_candidates": (
+            facet_alignment_result.publication_field_candidates
+            if facet_alignment_result is not None
+            else ()
+        ),
+        "typed_field_deferred": (
+            facet_alignment_result.typed_field_deferred
             if facet_alignment_result is not None
             else ()
         ),
@@ -1306,6 +1360,24 @@ def persist_product_artifacts(
     paths["research_trace"] = _write("research_trace", _build_research_trace(loop_result))
     paths["typed_gaps"] = _write("typed_gaps", [gap.model_dump(mode="json") for gap in typed_gaps])
 
+    # Research closure sidecars.  These are diagnostic provenance artifacts,
+    # not a second authority path: positive claims still come only from the
+    # frozen packets/facts/claims below.
+    loop_scope = getattr(loop_result.loop_state, "implementation_scope", None)
+    if loop_scope is not None:
+        paths["implementation_scope_v1"] = _write(
+            "implementation_scope_v1",
+            loop_scope.model_dump(mode="json"),
+            product=False,
+        )
+    loop_ledger = getattr(loop_result.loop_state, "candidate_acquisition_ledger", None)
+    if loop_ledger is not None:
+        paths["candidate_acquisition_ledger_v1"] = _write(
+            "candidate_acquisition_ledger_v1",
+            loop_ledger.model_dump(mode="json"),
+            product=False,
+        )
+
     coverage = planning["coverage"]
     agenda_ref = planning["agenda_ref"]
     completeness = planning["completeness"]
@@ -1330,6 +1402,8 @@ def persist_product_artifacts(
     facet_alignments = planning.get("facet_alignments") or ()
     facet_policies = planning.get("facet_policies") or ()
     facet_alignment_result = planning.get("facet_alignment_result")
+    publication_field_candidates = planning.get("publication_field_candidates") or ()
+    typed_field_deferred = planning.get("typed_field_deferred") or ()
 
     paths["obligation_coverage_v2"] = _write(
         "obligation_coverage_v2",
@@ -1523,6 +1597,26 @@ def persist_product_artifacts(
                 },
                 product=False,
             )
+        paths["publication_field_candidates_v1"] = _write(
+            "publication_field_candidates_v1",
+            {
+                "schema_version": "1.0",
+                "candidates": [
+                    item.model_dump(mode="json") for item in publication_field_candidates
+                ],
+            },
+            product=False,
+        )
+        paths["typed_field_deferred_v1"] = _write(
+            "typed_field_deferred_v1",
+            {
+                "schema_version": "1.0",
+                "deferred": [
+                    item.model_dump(mode="json") for item in typed_field_deferred
+                ],
+            },
+            product=False,
+        )
     if readiness is not None:
         paths["plan_product_readiness_v1"] = _write(
             "plan_product_readiness_v1",
@@ -1553,6 +1647,139 @@ def _build_research_trace(loop_result: ResearchLoopResult) -> dict[str, Any]:
         ],
         "node_trace": list(loop_result.node_trace),
     }
+
+
+def _write_closure_metrics(
+    *,
+    out_root: Path,
+    loop_result: ResearchLoopResult,
+    planning: dict[str, Any],
+    summary: Mapping[str, Any] | None = None,
+) -> str:
+    """Persist the compact quality-closure dashboard from frozen artifacts."""
+
+    root = Path(out_root).expanduser().resolve()
+    artifact_dir = root / "artifacts"
+    ledger = getattr(loop_result.loop_state, "candidate_acquisition_ledger", None)
+    records = tuple(getattr(ledger, "records", ()) or ())
+    target_records = tuple(
+        item for item in records
+        if item.ownership_role in {"target_core", "target_dependency"}
+    )
+    acquired = sum(item.terminal_status == "acquired_and_compiled" for item in target_records)
+    rejected = sum(item.terminal_status in {"explicitly_rejected", "superseded"} for item in target_records)
+    unresolved = sum(not item.terminal for item in target_records)
+    comparand_records = tuple(item for item in records if item.ownership_role in {"comparand", "evaluation"})
+    comparand_packets = sum(bool(item.packet_ids) for item in comparand_records)
+
+    candidates = tuple(planning.get("publication_field_candidates") or ())
+    deferred = tuple(planning.get("typed_field_deferred") or ())
+    candidate_by_id = {str(item.candidate_id): item for item in candidates}
+    hard_targets = 0
+    hard_from_unresolved = 0
+    support_slots = 0
+    publication_slots = 0
+    required_formula_ids: set[str] = set()
+    plan = planning.get("plan")
+    if plan is not None:
+        for section in getattr(plan, "sections", ()) or ():
+            for paragraph in getattr(section, "paragraphs", ()) or ():
+                required_fields = tuple(getattr(paragraph, "required_field_candidate_ids", ()) or ())
+                hard_targets += len(required_fields)
+                for candidate_id in required_fields:
+                    candidate = candidate_by_id.get(str(candidate_id))
+                    if candidate is None or not getattr(candidate, "is_consumable", False):
+                        hard_from_unresolved += 1
+                support_slots += len(getattr(paragraph, "support_slot_ids", ()) or ())
+                publication_slots += len(getattr(paragraph, "required_publication_slot_ids", ()) or ())
+                required_formula_ids.update(str(item) for item in getattr(paragraph, "formula_obligation_ids", ()) or ())
+
+    writer_paragraphs = 0
+    writer_witnesses = 0
+    valid_required_paragraphs = 0
+    writer_path = artifact_dir / "06_authoring" / "publication_writer_result_v1.json"
+    if writer_path.is_file():
+        try:
+            writer_payload = json.loads(writer_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            writer_payload = {}
+        for section in writer_payload.get("section_results") or ():
+            output = section.get("output") if isinstance(section, Mapping) else None
+            if not isinstance(output, Mapping):
+                continue
+            for paragraph in output.get("paragraphs") or ():
+                if not isinstance(paragraph, Mapping):
+                    continue
+                writer_paragraphs += 1
+                writer_witnesses += len(paragraph.get("witnesses") or ())
+                if paragraph.get("transaction_valid") is True or paragraph.get("valid") is True:
+                    valid_required_paragraphs += 1
+
+    trace_summary: Mapping[str, Any] = {}
+    trace_path = artifact_dir / "research_product" / "method_content_trace_v1.json"
+    if trace_path.is_file():
+        try:
+            trace_payload = json.loads(trace_path.read_text(encoding="utf-8"))
+            trace_summary = trace_payload.get("summary") or {}
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            trace_summary = {}
+    formalization_path = artifact_dir / "06_authoring" / "formalization_section_results_v1.json"
+    accepted_formula = 0
+    if formalization_path.is_file():
+        try:
+            formalization_payload = json.loads(formalization_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            formalization_payload = {}
+        accepted_formula = sum(
+            1 for section in formalization_payload.get("sections") or ()
+            for package in (section.get("packages") or ())
+            if isinstance(package, Mapping) and str(package.get("package_id") or "").strip()
+        )
+
+    metrics = {
+        "schema_version": "1.0",
+        "research": {
+            "must_cover_candidates": len(target_records),
+            "acquired": acquired,
+            "explicitly_rejected": rejected,
+            "unresolved_acquisition": unresolved,
+            "target_core_packet_ratio": (acquired / len(target_records)) if target_records else 0.0,
+            "comparand_packet_ratio": (comparand_packets / len(comparand_records)) if comparand_records else 0.0,
+        },
+        "alignment": {
+            "atomic_fields": len(candidates),
+            "renderable_fields": sum(bool(getattr(item, "is_consumable", False)) for item in candidates),
+            "deferred_fields": len(deferred),
+            "hard_target_from_unresolved": hard_from_unresolved,
+        },
+        "planning": {
+            "hard_targets": hard_targets,
+            "support_slots": support_slots,
+            "publication_slots": publication_slots,
+        },
+        "writer": {
+            "paragraphs": writer_paragraphs,
+            "witnesses": writer_witnesses,
+            "valid_required_paragraphs": valid_required_paragraphs,
+        },
+        "formula": {
+            "required": len(required_formula_ids),
+            "accepted": accepted_formula,
+            "consumed": int(trace_summary.get("consumed_formula_packages") or 0),
+            "duplicate_consumers": int(trace_summary.get("duplicate_formula_consumers") or 0),
+        },
+        "verification": {
+            "rendered_invalid": int(trace_summary.get("rendered_invalid") or 0),
+            "repository_verified_nonempty": bool(
+                (artifact_dir / "06_authoring" / "repository_verified_method.md").is_file()
+                and (artifact_dir / "06_authoring" / "repository_verified_method.md").stat().st_size > 0
+            ),
+            "structural_exit": bool((summary or {}).get("structural_exit", False)),
+        },
+    }
+    path = artifact_dir / "method_authoring_closure_metrics_v1.json"
+    _atomic_write_text(path, _json_text(metrics))
+    return str(path)
 
 
 def _writer_callback_summary(out_root: str | Path) -> dict[str, int]:
@@ -1893,6 +2120,8 @@ def run_autonomous_method_agent(
         concept_cards=concept_cards,
         compile_concept_cards=compile_concept_cards and live_llm,
         compile_argument_briefs=compile_argument_briefs,
+        implementation_scope=getattr(loop_result.loop_state, "implementation_scope", None),
+        behavior_graph=getattr(loop_result.loop_state, "behavior_graph", None),
     )
     _phase(
         "planning",
@@ -2138,6 +2367,16 @@ def run_autonomous_method_agent(
             "rows": 0,
             "status": "unavailable",
         }
+    try:
+        summary["closure_metrics_path"] = _write_closure_metrics(
+            out_root=resolved_out,
+            loop_result=loop_result,
+            planning=planning,
+            summary=summary,
+        )
+        paths["method_authoring_closure_metrics_v1"] = summary["closure_metrics_path"]
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        pass
     # The product-authoring graph is a durable orchestration overlay around
     # the existing research and Writer owners.  Persist it only after the
     # concrete artifacts above are committed; it must never alter the legacy
@@ -2357,6 +2596,11 @@ def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
         "method_argument_facets_v1",
         "facet_evidence_alignments_v1",
         "candidate_facet_policies_v1",
+        "publication_field_candidates_v1",
+        "typed_field_deferred_v1",
+        "implementation_scope_v1",
+        "candidate_acquisition_ledger_v1",
+        "method_authoring_closure_metrics_v1",
     )
     return {
         name: str(out_root / "artifacts" / f"{name}.json")

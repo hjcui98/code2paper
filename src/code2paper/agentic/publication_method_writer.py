@@ -301,6 +301,8 @@ def run_publication_method_writer(
         argument_facets = ()
         facet_alignments = ()
         facet_policies = ()
+        publication_field_candidates = ()
+        typed_field_deferred = ()
         brief_value = artifact_paths.get("method_argument_briefs_v1", "")
         if brief_value and Path(brief_value).is_file():
             from code2paper.agentic.method_argument_brief_models import (
@@ -364,6 +366,28 @@ def run_publication_method_writer(
                     if isinstance(policy_payload, dict)
                     else policy_payload
                 )
+            )
+        field_candidate_value = artifact_paths.get("publication_field_candidates_v1", "")
+        deferred_field_value = artifact_paths.get("typed_field_deferred_v1", "")
+        if field_candidate_value and Path(field_candidate_value).is_file():
+            from code2paper.agentic.method_argument_brief_models import PublicationFieldCandidateV1
+            payload = json.loads(Path(field_candidate_value).read_text(encoding="utf-8"))
+            publication_field_candidates = tuple(
+                PublicationFieldCandidateV1.model_validate(item)
+                for item in (payload.get("candidates", ()) if isinstance(payload, dict) else payload)
+            )
+        if deferred_field_value and Path(deferred_field_value).is_file():
+            from code2paper.agentic.method_argument_brief_models import TypedFieldDeferredV1
+            payload = json.loads(Path(deferred_field_value).read_text(encoding="utf-8"))
+            typed_field_deferred = tuple(
+                TypedFieldDeferredV1.model_validate(item)
+                for item in (payload.get("deferred", ()) if isinstance(payload, dict) else payload)
+            )
+        if not publication_field_candidates and argument_facets and facet_alignments:
+            from code2paper.agentic.method_argument_facet_aligner import compile_publication_field_candidates
+            publication_field_candidates, typed_field_deferred = compile_publication_field_candidates(
+                argument_facets,
+                facet_alignments,
             )
         concept_value = artifact_paths.get("method_concept_cards_v1", "")
         if argument_briefs is None and concept_value and Path(concept_value).is_file():
@@ -530,6 +554,7 @@ def run_publication_method_writer(
             argument_facets=argument_facets,
             facet_alignments=facet_alignments,
             facet_policies=facet_policies,
+            publication_field_candidates=publication_field_candidates,
         )
         architect_trace_path = str(method_output(Path(out_root), "method_architect_trace_v1"))
         _atomic_write_text(
@@ -650,6 +675,7 @@ def run_publication_method_writer(
         argument_facets=argument_facets,
         facet_alignments=facet_alignments,
         facet_policies=facet_policies,
+        publication_field_candidates=publication_field_candidates,
     )
     effective_resume_section_ids = tuple(resume_section_ids)
     callback_bundle = _load_callback_bundle(artifact_paths)
@@ -753,6 +779,8 @@ def run_publication_method_writer(
             argument_facets=argument_facets,
             facet_alignments=facet_alignments,
             facet_policies=facet_policies,
+            publication_field_candidates=publication_field_candidates,
+            typed_field_deferred=typed_field_deferred,
             formula_packages_by_section={
                 result.section_id: _writer_visible_formula_packages(result)
                 for result in section_formula_results
@@ -986,20 +1014,27 @@ def run_publication_method_writer(
             if isinstance(item, Mapping)
         )
         formula_routes: dict[str, dict[str, Any]] = {}
+        has_explicit_package_routes = any(
+            str(package.get("obligation_id") or "").strip()
+            for package in packages
+        )
         for obligation in obligations:
             obligation_id = str(obligation.get("obligation_id") or "").strip()
             if not obligation_id:
                 continue
             matches = [
                 package for package in packages
-                if (
-                    str(package.get("obligation_id") or "").strip() == obligation_id
-                    or (
-                        set(str(item) for item in (obligation.get("facet_ids") or ()))
-                        & set(str(item) for item in (package.get("bound_facet_ids") or ()))
-                    )
-                )
+                if str(package.get("obligation_id") or "").strip() == obligation_id
             ]
+            if not matches and not has_explicit_package_routes:
+                facet_ids = set(str(item) for item in (obligation.get("facet_ids") or ()))
+                matches = [
+                    package for package in packages
+                    if not facet_ids
+                    or facet_ids.intersection(
+                        set(str(item) for item in (package.get("bound_facet_ids") or ()))
+                    )
+                ]
             formula_routes[obligation_id] = {
                 "package_ids": tuple(
                     str(package.get("package_id") or "")
@@ -1028,10 +1063,14 @@ def run_publication_method_writer(
                 invalid_count += 1
                 missing.append(f"missing_paragraph:{plan_row.get('paragraph_id')}")
                 continue
+            from code2paper.agentic.publication_transaction_contract import (
+                required_anchors_from_plan_row,
+            )
             assessment = assess_paragraph_transaction(
                 transaction,
                 plan_row=plan_row,
                 formula_routes=formula_routes,
+                required_anchors=required_anchors_from_plan_row(plan_row),
             )
             required_count = sum(
                 len(values) for values in assessment.required_by_kind.values()
@@ -3487,6 +3526,8 @@ def _mechanism_section_payload(
     writer_view: Any | None,
     formula_packages: tuple[dict[str, Any], ...] | list[dict[str, Any]],
     formula_obligations: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    typed_field_deferred: tuple[Any, ...] | list[Any] = (),
 ) -> dict[str, Any]:
     """WP5 primary Writer structure: mechanism first, supporting facts nested."""
 
@@ -3590,6 +3631,14 @@ def _mechanism_section_payload(
         ),
         "accepted_formulas": accepted_formulas,
         "candidate_formulas": candidate_formulas,
+        "publication_field_candidates": [
+            item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+            for item in publication_field_candidates
+        ],
+        "typed_field_deferred": [
+            item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+            for item in typed_field_deferred
+        ],
         "caveated_open_slots": open_slots,
         "chain_contract": list(dict.fromkeys(chain)),
         "formula_obligation_ids": list(getattr(graph, "formula_obligation_ids", ()) or ()),
@@ -3681,6 +3730,7 @@ def _section_formula_obligations(
     core: list[Any],
     formula_constraints: list[str],
     primary_brief_ids: set[str] | frozenset[str] = frozenset(),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[Any, ...]:
     """Build typed formula obligations from facets and section planning.
 
@@ -3702,6 +3752,12 @@ def _section_formula_obligations(
         if str(getattr(equation, "equation_id", "") or "").strip()
     }
     primary = {str(item).strip() for item in primary_brief_ids if str(item).strip()}
+    field_candidate_ids_by_facet: dict[str, set[str]] = {}
+    for candidate in publication_field_candidates or ():
+        facet_id = str(getattr(candidate, "facet_id", "") or "").strip()
+        candidate_id = str(getattr(candidate, "candidate_id", "") or "").strip()
+        if facet_id and candidate_id:
+            field_candidate_ids_by_facet.setdefault(facet_id, set()).add(candidate_id)
     obligations: list[Any] = []
     seen_ids: set[str] = set()
     for facet in facets:
@@ -3725,6 +3781,9 @@ def _section_formula_obligations(
         facet_paragraphs = tuple(
             paragraph for paragraph in (getattr(graph, "paragraphs", ()) or ())
             if facet_id in (getattr(paragraph, "required_facet_ids", ()) or ())
+            or field_candidate_ids_by_facet.get(facet_id, set()).intersection(
+                set(getattr(paragraph, "required_field_candidate_ids", ()) or ())
+            )
             or (
                 str(getattr(paragraph, "paragraph_role", "") or "") == "formula"
                 and facet_id in (getattr(paragraph, "required_facet_ids", ()) or ())
@@ -3790,7 +3849,9 @@ def _section_formula_obligations(
         normalized = str(obligation_id).strip()
         if not normalized or normalized in seen_ids:
             continue
-        if not _formula_obligation_matches_core(normalized, core_ids):
+        if not _formula_obligation_matches_core(normalized, core_ids) and not normalized.startswith(
+            "formula:section:"
+        ):
             continue
         obligation_paragraphs = tuple(
             paragraph
@@ -3931,6 +3992,7 @@ def _run_section_formalizer(
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
     facet_policies: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[tuple[Any, ...], str]:
     """Run the section-scoped Formalizer (R2) for every planned section.
 
@@ -4101,6 +4163,7 @@ def _run_section_formalizer(
                 for value in getattr(graph, "primary_brief_ids", ()) or ()
                 if str(value).strip()
             },
+            publication_field_candidates=publication_field_candidates,
         )
         evidence_packs = build_mechanism_equation_evidence_packs(
             section_id=graph.section_id,
@@ -4269,6 +4332,7 @@ def _run_section_formalizer(
                 equations=equations,
                 facts=facts,
                 allowed_equation_ids=bound_equation_ids,
+                formula_obligations=tuple(formula_obligations),
             )
         if packages:
             valid_packages: list[Any] = []
@@ -4479,6 +4543,77 @@ def _invoke_section_formalizer_llm(
     accepted: list[Any] = []
     guard_log: list[list[str]] = []
     self_trace_rows: list[dict[str, Any]] = []
+
+    def _bind_current_formula_route(package: Any) -> tuple[Any, str]:
+        """Bind a uniquely identifiable Formalizer package before guards."""
+
+        package_id = str(getattr(package, "package_id", "") or "")
+        explicit_id = str(getattr(package, "obligation_id", "") or "").strip()
+        explicit_consumer = str(
+            getattr(package, "consumer_paragraph_id", "") or ""
+        ).strip()
+        if explicit_id and explicit_consumer:
+            return package, ""
+        if not formula_obligations:
+            return package, ""
+
+        def _keys(value: Any) -> set[str]:
+            raw = str(value or "").strip()
+            if not raw:
+                return set()
+            values = {raw}
+            if raw.startswith("formula:"):
+                values.add(raw[len("formula:"):])
+            if raw.startswith("equation:"):
+                values.add(raw[len("equation:"):])
+            return values
+
+        package_equation_keys = set().union(*(
+            _keys(value) for value in (getattr(package, "bound_equation_ids", ()) or ())
+        ))
+        package_facets = set(getattr(package, "bound_facet_ids", ()) or ())
+        matches = [
+            obligation for obligation in formula_obligations
+            if (
+                package_facets.intersection(set(getattr(obligation, "facet_ids", ()) or ()))
+                or package_equation_keys.intersection(_keys(obligation.obligation_id))
+            )
+        ]
+        if not matches and len(formula_obligations) == 1:
+            matches = [formula_obligations[0]]
+        if len(matches) != 1:
+            return package, f"{package_id}:formula_package_obligation_route_ambiguous"
+        obligation = matches[0]
+        consumer = str(
+            getattr(obligation, "consumer_paragraph_id", "")
+            or (
+                obligation.paragraph_ids[0]
+                if len(tuple(getattr(obligation, "paragraph_ids", ()) or ())) == 1
+                else ""
+            )
+        ).strip()
+        if not consumer:
+            # A section-less/unit-test Formalizer call has no paragraph owner
+            # to bind.  Preserve the canonical obligation id and let the
+            # section-level route validator require a consumer whenever a
+            # real paragraph plan exists.
+            if getattr(graph, "paragraphs", ()) or getattr(graph, "argument_unit_ids", ()):
+                return package, f"{package_id}:formula_package_without_paragraph_consumer"
+            return package.model_copy(update={
+                "obligation_id": str(obligation.obligation_id),
+                "bound_facet_ids": tuple(dict.fromkeys([
+                    *(getattr(package, "bound_facet_ids", ()) or ()),
+                    *(getattr(obligation, "facet_ids", ()) or ()),
+                ])),
+            }), ""
+        return package.model_copy(update={
+            "obligation_id": str(obligation.obligation_id),
+            "consumer_paragraph_id": consumer,
+            "bound_facet_ids": tuple(dict.fromkeys([
+                *(getattr(package, "bound_facet_ids", ()) or ()),
+                *(getattr(obligation, "facet_ids", ()) or ()),
+            ])),
+        }), ""
     must_emit_author_package = bool(author_intent_lane) and (
         formula_obligation_required
         or any(
@@ -4700,7 +4835,11 @@ def _invoke_section_formalizer_llm(
             for facet in author_facets
             if str(getattr(facet, "facet_id", "") or "").strip()
         }
-        for package in parsed.packages:
+        for raw_package in parsed.packages:
+            package, route_failure = _bind_current_formula_route(raw_package)
+            if route_failure:
+                failures.append(route_failure)
+                continue
             if author_intent_lane and package.authority_status == "code_verified":
                 failures.append(
                     f"{package.package_id}:author_intent_lane_forbids_code_verified"
@@ -10121,6 +10260,8 @@ def _writer_section_inputs(
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
     facet_policies: tuple[Any, ...] | list[Any] = (),
+    publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    typed_field_deferred: tuple[Any, ...] | list[Any] = (),
     formula_packages_by_section: dict[str, tuple[dict[str, Any], ...]] | None = None,
     formula_obligations_by_section: dict[str, tuple[dict[str, Any], ...]] | None = None,
     exclude_audit_only_concepts: bool = True,
@@ -10169,6 +10310,13 @@ def _writer_section_inputs(
                     "paragraph_role": paragraph.get("paragraph_role", "step_sequence"),
                     "argument_unit_ids": list(paragraph.get("argument_unit_ids") or ()),
                     "required_facet_ids": list(paragraph.get("required_facet_ids") or ()),
+                    "required_field_candidate_ids": list(
+                        paragraph.get("required_field_candidate_ids") or ()
+                    ),
+                    "support_slot_ids": list(paragraph.get("support_slot_ids") or ()),
+                    "required_publication_slot_ids": list(
+                        paragraph.get("required_publication_slot_ids") or ()
+                    ),
                     "ordered_semantic_slot_ids": list(
                         paragraph.get("ordered_semantic_slot_ids") or ()
                     ),
@@ -10181,6 +10329,7 @@ def _writer_section_inputs(
                     ),
                     "transition_from": paragraph.get("transition_from", ""),
                     "transition_to": paragraph.get("transition_to", ""),
+                    "witness_contract": paragraph.get("witness_contract") or {},
                 }
                 for paragraph in (raw.get("paragraphs") or ())
                 if isinstance(paragraph, dict)
@@ -10495,9 +10644,13 @@ def _writer_section_inputs(
                     "paragraph_role": "overview" if index == 1 else "step_sequence",
                     "argument_unit_ids": list(move.argument_unit_ids or graph.argument_unit_ids),
                     "required_facet_ids": [],
+                    "required_field_candidate_ids": [],
+                    "support_slot_ids": [],
+                    "required_publication_slot_ids": [],
                     "ordered_semantic_slot_ids": [],
                     "required_edge_ids": [],
                     "formula_obligation_ids": [],
+                    "witness_contract": {},
                     "expected_sentence_range": [1, 4],
                     "transition_from": "",
                     "transition_to": "",
@@ -10916,6 +11069,14 @@ def _writer_section_inputs(
                 facets=tuple(section_facets),
                 facet_alignments=tuple(section_facet_alignments),
                 facet_policies=tuple(section_facet_policies),
+                publication_field_candidates=tuple(
+                    candidate for candidate in publication_field_candidates
+                    if str(getattr(candidate, "facet_id", "") or "") in section_facet_ids
+                ),
+                typed_field_deferred=tuple(
+                    item for item in typed_field_deferred
+                    if str(getattr(item, "facet_id", "") or "") in section_facet_ids
+                ),
                 formula_packages=tuple(
                     formula_packages_by_section.get(graph.section_id, ())
                     if formula_packages_by_section else ()
@@ -11073,6 +11234,14 @@ def _writer_section_inputs(
                         formula_obligations_by_section.get(graph.section_id, ())
                         if formula_obligations_by_section else ()
                     ),
+                    publication_field_candidates=tuple(
+                        candidate for candidate in publication_field_candidates
+                        if str(getattr(candidate, "facet_id", "") or "") in section_facet_ids
+                    ),
+                    typed_field_deferred=tuple(
+                        item for item in typed_field_deferred
+                        if str(getattr(item, "facet_id", "") or "") in section_facet_ids
+                    ),
                 ),
                 "argument_flow": {
                     "semantic_frames": section_frames,
@@ -11165,11 +11334,15 @@ def _writer_section_inputs(
                         "Return one paragraphs item for every paragraph_plan row. "
                         "Each item must contain only that paragraph's substantive "
                         "Markdown and exact witness strings for every rendered facet, "
-                        "slot, edge, formula package, claim, or equation id. The "
+                        "field candidate, slot, edge, formula package, claim, or equation id. The "
                         "harness assembles section_markdown from these transactions; "
                         "do not use a single section paragraph to stand in for several "
                         "planned paragraphs. A witness must occur exactly once in its "
                         "paragraph text. "
+                        "For each required field candidate, follow the paragraph's "
+                        "witness_contract semantic_atom, polarity, conditions, and "
+                        "allowed factual anchors; never bind a sibling field or use an "
+                        "unrelated exact witness. "
                         "Use writer_view and its facet policies to decide the "
                         "author-intent scope and caveat mode, but use the supplied "
                         "argument_flow semantic frames as the only repository fact "
@@ -11244,11 +11417,16 @@ def _writer_section_inputs(
                             "Return one paragraphs item for every paragraph_plan row. "
                             "Each paragraph_markdown must be substantive body text "
                             "without a section H2 heading, and every rendered facet, "
-                            "slot, edge, formula package, claim, or equation id must "
+                            "field candidate, slot, edge, formula package, claim, or equation id must "
                             "have one exact witness occurring exactly once in that "
                             "paragraph. The harness assembles one section H2 and the "
                             "paragraphs in plan order; do not collapse multiple plan "
                             "rows into one transaction. "
+                            "The paragraph witness_contract is the local target "
+                            "authority: a required field candidate must express its "
+                            "semantic_atom with the stated polarity/conditions, and its "
+                            "exact witness must remain compatible with an allowed source "
+                            "anchor. "
                         )
                         if section_paragraphs else ""
                     )
@@ -11423,6 +11601,18 @@ def _writer_section_inputs(
                     "allowed_facet_ids": list(
                         section_facet_ids
                     ),
+                    "allowed_field_candidate_ids": [
+                        str(getattr(item, "candidate_id", "") or "")
+                        for item in publication_field_candidates
+                        if str(getattr(item, "facet_id", "") or "") in section_facet_ids
+                        and str(getattr(item, "candidate_id", "") or "").strip()
+                    ],
+                    "required_field_candidate_ids": [
+                        str(value)
+                        for paragraph in section_paragraphs
+                        for value in (paragraph.get("required_field_candidate_ids") or ())
+                        if str(value).strip()
+                    ],
                     "allowed_paragraph_ids": [
                         str(item.get("paragraph_id") or "")
                         for item in section_paragraphs
@@ -13165,20 +13355,27 @@ def _write_paragraph_transaction_assessments(
             if isinstance(item, Mapping)
         )
         routes: dict[str, dict[str, Any]] = {}
+        has_explicit_package_routes = any(
+            str(package.get("obligation_id") or "").strip()
+            for package in packages
+        )
         for obligation in obligations:
             obligation_id = str(obligation.get("obligation_id") or "").strip()
             if not obligation_id:
                 continue
             matches = [
                 package for package in packages
-                if (
-                    str(package.get("obligation_id") or "").strip() == obligation_id
-                    or (
-                        set(str(item) for item in (obligation.get("facet_ids") or ()))
-                        & set(str(item) for item in (package.get("bound_facet_ids") or ()))
-                    )
-                )
+                if str(package.get("obligation_id") or "").strip() == obligation_id
             ]
+            if not matches and not has_explicit_package_routes:
+                facet_ids = set(str(item) for item in (obligation.get("facet_ids") or ()))
+                matches = [
+                    package for package in packages
+                    if not facet_ids
+                    or facet_ids.intersection(
+                        set(str(item) for item in (package.get("bound_facet_ids") or ()))
+                    )
+                ]
             routes[obligation_id] = {
                 "package_ids": tuple(
                     str(package.get("package_id") or "")
@@ -13222,11 +13419,18 @@ def _write_paragraph_transaction_assessments(
         for plan_row in graph.paragraphs or ():
             paragraph_id = str(plan_row.paragraph_id)
             transaction = transactions.get(paragraph_id)
+            from code2paper.agentic.publication_transaction_contract import (
+                required_anchors_from_plan_row,
+            )
             assessment = assess_paragraph_transaction(
                 transaction or {"paragraph_id": paragraph_id},
                 plan_row=plan_row.model_dump(mode="json")
                 if hasattr(plan_row, "model_dump") else plan_row,
                 formula_routes=routes,
+                required_anchors=required_anchors_from_plan_row(
+                    plan_row.model_dump(mode="json")
+                    if hasattr(plan_row, "model_dump") else plan_row
+                ),
             )
             row = {
                 "section_id": section_id,

@@ -1586,6 +1586,16 @@ class _ResearchGraphContinuationProvider:
             argument_briefs=None,
             compile_argument_briefs=True,
             prior_plan=prior_plan,
+            implementation_scope=getattr(
+                getattr(result, "loop_state", None),
+                "implementation_scope",
+                None,
+            ),
+            behavior_graph=getattr(
+                getattr(result, "loop_state", None),
+                "behavior_graph",
+                None,
+            ),
         )
         old_briefs = self.argument_briefs
         new_briefs = planning.get("argument_briefs")

@@ -27,6 +27,8 @@ from code2paper.agentic.method_argument_brief_models import (
     AuthorMechanismFacetV1,
     MechanismAuthoringPacketV1,
     MethodArgumentBriefV1,
+    PublicationFieldCandidateV1,
+    TypedFieldDeferredV1,
 )
 from code2paper.agentic.method_proposition_models import MethodPropositionV1
 
@@ -358,6 +360,8 @@ class WriterViewV1(_ViewModel):
     required_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
     callback_opportunities: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     mechanism_authoring_packet: MechanismAuthoringPacketV1 | None = None
+    publication_field_candidates: tuple[PublicationFieldCandidateV1, ...] = Field(default_factory=tuple)
+    typed_field_deferred: tuple[TypedFieldDeferredV1, ...] = Field(default_factory=tuple)
     view_digest: str = ""
 
     @model_validator(mode="after")
@@ -406,6 +410,13 @@ class WriterViewV1(_ViewModel):
                 raise ValueError(
                     "writer authoring packet facet references unknown briefs"
                 )
+            packet_candidate_ids = {
+                item.candidate_id
+                for item in self.mechanism_authoring_packet.publication_field_candidates
+            }
+            view_candidate_ids = {item.candidate_id for item in self.publication_field_candidates}
+            if view_candidate_ids and packet_candidate_ids != view_candidate_ids:
+                raise ValueError("writer field candidate view is not closed over packet")
         active_layers = sum(
             1 for layer in (available, concept_available, brief_available) if layer
         )
@@ -752,6 +763,10 @@ def build_writer_view_from_argument_briefs(
     | list[CandidateFacetPolicyV1] = (),
     formula_packages: tuple[dict[str, Any], ...]
     | list[dict[str, Any]] = (),
+    publication_field_candidates: tuple[PublicationFieldCandidateV1, ...]
+    | list[PublicationFieldCandidateV1] = (),
+    typed_field_deferred: tuple[TypedFieldDeferredV1, ...]
+    | list[TypedFieldDeferredV1] = (),
     required_facet_ids: tuple[str, ...] = (),
     organization_seed: str = "",
 ) -> WriterViewV1:
@@ -766,6 +781,8 @@ def build_writer_view_from_argument_briefs(
             facets=facets,
             policies=facet_policies,
             alignments=facet_alignments,
+            publication_field_candidates=publication_field_candidates,
+            typed_field_deferred=typed_field_deferred,
             formula_packages=formula_packages,
             required_facet_ids=required_facet_ids,
             organization_seed=organization_seed,
@@ -941,4 +958,12 @@ def build_writer_view_from_argument_briefs(
         required_brief_ids=required_brief_ids,
         callback_opportunities=tuple(callback_opportunities),
         mechanism_authoring_packet=packet,
+        publication_field_candidates=tuple(
+            packet.publication_field_candidates if packet is not None
+            else publication_field_candidates
+        ),
+        typed_field_deferred=tuple(
+            packet.typed_field_deferred if packet is not None
+            else typed_field_deferred
+        ),
     )

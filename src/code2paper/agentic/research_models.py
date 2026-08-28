@@ -28,7 +28,7 @@ import hashlib
 import json
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from code2paper.agentic.source_authority import (
     SOURCE_AUTHORITY_LEVELS,
@@ -61,6 +61,27 @@ ResearchAction = Literal[
     "PLAN_METHOD",
     "STOP_BLOCKED",
 ]
+
+# Candidate ownership is deliberately repository-derived.  It is a safety
+# label, not a project-specific taxonomy: the same values are usable for a
+# model implementation, a data pipeline, or a non-Python repository.
+ImplementationOwnershipRoleV1 = Literal[
+    "target_core",
+    "target_dependency",
+    "comparand",
+    "evaluation",
+    "configuration",
+    "unknown",
+]
+
+IMPLEMENTATION_OWNERSHIP_ROLES: tuple[ImplementationOwnershipRoleV1, ...] = (
+    "target_core",
+    "target_dependency",
+    "comparand",
+    "evaluation",
+    "configuration",
+    "unknown",
+)
 
 
 RESEARCH_ACTIONS: tuple[ResearchAction, ...] = (
@@ -215,6 +236,211 @@ class _ResearchModel(BaseModel):
     """Common config: forbid extra fields, freeze where useful."""
 
     model_config = ConfigDict(extra="forbid")
+
+
+class ImplementationScopeV1(_ResearchModel):
+    """Repository-derived ownership scope for one authoring run.
+
+    The scope is intentionally a compact sidecar.  It prevents a lexically
+    similar sibling implementation or evaluation helper from becoming a
+    positive target-method fact while preserving those symbols for audit and
+    comparison.  No benchmark/project name is stored in the contract.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    target_entry_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_core_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_dependency_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    comparand_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    evaluation_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    configuration_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unknown_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    ownership_evidence_refs: tuple[str, ...] = Field(default_factory=tuple)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    content_digest: str = ""
+
+    @field_validator(
+        "target_entry_symbol_ids",
+        "target_core_symbol_ids",
+        "target_dependency_symbol_ids",
+        "comparand_symbol_ids",
+        "evaluation_symbol_ids",
+        "configuration_symbol_ids",
+        "unknown_symbol_ids",
+        "ownership_evidence_refs",
+    )
+    @classmethod
+    def _dedupe_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(str(item).strip() for item in value if str(item).strip()))
+
+    @model_validator(mode="after")
+    def _closed_and_digest(self) -> "ImplementationScopeV1":
+        groups = {
+            "target_core": set(self.target_core_symbol_ids),
+            "target_dependency": set(self.target_dependency_symbol_ids),
+            "comparand": set(self.comparand_symbol_ids),
+            "evaluation": set(self.evaluation_symbol_ids),
+            "configuration": set(self.configuration_symbol_ids),
+            "unknown": set(self.unknown_symbol_ids),
+        }
+        seen: set[str] = set()
+        for role, values in groups.items():
+            overlap = seen.intersection(values)
+            if overlap:
+                raise ValueError(
+                    "implementation scope assigns symbols to multiple roles: "
+                    + ",".join(sorted(overlap))
+                )
+            seen.update(values)
+        if not set(self.target_entry_symbol_ids).issubset(seen):
+            raise ValueError("implementation scope entry symbols are not classified")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest_payload(payload))
+        return self
+
+    def role_for(self, symbol_id: str) -> ImplementationOwnershipRoleV1:
+        value = str(symbol_id).strip()
+        if value in self.target_core_symbol_ids:
+            return "target_core"
+        if value in self.target_dependency_symbol_ids:
+            return "target_dependency"
+        if value in self.comparand_symbol_ids:
+            return "comparand"
+        if value in self.evaluation_symbol_ids:
+            return "evaluation"
+        if value in self.configuration_symbol_ids:
+            return "configuration"
+        return "unknown"
+
+
+CandidateAcquisitionStatusV1 = Literal[
+    "discovered",
+    "read",
+    "behavior_built",
+    "packet_built",
+    "acquired_and_compiled",
+    "explicitly_rejected",
+    "superseded",
+]
+
+
+class CandidateAcquisitionRecordV1(_ResearchModel):
+    """Audit record for one discovered candidate and its acquisition path."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    obligation_id: str
+    candidate_symbol_id: str
+    ownership_role: ImplementationOwnershipRoleV1 = "unknown"
+    discovered_rank: int = Field(default=0, ge=0)
+    search_observation_refs: tuple[str, ...] = Field(default_factory=tuple)
+    read_status: str = "not_attempted"
+    read_observation_refs: tuple[str, ...] = Field(default_factory=tuple)
+    behavior_graph_status: str = "not_attempted"
+    behavior_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    packet_status: str = "not_attempted"
+    packet_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # ``terminal_status`` is the canonical wire name. ``status`` is accepted
+    # as a validation alias because older audit prototypes used that shorter
+    # name; accepting it here keeps the ledger backward-compatible without
+    # creating a second mutable status field.
+    terminal_status: CandidateAcquisitionStatusV1 = Field(
+        default="discovered",
+        validation_alias=AliasChoices("terminal_status", "status"),
+        serialization_alias="terminal_status",
+    )
+    rejection_reason: str = ""
+    content_digest: str = ""
+
+    @field_validator(
+        "obligation_id", "candidate_symbol_id", "read_status",
+        "behavior_graph_status", "packet_status",
+    )
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("candidate acquisition identifiers/statuses must not be empty")
+        return str(value).strip()
+
+    @field_validator(
+        "search_observation_refs", "read_observation_refs", "behavior_node_ids",
+        "packet_ids", "fact_ids", "claim_ids",
+    )
+    @classmethod
+    def _dedupe_refs(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(str(item).strip() for item in value if str(item).strip()))
+
+    @model_validator(mode="after")
+    def _terminal_consistency(self) -> "CandidateAcquisitionRecordV1":
+        acquired = self.terminal_status == "acquired_and_compiled"
+        rejected = self.terminal_status == "explicitly_rejected"
+        superseded = self.terminal_status == "superseded"
+        if acquired and not (
+            self.read_observation_refs
+            and self.behavior_node_ids
+            and self.packet_ids
+            and self.fact_ids
+            and self.claim_ids
+        ):
+            raise ValueError(
+                "acquired candidate requires read, behavior, packet, fact, and claim references"
+            )
+        if (rejected or superseded) and not self.rejection_reason.strip():
+            raise ValueError("rejected/superseded candidate requires a typed reason")
+        if self.ownership_role in {"comparand", "evaluation"} and acquired and self.claim_ids:
+            raise ValueError("comparand/evaluation candidates cannot authorize target claims")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest_payload(payload))
+        return self
+
+    @property
+    def terminal(self) -> bool:
+        return self.terminal_status in {
+            "acquired_and_compiled", "explicitly_rejected", "superseded",
+        }
+
+    @property
+    def status(self) -> CandidateAcquisitionStatusV1:
+        """Compatibility alias for callers that use the short status name."""
+
+        return self.terminal_status
+
+
+class CandidateAcquisitionLedgerV1(_ResearchModel):
+    """Closed, content-addressed set of candidate acquisition records."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    records: tuple[CandidateAcquisitionRecordV1, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _closed_and_digest(self) -> "CandidateAcquisitionLedgerV1":
+        keys = [(item.obligation_id, item.candidate_symbol_id) for item in self.records]
+        if len(keys) != len(set(keys)):
+            raise ValueError("candidate acquisition ledger contains duplicate records")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest_payload(payload))
+        return self
+
+    def by_key(self) -> dict[tuple[str, str], CandidateAcquisitionRecordV1]:
+        return {(item.obligation_id, item.candidate_symbol_id): item for item in self.records}
+
+    @property
+    def unresolved_records(self) -> tuple[CandidateAcquisitionRecordV1, ...]:
+        return tuple(item for item in self.records if not item.terminal)
+
+    @property
+    def target_core_records(self) -> tuple[CandidateAcquisitionRecordV1, ...]:
+        return tuple(item for item in self.records if item.ownership_role in {"target_core", "target_dependency"})
 
 
 class ResearchContinuationSeedV1(_ResearchModel):
@@ -508,6 +734,28 @@ class ResearchAgendaV1(_ResearchModel):
         digest = _digest_payload(payload)
         object.__setattr__(self, "content_digest", digest)
         return self
+
+    def refresh_content_digest(self) -> str:
+        """Refresh the digest after an in-place candidate/status update.
+
+        Agenda items are intentionally mutable while the research loop is
+        running: search and behavior extraction can append candidate and node
+        references.  Pydantic's construction validator cannot observe those
+        later list mutations, so callers must close the agenda digest again at
+        the boundary where it is persisted or exposed to another stage.
+        """
+
+        payload = {
+            "schema_version": self.schema_version,
+            "run_id": self.run_id,
+            "repo_snapshot_id": self.repo_snapshot_id,
+            "project_tree_hash": self.project_tree_hash,
+            "intent_graph_digest": self.intent_graph_digest,
+            "items": [item.model_dump(mode="json") for item in self.items],
+        }
+        digest = _digest_payload(payload)
+        object.__setattr__(self, "content_digest", digest)
+        return digest
 
     @property
     def must_cover_items(self) -> list[ResearchAgendaItemV1]:
@@ -1250,6 +1498,12 @@ __all__ = [
     "BUDGET_TOOL_KINDS",
     "GlobalSafetyBudgetV1",
     "GapRequirementV1",
+    "IMPLEMENTATION_OWNERSHIP_ROLES",
+    "ImplementationOwnershipRoleV1",
+    "ImplementationScopeV1",
+    "CandidateAcquisitionStatusV1",
+    "CandidateAcquisitionRecordV1",
+    "CandidateAcquisitionLedgerV1",
     "PerObligationBudgetV1",
     "PacketRepairRequestV1",
     "QualityContentDimensionsV1",

@@ -25,7 +25,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.research_models import (
+    CandidateAcquisitionLedgerV1,
     GlobalSafetyBudgetV1,
+    ImplementationScopeV1,
     PerObligationBudgetV1,
     QualityStateV2,
     ResearchDecisionV1,
@@ -153,6 +155,8 @@ class AgentStateV3(TypedDict, total=False):
     behavior_graph_ref: str
     symbol_index_ref: str
     research_agenda_ref: str
+    implementation_scope_ref: str
+    candidate_acquisition_ledger_ref: str
 
     evidence_packet_set_ref: str
     code_fact_set_ref: str
@@ -218,6 +222,8 @@ class AgentStateV3Record(BaseModel):
     behavior_graph_ref: str = ""
     symbol_index_ref: str = ""
     research_agenda_ref: str = ""
+    implementation_scope_ref: str = ""
+    candidate_acquisition_ledger_ref: str = ""
 
     evidence_packet_set_ref: str = ""
     code_fact_set_ref: str = ""

@@ -35,7 +35,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -67,6 +67,12 @@ from code2paper.agentic.execution_profile import (
     assert_evidence_policy_unchanged,
     route_execution_profile,
 )
+from code2paper.agentic.implementation_scope import (
+    infer_implementation_scope,
+    ownership_rank,
+    scope_role_for_candidate,
+    seed_child_candidates_from_parents,
+)
 from code2paper.agentic.research_models import (
     BUDGET_TOOL_KINDS,
     GapRequirementV1,
@@ -80,6 +86,7 @@ from code2paper.agentic.research_models import (
     ResearchIssueV1,
     ResearchObservationV1,
     ResearchToolCallV1,
+    ImplementationScopeV1,
     ToolKind,
     TypedBehaviorTargetV1,
     empty_quality_state,
@@ -750,13 +757,91 @@ def repository_indexer_node(
         files=files,
     )
     symbol_index_digest = symbol_index.content_digest
+
+    # Build an ownership projection at the same frozen boundary as the
+    # symbol index.  The projection is intentionally generic: it uses typed
+    # entry/intent hints and call connectivity, never project names or paper
+    # answers.  It is returned through a private channel so the loop driver
+    # can hold the validated model outside LangGraph's serializable state.
+    author_texts = [
+        str(getattr(item, "author_text", "") or "")
+        for item in runtime.agenda.items
+        if str(getattr(item, "author_text", "") or "").strip()
+    ]
+    for value in _iter_intent_strings(runtime.intent_graph):
+        if value not in author_texts:
+            author_texts.append(value)
+    explicit_entries = _entry_symbol_hints(runtime.intent_target_proposal_report)
+    scope = infer_implementation_scope(
+        symbol_index.symbols,
+        author_texts=author_texts,
+        entry_symbol_ids=explicit_entries,
+        evidence_refs=(symbol_index_digest,),
+    )
+    scope_path = runtime.tool_context().write_artifact(
+        "implementation_scopes", scope.content_digest, scope
+    )
     return {
         "symbol_index_ref": symbol_index_digest,
+        "implementation_scope_ref": scope.content_digest,
         "behavior_graph_ref": _empty_behavior_graph_digest(
             runtime.repo_snapshot, language=adapter.language
         ),
         "status": "repository_indexed",
+        "_implementation_scope": scope,
+        "_implementation_scope_path": str(scope_path or ""),
+        # The symbol records are checkpoint-safe and let the loop refine the
+        # initial intent/index projection after call-graph extraction.  They
+        # are not evidence and never authorize a claim by themselves.
+        "_implementation_scope_symbols": [
+            symbol.model_dump(mode="json")
+            for symbol in symbol_index.symbols
+        ],
     }
+
+
+def _iter_intent_strings(value: Any, *, _depth: int = 0) -> tuple[str, ...]:
+    """Extract bounded author-intent text without trusting arbitrary keys."""
+
+    if _depth > 4 or value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,) if value.strip() else ()
+    if isinstance(value, Mapping):
+        result: list[str] = []
+        for key, item in value.items():
+            key_text = str(key).casefold()
+            if any(token in key_text for token in ("author", "intent", "method", "mechanism", "claim", "innovation")):
+                result.extend(_iter_intent_strings(item, _depth=_depth + 1))
+            elif _depth < 2 and isinstance(item, (Mapping, list, tuple)):
+                result.extend(_iter_intent_strings(item, _depth=_depth + 1))
+        return tuple(dict.fromkeys(result))
+    if isinstance(value, (list, tuple, set)):
+        result: list[str] = []
+        for item in value:
+            result.extend(_iter_intent_strings(item, _depth=_depth + 1))
+        return tuple(dict.fromkeys(result))
+    if hasattr(value, "model_dump"):
+        try:
+            return _iter_intent_strings(value.model_dump(mode="json"), _depth=_depth + 1)
+        except Exception:
+            return ()
+    return ()
+
+
+def _entry_symbol_hints(value: Any) -> tuple[str, ...]:
+    """Collect only explicitly named entry/root symbol hints from a report."""
+
+    if not isinstance(value, Mapping):
+        return ()
+    result: list[str] = []
+    for key, item in value.items():
+        key_text = str(key).casefold()
+        if not any(token in key_text for token in ("entry_symbol", "entrypoint_symbol", "target_entry", "root_symbol")):
+            continue
+        values = item if isinstance(item, (list, tuple, set)) else (item,)
+        result.extend(str(v).strip() for v in values if str(v).strip())
+    return tuple(dict.fromkeys(result))
 
 
 # ---------------------------------------------------------------------------
@@ -768,6 +853,8 @@ def research_agenda_builder_node(
     state: AgentStateV3,
     *,
     runtime: ResearchGraphRuntime,
+    implementation_scope: ImplementationScopeV1 | None = None,
+    behavior_graph: CodeBehaviorGraphV1 | None = None,
 ) -> dict[str, Any]:
     """Order obligations by priority and seed per-obligation budgets.
 
@@ -783,6 +870,16 @@ def research_agenda_builder_node(
     """
 
     agenda = runtime.agenda
+    # A mainline obligation may have already discovered a target symbol while
+    # a child/stage obligation remains empty.  Share only semantically
+    # related, non-audit candidates; the behavior-aware pass runs again after
+    # observations add graph context.
+    seed_child_candidates_from_parents(
+        agenda.items,
+        scope=implementation_scope,
+        behavior_graph=behavior_graph,
+    )
+    agenda.refresh_content_digest()
     budgets = seed_per_obligation_budgets(agenda, runtime.budget_policy)
     # Resume: honour an existing active_obligation_id if it still points
     # to an unresolved obligation.
@@ -2400,6 +2497,7 @@ def compile_candidate_node(
     behavior_graph: CodeBehaviorGraphV1,
     active_obligation_id: str,
     gain_tracker: InformationGainTracker,
+    implementation_scope: ImplementationScopeV1 | None = None,
 ) -> dict[str, Any]:
     """Compile the active obligation's candidate into authorized claims (R4).
 
@@ -2453,6 +2551,52 @@ def compile_candidate_node(
         candidate_symbol_ids=active_obligation.candidate_symbol_ids,
         candidate_behavior_node_ids=active_obligation.candidate_behavior_node_ids,
     )
+    if implementation_scope is not None:
+        # Scope is an authorization/ranking boundary, not a relevance score.
+        # Comparand/evaluation nodes may remain in the audit graph, but they
+        # must never form the positive target packet.  Unknown nodes are
+        # retained as fallback evidence only when no target-owned node exists.
+        owned_nodes = [
+            node for node in selected_nodes
+            if scope_role_for_candidate(
+                implementation_scope,
+                str(getattr(node, "symbol_id", "") or ""),
+                behavior_graph=behavior_graph,
+            ) in {"target_core", "target_dependency"}
+        ]
+        if owned_nodes:
+            selected_nodes = owned_nodes
+        else:
+            selected_nodes = [
+                node for node in selected_nodes
+                if scope_role_for_candidate(
+                    implementation_scope,
+                    str(getattr(node, "symbol_id", "") or ""),
+                    behavior_graph=behavior_graph,
+                ) not in {"comparand", "evaluation", "configuration"}
+            ]
+        selected_nodes.sort(
+            key=lambda node: (
+                -ownership_rank(
+                    scope_role_for_candidate(
+                        implementation_scope,
+                        str(getattr(node, "symbol_id", "") or ""),
+                        behavior_graph=behavior_graph,
+                    )
+                ),
+                str(getattr(node, "node_id", "") or ""),
+            )
+        )
+        if not selected_nodes:
+            active_obligation.missing_information.append(
+                "ownership:target_candidate_not_found"
+            )
+            return gap_finalizer_node(
+                state,
+                runtime=runtime,
+                active_obligation_id=active_obligation_id,
+                gain_tracker=gain_tracker,
+            )
     sibling_obligations = [
         item for item in runtime.agenda.items
         if item.obligation_id != active_obligation_id

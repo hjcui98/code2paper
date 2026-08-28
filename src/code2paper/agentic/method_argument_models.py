@@ -757,6 +757,89 @@ class SectionArgumentMoveV1(_MethodModel):
         return max(0, value)
 
 
+class ParagraphWitnessTargetV1(_MethodModel):
+    """One paragraph-local semantic target visible to the Writer."""
+
+    target_id: str
+    target_kind: Literal["facet", "field", "slot", "edge", "formula", "claim", "equation"]
+    semantic_atom: str = ""
+    paper_role: str = ""
+    required_polarity: str = "unknown"
+    required_conditions: tuple[str, ...] = Field(default_factory=tuple)
+    allowed_anchor_ids: tuple[str, ...] = Field(default_factory=tuple)
+    allowed_exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
+    authority_lane: str = "executable_hard"
+
+    @field_validator("target_id")
+    @classmethod
+    def _target_required(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("paragraph witness target requires an id")
+        return str(value).strip()
+
+    @field_validator(
+        "required_conditions", "allowed_anchor_ids", "allowed_exact_excerpts",
+    )
+    @classmethod
+    def _dedupe_values(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _clean_tuple(value)
+
+
+class ParagraphWitnessContractV1(_MethodModel):
+    """Closed paragraph-local contract shared by Writer and validators."""
+
+    schema_version: str = "1.0"
+    paragraph_id: str
+    rhetorical_goal: str = ""
+    targets: tuple[ParagraphWitnessTargetV1, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @field_validator("paragraph_id")
+    @classmethod
+    def _paragraph_required(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("paragraph witness contract requires a paragraph id")
+        return str(value).strip()
+
+    @model_validator(mode="after")
+    def _closed_and_digest(self) -> "ParagraphWitnessContractV1":
+        keys = [(item.target_kind, item.target_id) for item in self.targets]
+        if len(keys) != len(set(keys)):
+            raise ValueError("paragraph witness contract contains duplicate targets")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+    @property
+    def required_anchor_map(self) -> dict[tuple[str, str], tuple[str, ...]]:
+        anchors: dict[tuple[str, str], tuple[str, ...]] = {}
+        for item in self.targets:
+            values = list(item.allowed_exact_excerpts)
+            semantic_atom = str(item.semantic_atom or "").strip()
+            # ``formal expression`` is a type label, not a source witness;
+            # formula rendering is checked by the exact obligation/package
+            # route instead.  All other semantic atoms and explicit
+            # conditions are useful paragraph-local anchors even when the
+            # Writer paraphrases the repository excerpt.
+            if semantic_atom and semantic_atom.casefold() not in {
+                "formal expression", "formula"
+            }:
+                values.append(semantic_atom)
+            values.extend(item.required_conditions)
+            values = list(dict.fromkeys(value.strip() for value in values if value.strip()))
+            if values:
+                anchors[(item.target_kind, item.target_id)] = tuple(values)
+        return anchors
+
+    @property
+    def target_ids_by_kind(self) -> dict[str, tuple[str, ...]]:
+        result: dict[str, list[str]] = {}
+        for item in self.targets:
+            result.setdefault(item.target_kind, []).append(item.target_id)
+        return {key: tuple(value) for key, value in result.items()}
+
+
 class SectionParagraphPlanV1(_MethodModel):
     """Ordered paragraph contract derived from semantic slots.
 
@@ -777,12 +860,16 @@ class SectionParagraphPlanV1(_MethodModel):
     ] = "step_sequence"
     argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
     required_facet_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_field_candidate_ids: tuple[str, ...] = Field(default_factory=tuple)
+    support_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_publication_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
     ordered_semantic_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
     required_edge_ids: tuple[str, ...] = Field(default_factory=tuple)
     formula_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
     expected_sentence_range: tuple[int, int] = (1, 4)
     transition_from: str = ""
     transition_to: str = ""
+    witness_contract: ParagraphWitnessContractV1 | None = None
     content_digest: str = ""
 
     @field_validator("paragraph_id")
@@ -798,6 +885,9 @@ class SectionParagraphPlanV1(_MethodModel):
         "ordered_semantic_slot_ids",
         "required_edge_ids",
         "formula_obligation_ids",
+        "required_field_candidate_ids",
+        "support_slot_ids",
+        "required_publication_slot_ids",
     )
     @classmethod
     def _dedupe_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
@@ -812,6 +902,13 @@ class SectionParagraphPlanV1(_MethodModel):
 
     @model_validator(mode="after")
     def _digest(self) -> "SectionParagraphPlanV1":
+        ordered = set(self.ordered_semantic_slot_ids)
+        if not set(self.support_slot_ids).issubset(ordered):
+            raise ValueError("paragraph support slots are not present in ordered semantic slots")
+        if not set(self.required_publication_slot_ids).issubset(ordered):
+            raise ValueError("paragraph publication slots are not present in ordered semantic slots")
+        if self.witness_contract is not None and self.witness_contract.paragraph_id != self.paragraph_id:
+            raise ValueError("paragraph witness contract id does not match paragraph plan")
         object.__setattr__(self, "content_digest", _digest(
             self.model_dump(mode="json", exclude={"content_digest"})
         ))

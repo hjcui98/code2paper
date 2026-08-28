@@ -53,7 +53,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
 from code2paper.agentic.research_models import (
+    CandidateAcquisitionLedgerV1,
     GlobalSafetyBudgetV1,
+    ImplementationScopeV1,
     PerObligationBudgetV1,
     ResearchAgendaV1,
     ResearchAgendaItemV1,
@@ -62,6 +64,11 @@ from code2paper.agentic.research_models import (
     ResearchObservationV1,
     ResearchToolCallV1,
     empty_quality_state,
+)
+from code2paper.agentic.implementation_scope import (
+    build_candidate_acquisition_ledger,
+    infer_implementation_scope,
+    seed_child_candidates_from_parents,
 )
 from code2paper.agentic.research_nodes import (
     BudgetPolicyV1,
@@ -344,12 +351,16 @@ class LoopStateSnapshot(BaseModel):
     terminated: bool = False
     termination_reason: str = ""
     recent_observations: list[dict[str, Any]] = Field(default_factory=list)
+    observation_history: list[dict[str, Any]] = Field(default_factory=list)
     active_issue: dict[str, Any] | None = None
     current_quality_state: dict[str, Any] = Field(default_factory=dict)
     best_quality_state: dict[str, Any] = Field(default_factory=dict)
     decision_trace: list[dict[str, Any]] = Field(default_factory=list)
     policy_merge_trace: list[dict[str, Any]] = Field(default_factory=list)
     compiled_evidence: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    implementation_scope: dict[str, Any] = Field(default_factory=dict)
+    implementation_scope_symbols: list[dict[str, Any]] = Field(default_factory=list)
+    candidate_acquisition_ledger: dict[str, Any] = Field(default_factory=dict)
 
     def to_state_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dict for LangGraph state channels."""
@@ -371,6 +382,7 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
         "agenda_items": [item.model_dump(mode="json") for item in loop.runtime.agenda.items],
         "gain_tracker": loop.gain_tracker.snapshot(),
         "recent_observations": [item.model_dump(mode="json") for item in loop.recent_observations],
+        "observation_history": [item.model_dump(mode="json") for item in loop.observation_history],
         "active_issue": (loop.active_issue.model_dump(mode="json") if loop.active_issue else None),
         "current_quality_state": loop.current_quality_state.model_dump(mode="json"),
         "best_quality_state": loop.best_quality_state.model_dump(mode="json"),
@@ -385,6 +397,9 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
             }
             for key, value in loop.compiled_evidence.items()
         },
+        "implementation_scope": loop.implementation_scope.model_dump(mode="json"),
+        "implementation_scope_symbols": list(loop.implementation_scope_symbols),
+        "candidate_acquisition_ledger": loop.candidate_acquisition_ledger.model_dump(mode="json"),
     }
     payload_ref, payload_digest = _write_immutable_loop_payload(
         loop.runtime,
@@ -546,6 +561,15 @@ def restore_loop_state_from_snapshot(
         ResearchObservationV1.model_validate(payload)
         for payload in (immutable.get("recent_observations") or snapshot.recent_observations)
     ]
+    loop.observation_history = [
+        ResearchObservationV1.model_validate(payload)
+        for payload in (
+            immutable.get("observation_history")
+            or snapshot.observation_history
+            or immutable.get("recent_observations")
+            or snapshot.recent_observations
+        )
+    ]
     active_issue = immutable.get("active_issue") or snapshot.active_issue
     if active_issue:
         loop.active_issue = ResearchIssueV1.model_validate(active_issue)
@@ -583,6 +607,25 @@ def restore_loop_state_from_snapshot(
                 if strict:
                     raise ValueError(f"invalid_loop_state_snapshot:compiled_evidence:{key}") from exc
                 pass
+    scope_payload = immutable.get("implementation_scope") or snapshot.implementation_scope
+    if scope_payload:
+        try:
+            loop.implementation_scope = ImplementationScopeV1.model_validate(scope_payload)
+        except Exception as exc:
+            if strict:
+                raise ValueError("invalid_loop_state_snapshot:implementation_scope") from exc
+    scope_symbols = immutable.get("implementation_scope_symbols") or snapshot.implementation_scope_symbols
+    if scope_symbols:
+        loop.implementation_scope_symbols = tuple(
+            dict(item) for item in scope_symbols if isinstance(item, dict)
+        )
+    ledger_payload = immutable.get("candidate_acquisition_ledger") or snapshot.candidate_acquisition_ledger
+    if ledger_payload:
+        try:
+            loop.candidate_acquisition_ledger = CandidateAcquisitionLedgerV1.model_validate(ledger_payload)
+        except Exception as exc:
+            if strict:
+                raise ValueError("invalid_loop_state_snapshot:candidate_acquisition_ledger") from exc
     return loop
 
 
@@ -606,6 +649,11 @@ class ResearchLoopState:
     gain_tracker: InformationGainTracker = field(default_factory=InformationGainTracker)
     per_obligation_budgets: dict[str, PerObligationBudgetV1] = field(default_factory=dict)
     recent_observations: list[ResearchObservationV1] = field(default_factory=list)
+    # Unlike ``recent_observations`` this list is never cleared when the
+    # active obligation advances.  It is the provenance ledger input and is
+    # therefore required for cumulative candidate closure and checkpoint
+    # resume.
+    observation_history: list[ResearchObservationV1] = field(default_factory=list)
     active_issue: ResearchIssueV1 | None = None
     turn_index: int = 0
     no_progress_tool_call_ids: set[str] = field(default_factory=set)
@@ -623,6 +671,77 @@ class ResearchLoopState:
     # channels; the writer (V3GraphWrapper) reads them from here after the
     # loop terminates.
     compiled_evidence: dict[str, "CompiledEvidence"] = field(default_factory=dict)
+    implementation_scope: ImplementationScopeV1 = field(default_factory=ImplementationScopeV1)
+    implementation_scope_symbols: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    candidate_acquisition_ledger: CandidateAcquisitionLedgerV1 = field(default_factory=CandidateAcquisitionLedgerV1)
+
+
+def _append_observation_history(
+    loop: ResearchLoopState,
+    observations: tuple[ResearchObservationV1, ...] | list[ResearchObservationV1],
+) -> None:
+    """Append observations once while keeping the supervisor window separate."""
+
+    seen = {item.observation_id for item in loop.observation_history}
+    for observation in observations:
+        if observation.observation_id not in seen:
+            loop.observation_history.append(observation)
+            seen.add(observation.observation_id)
+
+
+def _refresh_acquisition_ledger(
+    loop: ResearchLoopState,
+    state: dict[str, Any] | None = None,
+) -> CandidateAcquisitionLedgerV1:
+    """Rebuild and persist the candidate closure ledger at each boundary."""
+
+    # Refine the scope at the behavior-graph boundary.  The initial indexer
+    # has symbols and intent but no call graph; once behavior nodes/relations
+    # exist, reachable symbols become dependencies and ambiguous siblings
+    # remain unknown/audit-only.
+    if loop.implementation_scope_symbols:
+        entry_ids = loop.implementation_scope.target_entry_symbol_ids
+        loop.implementation_scope = infer_implementation_scope(
+            loop.implementation_scope_symbols,
+            author_texts=tuple(
+                str(getattr(item, "author_text", "") or "")
+                for item in loop.runtime.agenda.items
+            ),
+            entry_symbol_ids=entry_ids,
+            behavior_graph=loop.behavior_graph,
+            evidence_refs=(
+                loop.runtime.repo_snapshot.snapshot_id,
+                loop.runtime.repo_snapshot.project_tree_hash,
+                loop.behavior_graph.content_digest,
+            ),
+        )
+
+    # Parent-to-child propagation is repeated after behavior extraction so a
+    # child can inherit a semantically related target symbol once the graph
+    # exposes its operation context.  The helper never copies audit-only
+    # candidates.
+    seed_child_candidates_from_parents(
+        loop.runtime.agenda.items,
+        behavior_graph=loop.behavior_graph,
+        scope=loop.implementation_scope,
+    )
+    loop.runtime.agenda.refresh_content_digest()
+    ledger = build_candidate_acquisition_ledger(
+        scope=loop.implementation_scope,
+        agenda_items=loop.runtime.agenda.items,
+        observations=tuple(loop.observation_history or loop.recent_observations),
+        behavior_graph=loop.behavior_graph,
+        compiled_by_obligation=loop.compiled_evidence,
+        repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
+    )
+    loop.candidate_acquisition_ledger = ledger
+    path = loop.runtime.tool_context().write_artifact(
+        "candidate_acquisition_ledgers", ledger.content_digest, ledger
+    )
+    if state is not None:
+        state["candidate_acquisition_ledger_ref"] = ledger.content_digest
+    return ledger
 
 
 def initial_loop_state(
@@ -648,6 +767,11 @@ def initial_loop_state(
         per_obligation_budgets=budgets,
         current_quality_state=initial_quality,
         best_quality_state=initial_quality,
+        implementation_scope=ImplementationScopeV1(),
+        candidate_acquisition_ledger=CandidateAcquisitionLedgerV1(
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        ),
     )
 
 
@@ -767,8 +891,24 @@ class ResearchLoopDriver:
         # --- linear prefix --------------------------------------------------
         state.update(input_resolution_node(state, runtime=runtime))
         state.update(intent_compiler_node(state, runtime=runtime))
-        state.update(repository_indexer_node(state, runtime=runtime))
-        state.update(research_agenda_builder_node(state, runtime=runtime))
+        index_update = repository_indexer_node(state, runtime=runtime)
+        inferred_scope = index_update.pop("_implementation_scope", None)
+        index_update.pop("_implementation_scope_path", None)
+        inferred_scope_symbols = index_update.pop("_implementation_scope_symbols", None)
+        state.update(index_update)
+        if inferred_scope is not None:
+            loop.implementation_scope = inferred_scope
+        if inferred_scope_symbols:
+            loop.implementation_scope_symbols = tuple(
+                dict(item) for item in inferred_scope_symbols if isinstance(item, dict)
+            )
+        state.update(research_agenda_builder_node(
+            state,
+            runtime=runtime,
+            implementation_scope=loop.implementation_scope,
+            behavior_graph=loop.behavior_graph,
+        ))
+        _refresh_acquisition_ledger(loop, state)
 
         # --- research loop --------------------------------------------------
         routes: list[str] = []
@@ -858,6 +998,7 @@ class ResearchLoopDriver:
                     behavior_graph=loop.behavior_graph,
                     active_obligation_id=active_obligation_id,
                     gain_tracker=loop.gain_tracker,
+                    implementation_scope=loop.implementation_scope,
                 )
                 compiled_evidence = compile_update.pop("_compiled_evidence", None)
                 partial_evidence = compile_update.pop("_partial_evidence", None)
@@ -867,6 +1008,7 @@ class ResearchLoopDriver:
                     _store_evidence_sidecar(loop, partial_evidence)
                 if compiled_evidence is not None:
                     _store_evidence_sidecar(loop, compiled_evidence)
+                _refresh_acquisition_ledger(loop, state)
                 if state.get("status") == "blocked":
                     terminated = True
                     termination_reason = "evidence_compile_blocked"
@@ -984,6 +1126,7 @@ class ResearchLoopDriver:
                 behavior_graph=loop.behavior_graph,
             )
             loop.recent_observations.extend(observations)
+            _append_observation_history(loop, observations)
             for call in pending:
                 loop.recent_tool_call_ids.add(call.tool_call_id)
             state["pending_tool_calls"] = []
@@ -1011,6 +1154,7 @@ class ResearchLoopDriver:
                 active_obligation_id=active_obligation_id,
             )
             state.update(bg_update)
+            _refresh_acquisition_ledger(loop, state)
 
             # Quality state selector.
             quality_update = quality_state_selector_node(
@@ -1081,6 +1225,7 @@ class ResearchLoopDriver:
                     behavior_graph=loop.behavior_graph,
                     active_obligation_id=active_obligation_id,
                     gain_tracker=loop.gain_tracker,
+                    implementation_scope=loop.implementation_scope,
                 )
                 compiled_evidence = compile_update.pop("_compiled_evidence", None)
                 partial_evidence = compile_update.pop("_partial_evidence", None)
@@ -1100,6 +1245,7 @@ class ResearchLoopDriver:
                     state["active_obligation_id"] = next_obl
                     loop.active_issue = None
                     loop.recent_observations.clear()
+                    _refresh_acquisition_ledger(loop, state)
                     turns_executed += 1
                     loop.turn_index += 1
                     continue
@@ -1125,6 +1271,7 @@ class ResearchLoopDriver:
                         loop.recent_observations.clear()
                     turns_executed += 1
                     loop.turn_index += 1
+                    _refresh_acquisition_ledger(loop, state)
                     continue
                 # No compiled evidence: the node already routed to gap
                 # finalizer.  ``gap_accepted`` is True when the gap was
@@ -1276,8 +1423,25 @@ def _ctx_linear_prefix(
     update: dict[str, Any] = {}
     update.update(input_resolution_node(state, runtime=runtime))
     update.update(intent_compiler_node(state, runtime=runtime))
-    update.update(repository_indexer_node(state, runtime=runtime))
-    update.update(research_agenda_builder_node(state, runtime=runtime))
+    index_update = repository_indexer_node(state, runtime=runtime)
+    inferred_scope = index_update.pop("_implementation_scope", None)
+    index_update.pop("_implementation_scope_path", None)
+    inferred_scope_symbols = index_update.pop("_implementation_scope_symbols", None)
+    update.update(index_update)
+    if inferred_scope is not None and ctx.loop_state is not None:
+        ctx.loop_state.implementation_scope = inferred_scope
+    if inferred_scope_symbols and ctx.loop_state is not None:
+        ctx.loop_state.implementation_scope_symbols = tuple(
+            dict(item) for item in inferred_scope_symbols if isinstance(item, dict)
+        )
+    update.update(research_agenda_builder_node(
+        state,
+        runtime=runtime,
+        implementation_scope=(ctx.loop_state.implementation_scope if ctx.loop_state else None),
+        behavior_graph=(ctx.loop_state.behavior_graph if ctx.loop_state else None),
+    ))
+    if ctx.loop_state is not None:
+        _refresh_acquisition_ledger(ctx.loop_state, update)
     # Re-emit the snapshot so the checkpointer persists the restored
     # state even when the linear prefix did not mutate it this turn.
     if ctx.loop_state is not None:
@@ -1420,6 +1584,7 @@ def _ctx_tool(
         behavior_graph=loop.behavior_graph,
     )
     loop.recent_observations.extend(observations)
+    _append_observation_history(loop, observations)
     for call in pending:
         loop.recent_tool_call_ids.add(call.tool_call_id)
     ctx._observations = list(observations)
@@ -1477,6 +1642,8 @@ def _ctx_observation(
         active_obligation_id=active_obligation_id,
     )
     update.update(bg_update)
+
+    _refresh_acquisition_ledger(loop, update)
 
     quality_update = quality_state_selector_node(
         state,
@@ -1567,6 +1734,7 @@ def _ctx_compile(
         behavior_graph=loop.behavior_graph,
         active_obligation_id=active_obligation_id,
         gain_tracker=loop.gain_tracker,
+        implementation_scope=loop.implementation_scope,
     )
     compiled_evidence = compile_update.pop("_compiled_evidence", None)
     partial_evidence = compile_update.pop("_partial_evidence", None)
@@ -1579,10 +1747,12 @@ def _ctx_compile(
         # Success: route to advancer.  The advancer increments
         # turns_executed only when a next obligation exists.
         ctx.compile_route = "compiled"
+        _refresh_acquisition_ledger(loop, compile_update)
         return compile_update
     if partial_evidence is not None:
         # The advancer performs the round-robin move and accounting.
         ctx.compile_route = "partial"
+        _refresh_acquisition_ledger(loop, compile_update)
         return compile_update
 
     # No compiled evidence: compile_candidate_node already called
@@ -1592,6 +1762,7 @@ def _ctx_compile(
         ctx.compile_route = "rejected"
         ctx.turns_executed += 1
         loop.turn_index += 1
+        _refresh_acquisition_ledger(loop, compile_update)
         return compile_update
 
     if compile_update.get("status") == "blocked":
@@ -1602,6 +1773,7 @@ def _ctx_compile(
 
     # Gap accepted: route to advancer (same as compiled-success).
     ctx.compile_route = "compiled"
+    _refresh_acquisition_ledger(loop, compile_update)
     return compile_update
 
 

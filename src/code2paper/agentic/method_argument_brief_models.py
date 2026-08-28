@@ -85,6 +85,8 @@ FacetFieldPolarityV1 = Literal[
     "unknown",
 ]
 
+PublicationFieldRenderPolicyV1 = Literal["required", "optional", "deferred"]
+
 
 def _digest(value: Any) -> str:
     encoded = json.dumps(
@@ -336,6 +338,123 @@ class FacetFieldBindingV1(_BriefModel):
         return _clean_tuple(value)
 
 
+class PublicationFieldCandidateV1(_BriefModel):
+    """Atomic, Writer-consumable projection of one aligned facet field.
+
+    Aggregate facet status is retained for diagnostics, but publication
+    planning consumes these atomic records.  A required candidate must carry
+    a semantic atom and an exact authorized excerpt; otherwise it is demoted
+    to ``optional``/``deferred`` rather than creating an impossible hard
+    paragraph target.
+    """
+
+    schema_version: str = "1.0"
+    candidate_id: str
+    facet_id: str
+    field_name: str
+    semantic_atom: str
+    authority_lane: str = "executable_hard"
+    polarity: FacetFieldPolarityV1 = "unknown"
+    conditions: tuple[str, ...] = Field(default_factory=tuple)
+    bound_claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
+    ownership_roles: tuple[str, ...] = Field(default_factory=tuple)
+    render_policy: PublicationFieldRenderPolicyV1 = "deferred"
+    defer_reason: str = ""
+    content_digest: str = ""
+
+    @field_validator(
+        "candidate_id", "facet_id", "field_name", "semantic_atom",
+    )
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("publication field candidate requires non-empty identity and semantic atom")
+        return str(value).strip()
+
+    @field_validator("authority_lane")
+    @classmethod
+    def _authority_lane_required(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("publication field candidate requires an authority lane")
+        return str(value).strip()
+
+    @field_validator(
+        "conditions", "bound_claim_ids", "bound_fact_ids", "bound_span_ids",
+        "bound_equation_ids", "exact_excerpts", "ownership_roles",
+    )
+    @classmethod
+    def _dedupe_values(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _clean_tuple(value)
+
+    @model_validator(mode="after")
+    def _consistency_and_digest(self) -> "PublicationFieldCandidateV1":
+        if self.render_policy == "required" and (
+            not self.exact_excerpts
+            or not (self.bound_claim_ids or self.bound_fact_ids or self.bound_span_ids or self.bound_equation_ids)
+            or "unknown" in self.ownership_roles
+            or "comparand" in self.ownership_roles
+            or "evaluation" in self.ownership_roles
+        ):
+            raise ValueError("required publication field candidate is not consumable")
+        if self.render_policy == "deferred" and not self.defer_reason.strip():
+            raise ValueError("deferred publication field candidate requires a reason")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+    @property
+    def is_consumable(self) -> bool:
+        return self.render_policy in {"required", "optional"} and not set(
+            self.ownership_roles
+        ).intersection({"unknown", "comparand", "evaluation"}) and bool(
+            self.semantic_atom.strip()
+            and self.authority_lane.strip()
+            and self.exact_excerpts
+            and (
+                self.bound_claim_ids
+                or self.bound_fact_ids
+                or self.bound_span_ids
+                or self.bound_equation_ids
+            )
+        )
+
+
+class TypedFieldDeferredV1(_BriefModel):
+    """Explicitly unresolved atomic field kept for research/review routing."""
+
+    schema_version: str = "1.0"
+    facet_id: str
+    field_name: str
+    unsupported_atom: str
+    reason_code: str
+    requested_search_terms: tuple[str, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @field_validator("facet_id", "field_name", "unsupported_atom", "reason_code")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("typed deferred field requires non-empty fields")
+        return str(value).strip()
+
+    @field_validator("requested_search_terms")
+    @classmethod
+    def _dedupe_terms(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _clean_tuple(value)
+
+    @model_validator(mode="after")
+    def _digest(self) -> "TypedFieldDeferredV1":
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
 class CandidateFacetPolicyV1(_BriefModel):
     """Deterministic Candidate/Verified policy for one author facet."""
 
@@ -415,6 +534,8 @@ class MechanismAuthoringPacketV1(_BriefModel):
     brief_ids: tuple[str, ...] = Field(default_factory=tuple)
     facets: tuple[AuthorMechanismFacetV1, ...] = Field(default_factory=tuple)
     facet_policies: tuple[CandidateFacetPolicyV1, ...] = Field(default_factory=tuple)
+    publication_field_candidates: tuple[PublicationFieldCandidateV1, ...] = Field(default_factory=tuple)
+    typed_field_deferred: tuple[TypedFieldDeferredV1, ...] = Field(default_factory=tuple)
     exact_evidence_excerpts: tuple[FacetEvidenceExcerptV1, ...] = Field(
         default_factory=tuple
     )
@@ -451,6 +572,13 @@ class MechanismAuthoringPacketV1(_BriefModel):
             raise ValueError("authoring packet policy references an unknown facet")
         if set(self.search_terms_by_facet_id) - known_facets:
             raise ValueError("authoring packet search terms reference an unknown facet")
+        candidate_ids = [item.candidate_id for item in self.publication_field_candidates]
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("authoring packet contains duplicate publication field candidates")
+        if any(item.facet_id not in known_facets for item in self.publication_field_candidates):
+            raise ValueError("authoring packet field candidate references an unknown facet")
+        if any(item.facet_id not in known_facets for item in self.typed_field_deferred):
+            raise ValueError("authoring packet deferred field references an unknown facet")
         if self.brief_ids:
             unknown_briefs = {
                 item.brief_id for item in self.facets if item.brief_id
