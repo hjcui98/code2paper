@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable
+import re
+from collections.abc import Callable, Iterable
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -42,6 +43,164 @@ _QUEUE_LANE_LABELS: dict[str, str] = {
     "external_literature": "literature",
     "expository_bridge": "author_confirmation",
 }
+
+_SEARCH_TERM_RE = re.compile(r"[A-Za-zΔδ][A-Za-z0-9_Δδ-]*")
+_SEARCH_TERM_STOP = frozenset({
+    "a", "an", "and", "are", "as", "at", "be", "by", "can", "do", "for",
+    "from", "had", "has", "have", "how", "in", "into", "is", "it", "its",
+    "may", "not", "note", "of", "on", "or", "our", "out", "plus", "read",
+    "than", "that", "the", "their", "them", "then", "these", "this",
+    "those", "to", "via", "we", "what", "when", "where", "which", "why",
+    "will", "with", "after", "all", "also", "apply", "author", "before",
+    "both", "clause", "confirmation", "does", "draft", "each", "empty",
+    "evidence", "functions", "implement", "intended", "mechanism",
+    "pending", "repository", "setups", "spans", "such", "symbols",
+    "through", "unlicensed", "use", "used", "using", "while", "must",
+    "should",
+})
+_GENERIC_CALLBACK_QUESTION_MARKERS = (
+    "which repository evidence or author confirmation resolves",
+    "which repository evidence resolves the unlicensed",
+    "replace this with one precise missing-information question",
+    "which repository evidence binds this section formula obligation",
+)
+_DIRECTED_QUESTION_PREFIX = (
+    "Which repository spans, symbols, or functions implement:"
+)
+
+
+def _iter_search_term_texts(texts: Iterable[Any]) -> Iterable[str]:
+    for text in texts:
+        if isinstance(text, (list, tuple, set)):
+            yield from _iter_search_term_texts(text)
+        else:
+            yield str(text or "")
+
+
+def _search_term_rank(token: str) -> int:
+    """Prefer formula/symbol tokens over heading English in a closed set."""
+
+    if any(character in token for character in "Δδ"):
+        return 3
+    if any(character.isdigit() for character in token) or "_" in token:
+        return 3
+    if len(token) >= 2 and token.isupper():
+        return 3
+    if any(character.isupper() for character in token[1:]):
+        return 2
+    if len(token) >= 8:
+        return 1
+    return 0
+
+
+def directed_search_terms_from_texts(*texts: Any, limit: int = 16) -> tuple[str, ...]:
+    """Extract directed repository search terms from closed-set author text.
+
+    Tokens come only from caller-supplied strings (unlicensed clauses,
+    missing parts, facet quotes).  The harness does not invent project
+    names or known answers.  Distinctive symbol/formula tokens rank above
+    generic heading English so a later clause is not truncated away.
+    """
+
+    ranked: list[tuple[int, int, str]] = []
+    seen: set[str] = set()
+    order = 0
+    for text in _iter_search_term_texts(texts):
+        for match in _SEARCH_TERM_RE.findall(text):
+            token = str(match).strip()
+            key = token.casefold()
+            if key in seen or key in _SEARCH_TERM_STOP:
+                continue
+            if len(token) < 3 and not (
+                any(character in token for character in "Δδ")
+                or any(character.isdigit() for character in token)
+                or token.isupper()
+            ):
+                continue
+            seen.add(key)
+            ranked.append((-_search_term_rank(token), order, token))
+            order += 1
+    ranked.sort()
+    return tuple(token for _, _, token in ranked[: max(0, int(limit))])
+
+
+def directed_callback_question(terms: Iterable[str]) -> str:
+    """Build a scoped search question from already-authorized terms."""
+
+    shown = [str(term).strip() for term in terms if str(term).strip()][:8]
+    if not shown:
+        return ""
+    return (
+        "Which repository spans, symbols, or functions implement: "
+        + ", ".join(shown)
+        + "?"
+    )
+
+
+def _is_generic_callback_question(question: str) -> bool:
+    folded = str(question or "").strip().casefold()
+    return any(marker in folded for marker in _GENERIC_CALLBACK_QUESTION_MARKERS)
+
+
+def fill_writing_research_search_terms(
+    request: WritingResearchRequestV1,
+) -> WritingResearchRequestV1:
+    """Fill empty executable search terms from closed-set missing parts.
+
+    WP-C: ``candidate_symbols_or_terms`` must come from ``search_terms`` /
+    unlicensed clause text already on the request.  A generic question with
+    an empty term list is not a legal repository route.
+    """
+
+    existing = tuple(
+        str(term).strip()
+        for term in request.candidate_symbols_or_terms
+        if str(term).strip()
+    )
+    from_parts = directed_search_terms_from_texts(*request.missing_parts)
+    existing_kept = tuple(
+        term for term in existing if term.casefold() not in _SEARCH_TERM_STOP
+    )
+    merged: list[str] = []
+    seen: set[str] = set()
+    high_rank = [term for term in from_parts if _search_term_rank(term) >= 3]
+    for token in (*high_rank, *existing_kept, *from_parts):
+        key = token.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(token)
+        if len(merged) >= 16:
+            break
+    filled = tuple(merged) or existing_kept or existing
+    question = str(request.exact_question or "").strip()
+    if filled and _is_generic_callback_question(question):
+        question = directed_callback_question(filled)
+    elif (
+        filled
+        and filled != existing
+        and question.startswith(_DIRECTED_QUESTION_PREFIX)
+    ):
+        question = directed_callback_question(filled)
+    why = str(request.why_needed_for_reader or "").strip()
+    if "before its prose can leave the candidate lane" in why.casefold():
+        why = (
+            "Directed repository search for unlicensed author-mechanism "
+            "fields. Keep writing the full author-logic Candidate as author "
+            "specification in parallel; do not omit the mechanism while this "
+            "callback is open."
+        )
+    if (
+        filled == tuple(request.candidate_symbols_or_terms)
+        and question == str(request.exact_question or "")
+        and why == str(request.why_needed_for_reader or "")
+    ):
+        return request
+    return request.model_copy(update={
+        "candidate_symbols_or_terms": filled,
+        "exact_question": question or request.exact_question,
+        "why_needed_for_reader": why or request.why_needed_for_reader,
+    })
 
 
 class ExternalResearchQueueItemV1(BaseModel):
@@ -99,6 +258,14 @@ class WritingResearchRouteV1(BaseModel):
 def route_writing_research_request(request: WritingResearchRequestV1) -> WritingResearchRouteV1:
     """Select an owner without broadening the requested scope."""
 
+    request = fill_writing_research_search_terms(request)
+    if (
+        request.required_authority_lane == "executable_hard"
+        and not any(str(term).strip() for term in request.candidate_symbols_or_terms)
+    ):
+        raise ValueError(
+            "executable_hard callback requires non-empty candidate_symbols_or_terms"
+        )
     owner_by_lane: dict[str, RouteOwnerV1] = {
         "executable_hard": "repository_tools",
         "configuration_resolved": "configuration_tools",
@@ -130,7 +297,16 @@ def route_writing_research_request(request: WritingResearchRequestV1) -> Writing
 def route_writing_research_requests(
     requests: list[WritingResearchRequestV1] | tuple[WritingResearchRequestV1, ...],
 ) -> tuple[WritingResearchRouteV1, ...]:
-    return tuple(route_writing_research_request(request) for request in requests)
+    # Route each request independently.  One malformed callback (for example
+    # an executable request without search terms) must be rejected without
+    # discarding otherwise valid callbacks from the same Writer response.
+    routes: list[WritingResearchRouteV1] = []
+    for request in requests:
+        try:
+            routes.append(route_writing_research_request(request))
+        except ValueError:
+            continue
+    return tuple(routes)
 
 
 def execute_writing_research_route(
@@ -139,14 +315,18 @@ def execute_writing_research_route(
     *,
     configuration_claims: ConfigurationClaimSetV1 | None = None,
     formalization: Any | None = None,
+    formalization_sections: tuple[Any, ...] | list[Any] | None = None,
+    equations: Any | None = None,
+    facts: Any | None = None,
     repository_provider: Callable[[WritingResearchRequestV1], dict[str, Any] | None] | None = None,
 ) -> WritingResearchCallbackArtifactV1 | None:
     """Execute an owned route and produce one validated, digest-pinned artifact.
 
     Repository/configuration/formalization routes may execute existing
     authorized sources: configuration claims are matched from the frozen
-    closed set, the formalization lane binds the validated Formalization
-    result digest, and the repository lane consumes a supplied provider whose
+    closed set, the formalization lane binds a section-scoped accepted
+    formula package (never a global Formalization digest alone), and the
+    repository lane consumes a supplied provider whose
     output must still pass the artifact validator.  Author, empirical, and
     literature lanes cannot be executed here: they stay in their explicit
     external queues and return ``None``.
@@ -155,7 +335,12 @@ def execute_writing_research_route(
     if route.owner == "configuration_tools":
         return _execute_configuration_route(request, configuration_claims)
     if route.owner == "formalization_agent":
-        return _execute_formalization_route(request, formalization)
+        return _execute_formalization_route(
+            request,
+            formalization_sections=formalization_sections,
+            equations=equations,
+            facts=facts,
+        )
     if route.owner == "repository_tools":
         if repository_provider is None:
             return None
@@ -180,19 +365,31 @@ def execute_open_requests_for_routes(
     *,
     configuration_claims: ConfigurationClaimSetV1 | None = None,
     formalization: Any | None = None,
+    formalization_sections: tuple[Any, ...] | list[Any] | None = None,
+    equations: Any | None = None,
+    facts: Any | None = None,
     repository_provider: Callable[[WritingResearchRequestV1], dict[str, Any] | None] | None = None,
 ) -> dict[str, tuple[WritingResearchCallbackArtifactV1, ...]]:
     """Route and execute every open request; external lanes stay pending."""
     artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] = {}
     for request in requests:
-        if request.status != "open":
+        if request.status not in {"open", "partial"}:
             continue
-        route = route_writing_research_request(request)
+        request = fill_writing_research_search_terms(request)
+        try:
+            route = route_writing_research_request(request)
+        except ValueError:
+            # Invalid repository callbacks are rejected at the harness
+            # boundary; they must not become a broad, unscoped search.
+            continue
         artifact = execute_writing_research_route(
             route,
             request,
             configuration_claims=configuration_claims,
             formalization=formalization,
+            formalization_sections=formalization_sections,
+            equations=equations,
+            facts=facts,
             repository_provider=repository_provider,
         )
         if artifact is not None:
@@ -232,19 +429,34 @@ def _execute_configuration_route(
 
 def _execute_formalization_route(
     request: WritingResearchRequestV1,
-    formalization: Any | None,
+    *,
+    formalization_sections: tuple[Any, ...] | list[Any] | None = None,
+    equations: Any | None = None,
+    facts: Any | None = None,
 ) -> WritingResearchCallbackArtifactV1 | None:
-    if formalization is None or not getattr(formalization, "content_digest", ""):
+    if not formalization_sections:
         return None
-    return WritingResearchCallbackArtifactV1(
-        artifact_id="formalization:result",
-        request_id=request.request_id,
-        section_id=request.section_id,
-        argument_unit_id=request.argument_unit_id,
-        authority_lane="formal_derivation",
-        artifact_ref="formalization_result_v1",
-        artifact_digest=formalization.content_digest,
-        validated=True,
+    from code2paper.agentic.formalization_agent import (
+        FormalizationSectionResultV1,
+        resolve_formalization_route_artifact,
+    )
+
+    section_results: list[FormalizationSectionResultV1] = []
+    for item in formalization_sections:
+        if isinstance(item, FormalizationSectionResultV1):
+            section_results.append(item)
+            continue
+        try:
+            section_results.append(FormalizationSectionResultV1.model_validate(item))
+        except (TypeError, ValueError):
+            continue
+    if not section_results:
+        return None
+    return resolve_formalization_route_artifact(
+        request,
+        section_results=tuple(section_results),
+        equations=equations,
+        facts=facts,
     )
 
 
@@ -262,7 +474,7 @@ def build_external_research_queue_items(
     items: list[ExternalResearchQueueItemV1] = []
     for request in requests:
         lane = str(request.required_authority_lane or "")
-        if lane not in _EXTERNAL_QUEUE_LANES or request.status != "open":
+        if lane not in _EXTERNAL_QUEUE_LANES or request.status not in {"open", "partial"}:
             continue
         question = str(request.exact_question or "").strip()
         if not question:
@@ -333,8 +545,11 @@ __all__ = [
     "WritingResearchRouteV1",
     "build_external_research_queue_items",
     "build_review_candidates_from_requests",
+    "directed_callback_question",
+    "directed_search_terms_from_texts",
     "execute_open_requests_for_routes",
     "execute_writing_research_route",
+    "fill_writing_research_search_terms",
     "route_writing_research_request",
     "route_writing_research_requests",
 ]

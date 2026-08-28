@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "prose_copied_from_paper": false,
+  "project_id": "ebcar",
+  "propositions": [
+    {"proposition_id": "efficiency_challenge", "importance": "major", "stage1": false, "expected_h2": "motivation", "content_class": "intent_only", "required_alias_groups": [["efficien", "latency", "cost"], ["rerank"]]},
+    {"proposition_id": "cross_passage_inference_challenge", "importance": "critical", "stage1": false, "expected_h2": "motivation", "content_class": "intent_only", "required_alias_groups": [["cross-passage", "cross passage", "inter-document"], ["infer", "coreference", "context"]]},
+    {"proposition_id": "operate_on_dense_embeddings", "importance": "critical", "stage1": false, "expected_h2": "framework", "content_class": "intent_code_fusion", "required_alias_groups": [["embed"], ["not raw text", "dense", "pre-computed", "precomputed"]]},
+    {"proposition_id": "shared_encoder_query_passages", "importance": "major", "stage1": false, "expected_h2": "framework", "content_class": "code_only", "required_alias_groups": [["query"], ["same", "shared", "encoder"]]},
+    {"proposition_id": "doc_id_relative_embeddings", "importance": "critical", "stage1": true, "expected_h2": "architecture", "content_class": "intent_code_fusion", "required_alias_groups": [["document id", "doc id", "document identity"], ["relative", "local", "candidate"]]},
+    {"proposition_id": "sinusoidal_passage_position", "importance": "major", "stage1": true, "expected_h2": "architecture", "content_class": "code_only", "required_alias_groups": [["position"], ["sinusoid", "passage"]]},
+    {"proposition_id": "enrich_sum_doc_pos", "importance": "major", "stage1": true, "expected_h2": "architecture", "content_class": "code_only", "required_alias_groups": [["doc"], ["pos"], ["sum", "add", "enrich"]]},
+    {"proposition_id": "shared_full_attention", "importance": "critical", "stage1": true, "expected_h2": "architecture", "content_class": "intent_code_fusion", "required_alias_groups": [["full attention", "shared"], ["inter-document", "global", "all passages"]]},
+    {"proposition_id": "dedicated_masked_attention", "importance": "critical", "stage1": true, "expected_h2": "architecture", "content_class": "intent_code_fusion", "required_alias_groups": [["mask"], ["same document", "intra-document", "within"]]},
+    {"proposition_id": "query_always_visible_in_mask", "importance": "major", "stage1": true, "expected_h2": "architecture", "content_class": "code_only", "required_alias_groups": [["query"], ["mask", "attend"]]},
+    {"proposition_id": "sum_two_attention_outputs", "importance": "major", "stage1": true, "expected_h2": "architecture", "content_class": "code_only", "required_alias_groups": [["sum", "add", "fuse"], ["attention"]]},
+    {"proposition_id": "infonce_contrastive", "importance": "critical", "stage1": false, "expected_h2": "training", "content_class": "intent_code_fusion", "required_alias_groups": [["infonce", "contrastive"], ["positive", "negative"]]},
+    {"proposition_id": "fixed_query_anchor", "importance": "critical", "stage1": false, "expected_h2": "training", "content_class": "intent_code_fusion", "required_alias_groups": [["fixed", "static", "unmodified", "original"], ["query"]]},
+    {"proposition_id": "dot_product_similarity", "importance": "major", "stage1": false, "expected_h2": "inference", "content_class": "code_only", "required_alias_groups": [["dot", "sim("], ["query", "passage"]]},
+    {"proposition_id": "sort_descending_scores", "importance": "major", "stage1": false, "expected_h2": "inference", "content_class": "code_only", "required_alias_groups": [["sort", "rank"], ["descending", "score"]]},
+    {"proposition_id": "no_query_reencode_at_infer", "importance": "major", "stage1": false, "expected_h2": "inference", "content_class": "intent_code_fusion", "required_alias_groups": [["query"], ["static", "not re-encod", "unchanged", "original"]]}
+  ]
+}

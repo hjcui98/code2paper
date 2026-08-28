@@ -1,0 +1,94 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:7620f4ac44f6a5930ef7d39a97d12567e09e779a7dcfa7965976cc4c69823eb3",
+  "projection_digest": "sha256:f5b5ceafc8cbe7b9e33c40dd6c11bfddbd309128daf2d7275d5b5f507bcb3042",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 4,
+  "supported_claims": 0,
+  "caveated_claims": 0,
+  "unsupported_claims": 4,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "Existing dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "The ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "This section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

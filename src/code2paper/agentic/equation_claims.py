@@ -30,7 +30,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -45,6 +45,29 @@ from code2paper.agentic.tool_runtime import atomic_write_bytes
 # ---------------------------------------------------------------------------
 # Equation claim model
 # ---------------------------------------------------------------------------
+
+FormulaRoleV1 = Literal[
+    "operation_atom",
+    "publication_candidate",
+    "incidental",
+]
+
+BARE_BINARY_EXPRESSION_RE = re.compile(r"^\s*x\s*[*+\-/]\s*y\s*$")
+
+
+def is_bare_binary_expression(expression: str) -> bool:
+    """True for incidental AST wrappers ``x + y`` / ``x * y`` / ``x / y``."""
+
+    return bool(BARE_BINARY_EXPRESSION_RE.match(str(expression or "").strip()))
+
+
+def effective_formula_role(equation: Any) -> str:
+    """Honor stored role, but never promote a bare binary wrapper."""
+
+    if is_bare_binary_expression(getattr(equation, "expression", "") or ""):
+        return "incidental"
+    role = str(getattr(equation, "formula_role", "") or "").strip()
+    return role or "publication_candidate"
 
 
 class EquationSymbolBindingV1(BaseModel):
@@ -73,6 +96,11 @@ class EquationClaimV1(BaseModel):
     operation_descriptors: list[str] = Field(default_factory=list)
     relation_evidence_ids: list[str] = Field(default_factory=list)
     exact_source_digests: list[str] = Field(default_factory=list)
+    # A source operation can remain a supported code fact without being a
+    # publication-worthy Method equation.  In particular, shape/dimension
+    # bookkeeping is ``incidental`` and must never be promoted by the
+    # Formalizer merely because its predicate is ``computes_formula``.
+    formula_role: FormulaRoleV1 = "publication_candidate"
     canonical_identity: str
     validation_status: str = "supported"  # "supported" | "rejected"
     validation_failures: list[str] = Field(default_factory=list)
@@ -108,6 +136,7 @@ class EquationProposalV1(BaseModel):
     fact_ids: list[str]
     proposed_symbol_bindings: list[EquationSymbolBindingV1] = Field(default_factory=list)
     conditions: list[str] = Field(default_factory=list)
+    formula_role: FormulaRoleV1 = "publication_candidate"
 
 
 class EquationAuthorizationReportV1(BaseModel):
@@ -287,12 +316,20 @@ def authorize_equation(
         symbol_bindings=list(proposal.proposed_symbol_bindings),
         conditions=list(proposal.conditions),
         operation_predicates=list(dict.fromkeys(f.predicate for f in selected_facts)),
-        operation_descriptors=list(dict.fromkeys(
-            value
-            for fact in selected_facts
-            for value in fact.semantic_context
-            if value.lower() in _BINARY_OPERATOR_BY_DIAGNOSTIC
-        )),
+        operation_descriptors=list(dict.fromkeys((
+            *(
+                value
+                for fact in selected_facts
+                for value in (fact.semantic_context or ())
+                if str(value).lower() in _BINARY_OPERATOR_BY_DIAGNOSTIC
+                or _is_mechanism_descriptor(value)
+            ),
+            *(
+                str(fact.predicate)
+                for fact in selected_facts
+                if _is_mechanism_predicate(fact.predicate)
+            ),
+        ))),
         relation_evidence_ids=list(dict.fromkeys(
             relation_id
             for fact in selected_facts
@@ -301,11 +338,43 @@ def authorize_equation(
         exact_source_digests=list(dict.fromkeys(
             fact.exact_source_digest for fact in selected_facts
         )),
+        formula_role=proposal.formula_role,
         canonical_identity=identity,
         validation_status="supported",
         validation_failures=[],
     )
     return equation, report
+
+
+_MECHANISM_DESCRIPTOR_TERMS = frozenset({
+    "representation", "transform", "transformation", "normalize", "normalization",
+    "aggregate", "aggregation", "reduce", "reduction", "objective", "loss",
+    "state update", "state_update", "inference score", "score", "propagate",
+    "propagation", "attention", "attend", "concatenate", "stack", "project",
+    "sample", "embedding", "dot product", "inner product", "outer product",
+    "similarity", "mask", "threshold", "cross_entropy", "contrastive",
+})
+
+_MECHANISM_PREDICATE_TERMS = (
+    "computes", "update", "attend", "propagat", "aggregat", "normaliz",
+    "embed", "score", "transform", "represent", "mask", "threshold",
+    "project", "sample", "stack", "concatenat", "pool", "loss", "objective",
+    "state", "infer", "similarity", "contrastive", "formula",
+)
+
+
+def _is_mechanism_descriptor(value: str) -> bool:
+    lowered = str(value or "").strip().lower()
+    if not lowered:
+        return False
+    return lowered in _MECHANISM_DESCRIPTOR_TERMS or any(
+        term in lowered for term in _MECHANISM_DESCRIPTOR_TERMS
+    )
+
+
+def _is_mechanism_predicate(value: str) -> bool:
+    lowered = str(value or "").strip().lower()
+    return any(term in lowered for term in _MECHANISM_PREDICATE_TERMS)
 
 
 _BINARY_OPERATOR_BY_DIAGNOSTIC: dict[str, str] = {
@@ -318,6 +387,91 @@ _BINARY_OPERATOR_BY_DIAGNOSTIC: dict[str, str] = {
     "pow": "^",
     "matmul": "*",
 }
+
+_BOOKKEEPING_FORMULA_TERMS = frozenset({
+    "shape",
+    "shapes",
+    "dim",
+    "dims",
+    "dimension",
+    "dimensions",
+    "channel",
+    "channels",
+    "embedding_dim",
+    "hidden_dim",
+    "feature_dim",
+    "batch",
+    "batch_size",
+    "length",
+    "len",
+    "size",
+    "width",
+    "height",
+    "capacity",
+    "index",
+    "indices",
+    "offset",
+    "stride",
+    "config",
+    "configuration",
+})
+
+
+def _formula_value_tokens(value: Any) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z][a-z0-9_]*", str(value or "").casefold())
+        if token
+    }
+
+
+def _is_bookkeeping_formula_value(value: Any) -> bool:
+    """Return whether a value names shape/configuration bookkeeping.
+
+    This is deliberately a narrow lexical classifier used only to keep
+    low-level operation atoms out of the *paper equation* lane.  It never
+    rejects the underlying CodeFact or equation authorization.
+    """
+
+    tokens = _formula_value_tokens(value)
+    if not tokens:
+        return False
+    return bool(tokens & _BOOKKEEPING_FORMULA_TERMS) or any(
+        token.startswith(("num_", "n_", "shape_", "dim_"))
+        or token.endswith(("_dim", "_size", "_length", "_shape"))
+        for token in tokens
+    )
+
+
+def _fact_is_bookkeeping_formula_operation(fact: Any) -> bool:
+    values: list[Any] = [
+        getattr(fact, "subject", ""),
+        getattr(fact, "object", ""),
+        *(getattr(fact, "semantic_context", ()) or ()),
+    ]
+    return any(_is_bookkeeping_formula_value(value) for value in values)
+
+
+def infer_formula_role(
+    *,
+    fact: CodeFactV1,
+    diagnostic: str = "",
+) -> FormulaRoleV1:
+    """Classify a derived operation without changing fact authority.
+
+    A binary operation over dimensions, channels, shapes, lengths, or config
+    values is useful evidence for implementation behavior but is incidental
+    for Method equations.  Other generic operations remain operation atoms
+    until a mechanism-level selector gives them publication meaning.
+    """
+
+    diagnostic_l = diagnostic.casefold()
+    if (
+        diagnostic_l in _BINARY_OPERATOR_BY_DIAGNOSTIC
+        or diagnostic_l in {"*", "+", "-", "/", "%", "^"}
+    ):
+        return "incidental"
+    return "publication_candidate"
 
 
 def derive_equation_proposals_from_facts(
@@ -368,6 +522,7 @@ def derive_equation_proposals_from_facts(
                 ),
             ],
             conditions=list(fact.conditions),
+            formula_role=infer_formula_role(fact=fact, diagnostic=diagnostic),
         ))
     return proposals
 
@@ -469,7 +624,13 @@ def write_equation_claims(path: str | Path, equations: EquationClaimSetV1) -> Pa
 
 
 def load_equation_claims(path: str | Path) -> EquationClaimSetV1:
-    return EquationClaimSetV1.model_validate_json(Path(path).read_text(encoding="utf-8"))
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    for item in payload.get("equations") or ():
+        if not isinstance(item, dict):
+            continue
+        if is_bare_binary_expression(str(item.get("expression") or "")):
+            item["formula_role"] = "incidental"
+    return EquationClaimSetV1.model_validate(payload)
 
 
 __all__ = [
@@ -478,10 +639,14 @@ __all__ = [
     "EquationClaimV1",
     "EquationProposalV1",
     "EquationSymbolBindingV1",
+    "FormulaRoleV1",
     "authorize_equation",
     "bind_equations_to_claims",
     "compile_equation_claims",
     "derive_equation_proposals_from_facts",
+    "effective_formula_role",
+    "infer_formula_role",
+    "is_bare_binary_expression",
     "load_equation_claims",
     "write_equation_claims",
 ]

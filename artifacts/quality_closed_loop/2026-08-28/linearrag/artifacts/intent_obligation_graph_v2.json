@@ -1,0 +1,1547 @@
+{
+  "schema_version": "2.0",
+  "mode": "intent-obligation-graph-v2",
+  "project_goal": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+  "method_goal": "Demonstrate that a relation-free hierarchical graph (Tri-Graph) with lightweight construction and a two-stage retrieval approach (entity activation via semantic bridging + global importance aggregation via PageRank) can outperform graph-based RAG methods while achieving linear scalability and zero LLM token cost during indexing.",
+  "implementation_scope": "",
+  "obligations": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "kind": "method_mainline",
+      "priority": "must_cover",
+      "source_field": "method_mainline",
+      "source_index": 0,
+      "author_text": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-fd8df1fe8a5b",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "build"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-e676b4a370ad",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "score"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "score"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b9c6d4f9cb46",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-33e1a023c32d",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "pruning"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "threshold",
+            "pruning"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-dc893c2c43f3",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "personalized pagerank"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagate",
+            "personalized pagerank",
+            "pagerank"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-d41a10419f52",
+          "role": "config",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "threshold"
+          ],
+          "aliases": [
+            "config"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute config configure default descriptor feature mask masking masks predict",
+        "build tri graph: extract entities from corpus passages, create entity, sentence, and passage nodes,"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-01-9c8dfe22",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 0,
+      "author_text": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-feddf5ad3ac7",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "build"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-0193d139c839",
+          "role": "graph_builder",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "adjacency matrices"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "graph construction",
+            "adjacency matrices",
+            "adjacency"
+          ],
+          "aliases": [
+            "graph_builder"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor feature graph construction graph index indexing",
+        "offline graph construction: build a tri graph from the corpus by splitting passages into"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-02-93c16851",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 1,
+      "author_text": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-9a041fc3da09",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "scores"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "scores"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-20ae4c78bebf",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "pruning"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "pruning"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-9feeb1137223",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "propagating"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagating"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "mask masking masks predict predicting predicts propagate propagates propagating",
+        "entity activation via local semantic bridging: for a query, activate relevant entities by initializing"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-03-8dda66b9",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 2,
+      "author_text": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ce28d980e221",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "score"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "importance",
+            "score"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-3bc59daebac5",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ranked"
+          ],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-91de51535eb6",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "personalized pagerank"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "personalized pagerank",
+            "pagerank"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts propagate propagates propagating rank ranked ranks",
+        "passage retrieval via global importance aggregation: use the activated entities as seeds for personalized"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-4e554ef0",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "project_goal",
+      "source_index": 0,
+      "author_text": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-d392ec908666",
+          "role": "graph_builder",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "indexing"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "indexing"
+          ],
+          "aliases": [
+            "graph_builder"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-6dfdd1c36fa0",
+          "role": "generation",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "generation"
+          ],
+          "decisions": [],
+          "outputs": [
+            "answer"
+          ],
+          "conditions": [],
+          "search_terms": [
+            "generation"
+          ],
+          "aliases": [
+            "generation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "generation graph construction graph index indexing invoke invokes",
+        "develop a retrieval augmented generation system that efficiently handles complex, multi hop queries over"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-bd3b9454",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 0,
+      "author_text": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-bbd96fcd460b",
+          "role": "graph_builder",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "adjacency"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "adjacency"
+          ],
+          "aliases": [
+            "graph_builder"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "graph construction graph index indexing",
+        "tri graph: hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency;"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-8058a7bc",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 1,
+      "author_text": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "spacy ner: lightweight named entity extraction used both offline (graph building) and online (query"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 2,
+      "author_text": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ae23d8974aa9",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "propagation"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagation"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "propagate propagates propagating",
+        "entity activation via semantic bridging: iterative propagation of entity relevance through the sentence entity"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 3,
+      "author_text": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-cee28a828872",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "pruning"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "pruning",
+            "threshold",
+            "filtering"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-61123cce2089",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "propagation"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagation"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-928b24d9edf6",
+          "role": "config",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "threshold"
+          ],
+          "aliases": [
+            "config"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "config configure default mask masking masks propagate propagates propagating",
+        "dynamic pruning: threshold based filtering that retains only strongly relevant entities during propagation, preventing"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-29ba03a1",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 4,
+      "author_text": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-b97891c24a00",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "importance"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-82b07b6935d7",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ranks"
+          ],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b890f26ec1c0",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "personalized pagerank"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "personalized pagerank",
+            "pagerank",
+            "propagating"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts propagate propagates propagating rank ranked ranks",
+        "personalized pagerank: global importance aggregation on the passage entity subgraph; ranks passages by propagating"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 5,
+      "author_text": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-32797aefd7db",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "scores"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "scores"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-d1573e8f9dca",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "ppr"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ppr"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "hybrid passage initialization: combines direct query passage similarity with entity based statistics (occurrence, level)"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 0,
+      "author_text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "motivation: revisit graphrag shortcomings from relation extraction errors"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-1977b399",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 1,
+      "author_text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "linearrag overview: tri graph concept and two stage retrieval philosophy"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-157f229e",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 2,
+      "author_text": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-e4aa00896ec5",
+          "role": "graph_builder",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "adjacency matrices"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "graph construction",
+            "adjacency matrices",
+            "adjacency"
+          ],
+          "aliases": [
+            "graph_builder"
+          ],
+          "organization_preference": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "graph construction graph index indexing",
+        "offline tri graph construction (entities, sentences, passages, contain/message adjacency matrices)"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 3,
+      "author_text": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-1fc4810b96ea",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "pruning"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "pruning"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-f322fa696c33",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "propagation"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagation"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "mask masking masks propagate propagates propagating",
+        "first retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 4,
+      "author_text": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-5d5e51ab5c03",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "importance"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-6d8e4239dd7c",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "personalized pagerank"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "personalized pagerank",
+            "pagerank"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized pagerank)"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 0,
+      "author_text": "Avoid explicit relation extraction entirely.",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "avoid explicit relation extraction entirely."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 1,
+      "author_text": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "use a hierarchical graph that preserves original text (passages, sentences) alongside entities."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 2,
+      "author_text": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-195bb83ef79c",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ranking"
+          ],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "rank ranked ranks",
+        "decouple retrieval into a local entity activation stage and a global passage ranking stage."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 3,
+      "author_text": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-cc0b14180bbe",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "pruning"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "pruning",
+            "threshold"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-4b288cd2f4c8",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "propagation"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "propagation"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-84fb4ec7e4fc",
+          "role": "config",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "threshold"
+          ],
+          "aliases": [
+            "config"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "config configure default mask masking masks propagate propagates propagating",
+        "apply dynamic pruning with a fixed relevance threshold during propagation."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 4,
+      "author_text": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-2ddd668b4f26",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "personalized pagerank"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "personalized pagerank",
+            "pagerank"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "propagate propagates propagating",
+        "employ personalized pagerank on the passage entity graph for passage retrieval."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 5,
+      "author_text": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-402c0e2aa390",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "scores"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "scores"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-49a55a57edac",
+          "role": "propagation",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "ppr"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ppr"
+          ],
+          "aliases": [
+            "propagation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "initialize passage ppr scores with a hybrid of direct similarity and entity based evidence."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    }
+  ],
+  "relations": [
+    {
+      "source_obligation_id": "O-STAGE-01-9c8dfe22",
+      "target_obligation_id": "O-STAGE-02-93c16851",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-STAGE-02-93c16851",
+      "target_obligation_id": "O-STAGE-03-8dda66b9",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "target_obligation_id": "O-ORGANIZATION-02-1977b399",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-02-1977b399",
+      "target_obligation_id": "O-ORGANIZATION-03-157f229e",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-03-157f229e",
+      "target_obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "target_obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-STAGE-01-9c8dfe22",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "relation": "supports"
+    },
+    {
+      "source_obligation_id": "O-STAGE-02-93c16851",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "relation": "supports"
+    },
+    {
+      "source_obligation_id": "O-STAGE-03-8dda66b9",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "relation": "supports"
+    }
+  ],
+  "content_digest": "sha256:7bff90c4e8ade0e1fe69a804c64e998d9a06cb944f4dc18ac40e4963e96507e5"
+}

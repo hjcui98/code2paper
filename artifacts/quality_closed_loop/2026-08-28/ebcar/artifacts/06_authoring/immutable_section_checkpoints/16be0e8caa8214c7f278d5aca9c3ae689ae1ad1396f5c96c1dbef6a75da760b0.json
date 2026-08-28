@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S1",
+  "response_ref": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9",
+  "output": {
+    "section_id": "MA-S1",
+    "heading_text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+    "section_markdown": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nExisting dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.\n\nThe ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-01-6b45ad90",
+      "brief:story:O-COMPONENT-11-27f310b2"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [
+      "facet-c5e7c214b56a659f"
+    ],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S1:1",
+      "paragraph:MA-S1:2"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S1:unit-1",
+        "candidate_symbols_or_terms": [
+          ","
+        ],
+        "concept_key": "existing-rerankers-efficiency-challenge",
+        "evidence_refs_used": [],
+        "exact_question": "What specific efficiency constraints (e.g., latency budgets, model-size caps, or scoring-cost limits) define the operating regime in which existing dense and listwise rerankers are evaluated, and which cross‑passage inference patterns (e.g., evidence aggregation, structural entailment, or multi‑passage composition) are known to exceed the representational capacity of those architectures?",
+        "missing_parts": [],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "req:MA-S1:unit-1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S1",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-6b45ad90"
+        ],
+        "target_clause_ids": [],
+        "why_needed_for_reader": "The motivation paragraph must state which efficiency constraints and which cross‑passage inference patterns constitute the challenge; the supplied brief states the challenge only at the level of a one‑line label without naming the concrete constraints or inference patterns, so the reader cannot see what specific pressure the setup is designed to address."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S1:1",
+        "paragraph_markdown": "Existing dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S1:2",
+        "paragraph_markdown": "The ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:d7d4ba1a12887d919a6d4af231c15aebde63d350d0ab0a50865385c2c7b53930",
+  "content_digest": "sha256:16be0e8caa8214c7f278d5aca9c3ae689ae1ad1396f5c96c1dbef6a75da760b0"
+}

@@ -1,0 +1,1875 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:fb8c87815464a94bbbe38f3d6f3da3f1d3624883ff06b0249951ef39b09a9b9e",
+  "claim_digest": "sha256:b5602e9f254a4bd7f1b7db4293311821872b0be54d9d655ca476935fc9702e59",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit-1/expository_bridge",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC2 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC3 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+        "section_markdown": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nExisting dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.\n\nThe ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-6b45ad90",
+          "brief:story:O-COMPONENT-11-27f310b2"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-c5e7c214b56a659f"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S1:1",
+          "paragraph:MA-S1:2"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "candidate_symbols_or_terms": [
+              ","
+            ],
+            "concept_key": "existing-rerankers-efficiency-challenge",
+            "evidence_refs_used": [],
+            "exact_question": "What specific efficiency constraints (e.g., latency budgets, model-size caps, or scoring-cost limits) define the operating regime in which existing dense and listwise rerankers are evaluated, and which cross‑passage inference patterns (e.g., evidence aggregation, structural entailment, or multi‑passage composition) are known to exceed the representational capacity of those architectures?",
+            "missing_parts": [],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "req:MA-S1:unit-1",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S1",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-01-6b45ad90"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The motivation paragraph must state which efficiency constraints and which cross‑passage inference patterns constitute the challenge; the supplied brief states the challenge only at the level of a one‑line label without naming the concrete constraints or inference patterns, so the reader cannot see what specific pressure the setup is designed to address."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:1",
+            "paragraph_markdown": "Existing dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:2",
+            "paragraph_markdown": "The ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Embedding‑based reranking formulation and overall framework.",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC4 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "Embedding‑based reranking formulation and overall framework.",
+        "section_markdown": "## Embedding‑based reranking formulation and overall framework.\n\nThis section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-54911271"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "candidate_symbols_or_terms": [
+              "embedding-based reranking formulation",
+              "overall framework"
+            ],
+            "current_known_facts": [
+              "Section MA-S2 is titled 'Embedding‑based reranking formulation and overall framework.'",
+              "No technical propositions, concepts, formulas, or dataflow relations are currently bound to this section."
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What are the specific embedding-based reranking formulation components and overall framework elements that this section should describe?",
+            "missing_parts": [
+              "Specific formulation components (e.g., embedding model, similarity function, ranking objective)",
+              "Overall framework architecture or pipeline description",
+              "Any mathematical expressions governing the reranking step"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "request:MA-S2:unit:research",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-54911271"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The reader question 'How does this setup realize Embedding‑based reranking formulation and overall framework?' cannot be answered without the specific formulation components and framework elements that the section is intended to explain."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "This section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Architecture details: enriching embeddings with document ID and position",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-2/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "Architecture details: enriching embeddings with document ID and position",
+        "section_markdown": "## Architecture details: enriching embeddings with document ID and position\n\nThe architecture under consideration enriches pre-computed dense passage embeddings with two structural signals—a document-identity embedding and a sinusoidal passage-position encoding—and processes the augmented vectors jointly with the query embedding through a stack of Transformer encoder layers equipped with a hybrid attention mechanism comprising a shared full-attention module and a dedicated masked-attention module. The intended design goal is to support cross-passage reasoning in retrieval-augmented generation by injecting document-level structural knowledge into the embedding space while avoiding full-text processing and autoregressive generation to reduce inference latency.\n\nThe core transformation maps the augmented passage embeddings and the fixed query embedding through the hybrid-attention encoder to produce contextualized passage embeddings; the closed-form expression for this layer-wise mapping is pending formal derivation. The input to each layer is the set of augmented passage embeddings concatenated with the query embedding, the transformation applies the shared full-attention module followed by the dedicated masked-attention module with residual connections and layer normalization, and the output is the set of contextualized passage embeddings that encode both cross-passage and intra-document structural information.\n\nThe pipeline proceeds in three operational phases: input preparation, structural augmentation, and hybrid-attention encoding. Each phase is described in turn below, with the configuration-dependent branching that governs the dedicated attention path made explicit at each decision point.\n\nA sinusoidal passage-position encoding is intended to encode the ordinal position of a passage within its source document, providing structural order cues that distinguish passages sharing identical content but appearing at different locations in the original document.\n\nThe shared full-attention module is a standard multi-head attention layer in which the query token and all passage tokens attend to one another without restriction, capturing global relevance signals and cross-document relationships across the entire candidate set.\n\nIn each Transformer encoder layer, the shared full-attention module and the dedicated masked-attention module operate in sequence, with residual connections and layer normalization applied after each sub-layer, so that the output of a layer is a function of both global and document-local interaction patterns.\n\nThe dedicated masked-attention module is conditionally active, governed by the configuration flag `cfg.use_dedicated_attention`; when this flag is set to false, the layer reduces to the shared full-attention path alone, and the document-local coherence signal is not modeled.\n\nThe attention mask applied by the dedicated module is intended to restrict each passage token's attention to the query token and to other passage tokens that share the same document identifier, thereby isolating intra-document interactions from inter-document interactions within the same layer.\n\nThe output of the final Transformer layer is a set of contextualized passage embeddings, each of which has been updated by both the global full-attention path and, when is enabled, the document-local masked-attention path, producing representations that encode both cross-passage and intra-document structural information.\n\nThe query embedding is held fixed throughout both training and inference; only the passage embeddings are updated by the encoder, so that the final ranking score is computed as the dot-product similarity between the static query vector and the contextualized passage vectors.\n\nIn the retrieval and embedding preparation phase, a dense retriever (Contriever) is intended to fetch top-𝑘 candidate passages for a given query, retrieving their pre-computed embeddings from the retriever's index; the query is encoded with the same Contriever model to produce a query embedding in the shared vector space.\n\nIn the structural augmentation phase, each retrieved passage embedding is augmented with a dynamic document-identity embedding and a sinusoidal passage-position encoding, injecting document-identity and ordering signals into the vector representation before it enters the hybrid-attention encoder.\n\nIn the hybrid-attention encoding phase, the query embedding and the augmented passage embeddings are fed jointly into the stack of Transformer encoder layers, where each layer applies the shared full-attention module and, when is enabled, the dedicated masked-attention module, producing contextualized passage embeddings as output.\n\nThe document-identity embedding table is a learned lookup of relative document-identity vectors, assigned dynamically to the unique documents present in the current candidate set rather than using global corpus-level identifiers, enabling the model to recognize which passages belong to the same source document.\n\nThe hybrid attention mechanism combines the shared full-attention module (modeling global cross-passage interactions) and the dedicated masked-attention module (modeling intra-document interactions) within each Transformer layer, so that inter-document and intra-document dependencies are jointly represented in the contextualized output.\n\nThe dedicated masked-attention module restricts each passage token's attention to the query token and to other passage tokens from the same document, enabling fine-grained coreference resolution and local coherence modeling that the unrestricted full-attention path alone cannot capture.\n\nThe complete architecture thus realizes the stated goal of enriching embeddings with document-identity and position signals and processing them through a hybrid-attention Transformer encoder, with the dedicated document-local attention path activated conditionally via .",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-METHOD-MAINLINE-01-c8146479",
+          "brief:story:O-ORGANIZATION-03-2c92c853",
+          "brief:story:O-COMPONENT-01-c301ecdd",
+          "brief:story:O-COMPONENT-04-b5b6af99",
+          "brief:story:O-COMPONENT-06-34021b88",
+          "brief:story:O-RATIONALE-CHECK-01-bad20132",
+          "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+          "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+          "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+          "brief:story:O-RATIONALE-CHECK-06-388166d9",
+          "brief:story:O-STAGE-01-039a963a",
+          "brief:story:O-STAGE-02-42e8d68d",
+          "brief:story:O-STAGE-03-2c5bd758",
+          "brief:story:O-COMPONENT-03-d8aa8c77",
+          "brief:story:O-COMPONENT-05-4c3594d2",
+          "brief:story:O-COMPONENT-07-d157b2cc",
+          "brief:story:O-RATIONALE-CHECK-03-b01101f7"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-ba08ce41d6e1d9b9",
+          "facet-00e27dd88a70848f",
+          "facet-bd2114e7ad9b1773",
+          "facet-308602a0138b57ea",
+          "facet-df672e4efc3751e2",
+          "facet-d87af6e7082cc916",
+          "facet-47997bc7d81ecdf5",
+          "facet-85ba5afaa2fbe7ac"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S3:1",
+          "paragraph:MA-S3:2",
+          "paragraph:MA-S3:3",
+          "paragraph:MA-S3:4",
+          "paragraph:MA-S3:5",
+          "paragraph:MA-S3:6",
+          "paragraph:MA-S3:7",
+          "paragraph:MA-S3:8",
+          "paragraph:MA-S3:9",
+          "paragraph:MA-S3:10",
+          "paragraph:MA-S3:11",
+          "paragraph:MA-S3:12",
+          "paragraph:MA-S3:13",
+          "paragraph:MA-S3:14",
+          "paragraph:MA-S3:15",
+          "paragraph:MA-S3:16",
+          "paragraph:MA-S3:17"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-2",
+            "candidate_symbols_or_terms": [
+              "hybrid-attention encoder layer",
+              "augmented passage embedding",
+              "query embedding",
+              "contextualized passage embedding"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "Which closed-form expression formalizes the layer-wise mapping from augmented passage embeddings and query embedding through the hybrid-attention encoder to contextualized passage embeddings, and which repository evidence binds it?",
+            "missing_parts": [
+              "closed-form layer-wise mapping formula",
+              "repository evidence binding the formula"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S3:unit-2:formula",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-METHOD-MAINLINE-01-c8146479"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The formula obligation for the core mechanism transformation is blocking; without an accepted formula package the reader cannot verify the mathematical form of the layer-wise mapping."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:1",
+            "paragraph_markdown": "The architecture under consideration enriches pre-computed dense passage embeddings with two structural signals—a document-identity embedding and a sinusoidal passage-position encoding—and processes the augmented vectors jointly with the query embedding through a stack of Transformer encoder layers equipped with a hybrid attention mechanism comprising a shared full-attention module and a dedicated masked-attention module. The intended design goal is to support cross-passage reasoning in retrieval-augmented generation by injecting document-level structural knowledge into the embedding space while avoiding full-text processing and autoregressive generation to reduce inference latency.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:2",
+            "paragraph_markdown": "The core transformation maps the augmented passage embeddings and the fixed query embedding through the hybrid-attention encoder to produce contextualized passage embeddings; the closed-form expression for this layer-wise mapping is pending formal derivation. The input to each layer is the set of augmented passage embeddings concatenated with the query embedding, the transformation applies the shared full-attention module followed by the dedicated masked-attention module with residual connections and layer normalization, and the output is the set of contextualized passage embeddings that encode both cross-passage and intra-document structural information.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:3",
+            "paragraph_markdown": "The pipeline proceeds in three operational phases: input preparation, structural augmentation, and hybrid-attention encoding. Each phase is described in turn below, with the configuration-dependent branching that governs the dedicated attention path made explicit at each decision point.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:4",
+            "paragraph_markdown": "A sinusoidal passage-position encoding is intended to encode the ordinal position of a passage within its source document, providing structural order cues that distinguish passages sharing identical content but appearing at different locations in the original document.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:5",
+            "paragraph_markdown": "The shared full-attention module is a standard multi-head attention layer in which the query token and all passage tokens attend to one another without restriction, capturing global relevance signals and cross-document relationships across the entire candidate set.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:6",
+            "paragraph_markdown": "In each Transformer encoder layer, the shared full-attention module and the dedicated masked-attention module operate in sequence, with residual connections and layer normalization applied after each sub-layer, so that the output of a layer is a function of both global and document-local interaction patterns.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:7",
+            "paragraph_markdown": "The dedicated masked-attention module is conditionally active, governed by the configuration flag `cfg.use_dedicated_attention`; when this flag is set to false, the layer reduces to the shared full-attention path alone, and the document-local coherence signal is not modeled.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:8",
+            "paragraph_markdown": "The attention mask applied by the dedicated module is intended to restrict each passage token's attention to the query token and to other passage tokens that share the same document identifier, thereby isolating intra-document interactions from inter-document interactions within the same layer.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:9",
+            "paragraph_markdown": "The output of the final Transformer layer is a set of contextualized passage embeddings, each of which has been updated by both the global full-attention path and, when `cfg.use_dedicated_attention` is enabled, the document-local masked-attention path, producing representations that encode both cross-passage and intra-document structural information.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:10",
+            "paragraph_markdown": "The query embedding is held fixed throughout both training and inference; only the passage embeddings are updated by the encoder, so that the final ranking score is computed as the dot-product similarity between the static query vector and the contextualized passage vectors.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:11",
+            "paragraph_markdown": "In the retrieval and embedding preparation phase, a dense retriever (Contriever) is intended to fetch top-𝑘 candidate passages for a given query, retrieving their pre-computed embeddings from the retriever's index; the query is encoded with the same Contriever model to produce a query embedding in the shared vector space.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:12",
+            "paragraph_markdown": "In the structural augmentation phase, each retrieved passage embedding is augmented with a dynamic document-identity embedding and a sinusoidal passage-position encoding, injecting document-identity and ordering signals into the vector representation before it enters the hybrid-attention encoder.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:13",
+            "paragraph_markdown": "In the hybrid-attention encoding phase, the query embedding and the augmented passage embeddings are fed jointly into the stack of Transformer encoder layers, where each layer applies the shared full-attention module and, when `cfg.use_dedicated_attention` is enabled, the dedicated masked-attention module, producing contextualized passage embeddings as output.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:14",
+            "paragraph_markdown": "The document-identity embedding table is a learned lookup of relative document-identity vectors, assigned dynamically to the unique documents present in the current candidate set rather than using global corpus-level identifiers, enabling the model to recognize which passages belong to the same source document.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:15",
+            "paragraph_markdown": "The hybrid attention mechanism combines the shared full-attention module (modeling global cross-passage interactions) and the dedicated masked-attention module (modeling intra-document interactions) within each Transformer layer, so that inter-document and intra-document dependencies are jointly represented in the contextualized output.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:16",
+            "paragraph_markdown": "The dedicated masked-attention module restricts each passage token's attention to the query token and to other passage tokens from the same document, enabling fine-grained coreference resolution and local coherence modeling that the unrestricted full-attention path alone cannot capture.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:17",
+            "paragraph_markdown": "The complete architecture thus realizes the stated goal of enriching embeddings with document-identity and position signals and processing them through a hybrid-attention Transformer encoder, with the dedicated document-local attention path activated conditionally via `cfg.use_dedicated_attention`.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "unknown_equations:equation:MA-S4:1",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:problem_or_local_context@MA-S4/MA-S4:unit-1/expository_bridge;problem_or_local_context@MA-S4/MA-S4:unit-2/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "Training objective: InfoNCE loss with fixed query anchor.",
+        "section_markdown": "## Training objective:\n\nInfoNCE loss with fixed query anchor.\n\n\nEBCAR is trained with a contrastive InfoNCE objective in which the original query embedding $q$, produced by the upstream retriever, is held fixed throughout training. Because $q$ is neither updated by gradient descent nor re-contextualized by the model, it serves as a stable reference point: the model's task is to adapt its passage-side representations to this fixed query space rather than to co-adapt both sides of the contrast. At each batch, the model produces a contextualized positive passage embedding $p^{+}$—the embedding of the ground-truth relevant passage in that batch—and a set of negative passage embeddings $p^{-}_{1}, p^{-}_{2}, p^{-}_{3}$, corresponding to other passages in the batch or in the retrieved set. The InfoNCE loss pulls $p^{+}$ toward $q$ while pushing the negatives away, and is computed as the negative log-likelihood of the positive pair under a softmax over the temperature-scaled dot-products of $q$ with all candidate passage embeddings.\n\nThe three ConTEB training sets—MLDR (entity disambiguation), SQuAD (span matching), and NarrativeQA (narrative comprehension)—supply the $(q, p^{+}, p^{-})$ tuples on which the loss is evaluated at each batch. Per-batch losses $L_{i}$ are computed independently; the epoch-level training loss $train_{loss}$ and validation loss $val_{loss}$ are obtained by averaging the per-batch losses over the total number of batches in the respective epoch. This averaging is performed over the ConTEB training sets for $train_{loss}$ and over the corresponding held-out splits for $val_{loss}$.\n\nThe fixed-anchor design carries a structural asymmetry: during the forward pass the query embedding $q$ carries no gradient and is a constant input to the softmax, while only the passage-side embeddings—produced by EBCAR's contextualization module—are differentiable and receive parameter updates. This distinguishes the InfoNCE objective here from a symmetric contrastive loss: because the anchor is not learned, the model must adapt its passage representations to a fixed query space rather than co-adapting both sides.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-04-1dd970df",
+          "brief:story:O-STAGE-04-c50e0bef",
+          "brief:story:O-COMPONENT-09-6a8cfd6c",
+          "brief:story:O-COMPONENT-10-dac6250f",
+          "brief:story:O-COMPONENT-12-370bd5b2"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-6bc5ee440fdc8329",
+          "facet-833638c7783e3952",
+          "facet-f6e629096087c520"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [
+          "slot:MA-S4:1:1",
+          "slot:MA-S4:1:2",
+          "slot:MA-S4:2:1",
+          "slot:MA-S4:3:1"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [
+          "equation:MA-S4:1"
+        ],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "concept_key": "InfoNCE contrastive loss formula",
+            "evidence_refs_used": [
+              "brief:story:O-ORGANIZATION-04-1dd970df",
+              "brief:story:O-STAGE-04-c50e0bef",
+              "brief:story:O-COMPONENT-09-6a8cfd6c"
+            ],
+            "exact_question": "What is the exact InfoNCE loss expression used to train EBCAR, including the temperature scaling and the set of negative passage embeddings?",
+            "missing_parts": [
+              "repository equation for the InfoNCE formula"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "req-MA-S4-01",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-1dd970df",
+              "brief:story:O-STAGE-04-c50e0bef",
+              "brief:story:O-COMPONENT-09-6a8cfd6c"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The section presents the InfoNCE loss as the intended training objective; without a repository equation the reader cannot verify the exact form."
+          },
+          {
+            "argument_unit_id": "MA-S4:unit-2",
+            "concept_key": "epoch-level train_loss and val_loss averaging",
+            "evidence_refs_used": [
+              "brief:story:O-ORGANIZATION-04-1dd970df",
+              "brief:story:O-COMPONENT-12-370bd5b2"
+            ],
+            "exact_question": "How are per-batch InfoNCE losses averaged over batches to produce the epoch-level train_loss and val_loss, and over which dataset splits is each computed?",
+            "missing_parts": [
+              "explicit averaging formula or code trace for epoch-level loss"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "req-MA-S4-02",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-1dd970df",
+              "brief:story:O-COMPONENT-12-370bd5b2"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The section states that per-batch losses are averaged to yield epoch-level metrics; the reader needs the exact averaging procedure and split definitions."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:1",
+            "paragraph_markdown": "EBCAR is trained with a contrastive InfoNCE objective in which the original query embedding $q$, produced by the upstream retriever, is held fixed throughout training. Because $q$ is neither updated by gradient descent nor re-contextualized by the model, it serves as a stable reference point: the model's task is to adapt its passage-side representations to this fixed query space rather than to co-adapt both sides of the contrast. At each batch, the model produces a contextualized positive passage embedding $p^{+}$—the embedding of the ground-truth relevant passage in that batch—and a set of negative passage embeddings $p^{-}_{1}, p^{-}_{2}, p^{-}_{3}$, corresponding to other passages in the batch or in the retrieved set. The InfoNCE loss pulls $p^{+}$ toward $q$ while pushing the negatives away, and is computed as the negative log-likelihood of the positive pair under a softmax over the temperature-scaled dot-products of $q$ with all candidate passage embeddings.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [
+              "slot:MA-S4:1:1",
+              "slot:MA-S4:1:2"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [
+              "equation:MA-S4:1"
+            ],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:2",
+            "paragraph_markdown": "The three ConTEB training sets—MLDR (entity disambiguation), SQuAD (span matching), and NarrativeQA (narrative comprehension)—supply the $(q, p^{+}, p^{-})$ tuples on which the loss is evaluated at each batch. Per-batch losses $L_{i}$ are computed independently; the epoch-level training loss $train_{loss}$ and validation loss $val_{loss}$ are obtained by averaging the per-batch losses over the total number of batches in the respective epoch. This averaging is performed over the ConTEB training sets for $train_{loss}$ and over the corresponding held-out splits for $val_{loss}$.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [
+              "slot:MA-S4:2:1"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:3",
+            "paragraph_markdown": "The fixed-anchor design carries a structural asymmetry: during the forward pass the query embedding $q$ carries no gradient and is a constant input to the softmax, while only the passage-side embeddings—produced by EBCAR's contextualization module—are differentiable and receive parameter updates. This distinguishes the InfoNCE objective here from a symmetric contrastive loss: because the anchor is not learned, the model must adapt its passage representations to a fixed query space rather than co-adapting both sides.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [
+              "slot:MA-S4:3:1"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Inference procedure.",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-2/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Inference procedure.",
+        "section_markdown": "## Inference procedure.\n\nAt inference time the query embedding is held static as the original Contriever embedding, while the contextualized passage embeddings are produced by the hybrid-attention encoder. These two sets of vectors constitute the inputs to the subsequent scoring and ranking stage.\n\nIn the intended scoring and ranking step, dot-product similarities are computed between the unchanged query embedding and each contextualized passage embedding, and passages are sorted in descending order of these scores to produce the final ranking.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-05-baf0d276",
+          "brief:story:O-STAGE-05-5b3d398a"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-cbc0a588831ac015"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-2",
+            "candidate_symbols_or_terms": [
+              "dot-product similarity",
+              "descending-score ranking",
+              "inference-time scoring formula"
+            ],
+            "current_known_facts": [
+              "the mainline brief confirms the reranker call and the training loop",
+              "the query embedding is the original Contriever embedding held static at inference",
+              "contextualized passage embeddings are the output of the hybrid-attention encoder"
+            ],
+            "evidence_refs_used": [
+              "brief:story:O-STAGE-05-5b3d398a"
+            ],
+            "exact_question": "Does the repository contain an explicit inference-time scoring formula that computes dot-product similarity between the static query embedding and each contextualized passage embedding, and sorts passages by descending score?",
+            "missing_parts": [
+              "explicit confirmation that the inference-time scoring step uses the inner product of the query vector and each contextualized passage vector",
+              "confirmation that ranking is by descending similarity score"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S5:unit-2:research:inference-scoring-formula",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S5",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-STAGE-05-5b3d398a"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The inference scoring and ranking step is the final operation that produces the retrieval output; without an explicit repository-confirmed formula, the method description cannot state the scoring rule as a verified fact."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:1",
+            "paragraph_markdown": "At inference time the query embedding is held static as the original Contriever embedding, while the contextualized passage embeddings are produced by the hybrid-attention encoder. These two sets of vectors constitute the inputs to the subsequent scoring and ranking stage.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:2",
+            "paragraph_markdown": "In the intended scoring and ranking step, dot-product similarities are computed between the unchanged query embedding and each contextualized passage embedding, and passages are sorted in descending order of these scores to produce the final ranking.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S1",
+    "MA-S2"
+  ],
+  "incomplete_section_ids": [
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit-1/expository_bridge",
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:missing_writing_research_callback:mechanism_overview",
+    "MA-S3:invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-2/expository_bridge",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:unknown_equations:equation:MA-S4:1",
+    "MA-S4:missing_writing_research_callback:mechanism_overview",
+    "MA-S4:invalid_writing_research_callback:problem_or_local_context@MA-S4/MA-S4:unit-1/expository_bridge;problem_or_local_context@MA-S4/MA-S4:unit-2/expository_bridge",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:missing_writing_research_callback:mechanism_overview",
+    "MA-S5:invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-2/expository_bridge",
+    "formalization_required_obligation_unresolved:MA-S3:formula:section:MA-S3:derivation,formula:facet:facet-d57e6b007d62768e"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+        "text_length": 752,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "Embedding‑based reranking formulation and overall framework.",
+        "text_length": 266,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Architecture details: enriching embeddings with document ID and position",
+        "text_length": 5571,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7;required_target_contract:paragraph:MA-S3:2:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:4:facet:facet-ba08ce41d6e1d9b9;required_target_contract:paragraph:MA-S3:5:facet:facet-00e27dd88a70848f;required_target_contract:paragraph:MA-S3:11:facet:facet-bd2114e7ad9b1773;required_target_contract:paragraph:MA-S3:12:facet:facet-308602a0138b57ea;required_target_contract:paragraph:MA-S3:13:facet:facet-df672e4efc3751e2;required_target_contract:paragraph:MA-S3:14:facet:facet-d87af6e7082cc916;required_target_contract:paragraph:MA-S3:15:facet:facet-47997bc7d81ecdf5;required_target_contract:paragraph:MA-S3:16:facet:facet-85ba5afaa2fbe7ac"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+        "text_length": 2533,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_equation_witness:paragraph:MA-S4:1:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:1:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:1:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:1:facet:facet-f6e629096087c520;unknown_equation_witness:paragraph:MA-S4:2:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:2:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:2:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:3:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:3:facet:facet-833638c7783e3952;unknown_equation_witness:paragraph:MA-S4:4:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:4:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:4:facet:facet-833638c7783e3952;missing_exact_witness:paragraph:MA-S4:4:facet:facet-f6e629096087c520;unknown_equation_witness:paragraph:MA-S4:5:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:5:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:5:facet:facet-6bc5ee440fdc8329;required_target_contract:paragraph:MA-S4:5:facet:facet-f6e629096087c520"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Inference procedure.",
+        "text_length": 250,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S5:2"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1028
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:facet:facet-c5e7c214b56a659f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:871d30ff6c80d9e2ae0a6c2939dd5ff9afd047bae5a978deb3367a286e6afe52",
+        "response_hash": "sha256:349646f8205f7c03217a6e0a324fac54f325aa1160e340d82cf8be6010a5c287",
+        "prompt_chars": 3758,
+        "input_payload_chars": 3832,
+        "schema_chars": 7106,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1028
+      },
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 243
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:paragraph_transaction_missing",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:13c3a2eb3fa805ccc8c41089dd75cd2b91f0066b0e9397fbd291b6f6a898e593",
+        "response_hash": "sha256:038838fe4640f5ffc7a9338b37f6d589d53b5128bb3c563d8d2918eed90733ea",
+        "prompt_chars": 3758,
+        "input_payload_chars": 6633,
+        "schema_chars": 7106,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1271
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:4849c1d5cafd770048ea739435ec41a5dae4afa9e845fbf3f86e319cd95a8844",
+        "response_hash": "sha256:899397c52df3585d7a67d73fa30eefb17484b646493e9110df3438edfcab1151",
+        "prompt_chars": 3758,
+        "input_payload_chars": 2444,
+        "schema_chars": 6865,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1337
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3893
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7;required_target_contract:paragraph:MA-S3:2:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:4:facet:facet-ba08ce41d6e1d9b9;required_target_contract:paragraph:MA-S3:5:facet:facet-00e27dd88a70848f;required_target_contract:paragraph:MA-S3:11:facet:facet-bd2114e7ad9b1773;required_target_contract:paragraph:MA-S3:12:facet:facet-308602a0138b57ea;required_target_contract:paragraph:MA-S3:13:facet:facet-df672e4efc3751e2;required_target_contract:paragraph:MA-S3:14:facet:facet-d87af6e7082cc916;required_target_contract:paragraph:MA-S3:15:facet:facet-47997bc7d81ecdf5;required_target_contract:paragraph:MA-S3:16:facet:facet-85ba5afaa2fbe7ac",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2f680899253578d625589910d4c227bfe571eff0d8f3df110a5c22f2fd272c34",
+        "response_hash": "sha256:bc9e2abec88dea4731f27f639f9f265bc6871f41f3dd4ddc581ef39196ef0c52",
+        "prompt_chars": 3758,
+        "input_payload_chars": 29487,
+        "schema_chars": 11509,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5230
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2735
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7;required_target_contract:paragraph:MA-S3:2:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:4:facet:facet-ba08ce41d6e1d9b9;required_target_contract:paragraph:MA-S3:5:facet:facet-00e27dd88a70848f;required_target_contract:paragraph:MA-S3:11:facet:facet-bd2114e7ad9b1773;required_target_contract:paragraph:MA-S3:12:facet:facet-308602a0138b57ea;required_target_contract:paragraph:MA-S3:13:facet:facet-df672e4efc3751e2;required_target_contract:paragraph:MA-S3:14:facet:facet-d87af6e7082cc916;required_target_contract:paragraph:MA-S3:15:facet:facet-47997bc7d81ecdf5;required_target_contract:paragraph:MA-S3:16:facet:facet-85ba5afaa2fbe7ac",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:c7963ea47ec9571bed758c469f3f11dcd8b0366ac50b5ae4801787382fb9dbb9",
+        "response_hash": "sha256:8eb29375fded2b5c17e506a2e55c33b1358ea04118eeaff4d27d96b8c70e698f",
+        "prompt_chars": 3758,
+        "input_payload_chars": 48698,
+        "schema_chars": 11509,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 7965
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2516
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7;required_target_contract:paragraph:MA-S3:2:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:4:facet:facet-ba08ce41d6e1d9b9;required_target_contract:paragraph:MA-S3:5:facet:facet-00e27dd88a70848f;required_target_contract:paragraph:MA-S3:11:facet:facet-bd2114e7ad9b1773;required_target_contract:paragraph:MA-S3:12:facet:facet-308602a0138b57ea;required_target_contract:paragraph:MA-S3:13:facet:facet-df672e4efc3751e2;required_target_contract:paragraph:MA-S3:14:facet:facet-d87af6e7082cc916;required_target_contract:paragraph:MA-S3:15:facet:facet-47997bc7d81ecdf5;required_target_contract:paragraph:MA-S3:16:facet:facet-85ba5afaa2fbe7ac",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:16bb62cb91c5ff4de07904b4c384e19f1721c8659c5fcea26f951a02bdfa8890",
+        "response_hash": "sha256:179e5429cd0e8f1eab897b1e11f9057bfe622a532209991abf4bf8ef422c8c9a",
+        "prompt_chars": 3758,
+        "input_payload_chars": 48730,
+        "schema_chars": 11509,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 10481
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1312
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;required_target_contract:paragraph:MA-S4:3:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:5:facet:facet-f6e629096087c520",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:1a4562976fdc737a1d9b2ff17bd874f66ece51c2843883ddc8c99f4c95420f45",
+        "response_hash": "sha256:4b7299aba7d16f9e22a34c15e3ea2f5006aaf7ce483bc1a64469c66b11d408bc",
+        "prompt_chars": 3758,
+        "input_payload_chars": 7845,
+        "schema_chars": 7828,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 11793
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1598
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:5;missing_exact_witness:paragraph:MA-S4:1:facet:facet-833638c7783e3952;missing_exact_witness:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;required_target_contract:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:3:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:3:facet:facet-833638c7783e3952;missing_exact_witness:paragraph:MA-S4:4:facet:facet-f6e629096087c520",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:7f8ad74f32d91a4fcd314fcb7009a8d660a9bedaf2490658133c9a771fcebcc6",
+        "response_hash": "sha256:65f2226fae188d784f8365641fd99cf6ef40228de07a2169d07e9ff72807c31c",
+        "prompt_chars": 3758,
+        "input_payload_chars": 14404,
+        "schema_chars": 7828,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 13391
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1103
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:paragraph_transaction_missing",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:15470ee0e8e521ba40c7d3e5787bdcc98a24a77e45b602a34bc17db60428c5ce",
+        "response_hash": "sha256:28eda213a2169a57586e787e973dd6543425321ae49bf82e2cb85a30e4b88726",
+        "prompt_chars": 3758,
+        "input_payload_chars": 14436,
+        "schema_chars": 7828,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 14494
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 604
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S5:2",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:90e1f33604f11891f986da86b6fdc7a8ade6c38559151fb8eba2ee0ffcae92b0",
+        "response_hash": "sha256:3dd68a84e90deea7091301c9c71349f4e5cba9f0f5e16685b72152ecfaeb140e",
+        "prompt_chars": 3758,
+        "input_payload_chars": 4408,
+        "schema_chars": 7182,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 15098
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1079
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_claim_witness:paragraph:MA-S5:1:brief:story:O-ORGANIZATION-05-baf0d276;duplicate_witness:paragraph:MA-S5:1:claim:brief:story:O-ORGANIZATION-05-baf0d276;unknown_claim_witness:paragraph:MA-S5:2:brief:story:O-STAGE-05-5b3d398a;duplicate_witness:paragraph:MA-S5:2:claim:brief:story:O-STAGE-05-5b3d398a;required_target_contract:paragraph:MA-S5:2:facet:facet-cbc0a588831ac015",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2cb6133146c39eac5a824b43e2ef2e729eb994e7f3f24b46a2c121eb4dc9e68e",
+        "response_hash": "sha256:df81306331c022abac59aa0f893ee89137445e1f189b4345b0487f68dc9d8d69",
+        "prompt_chars": 3758,
+        "input_payload_chars": 7411,
+        "schema_chars": 7182,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 16177
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 775
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:2:facet:facet-cbc0a588831ac015",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:77c73f92fadf57872d629d181d5ee7fae35d60bf03f998aaeb5612fdb41efd87",
+        "response_hash": "sha256:952c2f962099b7bbf3ea040c42aab1cc93d526fb3f656116daff2747fd9bf49e",
+        "prompt_chars": 3758,
+        "input_payload_chars": 7443,
+        "schema_chars": 7182,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 16952
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2acf60faa26f59a91726803852532d004f4e9ebeab174ad422d5c7c772618f8a",
+        "response_hash": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9",
+        "prompt_chars": 3758,
+        "input_payload_chars": 3940,
+        "schema_chars": 7106,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 188
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S1-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 821
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:facet:facet-c5e7c214b56a659f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:20df02c41247343dcc565fd30ac830a9ec9882c240b80babcc212dba86fec1ba",
+        "response_hash": "sha256:0dc839854009716491d76e1964b2d324b567ca95daac36dcfe4819957b610da0",
+        "prompt_chars": 3758,
+        "input_payload_chars": 6557,
+        "schema_chars": 7106,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1009
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-1-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1734
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_equation_witness:paragraph:MA-S4:1:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:1:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:1:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:1:facet:facet-f6e629096087c520;unknown_equation_witness:paragraph:MA-S4:2:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:2:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:2:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:3:facet:facet-833638c7783e3952;required_target_contract:paragraph:MA-S4:3:facet:facet-833638c7783e3952;unknown_equation_witness:paragraph:MA-S4:4:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:4:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:4:facet:facet-833638c7783e3952;missing_exact_witness:paragraph:MA-S4:4:facet:facet-f6e629096087c520;unknown_equation_witness:paragraph:MA-S4:5:MA-04:request-001;witness_not_unique_substring:paragraph:MA-S4:5:MA-04:request-001;missing_exact_witness:paragraph:MA-S4:5:facet:facet-6bc5ee440fdc8329;required_target_contract:paragraph:MA-S4:5:facet:facet-f6e629096087c520",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:aaae83166c58e0a0e07307f451c6b78866ae253634cc11128c41f853228ad154",
+        "response_hash": "sha256:140a49fee66a0d2c1b5469541e44d5ecfa689bd0ad983c7d6af57521a8cfa611",
+        "prompt_chars": 3758,
+        "input_payload_chars": 7953,
+        "schema_chars": 7828,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2743
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-1-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1453
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:4;missing_paragraph_transaction:paragraph:MA-S4:5;missing_exact_witness:paragraph:MA-S4:1:slot:slot:MA-S4:1:1;missing_exact_witness:paragraph:MA-S4:1:slot:slot:MA-S4:1:2;missing_exact_witness:paragraph:MA-S4:1:equation:equation:MA-S4:1;missing_exact_witness:paragraph:MA-S4:2:slot:slot:MA-S4:2:1;required_target_contract:paragraph:MA-S4:2:facet:facet-6bc5ee440fdc8329;missing_exact_witness:paragraph:MA-S4:3:slot:slot:MA-S4:3:1;required_target_contract:paragraph:MA-S4:3:facet:facet-833638c7783e3952",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:9d0b1a77a6ce7b8ca054940e18456a8e541aae9f77a295c76aba1ef3abe5e96b",
+        "response_hash": "sha256:c662a448353cd278f3364d5e21a9cc8c158922657d447a1d6c899fbe91d403ef",
+        "prompt_chars": 3758,
+        "input_payload_chars": 14399,
+        "schema_chars": 7828,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4196
+      }
+    ],
+    "cumulative_budget_consumed": 16952,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 9677,
+    "incomplete_sections": [
+      "MA-S1",
+      "MA-S3",
+      "MA-S4",
+      "MA-S5"
+    ],
+    "research_request_count": 6,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:349646f8205f7c03217a6e0a324fac54f325aa1160e340d82cf8be6010a5c287",
+        "parsed_payload_digest": "sha256:d3f5c150170fca2cc0b2b6d0465814a320ec9ff98ba40cad188693f62368749c"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "close_unambiguous_container_suffix"
+        ],
+        "original_text_digest": "sha256:038838fe4640f5ffc7a9338b37f6d589d53b5128bb3c563d8d2918eed90733ea",
+        "parsed_payload_digest": "sha256:0a713e97c7db2a37662b8689a5471df3036ca6655650a594f15bda56984b1252"
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:899397c52df3585d7a67d73fa30eefb17484b646493e9110df3438edfcab1151",
+        "parsed_payload_digest": "sha256:ea585b1b752a0b27f220524abf26c2838914593bed9ce1c9a363dda321c1cf6b"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:bc9e2abec88dea4731f27f639f9f265bc6871f41f3dd4ddc581ef39196ef0c52",
+        "parsed_payload_digest": "sha256:3fa14308114e1684c61e3f240276d48251da40ce2911851d8142503513df0fdd"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:8eb29375fded2b5c17e506a2e55c33b1358ea04118eeaff4d27d96b8c70e698f",
+        "parsed_payload_digest": "sha256:01181b1aa21f25b9e3ae58daffbe0feb10841711581bba9d765e3cbda84b1984"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:179e5429cd0e8f1eab897b1e11f9057bfe622a532209991abf4bf8ef422c8c9a",
+        "parsed_payload_digest": "sha256:d5094d27d51c93d963f62308f76f0e4445cee897f44ef3bfb92009dee38d1a3d"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:4b7299aba7d16f9e22a34c15e3ea2f5006aaf7ce483bc1a64469c66b11d408bc",
+        "parsed_payload_digest": "sha256:7c8281c6425d27e0b60ccedfceea3d15cb421b2259d7c2080f2180edfbd3f664"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:65f2226fae188d784f8365641fd99cf6ef40228de07a2169d07e9ff72807c31c",
+        "parsed_payload_digest": "sha256:b0b66a966e774db5ba5f167b3f86866c4685dfb8e123912a5dcc2fecf9dd35e6"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:28eda213a2169a57586e787e973dd6543425321ae49bf82e2cb85a30e4b88726",
+        "parsed_payload_digest": "sha256:0c4e0bdc6231173042ddc17bf437466b0e698dacffd9d1a5feedcbcd59a7a234"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:3dd68a84e90deea7091301c9c71349f4e5cba9f0f5e16685b72152ecfaeb140e",
+        "parsed_payload_digest": "sha256:3d7fbc253bc3420cbad8964d7237c7e2a154fea6fbf678d1766b4c2d1cb20296"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:df81306331c022abac59aa0f893ee89137445e1f189b4345b0487f68dc9d8d69",
+        "parsed_payload_digest": "sha256:c9f9c3eea1463c586d2e98df75553e3a0978e89398ea2e439ecc143b689a5a07"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:952c2f962099b7bbf3ea040c42aab1cc93d526fb3f656116daff2747fd9bf49e",
+        "parsed_payload_digest": "sha256:52ebe1d13ff1732afa089b9288e4c11170aa99e6b245fbbebaaac22fabb32f0e"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9",
+        "parsed_payload_digest": "sha256:5f861b3229165c42855dcf1404cbf2206863b1c73ea2960d5b7d2d9d389a216f"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:0dc839854009716491d76e1964b2d324b567ca95daac36dcfe4819957b610da0",
+        "parsed_payload_digest": "sha256:e81fa59b1c3fed8d304f1183e5b8f041543b166034b058398ec144ab335880d5"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:140a49fee66a0d2c1b5469541e44d5ecfa689bd0ad983c7d6af57521a8cfa611",
+        "parsed_payload_digest": "sha256:4fb3946c12de6b99520a908df452510a6990d0d6c6f5a00dd6b01cbe7ae3cb28"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c662a448353cd278f3364d5e21a9cc8c158922657d447a1d6c899fbe91d403ef",
+        "parsed_payload_digest": "sha256:1aeb8d7b6a013a7fe0bb3dabbb3a8420135662b4c159fa3e179f818a2c422529"
+      }
+    ],
+    "writer_repair_rounds": 7,
+    "writer_repair_commits": 0,
+    "writer_repair_no_progress_stops": 2,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S3",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "11218eca52044692b17cbe4ab8321bffbddf428e013d14477b284bb05735786f",
+        "candidate_digest": "a7a9371325de3a314d340938e450a02f858254c3a0c179e9aaf09a94d5b209ad"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "11218eca52044692b17cbe4ab8321bffbddf428e013d14477b284bb05735786f",
+        "candidate_digest": "d70a74ca361224c00fc3e677a76ab148caa03c6e50477755355246e9fd0e8875"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "1e28b36fd75a0a7daaf2d9f0516552871300b5aaafbcad332fb7151287fec02e",
+        "candidate_digest": "1012701f1243f31a399a8bd27a85ef68bae075dc958f2baed69406289ed010b7"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "b77c63befd03dbb85f49dcde4b0930426b202843d9745750cce93c767c476d48",
+        "candidate_digest": "816db2a30de4d5424871d05763444737fcd1c08912f2011642a073d184b6d375"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "b77c63befd03dbb85f49dcde4b0930426b202843d9745750cce93c767c476d48",
+        "candidate_digest": "9ea7809a0328a7ce28f7f82aa85370ae1d842fe3d65638b8e48ebe707730592c"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:349646f8205f7c03217a6e0a324fac54f325aa1160e340d82cf8be6010a5c287",
+      "parsed_payload_digest": "sha256:d3f5c150170fca2cc0b2b6d0465814a320ec9ff98ba40cad188693f62368749c"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "close_unambiguous_container_suffix"
+      ],
+      "original_text_digest": "sha256:038838fe4640f5ffc7a9338b37f6d589d53b5128bb3c563d8d2918eed90733ea",
+      "parsed_payload_digest": "sha256:0a713e97c7db2a37662b8689a5471df3036ca6655650a594f15bda56984b1252"
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:899397c52df3585d7a67d73fa30eefb17484b646493e9110df3438edfcab1151",
+      "parsed_payload_digest": "sha256:ea585b1b752a0b27f220524abf26c2838914593bed9ce1c9a363dda321c1cf6b"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:bc9e2abec88dea4731f27f639f9f265bc6871f41f3dd4ddc581ef39196ef0c52",
+      "parsed_payload_digest": "sha256:3fa14308114e1684c61e3f240276d48251da40ce2911851d8142503513df0fdd"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:8eb29375fded2b5c17e506a2e55c33b1358ea04118eeaff4d27d96b8c70e698f",
+      "parsed_payload_digest": "sha256:01181b1aa21f25b9e3ae58daffbe0feb10841711581bba9d765e3cbda84b1984"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:179e5429cd0e8f1eab897b1e11f9057bfe622a532209991abf4bf8ef422c8c9a",
+      "parsed_payload_digest": "sha256:d5094d27d51c93d963f62308f76f0e4445cee897f44ef3bfb92009dee38d1a3d"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:4b7299aba7d16f9e22a34c15e3ea2f5006aaf7ce483bc1a64469c66b11d408bc",
+      "parsed_payload_digest": "sha256:7c8281c6425d27e0b60ccedfceea3d15cb421b2259d7c2080f2180edfbd3f664"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:65f2226fae188d784f8365641fd99cf6ef40228de07a2169d07e9ff72807c31c",
+      "parsed_payload_digest": "sha256:b0b66a966e774db5ba5f167b3f86866c4685dfb8e123912a5dcc2fecf9dd35e6"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:28eda213a2169a57586e787e973dd6543425321ae49bf82e2cb85a30e4b88726",
+      "parsed_payload_digest": "sha256:0c4e0bdc6231173042ddc17bf437466b0e698dacffd9d1a5feedcbcd59a7a234"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:3dd68a84e90deea7091301c9c71349f4e5cba9f0f5e16685b72152ecfaeb140e",
+      "parsed_payload_digest": "sha256:3d7fbc253bc3420cbad8964d7237c7e2a154fea6fbf678d1766b4c2d1cb20296"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:df81306331c022abac59aa0f893ee89137445e1f189b4345b0487f68dc9d8d69",
+      "parsed_payload_digest": "sha256:c9f9c3eea1463c586d2e98df75553e3a0978e89398ea2e439ecc143b689a5a07"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:952c2f962099b7bbf3ea040c42aab1cc93d526fb3f656116daff2747fd9bf49e",
+      "parsed_payload_digest": "sha256:52ebe1d13ff1732afa089b9288e4c11170aa99e6b245fbbebaaac22fabb32f0e"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9",
+      "parsed_payload_digest": "sha256:5f861b3229165c42855dcf1404cbf2206863b1c73ea2960d5b7d2d9d389a216f"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:0dc839854009716491d76e1964b2d324b567ca95daac36dcfe4819957b610da0",
+      "parsed_payload_digest": "sha256:e81fa59b1c3fed8d304f1183e5b8f041543b166034b058398ec144ab335880d5"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:140a49fee66a0d2c1b5469541e44d5ecfa689bd0ad983c7d6af57521a8cfa611",
+      "parsed_payload_digest": "sha256:4fb3946c12de6b99520a908df452510a6990d0d6c6f5a00dd6b01cbe7ae3cb28"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:c662a448353cd278f3364d5e21a9cc8c158922657d447a1d6c899fbe91d403ef",
+      "parsed_payload_digest": "sha256:1aeb8d7b6a013a7fe0bb3dabbb3a8420135662b4c159fa3e179f818a2c422529"
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9",
+      "request_ids": [
+        "req:MA-S1:unit-1"
+      ],
+      "parsed_request_digests": [
+        "sha256:dc4a539d65bbf54c62761e8a6b6b0845b020db6a9b61d485d5124cbf0f8b871e"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:899397c52df3585d7a67d73fa30eefb17484b646493e9110df3438edfcab1151",
+      "request_ids": [
+        "request:MA-S2:unit:research"
+      ],
+      "parsed_request_digests": [
+        "sha256:f1f6de2763ea9ffee26b519be3c68bc5f02227b3622a29a913104b53743abe17"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:bc9e2abec88dea4731f27f639f9f265bc6871f41f3dd4ddc581ef39196ef0c52",
+      "request_ids": [
+        "req:MA-S3:unit-2:formula"
+      ],
+      "parsed_request_digests": [
+        "sha256:84652d1c93a0e6c0e6eb2d2479aa84444d69e34227e8a8f1f2409acfe58642f2"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "rejected_missing",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context",
+        "model_emitted_writing_callback:problem_or_local_context",
+        "rejected_missing_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:140a49fee66a0d2c1b5469541e44d5ecfa689bd0ad983c7d6af57521a8cfa611",
+      "request_ids": [
+        "req-MA-S4-01",
+        "req-MA-S4-02"
+      ],
+      "parsed_request_digests": [
+        "sha256:f82bc962d9ef7181fe942952a191e099e97c63721edebc5f091a9de644e512f3",
+        "sha256:590df7688c58740982d71018bcd172acdb810e4c6c7b3afb3d3b0d1c0c20e8e1"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": [
+        "mechanism_overview"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:3dd68a84e90deea7091301c9c71349f4e5cba9f0f5e16685b72152ecfaeb140e",
+      "request_ids": [
+        "MA-S5:unit-2:research:inference-scoring-formula"
+      ],
+      "parsed_request_digests": [
+        "sha256:d2c4c4df3dfc5931430e38cadac1ac2d44fbbd4c08bc1caf9385238ae0293798"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S1",
+      "retry_round": 1,
+      "applied": true,
+      "provenance": "writer_missing_section_retry",
+      "operations": [
+        "owner_retry_for_missing_section_output:section_body_missing_or_headings_only"
+      ],
+      "response_hash": "sha256:4e9bd0369f58af486e436c152a0cd8edf75b5fea74735128772ad5c4a0e499e9"
+    },
+    {
+      "section_id": "MA-S4",
+      "retry_round": 1,
+      "applied": true,
+      "provenance": "writer_missing_section_retry",
+      "operations": [
+        "owner_retry_for_missing_section_output:section_body_missing_or_headings_only"
+      ],
+      "response_hash": "sha256:140a49fee66a0d2c1b5469541e44d5ecfa689bd0ad983c7d6af57521a8cfa611"
+    }
+  ],
+  "final_text_digest": "sha256:ba410816532d157f5163c0513b2f78c47ce9852cf8fb95c63a109d32c2914bfd",
+  "authorship_ledger_digest": "sha256:fa2784c7296af581fb2683dec128f14b981d47f8feff30b8ff6c3637dd24afe4",
+  "publication_quality_digest": "sha256:3b1c5bb39fb0bec3cb8fba70a222a6bb77a8fa341546a18687fd5e20d8c0d94a",
+  "rewrite_transition_digest": "",
+  "callback_bundle_digest": "sha256:520abdfb5a0c98e40f16879f9a3d79d3f6281582e2cac1b371fa91248979af7c",
+  "transaction_assessment_digest": "sha256:a91c792faed6add84320f2df506c3c8cecff1ce3cc0ef4a12605a9c170d9cc83",
+  "rendered_text_digest": "sha256:7620f4ac44f6a5930ef7d39a97d12567e09e779a7dcfa7965976cc4c69823eb3",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 6,
+    "major": 35,
+    "minor": 0
+  },
+  "verified_validation_status": "incomplete",
+  "publication_ready": false,
+  "content_digest": "sha256:d92a44471e76d074cc0a6ffe95e68c417489f1258b229ea90b6c830a7bfe9471"
+}

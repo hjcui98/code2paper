@@ -5,12 +5,40 @@ from pathlib import Path
 
 from code2paper.agentic.method_content_regression import (
     build_python_behavior_inventory,
+    evaluate_method_authoring_oracle,
     evaluate_method_content_artifacts,
+    load_method_authoring_oracle,
     load_method_content_fixture,
+    load_method_synthesis_baselines,
 )
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "post_r8_method_content_regression_v1.json"
+SYNTHESIS_BASELINES = (
+    Path(__file__).parent / "fixtures" / "method_synthesis_funnel" / "baselines_v1.json"
+)
+AUTHORING_ORACLE = (
+    Path(__file__).parent / "fixtures" / "method_synthesis_funnel" / "original_oracle_v1.json"
+)
+
+
+def test_six_round_source_to_render_baseline_is_typed_and_diagnostic() -> None:
+    baseline = load_method_synthesis_baselines(SYNTHESIS_BASELINES)
+    replay = baseline.source_to_render_baseline
+
+    assert replay.run_id == "c2p-synth-20260826-225116"
+    assert replay.protocol == {
+        "callback_rounds": 0,
+        "revision_budget": 0,
+        "authority": "frozen_research_artifacts",
+    }
+    assert set(replay.projects) == {"linearrag", "dyg", "ebcar"}
+    for project in replay.projects.values():
+        assert project.draft_nonempty
+        assert project.writer_call_count > 0
+        assert project.formalizer_call_count >= project.formula_package_count
+        assert project.rendered_paragraph_count <= project.planned_paragraph_count
+        assert project.content_states["not_discovered"] >= 0
 
 
 def test_four_project_fixture_is_diagnostic_and_contains_no_copied_prose_fields() -> None:
@@ -118,3 +146,48 @@ def test_python_inventory_is_source_derived_and_does_not_promote_comments() -> N
     assert "time_mamba" in serialized
     assert "softmax" in serialized
     assert "forbidden_paper_only_phrase" not in serialized
+
+
+def test_original_paper_oracle_is_offline_and_captures_cross_project_units() -> None:
+    oracle = load_method_authoring_oracle(AUTHORING_ORACLE)
+    assert oracle.authority == "diagnostic_non_authorizing"
+    assert oracle.prose_copied_from_paper is False
+    assert set(oracle.projects) == {"linearrag", "dyg", "ebcar"}
+    assert any(
+        unit.polarity == "exclude_below_threshold"
+        for unit in oracle.projects["linearrag"].units
+    )
+    assert any(
+        unit.unit_id == "dyg_timespan_step_and_bc_path"
+        for unit in oracle.projects["dyg"].units
+    )
+    assert any(
+        unit.unit_id == "ebcar_dedicated_masked_attention"
+        for unit in oracle.projects["ebcar"].units
+    )
+
+
+def test_original_paper_oracle_reports_candidate_gap_without_authorizing_it() -> None:
+    oracle = load_method_authoring_oracle(AUTHORING_ORACLE)
+    original = (
+        "## First Retrieval: Entity Activation\n"
+        "Seed entities propagate through co-occurring sentences. Scores below "
+        "the threshold are discarded.\n"
+            "## Second Retrieval: Passage Ranking\n"
+            "A hybrid passage score uses log occurrence and damping in personalized "
+            "PageRank, then ranks passages in descending order. $$r(v)=w(v)$$\n"
+    )
+    candidate = (
+        "## First Retrieval: Entity Activation\n"
+        "Seed entities propagate through sentences and prune low scores.\n"
+    )
+    report = evaluate_method_authoring_oracle(
+        oracle=oracle,
+        project_id="linearrag",
+        candidate_text=candidate,
+        original_text=original,
+    )
+    stage2 = next(item for item in report.units if item.unit_id == "linearrag_stage2_hybrid_ppr")
+    assert stage2.original_covered
+    assert not stage2.candidate_covered
+    assert report.candidate_covered_units < report.original_covered_units

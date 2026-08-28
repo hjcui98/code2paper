@@ -144,9 +144,27 @@ def test_valid_direct_evidence_claim_passes_and_builds_posthoc_trace() -> None:
     )
 
     assert report.status == "passed"
+    assert report.verification_mode == "lexical_only"
+    assert report.semantic_verifier_calls == 0
     assert trace.hard_gate_passed
     assert trace.input_text_digest == text_digest(text)
     assert trace.entries[0].direct_evidence_ids == ["E1"]
+
+
+def test_reverse_validator_rejects_negated_high_overlap_claim() -> None:
+    text = "The encoder does not read configured features."
+    projection = _projection()
+
+    report = validate_text_evidence(
+        final_claims=extract_final_text_claims(text, projection),
+        projection=projection,
+        raw_evidence=_raw(),
+    )
+
+    assert report.status == "failed"
+    assert "allowed_wording_boundary_exceeded" in (
+        report.verdicts[0].deterministic_failures
+    )
 
 
 def test_legal_but_semantically_unrelated_evidence_is_rejected() -> None:
@@ -409,6 +427,57 @@ def test_semantic_verifier_rejection_returns_precise_authoring_revision() -> Non
     assert verdict.unsupported_fragment == "to resolve training settings"
 
 
+def test_closed_proposition_match_expands_to_claim_then_runs_evidence_gate() -> None:
+    """A proposition selects existing evidence authority; it never replaces it."""
+
+    projection = _projection()
+    text = "Configured features are consumed by the encoder."
+    lexical_only = extract_final_text_claims(text, projection)
+    lexical_claim = lexical_only.atomic_claims[0].model_copy(update={
+        "candidate_projection_claim_ids": [],
+        "candidate_direct_evidence_ids": [],
+    })
+    proposition_bound = lexical_only.model_copy(update={
+        "atomic_claims": [lexical_claim.model_copy(update={
+            "candidate_method_proposition_ids": ["MP-1"],
+        })],
+    })
+
+    report = validate_text_evidence(
+        final_claims=proposition_bound,
+        projection=projection,
+        raw_evidence=_raw(),
+        proposition_claim_ids={"MP-1": ("C1",)},
+    )
+
+    assert report.status == "passed"
+    assert report.verdicts[0].matched_method_proposition_ids == ["MP-1"]
+    assert report.verdicts[0].matched_projection_claim_ids == ["C1"]
+    assert report.verdicts[0].direct_evidence_ids == ["E1"]
+
+
+def test_candidate_only_proposition_can_only_produce_caveated_verdict() -> None:
+    projection = _projection()
+    extracted = extract_final_text_claims(
+        "Our intended deployment path avoids rendering.", projection
+    )
+    proposition_bound = extracted.model_copy(update={
+        "atomic_claims": [extracted.atomic_claims[0].model_copy(update={
+            "candidate_method_proposition_ids": ["MP-CANDIDATE"],
+        })],
+    })
+
+    report = validate_text_evidence(
+        final_claims=proposition_bound,
+        projection=projection,
+        raw_evidence=_raw(),
+        candidate_only_proposition_ids={"MP-CANDIDATE"},
+    )
+
+    assert report.verdicts[0].status == "caveated"
+    assert report.verdicts[0].direct_evidence_ids == []
+
+
 def test_numeric_and_formula_tokens_in_qualifiers_are_exempt_from_evidence_check() -> None:
     """Numbers and formulas inside authorized qualifiers are already validated
     by ``_qualifier_preserved``; they must not be re-checked against direct
@@ -453,6 +522,78 @@ def test_numeric_and_formula_tokens_in_qualifiers_are_exempt_from_evidence_check
         or "formula_not_in_direct_evidence" in v.deterministic_failures
         for v in report.verdicts
     )
+
+
+def test_backticked_snake_case_comparison_keeps_complete_identifier() -> None:
+    """A comparison inside Markdown code must not start at an identifier suffix.
+
+    The former one-letter formula regex extracted ``m == 0`` from
+    ``current_layer_num == 0`` and rejected an otherwise exact qualifier.
+    """
+
+    claim = ProjectedClaim(
+        claim_id="C-backtick-qual",
+        claim_text="The module loads features when current_layer_num == 0.",
+        support_status="supported",
+        direct_evidence_ids=["E1"],
+        supported_fragment="The module loads features when current_layer_num == 0.",
+        required_qualifiers=["current_layer_num == 0"],
+        allowed_wording_boundary="The module loads features when current_layer_num == 0.",
+        input_digest="sha256:backtick-qual",
+    )
+    projection = AuthoringInputProjection(
+        project_id="demo",
+        method_name="Demo",
+        author_goal="test",
+        implementation_scope="test",
+        projected_claims=[claim],
+        forbidden_claims=[],
+        projection_digest="sha256:projection",
+    )
+    text = "The module loads features when `current_layer_num == 0`."
+    extracted = extract_final_text_claims(text, projection)
+    report = validate_text_evidence(
+        final_claims=extracted,
+        projection=projection,
+        raw_evidence=_raw("features = compute()"),
+    )
+
+    assert report.status == "passed"
+    assert not any(
+        "formula_not_in_direct_evidence" in verdict.deterministic_failures
+        for verdict in report.verdicts
+    )
+
+
+def test_coordinated_return_objects_remain_one_atomic_claim() -> None:
+    """A coordinated object is not an independent factual clause."""
+
+    claim = ProjectedClaim(
+        claim_id="C-return-pair",
+        claim_text="The encoder returns node_features and output.",
+        support_status="supported",
+        direct_evidence_ids=["E1"],
+        supported_fragment="The encoder returns node_features and output.",
+        required_qualifiers=[],
+        allowed_wording_boundary="The encoder returns node_features and output.",
+        input_digest="sha256:return-pair",
+    )
+    projection = AuthoringInputProjection(
+        project_id="demo",
+        method_name="Demo",
+        author_goal="test",
+        implementation_scope="test",
+        projected_claims=[claim],
+        forbidden_claims=[],
+        projection_digest="sha256:projection",
+    )
+    extracted = extract_final_text_claims(
+        "The encoder returns `node_features` and `output`.", projection
+    )
+
+    assert [item.text for item in extracted.atomic_claims] == [
+        "The encoder returns `node_features` and `output`."
+    ]
 
 
 def test_formula_tokens_in_authorized_projection_fragments_are_exempt() -> None:
@@ -1228,3 +1369,76 @@ def test_empty_evidence_excerpt_is_explicit_failure() -> None:
         "direct_evidence_excerpt_empty" in v.deterministic_failures
         for v in report.verdicts
     )
+
+
+def test_candidate_fac_licenses_e2_parent_chain_without_l0_overlap() -> None:
+    from code2paper.agentic.trust_contracts import FinalAtomicClaim, FinalTextClaims, FinalTextUnit
+
+    l0 = ProjectedClaim(
+        claim_id="C-l0",
+        claim_text="activate branches_on entity_score < iteration_threshold",
+        support_status="supported",
+        direct_evidence_ids=["E1"],
+        supported_fragment="activate branches_on entity_score < iteration_threshold",
+        required_qualifiers=[],
+        allowed_wording_boundary="exact behavior predicate and operands from source span",
+        inference_level="E0",
+        input_digest="sha256:l0",
+    )
+    l2 = ProjectedClaim(
+        claim_id="C-l2",
+        claim_text="Expansion excludes entities whose score fails the threshold.",
+        support_status="supported",
+        direct_evidence_ids=["E1"],
+        supported_fragment="Expansion excludes entities whose score fails the threshold.",
+        required_qualifiers=[],
+        allowed_wording_boundary="effect interpretation licensed; polarity must match parent comparison units",
+        inference_level="E2",
+        parent_claim_ids=["C-l0"],
+        input_digest="sha256:l2",
+    )
+    projection = AuthoringInputProjection(
+        project_id="demo",
+        method_name="Demo",
+        author_goal="test",
+        implementation_scope="test",
+        projected_claims=[l0, l2],
+        forbidden_claims=[],
+        projection_digest="sha256:projection",
+    )
+    text = "Expansion excludes entities whose score fails the threshold."
+    report = validate_text_evidence(
+        final_claims=FinalTextClaims(
+            units=[FinalTextUnit(
+                unit_id="U1",
+                kind="sentence",
+                text=text,
+                line_start=1,
+                line_end=1,
+                char_start=0,
+                char_end=len(text),
+                factual=True,
+                span_digest="sha256:u1",
+            )],
+            atomic_claims=[FinalAtomicClaim(
+                atomic_claim_id="FAC1",
+                unit_id="U1",
+                text=text,
+                normalized_text=text,
+                line_start=1,
+                line_end=1,
+                char_start=0,
+                char_end=len(text),
+                candidate_projection_claim_ids=["C-l0"],
+                claim_digest="sha256:fac1",
+            )],
+            input_text_digest="sha256:text",
+        ),
+        projection=projection,
+        raw_evidence=_raw("if entity_score < iteration_threshold: continue"),
+    )
+    assert report.verdicts
+    failures = report.verdicts[0].deterministic_failures
+    assert "no_semantically_matching_projected_claim" not in failures
+    assert report.verdicts[0].status == "caveated"
+    assert "C-l2" in report.verdicts[0].matched_projection_claim_ids

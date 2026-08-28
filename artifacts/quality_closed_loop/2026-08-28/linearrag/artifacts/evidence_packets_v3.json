@@ -1,0 +1,1757 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "packets": [
+    {
+      "packet_id": "pkt-O-COMPONENT-01-4e554ef0-2a36a677d3ec",
+      "obligation_tags": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "scope": "sym:eb8aac3092d3f167",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:566:566",
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:566:566",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 566,
+          "line_end": 566,
+          "exact_excerpt": "        entity_nodes, sentence_nodes,passage_hash_id_to_entities,self.entity_to_sentence,self.sentence_to_entity = self.extract_nodes_and_edges(existing_passage_hash_id_to_entities, existing_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:b4565fe6693bbd1f5182309a91f9dd7854d7fa819597d41f5f7ce95190a668f1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:561:564",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 561,
+          "line_end": 564,
+          "exact_excerpt": "        if len(new_passage_hash_ids) > 0:\n            new_hash_id_to_passage = {k : hash_id_to_passage[k] for k in new_passage_hash_ids}\n            new_passage_hash_id_to_entities,new_sentence_to_entities = self.spacy_ner.batch_ner(new_hash_id_to_passage, self.config.max_workers)\n            self.merge_ner_results(existing_passage_hash_id_to_entities, existing_sentence_to_entities, new_passage_hash_id_to_entities, new_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:26a5eac16231ad3d2244f34d021a8fbd3b0341f3743fdf0ecfcf4b0a08f5ac54",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:02063000728b8d9f9b1b7ccd277dae4c3afceb40e39722de86f2d4f69eb7d6ca"
+    },
+    {
+      "packet_id": "pkt-O-METHOD-MAINLINE-01-79899e6c-accedd36980e",
+      "obligation_tags": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:113:113",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:234:235",
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:247:247",
+        "span:src/LinearRAG.py:240:240",
+        "span:src/LinearRAG.py:228:255",
+        "span:src/LinearRAG.py:216:216"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:231:231"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:113:113",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 113,
+          "line_end": 113,
+          "exact_excerpt": "                sorted_passage_hash_ids,sorted_passage_scores = self.graph_search_with_seed_entities(question,question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:ccc4266b06508f763f6eb8d874ec671c417c4cd7db195907391f00313d695b44",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:208:208",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 208,
+          "line_end": 208,
+          "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+          "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:234:235",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 234,
+          "line_end": 235,
+          "exact_excerpt": "                if not sentence_hash_ids:\n                    continue\n",
+          "excerpt_digest": "sha256:e6c66b37ece2d5e2d24a703e2d5b99131fc2e494fd1e22c65ff663dc47156806",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:231:232",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 232,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n                    continue\n",
+          "excerpt_digest": "sha256:34ec5965a623fe4f79c1914d3385047c10aefa7e332b0045e89ab707030db872",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:247:247",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 247,
+          "line_end": 247,
+          "exact_excerpt": "                        next_entity_score = entity_score * top_sentence_score\n",
+          "excerpt_digest": "sha256:0880c5c39ef62cd9e327e3700d1b329a8a9067491bb9fa6913887901c361afe9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:240:240",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n",
+          "excerpt_digest": "sha256:d0f334c99f44a02e017a3c5513e10637f4e93d5de4d61bd60a258be22b6f2ece",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:228:255",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 228,
+          "line_end": 255,
+          "exact_excerpt": "        while len(current_entities) > 0 and iteration < self.config.max_iterations:\n            new_entities = {}\n            for entity_hash_id, (entity_id, entity_score, tier) in current_entities.items():\n                if entity_score < self.config.iteration_threshold:\n                    continue\n                sentence_hash_ids = [sid for sid in list(self.entity_hash_id_to_sentence_hash_ids[entity_hash_id]) if sid not in used_sentence_hash_ids]\n                if not sentence_hash_ids:\n                    continue\n                sentence_indices = [self.sentence_embedding_store.hash_id_to_idx[sid] for sid in sentence_hash_ids]\n                sentence_embeddings = self.sentence_embeddings[sentence_indices]\n                question_emb = question_embedding.reshape(-1, 1) if len(question_embedding.shape) == 1 else question_embedding\n                sentence_similarities = np.dot(sentence_embeddings, question_emb).flatten()\n                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n                for top_sentence_index in top_sentence_indices:\n                    top_sentence_hash_id = sentence_hash_ids[top_sentence_index]\n                    top_sentence_score = sentence_similarities[top_sentence_index]\n                    used_sentence_hash_ids.add(top_sentence_hash_id)\n                    entity_hash_ids_in_sentence = self.sentence_hash_id_to_entity_hash_ids[top_sentence_hash_id]\n                    for next_entity_hash_id in entity_hash_ids_in_sentence:\n                        next_entity_score = entity_score * top_sentence_score\n                        if next_entity_score < self.config.iteration_threshold:\n                            continue\n                        next_enitity_node_idx = self.node_name_to_vertex_idx[next_entity_hash_id]\n                        entity_weights[next_enitity_node_idx] += next_entity_score\n                        new_entities[next_entity_hash_id] = (next_enitity_node_idx, next_entity_score, iteration+1)\n            actived_entities.update(new_entities)\n            current_entities = new_entities.copy()\n            iteration += 1\n",
+          "excerpt_digest": "sha256:9bec9a6b03dc73ff54c30f790f468c3449ed525b35c4d1bef549ffcc651bfe92",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:216:216",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 216,
+          "line_end": 216,
+          "exact_excerpt": "        return sorted_passage_hash_ids, sorted_passage_scores.tolist()\n",
+          "excerpt_digest": "sha256:20765573ed5a4fedbaccc60bf6c615ac4fb9835df5f9537e2cd6cd202bd49c0f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:231:231",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 231,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n",
+          "excerpt_digest": "sha256:e0cc812d4b8f1a5db19ec5f57a530e640c329bb0b428f9c8de3ae9b5e1ef2e5d",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:b820d3f5770ead16",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:b9da9fa9cfd8f215",
+          "target_symbol": "sym:b9da9fa9cfd8f215",
+          "source_endpoint": {
+            "node_id": "node:7a542bcb29a0c474",
+            "symbol_id": "sym:b9da9fa9cfd8f215",
+            "operation_subject": "sym:b9da9fa9cfd8f215",
+            "predicate": "BRANCH",
+            "operands": [
+              "entity_score < self.config.iteration_threshold"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:231:232"
+          },
+          "target_endpoint": {
+            "node_id": "node:ed13a6ebceb0bb1f",
+            "symbol_id": "sym:b9da9fa9cfd8f215",
+            "operation_subject": "sym:b9da9fa9cfd8f215",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.iteration_threshold"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:231:231"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:231:232",
+            "span:src/LinearRAG.py:231:231"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:b9da9fa9cfd8f215 -> sym:b9da9fa9cfd8f215"
+        }
+      ],
+      "conditions": [
+        "not sentence_hash_ids",
+        "entity_score < self.config.iteration_threshold",
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ],
+      "composition_rationale": "Deterministic selection covers 10 anchor spans and 1 relation spans across 10 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:26f78ec7dac25d1702955ab24854d94b084b3a5dae95c05a6a0c2fc398fb55ca"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-01-9c8dfe22-21489e72f258",
+      "obligation_tags": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "scope": "sym:2e3475acbbcc35f9",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:169:172",
+        "span:src/LinearRAG.py:174:184"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:169:172",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:2e3475acbbcc35f9",
+          "line_start": 169,
+          "line_end": 172,
+          "exact_excerpt": "            self.entity_to_sentence_sparse = torch.sparse_coo_tensor(\n                torch.zeros((2, 0), dtype=torch.long), torch.zeros(0, dtype=torch.float32),\n                (num_entities, num_sentences), device=self.device\n            )\n",
+          "excerpt_digest": "sha256:54ed3b7a4347d7dcf988e0bdc1a1ce2037e57bc4b2f0ea57a8accbceb4e4d7c4",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:174:184",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:2e3475acbbcc35f9",
+          "line_start": 174,
+          "line_end": 184,
+          "exact_excerpt": "        if len(sentence_to_entity_indices) > 0:\n            s2e_indices = torch.tensor(sentence_to_entity_indices, dtype=torch.long).t()\n            s2e_values = torch.tensor(sentence_to_entity_values, dtype=torch.float32)\n            self.sentence_to_entity_sparse = torch.sparse_coo_tensor(\n                s2e_indices, s2e_values, (num_sentences, num_entities), device=self.device\n            ).coalesce()\n        else:\n            self.sentence_to_entity_sparse = torch.sparse_coo_tensor(\n                torch.zeros((2, 0), dtype=torch.long), torch.zeros(0, dtype=torch.float32),\n                (num_sentences, num_entities), device=self.device\n            )\n",
+          "excerpt_digest": "sha256:9b999ead03f765234324dfb17b752e6eb1be00e5c2b03498f1fa3950ab3a2aa3",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "len(sentence_to_entity_indices) > 0"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:831eab90549c1b17ed16b19ba1c8156cc32ad03c708c3a02c3b32953b72633e9"
+    },
+    {
+      "packet_id": "pkt-callback:MA-S3:rq-1-17a4b85b79c0",
+      "obligation_tags": [
+        "callback:MA-S3:rq-1"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:240:240",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:247:247",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:228:255"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:192:192",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 192,
+          "line_end": 192,
+          "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+          "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:240:240",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n",
+          "excerpt_digest": "sha256:d0f334c99f44a02e017a3c5513e10637f4e93d5de4d61bd60a258be22b6f2ece",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:504:504",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 504,
+          "line_end": 504,
+          "exact_excerpt": "            passage_score = self.config.passage_ratio * dpr_passage_score + math.log(1 + total_entity_bonus)\n",
+          "excerpt_digest": "sha256:d10d0c1d671e0534054ea9f2ff8ba88271c09e33c152598d6433a40e17d0ce4f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:501:501",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 501,
+          "line_end": 501,
+          "exact_excerpt": "                    entity_bonus = entity_score * math.log(1 + entity_occurrences) / denom\n",
+          "excerpt_digest": "sha256:b9c6d925250f759eb5239e734a7e1fb5a851ade3a990fc71e5deac9d46be4abf",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:512:512",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 512,
+          "line_end": 512,
+          "exact_excerpt": "            passage_weights[passage_node_idx] = passage_score * self.config.passage_node_weight\n",
+          "excerpt_digest": "sha256:198097b1c074186ccc74f4c9712f16f3f27a482df3fb8cf6528020bc8416baac",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:247:247",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 247,
+          "line_end": 247,
+          "exact_excerpt": "                        next_entity_score = entity_score * top_sentence_score\n",
+          "excerpt_digest": "sha256:0880c5c39ef62cd9e327e3700d1b329a8a9067491bb9fa6913887901c361afe9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:225:225",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 225,
+          "line_end": 225,
+          "exact_excerpt": "        used_sentence_hash_ids = set()\n",
+          "excerpt_digest": "sha256:9aa95af87cc24fa3c561c6847e14e6b8ec58f54dc21b6f714158eb42a7a83ab1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:228:255",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 228,
+          "line_end": 255,
+          "exact_excerpt": "        while len(current_entities) > 0 and iteration < self.config.max_iterations:\n            new_entities = {}\n            for entity_hash_id, (entity_id, entity_score, tier) in current_entities.items():\n                if entity_score < self.config.iteration_threshold:\n                    continue\n                sentence_hash_ids = [sid for sid in list(self.entity_hash_id_to_sentence_hash_ids[entity_hash_id]) if sid not in used_sentence_hash_ids]\n                if not sentence_hash_ids:\n                    continue\n                sentence_indices = [self.sentence_embedding_store.hash_id_to_idx[sid] for sid in sentence_hash_ids]\n                sentence_embeddings = self.sentence_embeddings[sentence_indices]\n                question_emb = question_embedding.reshape(-1, 1) if len(question_embedding.shape) == 1 else question_embedding\n                sentence_similarities = np.dot(sentence_embeddings, question_emb).flatten()\n                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n                for top_sentence_index in top_sentence_indices:\n                    top_sentence_hash_id = sentence_hash_ids[top_sentence_index]\n                    top_sentence_score = sentence_similarities[top_sentence_index]\n                    used_sentence_hash_ids.add(top_sentence_hash_id)\n                    entity_hash_ids_in_sentence = self.sentence_hash_id_to_entity_hash_ids[top_sentence_hash_id]\n                    for next_entity_hash_id in entity_hash_ids_in_sentence:\n                        next_entity_score = entity_score * top_sentence_score\n                        if next_entity_score < self.config.iteration_threshold:\n                            continue\n                        next_enitity_node_idx = self.node_name_to_vertex_idx[next_entity_hash_id]\n                        entity_weights[next_enitity_node_idx] += next_entity_score\n                        new_entities[next_entity_hash_id] = (next_enitity_node_idx, next_entity_score, iteration+1)\n            actived_entities.update(new_entities)\n            current_entities = new_entities.copy()\n            iteration += 1\n",
+          "excerpt_digest": "sha256:9bec9a6b03dc73ff54c30f790f468c3449ed525b35c4d1bef549ffcc651bfe92",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:af30b2aa90ee91aa",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:97b433ccde9bd4d6",
+          "target_symbol": "sym:97b433ccde9bd4d6",
+          "source_endpoint": {
+            "node_id": "node:5944825b88e8893d",
+            "symbol_id": "sym:97b433ccde9bd4d6",
+            "operation_subject": "sym:97b433ccde9bd4d6",
+            "predicate": "COMPUTE",
+            "operands": [
+              "self.config.passage_ratio * dpr_passage_score",
+              "math.log(1 + total_entity_bonus)"
+            ],
+            "produced_entity": "passage_score",
+            "source_span_id": "span:src/LinearRAG.py:504:504"
+          },
+          "target_endpoint": {
+            "node_id": "node:c687b9755fc3af46",
+            "symbol_id": "sym:97b433ccde9bd4d6",
+            "operation_subject": "sym:97b433ccde9bd4d6",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.passage_ratio"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:504:504"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:504:504"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:97b433ccde9bd4d6 -> sym:97b433ccde9bd4d6"
+        },
+        {
+          "relation_id": "rel:607e7d9f2246f485",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:97b433ccde9bd4d6",
+          "target_symbol": "sym:97b433ccde9bd4d6",
+          "source_endpoint": {
+            "node_id": "node:cb67fdd0c5b2771e",
+            "symbol_id": "sym:97b433ccde9bd4d6",
+            "operation_subject": "sym:97b433ccde9bd4d6",
+            "predicate": "COMPUTE",
+            "operands": [
+              "passage_score",
+              "self.config.passage_node_weight"
+            ],
+            "produced_entity": "passage_weights[passage_node_idx]",
+            "source_span_id": "span:src/LinearRAG.py:512:512"
+          },
+          "target_endpoint": {
+            "node_id": "node:e63dcebcbaec2f1f",
+            "symbol_id": "sym:97b433ccde9bd4d6",
+            "operation_subject": "sym:97b433ccde9bd4d6",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.passage_node_weight"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:512:512"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:512:512"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:97b433ccde9bd4d6 -> sym:97b433ccde9bd4d6"
+        }
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ],
+      "composition_rationale": "Deterministic selection covers 8 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:e12bc0c8d774525926919056c2619e0513a5f8690ee15b3cbb44515ff87c80f1"
+    },
+    {
+      "packet_id": "pkt-callback:req:MA-S2:u2-e428f2357d1c",
+      "obligation_tags": [
+        "callback:req:MA-S2:u2"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:216:216",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:198:198"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:208:208",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 208,
+          "line_end": 208,
+          "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+          "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:209:209",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 209,
+          "line_end": 209,
+          "exact_excerpt": "        sorted_passage_scores = doc_scores[sorted_indices_in_doc_scores]\n",
+          "excerpt_digest": "sha256:1e3b577df22b513ab771dedb69a2cf8822b7ed1f43f6a56ff7a0bac49cf138e7",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:216:216",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 216,
+          "line_end": 216,
+          "exact_excerpt": "        return sorted_passage_hash_ids, sorted_passage_scores.tolist()\n",
+          "excerpt_digest": "sha256:20765573ed5a4fedbaccc60bf6c615ac4fb9835df5f9537e2cd6cd202bd49c0f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:211:211",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 211,
+          "line_end": 211,
+          "exact_excerpt": "        sorted_passage_hash_ids = [\n",
+          "excerpt_digest": "sha256:9ae5e3c6c31eb4278f20b6ae820c6884ce68519c3be9ee37c4fe9b1815f5e0e5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:198:198",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 198,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n",
+          "excerpt_digest": "sha256:dca887dd3f56439b30a3b35e0217fa82afdf549f7157d10aa9f1b97d2e169b39",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 8 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:0a1858aca9fc16538ca88294f120284358d3d38cb487c10b9ed2c7be3088ecfc"
+    },
+    {
+      "packet_id": "pkt-callback:request:MA-S5:configuration_and_branches-f930b0c61494",
+      "obligation_tags": [
+        "callback:request:MA-S5:configuration_and_branches"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:199:199",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 199,
+          "line_end": 199,
+          "exact_excerpt": "            vertices=range(len(self.node_name_to_vertex_idx)),\n",
+          "excerpt_digest": "sha256:39d5946d4017b6dacc56f0b1dd37551bd84a7033093a49ca761c99be00c16256",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:193:193",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 193,
+          "line_end": 193,
+          "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+          "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:212:212",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "            self.vertex_idx_to_node_name[self.passage_node_indices[i]] \n",
+          "excerpt_digest": "sha256:f3f781f52d7e988ed5b5fbc9dcfae2bd689f24468e549e63f7b13f4be402a2b9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 6 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:ce6658e194ccdaeca9bca6e42a86688200994ef30a6d78a1dcca0b490008221a"
+    },
+    {
+      "packet_id": "pkt-callback:request:MA-S5:mechanism_overview-f67337e42170",
+      "obligation_tags": [
+        "callback:request:MA-S5:mechanism_overview"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:199:199",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 199,
+          "line_end": 199,
+          "exact_excerpt": "            vertices=range(len(self.node_name_to_vertex_idx)),\n",
+          "excerpt_digest": "sha256:39d5946d4017b6dacc56f0b1dd37551bd84a7033093a49ca761c99be00c16256",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:100:100",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 100,
+          "line_end": 100,
+          "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:92:92",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 92,
+          "line_end": 92,
+          "exact_excerpt": "        self.vertex_idx_to_node_name = {v.index: v[\"name\"] for v in self.graph.vs if \"name\" in v.attributes()}\n",
+          "excerpt_digest": "sha256:796e2cbf869444bdc6da6cb98559a5c2ea7f3d7bcecc61c6e82000e1ab0c8797",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:212:212",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "            self.vertex_idx_to_node_name[self.passage_node_indices[i]] \n",
+          "excerpt_digest": "sha256:f3f781f52d7e988ed5b5fbc9dcfae2bd689f24468e549e63f7b13f4be402a2b9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 7 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:f987d481a1869a2e1123344b8825a4def274d8f6882267b85d64c666b607d3d5"
+    },
+    {
+      "packet_id": "pkt-O-METHOD-MAINLINE-01-79899e6c-e0da9670ec6b",
+      "obligation_tags": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "scope": "sym:05f6f680790f8d4e",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:629:629",
+        "span:src/LinearRAG.py:627:628"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:629:629",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:05f6f680790f8d4e",
+          "line_start": 629,
+          "line_end": 629,
+          "exact_excerpt": "                edges.append((node_hash_id, neighbor_hash_id))\n",
+          "excerpt_digest": "sha256:7d5b014aafbc0037ff78121d29e05d5d5d1e14974aae75436e8fcf9b441d916e",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:627:628",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:05f6f680790f8d4e",
+          "line_start": 627,
+          "line_end": 628,
+          "exact_excerpt": "                if node_hash_id == neighbor_hash_id:\n                    continue\n",
+          "excerpt_digest": "sha256:568d65776cb551a9f26e12fecb4cca322e53cf2b6a86deba9b6fde47b8de35ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "node_hash_id == neighbor_hash_id"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:2b0faf7135c295bd3943f8cd3308c00af76024daa2d7ddd42c9fd54349b4c179"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-01-9c8dfe22-21489e72f258",
+      "obligation_tags": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "scope": "sym:2e3475acbbcc35f9",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:169:172",
+        "span:src/LinearRAG.py:174:184"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:169:172",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:2e3475acbbcc35f9",
+          "line_start": 169,
+          "line_end": 172,
+          "exact_excerpt": "            self.entity_to_sentence_sparse = torch.sparse_coo_tensor(\n                torch.zeros((2, 0), dtype=torch.long), torch.zeros(0, dtype=torch.float32),\n                (num_entities, num_sentences), device=self.device\n            )\n",
+          "excerpt_digest": "sha256:54ed3b7a4347d7dcf988e0bdc1a1ce2037e57bc4b2f0ea57a8accbceb4e4d7c4",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:174:184",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:2e3475acbbcc35f9",
+          "line_start": 174,
+          "line_end": 184,
+          "exact_excerpt": "        if len(sentence_to_entity_indices) > 0:\n            s2e_indices = torch.tensor(sentence_to_entity_indices, dtype=torch.long).t()\n            s2e_values = torch.tensor(sentence_to_entity_values, dtype=torch.float32)\n            self.sentence_to_entity_sparse = torch.sparse_coo_tensor(\n                s2e_indices, s2e_values, (num_sentences, num_entities), device=self.device\n            ).coalesce()\n        else:\n            self.sentence_to_entity_sparse = torch.sparse_coo_tensor(\n                torch.zeros((2, 0), dtype=torch.long), torch.zeros(0, dtype=torch.float32),\n                (num_sentences, num_entities), device=self.device\n            )\n",
+          "excerpt_digest": "sha256:9b999ead03f765234324dfb17b752e6eb1be00e5c2b03498f1fa3950ab3a2aa3",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "len(sentence_to_entity_indices) > 0"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:831eab90549c1b17ed16b19ba1c8156cc32ad03c708c3a02c3b32953b72633e9"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-02-93c16851-0c86a4eb3eae",
+      "obligation_tags": [
+        "O-STAGE-02-93c16851"
+      ],
+      "scope": "sym:641dae5fb3420711",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:401:401",
+        "span:src/LinearRAG.py:449:449",
+        "span:src/LinearRAG.py:228:255",
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:393:393",
+        "span:src/LinearRAG.py:340:343",
+        "span:src/LinearRAG.py:387:387",
+        "span:src/LinearRAG.py:240:240"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:231:231"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:401:401",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:641dae5fb3420711",
+          "line_start": 401,
+          "line_end": 401,
+          "exact_excerpt": "                    weighted_sentence_scores = sentence_activation * sentence_similarities\n",
+          "excerpt_digest": "sha256:7a80984f0c34757c531a01c5518675319355e9139a158141b6149f198916eaf5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:449:449",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:641dae5fb3420711",
+          "line_start": 449,
+          "line_end": 449,
+          "exact_excerpt": "            active_indices = np.where(next_entity_scores_np >= self.config.iteration_threshold)[0]\n",
+          "excerpt_digest": "sha256:df48bace3e6aa41790b79ebf42f9fe41855cdd7986d0feb925fe385ea1357b2f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:228:255",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 228,
+          "line_end": 255,
+          "exact_excerpt": "        while len(current_entities) > 0 and iteration < self.config.max_iterations:\n            new_entities = {}\n            for entity_hash_id, (entity_id, entity_score, tier) in current_entities.items():\n                if entity_score < self.config.iteration_threshold:\n                    continue\n                sentence_hash_ids = [sid for sid in list(self.entity_hash_id_to_sentence_hash_ids[entity_hash_id]) if sid not in used_sentence_hash_ids]\n                if not sentence_hash_ids:\n                    continue\n                sentence_indices = [self.sentence_embedding_store.hash_id_to_idx[sid] for sid in sentence_hash_ids]\n                sentence_embeddings = self.sentence_embeddings[sentence_indices]\n                question_emb = question_embedding.reshape(-1, 1) if len(question_embedding.shape) == 1 else question_embedding\n                sentence_similarities = np.dot(sentence_embeddings, question_emb).flatten()\n                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n                for top_sentence_index in top_sentence_indices:\n                    top_sentence_hash_id = sentence_hash_ids[top_sentence_index]\n                    top_sentence_score = sentence_similarities[top_sentence_index]\n                    used_sentence_hash_ids.add(top_sentence_hash_id)\n                    entity_hash_ids_in_sentence = self.sentence_hash_id_to_entity_hash_ids[top_sentence_hash_id]\n                    for next_entity_hash_id in entity_hash_ids_in_sentence:\n                        next_entity_score = entity_score * top_sentence_score\n                        if next_entity_score < self.config.iteration_threshold:\n                            continue\n                        next_enitity_node_idx = self.node_name_to_vertex_idx[next_entity_hash_id]\n                        entity_weights[next_enitity_node_idx] += next_entity_score\n                        new_entities[next_entity_hash_id] = (next_enitity_node_idx, next_entity_score, iteration+1)\n            actived_entities.update(new_entities)\n            current_entities = new_entities.copy()\n            iteration += 1\n",
+          "excerpt_digest": "sha256:9bec9a6b03dc73ff54c30f790f468c3449ed525b35c4d1bef549ffcc651bfe92",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:231:232",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 232,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n                    continue\n",
+          "excerpt_digest": "sha256:34ec5965a623fe4f79c1914d3385047c10aefa7e332b0045e89ab707030db872",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:393:393",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:641dae5fb3420711",
+          "line_start": 393,
+          "line_end": 393,
+          "exact_excerpt": "                    all_selected_sentences = torch.cat(selected_sentence_indices_list)\n",
+          "excerpt_digest": "sha256:e56a67a17f67e7c6393ec6e4c071b80c4c0e9b74a531847223ac3254ba17fbf5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:340:343",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:641dae5fb3420711",
+          "line_start": 340,
+          "line_end": 343,
+          "exact_excerpt": "            sentence_activation = torch.sparse.mm(\n                self.entity_to_sentence_sparse.t(),\n                current_scores_2d\n            )\n",
+          "excerpt_digest": "sha256:1a6094e27ee5d7aed07dedc63207ef77b29480c55920da19908a9ac92abac75d",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:387:387",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:641dae5fb3420711",
+          "line_start": 387,
+          "line_end": 387,
+          "exact_excerpt": "                        top_k_values, top_k_local_indices = torch.topk(sentence_sims, k)\n",
+          "excerpt_digest": "sha256:aa6b9a3f928d32ba333869b15471aed463d28ea8fb2cddb2b7a4dc926000c8f3",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:240:240",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n",
+          "excerpt_digest": "sha256:d0f334c99f44a02e017a3c5513e10637f4e93d5de4d61bd60a258be22b6f2ece",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:231:231",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 231,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n",
+          "excerpt_digest": "sha256:e0cc812d4b8f1a5db19ec5f57a530e640c329bb0b428f9c8de3ae9b5e1ef2e5d",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:b820d3f5770ead16",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:b9da9fa9cfd8f215",
+          "target_symbol": "sym:b9da9fa9cfd8f215",
+          "source_endpoint": {
+            "node_id": "node:7a542bcb29a0c474",
+            "symbol_id": "sym:b9da9fa9cfd8f215",
+            "operation_subject": "sym:b9da9fa9cfd8f215",
+            "predicate": "BRANCH",
+            "operands": [
+              "entity_score < self.config.iteration_threshold"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:231:232"
+          },
+          "target_endpoint": {
+            "node_id": "node:ed13a6ebceb0bb1f",
+            "symbol_id": "sym:b9da9fa9cfd8f215",
+            "operation_subject": "sym:b9da9fa9cfd8f215",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.iteration_threshold"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:231:231"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:231:232",
+            "span:src/LinearRAG.py:231:231"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:b9da9fa9cfd8f215 -> sym:b9da9fa9cfd8f215"
+        },
+        {
+          "relation_id": "rel:b4714c23a1968647",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:641dae5fb3420711",
+          "target_symbol": "sym:641dae5fb3420711",
+          "source_endpoint": {
+            "node_id": "node:4270f77d0305f497",
+            "symbol_id": "sym:641dae5fb3420711",
+            "operation_subject": "sym:641dae5fb3420711",
+            "predicate": "MASK",
+            "operands": [
+              "np.where",
+              "next_entity_scores_np >= self.config.iteration_threshold"
+            ],
+            "produced_entity": "active_indices",
+            "source_span_id": "span:src/LinearRAG.py:449:449"
+          },
+          "target_endpoint": {
+            "node_id": "node:503eae2e3541a4c0",
+            "symbol_id": "sym:641dae5fb3420711",
+            "operation_subject": "sym:641dae5fb3420711",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.iteration_threshold"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:449:449"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:449:449"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:641dae5fb3420711 -> sym:641dae5fb3420711"
+        }
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations",
+        "entity_score < self.config.iteration_threshold"
+      ],
+      "composition_rationale": "Deterministic selection covers 8 anchor spans and 1 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:2e96cd54538cd3233e9b5801f9510f4ec6009cd4196d9017899dc64e993c167b"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-03-8dda66b9-006d0489bda0",
+      "obligation_tags": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:216:216"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:208:208",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 208,
+          "line_end": 208,
+          "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+          "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:216:216",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 216,
+          "line_end": 216,
+          "exact_excerpt": "        return sorted_passage_hash_ids, sorted_passage_scores.tolist()\n",
+          "excerpt_digest": "sha256:20765573ed5a4fedbaccc60bf6c615ac4fb9835df5f9537e2cd6cd202bd49c0f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 5 anchor spans and 0 relation spans across 5 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:bf1802f56f10dc36864e088592ebdebc4326fce0528b303519b224f24f5fc03e"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-4e554ef0-daf17c4fd512",
+      "obligation_tags": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "scope": "sym:742d89a92faf717a",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:34:34",
+        "span:src/LinearRAG.py:22:22",
+        "span:src/LinearRAG.py:26:26",
+        "span:src/LinearRAG.py:33:33",
+        "span:src/LinearRAG.py:32:32"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:34:34",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 34,
+          "line_end": 34,
+          "exact_excerpt": "        self.graph = ig.Graph(directed=False)\n",
+          "excerpt_digest": "sha256:84d3b01013c2a240f4ff0d47d4704d822e847ad4334ce31a779ee521f91d4a48",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:22:22",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 22,
+          "line_end": 22,
+          "exact_excerpt": "        retrieval_method = \"Vectorized Matrix-based\" if self.config.use_vectorized_retrieval else \"BFS Iteration\"\n",
+          "excerpt_digest": "sha256:5b1b2eaba39cab85337ae9ddffd47a10d2b72f2f591910bbea65e7668b2bd554",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:26:26",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 26,
+          "line_end": 26,
+          "exact_excerpt": "        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+          "excerpt_digest": "sha256:fd5260eeace2ee232fae0b45a5d8c61947ad5c5840d1fc829a4a226be57cefe2",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:33:33",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 33,
+          "line_end": 33,
+          "exact_excerpt": "        self.spacy_ner = SpacyNER(self.config.spacy_model)\n",
+          "excerpt_digest": "sha256:75f243b751f23a33a6b65e7539441e467be876afc3202aee86c96c59ed1cf443",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:32:32",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 32,
+          "line_end": 32,
+          "exact_excerpt": "        self.llm_model = self.config.llm_model\n",
+          "excerpt_digest": "sha256:9afeb7e4a45a2cc3c74215152d1533524ee2135bfe8ac97d2cb43de33b3b60c2",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:926b510de1417922",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:742d89a92faf717a",
+          "target_symbol": "sym:742d89a92faf717a",
+          "source_endpoint": {
+            "node_id": "node:7bb06a078c43e14d",
+            "symbol_id": "sym:742d89a92faf717a",
+            "operation_subject": "sym:742d89a92faf717a",
+            "predicate": "CALL",
+            "operands": [
+              "SpacyNER",
+              "self.config.spacy_model"
+            ],
+            "produced_entity": "self.spacy_ner",
+            "source_span_id": "span:src/LinearRAG.py:33:33"
+          },
+          "target_endpoint": {
+            "node_id": "node:e23149407442f89a",
+            "symbol_id": "sym:742d89a92faf717a",
+            "operation_subject": "sym:742d89a92faf717a",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.spacy_model"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:33:33"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:33:33"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:742d89a92faf717a -> sym:742d89a92faf717a"
+        }
+      ],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 5 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:6d047efd784341f0e5253ac10dc3a69a86caf581e1f5f3382358e192c31eb1c4"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-bd3b9454-56b1d998b619",
+      "obligation_tags": [
+        "O-COMPONENT-01-bd3b9454"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:129:129"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:96:96",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 96,
+          "line_end": 96,
+          "exact_excerpt": "            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n",
+          "excerpt_digest": "sha256:550d590dfc1b5af5e170c48d4790a3b67a5204a2057b0b5bd2c63d1a6dbee56c",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:95:105",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 105,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n            self._precompute_sparse_matrices()\n            e2s_shape = self.entity_to_sentence_sparse.shape\n            s2e_shape = self.sentence_to_entity_sparse.shape\n            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n            logger.info(f\"Matrices built: Entity-Sentence {e2s_shape}, Sentence-Entity {s2e_shape}\")\n            logger.info(f\"E2S Sparsity: {(1 - e2s_nnz / (e2s_shape[0] * e2s_shape[1])) * 100:.2f}% (nnz={e2s_nnz})\")\n            logger.info(f\"S2E Sparsity: {(1 - s2e_nnz / (s2e_shape[0] * s2e_shape[1])) * 100:.2f}% (nnz={s2e_nnz})\")\n            logger.info(f\"Device: {self.device}\")\n",
+          "excerpt_digest": "sha256:b749b135ed1ecd61254268653e76b02cb7f50074d99abb186ed5ee8a94902546",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:103:103",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 103,
+          "line_end": 103,
+          "exact_excerpt": "            logger.info(f\"E2S Sparsity: {(1 - e2s_nnz / (e2s_shape[0] * e2s_shape[1])) * 100:.2f}% (nnz={e2s_nnz})\")\n",
+          "excerpt_digest": "sha256:2d67e6907051a3bbf82e837ae8aa1c894c95147fcc5735f9b2fee4ffab88dc4e",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:129:129",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 129,
+          "line_end": 129,
+          "exact_excerpt": "        return retrieval_results\n",
+          "excerpt_digest": "sha256:41f09770b179724585df334adcda626b8d980682e749cf49f1971c655381bf04",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:95:95",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 95,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n",
+          "excerpt_digest": "sha256:49a7fe8032a9b4f7edb052e7ca633afe42004d4ef62c04de8fa27fb8ad57064a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:9c39c339b8028cfc",
+          "relation_type": "control_flow",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:676a092fcdcab365",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "CALL",
+            "operands": [
+              "logger.info",
+              "'Precomputing sparse adjacency matrices for vectorized retrieval...'"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:96:96"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "conditions": [
+            "self.config.use_vectorized_retrieval"
+          ],
+          "statement": "TRUE_BRANCH: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe when self.config.use_vectorized_retrieval"
+        },
+        {
+          "relation_id": "rel:406492bde7696947",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:052ae362dcc53aad",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:95"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:95:95"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "composition_rationale": "Deterministic selection covers 4 anchor spans and 1 relation spans across 4 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:0f8fa0ee0ab3e088a18fa6020144e567b4cfba1fe89e38a54fa9c0725a849b30"
+    },
+    {
+      "packet_id": "pkt-callback:MA-S3:rq-2-f4db69269df2",
+      "obligation_tags": [
+        "callback:MA-S3:rq-2"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:113:113",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:95:105",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 105,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n            self._precompute_sparse_matrices()\n            e2s_shape = self.entity_to_sentence_sparse.shape\n            s2e_shape = self.sentence_to_entity_sparse.shape\n            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n            logger.info(f\"Matrices built: Entity-Sentence {e2s_shape}, Sentence-Entity {s2e_shape}\")\n            logger.info(f\"E2S Sparsity: {(1 - e2s_nnz / (e2s_shape[0] * e2s_shape[1])) * 100:.2f}% (nnz={e2s_nnz})\")\n            logger.info(f\"S2E Sparsity: {(1 - s2e_nnz / (s2e_shape[0] * s2e_shape[1])) * 100:.2f}% (nnz={s2e_nnz})\")\n            logger.info(f\"Device: {self.device}\")\n",
+          "excerpt_digest": "sha256:b749b135ed1ecd61254268653e76b02cb7f50074d99abb186ed5ee8a94902546",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:95:95",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 95,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n",
+          "excerpt_digest": "sha256:49a7fe8032a9b4f7edb052e7ca633afe42004d4ef62c04de8fa27fb8ad57064a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:100:100",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 100,
+          "line_end": 100,
+          "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:118:118",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "                sorted_passage_indices,sorted_passage_scores = self.dense_passage_retrieval(question_embedding)\n",
+          "excerpt_digest": "sha256:a111100b93baa951bfaeb68e9055004efae780747ea9c1f3b38ac4c9685b06c7",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:101:101",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 101,
+          "line_end": 101,
+          "exact_excerpt": "            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b6c4c63a1343603eeebe9b2cdf126677bd38e7d89103b6843d7e4015d1e539de",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:111:111",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 111,
+          "line_end": 111,
+          "exact_excerpt": "            seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores = self.get_seed_entities(question)\n",
+          "excerpt_digest": "sha256:dbcb262f99f0886eec87dcf4da77cc3a51b73632b59c056732826f5265c6fdd4",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:113:113",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 113,
+          "line_end": 113,
+          "exact_excerpt": "                sorted_passage_hash_ids,sorted_passage_scores = self.graph_search_with_seed_entities(question,question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:ccc4266b06508f763f6eb8d874ec671c417c4cd7db195907391f00313d695b44",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:96:96",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 96,
+          "line_end": 96,
+          "exact_excerpt": "            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n",
+          "excerpt_digest": "sha256:550d590dfc1b5af5e170c48d4790a3b67a5204a2057b0b5bd2c63d1a6dbee56c",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:9c39c339b8028cfc",
+          "relation_type": "control_flow",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:676a092fcdcab365",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "CALL",
+            "operands": [
+              "logger.info",
+              "'Precomputing sparse adjacency matrices for vectorized retrieval...'"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:96:96"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "conditions": [
+            "self.config.use_vectorized_retrieval"
+          ],
+          "statement": "TRUE_BRANCH: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe when self.config.use_vectorized_retrieval"
+        },
+        {
+          "relation_id": "rel:406492bde7696947",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:052ae362dcc53aad",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:95"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:95:95"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "composition_rationale": "Deterministic selection covers 8 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:a7f2a591b867425b5877d6b2df6d2c6c83ceb303c997c6d3aea4796bead30e3c"
+    }
+  ],
+  "content_digest": "sha256:0dc42bf879ac239215776ecd5486e71d0d036398ac36b1245edc64d753f92264"
+}

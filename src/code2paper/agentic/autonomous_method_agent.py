@@ -19,6 +19,10 @@ NOT use the R8 legacy bridge (``V3GraphWrapper`` /
 NOT depend on the D5 matrix runner.  Missing evidence is a typed gap or
 review item, never a synthetic support.
 
+The sequential product operations are exposed through the shared
+``product_authoring_graph`` overlay and checkpoint; they remain adapters for
+the existing owning implementations rather than a second content pipeline.
+
 Shared product contracts come from ``method_product_models`` (Agent 1's P0
 layer): lanes, review candidates, plan readiness, output policy.  This
 module consumes them and never re-defines a parallel lane/readiness/review
@@ -85,20 +89,48 @@ from code2paper.agentic.method_product_models import (
     build_default_method_output_policy,
     build_review_candidates_from_completeness,
 )
+from code2paper.agentic.method_proposition_compiler import compile_method_propositions
+from code2paper.agentic.method_proposition_evidence_provider import (
+    build_method_proposition_evidence_judge,
+)
+from code2paper.agentic.method_proposition_provider import build_method_proposition_architect
+from code2paper.agentic.method_concept_card_compiler import (
+    compile_method_concept_cards,
+)
+from code2paper.agentic.method_concept_card_evidence_provider import (
+    build_concept_card_evidence_judge,
+)
+from code2paper.agentic.method_concept_card_provider import (
+    build_concept_card_architect,
+)
+from code2paper.agentic.method_argument_brief_compiler import compile_method_argument_briefs
+from code2paper.agentic.method_argument_facet_aligner import (
+    bind_facets_to_argument_briefs,
+    decompose_and_align_argument_facets,
+)
 from code2paper.agentic.obligation_fact_alignment import (
     bind_claims_to_obligations,
     build_obligation_coverage_v2,
 )
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 from code2paper.agentic.research_graph import (
+    CompiledEvidence,
     ResearchLoopResult,
     build_research_subgraph,
+    initial_loop_state,
 )
 from code2paper.agentic.research_models import (
+    ResearchDecisionV1,
     ResearchAgendaItemV1,
     ResearchAgendaV1,
+    ResearchObservationV1,
 )
+from code2paper.agentic.research_policy import PolicyMergeResult
 from code2paper.agentic.research_nodes import ResearchGraphRuntime
+from code2paper.agentic.product_authoring_graph import (
+    ProductAuthoringIssueV1,
+    persist_product_authoring_state_from_writer,
+)
 from code2paper.agentic.state_v3 import empty_agent_state_v3
 from code2paper.agentic.v3_runtime import (
     build_research_agenda_from_intent_graph,
@@ -108,16 +140,18 @@ from code2paper.llm.providers import has_provider_api_key, load_llm_config_from_
 from code2paper.schemas import ClaimEvidenceMap, LLMConfig, MethodEvidence
 
 PRODUCT_RESEARCH_READY_TOOLS: tuple[str, ...] = (
+    "list_repository_tree",
     "find_entrypoints",
     "search_symbols",
+    "search_code",
     "read_symbol",
+    "read_code_span",
     "find_references",
     "build_behavior_subgraph",
     "trace_call_path",
     "trace_data_flow",
     "inspect_control_flow",
     "inspect_configuration",
-    "search_code",
 )
 
 PRODUCT_RESEARCH_HARD_RULES: tuple[str, ...] = (
@@ -365,6 +399,8 @@ def build_product_research_runtime(
     artifact_root: str | Path | None = None,
     ready_tools: tuple[str, ...] = PRODUCT_RESEARCH_READY_TOOLS,
     hard_rules: tuple[str, ...] = PRODUCT_RESEARCH_HARD_RULES,
+    intent_graph_override: IntentObligationGraphV2 | None = None,
+    agenda_override: ResearchAgendaV1 | None = None,
 ) -> ResearchGraphRuntime:
     """Build the research runtime directly from repo + intent + claims.
 
@@ -380,31 +416,44 @@ def build_product_research_runtime(
         raise FileNotFoundError(f"repo path not found: {resolved_root}")
     repo_snapshot = build_repo_snapshot(resolved_root)
 
-    intent_summary = None
-    if author_intent_path:
-        intent_path = Path(author_intent_path)
-        if not intent_path.is_file():
-            raise FileNotFoundError(f"author intent file not found: {intent_path}")
-        intent_summary = load_author_intent_summary(intent_path)
-    intent_graph = compile_intent_obligation_graph_v2(intent_summary)
-    if claims is not None and claims.claims:
-        intent_graph = append_claims_to_intent_graph(
-            intent_graph,
-            claims,
-            project_root=resolved_root,
-        )
-
     effective_llm = llm_config or load_llm_config_from_env()
-    intent_graph, proposal_report = enrich_intent_graph_with_llm(
-        intent_graph,
-        effective_llm,
-    )
+    if intent_graph_override is not None:
+        intent_graph = intent_graph_override
+        proposal_report_payload: dict[str, Any] = {
+            "status": "resumed_from_research_stage_checkpoint",
+        }
+    else:
+        intent_summary = None
+        if author_intent_path:
+            intent_path = Path(author_intent_path)
+            if not intent_path.is_file():
+                raise FileNotFoundError(f"author intent file not found: {intent_path}")
+            intent_summary = load_author_intent_summary(intent_path)
+        intent_graph = compile_intent_obligation_graph_v2(intent_summary)
+        if claims is not None and claims.claims:
+            intent_graph = append_claims_to_intent_graph(
+                intent_graph,
+                claims,
+                project_root=resolved_root,
+            )
+        intent_graph, proposal_report = enrich_intent_graph_with_llm(
+            intent_graph,
+            effective_llm,
+        )
+        proposal_report_payload = proposal_report.model_dump(mode="json")
 
-    agenda = build_research_agenda_from_intent_graph(
+    agenda = agenda_override or build_research_agenda_from_intent_graph(
         intent_graph,
         run_id=run_id,
         repo_snapshot=repo_snapshot,
     )
+    if agenda.run_id != run_id:
+        raise ValueError("research agenda run id does not match runtime")
+    if (
+        agenda.repo_snapshot_id != repo_snapshot.snapshot_id
+        or agenda.project_tree_hash != repo_snapshot.project_tree_hash
+    ):
+        raise ValueError("research agenda snapshot identity does not match runtime")
 
     supervisor_backend = GemmaSupervisorBackend(
         llm_config=effective_llm,
@@ -419,7 +468,7 @@ def build_product_research_runtime(
         repo_snapshot=repo_snapshot,
         agenda=agenda,
         intent_graph=intent_graph,
-        intent_target_proposal_report=proposal_report.model_dump(mode="json"),
+        intent_target_proposal_report=proposal_report_payload,
         supervisor_backend=supervisor_backend,
         artifact_root=(
             Path(artifact_root).expanduser().resolve() if artifact_root else None
@@ -449,6 +498,61 @@ def run_product_research_phase(
     if result is None:
         raise RuntimeError("research subgraph did not produce a ResearchLoopResult")
     return result
+
+
+def _research_run_state(
+    result: ResearchLoopResult,
+    runtime: ResearchGraphRuntime,
+) -> dict[str, Any]:
+    """Return the honest product status of the repository research loop.
+
+    Graph termination only means execution stopped.  It does not mean that
+    the research succeeded: max-turn exhaustion, policy stops and a silent
+    deterministic compatibility fallback are materially different states.
+    """
+
+    final_status = str(result.final_state.get("status") or "incomplete")
+    backend = runtime.supervisor_backend
+    degraded_events = tuple(getattr(backend, "degraded_events", ()))
+    llm_decisions = max(
+        int(getattr(backend, "llm_decision_count", 0)),
+        sum(
+            1
+            for decision in result.decision_trace
+            if decision.produced_by == "llm_proposal"
+        ),
+    )
+    deterministic_decisions = sum(
+        1
+        for decision in result.decision_trace
+        if decision.produced_by == "deterministic_fallback"
+    )
+    policy_fallbacks = sum(
+        1 for merge in result.loop_state.policy_merge_trace if merge.fallback_used
+    )
+    degraded_reasons = list(degraded_events)
+    if policy_fallbacks:
+        degraded_reasons.append(f"policy_fallback:{policy_fallbacks}")
+    autonomous = (
+        llm_decisions > 0
+        and deterministic_decisions == 0
+        and not degraded_reasons
+    )
+    if result.termination_reason == "max_turns_reached":
+        final_status = "incomplete"
+    elif final_status == "trusted" and not autonomous:
+        # Evidence remains usable, but the product must not claim that an
+        # autonomous Research Agent completed the work when it actually ran
+        # through scripted fallback decisions.
+        final_status = "degraded"
+    return {
+        "status": final_status,
+        "autonomous": autonomous,
+        "llm_decisions": llm_decisions,
+        "deterministic_fallback_decisions": deterministic_decisions,
+        "policy_fallback_decisions": policy_fallbacks,
+        "degraded_reasons": list(dict.fromkeys(degraded_reasons)),
+    }
 
 
 def merge_product_evidence(
@@ -481,6 +585,154 @@ def merge_product_evidence(
             claim_set=claim_set,
         )
     return packet_set, fact_set, claim_set
+
+
+def persist_research_stage_checkpoint(
+    *,
+    out_root: str | Path,
+    runtime: ResearchGraphRuntime,
+    claims_input: UserClaimsInputV1,
+    loop_result: ResearchLoopResult,
+    packet_set: EvidencePacketSetV3 | None,
+    fact_set: CodeFactSetV1 | None,
+    claim_set: AtomicClaimSetV3 | None,
+) -> str:
+    """Commit completed repository research before any planning model call.
+
+    Proposition synthesis, semantic judging, or Writer transport may fail
+    independently of repository research.  Persisting this compact stage
+    boundary lets a later run continue from the exact frozen evidence rather
+    than repeating code searches to obtain another sample.
+    """
+
+    root = Path(out_root).expanduser().resolve()
+    path = root / "artifacts" / "research_product" / "research_stage_checkpoint_v1.json"
+    payload = {
+        "schema_version": "1.0",
+        "run_id": runtime.run_id,
+        "repo_snapshot_id": runtime.repo_snapshot.snapshot_id,
+        "project_tree_hash": runtime.repo_snapshot.project_tree_hash,
+        "intent_graph": runtime.intent_graph.model_dump(mode="json"),
+        "agenda": runtime.agenda.model_dump(mode="json"),
+        "claims_input": claims_input.model_dump(mode="json"),
+        "termination": {
+            "turns_executed": loop_result.turns_executed,
+            "terminated": loop_result.terminated,
+            "termination_reason": loop_result.termination_reason,
+            "final_status": str(loop_result.final_state.get("status") or "incomplete"),
+        },
+        "decision_trace": [
+            item.model_dump(mode="json") for item in loop_result.decision_trace
+        ],
+        "policy_merge_trace": [
+            item.model_dump(mode="json") for item in loop_result.policy_merge_trace
+        ],
+        "recent_observations": [
+            item.model_dump(mode="json")
+            for item in loop_result.loop_state.recent_observations
+        ],
+        "evidence_packets": (
+            packet_set.model_dump(mode="json") if packet_set is not None else None
+        ),
+        "code_facts": (
+            fact_set.model_dump(mode="json") if fact_set is not None else None
+        ),
+        "atomic_claims": (
+            claim_set.model_dump(mode="json") if claim_set is not None else None
+        ),
+        "research_state": _research_run_state(loop_result, runtime),
+    }
+    _atomic_write_text(path, _json_text(payload))
+    return str(path)
+
+
+def load_research_stage_checkpoint(
+    *,
+    path: str | Path,
+    runtime: ResearchGraphRuntime,
+) -> tuple[
+    ResearchLoopResult,
+    EvidencePacketSetV3 | None,
+    CodeFactSetV1 | None,
+    AtomicClaimSetV3 | None,
+    UserClaimsInputV1,
+]:
+    """Authenticate and restore the product research-stage boundary."""
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if str(payload.get("run_id") or "") != runtime.run_id:
+        raise ValueError("research_stage_checkpoint_run_id_mismatch")
+    if str(payload.get("repo_snapshot_id") or "") != runtime.repo_snapshot.snapshot_id:
+        raise ValueError("research_stage_checkpoint_snapshot_mismatch")
+    if str(payload.get("project_tree_hash") or "") != runtime.repo_snapshot.project_tree_hash:
+        raise ValueError("research_stage_checkpoint_tree_hash_mismatch")
+    checkpoint_intent = payload.get("intent_graph") or {}
+    if checkpoint_intent != runtime.intent_graph.model_dump(mode="json"):
+        raise ValueError("research_stage_checkpoint_intent_mismatch")
+    checkpoint_agenda = ResearchAgendaV1.model_validate(payload.get("agenda") or {})
+    runtime.agenda.items[:] = checkpoint_agenda.items
+    packet_set = (
+        EvidencePacketSetV3.model_validate(payload["evidence_packets"])
+        if payload.get("evidence_packets") is not None else None
+    )
+    fact_set = (
+        CodeFactSetV1.model_validate(payload["code_facts"])
+        if payload.get("code_facts") is not None else None
+    )
+    claim_set = (
+        AtomicClaimSetV3.model_validate(payload["atomic_claims"])
+        if payload.get("atomic_claims") is not None else None
+    )
+    loop = initial_loop_state(runtime)
+    if packet_set is not None and fact_set is not None and claim_set is not None:
+        obligation_id = (
+            runtime.agenda.items[0].obligation_id
+            if len(runtime.agenda.items) == 1 else "research-stage-aggregate"
+        )
+        loop.compiled_evidence[obligation_id] = CompiledEvidence(
+            obligation_id=obligation_id,
+            packet_set=packet_set,
+            fact_set=fact_set,
+            claim_set=claim_set,
+        )
+    loop.recent_observations = [
+        ResearchObservationV1.model_validate(item)
+        for item in payload.get("recent_observations") or ()
+    ]
+    loop.decision_trace = [
+        ResearchDecisionV1.model_validate(item)
+        for item in payload.get("decision_trace") or ()
+    ]
+    loop.policy_merge_trace = [
+        PolicyMergeResult.model_validate(item)
+        for item in payload.get("policy_merge_trace") or ()
+    ]
+    terminal = payload.get("termination") or {}
+    loop.turn_index = int(terminal.get("turns_executed") or 0)
+    loop.terminated = bool(terminal.get("terminated"))
+    loop.termination_reason = str(terminal.get("termination_reason") or "")
+    final_state = empty_agent_state_v3(
+        run_id=runtime.run_id,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+    ).to_state_dict()
+    final_state["status"] = str(terminal.get("final_status") or "incomplete")
+    return (
+        ResearchLoopResult(
+            loop_state=loop,
+            final_state=final_state,
+            turns_executed=loop.turn_index,
+            terminated=loop.terminated,
+            termination_reason=loop.termination_reason,
+            decision_trace=loop.decision_trace,
+            policy_merge_trace=loop.policy_merge_trace,
+            evidence_critic_routes=[],
+        ),
+        packet_set,
+        fact_set,
+        claim_set,
+        UserClaimsInputV1.model_validate(payload.get("claims_input") or {}),
+    )
 
 
 def build_typed_gaps(
@@ -532,29 +784,48 @@ def build_typed_gaps(
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
         elif item.status in {"pending", "in_progress"}:
+            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            stopping_reason = str(result.termination_reason or "").strip()
+            if not attempted:
+                stopping_reason = "never_attempted"
+            reason = (
+                f"Obligation {item.obligation_id} was still open when the "
+                f"research loop stopped ({result.termination_reason})."
+            )
+            if (
+                item.priority == "preference"
+                and "ORGANIZATION" in str(item.obligation_id).upper()
+            ):
+                reason = (
+                    f"Organization preference {item.obligation_id} remained open; "
+                    "it does not consume must-cover code search."
+                )
+                if stopping_reason == "never_attempted":
+                    stopping_reason = "organization_preference"
             gaps.append(TypedResearchGapV1(
                 gap_id=f"gap-unresolved:{item.obligation_id}",
                 obligation_id=item.obligation_id,
                 status="unresolved",
-                reason=(
-                    f"Obligation {item.obligation_id} was still open when the "
-                    f"research loop stopped ({result.termination_reason})."
-                ),
-                attempted_tools=tuple(dict.fromkeys(item.attempted_actions)),
+                reason=reason,
+                attempted_tools=attempted,
                 search_scope=tuple(dict.fromkeys(
                     path for path in item.candidate_symbol_ids
                 )),
-                stopping_reason=result.termination_reason,
+                stopping_reason=stopping_reason,
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
         elif item.status == "blocked":
+            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            stopping_reason = str(result.termination_reason or "").strip()
+            if not attempted:
+                stopping_reason = "never_attempted"
             gaps.append(TypedResearchGapV1(
                 gap_id=f"gap-blocked:{item.obligation_id}",
                 obligation_id=item.obligation_id,
                 status="blocked",
                 reason=f"Obligation {item.obligation_id} ended blocked.",
-                attempted_tools=tuple(dict.fromkeys(item.attempted_actions)),
-                stopping_reason=result.termination_reason,
+                attempted_tools=attempted,
+                stopping_reason=stopping_reason,
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
     known = {item.gap_id for item in gaps}
@@ -572,6 +843,27 @@ def build_typed_gaps(
     return tuple(gaps)
 
 
+def _requires_mechanism_planner(*, llm_config: LLMConfig | None) -> bool:
+    return bool(llm_config is not None and has_provider_api_key(llm_config))
+
+
+def _build_argument_brief_planner(
+    *,
+    llm_config: LLMConfig | None,
+    claims: AtomicClaimSetV3 | None,
+    equations: Any | None,
+) -> Any | None:
+    if not _requires_mechanism_planner(llm_config=llm_config) or claims is None:
+        return None
+    from code2paper.agentic.method_argument_brief_planner import build_mechanism_draft_planner
+
+    return build_mechanism_draft_planner(
+        llm_config,  # type: ignore[arg-type]
+        claims=claims,
+        equations=equations,
+    )
+
+
 def build_product_planning(
     *,
     runtime: ResearchGraphRuntime,
@@ -580,12 +872,33 @@ def build_product_planning(
     claim_set: AtomicClaimSetV3 | None,
     claims_input: UserClaimsInputV1 | None = None,
     method_name: str = "",
+    llm_config: LLMConfig | None = None,
+    concept_cards: Any | None = None,
+    compile_concept_cards: bool = False,
+    argument_briefs: Any | None = None,
+    compile_argument_briefs: bool = True,
+    facet_decomposer: Any | None = None,
+    facet_evidence_aligner: Any | None = None,
+    prior_plan: MethodSectionPlanV2 | None = None,
 ) -> dict[str, Any]:
     """Compile coverage, completeness, equations, configs, plan, readiness.
 
     Returns a dict with keys: ``coverage``, ``agenda_ref``,
     ``completeness``, ``equations``, ``configurations``, ``story_spine``,
-    ``plan`` (or None), ``readiness`` (or None), ``review_candidates``.
+    ``argument_facets``, ``facet_alignments``, ``facet_policies``,
+    ``facet_alignment_result``, ``plan`` (or None), ``readiness`` (or None),
+    ``review_candidates``.
+
+    ``concept_cards`` (optional ``MethodConceptCardSetV1``) switches the
+    plan to the Stage 2/3 concept lane: the Architect binds concept cards
+    to units instead of propositions, and the Writer surface consumes
+    ``method_concept_cards_v1``.  Proposition compilation is skipped in
+    that mode (propositions and concept cards are mutually exclusive).
+
+    ``compile_concept_cards`` is deprecated and ignored on the live mainline.
+    The default lane compiles deterministic ``method_argument_briefs_v1``
+    via ``compile_argument_briefs`` (no LLM).  Proposition compilation is
+    skipped when argument briefs are present.
     """
 
     intent_graph = runtime.intent_graph
@@ -633,6 +946,8 @@ def build_product_planning(
                             *[
                                 equation.equation_id
                                 for equation in equations.equations
+                                if str(getattr(equation, "formula_role", "") or "")
+                                != "incidental"
                                 if claim_facts.intersection(equation.fact_ids)
                             ],
                         ]
@@ -687,6 +1002,101 @@ def build_product_planning(
             authoring_projection,
             template=method_template,
         )
+    if (
+        argument_briefs is None
+        and concept_cards is None
+        and compile_argument_briefs
+        and claim_set is not None
+        and claim_set.claims
+    ):
+        argument_briefs = compile_method_argument_briefs(
+            claims=claim_set,
+            completeness=completeness,
+            coverage=coverage,
+            intent_graph=intent_graph,
+            story_spine=story_spine,
+            equations=equations,
+            configurations=configurations,
+            planner=_build_argument_brief_planner(
+                llm_config=llm_config,
+                claims=claim_set,
+                equations=equations,
+            ),
+            require_planner_for_unlicensed=_requires_mechanism_planner(
+                llm_config=llm_config,
+            ),
+        )
+    facet_alignment_result = None
+    if argument_briefs is not None:
+        # Candidate semantic alignment is a sidecar.  It receives the frozen
+        # research evidence but never mutates the deterministic clause
+        # licenses or the brief set's Verified digest.
+        facet_alignment_result = decompose_and_align_argument_facets(
+            briefs=argument_briefs,
+            claims=claim_set,
+            facts=fact_set,
+            evidence_packets=packet_set,
+            equations=equations,
+            facet_decomposer=facet_decomposer,
+            evidence_aligner=facet_evidence_aligner,
+            llm_config=(
+                llm_config
+                if llm_config is not None and has_provider_api_key(llm_config)
+                else None
+            ),
+            intent_graph=intent_graph,
+        )
+        if hasattr(argument_briefs, "model_copy"):
+            argument_briefs = bind_facets_to_argument_briefs(
+                argument_briefs,
+                facets=facet_alignment_result.facets,
+                alignments=facet_alignment_result.alignments,
+                policies=facet_alignment_result.policies,
+            )
+    # Deprecated: ``compile_concept_cards`` is ignored on the live mainline.
+    _ = compile_concept_cards
+    propositions = None
+    proposition_bindings = None
+    proposition_clusters = ()
+    proposition_architect_traces = ()
+    proposition_evidence_judge_traces = ()
+    if (
+        argument_briefs is None
+        and concept_cards is None
+        and packet_set is not None
+        and fact_set is not None
+        and claim_set is not None
+    ):
+        proposition_architect = (
+            build_method_proposition_architect(llm_config)
+            if llm_config is not None and has_provider_api_key(llm_config)
+            else None
+        )
+        proposition_evidence_judge = (
+            build_method_proposition_evidence_judge(llm_config)
+            if llm_config is not None and has_provider_api_key(llm_config)
+            else None
+        )
+        propositions, proposition_bindings, proposition_clusters = compile_method_propositions(
+            claims=claim_set,
+            facts=fact_set,
+            packets=packet_set,
+            completeness=completeness,
+            story_spine=story_spine,
+            proposal_architect=proposition_architect,
+            evidence_judge=proposition_evidence_judge,
+            require_evidence_judge=True,
+            configurations=configurations,
+            equations=equations,
+        )
+        proposition_architect_traces = tuple(
+            getattr(proposition_architect, "proposal_traces", ())
+            if proposition_architect is not None else ()
+        )
+        proposition_evidence_judge_traces = tuple(
+            getattr(proposition_evidence_judge, "evidence_judge_traces", ())
+            if proposition_evidence_judge is not None else ()
+        )
     plan = None
     readiness = None
     if claim_set is not None and claim_set.claims:
@@ -698,6 +1108,10 @@ def build_product_planning(
             method_name=method_name,
             story_spine=story_spine,
             policy=build_default_method_output_policy(),
+            propositions=propositions,
+            concept_cards=concept_cards,
+            argument_briefs=argument_briefs,
+            prior_plan=prior_plan,
         )
     review_candidates = build_review_candidates_from_completeness(
         completeness,
@@ -718,6 +1132,29 @@ def build_product_planning(
         "plan": plan,
         "readiness": readiness,
         "review_candidates": review_candidates,
+        "method_propositions": propositions,
+        "proposition_bindings": proposition_bindings,
+        "proposition_clusters": proposition_clusters,
+        "proposition_architect_traces": proposition_architect_traces,
+        "proposition_evidence_judge_traces": proposition_evidence_judge_traces,
+        "concept_cards": concept_cards,
+        "argument_briefs": argument_briefs,
+        "argument_facets": (
+            facet_alignment_result.facets
+            if facet_alignment_result is not None
+            else ()
+        ),
+        "facet_alignments": (
+            facet_alignment_result.alignments
+            if facet_alignment_result is not None
+            else ()
+        ),
+        "facet_policies": (
+            facet_alignment_result.policies
+            if facet_alignment_result is not None
+            else ()
+        ),
+        "facet_alignment_result": facet_alignment_result,
     }
 
 
@@ -839,6 +1276,18 @@ def persist_product_artifacts(
         paths[key] = str(target)
         return str(target)
 
+    # R3: persist the live behavior graph so facts/claims can be regenerated
+    # from frozen research evidence (exact-guard recompilation input).
+    _behavior_graph = getattr(
+        getattr(loop_result, "loop_state", None), "behavior_graph", None
+    )
+    if _behavior_graph is not None:
+        paths["behavior_graph_v1"] = _write(
+            "behavior_graph_v1",
+            _behavior_graph.model_dump(mode="json"),
+            product=False,
+        )
+
     paths["intent_obligation_graph_v2"] = _write(
         "intent_obligation_graph_v2",
         runtime.intent_graph.model_dump(mode="json"),
@@ -869,6 +1318,18 @@ def persist_product_artifacts(
     plan = planning["plan"]
     readiness = planning["readiness"]
     review_candidates = planning["review_candidates"]
+    propositions = planning.get("method_propositions")
+    proposition_bindings = planning.get("proposition_bindings")
+    proposition_clusters = planning.get("proposition_clusters") or ()
+    proposition_architect_traces = planning.get("proposition_architect_traces") or ()
+    proposition_evidence_judge_traces = planning.get(
+        "proposition_evidence_judge_traces"
+    ) or ()
+    concept_cards = planning.get("concept_cards")
+    argument_facets = planning.get("argument_facets") or ()
+    facet_alignments = planning.get("facet_alignments") or ()
+    facet_policies = planning.get("facet_policies") or ()
+    facet_alignment_result = planning.get("facet_alignment_result")
 
     paths["obligation_coverage_v2"] = _write(
         "obligation_coverage_v2",
@@ -953,12 +1414,115 @@ def persist_product_artifacts(
             "atomic_claims",
             claim_set.model_dump(mode="json"),
         )
+        from code2paper.agentic.scientific_claim_ir import write_technical_claims_sidecar
+
+        paths["technical_claims_v1"] = write_technical_claims_sidecar(
+            paths["atomic_claims_v3"], claim_set
+        )
     if plan is not None:
         paths["method_section_plan_v2"] = _write(
             "method_section_plan_v2",
             plan.model_dump(mode="json"),
             product=False,
         )
+    if propositions is not None:
+        paths["method_propositions_v1"] = _write(
+            "method_propositions_v1",
+            propositions.model_dump(mode="json"),
+            product=False,
+        )
+    if proposition_bindings is not None:
+        paths["method_proposition_bindings_v1"] = _write(
+            "method_proposition_bindings_v1",
+            proposition_bindings.model_dump(mode="json"),
+            product=False,
+        )
+    if proposition_clusters:
+        paths["method_proposition_clusters_v1"] = _write(
+            "method_proposition_clusters_v1",
+            {
+                "schema_version": "1.0",
+                "clusters": [
+                    item.model_dump(mode="json") for item in proposition_clusters
+                ],
+            },
+            product=False,
+        )
+    if proposition_architect_traces:
+        paths["method_proposition_architect_calls_v1"] = _write(
+            "method_proposition_architect_calls_v1",
+            {
+                "schema_version": "1.0",
+                "calls": list(proposition_architect_traces),
+            },
+            product=False,
+        )
+    if proposition_evidence_judge_traces:
+        paths["method_proposition_evidence_judge_calls_v1"] = _write(
+            "method_proposition_evidence_judge_calls_v1",
+            {
+                "schema_version": "1.0",
+                "calls": list(proposition_evidence_judge_traces),
+            },
+            product=False,
+        )
+    if concept_cards is not None:
+        paths["method_concept_cards_v1"] = _write(
+            "method_concept_cards_v1",
+            concept_cards.model_dump(mode="json"),
+            product=False,
+        )
+    argument_briefs = planning.get("argument_briefs")
+    if argument_briefs is not None:
+        paths["method_argument_briefs_v1"] = _write(
+            "method_argument_briefs_v1",
+            argument_briefs.model_dump(mode="json"),
+            product=False,
+        )
+    if argument_facets or facet_alignment_result is not None:
+        paths["method_argument_facets_v1"] = _write(
+            "method_argument_facets_v1",
+            {
+                "schema_version": "1.0",
+                "facets": [
+                    item.model_dump(mode="json") for item in argument_facets
+                ],
+            },
+            product=False,
+        )
+        paths["facet_evidence_alignments_v1"] = _write(
+            "facet_evidence_alignments_v1",
+            {
+                "schema_version": "1.0",
+                "alignments": [
+                    item.model_dump(mode="json") for item in facet_alignments
+                ],
+            },
+            product=False,
+        )
+        paths["candidate_facet_policies_v1"] = _write(
+            "candidate_facet_policies_v1",
+            {
+                "schema_version": "1.0",
+                "policies": [
+                    item.model_dump(mode="json") for item in facet_policies
+                ],
+            },
+            product=False,
+        )
+        if facet_alignment_result is not None:
+            paths["method_argument_facet_alignment_trace_v1"] = _write(
+                "method_argument_facet_alignment_trace_v1",
+                {
+                    "schema_version": "1.0",
+                    "content_digest": facet_alignment_result.content_digest,
+                    "schema_failures": list(
+                        facet_alignment_result.schema_failures
+                    ),
+                    "traces": list(facet_alignment_result.traces),
+                },
+                product=False,
+            )
     if readiness is not None:
         paths["plan_product_readiness_v1"] = _write(
             "plan_product_readiness_v1",
@@ -1075,6 +1639,49 @@ def _candidate_validation_state(out_root: str | Path) -> dict[str, Any]:
     }
 
 
+def _proposition_quality_state(out_root: str | Path) -> dict[str, Any]:
+    root = Path(out_root).expanduser().resolve()
+    quality_path = root / "artifacts" / "07_validation" / "publication_quality_report_v1.json"
+    alignment_path = root / "artifacts" / "07_validation" / "method_proposition_alignment_v1.json"
+    alignment_calls_path = root / "artifacts" / "07_validation" / "method_proposition_alignment_calls_v1.json"
+    result: dict[str, Any] = {
+        "planned_required_propositions": 0,
+        "rendered_required_propositions": 0,
+        "validated_required_propositions": 0,
+        "deferred_required_propositions": 0,
+        "rendered_proposition_recall": 0.0,
+        "validated_proposition_recall": 0.0,
+        "semantic_alignment_calls": 0,
+        "semantic_alignment_ambiguous": 0,
+        "semantic_alignment_trace_count": 0,
+        "unresolved_required_propositions": 0,
+    }
+    try:
+        if quality_path.is_file():
+            utility = (json.loads(quality_path.read_text(encoding="utf-8")).get("utility") or {})
+            for key in (
+                "planned_required_propositions",
+                "rendered_required_propositions",
+                "validated_required_propositions",
+                "deferred_required_propositions",
+                "rendered_proposition_recall",
+                "validated_proposition_recall",
+                "unresolved_required_propositions",
+            ):
+                if key in utility:
+                    result[key] = utility[key]
+        if alignment_path.is_file():
+            alignment = json.loads(alignment_path.read_text(encoding="utf-8"))
+            result["semantic_alignment_calls"] = int(alignment.get("semantic_alignment_calls") or 0)
+            result["semantic_alignment_ambiguous"] = int(alignment.get("semantic_alignment_ambiguous") or 0)
+        if alignment_calls_path.is_file():
+            call_payload = json.loads(alignment_calls_path.read_text(encoding="utf-8"))
+            result["semantic_alignment_trace_count"] = len(call_payload.get("calls") or ())
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        result["status"] = "unknown"
+    return result
+
+
 def _verified_validation_state(out_root: str | Path) -> dict[str, Any]:
     """Report the verified document's own fail-closed split semantics.
 
@@ -1123,6 +1730,10 @@ def run_autonomous_method_agent(
     method_name: str = "",
     run_id: str = "",
     write_method_text: bool | None = None,
+    research_stage_checkpoint: str | Path | None = None,
+    concept_cards: Any | None = None,
+    compile_concept_cards: bool = False,
+    compile_argument_briefs: bool = True,
 ) -> MethodAgentRunResultV1:
     """Run the full autonomous Method Agent product path.
 
@@ -1137,6 +1748,13 @@ def run_autonomous_method_agent(
     to ``False`` keeps the run fully deterministic (research + planning
     artifacts only) with an explicit ``skipped_no_live_llm`` / explicit
     writer status in the summary.
+
+    ``concept_cards`` (optional ``MethodConceptCardSetV1``) switches the
+    plan and Writer to the Stage 2/3 concept lane: the Architect binds
+    concept cards to units (verified/caveated separation), the Writer
+    consumes ``method_concept_cards_v1``, and the callback/fulfillment
+    loop carries concept-bearing requests.  Propositions are skipped in
+    this mode (mutually exclusive lanes).
     """
 
     resolved_out = Path(out_root).expanduser().resolve()
@@ -1166,6 +1784,17 @@ def run_autonomous_method_agent(
         })
 
     claims_input = load_user_claims(claims_path)
+    checkpoint_payload: dict[str, Any] | None = None
+    if research_stage_checkpoint:
+        checkpoint_payload = json.loads(
+            Path(research_stage_checkpoint).read_text(encoding="utf-8")
+        )
+        checkpoint_claims = UserClaimsInputV1.model_validate(
+            checkpoint_payload.get("claims_input") or {}
+        )
+        if claims_path and checkpoint_claims != claims_input:
+            raise ValueError("research_stage_checkpoint_claims_mismatch")
+        claims_input = checkpoint_claims
     runtime = build_product_research_runtime(
         repo_path=repo_path,
         author_intent_path=author_intent_path,
@@ -1173,6 +1802,14 @@ def run_autonomous_method_agent(
         run_id=effective_run_id,
         llm_config=effective_llm,
         artifact_root=resolved_out / "artifacts" / "research_tool_data",
+        intent_graph_override=(
+            IntentObligationGraphV2.model_validate(checkpoint_payload["intent_graph"])
+            if checkpoint_payload is not None else None
+        ),
+        agenda_override=(
+            ResearchAgendaV1.model_validate(checkpoint_payload["agenda"])
+            if checkpoint_payload is not None else None
+        ),
     )
     _phase(
         "input_resolution",
@@ -1186,21 +1823,39 @@ def run_autonomous_method_agent(
         },
     )
 
-    loop_result = run_product_research_phase(
-        runtime,
-        max_turns=int(max_research_turns),
-    )
+    if research_stage_checkpoint:
+        (
+            loop_result,
+            packet_set,
+            fact_set,
+            claim_set,
+            _checkpoint_claims,
+        ) = load_research_stage_checkpoint(
+            path=research_stage_checkpoint,
+            runtime=runtime,
+        )
+    else:
+        loop_result = run_product_research_phase(
+            runtime,
+            max_turns=int(max_research_turns),
+        )
+        packet_set, fact_set, claim_set = merge_product_evidence(loop_result, runtime)
+    research_run_state = _research_run_state(loop_result, runtime)
     _phase(
         "research_loop",
-        "ok" if loop_result.terminated else "incomplete",
+        "ok" if research_run_state["status"] == "trusted" else research_run_state["status"],
         {
             "turns_executed": loop_result.turns_executed,
             "termination_reason": loop_result.termination_reason,
             "decisions": len(loop_result.decision_trace),
+            "autonomous": research_run_state["autonomous"],
+            "llm_decisions": research_run_state["llm_decisions"],
+            "deterministic_fallback_decisions": research_run_state[
+                "deterministic_fallback_decisions"
+            ],
+            "resumed_from_stage_checkpoint": bool(research_stage_checkpoint),
         },
     )
-
-    packet_set, fact_set, claim_set = merge_product_evidence(loop_result, runtime)
     _phase(
         "evidence_compile",
         "ok",
@@ -1210,6 +1865,16 @@ def run_autonomous_method_agent(
             "claims": len(claim_set.claims) if claim_set is not None else 0,
             "synthetic_gaps": 0,
         },
+    )
+
+    research_checkpoint_path = persist_research_stage_checkpoint(
+        out_root=resolved_out,
+        runtime=runtime,
+        claims_input=claims_input,
+        loop_result=loop_result,
+        packet_set=packet_set,
+        fact_set=fact_set,
+        claim_set=claim_set,
     )
 
     typed_gaps = build_typed_gaps(
@@ -1224,6 +1889,10 @@ def run_autonomous_method_agent(
         claim_set=claim_set,
         claims_input=claims_input,
         method_name=method_name,
+        llm_config=effective_llm if live_llm else None,
+        concept_cards=concept_cards,
+        compile_concept_cards=compile_concept_cards and live_llm,
+        compile_argument_briefs=compile_argument_briefs,
     )
     _phase(
         "planning",
@@ -1236,6 +1905,14 @@ def run_autonomous_method_agent(
                 else "candidate_ready_with_review"
             ),
             "review_candidates": len(planning["review_candidates"]),
+            "method_propositions": len(
+                planning["method_propositions"].propositions
+                if planning.get("method_propositions") is not None else ()
+            ),
+            "proposition_gaps": len(
+                planning["method_propositions"].gaps
+                if planning.get("method_propositions") is not None else ()
+            ),
         },
     )
 
@@ -1271,7 +1948,7 @@ def run_autonomous_method_agent(
         "out_root": str(resolved_out),
         "live_llm": live_llm,
         "research": {
-            "status": "trusted" if loop_result.terminated else "incomplete",
+            **research_run_state,
             "termination_reason": loop_result.termination_reason,
             "turns_executed": loop_result.turns_executed,
         },
@@ -1336,6 +2013,7 @@ def run_autonomous_method_agent(
         agent_trace=agent_trace,
         summary=summary,
     )
+    paths["research_stage_checkpoint_v1"] = research_checkpoint_path
 
     writer_status = "skipped_no_live_llm"
     writer_blocked_reason = ""
@@ -1359,7 +2037,18 @@ def run_autonomous_method_agent(
     )
 
     callback_fulfillment = None
-    if write_method_text and writer_status in {"incomplete", "success"}:
+    callback_bundle_path = str(
+        writer_paths.get("writing_research_callback_artifacts_v1")
+        or writer_artifact_paths.get("writing_research_callback_artifacts_v1")
+        or ""
+    )
+    if write_method_text and (
+        writer_status in {"incomplete", "success"}
+        or (
+            callback_bundle_path
+            and Path(callback_bundle_path).is_file()
+        )
+    ):
         # Package F: run the bounded callback fulfillment/resume loop after the
         # first Writer call.  Open local-owned requests (repository/config/
         # formalization) are executed against the frozen repository evidence;
@@ -1377,10 +2066,15 @@ def run_autonomous_method_agent(
                 writer_paths=writer_paths,
                 llm_config=effective_llm,
                 budget=WritingCallbackFulfillmentBudgetV1(
-                    max_callback_rounds=max(1, int(max_callback_rounds)),
+                    max_callback_rounds=max(0, int(max_callback_rounds)),
                     max_tool_turns_per_request=max(1, int(max_callback_tool_turns_per_request)),
                 ),
                 llm_caller=None,
+                # Review P0 (Q4): route Writer callbacks through the ORIGINAL
+                # checkpointed Research LangGraph — the same research thread,
+                # agenda and evidence restored from the stage checkpoint.
+                research_stage_checkpoint=paths["research_stage_checkpoint_v1"],
+                method_name=method_name,
             )
         )
         _phase(
@@ -1403,6 +2097,10 @@ def run_autonomous_method_agent(
 
     paths.update(writer_paths)
     if callback_fulfillment is not None:
+        if callback_fulfillment.trace_path:
+            paths["research_continuation_trace_v1"] = (
+                callback_fulfillment.trace_path
+            )
         callback_counts.update({
             "local_requests_seen": callback_fulfillment.local_requests_seen,
             "callbacks_fulfilled": callback_fulfillment.local_requests_fulfilled,
@@ -1416,7 +2114,153 @@ def run_autonomous_method_agent(
             "resumed_section_ids": list(callback_fulfillment.resumed_section_ids),
             "stopped_reason": callback_fulfillment.stopped_reason,
         })
-    summary["writer"] = {
+    # WP0/WP7: build the source-to-render ledger only after Writer and any
+    # bounded callback resume have committed their artifacts.  The ledger is
+    # diagnostic metadata (ids/statuses/digests), never a new authority path.
+    try:
+        from code2paper.agentic.method_content_trace import write_method_content_trace
+
+        content_trace_path = (
+            resolved_out / "artifacts" / "research_product" / "method_content_trace_v1.json"
+        )
+        content_trace = write_method_content_trace(
+            content_trace_path,
+            {**paths, **writer_paths},
+        )
+        paths["method_content_trace_v1"] = str(content_trace_path)
+        summary["content_chain"] = {
+            **content_trace.summary,
+            "content_digest": content_trace.content_digest,
+            "trace_path": str(content_trace_path),
+        }
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        summary["content_chain"] = {
+            "rows": 0,
+            "status": "unavailable",
+        }
+    # The product-authoring graph is a durable orchestration overlay around
+    # the existing research and Writer owners.  Persist it only after the
+    # concrete artifacts above are committed; it must never alter the legacy
+    # local_text_repair route or turn missing evidence into support.
+    product_issues: list[ProductAuthoringIssueV1] = []
+    for gap in typed_gaps:
+        if gap.status not in {"explicit_gap", "unresolved", "blocked"}:
+            continue
+        product_issues.append(ProductAuthoringIssueV1(
+            issue_id=f"research:{gap.gap_id}",
+            issue_type="evidence_gap",
+            owner=(
+                "review"
+                if gap.status == "explicit_gap"
+                else "research_continuation"
+            ),
+            source="research_graph",
+            reason=gap.reason or gap.stopping_reason,
+        ))
+    if writer_status in {"incomplete", "blocked"}:
+        product_issues.append(ProductAuthoringIssueV1(
+            issue_id="writer:product_status",
+            issue_type="writer_incomplete",
+            owner="writer",
+            source="publication_method_writer",
+            reason=writer_blocked_reason or writer_status,
+        ))
+    callback_bundle_value = (
+        paths.get("writing_research_callback_artifacts_v1")
+        or writer_paths.get("writing_research_callback_artifacts_v1")
+        or ""
+    )
+    if callback_bundle_value and Path(callback_bundle_value).is_file():
+        try:
+            callback_payload = json.loads(
+                Path(callback_bundle_value).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            callback_payload = {}
+        for request in callback_payload.get("requests") or ():
+            if not isinstance(request, dict):
+                continue
+            if str(request.get("status") or "") not in {"open", "partial"}:
+                continue
+            request_id = str(request.get("request_id") or "").strip()
+            if not request_id:
+                continue
+            lane = str(request.get("required_authority_lane") or "")
+            product_issues.append(ProductAuthoringIssueV1(
+                issue_id=f"callback:{request_id}",
+                issue_type="writing_research_callback",
+                owner=(
+                    "research_continuation"
+                    if lane in {
+                        "executable_hard",
+                        "configuration_resolved",
+                        "formal_derivation",
+                    }
+                    else "review"
+                ),
+                section_id=str(request.get("section_id") or ""),
+                source="section_writer_callback",
+                reason="writing-time callback remains open",
+            ))
+    try:
+        _product_state, product_state_path = (
+            persist_product_authoring_state_from_writer(
+                out_root=resolved_out,
+                artifact_paths={**writer_artifact_paths, **paths},
+                run_id=effective_run_id,
+                open_issues=product_issues,
+                affected_section_ids=(
+                    *tuple(
+                        callback_fulfillment.resumed_section_ids
+                        if callback_fulfillment is not None else ()
+                    ),
+                ),
+                terminal_status=(
+                    "completed"
+                    if writer_status == "success" and not product_issues
+                    else "incomplete"
+                    if writer_status == "skipped_no_live_llm"
+                    else "review_ready_with_warnings"
+                ),
+                stop_reason=(
+                    writer_blocked_reason
+                    or (
+                        callback_fulfillment.stopped_reason
+                        if callback_fulfillment is not None else ""
+                    )
+                    or (
+                        "authoring_complete"
+                        if writer_status == "success" and not product_issues
+                        else "authoring_requires_review"
+                    )
+                ),
+            )
+        )
+        paths["product_authoring_state_v1"] = product_state_path
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+    product_state_path = paths.get("product_authoring_state_v1", "")
+    if product_state_path and Path(product_state_path).is_file():
+        try:
+            product_state_payload = json.loads(
+                Path(product_state_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            product_state_payload = {}
+        summary["product_authoring"] = {
+            "state_path": product_state_path,
+            "content_digest": str(
+                product_state_payload.get("content_digest") or ""
+            ),
+            "revision_id": str(product_state_payload.get("revision_id") or ""),
+            "terminal_status": str(
+                product_state_payload.get("terminal_status") or ""
+            ),
+            "invalidated_surfaces": list(
+                product_state_payload.get("invalidated_surfaces") or ()
+            ),
+        }
+    writer_summary: dict[str, Any] = {
         "status": writer_status,
         "blocked_reason": writer_blocked_reason,
         "candidate_written": bool(
@@ -1424,10 +2268,30 @@ def run_autonomous_method_agent(
         ),
         "verified_written": bool(writer_paths.get("repository_verified_method")),
     }
+    # Q0: the runner summary reads the independent candidate-first status
+    # fields from the persisted Writer result (plan 19.9).
+    writer_result_path = resolved_out / "artifacts" / "06_authoring" / "publication_writer_result_v1.json"
+    if writer_result_path.is_file():
+        try:
+            writer_payload = json.loads(writer_result_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            writer_payload = {}
+        for key in (
+            "candidate_generation_status",
+            "candidate_available",
+            "candidate_validation_status",
+            "candidate_warnings_by_severity",
+            "verified_validation_status",
+            "publication_ready",
+        ):
+            if key in writer_payload:
+                writer_summary[key] = writer_payload[key]
+    summary["writer"] = writer_summary
     summary["callbacks"] = callback_counts
     summary["review"] = review_counts
     summary["candidate_validation"] = candidate_validation
     summary["verified_validation"] = verified_validation
+    summary["proposition_quality"] = _proposition_quality_state(resolved_out)
     # The reverse-validator's ``unsupported_claims`` counts sentences in the
     # CANDIDATE that no repository evidence supports (author-intent /
     # candidate material is expected there).  The verified document is built
@@ -1457,7 +2321,7 @@ def run_autonomous_method_agent(
         repo_path=str(Path(repo_path).expanduser().resolve()),
         out_root=str(resolved_out),
         research_status=(
-            "trusted" if loop_result.terminated else "incomplete"
+            research_run_state["status"]
         ),
         research_termination_reason=loop_result.termination_reason,
         research_turns=loop_result.turns_executed,
@@ -1487,6 +2351,12 @@ def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
         "evidence_packets_v3",
         "code_facts_v1",
         "atomic_claims_v3",
+        "method_propositions_v1",
+        "method_proposition_bindings_v1",
+        "method_concept_cards_v1",
+        "method_argument_facets_v1",
+        "facet_evidence_alignments_v1",
+        "candidate_facet_policies_v1",
     )
     return {
         name: str(out_root / "artifacts" / f"{name}.json")
@@ -1548,7 +2418,9 @@ __all__ = [
     "build_product_research_runtime",
     "build_typed_gaps",
     "load_user_claims",
+    "load_research_stage_checkpoint",
     "merge_product_evidence",
+    "persist_research_stage_checkpoint",
     "persist_product_artifacts",
     "run_autonomous_method_agent",
     "run_product_research_phase",

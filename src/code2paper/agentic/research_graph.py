@@ -91,6 +91,7 @@ from code2paper.agentic.research_policy import (
 )
 from code2paper.agentic.research_supervisor import (
     DeterministicSupervisorBackend,
+    ExecutedToolCallSummaryV1,
     SupervisorBackend,
     build_decision_context,
 )
@@ -122,6 +123,81 @@ class CompiledEvidence:
     packet_set: Any  # EvidencePacketSetV3
     fact_set: Any  # CodeFactSetV1
     claim_set: Any  # AtomicClaimSetV3
+
+
+def _supported_claim_statements(
+    loop: "ResearchLoopState",
+    obligation_id: str,
+) -> tuple[str, ...]:
+    """Project compiled evidence back into the Manager's semantic workspace."""
+
+    compiled = loop.compiled_evidence.get(obligation_id)
+    if compiled is None:
+        return ()
+    return tuple(
+        dict.fromkeys(
+            str(getattr(claim, "canonical_text", "") or "").strip()
+            for claim in getattr(compiled.claim_set, "claims", ())
+            if str(getattr(claim, "canonical_text", "") or "").strip()
+        )
+    )
+
+
+def _executed_tool_call_summaries(
+    loop: "ResearchLoopState",
+    obligation_id: str,
+) -> tuple[ExecutedToolCallSummaryV1, ...]:
+    """Return exact prior calls, newest useful window.
+
+    The window is assembled across obligations: a ``read_symbol`` /
+    ``read_code_span`` / ``search`` executed while answering another
+    obligation still tells the Manager that this code has already been
+    inspected, so it must not re-read the same span.  The obligation id
+    is carried so the model can distinguish a fresh search for a new
+    story question from an exact re-read of code it already saw.
+
+    Only executed calls (present in ``recent_tool_call_ids``) are shown;
+    rejected proposals never appear.
+    """
+
+    summaries = [
+        ExecutedToolCallSummaryV1(
+            tool_name=call.tool_name,
+            arguments=dict(call.arguments),
+            path_scope=tuple(call.path_scope),
+            goal=call.goal,
+            obligation_id=decision.obligation_id,
+        )
+        for decision in loop.decision_trace
+        for call in decision.selected_tool_calls
+        if call.tool_call_id in loop.recent_tool_call_ids
+    ]
+    return tuple(summaries[-16:])
+
+
+def _executed_read_signatures(loop: "ResearchLoopState") -> tuple[str, ...]:
+    """Normalized keys of content reads already executed, across obligations.
+
+    The policy layer rejects an exact re-read of a source span whose bytes
+    were already returned in this snapshot, even when a different
+    obligation is now active.  Building the set here (instead of in the
+    supervisor node) keeps the decision context pure and lets unit tests
+    construct the expected signatures directly.
+    """
+
+    from code2paper.agentic.research_policy import _content_read_signature
+
+    signatures: list[str] = []
+    seen: set[str] = set()
+    for decision in loop.decision_trace:
+        for call in decision.selected_tool_calls:
+            if call.tool_call_id not in loop.recent_tool_call_ids:
+                continue
+            signature = _content_read_signature(call)
+            if signature and signature not in seen:
+                seen.add(signature)
+                signatures.append(signature)
+    return tuple(signatures)
 
 
 def _store_evidence_sidecar(
@@ -719,9 +795,16 @@ class ResearchLoopDriver:
                 no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
                 recent_tool_call_ids=tuple(loop.recent_tool_call_ids),
                 no_progress_tool_call_ids=tuple(loop.no_progress_tool_call_ids),
+                executed_read_signatures=_executed_read_signatures(loop),
                 turn_index=loop.turn_index,
                 current_supported_claim_ids=tuple(
                     _supported_claim_ids(runtime.agenda, active_obligation_id)
+                ),
+                current_supported_claim_statements=_supported_claim_statements(
+                    loop, active_obligation_id
+                ),
+                executed_tool_calls=_executed_tool_call_summaries(
+                    loop, active_obligation_id
                 ),
                 behavior_graph=loop.behavior_graph,
             )
@@ -732,7 +815,19 @@ class ResearchLoopDriver:
             # would overwrite ``produced_by`` to ``deterministic_fallback``
             # and hide LLM proposals from the R8 acceptance check.
             merged_decision = supervisor_update.pop("_merged_decision", None)
+            merge_results = supervisor_update.pop("_policy_merge_results", [])
             state.update(supervisor_update)
+
+            # Policy merge is pure.  Apply the accepted calls to the live
+            # per-obligation budget before the next model turn; previously
+            # the deltas were only traced, so an Agent could call the same
+            # tool kind indefinitely until the unrelated global turn cap.
+            for merge_result in merge_results:
+                loop.per_obligation_budgets = apply_consumed_budgets(
+                    loop.per_obligation_budgets,
+                    merge_result.consumed_budgets,
+                )
+            loop.policy_merge_trace.extend(merge_results)
 
             pending = supervisor_update.get("pending_tool_calls", [])
             if merged_decision is not None:
@@ -756,7 +851,86 @@ class ResearchLoopDriver:
                 state["status"] = "blocked"
                 state["blocked_reason"] = "supervisor_stop_blocked"
                 break
+            if decision.action == "COMPILE_EVIDENCE":
+                compile_update = compile_candidate_node(
+                    state,
+                    runtime=runtime,
+                    behavior_graph=loop.behavior_graph,
+                    active_obligation_id=active_obligation_id,
+                    gain_tracker=loop.gain_tracker,
+                )
+                compiled_evidence = compile_update.pop("_compiled_evidence", None)
+                partial_evidence = compile_update.pop("_partial_evidence", None)
+                gap_accepted = compile_update.pop("_gap_accepted", None)
+                state.update(compile_update)
+                if partial_evidence is not None:
+                    _store_evidence_sidecar(loop, partial_evidence)
+                if compiled_evidence is not None:
+                    _store_evidence_sidecar(loop, compiled_evidence)
+                if state.get("status") == "blocked":
+                    terminated = True
+                    termination_reason = "evidence_compile_blocked"
+                    break
+                if compiled_evidence is not None or gap_accepted is True:
+                    next_obl = _next_unresolved_obligation(
+                        runtime.agenda, active_obligation_id
+                    )
+                    if next_obl is None:
+                        terminated = True
+                        termination_reason = "all_obligations_terminal"
+                        state["status"] = "trusted"
+                        break
+                    state["active_obligation_id"] = next_obl
+                    loop.active_issue = None
+                    loop.recent_observations.clear()
+                elif partial_evidence is not None:
+                    next_obl = _next_unresolved_obligation(
+                        runtime.agenda, active_obligation_id
+                    )
+                    if next_obl is None:
+                        # Every obligation is terminal (supported / partial
+                        # with nothing left to research / gap / blocked):
+                        # ``partial`` with no actionable missing information
+                        # is a terminal status (design 8.4).  Re-entering the
+                        # supervisor would only repeat exact calls until
+                        # fallback exhaustion.
+                        terminated = True
+                        termination_reason = "all_obligations_terminal"
+                        state["status"] = "trusted"
+                        break
+                    if next_obl != active_obligation_id:
+                        state["active_obligation_id"] = next_obl
+                        loop.active_issue = None
+                        loop.recent_observations.clear()
+                turns_executed += 1
+                loop.turn_index += 1
+                routes.append("manager_compile")
+                continue
             if decision.action == "RECORD_GAP":
+                # ``partial`` is a terminal per-obligation status (design
+                # 8.4: "可写边界与 required qualifier 明确").  An obligation
+                # whose claims were already authorized must never be routed
+                # to the gap finalizer: the record-gap tool rejects
+                # ``gap_contradicts_authorized_positive_claim`` fail-closed,
+                # and re-entering the supervisor would only repeat exact
+                # calls until fallback exhaustion.  Advance (or terminate)
+                # the partial obligation directly.
+                if _active_obligation_partial(runtime.agenda, active_obligation_id):
+                    next_obl = _next_unresolved_obligation(
+                        runtime.agenda, active_obligation_id
+                    )
+                    if next_obl is None or next_obl == active_obligation_id:
+                        terminated = True
+                        termination_reason = "all_obligations_terminal"
+                        state["status"] = "trusted"
+                        break
+                    state["active_obligation_id"] = next_obl
+                    loop.active_issue = None
+                    loop.recent_observations.clear()
+                    turns_executed += 1
+                    loop.turn_index += 1
+                    routes.append("record_gap")
+                    continue
                 # Route to gap finalizer.
                 gap_update = gap_finalizer_node(
                     state,
@@ -930,8 +1104,25 @@ class ResearchLoopDriver:
                     loop.turn_index += 1
                     continue
                 if partial_evidence is not None:
-                    # Validated facts were retained, but no claim was
-                    # authorized. Keep researching this obligation.
+                    # Validated facts were retained. Give the next open
+                    # story question a breadth pass before revisiting this
+                    # partially answered obligation.  When nothing non-terminal
+                    # remains, ``partial`` with no actionable missing info is a
+                    # terminal status (design 8.4): terminate instead of
+                    # re-entering the supervisor with only exact repeats.
+                    next_obl = _next_unresolved_obligation(
+                        runtime.agenda,
+                        active_obligation_id,
+                    )
+                    if next_obl is None:
+                        terminated = True
+                        termination_reason = "all_obligations_terminal"
+                        state["status"] = "trusted"
+                        break
+                    if next_obl != active_obligation_id:
+                        state["active_obligation_id"] = next_obl
+                        loop.active_issue = None
+                        loop.recent_observations.clear()
                     turns_executed += 1
                     loop.turn_index += 1
                     continue
@@ -1128,13 +1319,31 @@ def _ctx_supervisor(
         no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
         recent_tool_call_ids=tuple(loop.recent_tool_call_ids),
         no_progress_tool_call_ids=tuple(loop.no_progress_tool_call_ids),
+        executed_read_signatures=_executed_read_signatures(loop),
         turn_index=loop.turn_index,
         current_supported_claim_ids=tuple(
             _supported_claim_ids(runtime.agenda, active_obligation_id)
         ),
+        current_supported_claim_statements=_supported_claim_statements(
+            loop, active_obligation_id
+        ),
+        executed_tool_calls=_executed_tool_call_summaries(
+            loop, active_obligation_id
+        ),
         behavior_graph=loop.behavior_graph,
+        # Same fail-closed exhaustiveness condition the gap finalizer uses:
+        # a second-level RECORD_GAP fallback is only proposed when the
+        # obligation may record a gap (no-progress threshold met or targeted
+        # search exhausted).  Without the gate, a rejected fallback would
+        # emit RECORD_GAP the finalizer rejects, routing straight back to the
+        # same doomed proposal (churn loop).
+        gap_justified=(
+            loop.gain_tracker.may_record_gap(active_obligation_id)
+            or loop.gain_tracker.targeted_search_exhausted(active_obligation_id)
+        ),
     )
     merged_decision = supervisor_update.pop("_merged_decision", None)
+    merge_results = supervisor_update.pop("_policy_merge_results", [])
     pending = supervisor_update.get("pending_tool_calls", [])
 
     if merged_decision is not None:
@@ -1148,7 +1357,12 @@ def _ctx_supervisor(
             active_issue=loop.active_issue,
         )
     loop.decision_trace.append(decision)
-    loop.policy_merge_trace.extend(supervisor_update.get("_policy_merge_results", []))
+    loop.policy_merge_trace.extend(merge_results)
+    for merge_result in merge_results:
+        loop.per_obligation_budgets = apply_consumed_budgets(
+            loop.per_obligation_budgets,
+            merge_result.consumed_budgets,
+        )
 
     # Stash pending and merged decision for the tool node.
     ctx._pending = list(pending)
@@ -1161,7 +1375,20 @@ def _ctx_supervisor(
         ctx.supervisor_route = "stop_blocked"
         return {"status": "blocked", "blocked_reason": "supervisor_stop_blocked"}
     if decision.action == "RECORD_GAP":
+        # A partial obligation (claims already authorized) must never be
+        # routed to the gap finalizer: the record-gap tool rejects
+        # ``gap_contradicts_authorized_positive_claim`` fail-closed and the
+        # loop would churn RECORD_GAP until max_turns.  Route it to the
+        # advancer, which terminates when every obligation is terminal
+        # (``partial`` with no actionable missing info is terminal per
+        # design 8.4).
+        if _active_obligation_partial(runtime.agenda, active_obligation_id):
+            ctx.supervisor_route = "partial_gap"
+            return supervisor_update
         ctx.supervisor_route = "record_gap"
+        return supervisor_update
+    if decision.action == "COMPILE_EVIDENCE":
+        ctx.supervisor_route = "compile_evidence"
         return supervisor_update
 
     if not pending:
@@ -1233,10 +1460,17 @@ def _ctx_observation(
     )
     update.update(ingest_update)
 
+    # Nodes in this composite pipeline share one logical turn.  Feed the
+    # freshly ingested candidate lists to the behavior-graph updater instead
+    # of the pre-turn state; otherwise a model-selected read may not become
+    # compilable until an unrelated later call.
+    observation_state = dict(state)
+    observation_state.update(ingest_update)
+
     _track_no_progress_calls(loop, observations, active_obligation_id)
 
     loop.behavior_graph, bg_update = behavior_graph_updater_node(
-        state,
+        observation_state,
         runtime=runtime,
         behavior_graph=loop.behavior_graph,
         observations=observations,
@@ -1347,9 +1581,8 @@ def _ctx_compile(
         ctx.compile_route = "compiled"
         return compile_update
     if partial_evidence is not None:
-        ctx.compile_route = "rejected"
-        ctx.turns_executed += 1
-        loop.turn_index += 1
+        # The advancer performs the round-robin move and accounting.
+        ctx.compile_route = "partial"
         return compile_update
 
     # No compiled evidence: compile_candidate_node already called
@@ -1433,7 +1666,16 @@ def _ctx_advancer(
     active_obligation_id = state.get("active_obligation_id", "")
 
     next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
-    if next_obl is None:
+    if next_obl is None or (
+        # The supervisor exhausted every strategy for a partial obligation
+        # (RECORD_GAP decision routed as ``partial_gap``): the round-robin
+        # returning the same obligation is not a fresh depth pass, it is the
+        # same dead end.  ``partial`` with claims is a terminal status
+        # (design 8.4) once no further strategy exists.
+        next_obl == active_obligation_id
+        and _active_obligation_partial(runtime.agenda, active_obligation_id)
+        and getattr(ctx, "supervisor_route", "") == "partial_gap"
+    ):
         ctx.terminated = True
         ctx.termination_reason = "all_obligations_terminal"
         ctx.advancer_route = "no_next"
@@ -1443,7 +1685,11 @@ def _ctx_advancer(
     ctx.turns_executed += 1
     loop.turn_index += 1
     loop.active_issue = None
-    loop.recent_observations.clear()
+    # A partial compile of the only/current obligation is not a context
+    # switch.  Preserve the exact source observation so the next Manager turn
+    # can reason about it.  Clear only when advancing to another question.
+    if next_obl != active_obligation_id:
+        loop.recent_observations.clear()
     return {"active_obligation_id": next_obl}
 
 
@@ -1728,6 +1974,8 @@ def build_research_subgraph(
         {
             "stop_blocked": "terminator",
             "record_gap": "gap_finalizer",
+            "partial_gap": "obligation_advancer",
+            "compile_evidence": "compile_candidate",
             "tool_exec": "research_tool",
             "no_tool_calls": "terminator",
         },
@@ -1754,6 +2002,7 @@ def build_research_subgraph(
         _compile_router,
         {
             "compiled": "obligation_advancer",
+            "partial": "obligation_advancer",
             "rejected": "research_supervisor",
             "blocked": "terminator",
         },
@@ -1872,31 +2121,106 @@ def _supported_claim_ids(
     return []
 
 
+def _obligation_is_terminal(item: Any) -> bool:
+    """Whether an obligation needs no further research.
+
+    ``supported`` / ``explicit_gap`` / ``blocked`` are terminal by design
+    (8.4).  A ``partial`` obligation is terminal only when nothing remains
+    to research (no missing information): claims are authorized and the
+    writing boundary plus required qualifiers are clear.  A partial
+    obligation that still lists missing information is revisitable -- the
+    supervisor may still have a fresh strategy for it (e.g. a call trace
+    for an unresolved ``call_relation``).
+    """
+
+    if item.status in {"supported", "explicit_gap", "blocked"}:
+        return True
+    if item.status == "partial":
+        actionable = [
+            value
+            for value in (item.missing_information or ())
+            if not value.startswith("candidate_path:")
+            and not value.startswith("tool_data_plane:")
+        ]
+        return not actionable
+    return False
+
+
+def _is_organization_preference(item: Any) -> bool:
+    """Author story-order headings are not code-search obligations."""
+
+    if str(getattr(item, "priority", "") or "") != "preference":
+        return False
+    return "ORGANIZATION" in str(getattr(item, "obligation_id", "") or "").upper()
+
+
+def _has_unresolved_must_cover(agenda: ResearchAgendaV1) -> bool:
+    return any(
+        item.priority == "must_cover" and not _obligation_is_terminal(item)
+        for item in agenda.items
+    )
+
+
+def _obligation_is_researchable_now(
+    item: Any,
+    *,
+    defer_organization_preference: bool,
+) -> bool:
+    if _obligation_is_terminal(item):
+        return False
+    if defer_organization_preference and _is_organization_preference(item):
+        return False
+    return True
+
+
 def _next_unresolved_obligation(
     agenda: ResearchAgendaV1, current_id: str
 ) -> str | None:
-    """Return the next unresolved must-cover obligation after ``current_id``."""
+    """Round-robin unresolved obligations instead of starving later sections.
+
+    Author method stories commonly start with a broad overview obligation.
+    Requiring that one item to close before touching feature extraction,
+    training, or inference let it consume the whole global turn budget.  A
+    partial item with unresolved missing information is therefore
+    revisitable, not terminal: breadth across the story spine happens
+    before another depth pass over the same question.  A partial item with
+    nothing left to research is terminal (design 8.4).
+
+    Organization ``preference`` nodes (paper story order) stay off the
+    must-cover search rotation until every unresolved must-cover item has
+    had a research turn.  They remain visible as review/candidate spine
+    items; they do not consume the code-search budget.
+    """
 
     items = agenda.items
+    defer_org = _has_unresolved_must_cover(agenda)
     started = False
+    # First move forward in story/agenda order regardless of priority.  The
+    # old must-cover-first second pass let a broad overview starve every
+    # should-cover stage that actually contained the method mechanics.
     for item in items:
         if not started:
             if item.obligation_id == current_id:
                 started = True
             continue
-        if item.priority == "must_cover" and item.status not in {
-            "supported", "explicit_gap", "blocked",
-        }:
+        if _obligation_is_researchable_now(
+            item, defer_organization_preference=defer_org
+        ):
             return item.obligation_id
-    # Wrap around: pick any unresolved must-cover.
+    # Wrap around after every later question has had a breadth pass, with
+    # must-cover items taking precedence on the next cycle.
     for item in items:
-        if item.priority == "must_cover" and item.status not in {
-            "supported", "explicit_gap", "blocked",
-        }:
+        if item.priority == "must_cover" and not _obligation_is_terminal(item):
             return item.obligation_id
-    # Fall back to any unresolved obligation.
+    # Fall back to any unresolved obligation, still skipping organization
+    # preference while must-cover search remains open.
     for item in items:
-        if item.status not in {"supported", "explicit_gap", "blocked"}:
+        if _obligation_is_researchable_now(
+            item, defer_organization_preference=defer_org
+        ):
+            return item.obligation_id
+    for item in items:
+        if not _obligation_is_terminal(item):
             return item.obligation_id
     return None
 
@@ -1999,15 +2323,11 @@ def _track_no_progress_calls(
     merge can reject exact re-runs.
     """
 
-    history = loop.gain_tracker.gain_history(active_obligation_id)
-    if not history:
-        return
-    if history[-1] != "no_gain":
-        return
     for obs in observations:
         if obs.obligation_id != active_obligation_id:
             continue
-        loop.no_progress_tool_call_ids.add(obs.tool_call_id)
+        if loop.gain_tracker.last_call_gained(obs.tool_call_id) is False:
+            loop.no_progress_tool_call_ids.add(obs.tool_call_id)
 
 
 __all__ = [
@@ -2023,3 +2343,14 @@ __all__ = [
     "run_research_loop",
     "snapshot_loop_state",
 ]
+
+
+def _active_obligation_partial(
+    agenda: ResearchAgendaV1, active_obligation_id: str
+) -> bool:
+    """Whether the active obligation is terminal-``partial`` (claims owned)."""
+
+    for item in agenda.items:
+        if item.obligation_id == active_obligation_id:
+            return bool(item.status == "partial" and item.supported_claim_ids)
+    return False

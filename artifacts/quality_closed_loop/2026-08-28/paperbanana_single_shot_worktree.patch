@@ -1,0 +1,1296 @@
+diff --git a/agents/polish_agent.py b/agents/polish_agent.py
+index 2ddfd13..2f163ba 100644
+--- a/agents/polish_agent.py
++++ b/agents/polish_agent.py
+@@ -50,12 +50,14 @@ class PolishAgent(BaseAgent):
+         if self.exp_config.task_name == "plot":
+             self.style_guide_filename = "neurips2025_plot_style_guide.md"
+             self.suggestion_system_prompt = PLOT_SUGGESTION_SYSTEM_PROMPT
++            self.system_prompt = PLOT_POLISH_AGENT_SYSTEM_PROMPT
+             self.task_config = {
+                 "task_name": "plot",
+             }
+         else:
+             self.style_guide_filename = "neurips2025_diagram_style_guide.md"
+             self.suggestion_system_prompt = DIAGRAM_SUGGESTION_SYSTEM_PROMPT
++            self.system_prompt = DIAGRAM_POLISH_AGENT_SYSTEM_PROMPT
+             self.task_config = {
+                 "task_name": "diagram",
+             }
+@@ -164,7 +166,8 @@ class PolishAgent(BaseAgent):
+         # Generate polished image
+         aspect_ratio = data.get("additional_info", {}).get("rounded_ratio", "16:9")
+         try:
+-            if generation_utils.openrouter_client is not None:
++            provider, resolved_model_name = generation_utils.resolve_model_provider(self.image_gen_model_name)
++            if provider == "openrouter":
+                 image_config = {
+                     "system_prompt": self.system_prompt,
+                     "temperature": self.exp_config.temperature,
+@@ -172,7 +175,21 @@ class PolishAgent(BaseAgent):
+                     "image_size": "1k",
+                 }
+                 response_list = await generation_utils.call_openrouter_image_generation_with_retry_async(
+-                    model_name=self.image_gen_model_name,
++                    model_name=resolved_model_name,
++                    contents=content_list,
++                    config=image_config,
++                    max_attempts=5,
++                    retry_delay=30,
++                )
++            elif provider == "aihubmix":
++                image_config = {
++                    "system_prompt": self.system_prompt,
++                    "temperature": self.exp_config.temperature,
++                    "aspect_ratio": aspect_ratio,
++                    "image_size": "1k",
++                }
++                response_list = await generation_utils.call_aihubmix_image_generation_with_retry_async(
++                    model_name=resolved_model_name,
+                     contents=content_list,
+                     config=image_config,
+                     max_attempts=5,
+@@ -180,7 +197,7 @@ class PolishAgent(BaseAgent):
+                 )
+             else:
+                 response_list = await generation_utils.call_gemini_with_retry_async(
+-                    model_name=self.image_gen_model_name,
++                    model_name=resolved_model_name,
+                     contents=content_list,
+                     config=types.GenerateContentConfig(
+                         system_instruction=self.system_prompt,
+diff --git a/agents/retriever_agent.py b/agents/retriever_agent.py
+index 9b29dc4..bff1e86 100644
+--- a/agents/retriever_agent.py
++++ b/agents/retriever_agent.py
+@@ -17,6 +17,7 @@ Vanilla Agent - Directly rendering images based on the method section.
+ """
+
+ import json
++import os
+ import random
+ from typing import Dict, Any
+ from google.genai import types
+@@ -32,7 +33,7 @@ class RetrieverAgent(BaseAgent):
+
+     def __init__(self, **kwargs):
+         super().__init__(**kwargs)
+-        self.model_name = self.exp_config.main_model_name
++        self.model_name = os.environ.get("RETRIEVER_MODEL_NAME", "").strip() or self.exp_config.main_model_name
+
+         # Task-specific configurations
+         if self.exp_config.task_name == "plot":
+@@ -48,9 +49,10 @@ class RetrieverAgent(BaseAgent):
+             }
+         else:
+             self.system_prompt = DIAGRAM_RETRIEVER_AGENT_SYSTEM_PROMPT
++            ref_limit = int(os.environ.get("RETRIEVER_REF_LIMIT", "200") or "200")
+             self.task_config = {
+                 "task_name": "diagram",
+-                "ref_limit": 200,  # Limit to first 200
++                "ref_limit": max(1, ref_limit),
+                 "target_labels": ["Caption", "Methodology section"],
+                 "candidate_labels": ["Diagram ID", "Caption", "Methodology section"],
+                 "candidate_type": "Diagram",
+@@ -336,4 +338,3 @@ Provide your output strictly in the following JSON format, containing only the *
+   ]
+ }```
+ """
+-
+diff --git a/agents/vanilla_agent.py b/agents/vanilla_agent.py
+index e0d5d8f..8b87475 100644
+--- a/agents/vanilla_agent.py
++++ b/agents/vanilla_agent.py
+@@ -130,7 +130,8 @@ class VanillaAgent(BaseAgent):
+         aspect_ratio = data["additional_info"]["rounded_ratio"]
+
+         if cfg["use_image_generation"]:
+-            if "gpt-image" in self.model_name:
++            provider, resolved_model_name = generation_utils.resolve_model_provider(self.model_name)
++            if provider == "openai" and "gpt-image" in resolved_model_name:
+                 image_config = {
+                     "size": "1536x1024",
+                     "quality": "high",
+@@ -138,13 +139,13 @@ class VanillaAgent(BaseAgent):
+                     "output_format": "png",
+                 }
+                 response_list = await generation_utils.call_openai_image_generation_with_retry_async(
+-                    model_name=self.model_name,
++                    model_name=resolved_model_name,
+                     prompt=prompt_text[:30000],
+                     config=image_config,
+                     max_attempts=5,
+                     retry_delay=30,
+                 )
+-            elif generation_utils.openrouter_client is not None:
++            elif provider == "openrouter":
+                 image_config = {
+                     "system_prompt": self.system_prompt,
+                     "temperature": self.exp_config.temperature,
+@@ -152,7 +153,21 @@ class VanillaAgent(BaseAgent):
+                     "image_size": "1k",
+                 }
+                 response_list = await generation_utils.call_openrouter_image_generation_with_retry_async(
+-                    model_name=self.model_name,
++                    model_name=resolved_model_name,
++                    contents=content_list,
++                    config=image_config,
++                    max_attempts=5,
++                    retry_delay=30,
++                )
++            elif provider == "aihubmix":
++                image_config = {
++                    "system_prompt": self.system_prompt,
++                    "temperature": self.exp_config.temperature,
++                    "aspect_ratio": aspect_ratio,
++                    "image_size": "1k",
++                }
++                response_list = await generation_utils.call_aihubmix_image_generation_with_retry_async(
++                    model_name=resolved_model_name,
+                     contents=content_list,
+                     config=image_config,
+                     max_attempts=5,
+@@ -165,7 +180,7 @@ class VanillaAgent(BaseAgent):
+                     image_size="1k",
+                 )
+                 response_list = await generation_utils.call_gemini_with_retry_async(
+-                    model_name=self.model_name,
++                    model_name=resolved_model_name,
+                     contents=content_list,
+                     config=types.GenerateContentConfig(**gen_config_args),
+                     max_attempts=5,
+@@ -227,4 +242,4 @@ You will be provided with "Plot Raw Data" and a "Visual Intent of the Desired Pl
+
+ ## OUTPUT
+ Write Python matplotlib code to generate the plot. Only provide the code without any explanations.
+-"""
+\ No newline at end of file
++"""
+diff --git a/agents/visualizer_agent.py b/agents/visualizer_agent.py
+index a45ee0e..8d47b75 100644
+--- a/agents/visualizer_agent.py
++++ b/agents/visualizer_agent.py
+@@ -103,7 +103,7 @@ class VisualizerAgent(BaseAgent):
+         if self.process_executor:
+             self.process_executor.shutdown(wait=True)
+
+-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
++    async def process(self, data: Dict[str, Any], only_keys: list[str] | None = None) -> Dict[str, Any]:
+         """
+         Unified processing method that works for both diagram and plot tasks.
+         Uses task_config to determine task-specific parameters.
+@@ -112,28 +112,33 @@ class VisualizerAgent(BaseAgent):
+         task_name = cfg["task_name"]
+
+         desc_keys_to_process = []
+-        for key in [
+-            f"target_{task_name}_desc0",
+-            f"target_{task_name}_stylist_desc0",
+-        ]:
+-            if key in data and f"{key}_base64_jpg" not in data:
+-                desc_keys_to_process.append(key)
+-
+-        for round_idx in range(3):
+-            key = f"target_{task_name}_critic_desc{round_idx}"
+-            if key in data and f"{key}_base64_jpg" not in data:
+-                critic_suggestions_key = f"target_{task_name}_critic_suggestions{round_idx}"
+-                critic_suggestions = data.get(critic_suggestions_key, "")
+-
+-                if critic_suggestions.strip() == "No changes needed." and round_idx > 0:
+-                    # Reuse previous round's base64
+-                    prev_base64_key = f"target_{task_name}_critic_desc{round_idx - 1}_base64_jpg"
+-                    if prev_base64_key in data:
+-                        data[f"{key}_base64_jpg"] = data[prev_base64_key]
+-                        print(f"[Visualizer] Reused base64 from round {round_idx - 1} for {key}")
+-                        continue
+-
+-                desc_keys_to_process.append(key)
++        if only_keys is not None:
++            for key in only_keys:
++                if key in data and f"{key}_base64_jpg" not in data:
++                    desc_keys_to_process.append(key)
++        else:
++            for key in [
++                f"target_{task_name}_desc0",
++                f"target_{task_name}_stylist_desc0",
++            ]:
++                if key in data and f"{key}_base64_jpg" not in data:
++                    desc_keys_to_process.append(key)
++
++            for round_idx in range(3):
++                key = f"target_{task_name}_critic_desc{round_idx}"
++                if key in data and f"{key}_base64_jpg" not in data:
++                    critic_suggestions_key = f"target_{task_name}_critic_suggestions{round_idx}"
++                    critic_suggestions = data.get(critic_suggestions_key, "")
++
++                    if critic_suggestions.strip() == "No changes needed." and round_idx > 0:
++                        # Reuse previous round's base64
++                        prev_base64_key = f"target_{task_name}_critic_desc{round_idx - 1}_base64_jpg"
++                        if prev_base64_key in data:
++                            data[f"{key}_base64_jpg"] = data[prev_base64_key]
++                            print(f"[Visualizer] Reused base64 from round {round_idx - 1} for {key}")
++                            continue
++
++                    desc_keys_to_process.append(key)
+
+         if not cfg["use_image_generation"]:
+             loop = asyncio.get_running_loop()
+@@ -155,7 +160,8 @@ class VisualizerAgent(BaseAgent):
+                 aspect_ratio = data["additional_info"]["rounded_ratio"]
+
+             if cfg["use_image_generation"]:
+-                if "gpt-image" in self.model_name:
++                provider, resolved_model_name = generation_utils.resolve_model_provider(self.model_name)
++                if provider == "openai" and "gpt-image" in resolved_model_name:
+                     image_config = {
+                         "size": "1536x1024",
+                         "quality": "high",
+@@ -163,14 +169,13 @@ class VisualizerAgent(BaseAgent):
+                         "output_format": "png",
+                     }
+                     response_list = await generation_utils.call_openai_image_generation_with_retry_async(
+-                        model_name=self.model_name,
++                        model_name=resolved_model_name,
+                         prompt=prompt_text,
+                         config=image_config,
+                         max_attempts=5,
+                         retry_delay=30,
+                     )
+-                elif generation_utils.openrouter_client is not None:
+-                    # OpenRouter image generation
++                elif provider == "openrouter":
+                     image_config = {
+                         "system_prompt": self.system_prompt,
+                         "temperature": self.exp_config.temperature,
+@@ -178,21 +183,34 @@ class VisualizerAgent(BaseAgent):
+                         "image_size": "1k",
+                     }
+                     response_list = await generation_utils.call_openrouter_image_generation_with_retry_async(
+-                        model_name=self.model_name,
++                        model_name=resolved_model_name,
++                        contents=content_list,
++                        config=image_config,
++                        max_attempts=5,
++                        retry_delay=30,
++                    )
++                elif provider == "aihubmix":
++                    image_config = {
++                        "system_prompt": self.system_prompt,
++                        "temperature": self.exp_config.temperature,
++                        "aspect_ratio": aspect_ratio,
++                        "image_size": "1k",
++                    }
++                    response_list = await generation_utils.call_aihubmix_image_generation_with_retry_async(
++                        model_name=resolved_model_name,
+                         contents=content_list,
+                         config=image_config,
+                         max_attempts=5,
+                         retry_delay=30,
+                     )
+                 else:
+-                    # Gemini direct image generation
+                     gen_config_args["response_modalities"] = ["IMAGE"]
+                     gen_config_args["image_config"] = types.ImageConfig(
+                         aspect_ratio=aspect_ratio,
+                         image_size="1k",
+                     )
+                     response_list = await generation_utils.call_gemini_with_retry_async(
+-                        model_name=self.model_name,
++                        model_name=resolved_model_name,
+                         contents=content_list,
+                         config=types.GenerateContentConfig(**gen_config_args),
+                         max_attempts=5,
+diff --git a/configs/model_config.template.yaml b/configs/model_config.template.yaml
+index 587cb46..644fce6 100644
+--- a/configs/model_config.template.yaml
++++ b/configs/model_config.template.yaml
+@@ -25,3 +25,8 @@ api_keys:
+   openai_api_key: ""
+   anthropic_api_key: ""
+   openrouter_api_key: "" # e.g. "sk-or-v1-xxxxx". Set model_name to "openrouter/<model>" to use.
++  aihubmix_api_key: "" # e.g. "sk-xxxxx". Set model_name to "aihubmix/<model>" to force routing.
++
++base_urls:
++  openai_base_url: "" # Optional OpenAI-compatible base URL, e.g. DashScope compatible-mode endpoint.
++  aihubmix_base_url: "https://aihubmix.com/v1"
+diff --git a/scripts/run_demo.sh b/scripts/run_demo.sh
+old mode 100755
+new mode 100644
+diff --git a/scripts/run_main.sh b/scripts/run_main.sh
+old mode 100755
+new mode 100644
+diff --git a/skill/SKILL.md b/skill/SKILL.md
+index 5eb8225..a4e881e 100644
+--- a/skill/SKILL.md
++++ b/skill/SKILL.md
+@@ -61,7 +61,7 @@ python skill/run.py \
+ | `--retrieval-setting` | No | `auto` | Retrieval mode: `auto`, `manual`, `random`, or `none` |
+ | `--main-model-name` | No | `gemini-3.1-pro-preview` | Main model for VLM agents. Provider auto-detected from configured API key |
+ | `--image-gen-model-name` | No | `gemini-3.1-flash-image-preview` | Model for image generation. Also supports `gemini-3-pro-image-preview` |
+-| `--exp-mode` | No | `demo_full` | Pipeline: `demo_full` (with Stylist) or `demo_planner_critic` (without Stylist) |
++| `--exp-mode` | No | `demo_full` | Pipeline: `demo_full` (with Stylist and Critic), `demo_planner_critic` (without Stylist), or `demo_stylist_once` (Planner + Stylist + one image generation, no Critic) |
+
+ *One of `--content` or `--content-file` is required.
+
+@@ -99,4 +99,3 @@ PaperBanana is based on the **PaperVizAgent** framework, a reference-driven mult
+ > arXiv:2601.23265
+
+ The framework introduces a collaborative team of five specialized agents — Retriever, Planner, Stylist, Visualizer, and Critic — to transform raw scientific content into publication-quality diagrams. Evaluation is conducted on the **PaperBananaBench** benchmark.
+-
+diff --git a/skill/run.py b/skill/run.py
+index 44a5f52..96f4168 100644
+--- a/skill/run.py
++++ b/skill/run.py
+@@ -20,7 +20,9 @@ Generates publication-quality academic diagrams and plots from method text.
+ import argparse
+ import asyncio
+ import base64
++import re
+ import shutil
++import subprocess
+ import sys
+ from io import BytesIO
+ from pathlib import Path
+@@ -61,6 +63,170 @@ def ensure_dataset(task_name: str):
+     )
+
+
++def _parse_page_range(page_range: str) -> tuple[int, int] | None:
++    page_range = str(page_range or "").strip()
++    if not page_range:
++        return None
++
++    match = re.fullmatch(r"(\d+)\s*-\s*(\d+)", page_range)
++    if match:
++        start, end = int(match.group(1)), int(match.group(2))
++        if start > 0 and end >= start:
++            return start, end
++
++    if page_range.isdigit():
++        page = int(page_range)
++        if page > 0:
++            return page, page
++
++    raise ValueError(f"Invalid page range: {page_range!r}. Use formats like '1-12' or '3'.")
++
++
++def load_pdf_text(pdf_path: str, page_range: str) -> str:
++    pdf_path = str(pdf_path)
++    page_bounds = _parse_page_range(page_range)
++    cmd = ["pdftotext", "-enc", "UTF-8"]
++    if page_bounds:
++        cmd.extend(["-f", str(page_bounds[0]), "-l", str(page_bounds[1])])
++    cmd.extend([pdf_path, "-"])
++    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
++    if proc.returncode != 0:
++        raise RuntimeError(proc.stderr.strip() or f"pdftotext failed with exit code {proc.returncode}")
++    return proc.stdout
++
++
++def extract_method_section(text: str) -> str:
++    normalized = str(text or "").replace("\r\n", "\n")
++    block_start_match = re.search(
++        r"(?:\n| {4,})(\d+\.\s+[^\n]{0,120}(?:proposed method|method(?:ology)?|approach|framework|architecture)[^\n]{0,120})",
++        normalized,
++        flags=re.IGNORECASE,
++    )
++    if block_start_match:
++        start_idx = block_start_match.start(1)
++        tail = normalized[start_idx:]
++        block_end_match = re.search(
++            r"(?:\n| {4,})(\d+\.\s+[^\n]{0,120}(?:experiments?|evaluation|results?|discussion|conclusion|references|appendix)[^\n]{0,120})",
++            tail,
++            flags=re.IGNORECASE,
++        )
++        if block_end_match and block_end_match.start(1) > 0:
++            tail = tail[:block_end_match.start(1)]
++        cleaned = tail.strip()
++        if cleaned:
++            return cleaned[:40000]
++
++    lines = normalized.splitlines()
++    top_level_heading_re = re.compile(r"^\s*(\d+)\.\s+(.{3,120})$")
++    headings: list[tuple[int, int, str]] = []
++
++    for idx, line in enumerate(lines):
++        match = top_level_heading_re.match(line.strip())
++        if not match:
++            continue
++        section_num = int(match.group(1))
++        section_title = " ".join(match.group(2).split())
++        headings.append((idx, section_num, section_title))
++
++    if headings:
++        positive_keywords = (
++            "method",
++            "methodology",
++            "approach",
++            "framework",
++            "architecture",
++            "proposed method",
++            "proposed approach",
++            "our method",
++        )
++        negative_keywords = (
++            "introduction",
++            "related work",
++            "background",
++            "preliminary",
++            "preliminaries",
++            "abstract",
++            "experiments",
++            "evaluation",
++            "results",
++            "discussion",
++            "conclusion",
++            "references",
++            "appendix",
++        )
++
++        chosen_idx = None
++        for idx, _section_num, title in headings:
++            lowered = title.lower()
++            if any(keyword in lowered for keyword in positive_keywords):
++                chosen_idx = idx
++                break
++
++        if chosen_idx is None:
++            experiment_idx = None
++            for idx, _section_num, title in headings:
++                lowered = title.lower()
++                if any(keyword in lowered for keyword in ("experiments", "evaluation", "results")):
++                    experiment_idx = idx
++                    break
++
++            candidate_sections = []
++            for idx, section_num, title in headings:
++                lowered = title.lower()
++                if any(keyword in lowered for keyword in negative_keywords):
++                    continue
++                if section_num >= 2 and (experiment_idx is None or idx < experiment_idx):
++                    candidate_sections.append(idx)
++
++            if candidate_sections:
++                chosen_idx = candidate_sections[-1]
++
++        if chosen_idx is not None:
++            end_idx = len(lines)
++            for idx, _section_num, _title in headings:
++                if idx > chosen_idx:
++                    end_idx = idx
++                    break
++            section_text = "\n".join(lines[chosen_idx:end_idx]).strip()
++            if section_text:
++                return section_text[:40000]
++
++    fallback_match = re.search(
++        r"^\s*(?:\d+(?:\.\d+)*)?\s*(method(?:ology)?|approach|framework|architecture)\b",
++        normalized,
++        flags=re.IGNORECASE | re.MULTILINE,
++    )
++    if fallback_match:
++        tail = normalized[fallback_match.start():]
++        end_match = re.search(
++            r"^\s*(?:\d+(?:\.\d+)*)?\s*(experiments?|evaluation|results?|discussion|conclusion|related work|references|appendix)\b",
++            tail,
++            flags=re.IGNORECASE | re.MULTILINE,
++        )
++        if end_match and end_match.start() > 0:
++            tail = tail[:end_match.start()]
++        return tail.strip()[:40000]
++
++    return normalized.strip()[:40000]
++
++
++def infer_title_from_text(text: str) -> str:
++    lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
++    for line in lines[:20]:
++        if len(line) >= 12 and "@" not in line and len(line.split()) >= 3:
++            return " ".join(line.split())[:160]
++    return ""
++
++
++def infer_caption(content: str, title: str = "") -> str:
++    title = " ".join(str(title or "").split())
++    if title:
++        return f"Overview of the proposed method in {title}"
++    if "3d" in content.lower():
++        return "Overview of the proposed 3D perception pipeline"
++    return "Overview of the proposed method"
++
++
+ def extract_final_image_b64(result: dict, exp_mode: str) -> str | None:
+     """Return the base64-encoded final image from a pipeline result dict.
+
+@@ -74,8 +240,8 @@ def extract_final_image_b64(result: dict, exp_mode: str) -> str | None:
+         if key in result and result[key]:
+             return result[key]
+
+-    # Fallback: stylist (demo_full) or planner
+-    if exp_mode == "demo_full":
++    # Fallback: stylist modes or planner-only mode
++    if exp_mode in {"demo_full", "demo_stylist_once"}:
+         key = f"target_{task_name}_stylist_desc0_base64_jpg"
+     else:
+         key = f"target_{task_name}_desc0_base64_jpg"
+@@ -84,7 +250,8 @@ def extract_final_image_b64(result: dict, exp_mode: str) -> str | None:
+
+ async def run(args):
+     ensure_model_config()
+-    ensure_dataset(args.task)
++    if args.retrieval_setting != "none":
++        ensure_dataset(args.task)
+
+     # Late imports so env is ready
+     from agents.planner_agent import PlannerAgent
+@@ -98,13 +265,26 @@ async def run(args):
+     from utils.paperviz_processor import PaperVizProcessor
+
+     # Read content from file if --content-file is given
++    raw_pdf_text = ""
++    title = ""
+     content = args.content
+-    if args.content_file:
+-        content = Path(args.content_file).read_text(encoding="utf-8")
++    if args.pdf_file:
++        raw_pdf_text = load_pdf_text(args.pdf_file, args.pdf_page_range)
++        title = infer_title_from_text(raw_pdf_text)
++        content = extract_method_section(raw_pdf_text)
++    elif args.content_file:
++        if str(args.content_file).lower().endswith(".pdf"):
++            raw_pdf_text = load_pdf_text(args.content_file, args.pdf_page_range)
++            title = infer_title_from_text(raw_pdf_text)
++            content = extract_method_section(raw_pdf_text)
++        else:
++            content = Path(args.content_file).read_text(encoding="utf-8")
+     if not content:
+-        print("ERROR: --content or --content-file is required.", file=sys.stderr)
++        print("ERROR: --content, --content-file, or --pdf-file is required.", file=sys.stderr)
+         sys.exit(1)
+
++    caption = args.caption or infer_caption(content, title)
++
+     exp_mode = args.exp_mode
+     exp_config = config.ExpConfig(
+         dataset_name="Demo",
+@@ -134,9 +314,9 @@ async def run(args):
+     for i in range(num_candidates):
+         data_list.append({
+             "filename": f"skill_candidate_{i}",
+-            "caption": args.caption,
++            "caption": caption,
+             "content": content,
+-            "visual_intent": args.caption,
++            "visual_intent": caption,
+             "additional_info": {"rounded_ratio": args.aspect_ratio},
+             "max_critic_rounds": args.max_critic_rounds,
+         })
+@@ -192,8 +372,12 @@ def main():
+                         help="Method section text to visualize")
+     parser.add_argument("--content-file", type=str, default="",
+                         help="Path to a file containing the method section text")
+-    parser.add_argument("--caption", type=str, required=True,
+-                        help="Figure caption / visual intent")
++    parser.add_argument("--pdf-file", type=str, default="",
++                        help="Path to a PDF paper file; PaperBanana will auto-extract the method section")
++    parser.add_argument("--pdf-page-range", type=str, default="1-12",
++                        help="PDF pages to read, e.g. '1-12' or '3' (default: 1-12)")
++    parser.add_argument("--caption", type=str, default="",
++                        help="Figure caption / visual intent; auto-generated from the PDF when omitted")
+     parser.add_argument("--task", type=str, default="diagram",
+                         choices=["diagram", "plot"],
+                         help="Task type: diagram or plot")
+@@ -214,8 +398,8 @@ def main():
+     parser.add_argument("--image-gen-model-name", type=str, default="",
+                         help="Model name for image generation (default: from config, currently gemini-3.1-flash-image-preview)")
+     parser.add_argument("--exp-mode", type=str, default="demo_full",
+-                        choices=["demo_full", "demo_planner_critic"],
+-                        help="Pipeline mode: demo_full (Retriever+Planner+Stylist+Visualizer+Critic) or demo_planner_critic (Retriever+Planner+Visualizer+Critic, no Stylist) (default: demo_full)")
++                        choices=["demo_full", "demo_planner_critic", "demo_stylist_once"],
++                        help="Pipeline mode: demo_full (Retriever+Planner+Stylist+Visualizer+Critic), demo_planner_critic (Retriever+Planner+Visualizer+Critic, no Stylist), or demo_stylist_once (Retriever+Planner+Stylist+one Visualizer call, no Critic) (default: demo_full)")
+
+     args = parser.parse_args()
+     asyncio.run(run(args))
+diff --git a/utils/generation_utils.py b/utils/generation_utils.py
+old mode 100755
+new mode 100644
+index 23b0b18..8582bc4
+--- a/utils/generation_utils.py
++++ b/utils/generation_utils.py
+@@ -55,7 +55,43 @@ gemini_client = None
+ anthropic_client = None
+ openai_client = None
+ openrouter_client = None
++aihubmix_client = None
++openai_base_url = ""
+ openrouter_api_key = ""
++aihubmix_api_key = ""
++aihubmix_base_url = ""
++
++
++_KNOWN_OPENAI_ENDPOINT_SUFFIXES = (
++    "/v1/chat/completions",
++    "/chat/completions",
++    "/v1/images/generations",
++    "/images/generations",
++)
++
++
++def _normalize_openai_compatible_base_url(base_url: str) -> str:
++    base = str(base_url or "").strip().rstrip("/")
++    if not base:
++        return ""
++
++    for suffix in _KNOWN_OPENAI_ENDPOINT_SUFFIXES:
++        if base.endswith(suffix):
++            return base[: -len(suffix)].rstrip("/")
++
++    return base
++
++
++def _build_openai_compatible_url(base_url: str, endpoint_suffix: str) -> str:
++    base = _normalize_openai_compatible_base_url(base_url)
++    suffix = str(endpoint_suffix or "").strip()
++    if not suffix:
++        return base if base.endswith("/v1") else f"{base}/v1"
++    if not suffix.startswith("/"):
++        suffix = f"/{suffix}"
++    if base.endswith("/v1"):
++        return f"{base}{suffix}"
++    return f"{base}/v1{suffix}"
+
+
+ def reinitialize_clients():
+@@ -66,8 +102,9 @@ def reinitialize_clients():
+
+     Returns a list of client names that were successfully initialized.
+     """
+-    global gemini_client, anthropic_client, openai_client
++    global gemini_client, anthropic_client, openai_client, openai_base_url
+     global openrouter_client, openrouter_api_key
++    global aihubmix_client, aihubmix_api_key, aihubmix_base_url
+
+     initialized = []
+
+@@ -88,8 +125,18 @@ def reinitialize_clients():
+         anthropic_client = None
+
+     key = get_config_val("api_keys", "openai_api_key", "OPENAI_API_KEY", "")
++    openai_base_url = get_config_val(
++        "base_urls",
++        "openai_base_url",
++        "OPENAI_BASE_URL",
++        "",
++    )
+     if key:
+-        openai_client = AsyncOpenAI(api_key=key)
++        openai_client_kwargs = {"api_key": key}
++        normalized_openai_base_url = _normalize_openai_compatible_base_url(openai_base_url)
++        if normalized_openai_base_url:
++            openai_client_kwargs["base_url"] = _build_openai_compatible_url(normalized_openai_base_url, "")
++        openai_client = AsyncOpenAI(**openai_client_kwargs)
+         print("Initialized OpenAI Client with API Key")
+         initialized.append("OpenAI")
+     else:
+@@ -106,6 +153,23 @@ def reinitialize_clients():
+     else:
+         openrouter_client = None
+
++    aihubmix_api_key = get_config_val("api_keys", "aihubmix_api_key", "AIHUBMIX_API_KEY", "")
++    aihubmix_base_url = get_config_val(
++        "base_urls",
++        "aihubmix_base_url",
++        "AIHUBMIX_BASE_URL",
++        "https://aihubmix.com/v1",
++    )
++    if aihubmix_api_key:
++        aihubmix_client = AsyncOpenAI(
++            base_url=_build_openai_compatible_url(aihubmix_base_url, ""),
++            api_key=aihubmix_api_key,
++        )
++        print("Initialized AIHubMix Client with API Key")
++        initialized.append("AIHubMix")
++    else:
++        aihubmix_client = None
++
+     return initialized
+
+
+@@ -282,9 +346,138 @@ def _convert_to_openai_format(contents: List[Dict[str, Any]]) -> List[Dict[str,
+                     "type": "image_url",
+                     "image_url": {"url": data_url}
+                 })
++            elif item.get("data"):
++                media_type = item.get("mime_type", "image/jpeg")
++                data_url = f"data:{media_type};base64,{item['data']}"
++                openai_contents.append({
++                    "type": "image_url",
++                    "image_url": {"url": data_url}
++                })
+     return openai_contents
+
+
++def _extract_b64_from_data_url(value: str) -> str | None:
++    if isinstance(value, str) and value.startswith("data:image") and "," in value:
++        return value.split(",", 1)[1]
++    return None
++
++
++def _extract_base64_image_payload(obj: Any) -> str | None:
++    if isinstance(obj, str):
++        return _extract_b64_from_data_url(obj)
++
++    if isinstance(obj, list):
++        for item in obj:
++            found = _extract_base64_image_payload(item)
++            if found:
++                return found
++        return None
++
++    if not isinstance(obj, dict):
++        return None
++
++    inline_data = obj.get("inline_data")
++    if isinstance(inline_data, dict):
++        b64_data = inline_data.get("data")
++        if isinstance(b64_data, str) and b64_data:
++            return b64_data
++
++    for key in ("b64_json", "b64", "base64", "image_base64", "data"):
++        value = obj.get(key)
++        if isinstance(value, str) and value:
++            if key == "data" and value.startswith("data:image"):
++                return _extract_b64_from_data_url(value)
++            if key != "data" or not value.startswith("http"):
++                return value
++
++    image_url = obj.get("image_url")
++    if isinstance(image_url, dict):
++        value = image_url.get("url")
++        found = _extract_b64_from_data_url(value)
++        if found:
++            return found
++    elif isinstance(image_url, str):
++        found = _extract_b64_from_data_url(image_url)
++        if found:
++            return found
++
++    for key in ("content", "multi_mod_content", "images", "message", "choices"):
++        if key in obj:
++            found = _extract_base64_image_payload(obj[key])
++            if found:
++                return found
++
++    for value in obj.values():
++        found = _extract_base64_image_payload(value)
++        if found:
++            return found
++
++    return None
++
++
++def _extract_image_url_payload(obj: Any) -> str | None:
++    if isinstance(obj, str):
++        return obj if obj.startswith(("http://", "https://")) else None
++
++    if isinstance(obj, list):
++        for item in obj:
++            found = _extract_image_url_payload(item)
++            if found:
++                return found
++        return None
++
++    if not isinstance(obj, dict):
++        return None
++
++    for key in ("url", "image_url"):
++        value = obj.get(key)
++        if isinstance(value, str) and value.startswith(("http://", "https://")):
++            return value
++        if isinstance(value, dict):
++            nested = value.get("url")
++            if isinstance(nested, str) and nested.startswith(("http://", "https://")):
++                return nested
++
++    for key in ("data", "images", "content", "multi_mod_content", "message", "choices"):
++        if key in obj:
++            found = _extract_image_url_payload(obj[key])
++            if found:
++                return found
++
++    for value in obj.values():
++        found = _extract_image_url_payload(value)
++        if found:
++            return found
++
++    return None
++
++
++def _is_aihubmix_size_not_supported_error(exc: httpx.HTTPStatusError) -> bool:
++    response = getattr(exc, "response", None)
++    if response is None or response.status_code != 400:
++        return False
++    error_text = response.text.lower()
++    return "size_not_supported" in error_text or "size not supported" in error_text
++
++
++async def _download_image_url_as_base64(url: str, headers: dict[str, str] | None = None) -> str | None:
++    if not url:
++        return None
++    request_headers = {}
++    if headers and "Authorization" in headers:
++        request_headers["Authorization"] = headers["Authorization"]
++    try:
++        async with httpx.AsyncClient(timeout=300, follow_redirects=True) as client:
++            resp = await client.get(url, headers=request_headers)
++        resp.raise_for_status()
++        if not resp.content:
++            return None
++        return base64.b64encode(resp.content).decode("utf-8")
++    except Exception as exc:
++        print(f"[Warning]: Failed to download generated image URL: {exc}")
++        return None
++
++
+ async def call_claude_with_retry_async(
+     model_name, contents, config, max_attempts=5, retry_delay=30, error_context=""
+ ):
+@@ -466,6 +659,11 @@ async def call_openai_image_generation_with_retry_async(
+     """
+     ASYNC: Call OpenAI Image Generation API (GPT-Image) with asynchronous retry logic.
+     """
++    if openai_client is None:
++        raise RuntimeError(
++            "OpenAI client was not initialized: missing OPENAI_API_KEY (or api_keys.openai_api_key)."
++        )
++
+     size = config.get("size", "1536x1024")
+     quality = config.get("quality", "high")
+     background = config.get("background", "opaque")
+@@ -490,14 +688,22 @@ async def call_openai_image_generation_with_retry_async(
+         try:
+             response = await openai_client.images.generate(**gen_params)
+
+-            # OpenAI images.generate returns a list of images in response.data
+-            if response.data and response.data[0].b64_json:
+-                return [response.data[0].b64_json]
+-            else:
+-                print(f"[Warning]: Failed to generate image via OpenAI, no data returned.")
+-                if attempt < max_attempts - 1:
+-                    await asyncio.sleep(retry_delay)
+-                continue
++            if response.data:
++                first_image = response.data[0]
++                b64_json = getattr(first_image, "b64_json", None)
++                if b64_json:
++                    return [b64_json]
++                image_url = getattr(first_image, "url", None)
++                if image_url:
++                    downloaded_b64 = await _download_image_url_as_base64(image_url)
++                    if downloaded_b64:
++                        return [downloaded_b64]
++
++            print(
++                "[Warning]: OpenAI-compatible image generation returned no parseable image. "
++                "Not retrying to avoid duplicate image jobs."
++            )
++            return ["Error"]
+
+         except Exception as e:
+             context_msg = f" for {error_context}" if error_context else ""
+@@ -664,38 +870,9 @@ async def call_openrouter_image_generation_with_retry_async(
+                     await asyncio.sleep(retry_delay)
+                 continue
+
+-            message = choices[0].get("message", {})
+-
+-            # Try extracting from inline_data in content (Gemini-style)
+-            content = message.get("content")
+-            if isinstance(content, list):
+-                for part in content:
+-                    if isinstance(part, dict) and "inline_data" in part:
+-                        b64_data = part["inline_data"].get("data", "")
+-                        if b64_data:
+-                            return [b64_data]
+-
+-            # Try extracting from images field (OpenRouter standard)
+-            images = message.get("images")
+-            if images and len(images) > 0:
+-                img_item = images[0]
+-                if isinstance(img_item, dict):
+-                    data_url = img_item.get("image_url", {}).get("url", "")
+-                else:
+-                    data_url = str(img_item)
+-                if "," in data_url:
+-                    b64_data = data_url.split(",", 1)[1]
+-                else:
+-                    b64_data = data_url
+-                if b64_data:
+-                    return [b64_data]
+-
+-            # Try extracting base64 from text content
+-            if isinstance(content, str) and content.startswith("data:image"):
+-                if "," in content:
+-                    b64_data = content.split(",", 1)[1]
+-                    if b64_data:
+-                        return [b64_data]
++            b64_data = _extract_base64_image_payload(data)
++            if b64_data:
++                return [b64_data]
+
+             print(f"[Warning]: OpenRouter image generation returned no images, retrying...")
+             if attempt < max_attempts - 1:
+@@ -731,6 +908,230 @@ async def call_openrouter_image_generation_with_retry_async(
+     return ["Error"]
+
+
++async def call_aihubmix_with_retry_async(
++    model_name, contents, config, max_attempts=5, retry_delay=30, error_context=""
++):
++    """
++    ASYNC: Call AIHubMix API (OpenAI-compatible) with asynchronous retry logic.
++    """
++    if aihubmix_client is None:
++        raise RuntimeError(
++            "AIHubMix client was not initialized: missing API key. "
++            "Please set AIHUBMIX_API_KEY in environment, or configure "
++            "api_keys.aihubmix_api_key in configs/model_config.yaml."
++        )
++
++    system_prompt = config["system_prompt"]
++    temperature = config["temperature"]
++    candidate_num = config["candidate_num"]
++    max_completion_tokens = config["max_completion_tokens"]
++    response_text_list = []
++    current_contents = contents
++
++    is_input_valid = False
++    for attempt in range(max_attempts):
++        try:
++            openai_contents = _convert_to_openai_format(current_contents)
++            first_response = await aihubmix_client.chat.completions.create(
++                model=model_name,
++                messages=[
++                    {"role": "system", "content": system_prompt},
++                    {"role": "user", "content": openai_contents},
++                ],
++                temperature=temperature,
++                max_completion_tokens=max_completion_tokens,
++            )
++            content = first_response.choices[0].message.content or ""
++            if not content.strip():
++                print("AIHubMix returned empty content, retrying...")
++                if attempt < max_attempts - 1:
++                    await asyncio.sleep(retry_delay)
++                continue
++            response_text_list.append(content)
++            is_input_valid = True
++            break
++
++        except Exception as e:
++            error_str = str(e).lower()
++            context_msg = f" for {error_context}" if error_context else ""
++            current_delay = min(retry_delay * (2 ** attempt), 60)
++            print(
++                f"AIHubMix attempt {attempt + 1} failed{context_msg}: {error_str}. "
++                f"Retrying in {current_delay}s..."
++            )
++            if attempt < max_attempts - 1:
++                await asyncio.sleep(current_delay)
++
++    if not is_input_valid:
++        context_msg = f" for {error_context}" if error_context else ""
++        print(f"Error: All {max_attempts} AIHubMix attempts failed{context_msg}.")
++        return ["Error"] * candidate_num
++
++    remaining_candidates = candidate_num - 1
++    if remaining_candidates > 0:
++        valid_openai_contents = _convert_to_openai_format(current_contents)
++        tasks = [
++            aihubmix_client.chat.completions.create(
++                model=model_name,
++                messages=[
++                    {"role": "system", "content": system_prompt},
++                    {"role": "user", "content": valid_openai_contents},
++                ],
++                temperature=temperature,
++                max_completion_tokens=max_completion_tokens,
++            )
++            for _ in range(remaining_candidates)
++        ]
++        results = await asyncio.gather(*tasks, return_exceptions=True)
++        for res in results:
++            if isinstance(res, Exception):
++                print(f"Error generating a subsequent AIHubMix candidate: {res}")
++                response_text_list.append("Error")
++            else:
++                response_text_list.append(res.choices[0].message.content or "Error")
++
++    return response_text_list
++
++
++async def call_aihubmix_image_generation_with_retry_async(
++    model_name, contents, config, max_attempts=5, retry_delay=30, error_context=""
++):
++    """
++    ASYNC: Call AIHubMix image generation.
++    For pure text-to-image requests use OpenAI-compatible images/generations.
++    For image-edit style requests (input images present), fallback to chat/completions.
++    """
++    if not aihubmix_api_key:
++        raise RuntimeError(
++            "AIHubMix client was not initialized: missing API key."
++        )
++
++    system_prompt = config.get("system_prompt", "")
++    temperature = config.get("temperature", 1.0)
++    aspect_ratio = config.get("aspect_ratio", "1:1")
++    image_size = config.get("image_size", "1k")
++
++    headers = {
++        "Authorization": f"Bearer {aihubmix_api_key}",
++        "Content-Type": "application/json",
++    }
++    has_image_input = any(item.get("type") == "image" for item in contents)
++
++    if not has_image_input:
++        prompt_parts = []
++        if system_prompt.strip():
++            prompt_parts.append(system_prompt.strip())
++        if aspect_ratio:
++            prompt_parts.append(f"aspect_ratio={aspect_ratio}")
++        for item in contents:
++            if item.get("type") == "text" and item.get("text"):
++                prompt_parts.append(item["text"])
++        prompt_text = "\n\n".join(prompt_parts).strip()
++        if not prompt_text:
++            prompt_text = "Generate a high-quality scientific figure."
++
++        size = "1024x1024"
++        if aspect_ratio == "16:9":
++            size = "1536x1024"
++        elif aspect_ratio == "21:9":
++            size = "1792x1024"
++        elif aspect_ratio == "3:2":
++            size = "1536x1024"
++
++        payload = {
++            "model": model_name,
++            "prompt": prompt_text,
++            "n": 1,
++            "size": size,
++            "quality": "high",
++            "output_format": "png",
++        }
++        url = _build_openai_compatible_url(aihubmix_base_url, "/images/generations")
++    else:
++        messages = []
++        system_parts = [
++            part
++            for part in [system_prompt.strip(), f"aspect_ratio={aspect_ratio}" if aspect_ratio else ""]
++            if part
++        ]
++        if system_parts:
++            messages.append({"role": "system", "content": "\n".join(system_parts)})
++        messages.append({"role": "user", "content": _convert_to_openai_format(contents)})
++
++        payload = {
++            "model": model_name,
++            "messages": messages,
++            "temperature": temperature,
++            "modalities": ["image", "text"],
++        }
++        if aspect_ratio or image_size:
++            payload["image_config"] = {}
++            if aspect_ratio:
++                payload["image_config"]["aspect_ratio"] = aspect_ratio
++            if image_size:
++                payload["image_config"]["image_size"] = image_size
++        url = _build_openai_compatible_url(aihubmix_base_url, "/chat/completions")
++
++    for attempt in range(max_attempts):
++        try:
++            async with httpx.AsyncClient(timeout=300) as client:
++                resp = await client.post(url, headers=headers, json=payload)
++            resp.raise_for_status()
++            data = resp.json()
++
++            b64_data = _extract_base64_image_payload(data)
++            if b64_data:
++                return [b64_data]
++
++            image_url = _extract_image_url_payload(data)
++            if image_url:
++                downloaded_b64 = await _download_image_url_as_base64(image_url, headers=headers)
++                if downloaded_b64:
++                    return [downloaded_b64]
++
++            top_keys = list(data.keys()) if isinstance(data, dict) else type(data).__name__
++            print(
++                "[Warning]: AIHubMix image generation returned HTTP 200 but no parseable image. "
++                f"Top-level response keys/type: {top_keys}. Not retrying to avoid duplicate image jobs."
++            )
++            return ["Error"]
++
++        except httpx.HTTPStatusError as e:
++            context_msg = f" for {error_context}" if error_context else ""
++            if not has_image_input and "size" in payload and _is_aihubmix_size_not_supported_error(e):
++                payload.pop("size", None)
++                print(
++                    f"AIHubMix image gen request failed{context_msg}: provider rejected the size parameter. "
++                    "Retrying once without size."
++                )
++                continue
++            current_delay = min(retry_delay * (2 ** attempt), 60)
++            print(
++                f"AIHubMix image gen attempt {attempt + 1} failed{context_msg}: "
++                f"HTTP {e.response.status_code} - {e.response.text}. "
++                f"Retrying in {current_delay}s..."
++            )
++            if attempt < max_attempts - 1:
++                await asyncio.sleep(current_delay)
++            else:
++                print(f"Error: All {max_attempts} attempts failed{context_msg}")
++                return ["Error"]
++        except Exception as e:
++            context_msg = f" for {error_context}" if error_context else ""
++            current_delay = min(retry_delay * (2 ** attempt), 60)
++            print(
++                f"AIHubMix image gen attempt {attempt + 1} failed{context_msg}: {e}. "
++                f"Retrying in {current_delay}s..."
++            )
++            if attempt < max_attempts - 1:
++                await asyncio.sleep(current_delay)
++            else:
++                print(f"Error: All {max_attempts} attempts failed{context_msg}")
++                return ["Error"]
++
++    return ["Error"]
++
++
+ def _to_openrouter_model_id(model_name: str) -> str:
+     """Convert a bare model name to OpenRouter format (provider/model).
+
+@@ -745,6 +1146,53 @@ def _to_openrouter_model_id(model_name: str) -> str:
+     return model_name
+
+
++def resolve_model_provider(model_name: str) -> tuple[str, str]:
++    """
++    Resolve provider and the concrete model id to use.
++    """
++    if model_name.startswith("openrouter/"):
++        return "openrouter", model_name[len("openrouter/"):]
++    if model_name.startswith("aihubmix/"):
++        return "aihubmix", model_name[len("aihubmix/"):]
++    if _is_openai_image_model(model_name):
++        if aihubmix_client is not None:
++            return "aihubmix", model_name
++        if openai_client is not None:
++            return "openai", model_name
++    if model_name.startswith("claude-"):
++        return "anthropic", model_name
++    if any(model_name.startswith(p) for p in ("gpt-", "o1-", "o3-", "o4-", "qwen")):
++        if openai_client is not None:
++            return "openai", model_name
++        if aihubmix_client is not None:
++            return "aihubmix", model_name
++        if openrouter_client is not None:
++            return "openrouter", _to_openrouter_model_id(model_name)
++        return "openai", model_name
++
++    actual_model = model_name
++    if openrouter_client is not None:
++        return "openrouter", _to_openrouter_model_id(model_name)
++    if aihubmix_client is not None:
++        return "aihubmix", actual_model
++    if gemini_client is not None:
++        return "gemini", actual_model
++    if anthropic_client is not None:
++        return "anthropic", actual_model
++    if openai_client is not None:
++        return "openai", actual_model
++
++    raise RuntimeError(
++        "No API client available. Please configure at least one API key "
++        "in configs/model_config.yaml or via environment variables."
++    )
++
++
++def _is_openai_image_model(model_name: str) -> bool:
++    lowered = str(model_name or "").strip().lower()
++    return lowered.startswith("gpt-image-") or lowered.startswith("chat-image-")
++
++
+ async def call_model_with_retry_async(
+     model_name, contents, config, max_attempts=5, retry_delay=5, error_context=""
+ ):
+@@ -757,33 +1205,7 @@ async def call_model_with_retry_async(
+       2. No prefix: auto-detect based on which API key is configured.
+          Priority: OpenRouter > Gemini > Anthropic > OpenAI
+     """
+-    # Explicit provider prefix overrides auto-detection
+-    if model_name.startswith("openrouter/"):
+-        provider = "openrouter"
+-        actual_model = model_name[len("openrouter/"):]
+-    elif model_name.startswith("claude-"):
+-        provider = "anthropic"
+-        actual_model = model_name
+-    elif any(model_name.startswith(p) for p in ("gpt-", "o1-", "o3-", "o4-")):
+-        provider = "openai"
+-        actual_model = model_name
+-    else:
+-        # Auto-detect provider based on which API key is configured
+-        actual_model = model_name
+-        if openrouter_client is not None:
+-            provider = "openrouter"
+-            actual_model = _to_openrouter_model_id(model_name)
+-        elif gemini_client is not None:
+-            provider = "gemini"
+-        elif anthropic_client is not None:
+-            provider = "anthropic"
+-        elif openai_client is not None:
+-            provider = "openai"
+-        else:
+-            raise RuntimeError(
+-                "No API client available. Please configure at least one API key "
+-                "in configs/model_config.yaml or via environment variables."
+-            )
++    provider, actual_model = resolve_model_provider(model_name)
+
+     if provider == "gemini":
+         return await call_gemini_with_retry_async(
+@@ -805,6 +1227,7 @@ async def call_model_with_retry_async(
+
+     call_fn = {
+         "openrouter": call_openrouter_with_retry_async,
++        "aihubmix": call_aihubmix_with_retry_async,
+         "anthropic": call_claude_with_retry_async,
+         "openai": call_openai_with_retry_async,
+     }[provider]
+diff --git a/utils/paperviz_processor.py b/utils/paperviz_processor.py
+index 5d978e4..e5d752c 100644
+--- a/utils/paperviz_processor.py
++++ b/utils/paperviz_processor.py
+@@ -132,6 +132,16 @@ class PaperVizProcessor:
+             data = await self.visualizer_agent.process(data)
+             data["eval_image_field"] = f"target_{task_name}_stylist_desc0_base64_jpg"
+
++        elif exp_mode == "demo_stylist_once":
++            if not already_retrieved:
++                data = await self.retriever_agent.process(data, retrieval_setting=retrieval_setting)
++            data = await self.planner_agent.process(data)
++            data = await self.stylist_agent.process(data)
++            stylist_key = f"target_{task_name}_stylist_desc0"
++            data = await self.visualizer_agent.process(data, only_keys=[stylist_key])
++            data["eval_image_field"] = f"{stylist_key}_base64_jpg"
++            do_eval = False
++
+         elif exp_mode in ["dev_planner_critic", "demo_planner_critic"]:
+             if not already_retrieved:
+                 data = await self.retriever_agent.process(data, retrieval_setting=retrieval_setting)
+@@ -249,4 +259,3 @@ class PaperVizProcessor:
+             data, task_name=exp_config.task_name, work_dir=exp_config.work_dir
+         )
+         return data
+-

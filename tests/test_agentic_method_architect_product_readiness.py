@@ -28,6 +28,10 @@ from code2paper.agentic.method_product_models import (
     MethodReviewCandidateV1,
     assess_plan_product_readiness,
 )
+from code2paper.agentic.method_proposition_models import (
+    MethodPropositionSetV1,
+    MethodPropositionV1,
+)
 
 
 def _claim(
@@ -99,6 +103,44 @@ def _matrix(statuses: dict[str, str]) -> MethodCompletenessMatrixV1:
     )
 
 
+def test_anchored_move_authority_proof_clears_unresolved_for_partial_obligation() -> None:
+    """WP-B: partial obligations must not ride on anchored proof unresolved rows."""
+
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-1",
+                text="The method ranks the primitives with partial coverage.",
+                obligation_id="obl-1",
+                status="partial",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-1",
+                name="Ranking stage",
+                purpose="Explain the ranking.",
+                ordered_claim_ids=["claim-1"],
+                covers_obligation_ids=["obl-1"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    completeness = _matrix({"obl-1": "partially_supported_by_repository"})
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claims,
+        completeness=completeness,
+    )
+    for proof in plan.move_authority_proofs:
+        if proof.state in {"anchored", "bridge"}:
+            assert proof.unresolved_obligation_ids == ()
+
+
 def test_supported_unit_is_candidate_and_verified_ready() -> None:
     claim_set = _claim_set()
     completeness = _matrix({"obl-1": "supported_by_repository", "obl-2": "supported_by_repository"})
@@ -113,6 +155,96 @@ def test_supported_unit_is_candidate_and_verified_ready() -> None:
     }
     assert readiness.review_required_obligation_ids == ()
     assert isinstance(trace["product_readiness"], dict)
+
+
+def test_remaining_claims_for_same_obligation_extend_stage_not_duplicate_section() -> None:
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-stage", text="The method builds the descriptor.",
+                obligation_id="obl-feature",
+            ),
+            _claim(
+                "claim-late", text="The method normalizes the descriptor.",
+                obligation_id="obl-feature",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-feature",
+                name="Implementation stage 1",
+                purpose="Explain descriptor construction.",
+                ordered_claim_ids=["claim-stage"],
+                covers_obligation_ids=["obl-feature"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims-same-obligation",
+    )
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id=claims.repo_snapshot_id,
+        project_tree_hash=claims.project_tree_hash,
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="obl-feature",
+                status="supported_by_repository",
+                claim_ids=("claim-stage", "claim-late"),
+                importance="critical",
+            ),
+        ],
+    )
+
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claims,
+        completeness=completeness,
+        method_name="Per-primitive feature descriptor",
+    )
+
+    assert [section.heading for section in plan.sections] == [
+        "Per-primitive feature descriptor"
+    ]
+    assert len(plan.argument_units) == 1
+    assert plan.argument_units[0].claim_ids == ("claim-stage", "claim-late")
+
+
+def test_architect_persists_closed_positive_caveated_proposition_order() -> None:
+    claim_set = _claim_set()
+    completeness = _matrix({"obl-1": "supported_by_repository", "obl-2": "unverified_by_repository"})
+    propositions = MethodPropositionSetV1(
+        repo_snapshot_id=claim_set.repo_snapshot_id,
+        project_tree_hash=claim_set.project_tree_hash,
+        propositions=(
+            MethodPropositionV1(
+                proposition_id="MP-POS", origin="repository_evidence",
+                evidence_lane="repository_verified", may_enter_verified=True,
+                source_obligation_ids=("obl-1",), reader_subject="the method",
+                transformation="ranks primitives",
+            ),
+            MethodPropositionV1(
+                proposition_id="MP-CAND", origin="author_intent",
+                evidence_lane="author_intent_unverified", requires_caveat=True,
+                source_obligation_ids=("obl-2",), reader_subject="the intended method",
+                transformation="prunes low-ranked primitives",
+            ),
+        ),
+        binding_sidecar_digest="sha256:" + "a" * 64,
+    )
+
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set, completeness=completeness, propositions=propositions,
+    )
+    by_obligation = {
+        unit.source_obligation_ids[0]: unit for unit in plan.argument_units
+        if unit.source_obligation_ids
+    }
+    assert by_obligation["obl-1"].positive_proposition_ids == ("MP-POS",)
+    assert by_obligation["obl-1"].proposition_order == ("MP-POS",)
+    assert by_obligation["obl-2"].caveated_proposition_ids == ("MP-CAND",)
+    assert by_obligation["obl-2"].proposition_order == ("MP-CAND",)
 
 
 def test_unverified_author_unit_is_candidate_ready_with_review_and_not_verified() -> None:
@@ -397,6 +529,172 @@ def test_organization_spine_consolidates_candidate_points_without_dropping_units
     assert all(row["realized_sections"] != ["unrealized"] for row in trace["story_spine"])
 
 
+def test_long_organization_stage_titles_remain_separate_sections() -> None:
+    claim_set = _claim_set()
+    org_rows = [
+        (
+            "O-ORGANIZATION-01",
+            "Offline graph construction from corpus units, adjacency matrices, "
+            "and entity spans before any retrieval stage",
+        ),
+        (
+            "O-ORGANIZATION-02",
+            "First retrieval stage: relevant entity activation via local "
+            "semantic bridging (initialization, iterative propagation, dynamic pruning)",
+        ),
+        (
+            "O-ORGANIZATION-03",
+            "Second retrieval stage: passage retrieval via global importance "
+            "aggregation and ranking on the hierarchical graph",
+        ),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            *_matrix({"obl-1": "supported_by_repository", "obl-2": "supported_by_repository"}).items,
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="author_confirmation_required",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    assert len(plan.sections) == 3
+    headings = " ".join(section.heading for section in plan.sections).casefold()
+    assert "first" in headings or "activation" in headings or "bridging" in headings
+    assert "second" in headings or "passage" in headings or "aggregation" in headings
+    realized = {
+        obligation_id
+        for unit in plan.argument_units
+        for obligation_id in unit.source_obligation_ids
+    }
+    assert {"O-ORGANIZATION-01", "O-ORGANIZATION-02", "O-ORGANIZATION-03"} <= realized
+
+
+def test_unverified_organization_rows_still_become_section_anchors() -> None:
+    claim_set = _claim_set()
+    org_rows = [
+        ("O-ORGANIZATION-01", "Motivation and problem setup"),
+        ("O-ORGANIZATION-02", "Offline graph construction"),
+        ("O-ORGANIZATION-03", "First retrieval via local activation"),
+        ("O-ORGANIZATION-04", "Second retrieval via global ranking"),
+        ("O-ORGANIZATION-05", "Overview of the two-stage retrieval"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            *_matrix({"obl-1": "supported_by_repository", "obl-2": "supported_by_repository"}).items,
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    headings = [section.heading for section in plan.sections]
+    assert len(headings) == 5
+    joined = " ".join(headings).casefold()
+    assert "additional repository-verified" not in joined
+    assert "motivation" in joined
+    assert "offline" in joined
+    realized = {
+        obligation_id
+        for unit in plan.argument_units
+        for obligation_id in unit.source_obligation_ids
+    }
+    assert {"O-ORGANIZATION-01", "O-ORGANIZATION-02", "O-ORGANIZATION-03"} <= realized
+
+
+def test_near_duplicate_activation_headings_merge_into_one_section() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-act-1",
+                text="The method activates entities by local semantic bridging.",
+                obligation_id="obl-act-1",
+            ),
+            _claim(
+                "claim-act-2",
+                text="The method activates entities by semantic bridging.",
+                obligation_id="obl-act-2",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-act-1",
+                name="Entity Activation via Local Semantic Bridging",
+                purpose="Explain local activation.",
+                ordered_claim_ids=["claim-act-1"],
+                covers_obligation_ids=["obl-act-1"],
+                organization_priority=1,
+            ),
+            SemanticStageGroupV1(
+                stage_id="stage-act-2",
+                name="Entity Activation via Semantic Bridging",
+                purpose="Explain the activation pass.",
+                ordered_claim_ids=["claim-act-2"],
+                covers_obligation_ids=["obl-act-2"],
+                organization_priority=2,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+    )
+    assert len(plan.sections) == 1
+    realized = {
+        obligation_id
+        for unit in plan.argument_units
+        for obligation_id in unit.source_obligation_ids
+    }
+    assert {"obl-act-1", "obl-act-2"} <= realized
+
+
 # ---------------------------------------------------------------------------
 # Package P: candidate units from story/completeness rows
 # ---------------------------------------------------------------------------
@@ -446,12 +744,22 @@ def test_partial_row_without_claim_ids_materializes_candidate_section() -> None:
     assert partial_unit.unresolved_inputs == ("obl-partial:partially_supported_by_repository",)
     assert partial_unit.source_artifact_ids == ("fact-partial-1",)
     assert "limitations_or_mismatch" in partial_unit.allowed_expository_moves
-    # A partial lane is candidate-permitted and review-optional by the P0
-    # contract (partial may enter verified only with preserved qualifiers);
-    # it never blocks the candidate and never enters verified unqualified.
-    assert readiness.readiness == "candidate_ready"
+    # Partial support may be caveated on the owning content move; it does not
+    # make limitations_or_mismatch a required callback on the section.
+    hosting = next(
+        section for section in plan.sections
+        if partial_unit.argument_unit_id in section.argument_unit_ids
+    )
+    assert all(
+        move.move != "limitations_or_mismatch" or not move.required
+        for move in hosting.moves
+    )
+    # A broad partial obligation keeps its supported subclaims available for
+    # sentence-level verification but the whole unit remains review-visible.
+    assert readiness.readiness == "candidate_ready_with_review"
     assert readiness.candidate_allowed_unit_ids
-    assert "obl-partial" not in readiness.verified_positive_unit_ids
+    assert partial_unit.argument_unit_id not in readiness.verified_positive_unit_ids
+    assert "obl-partial" in readiness.review_required_obligation_ids
 
 
 def test_author_confirmation_row_becomes_candidate_review_not_verified_fact() -> None:
@@ -550,3 +858,833 @@ def test_out_of_scope_row_is_not_materialized_as_candidate_prose() -> None:
     assert not any(
         "obl-scope" in unit.source_obligation_ids for unit in plan.argument_units
     )
+
+
+def test_architect_binds_concept_cards_verified_and_caveated_exactly_once() -> None:
+    """Stage 4: concept cards bind to units by obligation, verified/caveated
+    separated, and each card is placed on exactly one unit."""
+    from code2paper.agentic.method_concept_card_models import (
+        ConceptCardBindingV1,
+        ConceptCardEvidenceVerdictV1,
+        ConceptCardFieldJudgmentV1,
+        MethodConceptCardSetV1,
+        MethodConceptCardV1,
+    )
+
+    claim_set = _claim_set()
+    completeness = _matrix({"obl-1": "supported_by_repository", "obl-2": "unverified_by_repository"})
+    card_set = MethodConceptCardSetV1(
+        repo_snapshot_id=claim_set.repo_snapshot_id,
+        project_tree_hash=claim_set.project_tree_hash,
+        cards=(
+            MethodConceptCardV1(
+                concept_key="CK-1", cluster_id="CC-1",
+                authority_lane="repository",
+                method_subject="ranking descriptor",
+                operation="assembles per-primitive statistics",
+                may_enter_verified=True,
+                evidence_verdict="entailed",
+            ),
+            MethodConceptCardV1(
+                concept_key="CK-2", cluster_id="CC-2",
+                authority_lane="author_intent",
+                method_subject="intended pruning",
+                operation="claimed by the author",
+                may_enter_verified=False,
+                requires_caveat=True,
+                candidate_caveat="author-attested",
+            ),
+        ),
+        evidence_verdicts=(
+            ConceptCardEvidenceVerdictV1(
+                concept_key="CK-1",
+                field_judgments=(
+                    ConceptCardFieldJudgmentV1(
+                        field_name="method_subject",
+                        proposed_value="ranking descriptor",
+                        verdict="entailed",
+                        evidence_fragment_refs=("frag-1",),
+                        rationale="frag-1 establishes the subject",
+                    ),
+                ),
+                overall_verdict="entailed",
+                rationale="all fields entailed",
+            ),
+        ),
+        bindings=(
+            ConceptCardBindingV1(
+                concept_key="CK-1",
+                field_bindings=(("operation", ("frag-1",)),),
+                source_obligation_ids=("obl-1",),
+            ),
+            ConceptCardBindingV1(
+                concept_key="CK-2",
+                field_bindings=(("operation", ("frag-1",)),),
+                source_obligation_ids=("obl-2",),
+            ),
+        ),
+    )
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        concept_cards=card_set,
+    )
+    unit_by_obligation = {
+        unit.source_obligation_ids[0]: unit
+        for unit in plan.argument_units
+        if unit.source_obligation_ids
+    }
+    unit_1 = unit_by_obligation["obl-1"]
+    unit_2 = unit_by_obligation["obl-2"]
+    assert unit_1.verified_concept_card_ids == ("CK-1",)
+    assert unit_1.caveated_concept_card_ids == ()
+    assert unit_2.caveated_concept_card_ids == ("CK-2",)
+    assert unit_2.verified_concept_card_ids == ()
+    # Each card placed exactly once and orders are closed.
+    all_concepts = [
+        key
+        for unit in plan.argument_units
+        for key in (*unit.verified_concept_card_ids, *unit.caveated_concept_card_ids)
+    ]
+    assert len(all_concepts) == 2
+    assert len(set(all_concepts)) == 2
+    for unit in plan.argument_units:
+        assert set(unit.concept_card_ids) == (
+            set(unit.verified_concept_card_ids) | set(unit.caveated_concept_card_ids)
+        )
+        assert set(unit.concept_card_order) == set(unit.concept_card_ids)
+
+
+def test_architect_headings_and_reader_questions_are_story_derived() -> None:
+    claim_set = _claim_set()
+    completeness = _matrix({
+        "obl-1": "supported_by_repository",
+        "obl-2": "supported_by_repository",
+    })
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id="story:motivation",
+            title=(
+                "Motivation: limitations of vanilla SSMs – they ignore irregular "
+                "timespans and are vulnerable to"
+            ),
+            author_statement=(
+                "Vanilla SSMs ignore irregular timespans and are vulnerable to "
+                "noisy interactions."
+            ),
+            intended_role="motivation",
+            linked_obligation_ids=("obl-1",),
+            linked_claim_ids=("claim-1",),
+        ),
+        AuthorStoryNodeV1(
+            story_node_id="story:rank",
+            title="Rank first",
+            author_statement="Then rank the remaining primitives.",
+            linked_obligation_ids=("obl-2",),
+            linked_claim_ids=("claim-2",),
+        ),
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    from code2paper.agentic.publication_quality import heading_is_truncated
+
+    for section in plan.sections:
+        assert not heading_is_truncated(section.heading)
+        assert "transform its inputs into outputs" not in section.reader_question.lower()
+        equation_moves = [move for move in section.moves if move.move == "equation_or_derivation"]
+        assert equation_moves, section.moves
+        assert all(move.unanchored and move.unanchored_owner == "Formalizer" for move in equation_moves)
+        assert all(not move.required for move in equation_moves)
+
+
+def test_wp1_section_content_contract_and_formula_truth() -> None:
+    claim_set = _claim_set()
+    completeness = _matrix({
+        "obl-1": "supported_by_repository",
+        "obl-2": "supported_by_repository",
+    })
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+    )
+    for section in plan.sections:
+        assert section.heading_constraints
+        assert "writer_must_produce_heading_text" in section.heading_constraints
+        assert (
+            section.formula_obligation_ids
+            or (section.formula_not_applicable and section.formula_not_applicable_reason)
+        )
+
+
+def test_wp1_long_story_statement_not_used_as_truncated_heading() -> None:
+    claim_set = _claim_set()
+    completeness = _matrix({
+        "obl-1": "supported_by_repository",
+        "obl-2": "supported_by_repository",
+    })
+    long_statement = (
+        "Architecture details enrich embeddings with document identifiers and positional "
+        "signals before the Transformer encoder produces contextual representations."
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id="story:long",
+            title=long_statement,
+            author_statement=long_statement,
+            intended_role="setup",
+            linked_obligation_ids=("obl-1",),
+            linked_claim_ids=("claim-1",),
+        ),
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    from code2paper.agentic.publication_quality import heading_is_truncated
+
+    ranking = next(section for section in plan.sections if section.section_id == "MA-S1")
+    assert ranking.heading != long_statement
+    assert not heading_is_truncated(ranking.heading)
+    assert any(
+        constraint.startswith("author_statement:")
+        and long_statement in constraint
+        for constraint in ranking.heading_constraints
+    )
+
+
+def test_wp1_motivation_role_not_appended_when_title_already_starts_with_motivation() -> None:
+    from code2paper.agentic.method_architect import (
+        _CandidateRowEntry,
+        _planning_section_heading,
+    )
+
+    title = (
+        "Motivation: limitations of vanilla SSMs – they ignore irregular "
+        "timespans and are vulnerable to input noise Motivation"
+    )
+    node = AuthorStoryNodeV1(
+        story_node_id="story:motivation",
+        title=title,
+        author_statement=title,
+        intended_role="motivation",
+        linked_obligation_ids=("obl-1",),
+        linked_claim_ids=("claim-1",),
+    )
+    row = MethodCompletenessItemV1(
+        obligation_id="obl-1",
+        status="supported_by_repository",
+        claim_ids=("claim-1",),
+        importance="critical",
+        reason="fixture",
+        next_action="run scoped repository research",
+    )
+    heading, constraints = _planning_section_heading(
+        title,
+        bucket=[_CandidateRowEntry(row, node)],
+    )
+    from code2paper.agentic.publication_quality import heading_is_truncated
+
+    assert not heading.endswith("Motivation")
+    assert heading.lower().count("motivation") == 1
+    assert not heading_is_truncated(heading)
+    assert any(item.startswith("author_statement:") for item in constraints)
+
+
+def test_formalization_required_row_routes_to_equation_not_limitations() -> None:
+    claim_set = _claim_set()
+    completeness = _matrix({
+        "obl-1": "supported_by_repository",
+        "obl-2": "supported_by_repository",
+    })
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id=completeness.repo_snapshot_id,
+        project_tree_hash=completeness.project_tree_hash,
+        items=[
+            *completeness.items,
+            MethodCompletenessItemV1(
+                obligation_id="obl-formula",
+                role="loss",
+                statement="The contrastive objective needs a derivation.",
+                status="formalization_required",
+                claim_ids=(),
+                importance="high",
+                next_action="formalize the loss expression",
+            ),
+        ],
+    )
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+    )
+    formula_unit = next(
+        unit for unit in plan.argument_units
+        if "obl-formula" in unit.source_obligation_ids
+    )
+    assert "equation_or_derivation" in formula_unit.allowed_expository_moves
+    assert "limitations_or_mismatch" not in formula_unit.allowed_expository_moves
+    assert "formal_derivation" in formula_unit.authority_lanes
+
+
+def test_partial_row_routes_to_owning_content_move_not_limitations() -> None:
+    """WP1: ordinary partial support is not the generic limitations bucket."""
+
+    from code2paper.agentic.method_architect import _derive_move_and_lane
+
+    class _Row:
+        status = "partially_supported_by_repository"
+        role = "encoder"
+        next_action = ""
+        authority_lane = "executable_hard"
+
+    move, lane = _derive_move_and_lane(_Row())
+    assert move == "algorithm_or_data_flow"
+    assert move != "limitations_or_mismatch"
+    assert lane == "executable_hard"
+
+
+def test_author_confirmation_row_does_not_route_to_limitations() -> None:
+    from code2paper.agentic.method_architect import _derive_move_and_lane
+
+    class _Row:
+        status = "author_confirmation_required"
+        role = "rationale"
+        next_action = "request an explicit author confirmation artifact"
+        authority_lane = "author_attested"
+
+    move, lane = _derive_move_and_lane(_Row())
+    assert move != "limitations_or_mismatch"
+    assert lane == "author_attested"
+
+
+def test_stage_activation_claims_bind_to_first_retrieval_not_motivation() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-stage",
+                text=(
+                    "frontier expansion multiplies parent score by contextual "
+                    "similarity then prunes scores below a threshold"
+                ),
+                obligation_id="O-STAGE-02",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-activate",
+                name="Entity activation via local semantic bridging",
+                purpose="Initialize, propagate, and prune frontier scores",
+                ordered_claim_ids=["claim-stage"],
+                covers_obligation_ids=["O-STAGE-02"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    org_rows = [
+        ("O-ORGANIZATION-01", "Motivation: revisit graph retrieval shortcomings"),
+        ("O-ORGANIZATION-02", "Overview: hierarchical graph and two-stage retrieval philosophy"),
+        ("O-ORGANIZATION-03", "Offline construction of corpus units and adjacency"),
+        ("O-ORGANIZATION-04", "First retrieval: local activation via semantic bridging"),
+        ("O-ORGANIZATION-05", "Second retrieval: global rank aggregation"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-02",
+                role="pipeline_step",
+                statement="Entity activation via local semantic bridging",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    bound = {
+        section.heading: [
+            claim_id
+            for unit_id in section.argument_unit_ids
+            for unit in plan.argument_units
+            if unit.argument_unit_id == unit_id
+            for claim_id in unit.claim_ids
+        ]
+        for section in plan.sections
+    }
+    first = next(
+        heading for heading in bound
+        if "first retrieval" in heading.casefold() or "activation" in heading.casefold()
+    )
+    motivation = next(heading for heading in bound if "motivation" in heading.casefold())
+    assert "claim-stage" in bound[first]
+    assert "claim-stage" not in bound[motivation]
+    motivation_unit = next(
+        unit for unit in plan.argument_units
+        if "motivation" in unit.research_question.casefold()
+        or unit.argument_unit_id.startswith("MA-S1")
+    )
+    assert "equation_or_derivation" not in set(motivation_unit.allowed_expository_moves)
+    motivation_section = next(
+        section for section in plan.sections if "motivation" in section.heading.casefold()
+    )
+    assert "mechanism_overview" not in {move.move for move in motivation_section.moves}
+    assert "equation_or_derivation" not in {move.move for move in motivation_section.moves}
+
+
+def test_stage_encoding_claims_fold_into_architecture_not_framework() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-hybrid",
+                text=(
+                    "The encoder applies shared full attention and a dedicated "
+                    "masked attention over same-document passages."
+                ),
+                obligation_id="O-STAGE-08",
+            ),
+            _claim(
+                "claim-aug",
+                text=(
+                    "Each passage embedding is augmented with a document identity "
+                    "vector and a sinusoidal position encoding."
+                ),
+                obligation_id="O-STAGE-07",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-hybrid",
+                name="Hybrid-attention encoding",
+                purpose="Explain the hybrid attention encoder.",
+                ordered_claim_ids=["claim-hybrid"],
+                covers_obligation_ids=["O-STAGE-08"],
+                organization_priority=1,
+            ),
+            SemanticStageGroupV1(
+                stage_id="stage-aug",
+                name="Structural augmentation of retrieved passages",
+                purpose="Explain document-identity and position augmentation.",
+                ordered_claim_ids=["claim-aug"],
+                covers_obligation_ids=["O-STAGE-07"],
+                organization_priority=2,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    org_rows = [
+        ("O-ORGANIZATION-01", "Motivation: efficiency and cross-passage inference"),
+        (
+            "O-ORGANIZATION-02",
+            "Embedding-based ranking formulation and overall framework",
+        ),
+        (
+            "O-ORGANIZATION-03",
+            "Architecture details: enriching embeddings with document identity and position",
+        ),
+        ("O-ORGANIZATION-04", "Training objective"),
+        ("O-ORGANIZATION-05", "Inference procedure"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-08",
+                role="pipeline_step",
+                statement="Hybrid-attention encoding",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-07",
+                role="pipeline_step",
+                statement="Structural augmentation of retrieved passages",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    headings = [section.heading for section in plan.sections]
+    joined = " ".join(headings).casefold()
+    assert "hybrid-attention encoding" not in joined
+    assert "structural augmentation of retrieved" not in joined
+    bound = {
+        section.heading: [
+            claim_id
+            for unit_id in section.argument_unit_ids
+            for unit in plan.argument_units
+            if unit.argument_unit_id == unit_id
+            for claim_id in unit.claim_ids
+        ]
+        for section in plan.sections
+    }
+    architecture = next(
+        heading for heading in bound if "architecture" in heading.casefold()
+    )
+    framework = next(
+        heading for heading in bound if "framework" in heading.casefold()
+    )
+    training = next(
+        heading for heading in bound if "training" in heading.casefold()
+    )
+    motivation = next(
+        heading for heading in bound if "motivation" in heading.casefold()
+    )
+    assert "claim-hybrid" in bound[architecture]
+    assert "claim-aug" in bound[architecture]
+    assert "claim-hybrid" not in bound[framework]
+    assert "claim-aug" not in bound[framework]
+    assert "claim-hybrid" not in bound[training]
+    assert "claim-hybrid" not in bound[motivation]
+
+
+def test_motivation_goal_text_does_not_steal_stage_activation() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-stage",
+                text=(
+                    "frontier expansion multiplies parent score by contextual "
+                    "similarity then prunes scores below a threshold"
+                ),
+                obligation_id="O-STAGE-02",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-activate",
+                name="Entity activation via local semantic bridging",
+                purpose="Initialize, propagate, and prune frontier scores",
+                ordered_claim_ids=["claim-stage"],
+                covers_obligation_ids=["O-STAGE-02"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    org_rows = [
+        (
+            "O-ORGANIZATION-01",
+            "Motivation: a two-stage retrieval approach (entity activation via semantic bridging)",
+        ),
+        ("O-ORGANIZATION-02", "Overview: hierarchical graph philosophy"),
+        ("O-ORGANIZATION-03", "Offline construction of corpus units"),
+        ("O-ORGANIZATION-04", "First retrieval: local activation via semantic bridging"),
+        ("O-ORGANIZATION-05", "Second retrieval: global rank aggregation"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-02",
+                role="pipeline_step",
+                statement="Entity activation via local semantic bridging",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    bound = {
+        section.heading: [
+            claim_id
+            for unit_id in section.argument_unit_ids
+            for unit in plan.argument_units
+            if unit.argument_unit_id == unit_id
+            for claim_id in unit.claim_ids
+        ]
+        for section in plan.sections
+    }
+    first = next(
+        heading for heading in bound
+        if "first retrieval" in heading.casefold() or "activation" in heading.casefold()
+        and "motivation" not in heading.casefold()
+    )
+    motivation = next(heading for heading in bound if "motivation" in heading.casefold())
+    assert "claim-stage" in bound[first]
+    assert "claim-stage" not in bound[motivation]
+
+
+def test_stage_claim_with_mainline_covers_still_binds_first_retrieval() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-stage",
+                text=(
+                    "frontier expansion multiplies parent score by contextual "
+                    "similarity then prunes scores below a threshold"
+                ),
+                obligation_id="O-METHOD-MAINLINE-01",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-activate",
+                name="Entity activation via local semantic bridging",
+                purpose="Initialize, propagate, and prune frontier scores",
+                ordered_claim_ids=["claim-stage"],
+                covers_obligation_ids=["O-STAGE-02"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    org_rows = [
+        (
+            "O-ORGANIZATION-01",
+            "Motivation: a two-stage retrieval approach (entity activation via semantic bridging)",
+        ),
+        ("O-ORGANIZATION-02", "Overview: hierarchical graph philosophy"),
+        ("O-ORGANIZATION-03", "Offline construction of corpus units"),
+        ("O-ORGANIZATION-04", "First retrieval: local activation via semantic bridging"),
+        ("O-ORGANIZATION-05", "Second retrieval: global rank aggregation"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-02",
+                role="pipeline_step",
+                statement="Entity activation via local semantic bridging",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            MethodCompletenessItemV1(
+                obligation_id="O-METHOD-MAINLINE-01",
+                role="method_mainline",
+                statement="Two-stage retrieval over an occurrence graph",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    bound = {
+        section.heading: [
+            claim_id
+            for unit_id in section.argument_unit_ids
+            for unit in plan.argument_units
+            if unit.argument_unit_id == unit_id
+            for claim_id in unit.claim_ids
+        ]
+        for section in plan.sections
+    }
+    first = next(
+        heading for heading in bound
+        if "first retrieval" in heading.casefold() or (
+            "activation" in heading.casefold() and "motivation" not in heading.casefold()
+        )
+    )
+    motivation = next(heading for heading in bound if "motivation" in heading.casefold())
+    assert "claim-stage" in bound[first]
+    assert "claim-stage" not in bound[motivation]
+
+
+def test_short_stage_encoding_heading_folds_into_long_organization_title() -> None:
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[
+            _claim(
+                "claim-encode",
+                text="first-hop interaction sequences are encoded with node edge time and co-occurrence signals",
+                obligation_id="O-STAGE-01",
+            ),
+        ],
+        semantic_stage_groups=[
+            SemanticStageGroupV1(
+                stage_id="stage-encode",
+                name="Dynamic graph encoding",
+                purpose="Encode first-hop sequences.",
+                ordered_claim_ids=["claim-encode"],
+                covers_obligation_ids=["O-STAGE-01"],
+                organization_priority=1,
+            ),
+        ],
+        content_digest="sha256:claims",
+    )
+    org_rows = [
+        (
+            "O-ORGANIZATION-01",
+            "Dynamic graph encoding: how interaction sequences are represented "
+            "with heterogeneous features and aligned",
+        ),
+        ("O-ORGANIZATION-02", "Motivation: limitations of vanilla state space models"),
+        ("O-ORGANIZATION-03", "Redesign: timespan-informed step size"),
+    ]
+    completeness = MethodCompletenessMatrixV1(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        items=[
+            MethodCompletenessItemV1(
+                obligation_id="O-STAGE-01",
+                role="pipeline_step",
+                statement="Dynamic graph encoding",
+                status="supported_by_repository",
+                importance="critical",
+            ),
+            *[
+                MethodCompletenessItemV1(
+                    obligation_id=obligation_id,
+                    role="organization",
+                    statement=title,
+                    status="unverified_by_repository",
+                    importance="high",
+                )
+                for obligation_id, title in org_rows
+            ],
+        ],
+    )
+    spine = [
+        AuthorStoryNodeV1(
+            story_node_id=f"story:{obligation_id}",
+            title=title,
+            author_statement=title,
+            linked_obligation_ids=(obligation_id,),
+        )
+        for obligation_id, title in org_rows
+    ]
+    plan, _readiness, _trace = build_method_section_plan_with_product_readiness(
+        claims=claim_set,
+        completeness=completeness,
+        story_spine=spine,
+    )
+    encoding_headings = [
+        section.heading for section in plan.sections
+        if "encoding" in section.heading.casefold()
+    ]
+    assert len(encoding_headings) == 1
+    bound = {
+        claim_id
+        for unit in plan.argument_units
+        for claim_id in unit.claim_ids
+    }
+    assert "claim-encode" in bound
+    motivation = next(section.heading for section in plan.sections if "motivation" in section.heading.casefold())
+    motivation_claims = [
+        claim_id
+        for section in plan.sections
+        if section.heading == motivation
+        for unit_id in section.argument_unit_ids
+        for unit in plan.argument_units
+        if unit.argument_unit_id == unit_id
+        for claim_id in unit.claim_ids
+    ]
+    assert "claim-encode" not in motivation_claims

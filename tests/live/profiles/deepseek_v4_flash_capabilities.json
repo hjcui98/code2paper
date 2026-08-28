@@ -1,0 +1,13 @@
+{
+  "profile_name": "deepseek_v4_flash",
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "response_mode": "json_object",
+  "source": "remote_gateway",
+  "inference_mode": "",
+  "tensor_parallel_size": 1,
+  "speculative_tokens": 0,
+  "draft_tensor_parallel_size": 1,
+  "assistant_model_name": "",
+  "max_model_len": 131072
+}

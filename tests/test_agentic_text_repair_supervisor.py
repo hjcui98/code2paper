@@ -185,6 +185,31 @@ def test_derive_repair_issues_records_missing_relation_hint() -> None:
     assert "relation_evidence: none" in issues[0].missing_fact_or_relation
 
 
+def test_derive_repair_issues_formula_hint_requires_verbatim_qualifier() -> None:
+    """``formula_not_in_direct_evidence`` must carry the exact qualifier
+    comparison tokens.
+
+    The validator extracts comparison formulas greedily up to punctuation, so
+    ``under i == 0 and case_study configuration`` becomes the formula token
+    ``i == 0 and case_study configuration`` and no longer matches the frozen
+    qualifier.  The repair hint must tell the Rewrite to reproduce the
+    comparison verbatim and keep the general-path formula outside the branch
+    scope."""
+    report = _report([
+        _verdict(
+            "c1",
+            failures=["formula_not_in_direct_evidence"],
+            matched_projection_claim_ids=["proj-1"],
+        ),
+    ])
+    issues = derive_repair_issues(report)
+    hint = issues[0].missing_fact_or_relation
+    assert "formula_comparison_must_be_verbatim" in hint
+    assert "i == 0 and case_study" in hint
+    assert "required_qualifiers" in hint
+    assert "qualifier A" in hint
+
+
 def test_derive_repair_issues_empty_report_produces_no_issues() -> None:
     report = _report([])
     issues = derive_repair_issues(report)
@@ -296,3 +321,47 @@ def test_repair_issue_contract_is_frozen_and_forbids_extra_fields() -> None:
         raise AssertionError("TextRepairIssueV1 should forbid extra fields")
     except (pydantic.ValidationError, TypeError):
         pass
+
+
+# ---------------------------------------------------------------------------
+# Plan 14.4: exact qualifier payload must reach the Rewrite owner
+# ---------------------------------------------------------------------------
+
+
+def test_required_qualifier_missing_carries_exact_qualifier_tokens() -> None:
+    """The Rewrite owner needs the exact qualifier, not a generic hint."""
+    verdict = TextClaimEvidenceVerdict(
+        atomic_claim_id="FAC-Q1",
+        status="unsupported",
+        unsupported_fragment="The encoder reads the input.",
+        required_qualifiers=["case_study", "mode == 'train'"],
+        deterministic_failures=["required_qualifier_missing"],
+        model_verdict="",
+        rationale="required qualifier missing",
+        repair_action="preserve_required_qualifiers",
+    )
+    issues = derive_repair_issues(_report([verdict]))
+    assert len(issues) == 1
+    issue = issues[0]
+    assert issue.failure_type == "missing_qualifier"
+    assert issue.allowed_repair_scope == "wording_only"
+    assert "case_study" in issue.missing_fact_or_relation
+    assert "mode == 'train'" in issue.missing_fact_or_relation
+    assert issue.offending_fragment == "The encoder reads the input."
+
+
+def test_non_qualifier_failures_keep_evidence_hint() -> None:
+    verdict = TextClaimEvidenceVerdict(
+        atomic_claim_id="FAC-E1",
+        status="unsupported",
+        unsupported_fragment="The encoder reads the input.",
+        required_qualifiers=[],
+        deterministic_failures=["direct_evidence_missing"],
+        model_verdict="",
+        rationale="no evidence",
+        repair_action="drop_or_gap",
+    )
+    issues = derive_repair_issues(_report([verdict]))
+    assert len(issues) == 1
+    assert issues[0].failure_type == "unsupported_rationale"
+    assert "direct_evidence: none" in issues[0].missing_fact_or_relation

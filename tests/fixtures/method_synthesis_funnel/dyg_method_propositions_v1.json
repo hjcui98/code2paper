@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "prose_copied_from_paper": false,
+  "project_id": "dyg_mamba",
+  "propositions": [
+    {"proposition_id": "first_hop_interaction_sequence", "importance": "critical", "stage1": true, "expected_h2": "encoding", "content_class": "code_only", "required_alias_groups": [["first-hop", "first hop", "interaction sequence"], ["node"]]},
+    {"proposition_id": "four_heterogeneous_signals", "importance": "critical", "stage1": true, "expected_h2": "encoding", "content_class": "intent_code_fusion", "required_alias_groups": [["node"], ["edge"], ["time", "temporal"], ["co-occurrence", "cooccurrence", "frequency"]]},
+    {"proposition_id": "concat_aligned_encoding", "importance": "major", "stage1": true, "expected_h2": "encoding", "content_class": "code_only", "required_alias_groups": [["concat"], ["embed", "encod"]]},
+    {"proposition_id": "independent_src_dst_encoders", "importance": "major", "stage1": false, "expected_h2": "downstream", "content_class": "code_only", "required_alias_groups": [["source"], ["destination"], ["encoder", "independent"]]},
+    {"proposition_id": "vanilla_ssm_ignores_irregular_timespan", "importance": "critical", "stage1": false, "expected_h2": "motivation", "content_class": "intent_only", "required_alias_groups": [["irregular", "timespan", "time gap"], ["ssm", "mamba"]]},
+    {"proposition_id": "vanilla_ssm_input_noise", "importance": "critical", "stage1": false, "expected_h2": "motivation", "content_class": "intent_only", "required_alias_groups": [["noise"], ["ssm", "input"]]},
+    {"proposition_id": "dt_learnable_timespan_function", "importance": "critical", "stage1": false, "expected_h2": "redesign", "content_class": "intent_code_fusion", "required_alias_groups": [["delta", "step size", "dt", "timespan"], ["learnable", "monoton"]]},
+    {"proposition_id": "ebbinghaus_forgetting", "importance": "major", "stage1": false, "expected_h2": "redesign", "content_class": "intent_only", "required_alias_groups": [["forget", "decay", "ebbinghaus"], ["time"]]},
+    {"proposition_id": "a_negative_real_eigenvalues", "importance": "critical", "stage1": false, "expected_h2": "redesign", "content_class": "intent_code_fusion", "required_alias_groups": [["eigen", "diagonal", "negative"], ["stable", "decay", "forget"]]},
+    {"proposition_id": "bc_input_dependent", "importance": "critical", "stage1": false, "expected_h2": "redesign", "content_class": "intent_code_fusion", "required_alias_groups": [["input-dependent", "input dependent", "data-dependent"], ["b", "c", "projection"]]},
+    {"proposition_id": "spectral_norm_constraint", "importance": "critical", "stage1": false, "expected_h2": "redesign", "content_class": "intent_code_fusion", "required_alias_groups": [["spectral", "lipschitz", "norm"], ["robust", "noise", "constraint"]]},
+    {"proposition_id": "time_mamba_branch", "importance": "major", "stage1": false, "expected_h2": "redesign", "content_class": "code_only", "required_alias_groups": [["time_mamba", "dts", "mamba"]]},
+    {"proposition_id": "mean_pool_mlp_linkpred", "importance": "major", "stage1": false, "expected_h2": "downstream", "content_class": "intent_code_fusion", "required_alias_groups": [["pool", "mean"], ["mlp", "link"]]},
+    {"proposition_id": "node_class_single_encoder", "importance": "major", "stage1": false, "expected_h2": "downstream", "content_class": "code_only", "required_alias_groups": [["node classification", "classification"], ["co-occurrence", "omitted", "without"]]},
+    {"proposition_id": "bce_link_loss", "importance": "supporting", "stage1": false, "expected_h2": "downstream", "content_class": "code_only", "required_alias_groups": [["cross-entropy", "bce", "binary"], ["loss"]]},
+    {"proposition_id": "topk_or_padding_readout", "importance": "major", "stage1": false, "expected_h2": "encoding", "content_class": "code_only", "required_alias_groups": [["pad", "topk", "top-k", "softmax"]]},
+    {"proposition_id": "linear_complexity_claim", "importance": "optional", "stage1": false, "expected_h2": "downstream", "content_class": "intent_only", "required_alias_groups": [["linear"], ["complex"]]}
+  ]
+}

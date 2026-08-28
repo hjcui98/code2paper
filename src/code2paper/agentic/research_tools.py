@@ -40,9 +40,9 @@ import json
 import re
 import shlex
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from code2paper.agentic.repo_snapshot import RepoSnapshot
 from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
@@ -69,6 +69,7 @@ from code2paper.agentic.generic_fact_compiler import (
 )
 from code2paper.agentic.research_models import (
     ResearchObservationDiagnosticsV1,
+    ResearchObservationNotebookV1,
     ResearchObservationV1,
     ResearchObservationStatus,
     ResearchToolCallV1,
@@ -251,6 +252,31 @@ class ResearchToolContext(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def _bounded_excerpt(
+    text: str,
+    *,
+    start_line: int,
+    end_line: int,
+    max_chars: int = 2400,
+) -> str:
+    """Return a numbered, bounded source window for model reasoning.
+
+    This is a model-visible projection only.  Evidence authorization still
+    uses the exact source span recorded on the observation.
+    """
+
+    lines = text.splitlines()
+    start = max(1, start_line)
+    end = min(len(lines), max(start, end_line))
+    rendered = "\n".join(
+        f"{line_no}: {lines[line_no - 1]}"
+        for line_no in range(start, end + 1)
+    )
+    if len(rendered) <= max_chars:
+        return rendered
+    return rendered[:max_chars].rstrip() + "\n…"
+
+
 class _ResearchToolInputBase(BaseModel):
     """Common fields every research tool input must carry (R1.2)."""
 
@@ -380,6 +406,12 @@ class ReadCodeSpanInput(_ResearchToolInputBase):
             raise ValueError("start_line must be >= 1")
         return value
 
+    @model_validator(mode="after")
+    def _ordered_lines(self) -> "ReadCodeSpanInput":
+        if self.end_line and self.end_line < self.start_line:
+            raise ValueError("end_line must be 0 or >= start_line")
+        return self
+
 
 class InspectConfigurationInput(_ResearchToolInputBase):
     """Input schema for ``inspect_configuration``."""
@@ -413,8 +445,15 @@ class TraceCallPathInput(_ResearchToolInputBase):
 class TraceDataFlowInput(_ResearchToolInputBase):
     """Input schema for ``trace_data_flow``."""
 
-    symbol: str = ""
-    direction: str = "both"
+    symbol: str
+    direction: Literal["upstream", "downstream", "forward", "backward", "both"] = "both"
+
+    @field_validator("symbol")
+    @classmethod
+    def _symbol_required(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("symbol must not be empty")
+        return value
 
 
 class InspectControlFlowInput(_ResearchToolInputBase):
@@ -667,7 +706,14 @@ def search_symbols(
                     query,
                     source_cache=source_cache,
                 )
-            score = identifier_score * 10 + source_score
+            # Identifier matches are excellent exact hints, but path tokens
+            # contribute only a one-point fallback inside
+            # ``_symbol_query_score``. Multiplying that weak path hit by ten
+            # caused every helper in ``feature_utils.py`` to outrank a longer
+            # method whose body actually implemented the requested feature
+            # assembly. Let exact/partial symbol hits dominate naturally while
+            # keeping source-body semantics competitive with path-only noise.
+            score = identifier_score * 4 + source_score * 3
             if score > 0:
                 scored.append((score, entry))
         candidates = [
@@ -702,6 +748,9 @@ def search_symbols(
     result_refs = tuple(
         f"symbol:{entry.path}:{entry.symbol}:{entry.start_line}" for entry in selected
     )
+    symbol_names = tuple(
+        f"{entry.path}::{entry.symbol}" for entry in selected[:10]
+    )
     return make_observation(
         tool_call=tool_call,
         status="success" if not truncated else "truncated",
@@ -712,6 +761,14 @@ def search_symbols(
             truncated=truncated,
             ambiguous=_candidates_ambiguous(selected),
             notes=(f"total_matches={len(candidates)}", f"query={query}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Symbol search for {query!r} returned {len(selected)} ranked "
+                "candidates. Select a concrete candidate to read, or change "
+                "the query if these symbols do not answer the research question."
+            ),
+            discovered_symbols=symbol_names,
         ),
     )
 
@@ -766,6 +823,18 @@ def read_symbol(
                         candidate_count=1,
                         notes=(f"language_adapter={adapter.language}", f"symbol={symbol}", f"lines={start_line}-{end_line}"),
                     ),
+                    notebook=ResearchObservationNotebookV1(
+                        summary=(
+                            f"Read {symbol} in {rel_path} at lines "
+                            f"{start_line}-{end_line}."
+                        ),
+                        code_excerpt=_bounded_excerpt(
+                            file_text,
+                            start_line=start_line,
+                            end_line=end_line,
+                        ),
+                        discovered_symbols=(f"{rel_path}::{symbol}",),
+                    ),
                 )
         # Unsupported text files are exposed as a single span so the
         # supervisor can still read them without inventing a symbol range.
@@ -779,6 +848,14 @@ def read_symbol(
             diagnostics=ResearchObservationDiagnosticsV1(
                 candidate_count=1,
                 notes=("non_python_file", f"path={rel_path}"),
+            ),
+            notebook=ResearchObservationNotebookV1(
+                summary=f"Read non-Python source file {rel_path}.",
+                code_excerpt=_bounded_excerpt(
+                    file_text,
+                    start_line=1,
+                    end_line=line_count,
+                ),
             ),
         )
 
@@ -820,6 +897,19 @@ def read_symbol(
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
             notes=(f"symbol={symbol}", f"lines={start_line}-{end_line}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Read {symbol} in {rel_path} at lines {start_line}-{end_line}. "
+                "Use the excerpt to decide whether this code answers the active "
+                "question and what caller, data, branch, or configuration to inspect next."
+            ),
+            code_excerpt=_bounded_excerpt(
+                file_text,
+                start_line=start_line,
+                end_line=end_line,
+            ),
+            discovered_symbols=(f"{rel_path}::{symbol}",),
         ),
     )
 
@@ -892,6 +982,15 @@ def find_references(
             ambiguous=_references_ambiguous(references, symbol_name),
             notes=(f"symbol={symbol_name}", f"matches={len(references)}"),
         ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Found {len(references)} usages of {symbol_name}; inspect a "
+                "specific caller or use a trace when its role in the method is unclear."
+            ),
+            discovered_relations=tuple(
+                f"usage:{path}:{line_no}" for path, line_no, _ in references[:12]
+            ),
+        ),
     )
 
 
@@ -947,6 +1046,10 @@ def list_repository_tree(
             candidate_count=len(matched),
             truncated=truncated,
             notes=(f"files={len(matched)}", f"scope={scope_paths or ('.',)}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=f"Listed {len(matched)} repository files in the requested scope.",
+            discovered_symbols=tuple(matched[:20]),
         ),
     )
 
@@ -1011,6 +1114,15 @@ def search_code(
             truncated=truncated,
             notes=(f"query={query}", f"matches={len(matches)}"),
         ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Code search for {query!r} returned {len(matches)} exact line hits. "
+                "Read one or more relevant spans to understand their semantics."
+            ),
+            discovered_relations=tuple(
+                f"text-hit:{path}:{line}" for path, line, _ in matches[:20]
+            ),
+        ),
     )
 
 
@@ -1060,14 +1172,52 @@ def read_code_span(
         )
 
     authority = classify_source_authority(rel_path)
+    enclosing_refs: tuple[str, ...] = ()
+    if rel_path.endswith(".py"):
+        try:
+            tree = ast.parse(file_text)
+        except SyntaxError:
+            tree = None
+        if tree is not None:
+            candidates = [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                and int(getattr(node, "lineno", 0) or 0) <= start_line
+                <= int(getattr(node, "end_lineno", getattr(node, "lineno", 0)) or 0)
+            ]
+            if candidates:
+                enclosing = min(
+                    candidates,
+                    key=lambda node: (
+                        int(getattr(node, "end_lineno", node.lineno)) - int(node.lineno),
+                        -int(node.lineno),
+                    ),
+                )
+                enclosing_refs = (
+                    build_symbol_ref(rel_path, enclosing.name, int(enclosing.lineno)),
+                )
     return make_observation(
         tool_call=tool_call,
         status="success",
         source_authority=authority,
         exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
+        result_refs=enclosing_refs,
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
             notes=(f"path={rel_path}", f"lines={start_line}-{end_line}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=f"Read {rel_path} lines {start_line}-{end_line}.",
+            code_excerpt=_bounded_excerpt(
+                file_text,
+                start_line=start_line,
+                end_line=end_line,
+            ),
+            discovered_symbols=tuple(
+                ref.split(":", 1)[-1] for ref in enclosing_refs
+            ),
+            enclosing_symbol_refs=enclosing_refs,
         ),
     )
 
@@ -1162,6 +1312,17 @@ def inspect_configuration(
                 f"runtime_bindings={runtime_count}",
             ),
         ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Configuration inspection found {len(bindings)} bindings for "
+                f"{config_key or 'the requested scope'}; read the relevant lines "
+                "before describing defaults or runtime behavior."
+            ),
+            discovered_relations=tuple(
+                f"config:{path}:{line}:{key}"
+                for path, line, _, key in bindings[:20]
+            ),
+        ),
     )
 
 
@@ -1227,6 +1388,20 @@ def build_behavior_subgraph(
                         truncated=len(operations) >= node_budget,
                         notes=(f"language_adapter={adapter.language}", f"symbol={matched.qualified_name}"),
                     ),
+                    notebook=ResearchObservationNotebookV1(
+                        summary=(
+                            f"Extracted {min(len(operations), node_budget)} "
+                            f"operations from {matched.qualified_name} in {rel_path}."
+                        ),
+                        code_excerpt=_bounded_excerpt(
+                            file_text,
+                            start_line=matched.start_line,
+                            end_line=matched.end_line,
+                        ),
+                        discovered_relations=tuple(
+                            f"operation:{item}" for item in operations[:20]
+                        ),
+                    ),
                 )
         return make_observation(
             tool_call=tool_call,
@@ -1273,6 +1448,14 @@ def build_behavior_subgraph(
             candidate_count=len(nodes),
             truncated=truncated,
             notes=(f"symbol={symbol}", f"path={rel_path}", f"nodes={len(nodes)}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Extracted {len(nodes)} executable operations from {symbol} in "
+                f"{rel_path}; use them to assess whether the active method question "
+                "is answered or needs a relation/configuration trace."
+            ),
+            discovered_relations=tuple(f"operation:{node}" for node in nodes[:20]),
         ),
     )
 
@@ -1408,6 +1591,11 @@ def trace_data_flow(
     if not symbol:
         return _invalid_request(tool_call, "symbol must not be empty")
     direction = str(_arg_value(tool_call, "direction", default="both") or "both")
+    # Legacy aliases stay readable in checkpoints and direct tool callers;
+    # the model-visible contract uses upstream/downstream.
+    direction = {"forward": "downstream", "backward": "upstream"}.get(
+        direction, direction
+    )
     top_k = tool_call.top_k or 20
 
     symbol_name = symbol.split(".")[-1]
@@ -1454,6 +1642,16 @@ def trace_data_flow(
             candidate_count=len(flows),
             truncated=truncated,
             notes=(f"symbol={symbol_name}", f"direction={direction}", f"matches={len(flows)}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Data-flow inspection for {symbol_name} found {len(flows)} "
+                "assignment/return sites. Read the relevant windows before "
+                "treating them as method evidence."
+            ),
+            discovered_relations=tuple(
+                f"dataflow:{path}:{line}" for path, line, _ in flows[:12]
+            ),
         ),
     )
 
@@ -1537,6 +1735,15 @@ def inspect_control_flow(
             candidate_count=len(branches),
             truncated=truncated,
             notes=(f"symbol={symbol}", f"path={rel_path}", f"branches={len(branches)}"),
+        ),
+        notebook=ResearchObservationNotebookV1(
+            summary=(
+                f"Control-flow inspection found {len(branches)} branches or "
+                f"loops in {symbol or rel_path}."
+            ),
+            discovered_relations=tuple(
+                f"branch:{rel_path}:{line}:{kind}" for line, kind in branches[:12]
+            ),
         ),
     )
 
@@ -2766,7 +2973,19 @@ def _resolve_snapshot_path(snapshot: RepoSnapshot, candidate: str) -> str | None
     raw = (candidate or "").strip()
     if not raw:
         return None
-    cleaned = raw.replace("\\", "/").lstrip("./").lstrip("/")
+    normalized = raw.replace("\\", "/")
+    # Do not turn an external path into an apparently snapshot-relative path.
+    # ``lstrip('/.')`` used to accept ``/src/x.py`` and ``../src/x.py`` when
+    # the stripped suffix happened to exist in the frozen repository.
+    if normalized.startswith(("/", "//")) or re.match(r"^[A-Za-z]:/", normalized):
+        return None
+    if ".." in PurePosixPath(normalized).parts:
+        return None
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    cleaned = normalized.rstrip("/")
+    if not cleaned or cleaned == ".":
+        return None
     known = {file.path for file in snapshot.included_files}
     if cleaned in known:
         return cleaned
@@ -2876,6 +3095,19 @@ def _identifier_tokens(value: str) -> tuple[str, ...]:
         normalized.append(
             "dimension" if token in {"dim", "dims", "dimensional"} else token
         )
+    # Common repository identifiers compact an output width as ``f15``,
+    # ``d128`` or ``dim256``.  Treat those as retrieval aliases for an author
+    # phrase such as "15-dimensional"; this only ranks candidates and does
+    # not authorize a dimensional claim.
+    numeric_dimensions = [
+        token
+        for token in normalized
+        if token.isdigit()
+    ] if "dimension" in normalized else []
+    for width in numeric_dimensions:
+        for alias in (f"f{width}", f"d{width}", f"dim{width}"):
+            if alias not in normalized:
+                normalized.append(alias)
     return tuple(normalized)
 
 
@@ -3254,19 +3486,19 @@ def _find_data_flow(
 ) -> Iterable[int]:
     """Yield line numbers of data-flow events involving ``symbol_name``.
 
-    - ``forward``: assignments where ``symbol_name`` is the target;
-    - ``backward``: return statements referencing ``symbol_name``;
+    - ``downstream``: assignments where ``symbol_name`` is the target;
+    - ``upstream``: return statements referencing ``symbol_name``;
     - ``both``: both directions.
     """
 
     for node in ast.walk(tree):
-        if direction in ("forward", "both") and isinstance(node, ast.Assign):
+        if direction in ("downstream", "both") and isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == symbol_name:
                     yield int(getattr(node, "lineno", 0) or 0)
                 elif isinstance(target, ast.Attribute) and target.attr == symbol_name:
                     yield int(getattr(node, "lineno", 0) or 0)
-        if direction in ("backward", "both") and isinstance(node, ast.Return):
+        if direction in ("upstream", "both") and isinstance(node, ast.Return):
             if node.value is not None:
                 for sub in ast.walk(node.value):
                     if isinstance(sub, ast.Name) and sub.id == symbol_name:

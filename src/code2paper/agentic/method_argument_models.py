@@ -564,6 +564,8 @@ class MoveAuthorityProofV1(_MethodModel):
     request_ids: tuple[str, ...] = Field(default_factory=tuple)
     fulfillment_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
     fulfillment_artifact_digest: str = ""
+    unanchored: bool = False
+    unanchored_owner: str = ""
     content_digest: str = ""
 
     @field_validator("section_id", "move")
@@ -597,7 +599,7 @@ class MoveAuthorityProofV1(_MethodModel):
             raise ValueError("non-fulfilled move authority proofs cannot carry artifacts")
         if self.state in {"anchored", "bridge"} and self.unresolved_obligation_ids:
             raise ValueError("anchored/bridge move authority proofs cannot carry unresolved rows")
-        if self.state == "open" and not self.unresolved_obligation_ids:
+        if self.state == "open" and not self.unresolved_obligation_ids and not self.unanchored:
             raise ValueError("open move authority proofs require an unresolved obligation id")
         object.__setattr__(self, "content_digest", _digest(
             self.model_dump(mode="json", exclude={"content_digest"})
@@ -612,6 +614,19 @@ class MethodArgumentUnitV1(_MethodModel):
     section_role: str
     research_question: str
     design_objective: str = ""
+    proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    positive_proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    caveated_proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    proposition_order: tuple[str, ...] = Field(default_factory=tuple)
+    proposition_dependencies: tuple[tuple[str, str], ...] = Field(default_factory=tuple)
+    concept_card_ids: tuple[str, ...] = Field(default_factory=tuple)
+    verified_concept_card_ids: tuple[str, ...] = Field(default_factory=tuple)
+    caveated_concept_card_ids: tuple[str, ...] = Field(default_factory=tuple)
+    concept_card_order: tuple[str, ...] = Field(default_factory=tuple)
+    brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    verified_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    caveated_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    brief_order: tuple[str, ...] = Field(default_factory=tuple)
     claim_ids: tuple[str, ...] = Field(default_factory=tuple)
     equation_ids: tuple[str, ...] = Field(default_factory=tuple)
     configuration_ids: tuple[str, ...] = Field(default_factory=tuple)
@@ -638,9 +653,91 @@ class MethodArgumentUnitV1(_MethodModel):
     def _digest(self) -> "MethodArgumentUnitV1":
         if len(self.source_obligation_ids) != len(set(self.source_obligation_ids)):
             raise ValueError("argument unit contains duplicate source obligation ids")
+        for label, values in (
+            ("proposition", self.proposition_ids),
+            ("positive proposition", self.positive_proposition_ids),
+            ("caveated proposition", self.caveated_proposition_ids),
+            ("proposition order", self.proposition_order),
+            ("concept card", self.concept_card_ids),
+            ("verified concept card", self.verified_concept_card_ids),
+            ("caveated concept card", self.caveated_concept_card_ids),
+            ("concept card order", self.concept_card_order),
+            ("brief", self.brief_ids),
+            ("verified brief", self.verified_brief_ids),
+            ("caveated brief", self.caveated_brief_ids),
+            ("brief order", self.brief_order),
+        ):
+            if len(values) != len(set(values)):
+                raise ValueError(f"argument unit contains duplicate {label} ids")
+        typed = set(self.positive_proposition_ids) | set(self.caveated_proposition_ids)
+        if set(self.positive_proposition_ids) & set(self.caveated_proposition_ids):
+            raise ValueError("argument unit proposition authority classes overlap")
+        if typed and typed != set(self.proposition_ids):
+            raise ValueError("argument unit proposition classes are not closed")
+        if self.proposition_order and set(self.proposition_order) != set(self.proposition_ids):
+            raise ValueError("argument unit proposition order is not closed")
+        typed_concepts = set(self.verified_concept_card_ids) | set(
+            self.caveated_concept_card_ids
+        )
+        if set(self.verified_concept_card_ids) & set(self.caveated_concept_card_ids):
+            raise ValueError("argument unit concept authority classes overlap")
+        if typed_concepts and typed_concepts != set(self.concept_card_ids):
+            raise ValueError("argument unit concept classes are not closed")
+        if (
+            self.concept_card_order
+            and set(self.concept_card_order) != set(self.concept_card_ids)
+        ):
+            raise ValueError("argument unit concept card order is not closed")
+        typed_briefs = set(self.verified_brief_ids) | set(self.caveated_brief_ids)
+        if set(self.verified_brief_ids) & set(self.caveated_brief_ids):
+            raise ValueError("argument unit brief authority classes overlap")
+        if typed_briefs and typed_briefs != set(self.brief_ids):
+            raise ValueError("argument unit brief classes are not closed")
+        if self.brief_order and set(self.brief_order) != set(self.brief_ids):
+            raise ValueError("argument unit brief order is not closed")
+        if self.brief_ids and self.concept_card_ids:
+            raise ValueError("argument unit cannot bind briefs and concept cards together")
+        normalized_edges = tuple(dict.fromkeys(
+            (str(parent).strip(), str(child).strip())
+            for parent, child in self.proposition_dependencies
+            if str(parent).strip() and str(child).strip()
+        ))
+        if any(parent == child for parent, child in normalized_edges):
+            raise ValueError("argument unit proposition dependency contains a self-edge")
+        if any(set(edge) - set(self.proposition_ids) for edge in normalized_edges):
+            raise ValueError("argument unit proposition dependency is not closed")
+        indegree = {item: 0 for item in self.proposition_ids}
+        children = {item: [] for item in self.proposition_ids}
+        for parent, child in normalized_edges:
+            indegree[child] += 1
+            children[parent].append(child)
+        queue = [item for item in self.proposition_ids if indegree[item] == 0]
+        visited = 0
+        while queue:
+            parent = queue.pop(0)
+            visited += 1
+            for child in children[parent]:
+                indegree[child] -= 1
+                if indegree[child] == 0:
+                    queue.append(child)
+        if visited != len(self.proposition_ids):
+            raise ValueError("argument unit proposition dependency graph is cyclic")
+        object.__setattr__(self, "proposition_dependencies", normalized_edges)
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest(payload))
         return self
+
+
+class SectionContentOpenSlotV1(_MethodModel):
+    """Typed open slot owned by a specific authority lane."""
+
+    slot_id: str
+    owner: str
+    authority_lane: str
+    target_concept_key: str = ""
+    slot_kind: str
+    blocking_for_candidate: bool = False
+    blocking_for_verified: bool = False
 
 
 class SectionArgumentMoveV1(_MethodModel):
@@ -650,12 +747,75 @@ class SectionArgumentMoveV1(_MethodModel):
     information_budget: float = 1.0
     allowed_authority_lanes: tuple[AuthorityLaneV1, ...] = ("executable_hard",)
     required: bool = False
+    unanchored: bool = False
+    unanchored_owner: str = ""
     notes: tuple[str, ...] = Field(default_factory=tuple)
 
     @field_validator("paragraph_budget")
     @classmethod
     def _positive_budget(cls, value: int) -> int:
         return max(0, value)
+
+
+class SectionParagraphPlanV1(_MethodModel):
+    """Ordered paragraph contract derived from semantic slots.
+
+    Paragraph plans organize Writer output; they do not authorize facts.  All
+    positive content still requires the referenced semantic frame/evidence
+    bindings and the normal Candidate/Verified gates.
+    """
+
+    paragraph_id: str
+    paragraph_role: Literal[
+        "overview",
+        "construction",
+        "step_sequence",
+        "formula",
+        "interface",
+        "output",
+        "mismatch",
+    ] = "step_sequence"
+    argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_facet_ids: tuple[str, ...] = Field(default_factory=tuple)
+    ordered_semantic_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_edge_ids: tuple[str, ...] = Field(default_factory=tuple)
+    formula_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    expected_sentence_range: tuple[int, int] = (1, 4)
+    transition_from: str = ""
+    transition_to: str = ""
+    content_digest: str = ""
+
+    @field_validator("paragraph_id")
+    @classmethod
+    def _paragraph_required(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("paragraph plan requires a paragraph id")
+        return str(value).strip()
+
+    @field_validator(
+        "argument_unit_ids",
+        "required_facet_ids",
+        "ordered_semantic_slot_ids",
+        "required_edge_ids",
+        "formula_obligation_ids",
+    )
+    @classmethod
+    def _dedupe_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _clean_tuple(value)
+
+    @field_validator("expected_sentence_range")
+    @classmethod
+    def _sentence_range(cls, value: tuple[int, int]) -> tuple[int, int]:
+        if len(value) != 2 or value[0] < 1 or value[1] < value[0]:
+            raise ValueError("paragraph plan sentence range must be increasing")
+        return value
+
+    @model_validator(mode="after")
+    def _digest(self) -> "SectionParagraphPlanV1":
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
 
 
 class SectionArgumentGraphV1(_MethodModel):
@@ -666,11 +826,25 @@ class SectionArgumentGraphV1(_MethodModel):
     reader_question: str
     argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
     moves: tuple[SectionArgumentMoveV1, ...] = Field(default_factory=tuple)
+    paragraphs: tuple[SectionParagraphPlanV1, ...] = Field(default_factory=tuple)
     dependencies: tuple[str, ...] = Field(default_factory=tuple)
     unresolved_inputs: tuple[str, ...] = Field(default_factory=tuple)
     depth_budget: int = 1
     page_budget: float = 1.0
     incomplete: bool = False
+    # WP1 section content contract (single authority within the plan graph).
+    story_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    heading_constraints: tuple[str, ...] = Field(default_factory=tuple)
+    primary_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
+    supporting_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
+    audit_only_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
+    primary_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    supporting_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required_dataflow_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    formula_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    formula_not_applicable: bool = False
+    formula_not_applicable_reason: str = ""
+    open_slots: tuple[SectionContentOpenSlotV1, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -685,7 +859,14 @@ class SectionArgumentGraphV1(_MethodModel):
 
 
 class WritingResearchRequestV1(_MethodModel):
-    """A scoped request emitted while a section is being written."""
+    """A scoped request emitted while a section is being written.
+
+    ``concept_key`` / ``missing_parts`` / ``evidence_refs_used`` are the
+    Stage 5 concept-bearing payload: when the request targets a caveated
+    concept card, they record which concept is unresolved, which parts of
+    it are missing, and which evidence refs the card already binds.  They
+    are optional (proposition-lane requests omit them) and digest-covered.
+    """
 
     request_id: str
     section_id: str
@@ -697,8 +878,23 @@ class WritingResearchRequestV1(_MethodModel):
     current_known_facts: tuple[str, ...] = Field(default_factory=tuple)
     why_needed_for_reader: str = ""
     priority: Literal["critical", "high", "medium", "low"] = "medium"
-    status: Literal["open", "fulfilled", "author_review", "blocked"] = "open"
+    status: Literal["open", "partial", "fulfilled", "author_review", "blocked"] = "open"
     fulfilled_artifact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    concept_key: str = ""
+    missing_parts: tuple[str, ...] = Field(default_factory=tuple)
+    evidence_refs_used: tuple[str, ...] = Field(default_factory=tuple)
+    baseline_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_story_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
+    target_brief_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_clause_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_formula_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    mandatory_missing_slots: tuple[str, ...] = Field(default_factory=tuple)
+    baseline_fact_fingerprints: tuple[str, ...] = Field(default_factory=tuple)
+    baseline_claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    excluded_audit_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
+    satisfied_slots: tuple[str, ...] = Field(default_factory=tuple)
+    remaining_slots: tuple[str, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
     @field_validator("request_id", "section_id", "argument_unit_id", "exact_question")
@@ -706,6 +902,11 @@ class WritingResearchRequestV1(_MethodModel):
     def _required_binding_text(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("writing research request binding text must not be empty")
+        return value.strip()
+
+    @field_validator("concept_key")
+    @classmethod
+    def _optional_concept_key(cls, value: str) -> str:
         return value.strip()
 
     @model_validator(mode="after")
@@ -828,6 +1029,16 @@ class WritingResearchCallbackBundleV1(_MethodModel):
                 if set(artifact_ids) != set(request.fulfilled_artifact_ids):
                     raise ValueError(
                         f"fulfilled callback artifact IDs do not match request: {request.request_id}"
+                    )
+            elif request.status == "partial":
+                # Partial is real progress: remaining slots stay open, but any
+                # recorded artifact IDs must still match the validated items.
+                if request.fulfilled_artifact_ids and set(artifact_ids) != set(
+                    request.fulfilled_artifact_ids
+                ):
+                    raise ValueError(
+                        "partial callback artifact IDs do not match request: "
+                        + request.request_id
                     )
             elif request.fulfilled_artifact_ids:
                 raise ValueError(
@@ -982,7 +1193,7 @@ class MethodSectionPlanV2(_MethodModel):
             ):
                 raise ValueError("move authority proof crosses a unit section binding")
             unknown_obligations = set(proof.unresolved_obligation_ids) - set(assignment_by_id)
-            if unknown_obligations:
+            if unknown_obligations and not getattr(proof, "unanchored", False):
                 raise ValueError(
                     "move authority proof binds unknown obligations: "
                     + ",".join(sorted(unknown_obligations))
@@ -1198,6 +1409,41 @@ def _resolve_reference_status(
     return "unverified_by_repository"
 
 
+class SectionSentenceContentWitnessV1(_MethodModel):
+    """Sentence-scoped content witness binding prose to exact repository evidence."""
+
+    section_id: str
+    char_start: int
+    char_end: int
+    sentence_text: str = ""
+    concept_key: str = ""
+    exact_claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    exact_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    equation_or_formula_package_ids: tuple[str, ...] = Field(default_factory=tuple)
+    authority_lane: str = ""
+    completed_move_ids: tuple[str, ...] = Field(default_factory=tuple)
+    reverse_validation_status: str = "pending"
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _digest(self) -> "SectionSentenceContentWitnessV1":
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
+
+class SectionContentWitnessSetV1(_MethodModel):
+    schema_version: str = "1.0"
+    witnesses: tuple[SectionSentenceContentWitnessV1, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _digest(self) -> "SectionContentWitnessSetV1":
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
+
 __all__ = [
     "AUTHORITY_LANES",
     "AuthorityLaneV1",
@@ -1218,6 +1464,9 @@ __all__ = [
     "RhetoricalMoveV1",
     "SectionArgumentGraphV1",
     "SectionArgumentMoveV1",
+    "SectionContentOpenSlotV1",
+    "SectionContentWitnessSetV1",
+    "SectionSentenceContentWitnessV1",
     "WritingResearchRequestV1",
     "WritingResearchCallbackArtifactV1",
     "WritingResearchCallbackBundleV1",

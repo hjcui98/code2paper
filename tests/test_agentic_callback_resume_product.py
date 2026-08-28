@@ -231,9 +231,11 @@ def test_author_callback_produces_review_item_and_queue_artifact(
     ))
 
     def caller(_config, request):
+        grounding = request.input_payload.get("grounding_contract") or {}
+        unanchored = tuple(grounding.get("unanchored_required_moves") or ())
         return _callback_request(
             request,
-            moves_to_request=("limitations_or_mismatch",),
+            moves_to_request=unanchored[:1] or ("limitations_or_mismatch",),
         )
 
     result, outputs = run_publication_method_writer(
@@ -294,9 +296,11 @@ def test_literature_callback_produces_external_queue_artifact(tmp_path: Path) ->
     ))
 
     def caller(_config, request):
+        grounding = request.input_payload.get("grounding_contract") or {}
+        unanchored = tuple(grounding.get("unanchored_required_moves") or ())
         return _callback_request(
             request,
-            moves_to_request=("limitations_or_mismatch",),
+            moves_to_request=unanchored[:1] or ("limitations_or_mismatch",),
         )
 
     result, outputs = run_publication_method_writer(
@@ -345,9 +349,11 @@ def test_repository_callback_route_executes_locally_and_resumes_affected_section
     ))
 
     def caller(_config, request):
+        grounding = request.input_payload.get("grounding_contract") or {}
+        unanchored = tuple(grounding.get("unanchored_required_moves") or ())
         return _callback_request(
             request,
-            moves_to_request=("limitations_or_mismatch",),
+            moves_to_request=unanchored[:1] or ("limitations_or_mismatch",),
         )
 
     first, first_outputs = run_publication_method_writer(

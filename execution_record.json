@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "run_id": "replay",
+  "command": "scripts/run_authoring_replay.py .tmp/c2p-stage1-canary/run-linearrag  --repo /data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora --rebuild-authoring --persist-authoring-rebuild-manifest --profile tests/live/profiles/qwen38_vllm_budgeted.example.env",
+  "argv": [
+    "scripts/run_authoring_replay.py",
+    ".tmp/c2p-stage1-canary/run-linearrag",
+    "",
+    "--repo",
+    "/data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora",
+    "--rebuild-authoring",
+    "--persist-authoring-rebuild-manifest",
+    "--profile",
+    "tests/live/profiles/qwen38_vllm_budgeted.example.env"
+  ],
+  "exit_code": 143,
+  "frozen_root": "/home/cuihengjia/agent/Code2Paper copy/.tmp/c2p-stage1-canary/run-linearrag",
+  "fresh_root": "/home/cuihengjia/agent/Code2Paper copy",
+  "resume_section_ids": [],
+  "code_state_digest": "sha256:688133c938afce0514669cc713bb16d12851f981cdd1c0cd3a94a86b5a26915c",
+  "runtime": {
+    "start": {
+      "key": "start",
+      "recorded_at": "2026-08-22T10:01:01+0800",
+      "endpoint_origin": "http://127.0.0.1:8006",
+      "health": 200,
+      "models": [
+        "qwen38-27b-nvfp4"
+      ],
+      "running": 0,
+      "waiting": 0,
+      "gpu_cache_usage_perc": 0.0,
+      "max_model_len": 131072
+    },
+    "end": {
+      "key": "end",
+      "recorded_at": "2026-08-22T10:01:33+0800",
+      "endpoint_origin": "http://127.0.0.1:8006",
+      "health": 200,
+      "models": [
+        "qwen38-27b-nvfp4"
+      ],
+      "running": 2,
+      "waiting": 0,
+      "gpu_cache_usage_perc": 0.0,
+      "max_model_len": 131072
+    }
+  },
+  "reused_fulfilled_callback_ids": [],
+  "writer_resumed_section_ids": [],
+  "writer_status": "",
+  "writer_blocked_reason": "",
+  "candidate_digest": ""
+}

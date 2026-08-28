@@ -724,7 +724,17 @@ def _target_outputs(
 ) -> list[str]:
     """Derive explicit, code-checkable outputs for one semantic target."""
 
-    outputs = _quantitative_outputs(author_text)
+    # A dimension describes the constructed representation, not every later
+    # operation mentioned in the same author sentence. Copying ``15-D`` onto
+    # a NORMALIZE target forced the normalizer itself to restate the width and
+    # made otherwise exact evidence look incomplete. The construction or
+    # combination target retains the invariant; downstream transforms inherit
+    # the representation through their data-flow binding.
+    outputs = (
+        _quantitative_outputs(author_text)
+        if concept.concept_id in {"feature_construction", "feature_combination"}
+        else []
+    )
     if (
         concept.concept_id == "generation_invocation"
         and re.search(
@@ -1038,8 +1048,8 @@ def build_story_spine_from_intent_graph(
         statement = _clean(obligation.author_text)
         if not statement:
             continue
-        title = " ".join(statement.split())[:96] or f"Story point {index}"
         role = _story_role_for_kind(obligation.kind)
+        title = _story_node_short_title(statement, role=role, index=index)
         nodes.append(AuthorStoryNodeV1(
             story_node_id=f"story:{obligation.obligation_id}",
             title=title,
@@ -1128,6 +1138,29 @@ def typed_targets_signature(
 
 def _clean(value: str) -> str:
     return " ".join(str(value or "").strip().split())
+
+
+def _truncate_story_title(value: str, *, limit: int) -> str:
+    """Shorten a reader-facing title without cutting through a word."""
+
+    text = _clean(value)
+    if len(text) <= limit:
+        return text
+    prefix = text[: limit + 1]
+    if not text[limit].isspace():
+        prefix = prefix.rsplit(maxsplit=1)[0] if prefix.split() else prefix[:limit]
+    return prefix.strip().rstrip(",;:/(–—-").strip()
+
+
+def _story_node_short_title(statement: str, *, role: str, index: int) -> str:
+    """Organization title only; full author wording stays in ``author_statement``."""
+
+    first = re.split(r"(?<=[.?;。；])\s+", statement.strip(), maxsplit=1)[0].strip()
+    if first:
+        short = _truncate_story_title(first, limit=120)
+        if short:
+            return short
+    return f"{role.replace('_', ' ').title()} {index}"
 
 
 def _dedupe(values: list[str]) -> list[str]:

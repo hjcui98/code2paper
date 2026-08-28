@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "MA-S1": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nGraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality. This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+    "MA-S2": "## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nThe LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices. Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance."
+  },
+  "patches": [],
+  "duplicate_signatures": [],
+  "blocked_reason": "",
+  "response_ref": "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7",
+  "response_refs": [
+    "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7"
+  ],
+  "call_failures": [],
+  "content_digest": "sha256:0f2c531dff3b6253adcf32a5d23c8023fd5af56ea42458169e12e0f54c50cfad"
+}

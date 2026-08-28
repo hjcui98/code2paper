@@ -1,0 +1,1109 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:e0b2dc8d29ce54d8d5ff6f0b9ee0d21c190de59753fee811a20921ca0e70c62d"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [
+        "facet-e650301f08e6d4b3"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence shows concrete tensor operations (stacking, softmax normalization, top-k selection, weighted reduction, reshape) within compute_src_dst_node_temporal_embeddings, but does not demonstrate the full transformation from raw interaction sequences to a unified aligned feature representation capturing temporal and structural context. The operations are intermediate steps within a method, not the complete encoding pipeline described by the field text. No evidence shows the input being raw interaction sequences or the output being a unified aligned representation with temporal/structural context explicitly captured."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S1:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:0673ac4f25cb2cc5aafd24fe5ce8c5680d7d40ff8b9b068041e4b4f4c71ecfa0"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:3",
+      "formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:5be0ec85b1791e26e9c54632f6552357636950a991e15d4ea9255d5a6891bd87"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [
+        "facet-474697a48f990b43"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim 'Project all encoding types to a common dimension and concatenate them.' The evidence array is empty and no closed-set evidence indices are provided. Without repository evidence, the operational description cannot be confirmed or refuted against the codebase."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S1:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-3",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:e5d4052a33fab1dd890265e0ccad15d82da2b76f1cbb8b1341cd45cff41459b6"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit-4",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-4",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:b950418616b64f190b75a5a1cde8c6e7ff95574b3acd7715f5abe60dde8f53ba"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:6",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit-5",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-5",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:6",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:93ef88f0b3a8883cb80b906b2055a3aeffd3ceabf958b839d8408800ac825262"
+    },
+    {
+      "content_unit_id": "MA-S2:paragraph:MA-S2:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-02-780817ba"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S2:unit",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "paragraph_id": "paragraph:MA-S2:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:c6b3897a27c3e42edbddc1c89ebe9bb5ff8cea4981cee7d7ab8168a6375b75a5"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:aa4089e6022694803a98ade6e18d74f37f98a69247553478afe4edf2c5e555fa"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [
+        "facet-e3de4791afd3b462"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports that Δt is derived from the timespan (dts) via a linear projection (in_proj.weight @ rearrange(dts, ...)), confirming 'making Δt a function of the timespan'. However, no evidence in the supplied set addresses 'initializing A for stable decay' — the matrix A is not mentioned in any of the four evidence items. The formula_goal is a compound claim and only one component is supported by the available evidence."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:2",
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:23cae427b8c35b6839437ab5d4453adee9d34a7d1bd059e66cb099559afc291a"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [
+        "facet-fbcc6e92c1b73f4e",
+        "facet-4e742dc0e3b52bae",
+        "facet-9f2ea9661004e61a"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+          ],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGFormer.py:85:85"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-fbcc6e92c1b73f4e",
+              "span_id": "span:models/DyGFormer.py:85:85",
+              "path": "models/DyGFormer.py",
+              "symbol": "sym:dc51f7924aadbf79",
+              "line_start": 85,
+              "line_end": 85,
+              "exact_excerpt": "            self.neighbor_sampler.get_all_first_hop_neighbors(node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate)\n",
+              "excerpt_digest": "sha256:5a9229e1861974581e8e98ff6f7840785ae587b79b4b37e3d17ddfdaa7f00dba",
+              "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+              "fact_ids": [
+                "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "case_study"
+          ],
+          "unsupported_reason": ""
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports use of raw node features (self.node_raw_features indexed by node_ids at evidence 4, and nodes_edge_raw_features at evidence 0), but no evidence in the supplied set demonstrates zero vectors when features are unavailable. The 'zero vectors when unavailable' clause has no supporting evidence in any of the five evidence indices."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "owner marked this semantic field unsupported"
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "slot:fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+        "slot:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "slot:fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "slot:fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:f07f8e0d65ce63867497c61a6138b59a2ebb8db26ad9e0dfb04c64fd1deeaf27"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:a81f0689193813c778288ac7df0cfa3c7b8bb685560eb10766034d51c374534f"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [
+        "facet-8ebd977fd8a0b89d"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGFormer.py:169:169"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-8ebd977fd8a0b89d",
+              "span_id": "span:models/DyGFormer.py:169:169",
+              "path": "models/DyGFormer.py",
+              "symbol": "sym:dc51f7924aadbf79",
+              "line_start": 169,
+              "line_end": 169,
+              "exact_excerpt": "        patches_nodes_neighbor_co_occurrence_features = torch.cat([src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1)\n",
+              "excerpt_digest": "sha256:9ef523b6fcdf7242fe2f72cfcade98b72a15cf1f6408ab2cabd6dd8d294c0d6b",
+              "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+              "fact_ids": [
+                "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "i == 0 and case_study"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:a1e2355edef09bce2c6cfeb76e454fcf3b8b082f971eccd415717d26dac3cd6f"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:6",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:6",
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:3420d75241348d1a88623f8ee863f63d259d03724cb44eaf5dc316114b2e8d78"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:7",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-4",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:7",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:eb009d96460102dd61835504c082fff7cef7b28217b20da75c092c92a8c1dce4"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:3dfadcea835dbdf951d915f167217df8493f89b5f01578743e69421001b20946"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [
+        "facet-500349fe9389866d",
+        "facet-4d1239a88d3c0fce"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:cf690298ce1e4b62ab57f1159ea46c13b39457be688ff57aaa476e864f318e97"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:dafba42eab9d1b3b68e1e2dfc34e45dbc71386bbfdb4ab68444a726737059167"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:30a0b5cbd70ed183d6fcc49dd6c31b7c66ee64bb4b8271f0d2b8ce1162579926"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [
+        "facet-9d9902649b1ee4a5"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this mechanism claim."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-4",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:bc6c56cb4305f1e11fa79e2147eb45a0d015096489d8204018868850fba9dc8b"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:1",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [
+        "facet-9a8892286042413e",
+        "facet-85dd07572b8a77e2"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+            "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "bound_span_ids": [
+            "span:models/FreeDyG.py:330:330",
+            "span:models/FreeDyG.py:335:335",
+            "span:models/FreeDyG.py:337:337"
+          ],
+          "bound_equation_ids": [
+            "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+          ],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:337:337",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 337,
+              "line_end": 337,
+              "exact_excerpt": "        return hidden_states\n",
+              "excerpt_digest": "sha256:76194e99c5d939305fa5982eaca837232ce620ad9297df1ea1bad04bf8412b1c",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:335:335",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 335,
+              "line_end": 335,
+              "exact_excerpt": "        hidden_states = hidden_states + input_tensor\n",
+              "excerpt_digest": "sha256:d8b438b0fefb6e9b016191eb33309f739302d017f6a546ac90031a72dde653d2",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:330:330",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 330,
+              "line_end": 330,
+              "exact_excerpt": "        x=x*weight\n",
+              "excerpt_digest": "sha256:2c6d40f0436c223b2c518e5bf353aec1080170ee6d0210e57de83759f75363ff",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        },
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S5:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:1",
+      "formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:50b127e6dd01659318733ce173e097d2e5c47823d5f7c592e66389a27165dead"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:2",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [
+        "facet-e343d4bc111c5b77",
+        "facet-3f8317dd772533f4"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; formula_expectation is 'required' but evidence array is empty, so the SSM core formula (redefined Δt, stable diagonal A) cannot be verified against any repository evidence."
+        },
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the claim about B/C being input-dependent with spectral norm constraints for timespan-aware forgetting and noise-robust reviewing. The evidence array is empty, so no claims, facts, spans, or equations can be bound to this field. The formula expectation is 'required' but no formula evidence is available to confirm or deny the described mechanism."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S5:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:36ace77f4095f69c15af23b58f6a36b186828cc2b223392c72f093e2c2c3b41b"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:3",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-dyg-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:e57d675e5eaf8b98a4514ee23b9e1537bb1df9acd4b616482e47a333ddcf1f69"
+    }
+  ],
+  "summary": {
+    "rows": 22,
+    "sections": 5,
+    "planned_paragraphs": 22,
+    "rendered_paragraphs": 1,
+    "rendered_slots": 0,
+    "planned_edges": 0,
+    "rendered_edges": 0,
+    "formula_obligations": 3,
+    "consumed_formula_packages": 0,
+    "field_bound_rows": 2,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 1,
+    "rendered_invalid": 10,
+    "blocked_representation": 11,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0
+  },
+  "transaction_assessment_digest": "sha256:cdf9b6458a1319688f084039768bf444b7a59908bdae59a65693c05d58f9a089",
+  "content_digest": "sha256:d95cc86c84de963544d0f6f8acccbd9137d112f6d4a9a232206871c3cf0ec754"
+}

@@ -482,6 +482,58 @@ class AgenticReadinessReportTests(unittest.TestCase):
         self.assertTrue(loaded.passed)
         self.assertEqual(loaded.mode, "agentic-run-readiness-report")
 
+    def test_publication_quality_contract_reads_independent_candidate_fields(self) -> None:
+        # Q0: a durable candidate keeps the readiness contract passing even when
+        # validation reports warnings and the run is not publication-ready; the
+        # independent fields are the source of truth (plan 19.9).
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            artifacts = _base_artifacts(root)
+            artifacts.update({
+                "publication_writer_result_v1": _write_json(root, "writer_result.json", {
+                    "candidate_available": True,
+                    "candidate_generation_status": "generated",
+                    "candidate_validation_status": "warnings",
+                    "verified_validation_status": "incomplete",
+                    "publication_ready": False,
+                }),
+                "publication_quality_report_v1": _write_json(root, "quality.json", {
+                    "status": "incomplete",
+                    "final_integrity_gate_passed": False,
+                }),
+                "method_section_plan_v2": _write_json(root, "plan.json", {"schema_version": "2.0"}),
+                "final_text_authorship_ledger_v1": _write_json(root, "ledger.json", {"schema_version": "1.0"}),
+                "publication_section_checkpoint_v1": _write_json(root, "checkpoint.json", {"schema_version": "1.0"}),
+            })
+            state = AgenticRunState(project_root=root, out_root=root / "out", artifacts=artifacts)
+
+            report = build_run_readiness_report(state)
+
+        check = _check(report, "publication_quality_contract")
+        self.assertTrue(check.passed)
+        self.assertIn("candidate_validation_status=warnings", check.message)
+
+    def test_publication_quality_contract_fails_without_durable_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            artifacts = _base_artifacts(root)
+            artifacts.update({
+                "publication_writer_result_v1": _write_json(root, "writer_result.json", {
+                    "candidate_available": False,
+                    "candidate_generation_status": "failed",
+                }),
+                "publication_quality_report_v1": _write_json(root, "quality.json", {"status": "blocked"}),
+                "method_section_plan_v2": _write_json(root, "plan.json", {"schema_version": "2.0"}),
+                "final_text_authorship_ledger_v1": _write_json(root, "ledger.json", {"schema_version": "1.0"}),
+                "publication_section_checkpoint_v1": _write_json(root, "checkpoint.json", {"schema_version": "1.0"}),
+            })
+            state = AgenticRunState(project_root=root, out_root=root / "out", artifacts=artifacts)
+
+            report = build_run_readiness_report(state)
+
+        check = _check(report, "publication_quality_contract")
+        self.assertFalse(check.passed)
+
 
 def _base_artifacts(root: Path) -> dict[str, str]:
     return {

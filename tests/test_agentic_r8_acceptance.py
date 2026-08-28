@@ -1263,7 +1263,12 @@ def test_per_role_sampling_config_fails_above_the_role_output_ceiling():
     traces = [item for item in traces if item.role != RESEARCH_SUPERVISOR]
     traces.append(supervisor.model_copy(update={
         "effective_config": supervisor.effective_config.model_copy(
-            update={"max_output_tokens": 1537}
+            update={
+                "max_output_tokens": ROLE_GENERATION_CONFIGS[
+                    RESEARCH_SUPERVISOR
+                ].max_output_tokens_default
+                + 1
+            }
         )
     }))
     kwargs = _passing_report_kwargs()

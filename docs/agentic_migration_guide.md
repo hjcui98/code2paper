@@ -20,6 +20,23 @@ Evidence V2 gate to improve completion rate.
   `<out-root>/shadow_agentic/`. `shadow_comparison.json` forbids treating the
   background result as the delivered completion.
 
+The D6 execution profile is a separate, digest-bound transport route.  It may
+select a language adapter or provider/model, but it cannot change evidence or
+authorization policy.  Use it with the LangGraph runner when comparing a
+second implementation:
+
+```bash
+code2paper-agentic-run REPO \
+  --execution-profile /path/to/execution_profile_v1.json \
+  --execution-opt-in \
+  --execution-canary-key case-001
+```
+
+The runner writes `artifacts/10_run/execution_profile_v1.json` and
+`execution_route_v1.json`.  Shadow, opt-in, canary, and rollback decisions are
+checkpoint-safe; a `default_ready` profile remains inactive unless the
+independent cutover decision has passed the digest-pinned rollout gates.
+
 Example opt-in:
 
 ```bash

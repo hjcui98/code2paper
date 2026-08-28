@@ -1,0 +1,1450 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:a211d0436132cd2057c18cdd784928728d68d50589fadbefb8fd3a3e82d4c60d",
+  "claim_digest": "sha256:1098633fc3dd6ad230d22f4586e9758091c30f357a239e429639de16e169ffae",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit/expository_bridge",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+        "section_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nGraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality. This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S1:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit",
+            "candidate_symbols_or_terms": [
+              "GraphRAG"
+            ],
+            "current_known_facts": [
+              "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality."
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "Which specific relation extraction error modes in GraphRAG pipelines most significantly degrade downstream retrieval quality, and under what corpus conditions do they dominate?",
+            "missing_parts": [
+              "grounded evidence of which specific relation extraction error modes dominate in practice"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "request:MA-S1:1:1",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S1",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+            ],
+            "target_clause_ids": [
+              "clause:MA-S1:unit"
+            ],
+            "why_needed_for_reader": "The motivation paragraph currently asserts a general vulnerability to relation extraction error propagation without grounding which specific error modes are most consequential; a grounded identification would strengthen the problem framing and justify the design choice to eliminate the extraction stage."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:1",
+            "paragraph_markdown": "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality. This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC3 reverse validation failed: required_qualifier_missing",
+        "Final claim FAC4 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+        "section_markdown": "## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nThe LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices. Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-1977b399"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "evidence_refs_used": [],
+            "exact_question": "Does the paper text use the term 'Tri-Graph' as a defined label for the three-node-type graph, and if so, in which section or figure does it appear?",
+            "missing_parts": [
+              "repository confirmation that 'Tri-Graph' is a term appearing in the paper text",
+              "explicit statement of the three node types and their interconnecting adjacency structure as a named architectural unit"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "research:MA-S2:unit",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-1977b399"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The reader needs to know whether 'Tri-Graph' is a term the paper itself defines or an author-level shorthand, so the Method can state the label's provenance without overclaiming."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "The LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices. Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Offline Tri‑Graph construction",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:formal_objects_and_notation@MA-S3/MA-S3:unit-1/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "## Offline Tri‑Graph construction",
+        "section_markdown": "## Offline Tri‑Graph construction\n\nThe offline Tri‑Graph construction builds a hierarchical graph whose node set comprises three disjoint types—passage nodes, sentence nodes, and entity nodes—connected exclusively by occurrence relationships: sparse contain edges from passages to entities and sparse mention edges from sentences to entities. No relation triples are introduced; the graph preserves original textual context (passages and sentences) alongside extracted entities, anchoring the entire retrieval pipeline. Entities are extracted from corpus passages using a named-entity recognizer; each passage is split into sentences, and the resulting entity, sentence, and passage identifiers populate the three node partitions. The construction produces two sparse adjacency structures: a passage–entity contain matrix and a sentence–entity mention matrix, both exploiting the low density of entity occurrences in large corpora. The resulting Tri‑Graph serves as the static substrate on which all subsequent query-time retrieval stages operate, enabling entity-based navigation while retaining the original document hierarchy.\n\nThe output of the offline construction is a vertex-indexed graph with a vertex-index-to-node-name mapping that translates between numeric vertex indices and named nodes. Two sparse matrices are materialized: an entity-to-sentence adjacency matrix whose non-zero entries correspond to mention edges, and a sentence-to-entity adjacency matrix encoding the reverse direction. The entity-to-sentence edge count is determined by the non-zero count of the entity-to-sentence matrix (`len(entity_to_sentence_indices) > 0` guards against an empty graph). The graph is stored in a form that supports fast sparse-matrix operations required by the downstream personalized PageRank computation, and the vertex mapping enables iteration over all nodes by index during the ranking stage.\n\nAt query time, the system interfaces with the precomputed Tri‑Graph through two access paths. The first path retrieves seed entities for the query: a dedicated retrieval call returns entity indices, entity names, entity hash IDs, and entity scores, which together form the initial activation set. The second path performs dense passage retrieval, producing a ranked list of passage indices with their similarity scores against the query embedding. These two outputs—seeded entity scores and dense passage scores—constitute the inputs to the hybrid passage scoring and personalized PageRank stages that follow.\n\nThe hybrid passage scoring stage combines the two retrieval outputs into a composite passage score. A configurable passage ratio scales the dense-retrieval passage score; this scaled direct similarity is added to the log of one plus the total entity bonus. The entity bonus is accumulated per entity as the entity score multiplied by the log of one plus the entity's occurrence count, divided by a denominator; these per-entity contributions are summed to form the total entity bonus (`Contributing terms are aggregated by a sum.`). The composite score is then scaled by a configurable passage-node weight to yield the final passage weight. Entity weights derived from seed entity scores are added element-wise to the passage weights, forming the combined node-weight vector that initializes the personalized PageRank.\n\nThe personalized PageRank routine is invoked over the full vertex set of the Tri‑Graph using the combined node-weight vector as the personalization input. The routine iterates over all vertices indexed by the node-name-to-vertex-index mapping and produces a sorted list of passage indices together with their PPR scores. The PPR-sorted passage indices and scores are returned as the final ranked passage list. The execution path is selected by a configuration flag: when the vectorized retrieval mode is active (`self.config.use_vectorized_retrieval`), entity scores are computed via a vectorized top-k selection that retains only the highest-scoring entities; otherwise, the standard per-entity scoring path is used. In both paths, entity hash IDs are excluded from the scoring (`not sentence_hash_ids`), ensuring that only genuine entity nodes participate in the personalization vector.\n\nThe static structure of the Tri‑Graph is formally specified as a tripartite graph with separated node and edge types: mathcal{G} = (mathcal{V}, mathcal{E}, mathbf{A}) = (mathcal{V}_P cup mathcal{V}_S cup mathcal{V}_E, mathcal{E}_{contain} cup mathcal{E}_{mention}, mathbf{A}_{contain} cup mathbf{A}_{mention}) Here $mathcal{V}_P$, $mathcal{V}_S$, and $mathcal{V}_E$ denote the passage, sentence, and entity node sets; $mathcal{E}_{contain}$ and $mathcal{E}_{mention}$ are the contain and mention edge sets; and $mathbf{A}_{contain}$, $mathbf{A}_{mention}$ are the corresponding sparse adjacency matrices. This formulation is intended as the author's specification of the hierarchical structure that preserves original text alongside entities; the precise dimensions and sparsity bounds of the individual adjacency matrices remain pending formal derivation from the repository evidence.\n\nThe offline Tri‑Graph construction thus yields a hierarchical, entity-anchored graph that supports both local semantic bridging through the sentence–entity subgraph and global importance aggregation through the passage–entity subgraph, while retaining the original passage and sentence context throughout the retrieval pipeline.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+          "brief:story:O-STAGE-01-9c8dfe22",
+          "brief:story:O-STAGE-02-93c16851",
+          "brief:story:O-STAGE-03-8dda66b9",
+          "brief:story:O-COMPONENT-01-4e554ef0",
+          "brief:story:O-COMPONENT-01-bd3b9454",
+          "brief:story:O-COMPONENT-04-4f4f1da6",
+          "brief:story:O-COMPONENT-05-29ba03a1",
+          "brief:story:O-COMPONENT-06-bf20ec9b",
+          "brief:story:O-ORGANIZATION-03-157f229e",
+          "brief:story:O-ORGANIZATION-05-e0c123aa",
+          "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+          "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+          "brief:story:O-RATIONALE-CHECK-02-1a90a997"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-36188cb856f44d0d",
+          "facet-dfd9e7cedfe705e0",
+          "facet-aee51cb1cb5c563f",
+          "facet-37ac47cd0b3c324b",
+          "facet-397617ae0c814f4c",
+          "facet-11f57730a8077780",
+          "facet-6c02c195374453b1"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+          "slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+          "slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+          "slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a",
+          "slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+          "slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+          "slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+          "slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+          "slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d",
+          "slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+          "slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+          "slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+          "slot:fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+          "slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+          "slot:fact-callback:req:MA-S2:u2-node:22058d49423db008",
+          "slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+          "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+          "slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+        ],
+        "rendered_edge_ids": [
+          "rel:9c39c339b8028cfc"
+        ],
+        "used_formula_package_ids": [
+          "pkg-ma-s3-trigraph-v2"
+        ],
+        "used_argument_unit_ids": [
+          "MA-S3:unit-1",
+          "MA-S3:unit-2"
+        ],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-1",
+            "concept_key": "",
+            "evidence_refs_used": [],
+            "exact_question": "What repository evidence (equation, fragment, or configuration) formally derives the tri-graph formula G = (V, E, A) = (V_P ∪ V_S ∪ V_E, E_contain ∪ E_mention, A_contain ∪ A_mention) and its material conditions?",
+            "missing_parts": [
+              "repository evidence binding formula:section:MA-S3:derivation"
+            ],
+            "missing_rhetorical_move": "formal_objects_and_notation",
+            "request_id": "rq:MA-S3:formula-derivation-evidence",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-COMPONENT-01-bd3b9454"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The section formula obligation formula:section:MA-S3:derivation is blocking and unresolved; without repository evidence the formula cannot be promoted from author_intent to verified status."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:1",
+            "paragraph_markdown": "The offline Tri‑Graph construction builds a hierarchical graph whose node set comprises three disjoint types—passage nodes, sentence nodes, and entity nodes—connected exclusively by occurrence relationships: sparse contain edges from passages to entities and sparse mention edges from sentences to entities. No relation triples are introduced; the graph preserves original textual context (passages and sentences) alongside extracted entities, anchoring the entire retrieval pipeline. Entities are extracted from corpus passages using a named-entity recognizer; each passage is split into sentences, and the resulting entity, sentence, and passage identifiers populate the three node partitions. The construction produces two sparse adjacency structures: a passage–entity contain matrix and a sentence–entity mention matrix, both exploiting the low density of entity occurrences in large corpora. The resulting Tri‑Graph serves as the static substrate on which all subsequent query-time retrieval stages operate, enabling entity-based navigation while retaining the original document hierarchy.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:2",
+            "paragraph_markdown": "The output of the offline construction is a vertex-indexed graph with a vertex-index-to-node-name mapping that translates between numeric vertex indices and named nodes. Two sparse matrices are materialized: an entity-to-sentence adjacency matrix whose non-zero entries correspond to mention edges, and a sentence-to-entity adjacency matrix encoding the reverse direction. The entity-to-sentence edge count is determined by the non-zero count of the entity-to-sentence matrix (`len(entity_to_sentence_indices) > 0` guards against an empty graph). The graph is stored in a form that supports fast sparse-matrix operations required by the downstream personalized PageRank computation, and the vertex mapping enables iteration over all nodes by index during the ranking stage.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:3",
+            "paragraph_markdown": "At query time, the system interfaces with the precomputed Tri‑Graph through two access paths. The first path retrieves seed entities for the query: a dedicated retrieval call returns entity indices, entity names, entity hash IDs, and entity scores, which together form the initial activation set. The second path performs dense passage retrieval, producing a ranked list of passage indices with their similarity scores against the query embedding. These two outputs—seeded entity scores and dense passage scores—constitute the inputs to the hybrid passage scoring and personalized PageRank stages that follow.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:4",
+            "paragraph_markdown": "The hybrid passage scoring stage combines the two retrieval outputs into a composite passage score. A configurable passage ratio scales the dense-retrieval passage score; this scaled direct similarity is added to the log of one plus the total entity bonus. The entity bonus is accumulated per entity as the entity score multiplied by the log of one plus the entity's occurrence count, divided by a denominator; these per-entity contributions are summed to form the total entity bonus (`Contributing terms are aggregated by a sum.`). The composite score is then scaled by a configurable passage-node weight to yield the final passage weight. Entity weights derived from seed entity scores are added element-wise to the passage weights, forming the combined node-weight vector that initializes the personalized PageRank.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:5",
+            "paragraph_markdown": "The personalized PageRank routine is invoked over the full vertex set of the Tri‑Graph using the combined node-weight vector as the personalization input. The routine iterates over all vertices indexed by the node-name-to-vertex-index mapping and produces a sorted list of passage indices together with their PPR scores. The PPR-sorted passage indices and scores are returned as the final ranked passage list. The execution path is selected by a configuration flag: when the vectorized retrieval mode is active (`self.config.use_vectorized_retrieval`), entity scores are computed via a vectorized top-k selection that retains only the highest-scoring entities; otherwise, the standard per-entity scoring path is used. In both paths, entity hash IDs are excluded from the scoring (`not sentence_hash_ids`), ensuring that only genuine entity nodes participate in the personalization vector.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:6",
+            "paragraph_markdown": "The static structure of the Tri‑Graph is formally specified as a tripartite graph with separated node and edge types: $$ $$mathcal{G} = (mathcal{V}, mathcal{E}, mathbf{A}) = (mathcal{V}_P cup mathcal{V}_S cup mathcal{V}_E, mathcal{E}_{contain} cup mathcal{E}_{mention}, mathbf{A}_{contain} cup mathbf{A}_{mention}) $$ Here $mathcal{V}_P$, $mathcal{V}_S$, and $mathcal{V}_E$ denote the passage, sentence, and entity node sets; $mathcal{E}_{contain}$ and $mathcal{E}_{mention}$ are the contain and mention edge sets; and $mathbf{A}_{contain}$, $mathbf{A}_{mention}$ are the corresponding sparse adjacency matrices. This formulation is intended as the author's specification of the hierarchical structure that preserves original text alongside entities; the precise dimensions and sparsity bounds of the individual adjacency matrices remain pending formal derivation from the repository evidence.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:7",
+            "paragraph_markdown": "The offline Tri‑Graph construction thus yields a hierarchical, entity-anchored graph that supports both local semantic bridging through the sentence–entity subgraph and global importance aggregation through the passage–entity subgraph, while retaining the original passage and sentence context throughout the retrieval pipeline.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "First retrieval stage: relevant entity activation via local semantic bridging",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "unknown_rhetorical_moves:Entity activation via semantic bridging performs iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities for multi-hop connections. The system trades relational expressiveness for robustness and simplicity: retrieval quality is recovered through the propagation mechanism rather than through edge typing, and the absence of typed edges constitutes a deliberate scoping decision rather than a gap in the design.,The first retrieval stage activates relevant entities through local semantic bridging over a bipartite entity–sentence–passage hierarchy in which no typed relation edges are present. Entity nodes connect to the sentence node in which they appear, and sentence nodes connect to their parent passage node; the graph topology is derived entirely from structural co-occurrence rather than from predicted or rule-based relation labels. This design omits a dedicated relation-extraction module, so the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. Propagation is governed by two guard conditions: the iteration loop continues only while `len(current_entities) > 0 and iteration < self.config.max_iterations`, and candidate entities are pruned when `entity_score < self.config.iteration_threshold`.,The stage operates in three sequential phases: initialization, iterative propagation, and dynamic pruning. Initialization assigns seed scores from query–sentence similarity; iterative propagation expands the active frontier through the structural graph; dynamic pruning discards entities whose scores fall below the configured threshold, terminating the loop when no active entities remain or the maximum iteration count is reached.,`LinearRAG.calculate_entity_scores` propagates entity relevance through breadth-first frontier expansion: at each iteration the current frontier of active entities seeds a new frontier of adjacent entities in the sentence–entity subgraph, and scores are attenuated as they travel outward. The propagation mechanism formalizes how query–sentence similarity initializes seed scores and how those scores diffuse across the structural topology to identify latent intermediate entities for multi-hop connections. The closed-form derivation of the per-iteration score update is deferred pending resolution of the formula obligation.",
+        "invalid_writing_research_callback:formal_objects_and_notation@MA-S4/MA-S4:unit-1/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "First retrieval stage: relevant entity activation via local semantic bridging",
+        "section_markdown": "## First retrieval stage: relevant entity activation via local semantic bridging\n\nThe first retrieval stage activates relevant entities through local semantic bridging over a bipartite entity–sentence–passage hierarchy in which no typed relation edges are present. Entity nodes connect to the sentence node in which they appear, and sentence nodes connect to their parent passage node; the graph topology is derived entirely from structural co-occurrence rather than from predicted or rule-based relation labels. This design omits a dedicated relation-extraction module, so the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. Propagation is governed by two guard conditions: the iteration loop continues only while `len(current_entities) > 0 and iteration < self.config.max_iterations`, and candidate entities are pruned when `entity_score < self.config.iteration_threshold`.\n\n`LinearRAG.calculate_entity_scores` propagates entity relevance through breadth-first frontier expansion: at each iteration the current frontier of active entities seeds a new frontier of adjacent entities in the sentence–entity subgraph, and scores are attenuated as they travel outward. The propagation mechanism formalizes how query–sentence similarity initializes seed scores and how those scores diffuse across the structural topology to identify latent intermediate entities for multi-hop connections. The closed-form derivation of the per-iteration score update is deferred pending resolution of the formula obligation.\n\nThe stage operates in three sequential phases: initialization, iterative propagation, and dynamic pruning. Initialization assigns seed scores from query–sentence similarity; iterative propagation expands the active frontier through the structural graph; dynamic pruning discards entities whose scores fall below the configured threshold, terminating the loop when no active entities remain or the maximum iteration count is reached.\n\nEntity activation via semantic bridging performs iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities for multi-hop connections. The system trades relational expressiveness for robustness and simplicity: retrieval quality is recovered through the propagation mechanism rather than through edge typing, and the absence of typed edges constitutes a deliberate scoping decision rather than a gap in the design.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-04-8fc65790",
+          "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+          "brief:story:O-COMPONENT-03-0c4d02ed"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-49c35a32b3156393",
+          "facet-49c35a32b3156393",
+          "facet-49c35a32b3156393"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [
+          "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [
+          "The first retrieval stage activates relevant entities through local semantic bridging over a bipartite entity–sentence–passage hierarchy in which no typed relation edges are present. Entity nodes connect to the sentence node in which they appear, and sentence nodes connect to their parent passage node; the graph topology is derived entirely from structural co-occurrence rather than from predicted or rule-based relation labels. This design omits a dedicated relation-extraction module, so the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. Propagation is governed by two guard conditions: the iteration loop continues only while `len(current_entities) > 0 and iteration < self.config.max_iterations`, and candidate entities are pruned when `entity_score < self.config.iteration_threshold`.",
+          "`LinearRAG.calculate_entity_scores` propagates entity relevance through breadth-first frontier expansion: at each iteration the current frontier of active entities seeds a new frontier of adjacent entities in the sentence–entity subgraph, and scores are attenuated as they travel outward. The propagation mechanism formalizes how query–sentence similarity initializes seed scores and how those scores diffuse across the structural topology to identify latent intermediate entities for multi-hop connections. The closed-form derivation of the per-iteration score update is deferred pending resolution of the formula obligation.",
+          "The stage operates in three sequential phases: initialization, iterative propagation, and dynamic pruning. Initialization assigns seed scores from query–sentence similarity; iterative propagation expands the active frontier through the structural graph; dynamic pruning discards entities whose scores fall below the configured threshold, terminating the loop when no active entities remain or the maximum iteration count is reached.",
+          "Entity activation via semantic bridging performs iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities for multi-hop connections. The system trades relational expressiveness for robustness and simplicity: retrieval quality is recovered through the propagation mechanism rather than through edge typing, and the absence of typed edges constitutes a deliberate scoping decision rather than a gap in the design."
+        ],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "concept_key": "formula:section:MA-S4:derivation",
+            "evidence_refs_used": [],
+            "exact_question": "What is the closed-form expression for the per-iteration score update in LinearRAG.calculate_entity_scores, specifically how are attenuation factors computed as scores propagate through the sentence–entity subgraph?",
+            "missing_parts": [
+              "closed-form derivation of per-iteration score update",
+              "attenuation factor formula"
+            ],
+            "missing_rhetorical_move": "formal_objects_and_notation",
+            "request_id": "MA-S4:unit-1:formula:section:MA-S4:derivation",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-COMPONENT-03-0c4d02ed"
+            ],
+            "target_clause_ids": []
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:1",
+            "paragraph_markdown": "The first retrieval stage activates relevant entities through local semantic bridging over a bipartite entity–sentence–passage hierarchy in which no typed relation edges are present. Entity nodes connect to the sentence node in which they appear, and sentence nodes connect to their parent passage node; the graph topology is derived entirely from structural co-occurrence rather than from predicted or rule-based relation labels. This design omits a dedicated relation-extraction module, so the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. Propagation is governed by two guard conditions: the iteration loop continues only while `len(current_entities) > 0 and iteration < self.config.max_iterations`, and candidate entities are pruned when `entity_score < self.config.iteration_threshold`.",
+            "rendered_from_facet_ids": [
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393"
+            ],
+            "rendered_slot_ids": [
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:2",
+            "paragraph_markdown": "`LinearRAG.calculate_entity_scores` propagates entity relevance through breadth-first frontier expansion: at each iteration the current frontier of active entities seeds a new frontier of adjacent entities in the sentence–entity subgraph, and scores are attenuated as they travel outward. The propagation mechanism formalizes how query–sentence similarity initializes seed scores and how those scores diffuse across the structural topology to identify latent intermediate entities for multi-hop connections. The closed-form derivation of the per-iteration score update is deferred pending resolution of the formula obligation.",
+            "rendered_from_facet_ids": [
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393"
+            ],
+            "rendered_slot_ids": [
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:3",
+            "paragraph_markdown": "The stage operates in three sequential phases: initialization, iterative propagation, and dynamic pruning. Initialization assigns seed scores from query–sentence similarity; iterative propagation expands the active frontier through the structural graph; dynamic pruning discards entities whose scores fall below the configured threshold, terminating the loop when no active entities remain or the maximum iteration count is reached.",
+            "rendered_from_facet_ids": [
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393"
+            ],
+            "rendered_slot_ids": [
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:4",
+            "paragraph_markdown": "Entity activation via semantic bridging performs iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities for multi-hop connections. The system trades relational expressiveness for robustness and simplicity: retrieval quality is recovered through the propagation mechanism rather than through edge typing, and the absence of typed edges constitutes a deliberate scoping decision rather than a gap in the design.",
+            "rendered_from_facet_ids": [
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393",
+              "facet-49c35a32b3156393"
+            ],
+            "rendered_slot_ids": [
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+              "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Second retrieval stage: passage retrieval via global importance aggregation",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/executable_hard"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Second retrieval stage: passage retrieval via global importance aggregation",
+        "section_markdown": "## Second retrieval stage: passage retrieval via global importance aggregation\n\nRetrieval is decoupled into a local entity-activation stage and a global passage-ranking stage. In the local stage, seed entities are identified from the query via embedding similarity or exact match against the entity index; each seed entity receives an initial score that is then propagated through the entity–sentence subgraph, where every seed distributes its score to the sentences in which it appears, weighted by the entity–sentence edge weight (`node_hash_id == neighbor_hash_id`). The local stage operates on the sparse neighborhood of the seed entities and their co-occurring entities, producing a set of activated sentence scores. In the global stage, the activated sentence scores are aggregated to the passage level and a global ranking is performed over all passages in the corpus. The two stages are tuned independently: the local stage controls propagation reach, while the global stage controls how sentence evidence is combined into passage evidence. The global stage is realized by personalized PageRank (PPR) on the passage–entity graph, where the personalization vector is derived from the seed entities and the walk traverses multi-hop paths through the full graph. The PPR is executed by `LinearRAG.run_ppr`, which calls `personalized_pagerank` over all vertex indices with the configured damping factor, undirected edges, edge-weight attribute, a reset probability, and the `prpack` sparse-matrix backend, returning the resulting pagerank scores as the passage ranking. The exact boundary between the local and global scopes—whether the PPR is confined to a pruned subgraph or executed on the full passage–entity graph—is partially supported in the available evidence and remains pending author confirmation.\n\nThe PPR output is a vector of per-passage importance scores that constitute the final retrieval ranking; the top-k passages by PPR score are returned as the retrieval result. The specific PPR parameters—damping factor value, number of iterations, and convergence criterion—are implementation details not yet confirmed in the available evidence and are pending author confirmation.\n\nThe decoupling of retrieval into a local entity-activation stage and a global passage-ranking stage is the organizing principle of this section: the local stage confines propagation to a sparse entity–sentence subgraph, and the global stage aggregates the resulting sentence scores into a corpus-wide passage ranking.\n\nPersonalized PageRank on the passage–entity graph is the core retrieval primitive of the global stage; unlike flat vector-similarity retrieval, which captures only direct entity–passage overlap, the PPR walk accumulates multi-hop evidence so that passages sharing entities with a seed entity's neighborhood receive credit even without containing the seed entity directly.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-RATIONALE-CHECK-03-09c84504",
+          "brief:story:O-RATIONALE-CHECK-05-ffcf3556"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-c94a090684d57a33",
+          "facet-77eff1974af1d1d5"
+        ],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S5:1",
+          "paragraph:MA-S5:2",
+          "paragraph:MA-S5:3",
+          "paragraph:MA-S5:4"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+          "slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+          "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+          "slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-1",
+            "evidence_refs_used": [],
+            "exact_question": "What is the exact boundary between the local entity-activation subgraph and the global passage-ranking scope: is personalized PageRank executed on the full passage-entity graph or on a pruned local subgraph seeded by the query entities?",
+            "missing_parts": [],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "request:MA-S5:configuration_and_branches",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S5",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-RATIONALE-CHECK-03-09c84504"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The reader question asks how the decoupling is realized; the local/global boundary determines whether the PPR walk is confined to a sparse neighborhood or traverses the full multi-hop passage-entity graph, which changes the computational cost model and the evidence-coverage guarantee of the retrieval stage."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:1",
+            "paragraph_markdown": "Retrieval is decoupled into a local entity-activation stage and a global passage-ranking stage. In the local stage, seed entities are identified from the query via embedding similarity or exact match against the entity index; each seed entity receives an initial score that is then propagated through the entity–sentence subgraph, where every seed distributes its score to the sentences in which it appears, weighted by the entity–sentence edge weight (`node_hash_id == neighbor_hash_id`). The local stage operates on the sparse neighborhood of the seed entities and their co-occurring entities, producing a set of activated sentence scores. In the global stage, the activated sentence scores are aggregated to the passage level and a global ranking is performed over all passages in the corpus. The two stages are tuned independently: the local stage controls propagation reach, while the global stage controls how sentence evidence is combined into passage evidence. The global stage is realized by personalized PageRank (PPR) on the passage–entity graph, where the personalization vector is derived from the seed entities and the walk traverses multi-hop paths through the full graph. The PPR is executed by `LinearRAG.run_ppr`, which calls `personalized_pagerank` over all vertex indices with the configured damping factor, undirected edges, edge-weight attribute, a reset probability, and the `prpack` sparse-matrix backend, returning the resulting pagerank scores as the passage ranking. The exact boundary between the local and global scopes—whether the PPR is confined to a pruned subgraph or executed on the full passage–entity graph—is partially supported in the available evidence and remains pending author confirmation.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+              "slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+              "slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+              "slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+              "slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:2",
+            "paragraph_markdown": "The PPR output is a vector of per-passage importance scores that constitute the final retrieval ranking; the top-k passages by PPR score are returned as the retrieval result. The specific PPR parameters—damping factor value, number of iterations, and convergence criterion—are implementation details not yet confirmed in the available evidence and are pending author confirmation.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+              "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+              "slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:3",
+            "paragraph_markdown": "The decoupling of retrieval into a local entity-activation stage and a global passage-ranking stage is the organizing principle of this section: the local stage confines propagation to a sparse entity–sentence subgraph, and the global stage aggregates the resulting sentence scores into a corpus-wide passage ranking.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:4",
+            "paragraph_markdown": "Personalized PageRank on the passage–entity graph is the core retrieval primitive of the global stage; unlike flat vector-similarity retrieval, which captures only direct entity–passage overlap, the PPR walk accumulates multi-hop evidence so that passages sharing entities with a seed entity's neighborhood receive credit even without containing the seed entity directly.",
+            "rendered_from_facet_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S1",
+    "MA-S2"
+  ],
+  "incomplete_section_ids": [
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit/expository_bridge",
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:invalid_writing_research_callback:formal_objects_and_notation@MA-S3/MA-S3:unit-1/expository_bridge",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:unknown_rhetorical_moves:Entity activation via semantic bridging performs iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities for multi-hop connections. The system trades relational expressiveness for robustness and simplicity: retrieval quality is recovered through the propagation mechanism rather than through edge typing, and the absence of typed edges constitutes a deliberate scoping decision rather than a gap in the design.,The first retrieval stage activates relevant entities through local semantic bridging over a bipartite entity–sentence–passage hierarchy in which no typed relation edges are present. Entity nodes connect to the sentence node in which they appear, and sentence nodes connect to their parent passage node; the graph topology is derived entirely from structural co-occurrence rather than from predicted or rule-based relation labels. This design omits a dedicated relation-extraction module, so the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. Propagation is governed by two guard conditions: the iteration loop continues only while `len(current_entities) > 0 and iteration < self.config.max_iterations`, and candidate entities are pruned when `entity_score < self.config.iteration_threshold`.,The stage operates in three sequential phases: initialization, iterative propagation, and dynamic pruning. Initialization assigns seed scores from query–sentence similarity; iterative propagation expands the active frontier through the structural graph; dynamic pruning discards entities whose scores fall below the configured threshold, terminating the loop when no active entities remain or the maximum iteration count is reached.,`LinearRAG.calculate_entity_scores` propagates entity relevance through breadth-first frontier expansion: at each iteration the current frontier of active entities seeds a new frontier of adjacent entities in the sentence–entity subgraph, and scores are attenuated as they travel outward. The propagation mechanism formalizes how query–sentence similarity initializes seed scores and how those scores diffuse across the structural topology to identify latent intermediate entities for multi-hop connections. The closed-form derivation of the per-iteration score update is deferred pending resolution of the formula obligation.",
+    "MA-S4:invalid_writing_research_callback:formal_objects_and_notation@MA-S4/MA-S4:unit-1/expository_bridge",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/executable_hard",
+    "rewrite:unknown_style_section:MA-S4",
+    "rewrite:unknown_style_section:MA-S5",
+    "formalization_required_obligation_unresolved:MA-S3:formula:section:MA-S3:derivation,formula:facet:facet-8ce6e8dabb55bf84",
+    "formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+        "text_length": 472,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+        "text_length": 482,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Offline Tri‑Graph construction",
+        "text_length": 5282,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S3:1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S3:1:facet:facet-37ac47cd0b3c324b;required_target_contract:paragraph:MA-S3:1:facet:facet-397617ae0c814f4c;required_target_contract:paragraph:MA-S3:1:facet:facet-11f57730a8077780;required_target_contract:paragraph:MA-S3:1:facet:facet-6c02c195374453b1;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143;required_target_contract:paragraph:MA-S3:2:edge:rel:9c39c339b8028cfc;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:06177f1488930788;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:22058d49423db008;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2;required_target_contract:paragraph:MA-S3:6:facet:facet-36188cb856f44d0d;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "First retrieval stage: relevant entity activation via local semantic bridging",
+        "text_length": 2513,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:2329f1384378b9e8;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation;required_target_contract:paragraph:MA-S4:4:facet:facet-49c35a32b3156393"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Second retrieval stage: passage retrieval via global importance aggregation",
+        "text_length": 2886,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:97b32009bb4d2dae71985158ee5e636d6ab44fb92b641d0cae45da3e179cb66e",
+        "response_hash": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1",
+        "prompt_chars": 3758,
+        "input_payload_chars": 3504,
+        "schema_chars": 6865,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 118
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:5f599d18c6c8c797778ce139b67f70269c65ed916c9ce4ea3755fc20d6b6ba87",
+        "response_hash": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9",
+        "prompt_chars": 3758,
+        "input_payload_chars": 3638,
+        "schema_chars": 6865,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 238
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3425
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S3:1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S3:1:facet:facet-37ac47cd0b3c324b;required_target_contract:paragraph:MA-S3:1:facet:facet-397617ae0c814f4c;required_target_contract:paragraph:MA-S3:1:facet:facet-11f57730a8077780;required_target_contract:paragraph:MA-S3:1:facet:facet-6c02c195374453b1;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143;required_target_contract:paragraph:MA-S3:2:edge:rel:9c39c339b8028cfc;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:06177f1488930788;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:22058d49423db008;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2;required_target_contract:paragraph:MA-S3:6:facet:facet-36188cb856f44d0d;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:d5b3846f6211a1ebedea5660e5c4b1b5cb0a6ff3ce38110677e40b63fd8c812f",
+        "response_hash": "sha256:d4e183218fbbae7a588cae4b77dc3a51461d607e6b60ce07bd5af26e038617fb",
+        "prompt_chars": 3758,
+        "input_payload_chars": 29686,
+        "schema_chars": 14716,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3663
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2594
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S3:1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S3:1:facet:facet-37ac47cd0b3c324b;required_target_contract:paragraph:MA-S3:1:facet:facet-397617ae0c814f4c;required_target_contract:paragraph:MA-S3:1:facet:facet-11f57730a8077780;required_target_contract:paragraph:MA-S3:1:facet:facet-6c02c195374453b1;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143;required_target_contract:paragraph:MA-S3:2:edge:rel:9c39c339b8028cfc;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:06177f1488930788;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:22058d49423db008;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2;required_target_contract:paragraph:MA-S3:6:facet:facet-36188cb856f44d0d;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:f019851c05827a23810f94eb745fdf9c7050147763cfce502d7295e0de8d9e36",
+        "response_hash": "sha256:854cd75a0c527d5d5b6029d5305578da3a60bde590c33e456a556fc0d4483a08",
+        "prompt_chars": 3758,
+        "input_payload_chars": 47557,
+        "schema_chars": 14716,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6257
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2802
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S3:1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S3:1:facet:facet-37ac47cd0b3c324b;required_target_contract:paragraph:MA-S3:1:facet:facet-397617ae0c814f4c;required_target_contract:paragraph:MA-S3:1:facet:facet-11f57730a8077780;required_target_contract:paragraph:MA-S3:1:facet:facet-6c02c195374453b1;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558;required_target_contract:paragraph:MA-S3:1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143;required_target_contract:paragraph:MA-S3:2:edge:rel:9c39c339b8028cfc;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:06177f1488930788;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:22058d49423db008;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2;required_target_contract:paragraph:MA-S3:6:facet:facet-36188cb856f44d0d;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:8940a946db29bbe9bcd93754ba69eed883970c3c9915ba34503c1a5b018032b4",
+        "response_hash": "sha256:6cf843046a561719c44c02196173557a2f24f72b94f979477a09b45e89b4551d",
+        "prompt_chars": 3758,
+        "input_payload_chars": 47589,
+        "schema_chars": 14716,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 9059
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 980
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:2329f1384378b9e8;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation;required_target_contract:paragraph:MA-S4:4:facet:facet-49c35a32b3156393",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:1c28bec0f8f3cc38a7a97974ac4ca0d1c896374512fbd363a2c54f2f79290569",
+        "response_hash": "sha256:077744fecbe3d432739ac9122ac2d269f49add6956a2e42bf01e6c7156751d7f",
+        "prompt_chars": 3758,
+        "input_payload_chars": 8973,
+        "schema_chars": 9128,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 10039
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3873
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_slot_witness:paragraph:MA-S4:1:slot:facf-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;duplicate_witness:paragraph:MA-S4:1:slot:slot:facf-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;missing_exact_witness:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:2329f1384378b9e8;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;unknown_slot_witness:paragraph:MA-S4:2:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;witness_not_unique_substring:paragraph:MA-S4:2:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;duplicate_witness:paragraph:MA-S4:2:slot:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation;unknown_slot_witness:paragraph:MA-S4:3:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;duplicate_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;unknown_slot_witness:paragraph:MA-S4:4:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;duplicate_witness:paragraph:MA-S4:4:slot:slot:fact-O-STAAGE-02-93c16851-node:f6f7a9ceff9d6601;missing_exact_witness:paragraph:MA-S4:4:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:4:facet:facet-49c35a32b3156393",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:cbea109e51aa28e016cd81321ecdf498c93cf9d855aa1715cae43535c1d543c1",
+        "response_hash": "sha256:979167fc859a55d32c48755a476fc523788c9b9b9809bc171407e0f858d3ba2c",
+        "prompt_chars": 3758,
+        "input_payload_chars": 15399,
+        "schema_chars": 9128,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 13912
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3143
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S4:1:facet:facet-49c35a32b3156393;missing_exact_witness:paragraph:MA-S4:1:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:2329f1384378b9e8;required_target_contract:paragraph:MA-S4:1:slot:slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17;missing_exact_witness:paragraph:MA-S4:2:facet:facet-49c35a32b3156393;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation;missing_exact_witness:paragraph:MA-S4:3:facet:facet-49c35a32b3156393;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;missing_exact_witness:paragraph:MA-S4:4:facet:facet-49c35a32b3156393;missing_exact_witness:paragraph:MA-S4:4:slot:slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536;required_target_contract:paragraph:MA-S4:4:facet:facet-49c35a32b3156393",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:53ca027591895559e744075500024cf7bf22dca7c83540d46b1ce16464acd7a5",
+        "response_hash": "sha256:d887304bd931c076522a1d9f4be99f7c38c22deba1e9ba3e905732262d04647d",
+        "prompt_chars": 3758,
+        "input_payload_chars": 15431,
+        "schema_chars": 9128,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 17055
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 7521,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1627
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33;missing_exact_witness:paragraph:MA-S5:2:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33;required_target_contract:paragraph:MA-S5:2:slot:slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:c315424482c7e5378c26176fc4265abd45dbfa7e3a2ef948d0ea151b1b371f1d",
+        "response_hash": "sha256:1c73166bd147858be0d9cf8b672f6fbd85f449a499fb2d097a709642d4d42032",
+        "prompt_chars": 3758,
+        "input_payload_chars": 9039,
+        "schema_chars": 9031,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 18682
+      }
+    ],
+    "cumulative_budget_consumed": 18682,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 11643,
+    "incomplete_sections": [
+      "MA-S3",
+      "MA-S4",
+      "MA-S5"
+    ],
+    "research_request_count": 5,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1",
+        "parsed_payload_digest": "sha256:aa951a190376f6edca5d2801792d558b04d5c12313885ed37505a051e313e0c6"
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9",
+        "parsed_payload_digest": "sha256:9a65a5138a3a8978e18ce1e04f748523a8ce4af6dcec065310a3778e3e602b1d"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d4e183218fbbae7a588cae4b77dc3a51461d607e6b60ce07bd5af26e038617fb",
+        "parsed_payload_digest": "sha256:86514d564a1315642de75f8eab6a22548b63e957f14c08edc82edf434634effb"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:854cd75a0c527d5d5b6029d5305578da3a60bde590c33e456a556fc0d4483a08",
+        "parsed_payload_digest": "sha256:4b4594695265a20112191bac2cebd8f44b0b6e2a84929e69c1592535e4506850"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6cf843046a561719c44c02196173557a2f24f72b94f979477a09b45e89b4551d",
+        "parsed_payload_digest": "sha256:d9fff598674e8a2d1583c5a8ab220e61b0787f10a059100af083da6bdb86f86d"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:077744fecbe3d432739ac9122ac2d269f49add6956a2e42bf01e6c7156751d7f",
+        "parsed_payload_digest": "sha256:f2f5dab514e9959a9a80b5889aa54a6588fc2bd4da498468b110431c0c09d6d0"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:979167fc859a55d32c48755a476fc523788c9b9b9809bc171407e0f858d3ba2c",
+        "parsed_payload_digest": "sha256:12eda46be8be52a487c3a364655f84d92cd5802f366405dd241b223a4571960b"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d887304bd931c076522a1d9f4be99f7c38c22deba1e9ba3e905732262d04647d",
+        "parsed_payload_digest": "sha256:3b5bcbe213294072f13fa33344cd44af2c95d9501779d4cc2b9aa119eda3bda4"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:1c73166bd147858be0d9cf8b672f6fbd85f449a499fb2d097a709642d4d42032",
+        "parsed_payload_digest": "sha256:2ca27afb187c8d4b6db1990217147dd2f42b9c4831c1c264d38bf0ac346ef0b2"
+      }
+    ],
+    "writer_repair_rounds": 4,
+    "writer_repair_commits": 0,
+    "writer_repair_no_progress_stops": 2,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S3",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "4de5d2973b1ac9d7dfa2806de0e6b5361f4e8102061e090b9366cd1d7afdc0fe",
+        "candidate_digest": "7ad8eef5ab3adbaaeb7fcede26089838574258ff3748edb09c52f88bac243aa6"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "4de5d2973b1ac9d7dfa2806de0e6b5361f4e8102061e090b9366cd1d7afdc0fe",
+        "candidate_digest": "a1e05e1ee43850ae54512f37bff0850be83df16d0d30c7ac9e7f4e3a3c6ff61e"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "c1633d89d1c68c3e090489f9dfd39ad9750952015343e718ece3fafa247d32d4",
+        "candidate_digest": "b3760c213bc51fe051f85ea93fcdacf8e2994b284f5ca1c4c12de05e037ce7b2"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "c1633d89d1c68c3e090489f9dfd39ad9750952015343e718ece3fafa247d32d4",
+        "candidate_digest": "c1633d89d1c68c3e090489f9dfd39ad9750952015343e718ece3fafa247d32d4"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1",
+      "parsed_payload_digest": "sha256:aa951a190376f6edca5d2801792d558b04d5c12313885ed37505a051e313e0c6"
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9",
+      "parsed_payload_digest": "sha256:9a65a5138a3a8978e18ce1e04f748523a8ce4af6dcec065310a3778e3e602b1d"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:d4e183218fbbae7a588cae4b77dc3a51461d607e6b60ce07bd5af26e038617fb",
+      "parsed_payload_digest": "sha256:86514d564a1315642de75f8eab6a22548b63e957f14c08edc82edf434634effb"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:854cd75a0c527d5d5b6029d5305578da3a60bde590c33e456a556fc0d4483a08",
+      "parsed_payload_digest": "sha256:4b4594695265a20112191bac2cebd8f44b0b6e2a84929e69c1592535e4506850"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:6cf843046a561719c44c02196173557a2f24f72b94f979477a09b45e89b4551d",
+      "parsed_payload_digest": "sha256:d9fff598674e8a2d1583c5a8ab220e61b0787f10a059100af083da6bdb86f86d"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:077744fecbe3d432739ac9122ac2d269f49add6956a2e42bf01e6c7156751d7f",
+      "parsed_payload_digest": "sha256:f2f5dab514e9959a9a80b5889aa54a6588fc2bd4da498468b110431c0c09d6d0"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:979167fc859a55d32c48755a476fc523788c9b9b9809bc171407e0f858d3ba2c",
+      "parsed_payload_digest": "sha256:12eda46be8be52a487c3a364655f84d92cd5802f366405dd241b223a4571960b"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:d887304bd931c076522a1d9f4be99f7c38c22deba1e9ba3e905732262d04647d",
+      "parsed_payload_digest": "sha256:3b5bcbe213294072f13fa33344cd44af2c95d9501779d4cc2b9aa119eda3bda4"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:1c73166bd147858be0d9cf8b672f6fbd85f449a499fb2d097a709642d4d42032",
+      "parsed_payload_digest": "sha256:2ca27afb187c8d4b6db1990217147dd2f42b9c4831c1c264d38bf0ac346ef0b2"
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1",
+      "request_ids": [
+        "request:MA-S1:1:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:95774fa79b2c493567caaadc4b252aab747442061b2a35c1f09b5c19edd54700"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9",
+      "request_ids": [
+        "research:MA-S2:unit"
+      ],
+      "parsed_request_digests": [
+        "sha256:629ae1f43edc10104355ae60ab314c871bea5842d785d8ac06c0551810e3afd2"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:formal_objects_and_notation"
+      ],
+      "raw_response_hash": "sha256:d4e183218fbbae7a588cae4b77dc3a51461d607e6b60ce07bd5af26e038617fb",
+      "request_ids": [
+        "rq:MA-S3:formula-derivation-evidence"
+      ],
+      "parsed_request_digests": [
+        "sha256:1b44f7e7f32124b08ed1d305024a7bd8912f27fb5f20b904ffe3bc11ed3733d4"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:formal_objects_and_notation"
+      ],
+      "raw_response_hash": "sha256:077744fecbe3d432739ac9122ac2d269f49add6956a2e42bf01e6c7156751d7f",
+      "request_ids": [
+        "MA-S4:unit-1:formula:section:MA-S4:derivation"
+      ],
+      "parsed_request_digests": [
+        "sha256:28e17039a2cab18768a31354913143656c3c39479b29b21d030296d6a247066a"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:1c73166bd147858be0d9cf8b672f6fbd85f449a499fb2d097a709642d4d42032",
+      "request_ids": [
+        "request:MA-S5:configuration_and_branches"
+      ],
+      "parsed_request_digests": [
+        "sha256:190c79b065a0d0f6df62fb9e1080555b13c85701abe402174935a21f80bbfe3a"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    }
+  ],
+  "final_text_digest": "sha256:53a6430f0a57c8dfcf13160c0822d62a299d52061e2325be9f91ceb3d82e97df",
+  "authorship_ledger_digest": "sha256:7645f371c474b94310d443bcd6175b72ef8559e87e537d2101222f30a1e7e22b",
+  "publication_quality_digest": "sha256:b1c82e0c2b13c7ff41c09d7cc6be95591e640d31551285f49cf2b61f8af74610",
+  "rewrite_transition_digest": "sha256:b1a1897ac91b1d6614cded2be2aa966f87868f664eb3ab0f3ec79cbcb3c94e6c",
+  "callback_bundle_digest": "sha256:f685fcea453ffb2cbe566a9d469c7cb0e2f8165b6fb50e3dc8e89b44ae38fd5b",
+  "transaction_assessment_digest": "sha256:3844cd93f989e3be53d5b762d74bfbff8c778844fb6c3d4ea61aa13a34983e00",
+  "rendered_text_digest": "sha256:fb64252c784ae6c7857a2aea6610721a09579362c6e1dd210ea82807b7c20662",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 4,
+    "major": 68,
+    "minor": 0
+  },
+  "verified_validation_status": "incomplete",
+  "publication_ready": false,
+  "content_digest": "sha256:6238e2fe1caef77994a0e81fb74cbdb58a417be27fcd77d1d8d59baeaf3797fb"
+}

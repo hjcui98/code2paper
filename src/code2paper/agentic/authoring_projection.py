@@ -22,6 +22,7 @@ from code2paper.agentic.method_product_models import (
     method_lane_from_reference_status,
 )
 from code2paper.agentic.semantic_evidence import concepts_semantically_related
+from code2paper.agentic.publication_relevance import classify_claim_writing_role
 from code2paper.agentic.trust_contracts import (
     AuthorAttestedFragment,
     AuthoringInputProjection,
@@ -162,6 +163,7 @@ def build_authoring_projection(
             "required_qualifiers": qualifiers,
             "allowed_wording_boundary": boundary or fragment,
             "source": verified.source,
+            "writing_role": classify_claim_writing_role(verified),
         }
         projected.append(ProjectedClaim(**claim_payload, input_digest=_digest(claim_payload)))
 
@@ -340,7 +342,7 @@ def _build_v3_projection(
     projected: list[ProjectedClaim] = []
     for claim in claims.claims:
         if claim.status not in {"supported", "partial"} or claim.claim_kind not in {
-            "implementation_behavior", "configuration_fact"
+            "implementation_behavior", "configuration_fact", "technical_semantic",
         }:
             continue
         payload = {
@@ -353,6 +355,9 @@ def _build_v3_projection(
             "required_qualifiers": claim.required_qualifiers,
             "allowed_wording_boundary": claim.allowed_wording_boundary,
             "source": "atomic_claim_v3:" + ",".join(claim.fact_ids),
+            "writing_role": classify_claim_writing_role(claim),
+            "inference_level": getattr(claim, "inference_level", "E0") or "E0",
+            "parent_claim_ids": list(getattr(claim, "parent_claim_ids", ()) or ()),
         }
         projected.append(ProjectedClaim(**payload, input_digest=_digest(payload)))
 

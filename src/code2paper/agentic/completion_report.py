@@ -112,6 +112,43 @@ def _check_method_text(state: AgenticRunState) -> CompletionCheck:
 def _check_method_usability(state: AgenticRunState) -> CompletionCheck:
     publication_quality = artifact_json(state, "publication_quality_report_v1")
     if publication_quality:
+        writer_result = artifact_json(state, "publication_writer_result_v1")
+        if writer_result:
+            # Q0 candidate-first: the deliverable is an editable durable
+            # candidate.  publication_ready remains a quality label reported
+            # separately; validation warnings never erase the candidate.
+            candidate_available = bool(
+                writer_result.get("candidate_available")
+                or writer_result.get("candidate_generation_status") == "generated"
+            )
+            passed = candidate_available
+            detail = [
+                f"{key}={writer_result.get(key)}"
+                for key in (
+                    "candidate_generation_status",
+                    "candidate_validation_status",
+                    "verified_validation_status",
+                    "publication_ready",
+                )
+                if key in writer_result
+            ]
+            return CompletionCheck(
+                name="method_usability",
+                passed=passed,
+                deliverable="method_usability",
+                message=(
+                    "Editable Method candidate is durable and published."
+                    if passed
+                    else "No durable Method candidate was generated: "
+                    + ", ".join(detail or ["candidate_available=false"])
+                ),
+                artifact_keys=[
+                    "publication_writer_result_v1",
+                    "publication_quality_report_v1",
+                    "method_section_plan_v2",
+                    "final_text_authorship_ledger_v1",
+                ],
+            )
         safety = publication_quality.get("safety") or {}
         utility = publication_quality.get("utility") or {}
         passed = bool(

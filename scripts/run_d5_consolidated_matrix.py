@@ -141,6 +141,16 @@ class EndpointLease:
             self._handle = None
 
 
+def runtime_endpoint_origin() -> str:
+    """Origin for health/models/metrics; follows the live profile base URL."""
+
+    base = str(os.environ.get("CODE2PAPER_OPENAI_BASE_URL") or "http://127.0.0.1:8003/v1")
+    base = base.strip().rstrip("/")
+    if base.endswith("/v1"):
+        return base[:-3]
+    return base or "http://127.0.0.1:8003"
+
+
 def record_runtime_ledger(out_root: Path, key: str = "start") -> dict:
     """Record endpoint health/model/queue state without secrets.
 
@@ -148,32 +158,49 @@ def record_runtime_ledger(out_root: Path, key: str = "start") -> dict:
     appended to ``runtime_ledger.json`` so no pre-project record is
     overwritten.
     """
+    origin = runtime_endpoint_origin()
     ledger: dict = {
         "key": key,
         "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "endpoint_origin": origin,
         "health": None,
         "models": [],
         "running": None,
         "waiting": None,
+        "gpu_cache_usage_perc": None,
     }
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8003/health", timeout=10) as response:
+        with urllib.request.urlopen(f"{origin}/health", timeout=10) as response:
             ledger["health"] = response.status
     except Exception as exc:  # noqa: BLE001 - diagnostics-only ledger
         ledger["health_error"] = str(exc)
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8003/v1/models", timeout=10) as response:
+        with urllib.request.urlopen(f"{origin}/v1/models", timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
             ledger["models"] = [item["id"] for item in payload.get("data", [])]
+            ledger["max_model_len"] = next(
+                (
+                    item.get("max_model_len")
+                    for item in payload.get("data", [])
+                    if isinstance(item, dict)
+                ),
+                None,
+            )
     except Exception as exc:  # noqa: BLE001
         ledger["models_error"] = str(exc)
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8003/metrics", timeout=10) as response:
+        with urllib.request.urlopen(f"{origin}/metrics", timeout=10) as response:
             for line in response.read().decode("utf-8").splitlines():
                 if line.startswith("vllm:num_requests_running{"):
                     ledger["running"] = int(line.rsplit(" ", 1)[-1].split(".", 1)[0])
                 elif line.startswith("vllm:num_requests_waiting{"):
                     ledger["waiting"] = int(line.rsplit(" ", 1)[-1].split(".", 1)[0])
+                elif line.startswith("vllm:gpu_cache_usage_perc{") or line.startswith(
+                    "vllm:kv_cache_usage_perc{"
+                ):
+                    ledger["gpu_cache_usage_perc"] = float(
+                        line.rsplit(" ", 1)[-1].split(".", 1)[0]
+                    )
     except Exception as exc:  # noqa: BLE001
         ledger["metrics_error"] = str(exc)
     safe_key = "".join(char if char.isalnum() else "_" for char in key)
@@ -827,7 +854,9 @@ def _wait_for_idle_queue(out_root: Path, project_id: str, timeout_seconds: int =
     last: dict = {"running": None, "waiting": None, "idle_observed": False}
     while time.time() < deadline:
         try:
-            with urllib.request.urlopen("http://127.0.0.1:8003/metrics", timeout=10) as response:
+            with urllib.request.urlopen(
+                f"{runtime_endpoint_origin()}/metrics", timeout=10
+            ) as response:
                 running = waiting = None
                 for line in response.read().decode("utf-8").splitlines():
                     if line.startswith("vllm:num_requests_running{"):

@@ -557,6 +557,28 @@ def test_story_spine_is_empty_without_obligations() -> None:
     assert build_story_spine_from_intent_graph(IntentObligationGraphV2()) == []
 
 
+def test_story_spine_title_preserves_full_author_statement() -> None:
+    from code2paper.agentic.intent_compiler_v2 import build_story_spine_from_intent_graph
+
+    statement = (
+        "Architecture details enrich embeddings with document identifiers and positional "
+        "signals before the Transformer encoder produces contextual representations."
+    )
+    graph = IntentObligationGraphV2(obligations=[IntentObligationV2(
+        obligation_id="O-ORGANIZATION-LONG",
+        kind="organization",
+        priority="must_cover",
+        author_text=statement,
+        source_field="organization",
+    )])
+
+    title = build_story_spine_from_intent_graph(graph)[0]
+    assert title.author_statement == statement
+    assert title.title != statement
+    assert len(title.title) <= 120
+    assert title.title.startswith("Architecture details")
+
+
 def test_story_spine_links_claims_through_exact_obligation_ids() -> None:
     from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, AtomicClaimV3
     from code2paper.agentic.intent_compiler_v2 import build_story_spine_from_intent_graph

@@ -13,11 +13,15 @@ from code2paper.llm.client import (
     LLMResponse,
     _ProviderResult,
     _first_complete_json,
+    _incomplete_json_has_whitespace_padding,
+    _post_openai_stream_until_complete_json,
+    _set_response_read_timeout,
 )
 from code2paper.agentic.semantic_verifier_provider import LLMSemanticEvidenceVerifier
 from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode, load_capability_profile
 from code2paper.llm.providers import has_provider_api_key
 from code2paper.llm.response_schemas import parse_structured_response
+from code2paper.llm.retry_policy import RetryPolicy
 from code2paper.schemas import (
     AnalysisNavigationPlan,
     DraftClaimMap,
@@ -53,6 +57,40 @@ class _FakeStreamingResponse(_FakeHTTPResponse):
             yield f"data: {json.dumps(item)}\n".encode("utf-8")
 
 
+class _FakeRawStreamingResponse(_FakeHTTPResponse):
+    def __iter__(self):
+        yield from self.payload["lines"]
+
+
+class _BufferedSocket:
+    def __init__(self) -> None:
+        self.timeout = 0.0
+
+    def settimeout(self, value: float) -> None:
+        self.timeout = value
+
+
+class _FakeBufferedStreamingResponse(_FakeHTTPResponse):
+    def __init__(self, lines: list[bytes]) -> None:
+        super().__init__({})
+        self.lines = iter(lines)
+        self.fp = type("FP", (), {})()
+        self.fp.raw = type("Raw", (), {})()
+        self.fp.raw._sock = _BufferedSocket()
+
+    def readline(self) -> bytes:
+        return next(self.lines, b"")
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> bytes:
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line
+
+
 class LLMRuntimeTests(unittest.TestCase):
     def test_complete_json_detector_ignores_braces_inside_strings(self) -> None:
         text = 'prefix [note] {"markdown":"a } and \\\"{\\\"", "ids":["x"]}{"repeat":true}'
@@ -64,6 +102,49 @@ class LLMRuntimeTests(unittest.TestCase):
     def test_complete_json_detector_never_promotes_nested_array(self) -> None:
         self.assertIsNone(_first_complete_json('{"ids":[1]'))
         self.assertEqual(_first_complete_json('{"ids":[1]}'), '{"ids":[1]}')
+
+    def test_incomplete_json_whitespace_padding_is_transport_only(self) -> None:
+        truncated = (
+            '{"goal":"Find the SSM core","rationale":"I need to search for SSM-related or"'
+            + ("\n" * 80)
+        )
+        self.assertTrue(_incomplete_json_has_whitespace_padding(truncated))
+        self.assertFalse(
+            _incomplete_json_has_whitespace_padding('{"ok":true}' + ("\n" * 80))
+        )
+        self.assertFalse(_incomplete_json_has_whitespace_padding('{"ok":true'))
+        self.assertFalse(_incomplete_json_has_whitespace_padding("\n" * 80))
+
+    def test_structured_stream_closes_on_incomplete_json_whitespace_padding(self) -> None:
+        """Regression (DyG r3 callback): truncated JSON then a wall of
+        newlines consumed the full supervisor budget before parse failed."""
+
+        class PaddingThenMore(_FakeHTTPResponse):
+            def __iter__(self):
+                yield b'data: {"choices":[{"delta":{"content":"{\\"goal\\":\\"Find SSM"}}]}\n'
+                yield (
+                    b'data: {"choices":[{"delta":{"content":'
+                    + json.dumps("\n" * 80).encode("utf-8")
+                    + b"}}]}\n"
+                )
+                yield b'data: {"choices":[{"delta":{"content":"SHOULD_NOT_READ"}}]}\n'
+                raise AssertionError("client read padding past whitespace abort")
+
+        def fake_urlopen(_request, timeout=0):  # noqa: ANN001
+            return PaddingThenMore({})
+
+        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            text = _post_openai_stream_until_complete_json(
+                "http://127.0.0.1:8003/v1/chat/completions",
+                {"stream": True},
+                headers={},
+                timeout_seconds=10,
+                retry_policy=RetryPolicy(max_attempts=1),
+            )
+
+        self.assertTrue(text.startswith('{"goal":"Find SSM'))
+        self.assertNotIn("SHOULD_NOT_READ", text)
+        self.assertGreaterEqual(len(text) - len(text.rstrip()), 64)
 
     def test_loopback_structured_stream_stops_after_first_json(self) -> None:
         captured = {}
@@ -137,6 +218,49 @@ class LLMRuntimeTests(unittest.TestCase):
         # The accumulated model bytes are preserved, not discarded.
         self.assertEqual(response.text, '{"ok":true')
         self.assertFalse(response.blocked_reason)
+
+    def test_structured_stream_stops_at_done_on_keep_alive_connection(self) -> None:
+        """[DONE] is terminal even when the HTTP socket remains open."""
+
+        class DoneThenOpen(_FakeHTTPResponse):
+            def __iter__(self):
+                yield b'data: {"choices":[{"delta":{"content":"{\\"ok\\":true"}}]}\n'
+                yield b"data: [DONE]\n"
+                raise AssertionError("client read beyond SSE terminal marker")
+
+        def fake_urlopen(_request, timeout=0):  # noqa: ANN001
+            return DoneThenOpen({})
+
+        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            text = _post_openai_stream_until_complete_json(
+                "http://127.0.0.1:8003/v1/chat/completions",
+                {"stream": True},
+                headers={},
+                timeout_seconds=10,
+                retry_policy=RetryPolicy(max_attempts=1),
+            )
+
+        self.assertEqual(text, '{"ok":true')
+
+    def test_structured_stream_consumes_urllib_buffer_before_socket_readiness(self) -> None:
+        response = _FakeBufferedStreamingResponse([
+            b'data: {"choices":[{"delta":{"content":"{\\"ok\\":true}"}}]}\n',
+            b"data: [DONE]\n",
+        ])
+
+        with patch("urllib.request.urlopen", return_value=response):
+            text = _post_openai_stream_until_complete_json(
+                "http://127.0.0.1:8003/v1/chat/completions",
+                {"stream": True},
+                headers={},
+                timeout_seconds=10,
+                retry_policy=RetryPolicy(max_attempts=1),
+            )
+
+        self.assertEqual(text, '{"ok":true}')
+        self.assertGreater(response.fp.raw._sock.timeout, 0)
+        self.assertTrue(_set_response_read_timeout(response, 3.0))
+        self.assertEqual(response.fp.raw._sock.timeout, 3.0)
 
     def test_runtime_loads_tracked_nested_deployment_profile(self) -> None:
         profile_path = "tests/baselines/agentic/gemma4_mtp_vllm.profile.json"
@@ -242,7 +366,14 @@ class LLMRuntimeTests(unittest.TestCase):
             response_json_schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
         )
 
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}), patch(
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-key",
+                "CODE2PAPER_LLM_STREAM_STRUCTURED": "0",
+                "CODE2PAPER_OPENAI_BASE_URL": "https://api.openai.com/v1",
+            },
+        ), patch(
             "urllib.request.urlopen", side_effect=fake_urlopen
         ):
             response = LLMClient(config).complete(request)
@@ -296,6 +427,7 @@ class LLMRuntimeTests(unittest.TestCase):
             {
                 "OPENAI_API_KEY": "dummy-local-vllm",
                 "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8003/v1",
+                "CODE2PAPER_LLM_STREAM_STRUCTURED": "0",
             },
         ), patch("urllib.request.urlopen", side_effect=fake_urlopen):
             LLMClient(config).complete(request)
@@ -333,7 +465,14 @@ class LLMRuntimeTests(unittest.TestCase):
             },
         )
 
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}), patch(
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-key",
+                "CODE2PAPER_LLM_STREAM_STRUCTURED": "0",
+                "CODE2PAPER_OPENAI_BASE_URL": "https://api.openai.com/v1",
+            },
+        ), patch(
             "urllib.request.urlopen", side_effect=fake_urlopen
         ):
             LLMClient(config).complete(request)

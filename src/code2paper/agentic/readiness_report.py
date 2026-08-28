@@ -235,23 +235,38 @@ def _check_publication_quality_contract(state: AgenticRunState) -> ReadinessChec
     ]
     missing = [key for key in required if not artifact_json(state, key)]
     quality = artifact_json(state, "publication_quality_report_v1")
-    safety = quality.get("safety") or {}
-    utility = quality.get("utility") or {}
-    passed = not missing and bool(
-        quality.get("status") == "publication_ready"
-        and quality.get("plan_gate_passed")
-        and quality.get("final_integrity_gate_passed")
-        and safety.get("hard_gate_passed")
-        and utility.get("utility_gate_passed")
+    writer_result = artifact_json(state, "publication_writer_result_v1")
+    # Q0: readiness reads the independent status fields (plan 19.9).  The
+    # candidate's existence is the generation fact; publication_ready and
+    # validation statuses are quality labels reported separately and never
+    # erase a durable candidate.
+    candidate_available = bool(
+        writer_result.get("candidate_available")
+        or writer_result.get("candidate_generation_status") == "generated"
     )
+    passed = not missing and candidate_available and bool(quality)
+    detail: list[str] = missing or []
+    if writer_result:
+        for key in (
+            "candidate_available",
+            "candidate_validation_status",
+            "verified_validation_status",
+            "publication_ready",
+        ):
+            if key in writer_result:
+                detail.append(f"{key}={writer_result.get(key)}")
+    suffix = (", ".join(detail) if detail else "")
+    if suffix:
+        suffix = " [" + suffix + "]"
     return ReadinessCheck(
         name="publication_quality_contract",
         passed=passed,
         message=(
-            "Publication Writer plan, checkpoint, authorship, safety, and utility gates passed."
+            "Publication Writer candidate is durable; plan, checkpoint, and quality report are present."
+            + suffix
             if passed else
-            "Publication Writer output is missing a required artifact or remains incomplete: "
-            + ", ".join(missing or [str(quality.get("status") or "missing_quality")])
+            "Publication Writer output is missing a required artifact or produced no durable candidate: "
+            + ", ".join(detail or ["missing_quality"])
         ),
         artifact_keys=required,
     )

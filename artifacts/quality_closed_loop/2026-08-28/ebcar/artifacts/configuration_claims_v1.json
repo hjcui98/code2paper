@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "claims": [
+    {
+      "configuration_id": "config:sha256:9461b6288dfd2",
+      "key": "cfg.use_dedicated_attention",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:f658f7728c23587b4afdd531e2d894955cd610009105d4d8809e6a2b795eb358",
+      "content_digest": "sha256:ebb30dde38db0db9478d7440660ee4660d282e56a05533ab1c5ba8684590bdfe"
+    }
+  ],
+  "content_digest": "sha256:2e6710ef4d2ec4b4c783b7ebc0451bfa46bdb23a32e354cd32690a249b80e231"
+}

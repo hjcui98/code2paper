@@ -1,5 +1,13 @@
 Write one focused Method section from the supplied SectionArgumentGraph.
-Explain the supported input, transformation, conditions, and output in a coherent
-technical narrative. Define symbols before equations, distinguish active/default/
-conditional branches, and preserve limitations. Return content first and then the
-typed ids used by the text plus any scoped research requests.
+When paragraph_transaction_required is true, emit exactly one paragraph
+transaction for every planned paragraph.  Keep each paragraph_markdown free of
+headings; the harness supplies the section H2 and assembles paragraph order.
+Declare and witness every required facet, semantic slot, edge, and formula
+package in the same paragraph, and stop when its authorized targets are closed.
+Explain the supported input, transformation steps, conditions, and output in a
+coherent technical narrative. When the section has more than one argument unit
+or required facet, use blank lines to separate those steps; do not collapse a
+multi-step procedure into a single unbroken paragraph. Define symbols before
+equations, distinguish active/default/conditional branches, and preserve
+limitations. Return content first and then the typed ids used by the text plus
+any scoped research requests.

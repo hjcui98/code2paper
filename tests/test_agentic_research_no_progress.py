@@ -870,3 +870,31 @@ class TestBudgetPolicyPerObligation:
         # The policy doesn't enforce the block itself (that's policy merge's
         # job), but the remaining count must be 0 so policy merge can
         # reject further calls.
+
+
+def test_next_unresolved_skips_organization_preference_while_must_cover_open() -> None:
+    from code2paper.agentic.research_graph import _next_unresolved_obligation
+
+    agenda = ResearchAgendaV1(
+        run_id="run-org-skip",
+        repo_snapshot_id="repo:org",
+        project_tree_hash="sha256:tree",
+        items=[
+            ResearchAgendaItemV1(
+                obligation_id="O-STAGE-01",
+                priority="must_cover",
+                status="in_progress",
+            ),
+            ResearchAgendaItemV1(
+                obligation_id="O-ORGANIZATION-01",
+                priority="preference",
+                status="pending",
+            ),
+            ResearchAgendaItemV1(
+                obligation_id="O-STAGE-02",
+                priority="must_cover",
+                status="pending",
+            ),
+        ],
+    )
+    assert _next_unresolved_obligation(agenda, "O-STAGE-01") == "O-STAGE-02"

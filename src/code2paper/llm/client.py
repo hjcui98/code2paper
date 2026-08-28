@@ -11,7 +11,6 @@ from dataclasses import dataclass
 import http.client
 import json
 import os
-import select
 import socket
 import tempfile
 import time
@@ -29,6 +28,8 @@ from code2paper.llm.providers import (
 from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponseMode, is_loopback_url, load_capability_profile
 from code2paper.llm.retry_policy import RetryPolicy
 from code2paper.schemas import LLMConfig, LLMProvider
+
+_STREAM_METRICS: dict[str, object] = {"usage": None, "thinking_chars": 0}
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,10 @@ class LLMResponse:
     response_mode: str = ""
     finish_reason: str = ""
     token_usage: dict[str, int] | None = None
+    # Optional in-process structured payload retained by publication writers
+    # for semantic transaction comparison.  It is never serialized into the
+    # provider cache or emitted as reader-facing prose.
+    metadata: object | None = None
 
 
 @dataclass(frozen=True)
@@ -262,6 +267,7 @@ class LLMClient:
             in {"1", "true", "yes", "on"}
         ):
             payload["stream"] = True
+            payload["stream_options"] = {"include_usage": True}
             text = _post_openai_stream_until_complete_json(
                 base_url,
                 payload,
@@ -273,7 +279,7 @@ class LLMClient:
                 text=text,
                 response_mode=response_mode.value,
                 finish_reason="structured_complete",
-                token_usage=None,
+                token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
             )
         response = _post_json(
             base_url,
@@ -385,7 +391,11 @@ def _post_json(
         request = urllib.request.Request(
             url,
             data=_json_dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", **headers},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": _CLIENT_USER_AGENT,
+                **headers,
+            },
             method="POST",
         )
         try:
@@ -465,6 +475,8 @@ def _post_openai_stream_until_complete_json(
     delay_seconds = max(0.0, retry_policy.initial_delay_seconds)
     attempts = max(1, retry_policy.max_attempts)
     last_error: Exception | None = None
+    _STREAM_METRICS["usage"] = None
+    _STREAM_METRICS["thinking_chars"] = 0
     for attempt in range(1, attempts + 1):
         request = urllib.request.Request(
             url,
@@ -490,22 +502,23 @@ def _post_openai_stream_until_complete_json(
                         raise ProviderTimeoutError(
                             "provider_timeout_error:stream_inactivity"
                         )
-                    try:
-                        descriptor = response.fileno()
-                    except (AttributeError, OSError, TypeError, ValueError):
-                        descriptor = None
-                    if descriptor is not None:
-                        ready, _, _ = select.select(
-                            [descriptor], [], [], inactivity_remaining
-                        )
-                        if not ready:
+                    # HTTPResponse uses a BufferedReader.  Selecting on its
+                    # raw socket can report "not ready" after urllib has
+                    # already prefetched the next SSE line (including [DONE])
+                    # into the Python buffer, causing a false 30--120 second
+                    # hang after the server has completed.  Let readline
+                    # consume buffered bytes first and bound an actual socket
+                    # read with the inactivity deadline.
+                    if _set_response_read_timeout(response, inactivity_remaining):
+                        try:
+                            raw_line = response.readline()
+                        except (TimeoutError, socket.timeout):
                             complete = _first_complete_json(accumulated)
                             if complete is not None:
                                 return complete
                             raise ProviderTimeoutError(
                                 "provider_timeout_error:stream_inactivity"
                             )
-                        raw_line = response.readline()
                         if not raw_line:
                             break
                     else:
@@ -517,17 +530,39 @@ def _post_openai_stream_until_complete_json(
                     if not line.startswith("data:"):
                         continue
                     data = line[5:].strip()
-                    if not data or data == "[DONE]":
+                    if not data:
                         continue
+                    if data == "[DONE]":
+                        complete = _first_complete_json(accumulated)
+                        if complete is not None:
+                            return complete
+                        if accumulated.strip():
+                            # The owning structured-response layer may apply a
+                            # representation-only suffix repair.  [DONE] is a
+                            # protocol terminal marker; waiting for another
+                            # byte on a keep-alive socket can only hang.
+                            return accumulated
+                        raise ProviderRuntimeError(
+                            "provider_stream_done_without_json_content"
+                        )
                     try:
                         event = json.loads(data)
-                        choice = event["choices"][0]
+                    except json.JSONDecodeError:
+                        continue
+                    usage = event.get("usage")
+                    if isinstance(usage, dict):
+                        _STREAM_METRICS["usage"] = usage
+                    try:
+                        choice = (event.get("choices") or [None])[0] or {}
                         delta = choice.get("delta") or {}
-                    except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                    except (KeyError, IndexError, TypeError):
                         continue
                     content = delta.get("content")
                     reasoning_content = delta.get("reasoning_content")
                     if isinstance(reasoning_content, str) and reasoning_content:
+                        _STREAM_METRICS["thinking_chars"] = int(
+                            _STREAM_METRICS.get("thinking_chars") or 0
+                        ) + len(reasoning_content)
                         last_content_at = time.monotonic()
                         received_progress = True
                     if isinstance(content, str):
@@ -538,6 +573,14 @@ def _post_openai_stream_until_complete_json(
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
                             return complete
+                        if _incomplete_json_has_whitespace_padding(accumulated):
+                            # Guided decoding on this local stack sometimes
+                            # stops mid-string and then pads the rest of
+                            # max_tokens with newlines (finish_reason still
+                            # looks complete).  Close the stream so the GPU
+                            # does not spend a full role budget on padding;
+                            # the owning parser still fail-closes.
+                            return accumulated
                     if choice.get("finish_reason"):
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
@@ -583,6 +626,48 @@ def _post_openai_stream_until_complete_json(
     if last_error is not None:
         raise last_error
     raise ProviderRuntimeError("provider_unknown_error")
+
+
+def _set_response_read_timeout(response: object, timeout_seconds: float) -> bool:
+    """Set the socket deadline behind urllib's buffered HTTPResponse.
+
+    CPython's wrapper chain is normally ``response.fp.raw._sock``.  Walk a
+    small explicit set of known wrappers instead of depending on one private
+    shape; test doubles without a socket return ``False`` and keep using their
+    iterator protocol.
+    """
+
+    candidates = [response]
+    fp = getattr(response, "fp", None)
+    if fp is not None:
+        candidates.append(fp)
+        raw = getattr(fp, "raw", None)
+        if raw is not None:
+            candidates.append(raw)
+            sock = getattr(raw, "_sock", None)
+            if sock is not None:
+                candidates.append(sock)
+    for candidate in reversed(candidates):
+        setter = getattr(candidate, "settimeout", None)
+        if callable(setter):
+            setter(max(0.1, float(timeout_seconds)))
+            return True
+    return False
+
+
+def _incomplete_json_has_whitespace_padding(text: str, *, min_run: int = 64) -> bool:
+    """True when a JSON value started but the model is now emitting padding.
+
+    Representation-only transport stop: the bytes already received are
+    unchanged and still fail closed if they are not a complete value.
+    """
+
+    if _first_complete_json(text) is not None:
+        return False
+    if "{" not in text and "[" not in text:
+        return False
+    padding = len(text) - len(text.rstrip(" \t\r\n"))
+    return padding >= max(1, int(min_run))
 
 
 def _first_complete_json(text: str) -> str | None:
@@ -635,6 +720,22 @@ def _auth_headers(provider: LLMProvider, config: LLMConfig) -> dict[str, str]:
     return {}
 
 
+#: Some OpenAI-compatible gateways sit behind Cloudflare-style edge protection
+#: that rejects urllib's default ``Python-urllib/x.y`` user agent (HTTP 403,
+#: Cloudflare error 1010).  A plain curl-style user agent is accepted while
+#: keeping the request non-browser, and it is harmless for every local or
+#: remote provider the client already talks to.
+_CLIENT_USER_AGENT = "code2paper/1.0 (curl-like; +https://opencode.ai/zen/go)"
+
+
+def _request_headers(provider: LLMProvider, config: LLMConfig) -> dict[str, str]:
+    return {
+        "Content-Type": "application/json",
+        "User-Agent": _CLIENT_USER_AGENT,
+        **_auth_headers(provider, config),
+    }
+
+
 def _api_key(provider: LLMProvider, config: LLMConfig) -> str:
     for env_name in provider_api_key_env_candidates(provider):
         value = os.environ.get(env_name, "")
@@ -650,13 +751,26 @@ def _api_key(provider: LLMProvider, config: LLMConfig) -> str:
     raise ProviderRuntimeError("llm_api_key_missing")
 
 
-def _normalized_usage(value: object) -> dict[str, int] | None:
+def _normalized_usage(value: object, prefix: str = "") -> dict[str, int] | None:
     if not isinstance(value, dict):
         return None
     normalized: dict[str, int] = {}
     for key, item in value.items():
-        if isinstance(item, int) and not isinstance(item, bool):
-            normalized[str(key)] = item
+        label = str(key) if not prefix else f"{prefix}.{key}"
+        if isinstance(item, bool):
+            continue
+        if isinstance(item, int):
+            normalized[label] = item
+            continue
+        if isinstance(item, dict):
+            nested = _normalized_usage(item, label)
+            if nested:
+                normalized.update(nested)
+    if not prefix:
+        thinking_chars = int(_STREAM_METRICS.get("thinking_chars") or 0)
+        if thinking_chars and "thinking_chars" not in normalized:
+            normalized["thinking_chars"] = thinking_chars
+            normalized.setdefault("thinking_tokens_est", max(1, thinking_chars // 4))
     return normalized or None
 
 

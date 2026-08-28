@@ -18,6 +18,7 @@ from code2paper.llm.providers import load_llm_config_from_env
 from code2paper.llm.response_schemas import (
     PUBLICATION_METHOD_EDITOR_SCHEMA,
     PublicationMethodEditorOutputV1,
+    PublicationMethodEditorOutputV2,
     json_schema_for,
     try_parse_structured_response,
 )
@@ -47,6 +48,9 @@ class SectionTextPatchV1(BaseModel):
     generation_trace_ids: tuple[str, ...] = Field(default_factory=tuple)
     reason: str = ""
     scoped: bool = True
+    rendered_proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    caveated_proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    deferred_proposition_ids: tuple[str, ...] = Field(default_factory=tuple)
 
     @model_validator(mode="after")
     def _valid(self) -> "SectionTextPatchV1":
@@ -56,6 +60,13 @@ class SectionTextPatchV1(BaseModel):
             raise ValueError("unknown generation source")
         if not self.scoped:
             raise ValueError("editor patch must be section-scoped")
+        reported = [
+            *self.rendered_proposition_ids,
+            *self.caveated_proposition_ids,
+            *self.deferred_proposition_ids,
+        ]
+        if len(reported) != len(set(reported)):
+            raise ValueError("editor proposition dispositions must be disjoint")
         return self
 
 
@@ -112,14 +123,12 @@ class CrossSectionEditor:
         config: LLMConfig | None = None,
         caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     ) -> CrossSectionEditResultV1:
-        """Ask the owning Editor for evidence-aware academic patches.
+        """Ask the owning Editor for document-organization patches.
 
-        The Editor sees the same reader-facing claim, candidate-lane, and
-        formalization surfaces as the Writer, plus the document outline and
-        neighboring sections.  It does not receive raw repository files and
-        cannot create a new fact; its job is to distinguish supported Method
-        explanation from candidate-only author narrative and then improve the
-        global academic presentation without losing either authority lane.
+        The Editor owns paragraph/section organization, transitions,
+        terminology and cross-section repetition. Evidence support, missing
+        propositions and numeric/formula/qualifier repair remain with the
+        Verifier/Writer/Rewrite owners.
         """
 
         base_config = config or load_llm_config_from_env()
@@ -146,6 +155,26 @@ class CrossSectionEditor:
             section_contexts=section_contexts,
             document_context=document_context,
             config=base_config,
+            caller=caller,
+        )
+
+    def revise_one_section_with_llm(
+        self,
+        section_id: str,
+        section_text: str,
+        *,
+        section_context: Mapping[str, Any],
+        document_context: Mapping[str, Any] | None = None,
+        config: LLMConfig | None = None,
+        caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
+    ) -> CrossSectionEditResultV1:
+        """Public single-section semantic revision entry used for repair."""
+
+        return self._edit_one_batch_with_llm(
+            {section_id: section_text},
+            section_contexts={section_id: section_context},
+            document_context=document_context,
+            config=config or load_llm_config_from_env(),
             caller=caller,
         )
 
@@ -240,56 +269,60 @@ class CrossSectionEditor:
     ) -> CrossSectionEditResultV1:
         base_config = config
         repetition_hints = _repetition_hints(sections)
+        editor_contexts = {
+            str(section_id): _academic_editor_context(context)
+            for section_id, context in (section_contexts or {}).items()
+            if str(section_id) in sections
+        }
+        section_bodies = {
+            str(section_id): _split_fixed_heading(text)[1]
+            for section_id, text in sections.items()
+        }
+        fixed_headings = {
+            str(section_id): _split_fixed_heading(text)[0]
+            for section_id, text in sections.items()
+        }
         request = LLMRequest(
-            prompt_template_id="agentic_publication_method_editor_v1",
+            prompt_template_id="agentic_academic_method_editor_v2",
             prompt=(
-                "You are the cross-section academic Method Editor. Return only JSON matching "
-                "the editor schema. First audit the supplied draft against section_contexts, "
-                "then edit only passages that can be improved without inventing information. "
-                "Treat reader_facing_claims with may_enter_verified=true as repository-supported "
-                "implementation content: express each such claim once in natural Method prose and "
-                "preserve its required qualifiers. Treat section_candidate_points as candidate-only "
-                "author narrative: retain the author's intended contribution when useful, but use "
-                "an explicit author-intent, partial-support, mismatch, or pending formulation and "
-                "never present it as a repository-verified implementation fact. Remove positive "
-                "implementation details that appear in neither surface. Use mechanisms, data "
-                "representations, transformations, objectives, and outputs as sentence subjects; "
-                "raw code identifiers may appear only as short parenthetical bindings. Introduce "
-                "mathematical notation only when it is present in formalization. Eliminate generic "
-                "template openings, repeated pipeline summaries, terminology/notation drift, and "
-                "broken transitions. Make each section answer its own reader question instead of "
-                "restating the complete pipeline. "
-                "Return complete section-scoped patches with the exact before digest. Each patch "
-                "must contain patch_id, section_id, before_digest, replacement_text, "
-                "generation_source='editor', reason, and scoped=true. Preserve all supported "
-                "explanation and do not add factual content. Prefer a complete paragraph patch; "
-                "a full-section patch is allowed only when the section's authority framing is "
-                "systematically wrong. When repetition_hints identifies "
-                "duplicate sentences, return one patch per affected paragraph: set before_text "
-                "to the exact complete original paragraph and replacement_text to only the "
-                "rewritten paragraph. The replacement MUST remove later duplicate copies while "
-                "retaining the first supported occurrence. Keep before_digest as the digest of "
-                "the complete section. Do not copy a complete section into a patch. "
-                "If no safe edit is needed, return {\"patches\": []}; never invent a patch or "
-                "omit required patch fields."
+                "You are the academic Method Editor. Return only JSON matching the revision "
+                "schema. Rewrite a complete section body when this materially improves its "
+                "reader-facing logic, paragraph boundaries, transitions, terminology, or removes "
+                "code-trace narration and repetition. You may paraphrase and reorganize sentences; "
+                "you are not a byte patcher. Use only the supplied WriterView propositions. "
+                "Preserve every required positive proposition, every required epistemic caveat, "
+                "and every immutable condition, number, formula, configuration, and qualifier. "
+                "When required_qualifier_bindings are supplied for a section, preserve each "
+                "exact predicate in every sentence it scopes using academic prose plus one "
+                "compact parenthetical backtick binding; never replace it with a bare code "
+                "sentence or authorize a predicate from another section. "
+                "Do not invent a mechanism, loss, dataset, benefit, causal claim, or performance "
+                "claim. Describe implementation identifiers only when a minimal parenthetical "
+                "binding helps; prefer academic method language. Do not emit an H2 heading: the "
+                "harness owns and preserves it. Report rendered, caveated, and deferred IDs from "
+                "the supplied closed set. Any candidate-only author narrative must retain an explicit "
+                "author-intent, partial, mismatch, or pending caveat. If a safe material "
+                "improvement is unavailable, return "
+                "{\"revisions\": []}. Never compute offsets, digests, or original spans."
             ),
             input_payload={
-                "sections": dict(sections),
-                "section_contexts": {
-                    str(section_id): dict(context)
-                    for section_id, context in (section_contexts or {}).items()
-                    if str(section_id) in sections
-                },
+                "section_bodies": section_bodies,
+                "fixed_headings": fixed_headings,
+                "section_contexts": editor_contexts,
+                # Keep the original complete-section surface during the V2
+                # migration.  Replay callers and frozen Editor fixtures use
+                # these reader-facing values to propose a V1 whole-section
+                # replacement; live providers follow ``section_bodies`` and
+                # the V2 semantic revision schema above.  Both surfaces carry
+                # the same prose and authority context, so this compatibility
+                # alias does not broaden what the Editor may write.
+                "sections": {str(key): str(value) for key, value in sections.items()},
                 "document_context": dict(document_context or {}),
-                "section_contract": [
-                    {"section_id": str(section_id), "before_digest": _digest(text)}
-                    for section_id, text in sections.items()
-                ],
                 "repetition_hints": repetition_hints,
-                "contract": "complete_scoped_patches_only",
+                "contract": "whole_section_body_revision_v2",
             },
             schema_name=PUBLICATION_METHOD_EDITOR_SCHEMA,
-            response_json_schema=json_schema_for(PublicationMethodEditorOutputV1),
+            response_json_schema=json_schema_for(PublicationMethodEditorOutputV2),
         )
         try:
             try:
@@ -312,7 +345,7 @@ class CrossSectionEditor:
                 ),
                 "reasoning_effort": "none",
                 "thinking_token_budget": None,
-                "temperature": min(base_config.temperature, 0.2),
+                "temperature": min(max(base_config.temperature, 0.3), 0.45),
             })
             if caller is not None:
                 response = caller(editor_config, request)
@@ -343,23 +376,90 @@ class CrossSectionEditor:
                 blocked_reason=response.blocked_reason,
                 response_ref=response.response_hash,
             )
-        parsed, error = try_parse_structured_response(response.text, PublicationMethodEditorOutputV1)
-        if parsed is None:
+        parsed_v2, error = try_parse_structured_response(
+            response.text, PublicationMethodEditorOutputV2
+        )
+        if parsed_v2 is None:
+            # Historical fixtures and frozen responses remain replayable while
+            # live calls use the semantic V2 contract.
+            parsed_v1, legacy_error = try_parse_structured_response(
+                response.text, PublicationMethodEditorOutputV1
+            )
+        else:
+            parsed_v1, legacy_error = None, ""
+        if parsed_v2 is None and parsed_v1 is None:
             return CrossSectionEditResultV1(
                 sections={str(key): str(value) for key, value in sections.items()},
-                blocked_reason=f"editor_schema_failed:{error}",
+                blocked_reason=f"editor_schema_failed:{error or legacy_error}",
                 response_ref=response.response_hash,
             )
         try:
             patches: list[SectionTextPatchV1] = []
-            for item in parsed.patches:
-                patch_payload = item.model_dump(mode="json") if isinstance(item, BaseModel) else item
-                patch = SectionTextPatchV1.model_validate(patch_payload)
-                patches.append(patch.model_copy(update={
-                    "generation_trace_ids": tuple(
-                        dict.fromkeys([*patch.generation_trace_ids, response.response_hash])
-                    )
-                }))
+            if parsed_v2 is not None:
+                closed_ids_by_section = {
+                    section_id: _closed_editor_proposition_ids(context)
+                    for section_id, context in editor_contexts.items()
+                }
+                seen_sections: set[str] = set()
+                for item in parsed_v2.revisions:
+                    section_id = str(item.section_id)
+                    if section_id not in sections or section_id in seen_sections:
+                        raise ValueError("editor revision contains an unknown or duplicate section")
+                    seen_sections.add(section_id)
+                    writer_view = editor_contexts.get(section_id, {}).get("writer_view") or {}
+                    positive_ids = {
+                        str(row.get("proposition_id") or "")
+                        for row in writer_view.get("positive_propositions") or ()
+                        if isinstance(row, Mapping)
+                    }
+                    caveated_ids = {
+                        str(row.get("proposition_id") or "")
+                        for row in writer_view.get("caveated_propositions") or ()
+                        if isinstance(row, Mapping)
+                    }
+                    required_ids = {
+                        str(value) for value in writer_view.get("required_proposition_ids") or ()
+                        if str(value)
+                    }
+                    rendered_ids = set(item.rendered_proposition_ids)
+                    caveated_reported_ids = set(item.caveated_proposition_ids)
+                    deferred_ids = set(item.deferred_proposition_ids)
+                    reported_ids = rendered_ids | caveated_reported_ids | deferred_ids
+                    if not reported_ids.issubset(closed_ids_by_section.get(section_id, set())):
+                        raise ValueError("editor revision contains a foreign proposition id")
+                    if not rendered_ids.issubset(positive_ids):
+                        raise ValueError("editor rendered a caveated proposition as positive")
+                    if not caveated_reported_ids.issubset(caveated_ids):
+                        raise ValueError("editor caveat disposition does not match WriterView")
+                    if not required_ids.issubset(reported_ids):
+                        raise ValueError("editor revision omitted a required proposition disposition")
+                    heading, _body = _split_fixed_heading(sections[section_id])
+                    revised_body = item.revised_body_markdown.strip()
+                    while revised_body.startswith("## "):
+                        revised_body = "\n".join(revised_body.splitlines()[1:]).lstrip()
+                    replacement = f"{heading}\n\n{revised_body}" if heading else revised_body
+                    patches.append(SectionTextPatchV1(
+                        patch_id=f"editor-v2-{section_id}",
+                        section_id=section_id,
+                        before_digest=_digest(sections[section_id]),
+                        replacement_text=replacement,
+                        generation_source="editor",
+                        generation_trace_ids=(response.response_hash,),
+                        reason=";".join(item.addressed_revision_goals) or "academic_method_revision",
+                        rendered_proposition_ids=tuple(item.rendered_proposition_ids),
+                        caveated_proposition_ids=tuple(item.caveated_proposition_ids),
+                        deferred_proposition_ids=tuple(item.deferred_proposition_ids),
+                    ))
+            else:
+                assert parsed_v1 is not None
+                for item in parsed_v1.patches:
+                    patch_payload = item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                    patch = SectionTextPatchV1.model_validate(patch_payload)
+                    patches.append(patch.model_copy(update={
+                        "generation_trace_ids": tuple(
+                            dict.fromkeys([*patch.generation_trace_ids, response.response_hash])
+                        )
+                    }))
         except (TypeError, ValueError) as exc:
             return CrossSectionEditResultV1(
                 sections={str(key): str(value) for key, value in sections.items()},
@@ -371,6 +471,49 @@ class CrossSectionEditor:
             response_ref=response.response_hash,
             response_refs=(response.response_hash,),
         )
+
+
+def _split_fixed_heading(text: str) -> tuple[str, str]:
+    lines = str(text).lstrip().splitlines()
+    if lines and lines[0].startswith("## "):
+        return lines[0].strip(), "\n".join(lines[1:]).strip()
+    return "", str(text).strip()
+
+
+def _academic_editor_context(context: Mapping[str, Any]) -> dict[str, Any]:
+    """Expose only the four-layer WriterView and reader-facing purpose."""
+
+    writer_view = dict(context.get("writer_view") or {})
+    section = dict(context.get("section") or {})
+    return {
+        "section_purpose": section.get("purpose") or section.get("design_objective") or "",
+        "reader_question": section.get("reader_question") or "",
+        "writer_view": writer_view,
+        "reader_facing_claims": list(context.get("reader_facing_claims") or ()),
+        "required_qualifier_bindings": list(
+            context.get("required_qualifier_bindings") or ()
+        ),
+        "revision_goals": [
+            "answer the section question directly",
+            "organize one coherent idea per paragraph",
+            "replace code-trace narration with academic method language",
+            "remove repetition and generic placeholder prose",
+            "preserve proposition authority and caveats",
+        ],
+    }
+
+
+def _closed_editor_proposition_ids(context: Mapping[str, Any]) -> set[str]:
+    writer_view = context.get("writer_view") or {}
+    rows = [
+        *(writer_view.get("positive_propositions") or ()),
+        *(writer_view.get("caveated_propositions") or ()),
+    ]
+    return {
+        str(row.get("proposition_id"))
+        for row in rows
+        if isinstance(row, Mapping) and str(row.get("proposition_id") or "")
+    }
 
 
 def _ordered_editor_section_ids(
@@ -442,7 +585,7 @@ def edit_sections(
         applied.append(patch)
     duplicates = [signature for signature, count in Counter(_sentence_signature(text) for text in current.values()).items() if count > 1 and signature]
     return CrossSectionEditResultV1(
-        sections=current if not failures else {str(key): str(value) for key, value in sections.items()},
+        sections=current,
         patches=applied,
         duplicate_signatures=duplicates,
         blocked_reason=";".join(failures),

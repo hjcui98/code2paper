@@ -1,0 +1,199 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "research:MA-S2:unit",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "Does the paper text use the term 'Tri-Graph' as a defined label for the three-node-type graph, and if so, in which section or figure does it appear?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "Tri-Graph",
+        "appearing",
+        "explicit",
+        "statement",
+        "interconnecting",
+        "adjacency",
+        "structure",
+        "architectural",
+        "term",
+        "paper",
+        "text",
+        "three",
+        "node",
+        "types",
+        "named",
+        "unit"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The reader needs to know whether 'Tri-Graph' is a term the paper itself defines or an author-level shorthand, so the Method can state the label's provenance without overclaiming.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "repository confirmation that 'Tri-Graph' is a term appearing in the paper text",
+        "explicit statement of the three node types and their interconnecting adjacency structure as a named architectural unit"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-02-1977b399"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-1977b399"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:9bf6e5ebb50b737bbe9f81af41f28f65dac26c3942920654fac7684a0c850f98"
+    },
+    {
+      "request_id": "rq:MA-S3:formula-derivation-evidence",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "formal_objects_and_notation",
+      "exact_question": "What repository evidence (equation, fragment, or configuration) formally derives the tri-graph formula G = (V, E, A) = (V_P ∪ V_S ∪ V_E, E_contain ∪ E_mention, A_contain ∪ A_mention) and its material conditions?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "MA-S3",
+        "derivation",
+        "binding",
+        "formula",
+        "section"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section formula obligation formula:section:MA-S3:derivation is blocking and unresolved; without repository evidence the formula cannot be promoted from author_intent to verified status.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "repository evidence binding formula:section:MA-S3:derivation"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:101:101",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:129:129",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:198:198",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "target_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-COMPONENT-01-bd3b9454"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:191f456d8563811185254ebf16f4969219762eeaf1a070e89c7f5b73b25fbd26"
+    },
+    {
+      "request_id": "MA-S4:unit-1:formula:section:MA-S4:derivation",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "missing_rhetorical_move": "formal_objects_and_notation",
+      "exact_question": "What is the closed-form expression for the per-iteration score update in LinearRAG.calculate_entity_scores, specifically how are attenuation factors computed as scores propagate through the sentence–entity subgraph?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "closed-form",
+        "derivation",
+        "per-iteration",
+        "attenuation",
+        "score",
+        "update",
+        "factor",
+        "formula"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "formula:section:MA-S4:derivation",
+      "missing_parts": [
+        "closed-form derivation of per-iteration score update",
+        "attenuation factor formula"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_concept_keys": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:0d86a5758f9ce720c2e754ed8ff8dbd91807cd87757fe79e27c9e2ed8c327fd0"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:f685fcea453ffb2cbe566a9d469c7cb0e2f8165b6fb50e3dc8e89b44ae38fd5b"
+}

@@ -1,0 +1,639 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "packets": [
+    {
+      "packet_id": "pkt-O-METHOD-MAINLINE-01-79899e6c-4df10750b263",
+      "obligation_tags": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:192:192",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 192,
+          "line_end": 192,
+          "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+          "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:193:193",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 193,
+          "line_end": 193,
+          "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+          "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:187:190",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 187,
+          "line_end": 190,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n            entity_weights, actived_entities = self.calculate_entity_scores_vectorized(question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n        else:\n            entity_weights, actived_entities = self.calculate_entity_scores(question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:08e3501dab3bafa1ec14c359fcfdd647be26b9ede57a76285273c9adbeeb508a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:194:194",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 194,
+          "line_end": 194,
+          "exact_excerpt": "        return ppr_sorted_passage_indices,ppr_sorted_passage_scores\n",
+          "excerpt_digest": "sha256:b39bb3937c896976f87577e872c58adc77027fdef6e2c623ba1685688ebc2081",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:187:187",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 187,
+          "line_end": 187,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n",
+          "excerpt_digest": "sha256:49a7fe8032a9b4f7edb052e7ca633afe42004d4ef62c04de8fa27fb8ad57064a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:4024da979f792194",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:0310037f50fb51c0",
+          "target_symbol": "sym:0310037f50fb51c0",
+          "source_endpoint": {
+            "node_id": "node:aeeb37c1954490b7",
+            "symbol_id": "sym:0310037f50fb51c0",
+            "operation_subject": "sym:0310037f50fb51c0",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:187:190"
+          },
+          "target_endpoint": {
+            "node_id": "node:d1fc21e482f6ab9b",
+            "symbol_id": "sym:0310037f50fb51c0",
+            "operation_subject": "sym:0310037f50fb51c0",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:187:187"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:187:190",
+            "span:src/LinearRAG.py:187:187"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:0310037f50fb51c0 -> sym:0310037f50fb51c0"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "composition_rationale": "Deterministic selection covers 4 anchor spans and 1 relation spans across 4 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:4724763ff2afd4577f230c813332741cd8616f54a14d2dd060b1600bcb425929"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-01-9c8dfe22-2a36a677d3ec",
+      "obligation_tags": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "scope": "sym:eb8aac3092d3f167",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:566:566",
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:566:566",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 566,
+          "line_end": 566,
+          "exact_excerpt": "        entity_nodes, sentence_nodes,passage_hash_id_to_entities,self.entity_to_sentence,self.sentence_to_entity = self.extract_nodes_and_edges(existing_passage_hash_id_to_entities, existing_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:b4565fe6693bbd1f5182309a91f9dd7854d7fa819597d41f5f7ce95190a668f1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:561:564",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 561,
+          "line_end": 564,
+          "exact_excerpt": "        if len(new_passage_hash_ids) > 0:\n            new_hash_id_to_passage = {k : hash_id_to_passage[k] for k in new_passage_hash_ids}\n            new_passage_hash_id_to_entities,new_sentence_to_entities = self.spacy_ner.batch_ner(new_hash_id_to_passage, self.config.max_workers)\n            self.merge_ner_results(existing_passage_hash_id_to_entities, existing_sentence_to_entities, new_passage_hash_id_to_entities, new_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:26a5eac16231ad3d2244f34d021a8fbd3b0341f3743fdf0ecfcf4b0a08f5ac54",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:02063000728b8d9f9b1b7ccd277dae4c3afceb40e39722de86f2d4f69eb7d6ca"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-02-93c16851-8421c310597c",
+      "obligation_tags": [
+        "O-STAGE-02-93c16851"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:188:188",
+        "span:src/ner.py:32:33",
+        "span:src/ner.py:36:37",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:188:188",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 188,
+          "line_end": 188,
+          "exact_excerpt": "            entity_weights, actived_entities = self.calculate_entity_scores_vectorized(question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:8572224f5e0a0552a061664ebf5fa2fed0cff42ce38d3f5cde6bd3d538af2093",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/ner.py:32:33",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/ner.py",
+          "symbol": "sym:91c2d36974bb3855",
+          "line_start": 32,
+          "line_end": 33,
+          "exact_excerpt": "            if ent.label_ == \"ORDINAL\" or ent.label_ == \"CARDINAL\":\n                continue\n",
+          "excerpt_digest": "sha256:8196cb2bdf75c421a7fb020836e5114991496329e350293e423a56f892d57d01",
+          "file_digest": "sha256:8b4b6f1ccd931f7caa793402e0409e42c6bc1f4c47bd4d06d743ff9a4cdfc3f2",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/ner.py:36:37",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/ner.py",
+          "symbol": "sym:91c2d36974bb3855",
+          "line_start": 36,
+          "line_end": 37,
+          "exact_excerpt": "            if ent_text not in sentence_to_entities[sent_text]:\n                sentence_to_entities[sent_text].append(ent_text)\n",
+          "excerpt_digest": "sha256:754e65044e54c997fdb2fc57edec916a7a7339915995c3a4391c542640007944",
+          "file_digest": "sha256:8b4b6f1ccd931f7caa793402e0409e42c6bc1f4c47bd4d06d743ff9a4cdfc3f2",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:192:192",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 192,
+          "line_end": 192,
+          "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+          "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:194:194",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 194,
+          "line_end": 194,
+          "exact_excerpt": "        return ppr_sorted_passage_indices,ppr_sorted_passage_scores\n",
+          "excerpt_digest": "sha256:b39bb3937c896976f87577e872c58adc77027fdef6e2c623ba1685688ebc2081",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "composition_rationale": "Deterministic selection covers 5 anchor spans and 0 relation spans across 5 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:7c2d60f4c6661580cf580d0f2851ad8e2db5a9ed2d7da8b42dc5299371f23bdc"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-03-8dda66b9-36dbce53fed1",
+      "obligation_tags": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:193:193",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 193,
+          "line_end": 193,
+          "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+          "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:208:208",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 208,
+          "line_end": 208,
+          "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+          "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:187:190",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 187,
+          "line_end": 190,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n            entity_weights, actived_entities = self.calculate_entity_scores_vectorized(question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n        else:\n            entity_weights, actived_entities = self.calculate_entity_scores(question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:08e3501dab3bafa1ec14c359fcfdd647be26b9ede57a76285273c9adbeeb508a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:192:192",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 192,
+          "line_end": 192,
+          "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+          "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:194:194",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 194,
+          "line_end": 194,
+          "exact_excerpt": "        return ppr_sorted_passage_indices,ppr_sorted_passage_scores\n",
+          "excerpt_digest": "sha256:b39bb3937c896976f87577e872c58adc77027fdef6e2c623ba1685688ebc2081",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:187:187",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 187,
+          "line_end": 187,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n",
+          "excerpt_digest": "sha256:49a7fe8032a9b4f7edb052e7ca633afe42004d4ef62c04de8fa27fb8ad57064a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:4024da979f792194",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:0310037f50fb51c0",
+          "target_symbol": "sym:0310037f50fb51c0",
+          "source_endpoint": {
+            "node_id": "node:aeeb37c1954490b7",
+            "symbol_id": "sym:0310037f50fb51c0",
+            "operation_subject": "sym:0310037f50fb51c0",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:187:190"
+          },
+          "target_endpoint": {
+            "node_id": "node:d1fc21e482f6ab9b",
+            "symbol_id": "sym:0310037f50fb51c0",
+            "operation_subject": "sym:0310037f50fb51c0",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:187:187"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:187:190",
+            "span:src/LinearRAG.py:187:187"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:0310037f50fb51c0 -> sym:0310037f50fb51c0"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "composition_rationale": "Deterministic selection covers 6 anchor spans and 1 relation spans across 6 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:e5e0c0a05e8c2a0265031ede9c37d7d4892cb9a1ba7aed8b5e40a1c512679c4a"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-4e554ef0-2a36a677d3ec",
+      "obligation_tags": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "scope": "sym:eb8aac3092d3f167",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:566:566",
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:566:566",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 566,
+          "line_end": 566,
+          "exact_excerpt": "        entity_nodes, sentence_nodes,passage_hash_id_to_entities,self.entity_to_sentence,self.sentence_to_entity = self.extract_nodes_and_edges(existing_passage_hash_id_to_entities, existing_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:b4565fe6693bbd1f5182309a91f9dd7854d7fa819597d41f5f7ce95190a668f1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:561:564",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 561,
+          "line_end": 564,
+          "exact_excerpt": "        if len(new_passage_hash_ids) > 0:\n            new_hash_id_to_passage = {k : hash_id_to_passage[k] for k in new_passage_hash_ids}\n            new_passage_hash_id_to_entities,new_sentence_to_entities = self.spacy_ner.batch_ner(new_hash_id_to_passage, self.config.max_workers)\n            self.merge_ner_results(existing_passage_hash_id_to_entities, existing_sentence_to_entities, new_passage_hash_id_to_entities, new_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:26a5eac16231ad3d2244f34d021a8fbd3b0341f3743fdf0ecfcf4b0a08f5ac54",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:02063000728b8d9f9b1b7ccd277dae4c3afceb40e39722de86f2d4f69eb7d6ca"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-bd3b9454-56b1d998b619",
+      "obligation_tags": [
+        "O-COMPONENT-01-bd3b9454"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "anchor_span_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:129:129"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/LinearRAG.py:96:96",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 96,
+          "line_end": 96,
+          "exact_excerpt": "            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n",
+          "excerpt_digest": "sha256:550d590dfc1b5af5e170c48d4790a3b67a5204a2057b0b5bd2c63d1a6dbee56c",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:95:105",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 105,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n            logger.info(\"Precomputing sparse adjacency matrices for vectorized retrieval...\")\n            self._precompute_sparse_matrices()\n            e2s_shape = self.entity_to_sentence_sparse.shape\n            s2e_shape = self.sentence_to_entity_sparse.shape\n            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n            logger.info(f\"Matrices built: Entity-Sentence {e2s_shape}, Sentence-Entity {s2e_shape}\")\n            logger.info(f\"E2S Sparsity: {(1 - e2s_nnz / (e2s_shape[0] * e2s_shape[1])) * 100:.2f}% (nnz={e2s_nnz})\")\n            logger.info(f\"S2E Sparsity: {(1 - s2e_nnz / (s2e_shape[0] * s2e_shape[1])) * 100:.2f}% (nnz={s2e_nnz})\")\n            logger.info(f\"Device: {self.device}\")\n",
+          "excerpt_digest": "sha256:b749b135ed1ecd61254268653e76b02cb7f50074d99abb186ed5ee8a94902546",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:103:103",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 103,
+          "line_end": 103,
+          "exact_excerpt": "            logger.info(f\"E2S Sparsity: {(1 - e2s_nnz / (e2s_shape[0] * e2s_shape[1])) * 100:.2f}% (nnz={e2s_nnz})\")\n",
+          "excerpt_digest": "sha256:2d67e6907051a3bbf82e837ae8aa1c894c95147fcc5735f9b2fee4ffab88dc4e",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:129:129",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 129,
+          "line_end": 129,
+          "exact_excerpt": "        return retrieval_results\n",
+          "excerpt_digest": "sha256:41f09770b179724585df334adcda626b8d980682e749cf49f1971c655381bf04",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/LinearRAG.py:95:95",
+          "snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 95,
+          "line_end": 95,
+          "exact_excerpt": "        if self.config.use_vectorized_retrieval:\n",
+          "excerpt_digest": "sha256:49a7fe8032a9b4f7edb052e7ca633afe42004d4ef62c04de8fa27fb8ad57064a",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:9c39c339b8028cfc",
+          "relation_type": "control_flow",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:676a092fcdcab365",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "CALL",
+            "operands": [
+              "logger.info",
+              "'Precomputing sparse adjacency matrices for vectorized retrieval...'"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:96:96"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "conditions": [
+            "self.config.use_vectorized_retrieval"
+          ],
+          "statement": "TRUE_BRANCH: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe when self.config.use_vectorized_retrieval"
+        },
+        {
+          "relation_id": "rel:406492bde7696947",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:b6756a18e320d0fe",
+          "target_symbol": "sym:b6756a18e320d0fe",
+          "source_endpoint": {
+            "node_id": "node:74ab7a7685ae6051",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "BRANCH",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:105"
+          },
+          "target_endpoint": {
+            "node_id": "node:052ae362dcc53aad",
+            "symbol_id": "sym:b6756a18e320d0fe",
+            "operation_subject": "sym:b6756a18e320d0fe",
+            "predicate": "LOAD",
+            "operands": [
+              "self.config.use_vectorized_retrieval"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/LinearRAG.py:95:95"
+          },
+          "direct_span_ids": [
+            "span:src/LinearRAG.py:95:105",
+            "span:src/LinearRAG.py:95:95"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:b6756a18e320d0fe -> sym:b6756a18e320d0fe"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "composition_rationale": "Deterministic selection covers 4 anchor spans and 1 relation spans across 4 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:0f8fa0ee0ab3e088a18fa6020144e567b4cfba1fe89e38a54fa9c0725a849b30"
+    }
+  ],
+  "content_digest": "sha256:bdbb09acafcceb6207de3ac55a8791f3e08a756953827b6f65ab362b1e5b33de"
+}

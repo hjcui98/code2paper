@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "prose_copied_from_paper": false,
+  "projects": {
+    "linearrag": {
+      "units": [
+        {
+          "unit_id": "linearrag_offline_two_vertex_graph",
+          "story_role": "offline_construction",
+          "expected_heading_aliases": ["offline", "graph construction"],
+          "required_alias_groups": [["passage"], ["entity"], ["two node", "two node types", "bipartite"]]
+        },
+        {
+          "unit_id": "linearrag_stage1_activation_chain",
+          "story_role": "stage1",
+          "expected_heading_aliases": ["first retrieval", "activation"],
+          "required_alias_groups": [["seed"], ["sentence"], ["co-occurr", "cooccurr"], ["frontier", "iteratively", "propagation", "propagate"], ["top-k", "top k", "topk", "top-\\(k\\)"]]
+        },
+        {
+          "unit_id": "linearrag_threshold_excludes_below",
+          "story_role": "stage1",
+          "expected_heading_aliases": ["first retrieval", "activation"],
+          "required_alias_groups": [["threshold", "τ"], ["pruning", "discarded", "exclude", "continue"]],
+          "polarity": "exclude_below_threshold"
+        },
+        {
+          "unit_id": "linearrag_stage2_hybrid_ppr",
+          "story_role": "stage2",
+          "expected_heading_aliases": ["second retrieval", "ranking", "pagerank"],
+          "required_alias_groups": [["hybrid", "passage score"], ["pagerank", "ppr", "personalized"], ["descending", "rank"]],
+          "formula_alias_groups": [["log", "log1p"], ["damping", "damp"]],
+          "require_display_math": true
+        }
+      ]
+    },
+    "dyg": {
+      "units": [
+        {
+          "unit_id": "dyg_first_hop_sequence_contract",
+          "story_role": "encoding",
+          "expected_heading_aliases": ["first-hop", "neighbor", "encoding"],
+          "required_alias_groups": [["first-hop", "first hop"], ["truncate", "recent"], ["padded", "padding"], ["target node", "self"]]
+        },
+        {
+          "unit_id": "dyg_four_signal_channels",
+          "story_role": "encoding",
+          "expected_heading_aliases": ["encoding", "multi-signal"],
+          "required_alias_groups": [["node"], ["edge"], ["temporal", "time"], ["co-occurr", "cooccurr", "frequency"]]
+        },
+        {
+          "unit_id": "dyg_continuous_ssm_update",
+          "story_role": "ssm",
+          "expected_heading_aliases": ["ssm", "state space", "mamba"],
+          "required_alias_groups": [["continuous"], ["state"], ["discret", "step"], ["hidden"]],
+          "formula_alias_groups": [["A", "exp", "e^"], ["B", "input"], ["C", "output"]],
+          "require_display_math": true
+        },
+        {
+          "unit_id": "dyg_timespan_step_and_bc_path",
+          "story_role": "timespan_redesign",
+          "expected_heading_aliases": ["timespan", "step", "redesign"],
+          "required_alias_groups": [["time gap", "timespan", "delta"], ["softplus", "step size"], ["B", "C"], ["input-dependent", "content-dependent"]],
+          "polarity": "larger_gap_larger_step"
+        },
+        {
+          "unit_id": "dyg_cross_attention_topk_readout",
+          "story_role": "readout",
+          "expected_heading_aliases": ["cross-attention", "readout", "routing"],
+          "required_alias_groups": [["cross-attention", "cross attention"], ["top-k", "top k", "topk"], ["softmax"], ["weighted sum", "pool"]]
+        }
+      ]
+    },
+    "ebcar": {
+      "units": [
+        {
+          "unit_id": "ebcar_structural_augmentation",
+          "story_role": "structural_augmentation",
+          "expected_heading_aliases": ["structural", "augmentation"],
+          "required_alias_groups": [["document id", "doc id", "relative"], ["sinusoid", "sinusoidal"], ["position"], ["embedding"]]
+        },
+        {
+          "unit_id": "ebcar_shared_attention",
+          "story_role": "hybrid_attention",
+          "expected_heading_aliases": ["hybrid", "attention"],
+          "required_alias_groups": [["shared", "full attention"], ["global", "all passages"], ["query"]]
+        },
+        {
+          "unit_id": "ebcar_dedicated_masked_attention",
+          "story_role": "hybrid_attention",
+          "expected_heading_aliases": ["hybrid", "attention"],
+          "required_alias_groups": [["dedicated", "masked"], ["masked", "mask"], ["same document", "intra-document", "within document"]]
+        },
+        {
+          "unit_id": "ebcar_attention_outputs_fused",
+          "story_role": "hybrid_attention",
+          "expected_heading_aliases": ["hybrid", "attention"],
+          "required_alias_groups": [["sum", "add", "fuse"], ["attention", "output"]]
+        }
+      ]
+    }
+  }
+}

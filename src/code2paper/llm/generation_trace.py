@@ -14,6 +14,7 @@ fixture runs that exercise only the sampling path).
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -80,6 +81,10 @@ class GenerationCallTrace(BaseModel):
     schema_name: str = ""
     input_hash: str = ""
     response_hash: str = ""
+    prompt_chars: int = 0
+    input_payload_chars: int = 0
+    schema_chars: int = 0
+    thinking_chars: int = 0
     # Per-role extension state (only meaningful for the method_writer
     # role).  ``extended_budget_used`` is True when the call used the
     # extended budget (12288) instead of the default (8192).
@@ -132,6 +137,9 @@ def build_generation_call_trace(
     correlated across the run summary, SQLite checkpoint and R8 report.
     """
 
+    payload_text = json.dumps(request.input_payload, ensure_ascii=False, default=str)
+    schema_text = json.dumps(request.response_json_schema or {}, ensure_ascii=False, default=str)
+    usage = response.token_usage or {}
     return GenerationCallTrace(
         call_id=call_id,
         prompt_template_id=request.prompt_template_id,
@@ -141,13 +149,17 @@ def build_generation_call_trace(
         endpoint_origin=endpoint_origin_for_config(config),
         effective_config=build_effective_sampling_config(config),
         finish_reason=response.finish_reason,
-        token_usage=response.token_usage or {},
+        token_usage=usage,
         blocked_reason=response.blocked_reason,
         cached=response.cached,
         response_mode=response.response_mode,
         schema_name=request.schema_name,
         input_hash=request.input_hash,
         response_hash=response.response_hash,
+        prompt_chars=len(request.prompt or ""),
+        input_payload_chars=len(payload_text),
+        schema_chars=len(schema_text),
+        thinking_chars=int(usage.get("thinking_chars") or 0),
         extended_budget_used=extended_budget_used,
         cumulative_budget_consumed=cumulative_budget_consumed,
     )

@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "research:MA-S2:unit",
+      "lane": "expository_bridge",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "exact_question": "Does the paper text use the term 'Tri-Graph' as a defined label for the three-node-type graph, and if so, in which section or figure does it appear?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: Does the paper text use the term 'Tri-Graph' as a defined label for the three-node-type graph, and if so, in which section or figure does it appear.",
+      "needed_evidence": [
+        "Tri-Graph",
+        "appearing",
+        "explicit",
+        "statement",
+        "interconnecting",
+        "adjacency",
+        "structure",
+        "architectural",
+        "term",
+        "paper",
+        "text",
+        "three",
+        "node",
+        "types",
+        "named",
+        "unit"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "research:MA-S2:unit"
+      ],
+      "content_digest": "sha256:78b2c79f5d15fdd6b43db4ea1115c5ca487bbe6e8b134757f5dcfdc907a67a9e"
+    },
+    {
+      "request_id": "rq:MA-S3:formula-derivation-evidence",
+      "lane": "expository_bridge",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "exact_question": "What repository evidence (equation, fragment, or configuration) formally derives the tri-graph formula G = (V, E, A) = (V_P ∪ V_S ∪ V_E, E_contain ∪ E_mention, A_contain ∪ A_mention) and its material conditions?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What repository evidence (equation, fragment, or configuration) formally derives the tri-graph formula G = (V, E, A) = (V_P ∪ V_S ∪ V_E, E_contain ∪ E_mention, A_contain ∪ A_mention) and its material conditions.",
+      "needed_evidence": [
+        "MA-S3",
+        "derivation",
+        "binding",
+        "formula",
+        "section"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "rq:MA-S3:formula-derivation-evidence"
+      ],
+      "content_digest": "sha256:3d2a42ecf6378d6146b97669343bbc073dc152afd4937c89b3ff0bd8af0d3632"
+    },
+    {
+      "request_id": "MA-S4:unit-1:formula:section:MA-S4:derivation",
+      "lane": "expository_bridge",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "exact_question": "What is the closed-form expression for the per-iteration score update in LinearRAG.calculate_entity_scores, specifically how are attenuation factors computed as scores propagate through the sentence–entity subgraph?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What is the closed-form expression for the per-iteration score update in LinearRAG.calculate_entity_scores, specifically how are attenuation factors computed as scores propagate through the sentence–entity subgraph.",
+      "needed_evidence": [
+        "closed-form",
+        "derivation",
+        "per-iteration",
+        "attenuation",
+        "score",
+        "update",
+        "factor",
+        "formula"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S4:unit-1:formula:section:MA-S4:derivation"
+      ],
+      "content_digest": "sha256:6efd271d490f75b33196e7d11821d9927000da8a1477946383523bd5d04da67e"
+    }
+  ]
+}

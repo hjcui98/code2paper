@@ -1,0 +1,601 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "agenda_digest": "sha256:d312253ef0dc9dec3db2685f4bff58a3ec0cf8a28dacabb7e6fc88845056912f",
+  "items": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "role": "feature",
+      "statement": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "importance": "critical",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "rel:4024da979f792194",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "configuration_ids": [
+        "config:sha256:1edf681053477"
+      ],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "matched_relation_ids": [
+        "CONFIGURED_BY"
+      ],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-STAGE-01-9c8dfe22",
+      "role": "feature",
+      "statement": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-STAGE-02-93c16851",
+      "role": "predictor",
+      "statement": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/ner.py:36:37",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/ner.py:32:33",
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-STAGE-03-8dda66b9",
+      "role": "predictor",
+      "statement": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "rel:4024da979f792194",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:187:187",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "configuration_ids": [
+        "config:sha256:1edf681053477"
+      ],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-4e554ef0",
+      "role": "graph_builder",
+      "statement": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+        "fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-bd3b9454",
+      "role": "graph_builder",
+      "statement": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "rel:9c39c339b8028cfc",
+        "rel:406492bde7696947",
+        "span:src/LinearRAG.py:129:129",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "claim_ids": [
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-8058a7bc",
+      "role": "component",
+      "statement": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Obligation has no typed behavior targets to align against facts.",
+      "next_action": "run scoped repository research"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "role": "propagation",
+      "statement": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "role": "filter",
+      "statement": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "matched_relation_ids": [
+        "CONFIGURED_BY"
+      ],
+      "matched_span_ids": [],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-29ba03a1",
+      "role": "predictor",
+      "statement": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "role": "predictor",
+      "statement": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "role": "organization",
+      "statement": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "importance": "medium",
+      "status": "out_of_scope",
+      "authority_lane": "expository_bridge",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Obligation has no typed behavior targets to align against facts.",
+      "next_action": "retain the unit in the review sidecar with its declared scope reason"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-1977b399",
+      "role": "organization",
+      "statement": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "importance": "medium",
+      "status": "out_of_scope",
+      "authority_lane": "expository_bridge",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Obligation has no typed behavior targets to align against facts.",
+      "next_action": "retain the unit in the review sidecar with its declared scope reason"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-157f229e",
+      "role": "graph_builder",
+      "statement": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "role": "filter",
+      "statement": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "role": "predictor",
+      "statement": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Every typed behavior target is covered by supported code facts.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "role": "rationale_check",
+      "statement": "Avoid explicit relation extraction entirely.",
+      "importance": "medium",
+      "status": "author_confirmation_required",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文.",
+      "next_action": "request an explicit author confirmation artifact"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "role": "rationale_check",
+      "statement": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "importance": "medium",
+      "status": "author_confirmation_required",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文.",
+      "next_action": "request an explicit author confirmation artifact"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "role": "ranking",
+      "statement": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "role": "filter",
+      "statement": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "matched_relation_ids": [
+        "CONFIGURED_BY"
+      ],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "role": "propagation",
+      "statement": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim.",
+      "next_action": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "role": "predictor",
+      "statement": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "importance": "medium",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "source_artifact_ids": [],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "matched_relation_ids": [],
+      "matched_span_ids": [],
+      "reason": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim.",
+      "next_action": ""
+    }
+  ],
+  "content_digest": "sha256:b4ce9574cbe58511c70d6cde53aa992aee3aa49f72f62f55b907fe72ad1a9eec"
+}

@@ -1,0 +1,251 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S1:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "content_digest": "sha256:80136583db4ae57ee4fb6e622d3e61dc585226ace02ccfb5ff18254c70e33f82"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "content_digest": "sha256:7cf697f07ca5471656bdf4cb9980fcf512f699e36f8d3731ab4e29c176651090"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-d57e6b007d62768e"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-d57e6b007d62768e",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-d57e6b007d62768e",
+          "facet_ids": [
+            "facet-d57e6b007d62768e"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder."
+          ],
+          "content_digest": "sha256:950b21b2cd77b5cbf10d3ffeccef32cdfae80d5648a962ac7ce6965be2e297e9"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S3:derivation",
+        "formula:facet:facet-d57e6b007d62768e"
+      ],
+      "preferred_formula_review_ids": [],
+      "content_digest": "sha256:2fcbfe5dd2d8b0fc221b8522b47214a02e9fc72e68a337afaf94dfe1883760b5"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "content_digest": "sha256:88cc7df4792facc8cc0c27b7352ef413ad9a88585c002b17a52018ffc2457018"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S5",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S5:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "content_digest": "sha256:36d730fb648d431e8b5cad4ecb1b22ba9a0def9d870faa9669fe72e49c9e3032"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-d57e6b007d62768e"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}

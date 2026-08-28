@@ -34,10 +34,14 @@ from code2paper.llm.section_writer import (
     _decode_publication_research_requests,
     default_section_system_prompt,
     dynamic_writer_cumulative_budget,
+    _llm_visible_section_payload,
+    _normalize_publication_paragraph_transaction,
     write_publication_method_by_sections,
     write_method_by_sections,
 )
 from code2paper.llm.response_schemas import (
+    PublicationContentWitnessV1,
+    PublicationMethodParagraphOutputV1,
     PublicationMethodSectionOutputV1,
     json_schema_for,
 )
@@ -117,6 +121,97 @@ class DefaultSystemPromptTests(unittest.TestCase):
         self.assertIn("Method writer", prompt)
         self.assertIn("Hard constraints", prompt)
 
+    def test_writer_view_hides_legacy_competing_content_surfaces(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Overview",
+            prompt_payload={
+                "writer_view": {"purpose": {"heading": "Overview"}},
+                "argument_flow": {"semantic_frames": ["hidden"]},
+                "reader_facing_claims": [{"paper_statement": "hidden"}],
+                "validation_constraints": {"claims": ["hidden"]},
+                "content_first_instruction": "legacy long instruction",
+                "binding_contract": {"allowed_proposition_ids": ["MP-1"]},
+                "required_qualifier_bindings": [
+                    "self.config.use_vectorized_retrieval",
+                ],
+            },
+        )
+
+        visible = _llm_visible_section_payload(section)
+
+        self.assertEqual(visible["writer_view"]["purpose"]["heading"], "Overview")
+        self.assertEqual(
+            visible["required_qualifier_bindings"],
+            ["self.config.use_vectorized_retrieval"],
+        )
+        self.assertNotIn("binding_contract", visible)
+        self.assertNotIn("argument_flow", visible)
+        self.assertNotIn("reader_facing_claims", visible)
+        self.assertNotIn("validation_constraints", visible)
+        self.assertNotIn("content_first_instruction", visible)
+
+    def test_writer_view_hides_all_harness_id_surfaces_from_real_request(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Overview",
+            publication_mode=True,
+            argument_graph={"argument_unit_ids": ["MA-S1:unit"]},
+            prompt_payload={
+                "section_id": "MA-S1",
+                "heading": "Overview",
+                "writer_view": {
+                    "purpose": {"heading": "Overview"},
+                    "positive_propositions": [{"proposition_id": "MP-1"}],
+                },
+                "argument_units": [{"argument_unit_id": "MA-S1:unit"}],
+                "argument_flow": {"semantic_frames": [{"frame_id": "FRAME-1"}]},
+                "validation_constraints": {"claims": [{"claim_id": "C1"}]},
+                "grounding_contract": {"required_anchor_fields": ["fact:F1"]},
+                "binding_contract": {
+                    "used_argument_unit_ids": ["MA-S1:unit"],
+                    "used_claim_ids": ["C1"],
+                    "used_equation_ids": ["EQ1"],
+                    "used_configuration_ids": ["CFG1"],
+                    "allowed_proposition_ids": ["MP-1"],
+                },
+                "required_rhetorical_moves": ["mechanism_overview"],
+                "formalization": {"equation_ids": ["EQ1"]},
+            },
+        )
+
+        visible = _llm_visible_section_payload(section)
+
+        self.assertEqual(set(visible), {"section_id", "heading", "writer_view"})
+        serialized = json.dumps(visible)
+        for forbidden in ("C1", "EQ1", "CFG1", "FRAME-1", "MA-S1:unit", "fact:F1"):
+            self.assertNotIn(forbidden, serialized)
+
+    def test_compact_writer_view_keeps_licensed_l2_without_claim_ids(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S4",
+            heading="First retrieval",
+            prompt_payload={
+                "writer_view": {
+                    "purpose": {"heading": "First retrieval"},
+                    "technical_propositions": [{
+                        "proposition_id": "l2:threshold",
+                        "reader_subject": "licensed technical effect",
+                        "transformation": "Expansion excludes entities whose score fails the threshold.",
+                    }],
+                    "positive_briefs": [],
+                    "caveated_briefs": [],
+                },
+            },
+        )
+        visible = _llm_visible_section_payload(section)
+        rows = visible["writer_view"]["technical_propositions"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["license"], "E2")
+        self.assertIn("fails the threshold", rows[0]["transformation"])
+        self.assertFalse(visible["writer_view"]["claim_free_expository_bridge_allowed"])
+        self.assertNotIn("l2:threshold", json.dumps(visible))
+
 
 class WriteMethodBySectionsBasicTests(unittest.TestCase):
     def test_single_section_produces_concatenated_markdown(self) -> None:
@@ -178,6 +273,65 @@ class WriteMethodBySectionsBasicTests(unittest.TestCase):
         )
         config, _ = caller.calls[0]
         self.assertEqual(config.max_output_tokens, 8192)
+
+    def test_content_transaction_rejection_returns_feedback_for_one_correction(self) -> None:
+        writer_view = {
+            "purpose": {"heading": "Encoder", "reader_question": "How is input read?"},
+            "positive_propositions": [{
+                "proposition_id": "MP-1",
+                "reader_subject": "the encoder",
+                "transformation": "reads the configured input",
+                "inputs": ["configured input"],
+                "outputs": [],
+                "conditions": [],
+                "paper_terms": ["encoder"],
+            }],
+            "caveated_propositions": [],
+            "immutable_constraints": [],
+            "allowed_proposition_ids": ["MP-1"],
+            "required_proposition_ids": ["MP-1"],
+        }
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            prompt_payload={"writer_view": writer_view},
+        )
+        caller = _RecordingCaller([
+            _response(text=(
+                "## Encoder\n\nencoder.read reads the configured input through "
+                "encoder.load and encoder.return_value."
+            )),
+            _response(text="## Encoder\n\nThe encoder reads the configured input and improves accuracy."),
+            _response(text="## Encoder\n\nThe encoder reads the configured input."),
+        ])
+        transaction_calls: list[tuple[str, str]] = []
+
+        def validator(_section, incumbent, candidate):
+            transaction_calls.append((incumbent, candidate))
+            if "improves accuracy" in candidate:
+                return False, "writer_unsupported_positive_regressed"
+            return True, "writer_transaction_monotonic_gain"
+
+        result = write_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+            content_transaction_validator=validator,
+        )
+
+        self.assertEqual(len(transaction_calls), 2)
+        self.assertIn("improves accuracy", transaction_calls[0][1])
+        self.assertEqual(
+            result.sections[0].text,
+            "## Encoder\n\nThe encoder reads the configured input.",
+        )
+        self.assertEqual(result.writer_repair_rounds, 2)
+        self.assertEqual(result.writer_repair_commits, 1)
+        self.assertEqual(len(result.writer_repair_transaction_rejections), 1)
+        self.assertEqual(
+            result.writer_repair_transaction_rejections[0]["reason"],
+            "writer_unsupported_positive_regressed",
+        )
 
 
 class FinishReasonLengthEscalationTests(unittest.TestCase):
@@ -646,8 +800,8 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
 
         schema = caller.calls[0][1].response_json_schema
         self.assertEqual(schema["properties"]["section_id"]["const"], "mechanism")
-        self.assertEqual(schema["properties"]["section_markdown"]["minLength"], 800)
-        self.assertEqual(schema["properties"]["section_markdown"]["maxLength"], 2400)
+        self.assertEqual(schema["properties"]["section_markdown"]["minLength"], 180)
+        self.assertEqual(schema["properties"]["section_markdown"]["maxLength"], 4800)
         claims = schema["properties"]["used_claim_ids"]
         self.assertEqual(claims["type"], "array")
         self.assertEqual(claims["items"]["enum"], ["claim:1", "claim:2"])
@@ -689,6 +843,226 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
             schema["properties"]["completed_rhetorical_moves"]["items"]["enum"],
             ["mechanism_overview", "inference_and_output"],
         )
+
+    def test_publication_schema_requires_callbacks_when_move_is_unanchored(self) -> None:
+        """Stage 5: when a section has unanchored required moves, the output
+        schema requires a non-empty ``new_research_requests`` with closed-set
+        bindings, so guided decoding cannot silently return ``[]``.  The
+        harness contract validator still rejects fabricated requests."""
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Transformation and output",
+            prompt_payload={
+                "binding_contract": {
+                    "used_argument_unit_ids": ["MA-S1:unit"],
+                    "used_claim_ids": ["claim:1"],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": ["mechanism_overview"],
+                },
+                "grounding_contract": {
+                    "callback_required": True,
+                    "unanchored_required_moves": ["limitations_or_mismatch"],
+                    "move_authority": {
+                        "limitations_or_mismatch": {
+                            "required": True,
+                            "state": "open",
+                            "required_authority_lane": "executable_hard",
+                        }
+                    },
+                },
+            },
+            argument_graph={
+                "argument_unit_ids": ["MA-S1:unit"],
+                "moves": [
+                    {"move": "limitations_or_mismatch", "argument_unit_ids": ["MA-S1:unit"], "required": True},
+                ],
+            },
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response()])
+
+        write_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+            response_json_schema=json_schema_for(PublicationMethodSectionOutputV1),
+            publication_mode=True,
+        )
+
+        schema = caller.calls[0][1].response_json_schema
+        self.assertIn("new_research_requests", schema["required"])
+        requests = schema["properties"]["new_research_requests"]
+        self.assertEqual(requests["minItems"], 1)
+        item = requests["items"]
+        self.assertEqual(item["properties"]["section_id"]["const"], "MA-S1")
+        self.assertEqual(
+            item["properties"]["missing_rhetorical_move"]["enum"],
+            ["limitations_or_mismatch"],
+        )
+        self.assertEqual(
+            item["properties"]["required_authority_lane"]["enum"],
+            ["executable_hard"],
+        )
+        self.assertEqual(
+            item["properties"]["argument_unit_id"]["enum"],
+            ["MA-S1:unit"],
+        )
+        self.assertEqual(item["properties"]["status"]["const"], "open")
+        self.assertEqual(item["properties"]["exact_question"]["minLength"], 5)
+        # Local lanes require at least one exact candidate term so the
+        # harness contract (subset of authorized terms) is satisfiable.
+        self.assertIn("candidate_symbols_or_terms", item["required"])
+        self.assertEqual(
+            item["properties"]["candidate_symbols_or_terms"]["minItems"],
+            1,
+        )
+
+    def test_publication_schema_keeps_callbacks_optional_without_unanchored_moves(self) -> None:
+        """A section with no unanchored moves must not be forced to emit
+        research requests."""
+        section = WriterSectionInput(
+            section_id="MA-S2",
+            heading="Extraction",
+            prompt_payload={
+                "binding_contract": {
+                    "used_argument_unit_ids": ["MA-S2:unit"],
+                    "used_claim_ids": [],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": [],
+                },
+                "grounding_contract": {"callback_required": False},
+            },
+            argument_graph={"argument_unit_ids": ["MA-S2:unit"], "moves": []},
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response()])
+
+        write_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+            response_json_schema=json_schema_for(PublicationMethodSectionOutputV1),
+            publication_mode=True,
+        )
+
+        schema = caller.calls[0][1].response_json_schema
+        self.assertNotIn("new_research_requests", schema["required"])
+        self.assertNotIn(
+            "minItems",
+            schema["properties"]["new_research_requests"],
+        )
+        self.assertEqual(
+            schema["properties"]["new_research_requests"].get("maxItems"),
+            0,
+        )
+
+    def test_publication_schema_external_lane_callbacks_do_not_require_candidates(self) -> None:
+        """Author-attested/external lanes need no candidate terms: the
+        request is routed to an external queue, not repository tools."""
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Limitations",
+            prompt_payload={
+                "binding_contract": {
+                    "used_argument_unit_ids": ["MA-S1:unit"],
+                    "used_claim_ids": [],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": [],
+                },
+                "grounding_contract": {
+                    "callback_required": True,
+                    "unanchored_required_moves": ["limitations_or_mismatch"],
+                    "move_authority": {
+                        "limitations_or_mismatch": {
+                            "required": True,
+                            "state": "external_pending",
+                            "required_authority_lane": "author_attested",
+                        }
+                    },
+                },
+            },
+            argument_graph={
+                "argument_unit_ids": ["MA-S1:unit"],
+                "moves": [
+                    {"move": "limitations_or_mismatch", "argument_unit_ids": ["MA-S1:unit"], "required": True},
+                ],
+            },
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response()])
+
+        write_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+            response_json_schema=json_schema_for(PublicationMethodSectionOutputV1),
+            publication_mode=True,
+        )
+
+        schema = caller.calls[0][1].response_json_schema
+        item = schema["properties"]["new_research_requests"]["items"]
+        self.assertNotIn("candidate_symbols_or_terms", item["required"])
+
+    def test_publication_schema_requires_concept_payload_when_binding_present(self) -> None:
+        """Stage 5: when the callback prototype carries a concept_binding,
+        the request must name the concept key, its missing parts, and the
+        evidence refs used — the researcher needs the semantic gap."""
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Transformation and output",
+            prompt_payload={
+                "binding_contract": {
+                    "used_argument_unit_ids": ["MA-S1:unit"],
+                    "used_claim_ids": ["claim:1"],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": ["mechanism_overview"],
+                },
+                "grounding_contract": {
+                    "callback_required": True,
+                    "unanchored_required_moves": ["limitations_or_mismatch"],
+                    "move_authority": {
+                        "limitations_or_mismatch": {
+                            "required": True,
+                            "state": "open",
+                            "required_authority_lane": "executable_hard",
+                        }
+                    },
+                    "callback_request_prototypes": [{
+                        "concept_binding": [{
+                            "concept_key": "CK-C",
+                            "missing_parts": ["exact standardization formula"],
+                            "evidence_refs_used": ["span:gaussian.py:10:12"],
+                        }],
+                    }],
+                },
+            },
+            argument_graph={
+                "argument_unit_ids": ["MA-S1:unit"],
+                "moves": [
+                    {"move": "limitations_or_mismatch", "argument_unit_ids": ["MA-S1:unit"], "required": True},
+                ],
+            },
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response()])
+
+        write_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+            response_json_schema=json_schema_for(PublicationMethodSectionOutputV1),
+            publication_mode=True,
+        )
+
+        schema = caller.calls[0][1].response_json_schema
+        item = schema["properties"]["new_research_requests"]["items"]
+        self.assertIn("concept_key", item["required"])
+        self.assertIn("missing_parts", item["required"])
+        self.assertIn("evidence_refs_used", item["required"])
 
     def test_stop_response_with_wrong_section_binding_is_rejected(self) -> None:
         section = WriterSectionInput(
@@ -1449,6 +1823,10 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
         self.assertEqual(len(result.outputs), 1)
         self.assertFalse(result.aggregate.sections[0].incomplete)
         self.assertEqual(len(result.aggregate.traces), 2)
+        self.assertTrue(
+            str(caller.calls[1][1].prompt_template_id).endswith("_representation_repair_v1")
+        )
+        self.assertIn("representation-retry", result.aggregate.traces[1].call_id)
 
     def test_publication_closed_set_claim_binding_failure_triggers_owner_retry(self) -> None:
         """A near-miss closed-set claim id (transposed characters) is a
@@ -1510,6 +1888,10 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
         self.assertEqual(len(result.outputs), 1)
         self.assertFalse(result.aggregate.sections[0].incomplete)
         self.assertEqual(len(result.aggregate.traces), 2)
+        self.assertTrue(
+            str(caller.calls[1][1].prompt_template_id).endswith("_representation_repair_v1")
+        )
+        self.assertIn("representation-retry", result.aggregate.traces[1].call_id)
 
 
     def test_publication_missing_bindings_are_not_writer_failures(self) -> None:
@@ -1599,6 +1981,82 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
             result.aggregate.sections[0].blocked_reason,
         )
 
+    def test_missing_required_briefs_keep_authored_markdown(self) -> None:
+        """DyG 111122 / LinearRAG 100052: deferred primary briefs must not
+        erase section_markdown. Candidate keeps the body; invented ids still
+        discard."""
+        body = (
+            "## Overview\n\n"
+            "The encoder applies softmax routing to temporal embeddings."
+        )
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Overview",
+            prompt_payload={
+                "writer_view": {
+                    "positive_briefs": [{"brief_id": "brief:primary"}],
+                    "caveated_briefs": [{"brief_id": "brief:other"}],
+                },
+                "binding_contract": {
+                    "primary_brief_ids": ["brief:primary", "brief:other"],
+                    "required_brief_ids": ["brief:primary", "brief:other"],
+                    "allowed_brief_ids": ["brief:primary", "brief:other"],
+                },
+            },
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response(text=json.dumps({
+            "section_id": "MA-S1",
+            "heading_text": "Overview",
+            "section_markdown": body,
+            "rendered_brief_ids": ["brief:primary"],
+            "deferred_brief_ids": ["brief:other"],
+            "new_research_requests": [],
+        }))])
+        result = write_publication_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+        )
+        self.assertEqual(len(caller.calls), 1)
+        self.assertEqual(len(result.outputs), 1)
+        self.assertEqual(result.outputs[0].section_markdown, body)
+        self.assertFalse(result.aggregate.sections[0].incomplete)
+        self.assertEqual(result.outputs[0].rendered_brief_ids, ["brief:primary"])
+        self.assertEqual(result.outputs[0].deferred_brief_ids, ["brief:other"])
+
+    def test_unknown_brief_id_still_discards_response(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Overview",
+            prompt_payload={
+                "writer_view": {
+                    "positive_briefs": [{"brief_id": "brief:primary"}],
+                },
+                "binding_contract": {
+                    "primary_brief_ids": ["brief:primary"],
+                    "allowed_brief_ids": ["brief:primary"],
+                },
+            },
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response(text=json.dumps({
+            "section_id": "MA-S1",
+            "heading_text": "Overview",
+            "section_markdown": "## Overview\n\nThe encoder applies softmax routing.",
+            "rendered_brief_ids": ["brief:invented"],
+            "deferred_brief_ids": [],
+            "new_research_requests": [],
+        }))])
+        result = write_publication_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+        )
+        self.assertEqual(result.outputs, [])
+        self.assertTrue(result.aggregate.sections[0].incomplete)
+        self.assertIn("unknown_rendered_briefs", result.aggregate.sections[0].blocked_reason)
+
 
     def test_argument_plan_sets_dynamic_budget_below_global_cap(self) -> None:
         section = WriterSectionInput(
@@ -1642,6 +2100,153 @@ class CustomCallIdPrefixTests(unittest.TestCase):
         self.assertTrue(
             result.traces[0].call_id.startswith("LLM-method-overview"),
             f"call_id was {result.traces[0].call_id}",
+        )
+
+
+class ParagraphTransactionTests(unittest.TestCase):
+    def test_transaction_assembles_one_heading_in_plan_order(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            publication_mode=True,
+            argument_graph={
+                "paragraphs": [
+                    {
+                        "paragraph_id": "MA-S1:p1",
+                        "required_facet_ids": ["facet:input"],
+                        "ordered_semantic_slot_ids": ["slot:input"],
+                    },
+                    {
+                        "paragraph_id": "MA-S1:p2",
+                        "required_facet_ids": ["facet:output"],
+                        "ordered_semantic_slot_ids": ["slot:output"],
+                    },
+                ],
+            },
+            prompt_payload={
+                "writer_view": {
+                    "mechanism_authoring_packet": {
+                        "facets": [
+                            {"facet_id": "facet:input"},
+                            {"facet_id": "facet:output"},
+                        ]
+                    }
+                }
+            },
+        )
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[
+                PublicationMethodParagraphOutputV1(
+                    paragraph_id="MA-S1:p2",
+                    paragraph_markdown="The output is emitted.",
+                    rendered_from_facet_ids=["facet:output"],
+                    rendered_slot_ids=["slot:output"],
+                    witnesses=[
+                        PublicationContentWitnessV1(
+                            witness_kind="facet",
+                            target_id="facet:output",
+                            exact_text="output",
+                        ),
+                        PublicationContentWitnessV1(
+                            witness_kind="slot",
+                            target_id="slot:output",
+                            exact_text="output",
+                        ),
+                    ],
+                ),
+                PublicationMethodParagraphOutputV1(
+                    paragraph_id="MA-S1:p1",
+                    paragraph_markdown="The input is encoded.",
+                    rendered_from_facet_ids=["facet:input"],
+                    rendered_slot_ids=["slot:input"],
+                    witnesses=[
+                        PublicationContentWitnessV1(
+                            witness_kind="facet",
+                            target_id="facet:input",
+                            exact_text="input",
+                        ),
+                        PublicationContentWitnessV1(
+                            witness_kind="slot",
+                            target_id="slot:input",
+                            exact_text="input",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        normalized, failures = _normalize_publication_paragraph_transaction(
+            output, section=section, require_transactions=True
+        )
+        self.assertEqual(failures, [])
+        self.assertEqual(normalized.rendered_paragraph_ids, ["MA-S1:p1", "MA-S1:p2"])
+        self.assertEqual(
+            normalized.section_markdown,
+            "## Encoder\n\nThe input is encoded.\n\nThe output is emitted.",
+        )
+
+    def test_transaction_rejects_self_report_without_exact_witness(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            publication_mode=True,
+            argument_graph={
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "required_facet_ids": ["facet:input"],
+                }],
+            },
+            prompt_payload={
+                "writer_view": {
+                    "mechanism_authoring_packet": {
+                        "facets": [{"facet_id": "facet:input"}]
+                    }
+                }
+            },
+        )
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown="The encoder reads data.",
+                rendered_from_facet_ids=["facet:input"],
+                witnesses=[],
+            )],
+        )
+        _normalized, failures = _normalize_publication_paragraph_transaction(
+            output, section=section, require_transactions=True
+        )
+        self.assertIn("missing_exact_witness:MA-S1:p1:facet:facet:input", failures)
+
+    def test_transaction_rejects_empty_required_witness_contract(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            publication_mode=True,
+            argument_graph={
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "required_facet_ids": ["facet:input"],
+                    "ordered_semantic_slot_ids": ["slot:input"],
+                }],
+            },
+            prompt_payload={},
+        )
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown="The encoder reads data.",
+            )],
+        )
+        _normalized, failures = _normalize_publication_paragraph_transaction(
+            output, section=section, require_transactions=True
+        )
+        self.assertIn(
+            "required_target_contract:MA-S1:p1:facet:facet:input", failures
+        )
+        self.assertIn(
+            "required_target_contract:MA-S1:p1:slot:slot:input", failures
         )
 
 

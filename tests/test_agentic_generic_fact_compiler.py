@@ -191,6 +191,20 @@ class TestStableFactIdentity:
         result_b = _compile(graph_b, node_ids=["node:b"])
         assert result_a.facts[0].canonical_identity != result_b.facts[0].canonical_identity
 
+    def test_value_producing_operation_preserves_operands_and_result(self) -> None:
+        node = _node(
+            node_id="node:volume",
+            predicate="REDUCE",
+            operands=("torch.prod", "scales", "dim=1"),
+            result="f_p_volume",
+        )
+
+        result = _compile(_graph(nodes=[node]), node_ids=[node.node_id])
+
+        assert result.facts[0].object == [
+            "torch.prod", "scales", "dim=1", "result=f_p_volume",
+        ]
+
 
 # ---------------------------------------------------------------------------
 # Source authority rejection
@@ -474,3 +488,77 @@ def _strip_docstrings_and_comments(text: str) -> str:
             line = line.split("#", 1)[0]
         lines.append(line)
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Q1 — exact condition ownership (plan 19.5.3)
+# ---------------------------------------------------------------------------
+
+
+class TestExactConditionOwnership:
+    def test_unguarded_operation_before_guarded_branch_keeps_no_condition(self) -> None:
+        transform = _node(
+            node_id="node:transform", predicate="TRANSFORM", operands=("x",), result="y"
+        )
+        branch = _node(node_id="node:branch", predicate="BRANCH", guard="loss_i.shape[0] == 0")
+        inside = _node(node_id="node:inside", predicate="REDUCE", operands=("loss",))
+        rel = _relation(
+            relation_id="rel:control",
+            kind="CONTROL_DEPENDS_ON",
+            source_node_id="node:branch",
+            target_node_id="node:inside",
+            guard="loss_i.shape[0] == 0",
+        )
+        graph = _graph(nodes=[transform, branch, inside], relations=[rel])
+        result = _compile(
+            graph,
+            node_ids=["node:transform", "node:branch", "node:inside"],
+            relation_ids=["rel:control"],
+            guards=["loss_i.shape[0] == 0"],
+        )
+        transform_fact = next(f for f in result.facts if f.predicate == "transforms")
+        assert transform_fact.conditions == []
+        inside_fact = next(f for f in result.facts if f.predicate == "reduces")
+        assert "loss_i.shape[0] == 0" in inside_fact.conditions
+
+    def test_packet_guard_union_is_metadata_not_fact_truth_scope(self) -> None:
+        node = _node(node_id="node:plain", predicate="READ", operands=("x",), result="y")
+        graph = _graph(nodes=[node])
+        result = _compile(graph, node_ids=["node:plain"], guards=["loss empty", "training_mode"])
+        assert result.facts[0].conditions == []
+
+    def test_same_obligation_adjacency_never_infers_a_condition(self) -> None:
+        first = _node(node_id="node:first", predicate="READ", operands=("a",))
+        second = _node(node_id="node:second", predicate="READ", operands=("b",))
+        branch = _node(node_id="node:branch", predicate="BRANCH", guard="mode_is_eval")
+        graph = _graph(nodes=[first, second, branch])
+        result = _compile(
+            graph,
+            node_ids=["node:first", "node:second", "node:branch"],
+            guards=["mode_is_eval"],
+        )
+        for fact in result.facts:
+            if fact.predicate == "reads":
+                assert fact.conditions == []
+
+    def test_control_dependence_attaches_guard_only_to_its_exact_target(self) -> None:
+        other = _node(node_id="node:other", predicate="READ", operands=("z",))
+        branch = _node(node_id="node:branch", predicate="BRANCH", guard="training_mode")
+        inside = _node(node_id="node:inside", predicate="COMPUTE", operands=("loss",))
+        rel = _relation(
+            relation_id="rel:control",
+            kind="TRUE_BRANCH",
+            source_node_id="node:branch",
+            target_node_id="node:inside",
+        )
+        graph = _graph(nodes=[other, branch, inside], relations=[rel])
+        result = _compile(
+            graph,
+            node_ids=["node:other", "node:branch", "node:inside"],
+            relation_ids=["rel:control"],
+            guards=["training_mode"],
+        )
+        other_fact = next(f for f in result.facts if f.predicate == "reads")
+        assert other_fact.conditions == []
+        inside_fact = next(f for f in result.facts if f.predicate == "computes_formula")
+        assert "training_mode" in inside_fact.conditions

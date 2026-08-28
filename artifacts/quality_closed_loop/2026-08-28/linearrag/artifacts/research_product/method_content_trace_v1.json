@@ -1,0 +1,826 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-4ee8e0bf"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:37a3686192b98593fe1b769b308233f4773e424ecd819c1adec72a2947b0d628"
+    },
+    {
+      "content_unit_id": "MA-S2:paragraph:MA-S2:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-02-1977b399"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S2:unit",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "paragraph_id": "paragraph:MA-S2:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:d20d0e99c8df0d3179af5e609f52a376f8e04fcd218ddf3a9c6193513daf1b92"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:1",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [
+        "facet-dfd9e7cedfe705e0",
+        "facet-aee51cb1cb5c563f",
+        "facet-37ac47cd0b3c324b",
+        "facet-397617ae0c814f4c",
+        "facet-11f57730a8077780",
+        "facet-6c02c195374453b1"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence supports iterative propagation through the sentence-entity subgraph (evidence 1), threshold-based pruning (evidence 0, 17), and top-k sentence selection (evidence 2, 15), but does not directly evidence the initialization step from matched seed entities as part of the propagation loop itself, nor does it evidence the discovery of 'hidden bridging entities' as a distinct outcome. The vectorized variant (evidence 14-18) shows a parallel implementation but the facet describes the general mechanism without specifying which variant. The core propagation and pruning are well-supported; the initialization and 'hidden bridging' framing are not directly evidenced in the supplied spans."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet claims 'activated entities as seeds' and 'passage-entity subgraph' and 'hybrid score' initialization. Evidence supports personalized PageRank with reset_prob derived from combined entity+passage weights (evidence 1, 5, 9), but does not confirm a dedicated 'passage-entity subgraph' (the graph appears to be the full graph with all vertices), nor does it explicitly show 'activated entities' as distinct seeds separate from passage nodes. The 'hybrid score' is partially supported by the combination of entity_weights and passage_weights (evidence 5), but the subgraph restriction is not evidenced."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The claim describes a 'Tri-Graph' as a hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency that anchors the entire retrieval pipeline. The supplied evidence shows individual code operations (initializing sets, computing PPR scores, calling sparse matrix methods, branching on config flags, returning results) but does not contain any evidence of a hierarchical graph structure with entity/sentence/passage node layers, sparse contain/message adjacency matrices, or a 'Tri-Graph' concept. The evidence references `self.graph` (a single graph object) and sparse matrices (`entity_to_sentence_sparse`, `sentence_to_entity_sparse`) but does not establish a hierarchical multi-layer graph with the described topology or that it 'anchors the entire retrieval'. "
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set describes a hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency. The evidence shows flat graph operations (personalized PPR on a single graph, sparse matrix sparsity logging) but not a multi-level hierarchical structure with the claimed topology."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence covers passage score computation (evidence 0), passage weight computation (evidence 1), and a NaN/negative-value mask in run_ppr (evidence 2). None of these evidence items demonstrate threshold-based filtering that retains only strongly relevant entities during propagation. The mask in evidence 2 (np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)) is a validity guard, not a relevance-threshold pruning mechanism. No evidence supports the claimed operation of dynamic pruning preventing combinatorial expansion and noise."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms a method named run_ppr is called with node_weights and returns sorted passage indices and scores (evidence 6), and that it operates over vertices derived from node_name_to_vertex_idx (evidence 5). However, no evidence shows the actual PPR algorithm implementation (e.g., iterative power method, damping factor, or personalized vector construction), so the specific mechanism of 'propagating influence from activated entities' is not directly demonstrated in the supplied evidence. The naming and I/O are consistent with PPR but the internal mechanism is not evidenced here."
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence supports combining direct query-passage similarity (dpr_passage_score) with entity-based statistics (total_entity_bonus derived from entity_score * log(1 + entity_occurrences) / denom) to compute passage_score, which is then scaled by passage_node_weight to produce passage_weights. However, the claim mentions 'level' as an entity-based statistic, but no evidence in the provided set references a 'level' component. The combination is confirmed via evidence 0 (passage_score = passage_ratio * dpr_passage_score + log(1 + total_entity_bonus)) and evidence 4 (entity_bonus = entity_score * log(1 + entity_occurrences) / denom), and evidence 3 shows passage_weights[passage_node_idx] = passage_score * passage_node_weight. The 'level' component is not supported by any provided evidence. P"
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+        "slot:fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:72f7bad8c3a7c390fa8447170cbefe297443e024836e08f46ad6ebd6965978e2"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:2",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "slot:fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "required_edge_ids": [
+        "rel:9c39c339b8028cfc"
+      ],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:2cdb8ea992c956e4d317c24293468c8986f5ff57f9571f0dae6fb3793482b729"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:3",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+        "slot:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d",
+        "slot:fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+        "slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+        "slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+        "slot:fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "slot:fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "slot:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:cd3018f9f257772a7c2046dd7ab139f94775b33962e908840cf70d6ddca1edc2"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:4",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "slot:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "slot:fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "slot:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "slot:fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "slot:fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "slot:fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "slot:fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:3659990e732d8cb5ffb845c572f70b1c4b117741247bb8a8b4aed332ed76cad0"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:5",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "slot:fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "slot:fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "slot:fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+        "slot:fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "slot:fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+        "slot:fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:85fab3b16d92358e14716e2622195672f91b8e388dce09472c418882e75b8c07"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:6",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [
+        "facet-36188cb856f44d0d"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The formula_goal describes offline graph construction (splitting passages into sentences, extracting entities with spaCy, creating sparse contain and mention adjacency matrices). The evidence shows the sparse matrix creation step (evidence 0, 1) but does not show sentence splitting, spaCy entity extraction, or the broader graph construction pipeline. No formula/equation is present in the evidence that corresponds to the described graph construction process. The formula_expectation is 'required' but no equation_atoms are present in any evidence item that would support a formula for graph construction."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:6",
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:849aa86f5b9d3eea631abab52a41f4e5668be7293ae3b26383d67283682c2ee0"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:7",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-STAGE-02-93c16851",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-COMPONENT-05-29ba03a1",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-ORGANIZATION-03-157f229e",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:7",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:845dd93397d11bdbe95bfeee2331e98ffaff8ba63892692e086d308678211bf6"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:1",
+      "source_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "slot:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+        "slot:fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+        "slot:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:8c1468c28805164b7698eac66dbb825fabc2a4eefe99db94d029912166b36d9b"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:2",
+      "source_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+        "slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+        "slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+        "slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+        "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:2",
+      "formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:28eb47afa102e5ef33e0190bae5ae41fb82ad44396cfc156f1c9eb1e0c74f9fa"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:3",
+      "source_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:438fbf0f53a5547f2164328d879be85a67b3689e2227898f78c4446184684a05"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:4",
+      "source_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "source_facet_ids": [
+        "facet-49c35a32b3156393"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot bind any claim, fact, span, equation, or exact excerpt to this field."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:6c8081ef1b7c9dda8dcc5c7e2bf891f42d7c9e5977e80ee563bdbf2f90b91802"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:1",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+        "slot:fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:36a40ade8cfc22b32cd56f96c124544581f973a7b53f53fad54b73232d582e0a"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:2",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+        "slot:fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:2e5d839116c89b52c09f7f7b81705d989a68328834dc76b6f75bae929e97e95c"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:3",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:4872302cdde204415b9a905c04230593bceb5a052e4a1b416f2be316071d496a"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:4",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/publication_quality_report_v1.json",
+        "/tmp/c2p-quality-closed-loop-retain-linearrag-20260828/artifacts/07_validation/agentic_text_evidence_validation.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:c8af7279ffb8bddbfd44bf0d29b96fa1cde09d1715f1717704b051e12df6187a"
+    }
+  ],
+  "summary": {
+    "rows": 17,
+    "sections": 5,
+    "planned_paragraphs": 17,
+    "rendered_paragraphs": 2,
+    "rendered_slots": 0,
+    "planned_edges": 1,
+    "rendered_edges": 0,
+    "formula_obligations": 2,
+    "consumed_formula_packages": 0,
+    "field_bound_rows": 0,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 2,
+    "rendered_invalid": 12,
+    "blocked_representation": 3,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0
+  },
+  "transaction_assessment_digest": "sha256:3844cd93f989e3be53d5b762d74bfbff8c778844fb6c3d4ea61aa13a34983e00",
+  "content_digest": "sha256:955cd3a125f0769f75fcd9c38d8d79929c186ecbfe4ec8451a804816b547ed7b"
+}

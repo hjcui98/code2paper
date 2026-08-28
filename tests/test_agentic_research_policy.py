@@ -575,6 +575,97 @@ class TestNoDuplicateNoGain:
         )
         assert "duplicate_no_gain_call" in result.rejection_rules
 
+    def test_cross_obligation_exact_read_is_rejected(self) -> None:
+        # The same read_symbol span was already executed while answering a
+        # different obligation.  Tool-call ids differ because they embed the
+        # obligation id, so the id-level rule cannot see the duplicate; the
+        # normalized read signature must reject it.
+        proposal = _decision(
+            tool_calls=(
+                _tool_call(
+                    tool_call_id="tc-new-obl",
+                    tool_name="read_symbol",
+                    obligation_id="obl-2",
+                    tool_kind="code_read",
+                    arguments={
+                        "path": "utils/gaussian_model.py",
+                        "symbol": "GaussianModel.get_prune_input_f15",
+                    },
+                ),
+            ),
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=("tc-old-obl",),
+            executed_read_signatures=(
+                "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15",
+            ),
+        )
+        assert "duplicate_no_gain_call" in result.rejection_rules
+
+    def test_cross_obligation_read_code_span_is_rejected(self) -> None:
+        proposal = _decision(
+            tool_calls=(
+                _tool_call(
+                    tool_call_id="tc-new-obl-span",
+                    tool_name="read_code_span",
+                    obligation_id="obl-2",
+                    tool_kind="code_read",
+                    arguments={
+                        "path": "utils/feature_utils.py",
+                        "start_line": 1,
+                        "end_line": 0,
+                    },
+                ),
+            ),
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            executed_read_signatures=(
+                "read_code_span:utils/feature_utils.py:1:0",
+            ),
+        )
+        assert "duplicate_no_gain_call" in result.rejection_rules
+
+    def test_different_span_read_is_not_rejected(self) -> None:
+        proposal = _decision(
+            tool_calls=(
+                _tool_call(
+                    tool_call_id="tc-new-obl-other",
+                    tool_name="read_symbol",
+                    obligation_id="obl-2",
+                    tool_kind="code_read",
+                    arguments={
+                        "path": "utils/gaussian_model.py",
+                        "symbol": "GaussianModel.prune_points",
+                    },
+                ),
+            ),
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            executed_read_signatures=(
+                "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15",
+            ),
+        )
+        assert result.accepted is True
+        assert "duplicate_no_gain_call" not in result.rejection_rules
+
 
 # ---------------------------------------------------------------------------
 # Rule 6: no authority overreach
@@ -725,6 +816,80 @@ class TestFallbackConstruction:
         # a tool call, the fallback should be STOP_BLOCKED or RECORD_GAP).
         assert result.decision.action in {"RECORD_GAP", "STOP_BLOCKED"}
 
+    def test_fallback_rejection_with_justified_gap_proposes_record_gap(self) -> None:
+        """A rejected fallback must not die in STOP_BLOCKED when the graph
+        reports the obligation may record a typed gap (R3.3 fallback table:
+        ``fallback_action`` is the documented next move).  The gap finalizer
+        still validates exhaustiveness fail-closed."""
+        # Proposal and fallback are both rejected: the duplicate read fails
+        # the no-gain rule, and every budget is exhausted so the fallback
+        # search cannot be proposed either.
+        proposal = _decision(
+            action="READ_CANDIDATE",
+            tool_calls=(_tool_call(tool_call_id="tc-dup", tool_name="read_symbol"),),
+        )
+        budgets = _budgets(
+            used={
+                "symbol_search": 5,
+                "code_read": 5,
+                "call_trace": 5,
+                "data_flow_trace": 5,
+                "branch_inspection": 5,
+                "hint_search": 5,
+                "packet_repair": 5,
+            }
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=budgets,
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=("tc-dup",),
+            no_progress_tool_call_ids=("tc-dup",),
+            gap_justified=True,
+        )
+        assert result.fallback_used
+        assert result.decision is not None
+        assert result.decision.action == "RECORD_GAP"
+        assert result.decision.selected_tool_calls == ()
+        assert result.decision.stop_condition == "policy_merge_fallback_exhausted"
+
+    def test_fallback_rejection_without_justified_gap_stays_blocked(self) -> None:
+        """Without gap justification the second-level fallback must not fire;
+        an unjustified RECORD_GAP would be rejected by the gap finalizer and
+        churn the loop."""
+        proposal = _decision(
+            action="READ_CANDIDATE",
+            tool_calls=(_tool_call(tool_call_id="tc-dup", tool_name="read_symbol"),),
+        )
+        budgets = _budgets(
+            used={
+                "symbol_search": 5,
+                "code_read": 5,
+                "call_trace": 5,
+                "data_flow_trace": 5,
+                "branch_inspection": 5,
+                "hint_search": 5,
+                "packet_repair": 5,
+            }
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=budgets,
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=("tc-dup",),
+            no_progress_tool_call_ids=("tc-dup",),
+            gap_justified=False,
+        )
+        assert result.fallback_used
+        assert result.decision is not None
+        assert result.decision.action == "STOP_BLOCKED"
+
     def test_trace_ref_is_stable(self) -> None:
         proposal = _decision()
         result1 = apply_policy_merge(
@@ -745,6 +910,193 @@ class TestFallbackConstruction:
         )
         assert result1.trace_ref == result2.trace_ref
         assert result1.trace_ref.startswith("policy-merge:")
+
+    def test_fallback_context_sees_executed_calls_and_switches_strategy(
+        self,
+    ) -> None:
+        """A rejected duplicate read must not make the deterministic
+        fallback propose the same doomed read.
+
+        Regression (fresh EBCAR run): the fallback context was built without
+        ``executed_tool_calls``, so the deterministic supervisor could not
+        see that ``read_symbol`` on the candidate had already run; it
+        re-proposed the exact read, policy rejected the fallback too, and
+        the run died in STOP_BLOCKED from fallback exhaustion."""
+        from code2paper.agentic.research_policy import (
+            _build_fallback_decision,
+        )
+        from code2paper.agentic.research_supervisor import (
+            DeterministicSupervisorBackend,
+            ExecutedToolCallSummaryV1,
+        )
+
+        # The proposal re-reads a symbol whose read already executed for
+        # another obligation in this snapshot.
+        proposal = _decision(
+            action="READ_CANDIDATE",
+            tool_calls=(_tool_call(tool_call_id="tc-reread", tool_name="read_symbol"),),
+        )
+        budgets = _budgets()
+        executed = (
+            ExecutedToolCallSummaryV1(
+                tool_name="read_symbol",
+                arguments={"path": "model.py", "symbol": "Encoder.forward"},
+                path_scope=("model.py",),
+                goal="read candidate",
+                obligation_id="obl-0",
+            ),
+        )
+        backend = DeterministicSupervisorBackend(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            ready_tools=_READY_TOOLS,
+        )
+        fallback, rejection = _build_fallback_decision(
+            proposal=proposal,
+            active_issue=None,
+            agenda=_agenda(_obligation(candidate_symbol_ids=("sym:model.py:Encoder.forward",))),
+            per_obligation_budgets=budgets,
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=(),
+            no_progress_tool_call_ids=(),
+            executed_tool_calls=executed,
+            repo_snapshot_paths=_SNAPSHOT_PATHS,
+            fallback_backend=backend,
+            context_run_id=_RUN_ID,
+            context_repo_snapshot_id=_SNAPSHOT_ID,
+            context_turn_index=5,
+        )
+        assert rejection is None, f"fallback must not be rejected: {rejection}"
+        assert fallback is not None
+        # The fallback must NOT re-propose the doomed READ_CANDIDATE of the
+        # already-executed symbol.
+        assert fallback.action != "READ_CANDIDATE"
+        assert fallback.action in {
+            "SEARCH_SYMBOLS", "TRACE_CALLS", "TRACE_DATA_FLOW",
+            "INSPECT_BRANCH", "INSPECT_CONFIG", "SEARCH_HINTS",
+            "BUILD_BEHAVIOR_SUBGRAPH", "RECORD_GAP",
+        }
+
+    def test_fallback_without_executed_summaries_proposes_doomed_search(
+        self,
+    ) -> None:
+        """Sanity contrast: with no executed summaries the fallback cannot
+        know its stable search already ran with no gain and re-proposes the
+        same SEARCH_SYMBOLS (the old behavior that ended in STOP_BLOCKED
+        when policy rejected the fallback as a duplicate no-gain call)."""
+        from code2paper.agentic.research_policy import _build_fallback_decision
+        from code2paper.agentic.research_supervisor import (
+            DeterministicSupervisorBackend,
+        )
+
+        proposal = _decision(
+            action="SEARCH_SYMBOLS",
+            tool_calls=(_tool_call(tool_call_id="tc-search", tool_name="search_symbols"),),
+        )
+        backend = DeterministicSupervisorBackend(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            ready_tools=_READY_TOOLS,
+        )
+        fallback, _rejection = _build_fallback_decision(
+            proposal=proposal,
+            active_issue=None,
+            agenda=_agenda(_obligation()),
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=(),
+            no_progress_tool_call_ids=(),
+            executed_tool_calls=(),
+            repo_snapshot_paths=_SNAPSHOT_PATHS,
+            fallback_backend=backend,
+            context_run_id=_RUN_ID,
+            context_repo_snapshot_id=_SNAPSHOT_ID,
+            context_turn_index=5,
+        )
+        assert fallback is not None
+        assert fallback.action == "SEARCH_SYMBOLS"
+
+    def test_fallback_context_sees_executed_search_and_switches_strategy(
+        self,
+    ) -> None:
+        """A rejected duplicate search must make the deterministic fallback
+        switch strategy instead of re-proposing the same search.
+
+        Regression (fresh EBCAR run): the fallback context was built without
+        ``executed_tool_calls``, so the deterministic supervisor could not
+        see that its stable search id had already run with no gain; it
+        re-proposed SEARCH_SYMBOLS, policy rejected the fallback as a
+        duplicate no-gain call, and the run died in STOP_BLOCKED from
+        fallback exhaustion."""
+        from code2paper.agentic.research_policy import _build_fallback_decision
+        from code2paper.agentic.research_supervisor import (
+            DeterministicSupervisorBackend,
+            ExecutedToolCallSummaryV1,
+            ResearchDecisionContextV1,
+        )
+
+        # The plain obligation's deterministic search is stable, so the
+        # executed summary below reproduces exactly the call the fallback
+        # would otherwise build.
+        proposal = _decision(
+            action="SEARCH_SYMBOLS",
+            tool_calls=(_tool_call(tool_call_id="tc-search", tool_name="search_symbols"),),
+        )
+        backend = DeterministicSupervisorBackend(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            ready_tools=_READY_TOOLS,
+        )
+        base_context = ResearchDecisionContextV1(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            turn_index=6,
+            active_obligation=_obligation(),
+            active_issue=None,
+            ready_tools=_READY_TOOLS,
+            allowed_actions=("SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS",
+                              "RECORD_GAP", "STOP_BLOCKED"),
+        )
+        # The search this fallback would propose.
+        doomed = backend.decide(base_context)
+        assert doomed.action == "SEARCH_SYMBOLS"
+        proposed_call = doomed.selected_tool_calls[0]
+        executed = (
+            ExecutedToolCallSummaryV1(
+                tool_name=proposed_call.tool_name,
+                arguments=dict(proposed_call.arguments or {}),
+                path_scope=tuple(proposed_call.path_scope or ()),
+                goal="search symbols",
+                obligation_id="obl-1",
+            ),
+        )
+        fallback, rejection = _build_fallback_decision(
+            proposal=proposal,
+            active_issue=None,
+            agenda=_agenda(_obligation()),
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=(),
+            no_progress_tool_call_ids=(),
+            executed_tool_calls=executed,
+            repo_snapshot_paths=_SNAPSHOT_PATHS,
+            fallback_backend=backend,
+            context_run_id=_RUN_ID,
+            context_repo_snapshot_id=_SNAPSHOT_ID,
+            context_turn_index=5,
+        )
+        assert rejection is None, f"fallback must not be rejected: {rejection}"
+        assert fallback is not None
+        # The fallback must NOT re-propose the doomed search.
+        assert fallback.action != "SEARCH_SYMBOLS"
+        assert fallback.action in {
+            "TRACE_CALLS", "TRACE_DATA_FLOW", "INSPECT_BRANCH",
+            "INSPECT_CONFIG", "SEARCH_HINTS", "BUILD_BEHAVIOR_SUBGRAPH",
+            "RECORD_GAP", "STOP_BLOCKED",
+        }
 
 
 # ---------------------------------------------------------------------------

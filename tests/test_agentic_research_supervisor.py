@@ -42,6 +42,7 @@ from code2paper.agentic.research_models import (
 )
 from code2paper.agentic.research_supervisor import (
     DeterministicSupervisorBackend,
+    ExecutedToolCallSummaryV1,
     RecentObservationSummaryV1,
     ResearchDecisionContextV1,
     SupervisorBackend,
@@ -51,6 +52,7 @@ from code2paper.agentic.research_supervisor import (
     supervisor_node,
     _salient_author_search_terms,
 )
+from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 
 
@@ -186,6 +188,7 @@ def _obligation(
     priority: str = "must_cover",
     status: str = "in_progress",
     candidate_symbol_ids: tuple[str, ...] = (),
+    candidate_behavior_node_ids: tuple[str, ...] = (),
     missing_information: tuple[str, ...] = (),
     typed_targets: tuple[TypedBehaviorTargetV1, ...] = (),
 ) -> ResearchAgendaItemV1:
@@ -194,6 +197,7 @@ def _obligation(
         priority=priority,  # type: ignore[arg-type]
         status=status,  # type: ignore[arg-type]
         candidate_symbol_ids=list(candidate_symbol_ids),
+        candidate_behavior_node_ids=list(candidate_behavior_node_ids),
         missing_information=list(missing_information),
         typed_behavior_targets=list(typed_targets),
     )
@@ -252,6 +256,8 @@ def _context(
     active_issue: ResearchIssueV1 | None = None,
     no_progress_counter: int = 0,
     recent_observations: tuple[ResearchObservationV1, ...] = (),
+    executed_tool_calls: tuple[ExecutedToolCallSummaryV1, ...] = (),
+    behavior_graph: Any | None = None,
     per_obligation_budgets: dict[str, PerObligationBudgetV1] | None = None,
     turn_index: int = 0,
 ) -> ResearchDecisionContextV1:
@@ -264,6 +270,8 @@ def _context(
         active_obligation_id=active_obligation.obligation_id if active_obligation else "",
         active_issue=active_issue,
         recent_observations=recent_observations,
+        executed_tool_calls=executed_tool_calls,
+        behavior_graph=behavior_graph,
         per_obligation_budgets=per_obligation_budgets or {},
         global_safety_budget=GlobalSafetyBudgetV1(),
         no_progress_counter=no_progress_counter,
@@ -508,6 +516,261 @@ class TestDeterministicSupervisorBackend:
         )
         decision = backend.decide(ctx)
         assert decision.action == "TRACE_CALLS"
+
+    @staticmethod
+    def _bound_graph(
+        *,
+        path: str = "train.py",
+        name: str = "train",
+        line: int = 10,
+        node_id: str = "node:bound1",
+        span_start: int = 1,
+        span_end: int = 30,
+    ) -> CodeBehaviorGraphV1:
+        """A behavior graph whose node binds to the exact candidate symbol."""
+        from code2paper.agentic.behavior_graph import BehaviorNodeV1, make_symbol_id
+
+        return CodeBehaviorGraphV1(
+            repo_snapshot_id=_SNAPSHOT_ID,
+            project_tree_hash=_TREE_HASH,
+            nodes=[
+                BehaviorNodeV1(
+                    node_id=node_id,
+                    symbol_id=make_symbol_id(path, name, line),
+                    operation_id="op-1",
+                    predicate="WRITE",
+                    operands=("x",),
+                    result="x",
+                    source_span_id=f"span:{path}:{span_start}:{span_end}",
+                )
+            ],
+        )
+
+    def test_backend_compiles_when_candidate_read_already_executed(self) -> None:
+        """A read already executed for another obligation must not be re-proposed.
+
+        Policy rejects the exact re-read (identical snapshot bytes), so the
+        deterministic supervisor must switch to COMPILE_EVIDENCE when the
+        behavior graph already carries nodes that bind to the exact
+        candidate; otherwise the loop burns turns until fallback-exhaustion
+        STOP_BLOCKED.
+        """
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+            # Semantic information is still outstanding (as in the live
+            # fixture); only the exact read bytes are already in the run.
+            missing_information=("describe the code-backed aggregation output",),
+        )
+        # The read was executed while answering another obligation.
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_symbol",
+            arguments={"path": "train.py", "symbol": "train", "top_k": 1},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        # Recent search found the same symbol (so READ_CANDIDATE would be the
+        # naive next step).
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "COMPILE_EVIDENCE"
+        assert decision.selected_tool_calls == ()
+
+    def test_same_symbol_name_in_other_path_does_not_suppress_read(self) -> None:
+        """A prior read_symbol of ``other.py:train`` must not suppress
+        reading ``train.py:train``: the identity is (path, symbol)."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+        )
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_symbol",
+            arguments={"path": "other.py", "symbol": "train", "top_k": 1},
+            path_scope=("other.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "READ_CANDIDATE"
+
+    def test_same_file_different_span_does_not_suppress_read(self) -> None:
+        """A prior read_code_span of a different interval in the same file
+        must not suppress reading the candidate symbol."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+        )
+        # Prior span read covers lines 40-60; the candidate is at line 10.
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_code_span",
+            arguments={"path": "train.py", "start_line": 40, "end_line": 60},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "READ_CANDIDATE"
+
+    def test_adjacent_non_covering_span_does_not_suppress_read(self) -> None:
+        """An adjacent (non-covering) interval must not suppress the read."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+        )
+        # Span ends at line 9, candidate starts at line 10: adjacent, not
+        # covering.
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_code_span",
+            arguments={"path": "train.py", "start_line": 1, "end_line": 9},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "READ_CANDIDATE"
+
+    def test_covering_span_suppresses_read_when_graph_binds_candidate(self) -> None:
+        """A prior read_code_span whose interval covers the candidate line
+        may suppress the read when graph support binds to that candidate."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+            missing_information=("describe the code-backed aggregation output",),
+        )
+        # Prior span covers lines 1-30, candidate at line 10.
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_code_span",
+            arguments={"path": "train.py", "start_line": 1, "end_line": 30},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "COMPILE_EVIDENCE"
+        assert decision.selected_tool_calls == ()
+
+    def test_exact_read_with_unrelated_nodes_switches_strategy(self) -> None:
+        """An exact prior read with behavior nodes that do NOT bind to the
+        candidate must switch strategy, not compile from unrelated bytes."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+            missing_information=("describe the code-backed aggregation output",),
+        )
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_symbol",
+            arguments={"path": "train.py", "symbol": "train", "top_k": 1},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for obl-0",
+            obligation_id="obl-0",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        # Graph node binds to a DIFFERENT symbol in the same file, in a
+        # region that does NOT cover the candidate line: the path projection
+        # is non-empty but the candidate binding is not.
+        unrelated = self._bound_graph(
+            path="train.py", name="other", line=50, node_id="node:unrelated",
+            span_start=40, span_end=60,
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=unrelated,
+        )
+        decision = backend.decide(ctx)
+        assert decision.action in {"TRACE_CALLS", "SEARCH_HINTS"}
+
+    def test_backend_still_reads_candidate_when_read_not_executed(self) -> None:
+        """The guard must not suppress legitimate first reads."""
+        backend = _backend()
+        obl = _obligation(
+            candidate_symbol_ids=("symbol:train.py:train:10",),
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "READ_CANDIDATE"
 
     def test_backend_returns_stop_blocked_when_no_active_obligation(self) -> None:
         backend = _backend()
@@ -938,6 +1201,46 @@ class TestBuildDecisionContext:
         )
         assert "STOP_BLOCKED" in ctx.allowed_actions
         assert "SEARCH_SYMBOLS" not in ctx.allowed_actions
+
+    def test_context_filters_already_read_candidates(self) -> None:
+        """A candidate whose exact read already executed must not be shown as
+        a top candidate: policy would reject a re-read as a duplicate no-gain
+        call, so advertising it makes both the LLM and the deterministic
+        supervisor propose a doomed READ_CANDIDATE (EBCAR churn)."""
+        obl = _obligation(
+            candidate_symbol_ids=(
+                "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward",
+                "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank",
+            )
+        )
+        agenda = _agenda(obl)
+        executed = (
+            ExecutedToolCallSummaryV1(
+                tool_name="read_symbol",
+                arguments={
+                    "path": "src/model/ebcar_dedicated_attention_model.py",
+                    "symbol": "EBCarRerankerHybridAttention.forward",
+                },
+                path_scope=("src/model/ebcar_dedicated_attention_model.py",),
+                goal="read",
+                obligation_id="obl-0",
+            ),
+        )
+        ctx = build_decision_context(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            turn_index=0,
+            agenda=agenda,
+            active_obligation_id="obl-1",
+            active_issue=None,
+            recent_observations=(),
+            per_obligation_budgets={},
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            executed_tool_calls=executed,
+        )
+        assert ctx.top_candidate_symbol_ids == (
+            "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank",
+        )
 
     def test_context_allowed_actions_include_tool_calling_when_obligation_active(self) -> None:
         obl = _obligation()

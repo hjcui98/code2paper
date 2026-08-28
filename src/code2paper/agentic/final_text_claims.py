@@ -13,6 +13,19 @@ from code2paper.agentic.trust_contracts import (
 )
 
 
+_FORMULA_IDENTIFIER = (
+    r"[A-Za-z_][A-Za-z0-9_]*"
+    r"(?:\.[A-Za-z_][A-Za-z0-9_]*|\[[^\[\]]*\]|\([^)]*\))*"
+)
+_FORMULA_RISK = re.compile(
+    r"\$[^$]+\$|\\(?:begin|end)\{equation\}|"
+    r"(?<![A-Za-z0-9_])" + _FORMULA_IDENTIFIER
+    + r"\s*==\s*[^,.;]+|"
+    r"(?<![A-Za-z0-9_])" + _FORMULA_IDENTIFIER
+    + r"\s+=\s+(?![\[\"'])[^,.;]+"
+)
+
+
 _RISK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("number", re.compile(r"(?<![A-Za-z])\d+(?:\.\d+)?%?")),
     # Distinguish mathematical formulas and comparisons from Python keyword
@@ -20,7 +33,7 @@ _RISK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     # ``x = ["..."]`` or ``x = "..."`` is a code pattern (list/string assignment).
     # ``x = 1`` (spaces around ``=``) and ``current_layer_num == 0`` (``==``)
     # are formulas.
-    ("formula", re.compile(r"\$[^$]+\$|\\(?:begin|end)\{equation\}|[A-Za-z]\s*==\s*[^,.;]+|[A-Za-z]\s+=\s+(?![\[\"'])[^,.;]+")),
+    ("formula", _FORMULA_RISK),
     ("causal", re.compile(r"\b(?:causes?|ensures?|guarantees?|leads? to|results? in)\b", re.I)),
     ("performance", re.compile(r"\b(?:improves?|outperforms?|faster|better|state[- ]of[- ]the[- ]art)\b", re.I)),
     ("complexity", re.compile(r"\bO\s*\([^)]+\)")),
@@ -78,6 +91,28 @@ FINAL_TEXT_LANES: tuple[str, ...] = (
 _FACTUAL_HINT = re.compile(
     r"\b(?:use|uses|used|compute|computes|produce|produces|apply|applies|encode|decode|optimiz|train|"
     r"configure|construct|return|output|input|module|layer|loss|parameter|pipeline|stage|model|method|algorithm)\w*\b",
+    re.I,
+)
+# This narrower pattern answers a different question from ``_FACTUAL_HINT``:
+# whether one side of a coordination contains its own predicate and can be
+# extracted as an independent atomic clause.  Nominal words such as
+# ``output``, ``input``, ``model`` and ``method`` deliberately do not count.
+# Otherwise ``returns node_features and output`` is split into a valid return
+# claim plus a spurious bare ``output`` claim.
+_INDEPENDENT_CLAUSE_VERB = re.compile(
+    r"\b(?:uses?|comput(?:e|es|ed|ing)|produc(?:e|es|ed|ing)|"
+    r"appl(?:y|ies|ied|ying)|encod(?:e|es|ed|ing)|decod(?:e|es|ed|ing)|"
+    r"optimi[sz](?:e|es|ed|ing)|trains?|trained|training|"
+    r"configur(?:e|es|ed|ing)|constructs?|constructed|constructing|"
+    r"returns?|returned|returning|loads?|loaded|loading|reads?|read|reading|"
+    r"writes?|wrote|written|writing|stores?|stored|storing|calls?|called|calling|"
+    r"invokes?|invoked|invoking|normaliz(?:e|es|ed|ing)|"
+    r"concatenat(?:e|es|ed|ing)|aggregat(?:e|es|ed|ing)|"
+    r"propagat(?:e|es|ed|ing)|filters?|filtered|filtering|"
+    r"sorts?|sorted|sorting|selects?|selected|selecting|"
+    r"reshap(?:e|es|ed|ing)|projects?|projected|projecting|"
+    r"attends?|attended|attending|samples?|sampled|sampling|"
+    r"checks?|checked|checking|compares?|compared|comparing)\b",
     re.I,
 )
 # Exact nominal structural labels (``Implementation stage 1``, ``Stage 2``,
@@ -557,8 +592,9 @@ def _clause_like(text: str) -> bool:
     # ``self.cfg.use_dedicated_attention``) are removed before the check so
     # attribute names containing factual verbs (``use``, ``configure``) are
     # not mistaken for clause verbs.
-    cleaned = re.sub(r"\b\w+(?:\.\w+)+\b", "", text)
-    return bool(_FACTUAL_HINT.search(cleaned))
+    cleaned = re.sub(r"`[^`]+`", "", text)
+    cleaned = re.sub(r"\b\w+(?:\.\w+)+\b", "", cleaned)
+    return bool(_INDEPENDENT_CLAUSE_VERB.search(cleaned))
 
 
 def _is_discourse(text: str, risks: list[str]) -> bool:

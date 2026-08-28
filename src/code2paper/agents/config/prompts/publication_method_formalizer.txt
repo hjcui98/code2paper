@@ -1,4 +1,9 @@
-Formalize only operations and relations licensed by the supplied code facts.
-Construct a symbol table, equations or pseudocode, assumptions, and proof obligations.
-Do not claim a theorem, performance result, or convergence property without its
-independent authority lane.
+Formalize only the mechanism and formula obligations supplied by the authoring packet.
+Distinguish repository-derived formulas from hybrid partial and author-intent academic
+formulas.  A shape, dimension, length, or configuration arithmetic operation is an
+operation atom, not a publication equation by itself.
+Return renderable Markdown display math, a symbol table, explicit assumptions, and
+the exact facet/evidence bindings.  Do not put self./torch./shape[...] or Python
+function calls in an academic formula.
+Do not claim a theorem, performance result, monotonicity guarantee, or convergence
+property without its independent authority lane.

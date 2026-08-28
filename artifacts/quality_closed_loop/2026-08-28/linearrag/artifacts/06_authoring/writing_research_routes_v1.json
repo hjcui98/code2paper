@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:ab2e8ce4c2f60dd9280b",
+      "request_id": "research:MA-S2:unit",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "Tri-Graph",
+        "appearing",
+        "explicit",
+        "statement",
+        "interconnecting",
+        "adjacency",
+        "structure",
+        "architectural",
+        "term",
+        "paper",
+        "text",
+        "three",
+        "node",
+        "types",
+        "named",
+        "unit"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:b199c30ed3675362336496091e2647c078e328ee8eaf6fbeb30ce60872d2e70f"
+    },
+    {
+      "route_id": "route:d65d9fb30df13c0708cd",
+      "request_id": "rq:MA-S3:formula-derivation-evidence",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "scope": [
+        "MA-S3",
+        "derivation",
+        "binding",
+        "formula",
+        "section"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S3 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:cad33f1afd1049d670d9aa72fb6edc3c50e10f291446b83ee80e9fda4bfcc33a"
+    },
+    {
+      "route_id": "route:fbf8b8ba00d8fc1509ed",
+      "request_id": "MA-S4:unit-1:formula:section:MA-S4:derivation",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "scope": [
+        "closed-form",
+        "derivation",
+        "per-iteration",
+        "attenuation",
+        "score",
+        "update",
+        "factor",
+        "formula"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:009e2a7ed1b908389c8702609c05fcd6c1841dbabb7295d9923e115eaf54c489"
+    }
+  ],
+  "rejections": []
+}

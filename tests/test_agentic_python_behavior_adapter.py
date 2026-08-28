@@ -258,7 +258,24 @@ def test_extract_operations_generic_call_emits_call_predicate() -> None:
     assert calls
     # The call operands must include the function name and its arguments.
     operands = calls[0].operands
+    assert calls[0].result == "result"
     assert "compute" in operands[0]
+
+
+def test_value_producing_reduction_keeps_assignment_target() -> None:
+    source = textwrap.dedent(
+        """\
+        def volume(scales):
+            f_p_volume = torch.prod(scales, dim=1)
+            return f_p_volume
+        """
+    )
+    index = _index_files({"features.py": source})
+    nodes, _ = _extract(_first_symbol(index, "volume"), source)
+
+    reduction = next(node for node in nodes if node.predicate == "REDUCE")
+    assert reduction.result == "f_p_volume"
+    assert reduction.operands == ("torch.prod", "scales", "dim=1")
 
 
 def test_extract_operations_torch_topk_emits_topk_predicate() -> None:

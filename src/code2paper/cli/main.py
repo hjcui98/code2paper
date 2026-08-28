@@ -108,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     method_agent_run.add_argument("--llm-model", default="")
     method_agent_run.add_argument("--method-name", default="")
     method_agent_run.add_argument("--run-id", default="")
+    method_agent_run.add_argument("--research-stage-checkpoint", default="")
 
     intake_parser = subparsers.add_parser("intake")
     intake_parser.add_argument("--project", dest="project_root", required=True)
@@ -254,6 +255,10 @@ def main(argv: list[str] | None = None) -> int:
             run_args.extend(["--method-name", args.method_name])
         if args.run_id:
             run_args.extend(["--run-id", args.run_id])
+        if args.research_stage_checkpoint:
+            run_args.extend([
+                "--research-stage-checkpoint", args.research_stage_checkpoint,
+            ])
         return method_agent_main(run_args)
 
     if args.command == "intake":

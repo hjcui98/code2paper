@@ -43,6 +43,53 @@ class MethodContentRegressionFixtureV1(BaseModel):
         return self
 
 
+class MethodSynthesisProjectBaselineV1(BaseModel):
+    """Non-authorizing source-to-render counters for one frozen replay."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    facet_status_counts: dict[str, int]
+    draft_nonempty: bool
+    writer_call_count: int = Field(ge=0)
+    writer_repair_rounds: int = Field(ge=0)
+    writer_repair_commits: int = Field(ge=0)
+    formalizer_call_count: int = Field(ge=0)
+    formula_package_count: int = Field(ge=0)
+    used_equation_count: int = Field(ge=0)
+    planned_paragraph_count: int = Field(ge=0)
+    rendered_paragraph_count: int = Field(ge=0)
+    content_states: dict[str, int] = Field(default_factory=dict)
+    dropped_section_ids: tuple[str, ...] = ()
+
+
+class MethodSynthesisBaselineV1(BaseModel):
+    """Frozen protocol and project counters used only for diagnostics."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    run_id: str
+    protocol: dict[str, Any]
+    projects: dict[str, MethodSynthesisProjectBaselineV1]
+
+
+class MethodSynthesisBaselinesV1(BaseModel):
+    """Typed loader for the funnel's source-to-render baseline sidecar."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    authority: str
+    notes: str = ""
+    baselines: tuple[dict[str, Any], ...] = ()
+    source_to_render_baseline: MethodSynthesisBaselineV1
+
+    @model_validator(mode="after")
+    def _non_authorizing(self) -> "MethodSynthesisBaselinesV1":
+        if self.authority != "diagnostic_non_authorizing":
+            raise ValueError("synthesis baselines must be diagnostic and non-authorizing")
+        return self
+
+
 class MethodContentUnitResultV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -71,9 +118,184 @@ class MethodContentRegressionReportV1(BaseModel):
         return self
 
 
+class MethodAuthoringOracleUnitV1(BaseModel):
+    """One non-authorizing semantic unit from an original-paper oracle.
+
+    The oracle stores aliases and placement expectations only.  It never
+    stores paper prose, source facts, or evidence references, and therefore
+    cannot grant a Method claim authority.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    unit_id: str
+    story_role: str = ""
+    expected_heading_aliases: tuple[str, ...] = ()
+    required_alias_groups: tuple[tuple[str, ...], ...] = ()
+    formula_alias_groups: tuple[tuple[str, ...], ...] = ()
+    require_display_math: bool = False
+    polarity: str = ""
+
+
+class MethodAuthoringOracleProjectV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    units: tuple[MethodAuthoringOracleUnitV1, ...]
+
+
+class MethodAuthoringOracleV1(BaseModel):
+    """Offline original-paper comparison fixture (diagnostic only)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    authority: str
+    prose_copied_from_paper: bool = False
+    projects: dict[str, MethodAuthoringOracleProjectV1]
+
+    @model_validator(mode="after")
+    def _non_authorizing(self) -> "MethodAuthoringOracleV1":
+        if self.authority != "diagnostic_non_authorizing":
+            raise ValueError("authoring oracle must be diagnostic and non-authorizing")
+        if self.prose_copied_from_paper:
+            raise ValueError("authoring oracle must not copy original paper prose")
+        return self
+
+
+class MethodAuthoringOracleUnitResultV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    unit_id: str
+    story_role: str = ""
+    original_covered: bool
+    candidate_covered: bool
+    candidate_missing_alias_groups: tuple[tuple[str, ...], ...] = ()
+    candidate_missing_formula_groups: tuple[tuple[str, ...], ...] = ()
+    candidate_heading_found: bool = False
+    candidate_has_display_math: bool = False
+    polarity_ok: bool = True
+
+
+class MethodAuthoringOracleReportV1(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    fixture_authority: str = "diagnostic_non_authorizing"
+    units: tuple[MethodAuthoringOracleUnitResultV1, ...]
+    original_covered_units: int
+    candidate_covered_units: int
+    total_units: int
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _digest(self) -> "MethodAuthoringOracleReportV1":
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        encoded = json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+        object.__setattr__(
+            self,
+            "content_digest",
+            "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        )
+        return self
+
+
 def load_method_content_fixture(path: str | Path) -> MethodContentRegressionFixtureV1:
     return MethodContentRegressionFixtureV1.model_validate_json(
         Path(path).read_text(encoding="utf-8")
+    )
+
+
+def load_method_synthesis_baselines(path: str | Path) -> MethodSynthesisBaselinesV1:
+    """Load source-to-render counters without granting them fact authority."""
+
+    return MethodSynthesisBaselinesV1.model_validate_json(
+        Path(path).read_text(encoding="utf-8")
+    )
+
+
+def load_method_authoring_oracle(path: str | Path) -> MethodAuthoringOracleV1:
+    """Load aliases for an offline original-paper comparison."""
+
+    return MethodAuthoringOracleV1.model_validate_json(
+        Path(path).read_text(encoding="utf-8")
+    )
+
+
+def evaluate_method_authoring_oracle(
+    *,
+    oracle: MethodAuthoringOracleV1,
+    project_id: str,
+    candidate_text: str,
+    original_text: str,
+) -> MethodAuthoringOracleReportV1:
+    """Compare candidate structure/atoms to the offline paper oracle.
+
+    This deliberately uses alias groups rather than exact paper wording.  The
+    original text is an evaluation-only baseline and is never returned as a
+    fact or passed to a Writer prompt.
+    """
+
+    project = oracle.projects.get(project_id)
+    if project is None:
+        raise ValueError(f"unknown authoring-oracle project: {project_id}")
+    original_haystack = str(original_text or "").lower()
+    candidate_haystack = str(candidate_text or "").lower()
+    heading_text = "\n".join(
+        line.strip().lstrip("#").strip()
+        for line in candidate_text.splitlines()
+        if line.lstrip().startswith("#")
+    ).lower()
+    display_math = bool(re.search(
+        r"(?s)(?:\\\[.*?\\\]|\\begin\{(?:equation|aligned|gather|split|cases)\}.*?\\end\{(?:equation|aligned|gather|split|cases)\}|\$\$.*?\$\$)",
+        candidate_text,
+    ))
+    results: list[MethodAuthoringOracleUnitResultV1] = []
+    for unit in project.units:
+        original_missing = [
+            group for group in unit.required_alias_groups
+            if not any(_contains_alias(original_haystack, alias) for alias in group)
+        ]
+        candidate_missing = [
+            group for group in unit.required_alias_groups
+            if not any(_contains_alias(candidate_haystack, alias) for alias in group)
+        ]
+        formula_missing = [
+            group for group in unit.formula_alias_groups
+            if not any(_contains_alias(candidate_haystack, alias) for alias in group)
+        ]
+        heading_found = not unit.expected_heading_aliases or any(
+            _contains_alias(heading_text, alias)
+            for alias in unit.expected_heading_aliases
+        )
+        polarity_ok = _oracle_polarity_ok(candidate_haystack, unit.polarity)
+        original_covered = not original_missing
+        candidate_covered = (
+            not candidate_missing
+            and not formula_missing
+            and heading_found
+            and (display_math if unit.require_display_math else True)
+            and polarity_ok
+        )
+        results.append(MethodAuthoringOracleUnitResultV1(
+            unit_id=unit.unit_id,
+            story_role=unit.story_role,
+            original_covered=original_covered,
+            candidate_covered=candidate_covered,
+            candidate_missing_alias_groups=tuple(candidate_missing),
+            candidate_missing_formula_groups=tuple(formula_missing),
+            candidate_heading_found=heading_found,
+            candidate_has_display_math=display_math,
+            polarity_ok=polarity_ok,
+        ))
+    return MethodAuthoringOracleReportV1(
+        project_id=project_id,
+        fixture_authority=oracle.authority,
+        units=tuple(results),
+        original_covered_units=sum(item.original_covered for item in results),
+        candidate_covered_units=sum(item.candidate_covered for item in results),
+        total_units=len(results),
     )
 
 
@@ -203,10 +425,51 @@ def _contains_alias(haystack: str, alias: str) -> bool:
     return normalized in haystack
 
 
+def _oracle_polarity_ok(haystack: str, polarity: str) -> bool:
+    """Check only the small set of generic polarity contracts in fixtures."""
+
+    name = str(polarity or "").strip().casefold()
+    if not name:
+        return True
+    if name == "exclude_below_threshold":
+        has_below = bool(re.search(
+            r"(?:below|less than|under|<)\W{0,24}(?:the\W+)?(?:threshold|tau|τ)",
+            haystack,
+        ))
+        has_exclude = bool(re.search(
+            r"(?:below|less than|under|<).{0,100}(?:exclude|prun|discard|drop|reject|fail|continue)",
+            haystack,
+        ))
+        has_admit = bool(re.search(
+            r"(?:below|less than|under|<).{0,100}(?:keep|admit|retain|include|accept)",
+            haystack,
+        ))
+        return (has_exclude or not has_below) and not has_admit
+    if name == "larger_gap_larger_step":
+        has_gap = bool(re.search(r"(?:larger|greater|longer).{0,80}(?:gap|timespan)", haystack))
+        has_step = bool(re.search(r"(?:larger|greater|increase).{0,80}(?:step|delta|Δ)", haystack))
+        return has_gap and has_step
+    return True
+
+
 __all__ = [
+    "MethodAuthoringOracleProjectV1",
+    "MethodAuthoringOracleReportV1",
+    "MethodAuthoringOracleUnitResultV1",
+    "MethodAuthoringOracleUnitV1",
+    "MethodAuthoringOracleV1",
+    "MethodContentProjectFixtureV1",
     "MethodContentRegressionFixtureV1",
     "MethodContentRegressionReportV1",
+    "MethodContentUnitFixtureV1",
+    "MethodContentUnitResultV1",
+    "MethodSynthesisBaselinesV1",
+    "MethodSynthesisProjectBaselineV1",
+    "MethodSynthesisBaselineV1",
     "build_python_behavior_inventory",
+    "evaluate_method_authoring_oracle",
     "evaluate_method_content_artifacts",
+    "load_method_authoring_oracle",
     "load_method_content_fixture",
+    "load_method_synthesis_baselines",
 ]

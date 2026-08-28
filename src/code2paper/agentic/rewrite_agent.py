@@ -20,6 +20,7 @@ from typing import Any, Callable, Iterable, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.research_models import TextRepairIssueV1
+from code2paper.agentic.publication_quality import heading_replacement_is_coherent
 from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
 from code2paper.llm.generation_trace import build_generation_call_trace
@@ -66,7 +67,11 @@ class LocalRewriteOutputV1(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    patches: tuple[LocalRewritePatchV1, ...] = Field(default_factory=tuple, max_length=1)
+    # Multiple *disjoint* exact spans are allowed so a multi-claim paragraph
+    # can be repaired sentence-by-sentence.  ``apply_local_rewrite_patches``
+    # still rejects any overlap, out-of-cluster issue id, or byte mismatch,
+    # so the fail-closed exact-span contract is unchanged.
+    patches: tuple[LocalRewritePatchV1, ...] = Field(default_factory=tuple, max_length=8)
     self_identified_risks: tuple[str, ...] = Field(default_factory=tuple)
     incomplete: bool = False
 
@@ -196,6 +201,43 @@ def _repair_unique_patch_coordinates(
     return output.model_copy(update={"patches": tuple(patches)}), True
 
 
+def _repair_preserved_section_heading(
+    incumbent_text: str,
+    output: LocalRewriteOutputV1,
+) -> tuple[LocalRewriteOutputV1, bool]:
+    """Restore the unchanged heading omitted by a full-section model patch.
+
+    This is representation-only recovery: the exact incumbent heading is
+    retained only when the model consumes it, returns a non-empty replacement,
+    and supplies no replacement heading of its own.
+    """
+
+    incumbent_lines = incumbent_text.lstrip().splitlines()
+    if not incumbent_lines or not incumbent_lines[0].lstrip().startswith("#"):
+        return output, False
+    heading = incumbent_lines[0].strip()
+    repaired = False
+    patches: list[LocalRewritePatchV1] = []
+    for patch in output.patches:
+        replacement_lines = patch.replacement_text.lstrip().splitlines()
+        consumes_heading = bool(
+            patch.original_text.splitlines()
+            and patch.original_text.splitlines()[0].strip() == heading
+        )
+        replacement_has_heading = bool(
+            replacement_lines and replacement_lines[0].lstrip().startswith("#")
+        )
+        if consumes_heading and patch.replacement_text.strip() and not replacement_has_heading:
+            patch = patch.model_copy(update={
+                "replacement_text": f"{heading}\n\n{patch.replacement_text.lstrip()}",
+            })
+            repaired = True
+        patches.append(patch)
+    if not repaired:
+        return output, False
+    return output.model_copy(update={"patches": tuple(patches)}), True
+
+
 def _candidate_readability_failures(
     incumbent_text: str,
     candidate_text: str,
@@ -213,10 +255,16 @@ def _candidate_readability_failures(
     authority = (section_context or {}).get("writer_authority_context", {})
     candidate_points = authority.get("section_candidate_points", ())
     supported_claims = authority.get("reader_facing_claims", ())
+    writer_view = authority.get("writer_view", {})
+    packet = (
+        writer_view.get("mechanism_authoring_packet", {})
+        if isinstance(writer_view, dict) else {}
+    )
     protects_section_body = bool(
         re.search(r"(?m)^#{1,6}\s+", incumbent_text)
         or candidate_points
         or supported_claims
+        or (isinstance(packet, dict) and packet.get("facets"))
     )
     failures: list[str] = []
     incumbent_heading = incumbent_text.lstrip().splitlines()[:1]
@@ -226,13 +274,34 @@ def _candidate_readability_failures(
         else ""
     )
     expected_heading = str((section_context or {}).get("writer_heading") or "").strip()
-    required_heading_line = incumbent_heading or (
-        f"## {expected_heading}" if expected_heading else ""
-    )
-    if required_heading_line:
+    # A rewrite may keep the incumbent heading OR repair a fused/missing
+    # heading to the exact planned heading (``writer_heading``).  It can
+    # never rename the heading to anything else, so the gate stays closed:
+    # only the plan-authorized heading line is an acceptable replacement.
+    # The one exception is a plan heading that itself is truncated mid-clause
+    # (R2): completing or shortening the broken clause is an authorized
+    # Writer/Rewrite generation, so a coherent replacement heading with no
+    # internal ids passes while a still-truncated heading fails.
+    planned_heading_line = f"## {expected_heading}" if expected_heading else ""
+    required_heading_lines = {
+        line
+        for line in (incumbent_heading, planned_heading_line)
+        if line
+    }
+    if required_heading_lines:
         first_line = candidate_text.lstrip().splitlines()[:1]
-        if not first_line or first_line[0].strip() != required_heading_line:
-            failures.append("candidate_removed_or_changed_section_heading")
+        first_line_text = first_line[0].strip() if first_line else ""
+        if first_line_text not in required_heading_lines:
+            replacement_is_coherent = bool(
+                expected_heading
+                and first_line_text.startswith("## ")
+                and heading_replacement_is_coherent(
+                    first_line_text[3:].strip(),
+                    planned_heading=expected_heading,
+                )
+            )
+            if not replacement_is_coherent:
+                failures.append("candidate_removed_or_changed_section_heading")
     if protects_section_body and incumbent_body and not candidate_body:
         failures.append("candidate_body_empty")
     debris = candidate_body.lower().strip(" ,.;:-")
@@ -249,6 +318,71 @@ def _candidate_readability_failures(
     ):
         failures.append("candidate_body_collapsed")
     return tuple(dict.fromkeys(failures))
+
+
+def _required_facets_lost_by_empty_patches(
+    incumbent_text: str,
+    candidate_text: str,
+    patches: Iterable[LocalRewritePatchV1],
+    packet: dict[str, Any],
+) -> tuple[str, ...]:
+    """Return required facets whose lexical witness was deleted.
+
+    This is a narrow local guard for empty replacements.  The publication
+    transaction performs the authoritative semantic coverage check; this
+    guard only prevents an obvious required-facet deletion from reaching that
+    transaction.
+    """
+
+    if not any(
+        not patch.replacement_text and patch.allowed_scope == "drop_or_gap"
+        for patch in patches
+    ):
+        return ()
+    required = {
+        str(item).strip()
+        for item in packet.get("required_facet_ids", ())
+        if str(item).strip()
+    }
+    facets = {
+        str(item.get("facet_id") or ""): item
+        for item in packet.get("facets", ())
+        if isinstance(item, dict) and str(item.get("facet_id") or "").strip()
+    }
+    if not required or not facets:
+        return ()
+    stop_words = {
+        "a", "an", "and", "for", "in", "is", "of", "the", "to", "with",
+    }
+
+    def tokens(value: Any) -> set[str]:
+        return {
+            token.casefold()
+            for token in re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", str(value or ""))
+            if token.casefold() not in stop_words
+        }
+
+    incumbent_tokens = tokens(incumbent_text)
+    candidate_tokens = tokens(candidate_text)
+    lost: list[str] = []
+    for facet_id in sorted(required):
+        facet = facets.get(facet_id)
+        if facet is None:
+            continue
+        semantic_values = facet.get("semantic_fields") or {}
+        witnesses = tokens(facet.get("exact_source_quote"))
+        if isinstance(semantic_values, dict):
+            for value in semantic_values.values():
+                witnesses.update(tokens(value))
+        if not witnesses:
+            continue
+        threshold = max(1, min(3, len(witnesses) // 2))
+        if (
+            len(incumbent_tokens & witnesses) >= threshold
+            and len(candidate_tokens & witnesses) < threshold
+        ):
+            lost.append(facet_id)
+    return tuple(lost)
 
 
 @dataclass
@@ -287,6 +421,37 @@ class LocalRewriteAgent:
                 candidate_text=incumbent_text,
                 blocked_reason="rewrite_scope_not_owned_by_local_rewrite",
             )
+        if (section_context or {}).get("strict_owner_routing"):
+            from code2paper.agentic.publication_issue_owner_router import (
+                route_publication_issues,
+            )
+
+            owner_routes = route_publication_issues(issue_list)
+            wrong_owner = tuple(
+                route.issue_id
+                for route in owner_routes
+                if route.owner != "rewrite"
+            )
+            if wrong_owner:
+                return RewriteCallResult(
+                    status="blocked",
+                    incumbent_digest=incumbent_digest,
+                    candidate_digest=incumbent_digest,
+                    candidate_text=incumbent_text,
+                    blocked_reason="wrong_owner",
+                    patch_failures=tuple(
+                        f"wrong_owner:{issue_id}" for issue_id in wrong_owner
+                    ),
+                )
+        authority_context = (section_context or {}).get(
+            "writer_authority_context", {}
+        )
+        packet = (
+            authority_context.get("writer_view", {})
+            if isinstance(authority_context, dict) else {}
+        )
+        if isinstance(packet, dict):
+            packet = packet.get("mechanism_authoring_packet") or {}
         base_config = self.config or load_llm_config_from_env()
         config = apply_role_config(base_config, LOCAL_REWRITE)
         payload = {
@@ -298,9 +463,8 @@ class LocalRewriteAgent:
                 "preserve_unaffected_text": True,
                 "do_not_invent_evidence": True,
                 "return_offsets_in_incumbent_text": True,
-                "repository_claims_may_be_positive": True,
-                "candidate_points_require_visible_epistemic_framing": True,
-                "unlisted_positive_details_must_be_removed": True,
+                "do_not_resolve_authority_or_evidence_failures": True,
+                "required_facet_coverage_must_not_decrease": True,
             },
         }
         method_language_instruction = (
@@ -318,35 +482,30 @@ class LocalRewriteAgent:
             prompt=(
                 "You are the owning academic Method Rewrite Agent. Return only JSON matching "
                 "the schema. Diagnose each assigned issue against "
-                "section_context.writer_authority_context before editing. That context is the "
-                "same authority surface supplied to Writer: reader_facing_claims, candidate "
-                "points, argument flow, formalization, validation constraints, and bindings. "
-                "Use reader_facing_claims whose may_enter_verified is true for positive "
-                "implementation statements, expressed once in natural academic Method language "
-                "with every required qualifier. A section_candidate_point is not repository "
-                "evidence: preserve it only as author-owned or candidate narrative using explicit "
-                "phrasing such as 'we aim', 'our intended design', 'repository evidence partially "
-                "supports', 'pending confirmation', or an explicit mismatch statement. If an "
-                "offending positive assertion maps to neither surface, remove it; do not make it "
-                "vague merely to evade validation. Use mechanisms, representations, mathematical "
-                "or data transformations, assumptions, and outputs as grammatical subjects. Put "
-                "only indispensable code identifiers in short parenthetical repository bindings, "
-                "never as an execution inventory. Use an equation or symbol only when supplied by "
-                "formalization, and never infer empirical benefit, novelty, complexity, or theory. "
+                "section_context.writer_authority_context before editing. Use that context only "
+                "to preserve already-authorized semantic content and facet coverage. Use "
+                "mechanisms, representations, mathematical or data transformations, assumptions, "
+                "and outputs as grammatical subjects. Put only indispensable code identifiers in "
+                "short parenthetical repository bindings, never as an execution inventory. Use an "
+                "equation or symbol only when supplied by formalization, and never infer empirical "
+                "benefit, novelty, complexity, or theory. "
+                "This owner handles paper-language and local wording issues only. Evidence gaps, "
+                "formula authority, missing core content, and cross-section organization belong "
+                "to Research continuation, Formalizer, Writer, or Editor; do not solve them by "
+                "dropping a required mechanism or replacing its subject with a code symbol. "
                 "Remove generic section templates and avoid restating the complete pipeline in a "
-                "component-specific section. For supported_claim_not_rendered, replace one exact "
-                "existing paragraph (or the section when necessary) with a version that integrates "
-                "the supplied claim; never use a zero-width insertion. Do not solve unsupported "
-                "prose by deleting the whole section. If section_candidate_points are present, "
-                "replace the unsupported implementation story with a concise candidate paragraph "
-                "that states the relevant point using an explicit epistemic marker. If "
-                "reader_facing_claims are present, retain their supported semantic content in "
-                "natural prose. Never leave a heading followed only by whitespace, punctuation, "
-                "or connective words such as 'and'. Return exactly one patch when an edit is "
-                "needed: replace one complete paragraph or, when authority framing is wrong "
-                "throughout, the complete section. The patch may list every issue_id that it "
-                "resolves. Never return nested sentence patches. Return the exact incumbent "
-                "character offsets and original_text, then the complete replacement span. The "
+                "component-specific section. Never leave a heading followed only by whitespace, "
+                "punctuation, or connective words such as 'and'. Return one or more disjoint patches when "
+                "preserving an existing candidate narrative, "
+                "edits are needed: replace one complete paragraph or, when authority framing is "
+                "wrong throughout, the complete section. Each patch may list every issue_id that "
+                "it resolves, but only issue_ids that appear in the assigned issues payload — "
+                "never section-level structure ids (e.g. 'structure:*') or ids from another "
+                "repair cluster. Never return nested, overlapping, or duplicate patches. Return "
+                "the exact incumbent character offsets and original_text, then the complete "
+                "replacement span. original_text must be copied character-for-character from "
+                "input_payload.incumbent_text at those offsets; never paraphrase, truncate, "
+                "normalize whitespace, or regenerate the span. The "
                 "patch MUST include a non-empty issue_ids "
                 "array containing the exact atomic_claim_id from the repair issue, or its exact "
                 "sentence_id when atomic_claim_id is empty, plus patch_id and "
@@ -354,11 +513,10 @@ class LocalRewriteAgent:
                 "those spans, add evidence, or normalize unrelated punctuation. For wording_only, "
                 "replacement_text must be non-empty and allowed_scope must be wording_only. For an "
                 "empty replacement, allowed_scope MUST be drop_or_gap and every issue_id must refer "
-                "only to an issue whose allowed_repair_scope is drop_or_gap. original_text must be "
-                "the exact non-empty incumbent slice. Example: {\"patches\":[{\"patch_id\":\"drop-FAC1\","
-                "\"section_id\":\"\",\"start\":0,\"end\":12,\"original_text\":\"...\","
-                "\"replacement_text\":\"\",\"issue_ids\":[\"FAC1\"],"
-                "\"allowed_scope\":\"drop_or_gap\"}]}."
+                "only to an issue whose allowed_repair_scope is drop_or_gap; never use an empty "
+                "replacement for a required mechanism facet. original_text must be the exact "
+                "non-empty incumbent slice. Return an empty patches list when no safe "
+                "paper-language edit is authorized."
                 + method_language_instruction
             ),
             input_payload=payload,
@@ -411,21 +569,32 @@ class LocalRewriteAgent:
         parsed, coordinates_repaired = _repair_unique_patch_coordinates(
             incumbent_text, parsed
         )
-        if coordinates_repaired:
+        parsed, heading_repaired = _repair_preserved_section_heading(
+            incumbent_text, parsed
+        )
+        if coordinates_repaired or heading_repaired:
             recovery = recovery.model_copy(update={
                 "applied": True,
                 "operations": tuple(dict.fromkeys([
                     *recovery.operations,
-                    "repair_unique_exact_span_coordinates",
+                    *(
+                        ("repair_unique_exact_span_coordinates",)
+                        if coordinates_repaired else ()
+                    ),
+                    *(
+                        ("restore_unchanged_section_heading",)
+                        if heading_repaired else ()
+                    ),
                 ])),
             })
         scope_rank = {
             "wording_only": 0,
-            "sentence_atomicity": 1,
-            "claim_decomposition": 2,
-            "packet_relation": 3,
-            "code_search": 4,
-            "drop_or_gap": 5,
+            "formula_rendering": 1,
+            "sentence_atomicity": 2,
+            "claim_decomposition": 3,
+            "packet_relation": 4,
+            "code_search": 5,
+            "drop_or_gap": 6,
         }
         issue_by_id: dict[str, list[TextRepairIssueV1]] = {}
         for issue in issue_list:
@@ -499,6 +668,31 @@ class LocalRewriteAgent:
                 response_ref=response.response_hash,
                 blocked_reason="rewrite_candidate_not_readable",
                 patch_failures=readability_failures,
+                generation_trace=trace,
+                response_recovery_trace=recovery.model_dump(mode="json"),
+            )
+        lost_facets = (
+            _required_facets_lost_by_empty_patches(
+                incumbent_text,
+                candidate,
+                parsed.patches,
+                packet,
+            )
+            if isinstance(packet, dict) else ()
+        )
+        if lost_facets:
+            return RewriteCallResult(
+                status="rejected",
+                incumbent_digest=incumbent_digest,
+                candidate_digest=incumbent_digest,
+                candidate_text=incumbent_text,
+                output=parsed,
+                response_ref=response.response_hash,
+                blocked_reason="rewrite_required_facet_drop_forbidden",
+                patch_failures=tuple(
+                    f"required_facet_drop_forbidden:{facet_id}"
+                    for facet_id in lost_facets
+                ),
                 generation_trace=trace,
                 response_recovery_trace=recovery.model_dump(mode="json"),
             )

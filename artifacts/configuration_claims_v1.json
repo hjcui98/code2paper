@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "claims": [
+    {
+      "configuration_id": "config:sha256:1edf681053477",
+      "key": "self.config.use_vectorized_retrieval",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:4024da979f792194"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:1ab92ac8b4e038d083ea213c8b5a9bc9f2eb3d9e133c9302b764729b31e7abf4",
+      "content_digest": "sha256:cad2f2a9d714af8e12192215b5f09e6c20239a7614fa52c1197b6a8b6d166d12"
+    }
+  ],
+  "content_digest": "sha256:e5a19f5aa6e9b6a4a1ba6c640503f20bfb4954ff3a5bd8c9dcec8450bd7890b2"
+}

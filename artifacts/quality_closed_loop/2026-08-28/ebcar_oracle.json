@@ -1,0 +1,60 @@
+{
+  "project_id": "ebcar",
+  "fixture_authority": "diagnostic_non_authorizing",
+  "units": [
+    {
+      "unit_id": "ebcar_structural_augmentation",
+      "story_role": "structural_augmentation",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "ebcar_shared_attention",
+      "story_role": "hybrid_attention",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "ebcar_dedicated_masked_attention",
+      "story_role": "hybrid_attention",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "ebcar_attention_outputs_fused",
+      "story_role": "hybrid_attention",
+      "original_covered": false,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [
+        [
+          "sum",
+          "add",
+          "fuse"
+        ]
+      ],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    }
+  ],
+  "original_covered_units": 3,
+  "candidate_covered_units": 0,
+  "total_units": 4,
+  "content_digest": "sha256:9837de12d87544051c9d103f801025dd94b58c3445bdb3aa780ea8a79bf42487"
+}

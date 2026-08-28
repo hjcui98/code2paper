@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "nr:MA-S1:unit-1:mechanism_overview",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "Which repository evidence anchors the mechanism_overview move for the dynamic graph encoding pipeline, specifically the transformation of raw interaction sequences into a unified aligned representation via heterogeneous feature channels?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "mechanism_overview"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The mechanism_overview move requires a repository-anchored expository bridge to describe how heterogeneous feature channels are assembled into a unified tensor; without it, the section cannot move from the alignment and routing operations to the overall encoding pipeline narrative.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "dynamic_graph_encoding_mechanism",
+      "missing_parts": [
+        "mechanism_overview"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/DyGMamba.py:211:211",
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:215:215",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "target_concept_keys": [
+        "dynamic_graph_encoding_mechanism"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-42774719",
+        "brief:story:O-STAGE-01-06d7de36"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:039352b3550aa758acb33bf253c2f4500a9c6d3c1a61e971e21bb5d99db7f2ce"
+    },
+    {
+      "request_id": "rr-ma-s3-mechanism-overview",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "What repository evidence anchors the mechanism_overview rhetorical move for the timespan-aware forgetting stage, specifically the MambaTimeDelta module's branching logic, input projection, and gating operations?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "mechanism_overview"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The overview paragraphs (MA-S3:1 and MA-S3:7) require a mechanism_overview move to orient the reader to the timespan-aware forgetting stage. No repository evidence currently anchors this move; the organization_seed describes the branching and gating logic but it resides in the author_intent lane without a verified expository bridge.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "mechanism_overview"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/mamba_simple.py:471:471",
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:497:525",
+        "span:models/mamba_simple.py:551:551"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4",
+        "brief:story:O-STAGE-02-e02cd0f2"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:434ee94fb649334d95e693b40d9f283ccc504391d7149f64010e2791ed5895a1"
+    },
+    {
+      "request_id": "MA-S4:r-001",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "How is the shared edge-memory tensor constructed and updated across the three strategies, and how does it feed into predict_link_probabilities?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "strategy",
+        "interface",
+        "contract",
+        "edge-memory",
+        "prediction",
+        "function",
+        "precise",
+        "tensor",
+        "layout",
+        "update",
+        "rule",
+        "between"
+      ],
+      "current_known_facts": [
+        "The edge memory is computed by one of three strategies: repeat-threshold, time-window, or unlimited",
+        "When an edge feature is unavailable, a zero vector is substituted",
+        "The EdgeBank module maintains a memory of observed edges"
+      ],
+      "why_needed_for_reader": "The reader needs to understand how the edge-memory tensor is built and consumed to follow the link-prediction pipeline.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "edge_memory_tensor",
+      "missing_parts": [
+        "The precise tensor layout and update rule for each strategy",
+        "The interface contract between the edge-memory tensor and the prediction function"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:110:110",
+        "span:models/EdgeBank.py:110:112",
+        "span:models/EdgeBank.py:114:114",
+        "span:models/EdgeBank.py:118:118",
+        "span:models/EdgeBank.py:119:119"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "target_concept_keys": [
+        "edge_memory_tensor"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-COMPONENT-03-2ae65141"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation",
+        "relation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [
+        "The edge memory is computed by one of three strategies: repeat-threshold, time-window, or unlimited",
+        "When an edge feature is unavailable, a zero vector is substituted",
+        "The EdgeBank module maintains a memory of observed edges"
+      ],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:9635b9c8290116734b00ca9fdd7665d9f2b4beb0105b71a74900df8d3d33fd07"
+    },
+    {
+      "request_id": "rq:MA-S5:unit-2:component-07",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "How does the continuous formulation of the DyG-Mamba SSM core redefine the step size Δt as a function of the interaction timespan, and how does the stable diagonal initialization of A guarantee bounded state evolution for irregular sequences?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "facet-85dd07572b77e2",
+        "facet-e343d4bc111c5b77",
+        "facet-3f8317dd772533f4",
+        "formula",
+        "facet"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The reader question asks how the continuous SSM core redefines Δt and A; the formula facets carry the specification but lack repository witnesses, so the author-intent description of the timespan-dependent step size and stable diagonal initialization must be written as specification prose.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "formula:facet:facet-85dd07572b77e2",
+        "formula:facet:facet-e343d4bc111c5b77",
+        "formula:facet:facet-3f8317dd772533f4"
+      ],
+      "evidence_refs_used": [
+        "brief:story:O-COMPONENT-07-c430eb84"
+      ],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-COMPONENT-07-c430eb84"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:7d5287bcc00346501ee28967575724edf1eea6ca50e266739d3c561e7468e7d8"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:44c5dc5f121c13b46d373f1ff6766bbeadaab8dd02155de3e5085a2b045c55ff"
+}

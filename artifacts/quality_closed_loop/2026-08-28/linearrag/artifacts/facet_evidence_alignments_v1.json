@@ -1,0 +1,2473 @@
+{
+  "schema_version": "1.0",
+  "alignments": [
+    {
+      "facet_id": "facet-1f936373429e5100",
+      "alignment_id": "alignment:facet-1f936373429e5100",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+            "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+            "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:100:100",
+            "span:src/LinearRAG.py:101:101",
+            "span:src/LinearRAG.py:111:111",
+            "span:src/LinearRAG.py:113:113",
+            "span:src/LinearRAG.py:118:118",
+            "span:src/LinearRAG.py:192:192",
+            "span:src/LinearRAG.py:193:193",
+            "span:src/LinearRAG.py:197:197",
+            "span:src/LinearRAG.py:198:205",
+            "span:src/LinearRAG.py:199:199",
+            "span:src/LinearRAG.py:207:207",
+            "span:src/LinearRAG.py:208:208",
+            "span:src/LinearRAG.py:212:212",
+            "span:src/LinearRAG.py:216:216",
+            "span:src/LinearRAG.py:225:225",
+            "span:src/LinearRAG.py:228:255",
+            "span:src/LinearRAG.py:231:231",
+            "span:src/LinearRAG.py:231:232",
+            "span:src/LinearRAG.py:234:235",
+            "span:src/LinearRAG.py:240:240",
+            "span:src/LinearRAG.py:247:247",
+            "span:src/LinearRAG.py:501:501",
+            "span:src/LinearRAG.py:504:504",
+            "span:src/LinearRAG.py:512:512",
+            "span:src/LinearRAG.py:627:628",
+            "span:src/LinearRAG.py:629:629",
+            "span:src/LinearRAG.py:92:92"
+          ],
+          "bound_equation_ids": [
+            "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+          ],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:231:232",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 231,
+              "line_end": 232,
+              "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n                    continue\n",
+              "excerpt_digest": "sha256:34ec5965a623fe4f79c1914d3385047c10aefa7e332b0045e89ab707030db872",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+                "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:208:208",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 208,
+              "line_end": 208,
+              "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+              "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:198:205",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 198,
+              "line_end": 205,
+              "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+              "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:216:216",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 216,
+              "line_end": 216,
+              "exact_excerpt": "        return sorted_passage_hash_ids, sorted_passage_scores.tolist()\n",
+              "excerpt_digest": "sha256:20765573ed5a4fedbaccc60bf6c615ac4fb9835df5f9537e2cd6cd202bd49c0f",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:247:247",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 247,
+              "line_end": 247,
+              "exact_excerpt": "                        next_entity_score = entity_score * top_sentence_score\n",
+              "excerpt_digest": "sha256:0880c5c39ef62cd9e327e3700d1b329a8a9067491bb9fa6913887901c361afe9",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+              ],
+              "equation_ids": [
+                "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:228:255",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 228,
+              "line_end": 255,
+              "exact_excerpt": "        while len(current_entities) > 0 and iteration < self.config.max_iterations:\n            new_entities = {}\n            for entity_hash_id, (entity_id, entity_score, tier) in current_entities.items():\n                if entity_score < self.config.iteration_threshold:\n                    continue\n                sentence_hash_ids = [sid for sid in list(self.entity_hash_id_to_sentence_hash_ids[entity_hash_id]) if sid not in used_sentence_hash_ids]\n                if not sentence_hash_ids:\n                    continue\n                sentence_indices = [self.sentence_embedding_store.hash_id_to_idx[sid] for sid in sentence_hash_ids]\n                sentence_embeddings = self.sentence_embeddings[sentence_indices]\n                question_emb = question_embedding.reshape(-1, 1) if len(question_embedding.shape) == 1 else question_embedding\n                sentence_similarities = np.dot(sentence_embeddings, question_emb).flatten()\n                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n                for top_sentence_index in top_sentence_indices:\n                    top_sentence_hash_id = sentence_hash_ids[top_sentence_index]\n                    top_sentence_score = sentence_similarities[top_sentence_index]\n                    used_sentence_hash_ids.add(top_sentence_hash_id)\n                    entity_hash_ids_in_sentence = self.sentence_hash_id_to_entity_hash_ids[top_sentence_hash_id]\n                    for next_entity_hash_id in entity_hash_ids_in_sentence:\n                        next_entity_score = entity_score * top_sentence_score\n                        if next_entity_score < self.config.iteration_threshold:\n                            continue\n                        next_enitity_node_idx = self.node_name_to_vertex_idx[next_entity_hash_id]\n                        entity_weights[next_enitity_node_idx] += next_entity_score\n                        new_entities[next_entity_hash_id] = (next_enitity_node_idx, next_entity_score, iteration+1)\n            actived_entities.update(new_entities)\n            current_entities = new_entities.copy()\n            iteration += 1\n",
+              "excerpt_digest": "sha256:9bec9a6b03dc73ff54c30f790f468c3449ed525b35c4d1bef549ffcc651bfe92",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:240:240",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 240,
+              "line_end": 240,
+              "exact_excerpt": "                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n",
+              "excerpt_digest": "sha256:d0f334c99f44a02e017a3c5513e10637f4e93d5de4d61bd60a258be22b6f2ece",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:231:231",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 231,
+              "line_end": 231,
+              "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n",
+              "excerpt_digest": "sha256:e0cc812d4b8f1a5db19ec5f57a530e640c329bb0b428f9c8de3ae9b5e1ef2e5d",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+                "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:207:207",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 207,
+              "line_end": 207,
+              "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+              "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:113:113",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 113,
+              "line_end": 113,
+              "exact_excerpt": "                sorted_passage_hash_ids,sorted_passage_scores = self.graph_search_with_seed_entities(question,question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+              "excerpt_digest": "sha256:ccc4266b06508f763f6eb8d874ec671c417c4cd7db195907391f00313d695b44",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:234:235",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 234,
+              "line_end": 235,
+              "exact_excerpt": "                if not sentence_hash_ids:\n                    continue\n",
+              "excerpt_digest": "sha256:e6c66b37ece2d5e2d24a703e2d5b99131fc2e494fd1e22c65ff663dc47156806",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:504:504",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:97b433ccde9bd4d6",
+              "line_start": 504,
+              "line_end": 504,
+              "exact_excerpt": "            passage_score = self.config.passage_ratio * dpr_passage_score + math.log(1 + total_entity_bonus)\n",
+              "excerpt_digest": "sha256:d10d0c1d671e0534054ea9f2ff8ba88271c09e33c152598d6433a40e17d0ce4f",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+                "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+                "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31"
+              ],
+              "equation_ids": [
+                "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:192:192",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:0310037f50fb51c0",
+              "line_start": 192,
+              "line_end": 192,
+              "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+              "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+              ],
+              "equation_ids": [
+                "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:512:512",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:97b433ccde9bd4d6",
+              "line_start": 512,
+              "line_end": 512,
+              "exact_excerpt": "            passage_weights[passage_node_idx] = passage_score * self.config.passage_node_weight\n",
+              "excerpt_digest": "sha256:198097b1c074186ccc74f4c9712f16f3f27a482df3fb8cf6528020bc8416baac",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+                "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+                "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e"
+              ],
+              "equation_ids": [
+                "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:225:225",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b9da9fa9cfd8f215",
+              "line_start": 225,
+              "line_end": 225,
+              "exact_excerpt": "        used_sentence_hash_ids = set()\n",
+              "excerpt_digest": "sha256:9aa95af87cc24fa3c561c6847e14e6b8ec58f54dc21b6f714158eb42a7a83ab1",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:501:501",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:97b433ccde9bd4d6",
+              "line_start": 501,
+              "line_end": 501,
+              "exact_excerpt": "                    entity_bonus = entity_score * math.log(1 + entity_occurrences) / denom\n",
+              "excerpt_digest": "sha256:b9c6d925250f759eb5239e734a7e1fb5a851ade3a990fc71e5deac9d46be4abf",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+              ],
+              "equation_ids": [
+                "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:197:197",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 197,
+              "line_end": 197,
+              "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+              "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+                "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:199:199",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 199,
+              "line_end": 199,
+              "exact_excerpt": "            vertices=range(len(self.node_name_to_vertex_idx)),\n",
+              "excerpt_digest": "sha256:39d5946d4017b6dacc56f0b1dd37551bd84a7033093a49ca761c99be00c16256",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+                "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:212:212",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 212,
+              "line_end": 212,
+              "exact_excerpt": "            self.vertex_idx_to_node_name[self.passage_node_indices[i]] \n",
+              "excerpt_digest": "sha256:f3f781f52d7e988ed5b5fbc9dcfae2bd689f24468e549e63f7b13f4be402a2b9",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:193:193",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:0310037f50fb51c0",
+              "line_start": 193,
+              "line_end": 193,
+              "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+              "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:92:92",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 92,
+              "line_end": 92,
+              "exact_excerpt": "        self.vertex_idx_to_node_name = {v.index: v[\"name\"] for v in self.graph.vs if \"name\" in v.attributes()}\n",
+              "excerpt_digest": "sha256:796e2cbf869444bdc6da6cb98559a5c2ea7f3d7bcecc61c6e82000e1ab0c8797",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:100:100",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 100,
+              "line_end": 100,
+              "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+              "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:627:628",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:05f6f680790f8d4e",
+              "line_start": 627,
+              "line_end": 628,
+              "exact_excerpt": "                if node_hash_id == neighbor_hash_id:\n                    continue\n",
+              "excerpt_digest": "sha256:568d65776cb551a9f26e12fecb4cca322e53cf2b6a86deba9b6fde47b8de35ee",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:629:629",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:05f6f680790f8d4e",
+              "line_start": 629,
+              "line_end": 629,
+              "exact_excerpt": "                edges.append((node_hash_id, neighbor_hash_id))\n",
+              "excerpt_digest": "sha256:7d5b014aafbc0037ff78121d29e05d5d5d1e14974aae75436e8fcf9b441d916e",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:111:111",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 111,
+              "line_end": 111,
+              "exact_excerpt": "            seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores = self.get_seed_entities(question)\n",
+              "excerpt_digest": "sha256:dbcb262f99f0886eec87dcf4da77cc3a51b73632b59c056732826f5265c6fdd4",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-2-node:63404e1903696c87"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:118:118",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 118,
+              "line_end": 118,
+              "exact_excerpt": "                sorted_passage_indices,sorted_passage_scores = self.dense_passage_retrieval(question_embedding)\n",
+              "excerpt_digest": "sha256:a111100b93baa951bfaeb68e9055004efae780747ea9c1f3b38ac4c9685b06c7",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-1f936373429e5100",
+              "span_id": "span:src/LinearRAG.py:101:101",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 101,
+              "line_end": 101,
+              "exact_excerpt": "            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n",
+              "excerpt_digest": "sha256:b6c4c63a1343603eeebe9b2cdf126677bd38e7d89103b6843d7e4015d1e539de",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712"
+      ],
+      "bound_span_ids": [
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:101:101",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:240:240",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:113:113",
+        "span:src/LinearRAG.py:212:212",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:234:235",
+        "span:src/LinearRAG.py:629:629",
+        "span:src/LinearRAG.py:231:231",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:228:255",
+        "span:src/LinearRAG.py:627:628",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:247:247",
+        "span:src/LinearRAG.py:216:216"
+      ],
+      "bound_equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:231:232",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 232,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n                    continue\n",
+          "excerpt_digest": "sha256:34ec5965a623fe4f79c1914d3385047c10aefa7e332b0045e89ab707030db872",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:208:208",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 208,
+          "line_end": 208,
+          "exact_excerpt": "        sorted_indices_in_doc_scores = np.argsort(doc_scores)[::-1]\n",
+          "excerpt_digest": "sha256:0be688e16e3acc8ef1eac8524fefd6368e131d6b0ebccd83ee3d9bb78b859f07",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:198:205",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 198,
+          "line_end": 205,
+          "exact_excerpt": "        pagerank_scores = self.graph.personalized_pagerank(\n            vertices=range(len(self.node_name_to_vertex_idx)),\n            damping=self.config.damping,\n            directed=False,\n            weights='weight',\n            reset=reset_prob,\n            implementation='prpack'\n        )\n",
+          "excerpt_digest": "sha256:b374b72d1a2ebf1fbf20e038a5c1ec9485e7630a5c5bc15360dfd420e88df3a5",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:216:216",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 216,
+          "line_end": 216,
+          "exact_excerpt": "        return sorted_passage_hash_ids, sorted_passage_scores.tolist()\n",
+          "excerpt_digest": "sha256:20765573ed5a4fedbaccc60bf6c615ac4fb9835df5f9537e2cd6cd202bd49c0f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:247:247",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 247,
+          "line_end": 247,
+          "exact_excerpt": "                        next_entity_score = entity_score * top_sentence_score\n",
+          "excerpt_digest": "sha256:0880c5c39ef62cd9e327e3700d1b329a8a9067491bb9fa6913887901c361afe9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+          ],
+          "equation_ids": [
+            "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:228:255",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 228,
+          "line_end": 255,
+          "exact_excerpt": "        while len(current_entities) > 0 and iteration < self.config.max_iterations:\n            new_entities = {}\n            for entity_hash_id, (entity_id, entity_score, tier) in current_entities.items():\n                if entity_score < self.config.iteration_threshold:\n                    continue\n                sentence_hash_ids = [sid for sid in list(self.entity_hash_id_to_sentence_hash_ids[entity_hash_id]) if sid not in used_sentence_hash_ids]\n                if not sentence_hash_ids:\n                    continue\n                sentence_indices = [self.sentence_embedding_store.hash_id_to_idx[sid] for sid in sentence_hash_ids]\n                sentence_embeddings = self.sentence_embeddings[sentence_indices]\n                question_emb = question_embedding.reshape(-1, 1) if len(question_embedding.shape) == 1 else question_embedding\n                sentence_similarities = np.dot(sentence_embeddings, question_emb).flatten()\n                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n                for top_sentence_index in top_sentence_indices:\n                    top_sentence_hash_id = sentence_hash_ids[top_sentence_index]\n                    top_sentence_score = sentence_similarities[top_sentence_index]\n                    used_sentence_hash_ids.add(top_sentence_hash_id)\n                    entity_hash_ids_in_sentence = self.sentence_hash_id_to_entity_hash_ids[top_sentence_hash_id]\n                    for next_entity_hash_id in entity_hash_ids_in_sentence:\n                        next_entity_score = entity_score * top_sentence_score\n                        if next_entity_score < self.config.iteration_threshold:\n                            continue\n                        next_enitity_node_idx = self.node_name_to_vertex_idx[next_entity_hash_id]\n                        entity_weights[next_enitity_node_idx] += next_entity_score\n                        new_entities[next_entity_hash_id] = (next_enitity_node_idx, next_entity_score, iteration+1)\n            actived_entities.update(new_entities)\n            current_entities = new_entities.copy()\n            iteration += 1\n",
+          "excerpt_digest": "sha256:9bec9a6b03dc73ff54c30f790f468c3449ed525b35c4d1bef549ffcc651bfe92",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:240:240",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "                top_sentence_indices = np.argsort(sentence_similarities)[::-1][:self.config.top_k_sentence]\n",
+          "excerpt_digest": "sha256:d0f334c99f44a02e017a3c5513e10637f4e93d5de4d61bd60a258be22b6f2ece",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:231:231",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 231,
+          "line_end": 231,
+          "exact_excerpt": "                if entity_score < self.config.iteration_threshold:\n",
+          "excerpt_digest": "sha256:e0cc812d4b8f1a5db19ec5f57a530e640c329bb0b428f9c8de3ae9b5e1ef2e5d",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:207:207",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 207,
+          "line_end": 207,
+          "exact_excerpt": "        doc_scores = np.array([pagerank_scores[idx] for idx in self.passage_node_indices])\n",
+          "excerpt_digest": "sha256:c4e93e43a4b8d896b82a446104ea3fd67833b828569ee32c5915866a302223ea",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:113:113",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 113,
+          "line_end": 113,
+          "exact_excerpt": "                sorted_passage_hash_ids,sorted_passage_scores = self.graph_search_with_seed_entities(question,question_embedding,seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores)\n",
+          "excerpt_digest": "sha256:ccc4266b06508f763f6eb8d874ec671c417c4cd7db195907391f00313d695b44",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:234:235",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 234,
+          "line_end": 235,
+          "exact_excerpt": "                if not sentence_hash_ids:\n                    continue\n",
+          "excerpt_digest": "sha256:e6c66b37ece2d5e2d24a703e2d5b99131fc2e494fd1e22c65ff663dc47156806",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:504:504",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 504,
+          "line_end": 504,
+          "exact_excerpt": "            passage_score = self.config.passage_ratio * dpr_passage_score + math.log(1 + total_entity_bonus)\n",
+          "excerpt_digest": "sha256:d10d0c1d671e0534054ea9f2ff8ba88271c09e33c152598d6433a40e17d0ce4f",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31"
+          ],
+          "equation_ids": [
+            "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:192:192",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 192,
+          "line_end": 192,
+          "exact_excerpt": "        node_weights = entity_weights + passage_weights\n",
+          "excerpt_digest": "sha256:9bfd7b3f0ccceda63dab0ebe2164ce0124a7a04e0cfebd3138c4ebb9132c17ae",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+          ],
+          "equation_ids": [
+            "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:512:512",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 512,
+          "line_end": 512,
+          "exact_excerpt": "            passage_weights[passage_node_idx] = passage_score * self.config.passage_node_weight\n",
+          "excerpt_digest": "sha256:198097b1c074186ccc74f4c9712f16f3f27a482df3fb8cf6528020bc8416baac",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e"
+          ],
+          "equation_ids": [
+            "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:225:225",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b9da9fa9cfd8f215",
+          "line_start": 225,
+          "line_end": 225,
+          "exact_excerpt": "        used_sentence_hash_ids = set()\n",
+          "excerpt_digest": "sha256:9aa95af87cc24fa3c561c6847e14e6b8ec58f54dc21b6f714158eb42a7a83ab1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:501:501",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:97b433ccde9bd4d6",
+          "line_start": 501,
+          "line_end": 501,
+          "exact_excerpt": "                    entity_bonus = entity_score * math.log(1 + entity_occurrences) / denom\n",
+          "excerpt_digest": "sha256:b9c6d925250f759eb5239e734a7e1fb5a851ade3a990fc71e5deac9d46be4abf",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+          ],
+          "equation_ids": [
+            "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:199:199",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 199,
+          "line_end": 199,
+          "exact_excerpt": "            vertices=range(len(self.node_name_to_vertex_idx)),\n",
+          "excerpt_digest": "sha256:39d5946d4017b6dacc56f0b1dd37551bd84a7033093a49ca761c99be00c16256",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:212:212",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "            self.vertex_idx_to_node_name[self.passage_node_indices[i]] \n",
+          "excerpt_digest": "sha256:f3f781f52d7e988ed5b5fbc9dcfae2bd689f24468e549e63f7b13f4be402a2b9",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:193:193",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 193,
+          "line_end": 193,
+          "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+          "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:92:92",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 92,
+          "line_end": 92,
+          "exact_excerpt": "        self.vertex_idx_to_node_name = {v.index: v[\"name\"] for v in self.graph.vs if \"name\" in v.attributes()}\n",
+          "excerpt_digest": "sha256:796e2cbf869444bdc6da6cb98559a5c2ea7f3d7bcecc61c6e82000e1ab0c8797",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:100:100",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 100,
+          "line_end": 100,
+          "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:627:628",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:05f6f680790f8d4e",
+          "line_start": 627,
+          "line_end": 628,
+          "exact_excerpt": "                if node_hash_id == neighbor_hash_id:\n                    continue\n",
+          "excerpt_digest": "sha256:568d65776cb551a9f26e12fecb4cca322e53cf2b6a86deba9b6fde47b8de35ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:629:629",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:05f6f680790f8d4e",
+          "line_start": 629,
+          "line_end": 629,
+          "exact_excerpt": "                edges.append((node_hash_id, neighbor_hash_id))\n",
+          "excerpt_digest": "sha256:7d5b014aafbc0037ff78121d29e05d5d5d1e14974aae75436e8fcf9b441d916e",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:111:111",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 111,
+          "line_end": 111,
+          "exact_excerpt": "            seed_entity_indices,seed_entities,seed_entity_hash_ids,seed_entity_scores = self.get_seed_entities(question)\n",
+          "excerpt_digest": "sha256:dbcb262f99f0886eec87dcf4da77cc3a51b73632b59c056732826f5265c6fdd4",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:118:118",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "                sorted_passage_indices,sorted_passage_scores = self.dense_passage_retrieval(question_embedding)\n",
+          "excerpt_digest": "sha256:a111100b93baa951bfaeb68e9055004efae780747ea9c1f3b38ac4c9685b06c7",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-1f936373429e5100",
+          "span_id": "span:src/LinearRAG.py:101:101",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 101,
+          "line_end": 101,
+          "exact_excerpt": "            s2e_nnz = self.sentence_to_entity_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b6c4c63a1343603eeebe9b2cdf126677bd38e7d89103b6843d7e4015d1e539de",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "Tri-Graph",
+        "PageRank",
+        "entities",
+        "passages",
+        "sentence",
+        "occurrence",
+        "relationships",
+        "relation",
+        "similarity",
+        "contextual",
+        "relevance",
+        "Iteratively",
+        "propagate",
+        "activation",
+        "subgraph",
+        "aggregating"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:0705a5791cede58520f6c007468cf8b38eca3d9acb3827e21ef7b5fe670f793d",
+      "schema_failures": [],
+      "content_digest": "sha256:fd66bf8c20ddd9e7a256df4559a21d628317b9e85fff57a8b06768864efa74a8"
+    },
+    {
+      "facet_id": "facet-36188cb856f44d0d",
+      "alignment_id": "alignment:facet-36188cb856f44d0d",
+      "clause_id": "clause:O-STAGE-01-9c8dfe22:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The formula_goal describes offline graph construction (splitting passages into sentences, extracting entities with spaCy, creating sparse contain and mention adjacency matrices). The evidence shows the sparse matrix creation step (evidence 0, 1) but does not show sentence splitting, spaCy entity extraction, or the broader graph construction pipeline. No formula/equation is present in the evidence that corresponds to the described graph construction process. The formula_expectation is 'required' but no equation_atoms are present in any evidence item that would support a formula for graph construction."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "spaCy",
+        "Construction",
+        "splitting",
+        "passages",
+        "sentences",
+        "extracting",
+        "entities",
+        "creating",
+        "sentence",
+        "adjacency",
+        "matrices",
+        "Offline",
+        "Graph",
+        "Build",
+        "Tri",
+        "corpus"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:1ac7b2ac17fb999637b4865448ddd79a498c38ae9599eea9f4e35cd33138f54f"
+    },
+    {
+      "facet_id": "facet-dfd9e7cedfe705e0",
+      "alignment_id": "alignment:facet-dfd9e7cedfe705e0",
+      "clause_id": "clause:O-STAGE-02-93c16851:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence supports iterative propagation through the sentence-entity subgraph (evidence 1), threshold-based pruning (evidence 0, 17), and top-k sentence selection (evidence 2, 15), but does not directly evidence the initialization step from matched seed entities as part of the propagation loop itself, nor does it evidence the discovery of 'hidden bridging entities' as a distinct outcome. The vectorized variant (evidence 14-18) shows a parallel implementation but the facet describes the general mechanism without specifying which variant. The core propagation and pruning are well-supported; the initialization and 'hidden bridging' framing are not directly evidenced in the supplied spans."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Activation",
+        "Semantic",
+        "Bridging",
+        "activate",
+        "relevant",
+        "entities",
+        "initializing",
+        "computing",
+        "sentence",
+        "similarities",
+        "iteratively",
+        "propagating",
+        "subgraph",
+        "discover",
+        "Entity",
+        "Local"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:ce3d217e017348c7295f6ccdc922f29c897d0e10d146be049aedc3e235a98ae1"
+    },
+    {
+      "facet_id": "facet-aee51cb1cb5c563f",
+      "alignment_id": "alignment:facet-aee51cb1cb5c563f",
+      "clause_id": "clause:O-STAGE-03-8dda66b9:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet claims 'activated entities as seeds' and 'passage-entity subgraph' and 'hybrid score' initialization. Evidence supports personalized PageRank with reset_prob derived from combined entity+passage weights (evidence 1, 5, 9), but does not confirm a dedicated 'passage-entity subgraph' (the graph appears to be the full graph with all vertices), nor does it explicitly show 'activated entities' as distinct seeds separate from passage nodes. The 'hybrid score' is partially supported by the combination of entity_weights and passage_weights (evidence 5), but the subgraph restriction is not evidenced."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PageRank",
+        "Retrieval",
+        "Importance",
+        "Aggregation",
+        "activated",
+        "entities",
+        "personalized",
+        "subgraph",
+        "initializing",
+        "globally",
+        "passages",
+        "Passage",
+        "Global",
+        "seeds",
+        "entity",
+        "nodes"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:e80c1e9eba21d6bd54c29efc3c5bcd15df1a2b5dca25f284f325308e5c92d981"
+    },
+    {
+      "facet_id": "facet-751466939a6d86e8",
+      "alignment_id": "alignment:facet-751466939a6d86e8",
+      "clause_id": "clause:O-COMPONENT-01-4e554ef0:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:100:100",
+            "span:src/LinearRAG.py:193:193",
+            "span:src/LinearRAG.py:22:22",
+            "span:src/LinearRAG.py:561:564",
+            "span:src/LinearRAG.py:566:566",
+            "span:src/LinearRAG.py:92:92"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:561:564",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:eb8aac3092d3f167",
+              "line_start": 561,
+              "line_end": 564,
+              "exact_excerpt": "        if len(new_passage_hash_ids) > 0:\n            new_hash_id_to_passage = {k : hash_id_to_passage[k] for k in new_passage_hash_ids}\n            new_passage_hash_id_to_entities,new_sentence_to_entities = self.spacy_ner.batch_ner(new_hash_id_to_passage, self.config.max_workers)\n            self.merge_ner_results(existing_passage_hash_id_to_entities, existing_sentence_to_entities, new_passage_hash_id_to_entities, new_sentence_to_entities)\n",
+              "excerpt_digest": "sha256:26a5eac16231ad3d2244f34d021a8fbd3b0341f3743fdf0ecfcf4b0a08f5ac54",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:566:566",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:eb8aac3092d3f167",
+              "line_start": 566,
+              "line_end": 566,
+              "exact_excerpt": "        entity_nodes, sentence_nodes,passage_hash_id_to_entities,self.entity_to_sentence,self.sentence_to_entity = self.extract_nodes_and_edges(existing_passage_hash_id_to_entities, existing_sentence_to_entities)\n",
+              "excerpt_digest": "sha256:b4565fe6693bbd1f5182309a91f9dd7854d7fa819597d41f5f7ce95190a668f1",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:193:193",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:0310037f50fb51c0",
+              "line_start": 193,
+              "line_end": 193,
+              "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+              "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:92:92",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 92,
+              "line_end": 92,
+              "exact_excerpt": "        self.vertex_idx_to_node_name = {v.index: v[\"name\"] for v in self.graph.vs if \"name\" in v.attributes()}\n",
+              "excerpt_digest": "sha256:796e2cbf869444bdc6da6cb98559a5c2ea7f3d7bcecc61c6e82000e1ab0c8797",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:100:100",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:b6756a18e320d0fe",
+              "line_start": 100,
+              "line_end": 100,
+              "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+              "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-751466939a6d86e8",
+              "span_id": "span:src/LinearRAG.py:22:22",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:742d89a92faf717a",
+              "line_start": 22,
+              "line_end": 22,
+              "exact_excerpt": "        retrieval_method = \"Vectorized Matrix-based\" if self.config.use_vectorized_retrieval else \"BFS Iteration\"\n",
+              "excerpt_digest": "sha256:5b1b2eaba39cab85337ae9ddffd47a10d2b72f2f591910bbea65e7668b2bd554",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:22:22",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:561:564",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 561,
+          "line_end": 564,
+          "exact_excerpt": "        if len(new_passage_hash_ids) > 0:\n            new_hash_id_to_passage = {k : hash_id_to_passage[k] for k in new_passage_hash_ids}\n            new_passage_hash_id_to_entities,new_sentence_to_entities = self.spacy_ner.batch_ner(new_hash_id_to_passage, self.config.max_workers)\n            self.merge_ner_results(existing_passage_hash_id_to_entities, existing_sentence_to_entities, new_passage_hash_id_to_entities, new_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:26a5eac16231ad3d2244f34d021a8fbd3b0341f3743fdf0ecfcf4b0a08f5ac54",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:566:566",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:eb8aac3092d3f167",
+          "line_start": 566,
+          "line_end": 566,
+          "exact_excerpt": "        entity_nodes, sentence_nodes,passage_hash_id_to_entities,self.entity_to_sentence,self.sentence_to_entity = self.extract_nodes_and_edges(existing_passage_hash_id_to_entities, existing_sentence_to_entities)\n",
+          "excerpt_digest": "sha256:b4565fe6693bbd1f5182309a91f9dd7854d7fa819597d41f5f7ce95190a668f1",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:193:193",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:0310037f50fb51c0",
+          "line_start": 193,
+          "line_end": 193,
+          "exact_excerpt": "        ppr_sorted_passage_indices,ppr_sorted_passage_scores = self.run_ppr(node_weights)\n",
+          "excerpt_digest": "sha256:a7695f6697f90dd8ade146c0f7a27302ff1a6f0edc72dd3b7b3518e929639534",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:92:92",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 92,
+          "line_end": 92,
+          "exact_excerpt": "        self.vertex_idx_to_node_name = {v.index: v[\"name\"] for v in self.graph.vs if \"name\" in v.attributes()}\n",
+          "excerpt_digest": "sha256:796e2cbf869444bdc6da6cb98559a5c2ea7f3d7bcecc61c6e82000e1ab0c8797",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:100:100",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:b6756a18e320d0fe",
+          "line_start": 100,
+          "line_end": 100,
+          "exact_excerpt": "            e2s_nnz = self.entity_to_sentence_sparse._nnz()\n",
+          "excerpt_digest": "sha256:b17285512aa45ab945d6be5ed447def4a540cffcbc0972183b445b7ae1ff8524",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-751466939a6d86e8",
+          "span_id": "span:src/LinearRAG.py:22:22",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:742d89a92faf717a",
+          "line_start": 22,
+          "line_end": 22,
+          "exact_excerpt": "        retrieval_method = \"Vectorized Matrix-based\" if self.config.use_vectorized_retrieval else \"BFS Iteration\"\n",
+          "excerpt_digest": "sha256:5b1b2eaba39cab85337ae9ddffd47a10d2b72f2f591910bbea65e7668b2bd554",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "retrieval-augmented",
+        "generation",
+        "efficiently",
+        "multi-hop",
+        "large-scale",
+        "unstructured",
+        "eliminating",
+        "reliance",
+        "error-prone",
+        "relation",
+        "extraction",
+        "entity-based",
+        "indexing",
+        "two-stage",
+        "retrieval",
+        "Develop"
+      ],
+      "rationale": "Deterministic local evidence fallback after owner unavailability.",
+      "evidence_digest": "sha256:0322b64841a275c14ce1c04ea182341a5156fb36c4de065f89552170474b9876",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:b2b3615218f561c7a21a1dc6279add260665c6bdb7b7b9fa29e3b40baa29a44d"
+    },
+    {
+      "facet_id": "facet-37ac47cd0b3c324b",
+      "alignment_id": "alignment:facet-37ac47cd0b3c324b",
+      "clause_id": "clause:O-COMPONENT-01-bd3b9454:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The claim describes a 'Tri-Graph' as a hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency that anchors the entire retrieval pipeline. The supplied evidence shows individual code operations (initializing sets, computing PPR scores, calling sparse matrix methods, branching on config flags, returning results) but does not contain any evidence of a hierarchical graph structure with entity/sentence/passage node layers, sparse contain/message adjacency matrices, or a 'Tri-Graph' concept. The evidence references `self.graph` (a single graph object) and sparse matrices (`entity_to_sentence_sparse`, `sentence_to_entity_sparse`) but does not establish a hierarchical multi-layer graph with the described topology or that it 'anchors the entire retrieval'. "
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set describes a hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency. The evidence shows flat graph operations (personalized PPR on a single graph, sparse matrix sparsity logging) but not a multi-level hierarchical structure with the claimed topology."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Tri-Graph",
+        "Hierarchical",
+        "sentence",
+        "adjacency",
+        "retrieval",
+        "pipeline",
+        "graph",
+        "entity",
+        "passage",
+        "nodes",
+        "sparse",
+        "contain",
+        "message",
+        "anchors",
+        "entire"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:b5fe6acfd9fcc009d4d0f2730040623cfcd763e1f0d9c213fc2e2517ff906c85"
+    },
+    {
+      "facet_id": "facet-2463c74d9fdec304",
+      "alignment_id": "alignment:facet-2463c74d9fdec304",
+      "clause_id": "clause:O-COMPONENT-02-8058a7bc:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "NER",
+        "spaCy",
+        "Lightweight",
+        "extraction",
+        "building",
+        "named",
+        "entity",
+        "offline",
+        "graph",
+        "online",
+        "query"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:5ceef13a747174a68cbdf32e5adddbb4aa3122ba99ae3c545027a24de06ead5e"
+    },
+    {
+      "facet_id": "facet-49c35a32b3156393",
+      "alignment_id": "alignment:facet-49c35a32b3156393",
+      "clause_id": "clause:O-COMPONENT-03-0c4d02ed:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot bind any claim, fact, span, equation, or exact excerpt to this field."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Activation",
+        "Semantic",
+        "Bridging",
+        "Iterative",
+        "propagation",
+        "relevance",
+        "sentence",
+        "subgraph",
+        "similarity",
+        "identifies",
+        "intermediate",
+        "entities",
+        "connections",
+        "Entity",
+        "based",
+        "query"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:2538cce9d344ac57460add942de482b35742d3896544972d6145bfcd3061514a"
+    },
+    {
+      "facet_id": "facet-397617ae0c814f4c",
+      "alignment_id": "alignment:facet-397617ae0c814f4c",
+      "clause_id": "clause:O-COMPONENT-04-4f4f1da6:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence covers passage score computation (evidence 0), passage weight computation (evidence 1), and a NaN/negative-value mask in run_ppr (evidence 2). None of these evidence items demonstrate threshold-based filtering that retains only strongly relevant entities during propagation. The mask in evidence 2 (np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)) is a validity guard, not a relevance-threshold pruning mechanism. No evidence supports the claimed operation of dynamic pruning preventing combinatorial expansion and noise."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Threshold",
+        "filtering",
+        "strongly",
+        "relevant",
+        "entities",
+        "propagation",
+        "preventing",
+        "combinatorial",
+        "expansion",
+        "Dynamic",
+        "Pruning",
+        "based",
+        "retains",
+        "only",
+        "during",
+        "noise"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:0703ab9ebb56dcb17137a6688b921068aaea3e3dc857eba3209545138923fb62"
+    },
+    {
+      "facet_id": "facet-11f57730a8077780",
+      "alignment_id": "alignment:facet-11f57730a8077780",
+      "clause_id": "clause:O-COMPONENT-05-29ba03a1:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms a method named run_ppr is called with node_weights and returns sorted passage indices and scores (evidence 6), and that it operates over vertices derived from node_name_to_vertex_idx (evidence 5). However, no evidence shows the actual PPR algorithm implementation (e.g., iterative power method, damping factor, or personalized vector construction), so the specific mechanism of 'propagating influence from activated entities' is not directly demonstrated in the supplied evidence. The naming and I/O are consistent with PPR but the internal mechanism is not evidenced here."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PageRank",
+        "Personalized",
+        "importance",
+        "aggregation",
+        "subgraph",
+        "passages",
+        "propagating",
+        "influence",
+        "activated",
+        "entities",
+        "Global",
+        "passage",
+        "entity",
+        "ranks"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:cb4fe500fd4ed4d87d983d838b0713d39b5c99c3268b6dce5747eeb81c84a7fe"
+    },
+    {
+      "facet_id": "facet-6c02c195374453b1",
+      "alignment_id": "alignment:facet-6c02c195374453b1",
+      "clause_id": "clause:O-COMPONENT-06-bf20ec9b:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence supports combining direct query-passage similarity (dpr_passage_score) with entity-based statistics (total_entity_bonus derived from entity_score * log(1 + entity_occurrences) / denom) to compute passage_score, which is then scaled by passage_node_weight to produce passage_weights. However, the claim mentions 'level' as an entity-based statistic, but no evidence in the provided set references a 'level' component. The combination is confirmed via evidence 0 (passage_score = passage_ratio * dpr_passage_score + log(1 + total_entity_bonus)) and evidence 4 (entity_bonus = entity_score * log(1 + entity_occurrences) / denom), and evidence 3 shows passage_weights[passage_node_idx] = passage_score * passage_node_weight. The 'level' component is not supported by any provided evidence. P"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PPR",
+        "Initialization",
+        "Combines",
+        "similarity",
+        "statistics",
+        "occurrence",
+        "Hybrid",
+        "Passage",
+        "direct",
+        "query",
+        "entity",
+        "based",
+        "level",
+        "set",
+        "initial",
+        "scores"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:90c15674243aff33e57d1e2485960668f4dacbe64ee352cb05577efae29ec2b2"
+    },
+    {
+      "facet_id": "facet-9218cef3b4752e6d",
+      "alignment_id": "alignment:facet-9218cef3b4752e6d",
+      "clause_id": "clause:O-ORGANIZATION-01-4ee8e0bf:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate the claim about revisiting GraphRAG shortcomings from relation extraction errors."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "GraphRAG",
+        "Motivation",
+        "shortcomings",
+        "relation",
+        "extraction",
+        "revisit",
+        "errors"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:cafa57a82f3b970fb6e450e90a7d5e8b3e7a4f9769b88a5d5031e8802f79581c"
+    },
+    {
+      "facet_id": "facet-44d3952a34b9c61b",
+      "alignment_id": "alignment:facet-44d3952a34b9c61b",
+      "clause_id": "clause:O-ORGANIZATION-02-1977b399:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify LinearRAG Tri-Graph concept or two-stage retrieval philosophy against any repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "LinearRAG",
+        "overview",
+        "retrieval",
+        "philosophy",
+        "Tri",
+        "Graph",
+        "concept",
+        "two",
+        "stage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:406a9fc52a62013693c0f168a1ee759e4bce8d65a22d5db2db5b8299054bef7a"
+    },
+    {
+      "facet_id": "facet-8ce6e8dabb55bf84",
+      "alignment_id": "alignment:facet-8ce6e8dabb55bf84",
+      "clause_id": "clause:O-ORGANIZATION-03-157f229e:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The formula_goal describes offline tri-graph construction with entities, sentences, passages, and contain/message adjacency matrices. The supplied evidence covers runtime operations (PPR computation, dense retrieval, seed entity extraction, sparse matrix nnz queries) but contains no evidence of graph construction, adjacency matrix building, or offline pipeline setup. No evidence index supports the formula-level goal of constructing the tri-graph structure itself."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "construction",
+        "entities",
+        "sentences",
+        "passages",
+        "adjacency",
+        "matrices",
+        "Offline",
+        "Tri",
+        "Graph",
+        "contain",
+        "message"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:4628c91db50e0cc6d4ddda2088de232b8affe40d77971ae4dd98b0d9ec72637f"
+    },
+    {
+      "facet_id": "facet-0110bf36238d22ed",
+      "alignment_id": "alignment:facet-0110bf36238d22ed",
+      "clause_id": "clause:O-ORGANIZATION-04-8fc65790:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:197:197"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-0110bf36238d22ed",
+              "span_id": "span:src/LinearRAG.py:197:197",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:8e5d796ba2b673e3",
+              "line_start": 197,
+              "line_end": 197,
+              "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+              "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+                "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-0110bf36238d22ed",
+          "span_id": "span:src/LinearRAG.py:197:197",
+          "path": "src/LinearRAG.py",
+          "symbol": "sym:8e5d796ba2b673e3",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        reset_prob = np.where(np.isnan(node_weights) | (node_weights < 0), 0, node_weights)\n",
+          "excerpt_digest": "sha256:fb9c98d56a040db5c540dfe06be8e401b55f82639af4617150870ee3c22c12ee",
+          "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+          "fact_ids": [
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "retrieval",
+        "relevant",
+        "activation",
+        "semantic",
+        "bridging",
+        "initialization",
+        "iterative",
+        "propagation",
+        "First",
+        "stage",
+        "entity",
+        "local",
+        "dynamic",
+        "pruning"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:db2f77895298dd97384f78f40a9ab30a92b9f5122fd26fcc82c2cfa19899a131",
+      "schema_failures": [],
+      "content_digest": "sha256:91ceccb62f3f022d12e23805d62a62039c7197d34d40111f804aafe7588e0bd5"
+    },
+    {
+      "facet_id": "facet-2962ffa6059952a7",
+      "alignment_id": "alignment:facet-2962ffa6059952a7",
+      "clause_id": "clause:O-ORGANIZATION-05-e0c123aa:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports hybrid passage initialization (entity_weights + passage_weights at evidence index 1) and personalized PageRank (run_ppr call at evidence index 6), but no evidence explicitly labels this as a 'second retrieval stage' or describes it as 'global importance aggregation'. The mechanism components are present but the framing as a distinct second stage and the 'global importance aggregation' characterization are not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PageRank",
+        "retrieval",
+        "importance",
+        "aggregation",
+        "initialization",
+        "personalized",
+        "Second",
+        "stage",
+        "passage",
+        "global",
+        "hybrid"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:ff7ec4a64c8fd956289daaeab13acee0ce4e173aff38fdfb242e490364e6ec00"
+    },
+    {
+      "facet_id": "facet-2d7d68d7654183c5",
+      "alignment_id": "alignment:facet-2d7d68d7654183c5",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-c0bb1e93:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate the claim 'Avoid explicit relation extraction entirely.' against repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "explicit",
+        "relation",
+        "extraction",
+        "entirely",
+        "Avoid"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:708d9224bf80765acf38d55e8f02797391d4b3133b904d7798b21d2787040577"
+    },
+    {
+      "facet_id": "facet-f53ce53973fd2859",
+      "alignment_id": "alignment:facet-f53ce53973fd2859",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-1a90a997:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "owner marked this semantic field unsupported"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "hierarchical",
+        "preserves",
+        "original",
+        "passages",
+        "sentences",
+        "alongside",
+        "entities",
+        "graph",
+        "text"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:74abdace6e1b45ad5555666c5f4988d41a1588163fab73e84e8bef52c4cd4159"
+    },
+    {
+      "facet_id": "facet-c94a090684d57a33",
+      "alignment_id": "alignment:facet-c94a090684d57a33",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-09c84504:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the decoupling of retrieval into a local entity-activation stage and a global passage-ranking stage against any repository artifact."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Decouple",
+        "retrieval",
+        "activation",
+        "local",
+        "entity",
+        "stage",
+        "global",
+        "passage",
+        "ranking"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:b9d507ff9dc32edba664024436ce2ffca012d26b176c394a22dd2b2148b0d172"
+    },
+    {
+      "facet_id": "facet-707cc9a20282c836",
+      "alignment_id": "alignment:facet-707cc9a20282c836",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence shows passage score computation (passage_ratio * dpr_passage_score + log(1 + total_entity_bonus)), passage weight application (passage_score * passage_node_weight), and a NaN/negative reset mask in run_ppr. None of these constitute dynamic pruning with a fixed relevance threshold during propagation. The reset_prob mask handles invalid values (NaN or negative), not a relevance threshold for pruning nodes during PPR propagation. No evidence supports the claimed mechanism of applying a fixed relevance threshold to prune during propagation."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "relevance",
+        "threshold",
+        "propagation",
+        "dynamic",
+        "pruning",
+        "fixed",
+        "during"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:42393da273f58f450eb42c50186eb0ad65b982af7958cb562e2707885311b456"
+    },
+    {
+      "facet_id": "facet-77eff1974af1d1d5",
+      "alignment_id": "alignment:facet-77eff1974af1d1d5",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-ffcf3556:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim against repository content."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PageRank",
+        "personalized",
+        "retrieval",
+        "Employ",
+        "passage",
+        "entity",
+        "graph"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:7cb6983ebf2f458ed09d2d9abcf4b5d3e696a703c4a0a59a3dbaa66d269057fe"
+    },
+    {
+      "facet_id": "facet-14e6716402039fea",
+      "alignment_id": "alignment:facet-14e6716402039fea",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-0f48dc22:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence 0 shows passage_score computed as a hybrid of direct similarity (dpr_passage_score) and entity-based evidence (total_entity_bonus) in calculate_passage_scores, and evidence 1 shows node_weights combining entity_weights and passage_weights in graph_search_with_seed_entities. However, no evidence directly shows these scores being used to initialize PPR scores; the PPR call (evidence 6) passes node_weights to run_ppr but the initialization semantics are not explicitly stated in the supplied evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "PPR",
+        "Initialize",
+        "similarity",
+        "passage",
+        "scores",
+        "hybrid",
+        "direct",
+        "entity",
+        "based"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:00b028fc645b23bde7d65bf6a7479c9d11a7cb3da77bc9e1f8c8c1c4a5493626"
+    }
+  ]
+}

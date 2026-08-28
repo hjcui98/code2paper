@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "prose_copied_from_paper": false,
+  "project_id": "generic_stage_routing",
+  "organization_headings": [
+    "Motivation: revisit graph retrieval shortcomings",
+    "Overview: hierarchical graph and two-stage retrieval philosophy",
+    "Offline construction of corpus units and adjacency",
+    "First retrieval: local activation via semantic bridging",
+    "Second retrieval: global rank aggregation"
+  ],
+  "stage_obligation_id": "O-STAGE-02",
+  "stage_claim_text": "frontier expansion multiplies parent score by contextual similarity then prunes scores below a threshold"
+}

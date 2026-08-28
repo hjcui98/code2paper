@@ -21,7 +21,12 @@ from code2paper.core.schemas import RawEvidencePack, SourceType
 
 
 SemanticVerifier = Callable[[dict[str, Any]], Mapping[str, Any] | None]
-_STRONG_WORDS = {"guarantee", "guarantees", "ensure", "ensures", "cause", "causes", "outperform", "outperforms"}
+_STRONG_WORDS = {
+    "not", "never", "without", "always",
+    "guarantee", "guarantees", "ensure", "ensures", "cause", "causes",
+    "enable", "enables", "outperform", "outperforms", "improve", "improves",
+    "faster", "better", "robust", "novel",
+}
 
 # A comparison is an exact ``identifier operator value`` unit.  The
 # identifier and the value carry word boundaries so an authorized
@@ -53,6 +58,20 @@ _COMPARISON_SHAPE = re.compile(
     r"(?![A-Za-z0-9_])"
 )
 
+_FORMULA_IDENTIFIER = (
+    r"[A-Za-z_][A-Za-z0-9_]*"
+    r"(?:\.[A-Za-z_][A-Za-z0-9_]*|\[[^\[\]]*\]|\([^)]*\))*"
+)
+_FORMULA_EXPRESSION = re.compile(
+    r"\$(?P<math>[^$]+)\$|"
+    r"(?<![A-Za-z0-9_])(?P<comparison>"
+    + _FORMULA_IDENTIFIER
+    + r"\s*==\s*[^,.;]+)|"
+    r"(?<![A-Za-z0-9_])(?P<assignment>"
+    + _FORMULA_IDENTIFIER
+    + r"\s+=\s+(?![\[\"'])[^,.;]+)"
+)
+
 
 def _comparison_units(text: str) -> set[tuple[str, str, str]]:
     """Parse every comparison expression in ``text`` into exact normalized
@@ -80,6 +99,9 @@ def validate_text_evidence(
     semantic_verifier: SemanticVerifier | None = None,
     max_semantic_verifier_calls: int = 0,
     require_semantic_verifier: bool | None = None,
+    proposition_claim_ids: Mapping[str, list[str] | tuple[str, ...]] | None = None,
+    candidate_only_proposition_ids: set[str] | None = None,
+    evidence_entailed_proposition_ids: set[str] | None = None,
 ) -> TextEvidenceValidationReport:
     evidence_by_id = {item.evidence_id: item for item in raw_evidence.evidence_items}
     v2_by_id = {
@@ -123,8 +145,24 @@ def validate_text_evidence(
     unit_text_by_id = {unit.unit_id: unit.text for unit in final_claims.units}
     verdicts: list[TextClaimEvidenceVerdict] = []
     verifier_calls = 0
+    proposition_claim_ids = proposition_claim_ids or {}
+    candidate_only_proposition_ids = candidate_only_proposition_ids or set()
     for claim in final_claims.atomic_claims:
-        matches = [projection_by_id[item] for item in claim.candidate_projection_claim_ids if item in projection_by_id]
+        proposition_backed = bool(
+            claim.candidate_method_proposition_ids
+            if evidence_entailed_proposition_ids is None
+            else set(claim.candidate_method_proposition_ids)
+            & evidence_entailed_proposition_ids
+        )
+        projection_ids = _dedupe([
+            *claim.candidate_projection_claim_ids,
+            *(
+                claim_id
+                for proposition_id in claim.candidate_method_proposition_ids
+                for claim_id in proposition_claim_ids.get(proposition_id, ())
+            ),
+        ])
+        matches = [projection_by_id[item] for item in projection_ids if item in projection_by_id]
         author_matches = [
             author_attested_by_id[item]
             for item in claim.candidate_author_attested_ids
@@ -135,6 +173,10 @@ def validate_text_evidence(
             for item in claim.candidate_narrative_ids
             if item in candidate_narrative_by_id
         ]
+        matched_candidate_propositions = sorted(
+            set(claim.candidate_method_proposition_ids)
+            & candidate_only_proposition_ids
+        )
         # Author-owned statements are a separate lane.  They may be emitted
         # as caveated prose only when the final fragment is a close match to
         # the validated callback/MethodEvidence wording; they never receive
@@ -144,6 +186,7 @@ def validate_text_evidence(
                 atomic_claim_id=claim.atomic_claim_id,
                 status="caveated",
                 matched_projection_claim_ids=[item.fragment_id for item in author_matches],
+                matched_method_proposition_ids=claim.candidate_method_proposition_ids,
                 supported_fragment=claim.text,
                 rationale="Author-attested fragment matched; not repository evidence.",
                 repair_action="",
@@ -158,6 +201,7 @@ def validate_text_evidence(
                 atomic_claim_id=claim.atomic_claim_id,
                 status="caveated",
                 matched_projection_claim_ids=point_ids,
+                matched_method_proposition_ids=claim.candidate_method_proposition_ids,
                 supported_fragment=claim.text,
                 rationale=(
                     "Typed candidate narrative matched with explicit author/"
@@ -166,8 +210,39 @@ def validate_text_evidence(
                 repair_action="",
             ))
             continue
+        if not matches and matched_candidate_propositions:
+            # The closed-set aligner has already checked semantic roles,
+            # immutable constraints, authority expansion and the visible
+            # epistemic caveat.  This author/partial proposition therefore
+            # authorizes candidate prose only; it supplies no repository IDs
+            # and can never enter the verified document.
+            verdicts.append(TextClaimEvidenceVerdict(
+                atomic_claim_id=claim.atomic_claim_id,
+                status="caveated",
+                matched_projection_claim_ids=[],
+                matched_method_proposition_ids=matched_candidate_propositions,
+                supported_fragment=claim.text,
+                rationale=(
+                    "Closed candidate-only Method proposition matched with "
+                    "its required caveat; not repository evidence."
+                ),
+                repair_action="",
+            ))
+            continue
+        licensed_matches = [
+            item for item in projection.projected_claims
+            if str(getattr(item, "inference_level", "E0") or "E0") in {"E2", "E3"}
+            and list(getattr(item, "parent_claim_ids", ()) or ())
+            and _projection_overlap_sufficient(claim.text, [item])
+        ]
         failures: list[str] = []
-        if not matches:
+        candidate_licensed = False
+        if licensed_matches and (
+            not matches or not _projection_overlap_sufficient(claim.text, matches)
+        ):
+            matches = licensed_matches
+            candidate_licensed = True
+        elif not matches:
             failures.append("no_semantically_matching_projected_claim")
         direct_ids = _dedupe([evidence_id for item in matches for evidence_id in item.direct_evidence_ids])
         relation_ids = _dedupe([evidence_id for item in matches for evidence_id in item.relation_evidence_ids])
@@ -181,7 +256,7 @@ def validate_text_evidence(
             item for item in direct_ids
             if item not in (known_exact if (evidence_snapshot_v2 is not None or evidence_packets_v3 is not None) else evidence_by_id)
         ]
-        if missing_ids or not direct_ids:
+        if missing_ids or (not direct_ids and not candidate_licensed):
             failures.append("direct_evidence_missing")
         if evidence_snapshot_v2 is not None or evidence_packets_v3 is not None:
             evidence_text = "\n".join(
@@ -202,16 +277,30 @@ def validate_text_evidence(
             # ``revise_authoring_wording``); only a fragment whose matched
             # evidence genuinely cannot support it routes to the packet
             # binding owner.
-            if not _projection_overlap_sufficient(claim.text, matches):
+            if (
+                not candidate_licensed
+                and not proposition_backed
+                and not _projection_overlap_sufficient(claim.text, matches)
+            ):
                 failures.append("no_semantically_matching_projected_claim")
-            if evidence_text and not _evidence_related(claim.text, evidence_text):
+            if (
+                not candidate_licensed
+                and not proposition_backed
+                and evidence_text
+                and not _evidence_related(claim.text, evidence_text)
+            ):
                 failures.append("direct_evidence_semantically_unrelated")
         required_qualifiers = _dedupe([qualifier for item in matches for qualifier in item.required_qualifiers])
+        if _comparison_polarity_flipped(claim.text, matches):
+            failures.append("comparison_polarity_flipped")
         if required_qualifiers and not _qualifier_preserved(
             unit_text_by_id.get(claim.unit_id, claim.text), required_qualifiers
         ):
             failures.append("required_qualifier_missing")
-        if _wording_strength_exceeded(claim.text, matches):
+        if (
+            _wording_strength_exceeded(claim.text, matches)
+            and not _licensed_effect_match(claim.text, matches)
+        ):
             failures.append("allowed_wording_boundary_exceeded")
         # Authorized projection fragments and wording boundaries carry the
         # exact code expressions (e.g. ``dim=1``, ``node_memories[torch...]``)
@@ -228,7 +317,9 @@ def validate_text_evidence(
         # excerpt slip through when no other failure fires.  Fail closed
         # here so the gap is visible and must be repaired at the evidence
         # layer.
-        _evidence_excerpt_empty = bool(direct_ids) and not evidence_text.strip()
+        _evidence_excerpt_empty = (
+            bool(direct_ids) and not evidence_text.strip() and not candidate_licensed
+        )
         if _evidence_excerpt_empty:
             failures.append("direct_evidence_excerpt_empty")
         if (
@@ -284,12 +375,16 @@ def validate_text_evidence(
             )
 
         partial = any(item.support_status == "partial" for item in matches)
-        status = "unsupported" if failures else ("caveated" if partial else "supported")
+        if candidate_licensed and not failures:
+            status = "caveated"
+        else:
+            status = "unsupported" if failures else ("caveated" if partial else "supported")
         verdicts.append(
             TextClaimEvidenceVerdict(
                 atomic_claim_id=claim.atomic_claim_id,
                 status=status,
                 matched_projection_claim_ids=[item.claim_id for item in matches],
+                matched_method_proposition_ids=claim.candidate_method_proposition_ids,
                 direct_evidence_ids=direct_ids,
                 relation_evidence_ids=relation_ids,
                 supported_fragment=(model_supported_fragment or claim.text) if not failures else model_supported_fragment,
@@ -321,9 +416,77 @@ def validate_text_evidence(
         unsupported_claims=unsupported,
         unverified_claims=unverified,
         semantic_verifier_calls=verifier_calls,
+        verification_mode="semantic" if verifier_calls > 0 else "lexical_only",
         verdicts=verdicts,
         recommended_actions=actions,
     )
+
+
+def _drop_heading_only_verified_sections(text: str) -> str:
+    """Omit sections that contain only a heading after sentence filtering."""
+
+    blocks = re.split(r"(?m)(?=^#{1,6}\s+)", text)
+    kept: list[str] = []
+    for block in blocks:
+        stripped = block.strip()
+        if not stripped:
+            continue
+        lines = [line for line in stripped.splitlines() if line.strip()]
+        if lines and lines[0].lstrip().startswith("#") and len(lines) == 1:
+            continue
+        kept.append(stripped)
+    return "\n\n".join(kept)
+
+
+def _normalize_scaffolding_heading(text: str) -> str:
+    """Normalize a heading for exact comparison with the Architect's plan.
+
+    Strips markdown ``#`` markers and collapses inner whitespace so a
+    writer-copied heading matches its plan heading regardless of leading
+    hash count or spacing.
+    """
+
+    value = str(text or "").strip().lstrip("#").strip()
+    return " ".join(value.split()).casefold()
+
+
+def _unit_has_factual_payload(unit: Any) -> bool:
+    """Fail-closed scaffolding guard: does a non-factual unit carry facts?
+
+    A heading/discourse unit is claim-free scaffolding only when it is
+    structurally minimal.  Any of these makes it factual payload that must
+    be reverse-validated (and excluded from verified until supported):
+
+    - the extractor flagged high-risk markers (numbers, formulas,
+      causal/performance/complexity vocabulary) on the unit;
+    - the text carries epistemic markers (author-intent / unverified /
+      pending / review language) — such prose is caveated material at best;
+    - the text contains two or more sentence-final periods, i.e. the unit
+      is really a fused paragraph, not a heading;
+    - the unit is implausibly long for a heading (beyond a short label).
+    """
+
+    text = str(getattr(unit, "text", "") or "").strip()
+    if not text:
+        return False
+    if getattr(unit, "high_risk_markers", ()) or ():
+        return True
+    lowered = text.casefold()
+    if any(marker in lowered for marker in _EPISTEMIC_MARKERS):
+        return True
+    # Two or more terminal periods means the unit holds multiple sentences.
+    if len(re.findall(r"[.!?](?:\s|$)", text)) >= 2:
+        return True
+    return len(text.split()) > 14
+
+
+_EPISTEMIC_MARKERS = (
+    "author-intended", "author intended", "author-attested", "author attested",
+    "unverified", "not verified", "pending confirmation", "pending",
+    "our intended", "we aim", "remains intended", "intended design",
+    "requires confirmation", "not yet implemented", "to be confirmed",
+    "await", "awaiting",
+)
 
 
 def _verdict_is_repository_supported(
@@ -342,7 +505,9 @@ def _verdict_is_repository_supported(
     """
 
     if verdict.status == "supported":
-        return True
+        if not verdict.matched_projection_claim_ids:
+            return True
+        return any(str(item) in projection_claim_ids for item in verdict.matched_projection_claim_ids)
     if verdict.status != "caveated" or not include_partial:
         return False
     return any(
@@ -358,6 +523,7 @@ def build_repository_verified_text(
     validation_report: TextEvidenceValidationReport,
     projection: AuthoringInputProjection,
     include_partial: bool = True,
+    expected_headings: set[str] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Build the repository-verified document from a candidate text (G2).
 
@@ -377,7 +543,11 @@ def build_repository_verified_text(
     are never rewritten or invented.
     """
 
-    projection_claim_ids = {claim.claim_id for claim in projection.projected_claims}
+    projection_claim_ids = {
+        claim.claim_id
+        for claim in projection.projected_claims
+        if str(getattr(claim, "inference_level", "E0") or "E0") in {"E0", "E1", ""}
+    }
     verdict_by_id = {item.atomic_claim_id: item for item in validation_report.verdicts}
     claim_ids_by_unit: dict[str, list[str]] = {}
     for claim in final_claims.atomic_claims:
@@ -385,10 +555,33 @@ def build_repository_verified_text(
 
     keep_unit: dict[str, bool] = {}
     excluded_reasons: list[dict[str, Any]] = []
+    normalized_expected = {
+        _normalize_scaffolding_heading(str(heading))
+        for heading in (expected_headings or ())
+    }
     for unit in final_claims.units:
         if not unit.factual or unit.kind in {
             "heading", "discourse", "expository_bridge", "caption",
         }:
+            # Scaffolding exemption is fail-closed: a heading/discourse unit
+            # is kept only when it is the Architect's own heading or carries
+            # no factual payload.  A fused ``## HeadingBody...`` paragraph
+            # that escaped heading normalization must not ride into verified
+            # as "structure" — its sentences are factual content and need
+            # verdicts.
+            if _unit_has_factual_payload(unit) and not (
+                unit.kind == "heading"
+                and _normalize_scaffolding_heading(unit.text) in normalized_expected
+            ):
+                keep_unit[unit.unit_id] = False
+                excluded_reasons.append({
+                    "unit_id": unit.unit_id,
+                    "text": unit.text,
+                    "char_start": unit.char_start,
+                    "char_end": unit.char_end,
+                    "reason": "scaffolding_unit_with_factual_payload",
+                })
+                continue
             keep_unit[unit.unit_id] = True
             continue
         claim_ids = claim_ids_by_unit.get(unit.unit_id, [])
@@ -458,7 +651,9 @@ def build_repository_verified_text(
     parts.append(final_text[cursor:])
     verified_text = "".join(parts)
     # Rejoining on blank lines keeps markdown layout canonical.
-    verified_text = re.sub(r"\n{3,}", "\n\n", verified_text).strip()
+    verified_text = re.sub(r"\n{3,}", "\n\n", verified_text)
+    verified_text = re.sub(r"[ \t]{2,}", " ", verified_text)
+    verified_text = _drop_heading_only_verified_sections(verified_text).strip()
     excluded_unsupported = [
         item for item in excluded_reasons
         if not keep_unit.get(item["unit_id"], False)
@@ -551,7 +746,26 @@ def _projection_overlap_sufficient(text: str, matches: list[Any]) -> bool:
     if not projection_tokens:
         return False
     overlap = len(claim_tokens & projection_tokens)
-    return overlap / max(1, min(len(claim_tokens), len(projection_tokens))) >= 0.45
+    threshold = 0.20 if any(
+        str(getattr(item, "inference_level", "E0") or "E0") in {"E2", "E3"}
+        for item in matches
+    ) else 0.45
+    return overlap / max(1, min(len(claim_tokens), len(projection_tokens))) >= threshold
+
+
+def _licensed_effect_match(text: str, matches: list[Any]) -> bool:
+    return any(
+        str(getattr(item, "inference_level", "E0") or "E0") in {"E2", "E3"}
+        for item in matches
+    ) and _projection_overlap_sufficient(text, matches)
+
+
+def _comparison_polarity_flipped(text: str, matches: list[Any]) -> bool:
+    licensed = " ".join(str(item.supported_fragment) for item in matches).casefold()
+    if "exclud" not in licensed and "fails the threshold" not in licensed:
+        return False
+    folded = str(text or "").casefold()
+    return bool(re.search(r"(eligib|retain|keep|only if).{0,48}<\s", folded))
 
 
 def _evidence_related(text: str, evidence_text: str) -> bool:
@@ -580,7 +794,14 @@ def _qualifier_preserved(text: str, qualifiers: list[str]) -> bool:
 
 def _wording_strength_exceeded(text: str, matches: list[Any]) -> bool:
     text_words = _tokens(text) & _STRONG_WORDS
-    allowed_words = set().union(*(_tokens(item.allowed_wording_boundary) for item in matches)) if matches else set()
+    allowed_words = set().union(*(
+        _tokens(
+            str(item.supported_fragment)
+            + " "
+            + str(item.allowed_wording_boundary)
+        )
+        for item in matches
+    )) if matches else set()
     return bool(text_words - allowed_words)
 
 
@@ -666,8 +887,27 @@ def _formula_tokens_supported(
     # Use the same pattern as the risk marker: match ``==`` comparisons and
     # spaced ``=`` formulas, but NOT keyword arguments (``dim=1``) or code
     # patterns (``x = ["..."]``, ``x = "..."``).
-    formulas = re.findall(r"\$([^$]+)\$|([A-Za-z]\s*==\s*[^,.;]+|[A-Za-z]\s+=\s+(?![\[\"'])[^,.;]+)", text)
-    needed = {"".join(item).replace(" ", "") for item in formulas if "".join(item).strip()}
+    # Markdown code delimiters are presentation, not part of an authorized
+    # comparison/formula.  Remove them before exact expression extraction so
+    # a backticked qualifier does not become ``current_layer_num==0```.
+    formula_text = text.replace("`", "")
+    needed = set()
+    for match in _FORMULA_EXPRESSION.finditer(formula_text):
+        value = next(
+            value for value in match.groupdict().values() if value is not None
+        )
+        normalized = value.replace(" ", "")
+        # The value part of a comparison is greedy up to punctuation, so a
+        # compact parenthetical binding such as
+        # ``(`doc['chunk_id'] == query['chunk_id']`)`` leaves one trailing
+        # unbalanced closing paren in the extracted formula.  The required
+        # qualifier (the authority) never contains that paren; strip only
+        # trailing closers when they are unbalanced, so the parenthetical
+        # backtick form of a required qualifier still matches its frozen
+        # predicate instead of failing as ``formula_not_in_direct_evidence``.
+        if normalized.count(")") > normalized.count("("):
+            normalized = normalized.rstrip(")]}")
+        needed.add(normalized)
     # Formulas that appear inside authorized qualifiers or authorized
     # projection fragments are already validated by ``_qualifier_preserved``
     # or the projection itself; add them to the allowed source.

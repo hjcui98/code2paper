@@ -14,6 +14,7 @@ import json
 import os
 import uuid
 from pathlib import Path
+from typing import Any
 
 from code2paper.agentic.autonomous_method_agent import (
     MethodAgentRunResultV1,
@@ -265,6 +266,31 @@ def _restore_env(changed: dict[str, str | None]) -> None:
             os.environ[key] = previous
 
 
+def _load_concept_cards(path: str) -> Any | None:
+    """Load an optional Stage 2/3 MethodConceptCardSetV1 JSON artifact.
+
+    Returns ``None`` when the flag is empty (proposition lane); a missing or
+    malformed file is an integrity failure, not a silent fallback.
+    """
+    if not str(path or "").strip():
+        return None
+    from code2paper.agentic.method_concept_card_models import (
+        MethodConceptCardSetV1,
+    )
+
+    resolved = Path(path).expanduser().resolve()
+    if not resolved.is_file():
+        raise FileNotFoundError(f"concept cards artifact not found: {resolved}")
+    try:
+        return MethodConceptCardSetV1.model_validate_json(
+            resolved.read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise ValueError(
+            f"concept cards artifact invalid: {exc.__class__.__name__}:{str(exc)[:200]}"
+        ) from exc
+
+
 def _method_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="code2paper method-agent",
@@ -287,6 +313,27 @@ def _method_agent_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--llm-model", default="", help="LLM model override")
     run_parser.add_argument("--method-name", default="", help="Method name used by the Architect")
     run_parser.add_argument("--run-id", default="", help="Stable run identity")
+    run_parser.add_argument(
+        "--concept-cards",
+        default="",
+        help="Stage 2/3 MethodConceptCardSetV1 JSON; switches the plan and Writer to the concept lane",
+    )
+    run_parser.add_argument(
+        "--compile-concept-cards",
+        action="store_true",
+        help="Deprecated no-op: live planning uses deterministic argument briefs instead",
+    )
+    run_parser.add_argument(
+        "--compile-argument-briefs",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Compile method_argument_briefs_v1 during planning (default: enabled)",
+    )
+    run_parser.add_argument(
+        "--research-stage-checkpoint",
+        default="",
+        help="Resume after repository research from a trusted stage checkpoint.",
+    )
     return parser
 
 
@@ -345,6 +392,13 @@ def method_agent_main(argv: list[str] | None = None) -> int:
             max_research_turns=max(1, int(args.max_research_turns)),
             method_name=args.method_name,
             run_id=args.run_id,
+            research_stage_checkpoint=(
+                Path(args.research_stage_checkpoint).expanduser().resolve()
+                if args.research_stage_checkpoint else None
+            ),
+            concept_cards=_load_concept_cards(args.concept_cards),
+            compile_concept_cards=bool(args.compile_concept_cards),
+            compile_argument_briefs=bool(args.compile_argument_briefs),
         )
     except (FileNotFoundError, ValueError, RuntimeError, OSError) as exc:
         print(f"[code2paper method-agent] error={exc}")

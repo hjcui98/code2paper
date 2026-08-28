@@ -1,0 +1,1375 @@
+{
+  "schema_version": "1.0",
+  "alignments": [
+    {
+      "facet_id": "facet-9a1ed70668b9de25",
+      "alignment_id": "alignment:facet-9a1ed70668b9de25",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms the extraction and encoding pipeline (padding, stacking, reshaping, softmax routing, top-k selection, weighted reduction, dual-encoder architecture) but does not contain evidence for the continuous SSM redesign, Δt as a learnable monotonically increasing function of time gap, Ebbinghaus-inspired forgetting curve, diagonal A matrix with negative real-part eigenvalues, input-dependent B/C matrices with spectral norm constraints, or the MLP predictor for link prediction vs. single encoder for node classification. The formula_expectation is 'required' but no equation_atoms are present in the evidence to support the core SSM mechanism described in the goal."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "MLP",
+        "DyG-Mamba",
+        "first-hop",
+        "interaction",
+        "sequence",
+        "absolute",
+        "temporal",
+        "co-occurrence",
+        "encoding",
+        "continuous",
+        "redesigned",
+        "forgetting",
+        "timespan",
+        "selectively"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:811e0bb7fe19766ddca310e0aca465ddd6323f7fdcf7aff8a64ee43653c7688e"
+    },
+    {
+      "facet_id": "facet-e650301f08e6d4b3",
+      "alignment_id": "alignment:facet-e650301f08e6d4b3",
+      "clause_id": "clause:O-STAGE-01-06d7de36:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence shows concrete tensor operations (stacking, softmax normalization, top-k selection, weighted reduction, reshape) within compute_src_dst_node_temporal_embeddings, but does not demonstrate the full transformation from raw interaction sequences to a unified aligned feature representation capturing temporal and structural context. The operations are intermediate steps within a method, not the complete encoding pipeline described by the field text. No evidence shows the input being raw interaction sequences or the output being a unified aligned representation with temporal/structural context explicitly captured."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "encoding",
+        "Transform",
+        "interaction",
+        "sequences",
+        "representation",
+        "captures",
+        "temporal",
+        "structural",
+        "Dynamic",
+        "graph",
+        "raw",
+        "unified",
+        "aligned",
+        "feature",
+        "context"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:0d0d18d2791b5189f3c22753402044ecdb77c4ce4240aafb043676471f76da83"
+    },
+    {
+      "facet_id": "facet-e3de4791afd3b462",
+      "alignment_id": "alignment:facet-e3de4791afd3b462",
+      "clause_id": "clause:O-STAGE-02-e02cd0f2:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports that Δt is derived from the timespan (dts) via a linear projection (in_proj.weight @ rearrange(dts, ...)), confirming 'making Δt a function of the timespan'. However, no evidence in the supplied set addresses 'initializing A for stable decay' — the matrix A is not mentioned in any of the four evidence items. The formula_goal is a compound claim and only one component is supported by the available evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "Timespan-aware",
+        "forgetting",
+        "historical",
+        "proportionally",
+        "function",
+        "timespan",
+        "initializing",
+        "Let",
+        "forget",
+        "states",
+        "elapsed",
+        "time",
+        "making",
+        "stable"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:4fa7eabec94f28c408d2346f03e1b27791b6f2681a6c9320255ed64300d0e63c"
+    },
+    {
+      "facet_id": "facet-9a8892286042413e",
+      "alignment_id": "alignment:facet-9a8892286042413e",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "interface"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+            "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "bound_span_ids": [
+            "span:models/FreeDyG.py:330:330",
+            "span:models/FreeDyG.py:335:335",
+            "span:models/FreeDyG.py:337:337"
+          ],
+          "bound_equation_ids": [
+            "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+          ],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:337:337",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 337,
+              "line_end": 337,
+              "exact_excerpt": "        return hidden_states\n",
+              "excerpt_digest": "sha256:76194e99c5d939305fa5982eaca837232ce620ad9297df1ea1bad04bf8412b1c",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:335:335",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 335,
+              "line_end": 335,
+              "exact_excerpt": "        hidden_states = hidden_states + input_tensor\n",
+              "excerpt_digest": "sha256:d8b438b0fefb6e9b016191eb33309f739302d017f6a546ac90031a72dde653d2",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:330:330",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 330,
+              "line_end": 330,
+              "exact_excerpt": "        x=x*weight\n",
+              "excerpt_digest": "sha256:2c6d40f0436c223b2c518e5bf353aec1080170ee6d0210e57de83759f75363ff",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+      ],
+      "bound_span_ids": [
+        "span:models/FreeDyG.py:330:330",
+        "span:models/FreeDyG.py:337:337",
+        "span:models/FreeDyG.py:335:335"
+      ],
+      "bound_equation_ids": [
+        "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+      ],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-9a8892286042413e",
+          "span_id": "span:models/FreeDyG.py:337:337",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 337,
+          "line_end": 337,
+          "exact_excerpt": "        return hidden_states\n",
+          "excerpt_digest": "sha256:76194e99c5d939305fa5982eaca837232ce620ad9297df1ea1bad04bf8412b1c",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-9a8892286042413e",
+          "span_id": "span:models/FreeDyG.py:335:335",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 335,
+          "line_end": 335,
+          "exact_excerpt": "        hidden_states = hidden_states + input_tensor\n",
+          "excerpt_digest": "sha256:d8b438b0fefb6e9b016191eb33309f739302d017f6a546ac90031a72dde653d2",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+          ],
+          "equation_ids": [
+            "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        },
+        {
+          "facet_id": "facet-9a8892286042413e",
+          "span_id": "span:models/FreeDyG.py:330:330",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 330,
+          "line_end": 330,
+          "exact_excerpt": "        x=x*weight\n",
+          "excerpt_digest": "sha256:2c6d40f0436c223b2c518e5bf353aec1080170ee6d0210e57de83759f75363ff",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+          ],
+          "equation_ids": [
+            "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+          ],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "Robust",
+        "Enable",
+        "noise"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:0466ab3266b34ee6779d15d96e6f38d810ec2362d4976422c6d31eca686ee078",
+      "schema_failures": [],
+      "content_digest": "sha256:4f3d84dfba609d8775a23ccff15cb13eea20176aee4fdc31fe553fba5c446664"
+    },
+    {
+      "facet_id": "facet-85dd07572b8a77e2",
+      "alignment_id": "alignment:facet-85dd07572b8a77e2",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "norm"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:dc1278f570ced26f3dc56d5453a45046282f0a4f89d76a6dd6e1f9e642ecee77"
+    },
+    {
+      "facet_id": "facet-500349fe9389866d",
+      "alignment_id": "alignment:facet-500349fe9389866d",
+      "clause_id": "clause:O-STAGE-04-a3a3e8ab:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "interface"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Downstream",
+        "prediction",
+        "fixed-size",
+        "embeddings",
+        "sequential",
+        "task-specific",
+        "predictions",
+        "node",
+        "output",
+        "produce"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:6e9b651404197b442d8e73c8ce1a1e7533d4f73acfc464185343a3215a8f11f0"
+    },
+    {
+      "facet_id": "facet-27117a1993cf169a",
+      "alignment_id": "alignment:facet-27117a1993cf169a",
+      "clause_id": "clause:O-COMPONENT-01-88e55e54:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence shows internal mechanism steps (concatenation, mean reduction, weighted aggregation, addition, output layer, return) of GraphMixer.compute_node_temporal_embeddings, which is a component of a dynamic graph representation learning model. However, the evidence does not demonstrate the full model development, handling of irregular time gaps and noisy historical patterns, or targeting strong performance on dynamic link prediction and node classification. The evidence only covers one method's internal operations, not the overall model architecture or its performance targets."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "representation",
+        "learning",
+        "effectively",
+        "continuous-time",
+        "interaction",
+        "sequences",
+        "irregular",
+        "historical",
+        "patterns",
+        "targeting",
+        "performance",
+        "prediction",
+        "classification",
+        "Develop",
+        "dynamic",
+        "graph"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:3c349d8f5ba5a171ff3cee56707c1ea486ac50a05a1634cfe5eb4fbe05e5e9d5"
+    },
+    {
+      "facet_id": "facet-fbcc6e92c1b73f4e",
+      "alignment_id": "alignment:facet-fbcc6e92c1b73f4e",
+      "clause_id": "clause:O-COMPONENT-01-377afc18:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+          ],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGFormer.py:85:85"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-fbcc6e92c1b73f4e",
+              "span_id": "span:models/DyGFormer.py:85:85",
+              "path": "models/DyGFormer.py",
+              "symbol": "sym:dc51f7924aadbf79",
+              "line_start": 85,
+              "line_end": 85,
+              "exact_excerpt": "            self.neighbor_sampler.get_all_first_hop_neighbors(node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate)\n",
+              "excerpt_digest": "sha256:5a9229e1861974581e8e98ff6f7840785ae587b79b4b37e3d17ddfdaa7f00dba",
+              "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+              "fact_ids": [
+                "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "case_study"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "bound_span_ids": [
+        "span:models/DyGFormer.py:85:85"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-fbcc6e92c1b73f4e",
+          "span_id": "span:models/DyGFormer.py:85:85",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 85,
+          "line_end": 85,
+          "exact_excerpt": "            self.neighbor_sampler.get_all_first_hop_neighbors(node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate)\n",
+          "excerpt_digest": "sha256:5a9229e1861974581e8e98ff6f7840785ae587b79b4b37e3d17ddfdaa7f00dba",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "fact_ids": [
+            "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "Interaction",
+        "sequence",
+        "extraction",
+        "first-hop",
+        "neighbor",
+        "prediction",
+        "timestamp",
+        "Obtain",
+        "ordered",
+        "events",
+        "node"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:319864155fa8e01842249d69b524d25d5e53eb3aa6d187686c81118a27895084",
+      "schema_failures": [],
+      "content_digest": "sha256:40639ca4b4815e38c654ef7c6435a7e723264c74291306ae2287b916dab926a3"
+    },
+    {
+      "facet_id": "facet-4e742dc0e3b52bae",
+      "alignment_id": "alignment:facet-4e742dc0e3b52bae",
+      "clause_id": "clause:O-COMPONENT-02-c39dd898:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports use of raw node features (self.node_raw_features indexed by node_ids at evidence 4, and nodes_edge_raw_features at evidence 0), but no evidence in the supplied set demonstrates zero vectors when features are unavailable. The 'zero vectors when unavailable' clause has no supporting evidence in any of the five evidence indices."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "encoding",
+        "features",
+        "unavailable",
+        "Node",
+        "raw",
+        "zero",
+        "vectors"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:8a6064f4979e701a34a6711c14a17d1c98e555d023efd21bec098fcd95dc7286"
+    },
+    {
+      "facet_id": "facet-4d1239a88d3c0fce",
+      "alignment_id": "alignment:facet-4d1239a88d3c0fce",
+      "clause_id": "clause:O-COMPONENT-03-2ae65141:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "encoding",
+        "features",
+        "unavailable",
+        "Edge",
+        "raw",
+        "zero",
+        "vectors"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:35b041f9cb6cf05a1ffb34f7938c35de2077f6605d3bba3ed0370e3ec0482ff3"
+    },
+    {
+      "facet_id": "facet-9f2ea9661004e61a",
+      "alignment_id": "alignment:facet-9f2ea9661004e61a",
+      "clause_id": "clause:O-COMPONENT-04-6d73cce5:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "owner marked this semantic field unsupported"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "prediction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Encode",
+        "time"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:203f77019467441eeb3d1daf00412ec9ab308fa7369f7942f2b0592906611666"
+    },
+    {
+      "facet_id": "facet-8ebd977fd8a0b89d",
+      "alignment_id": "alignment:facet-8ebd977fd8a0b89d",
+      "clause_id": "clause:O-COMPONENT-05-8cd85daa:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGFormer.py:169:169"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-8ebd977fd8a0b89d",
+              "span_id": "span:models/DyGFormer.py:169:169",
+              "path": "models/DyGFormer.py",
+              "symbol": "sym:dc51f7924aadbf79",
+              "line_start": 169,
+              "line_end": 169,
+              "exact_excerpt": "        patches_nodes_neighbor_co_occurrence_features = torch.cat([src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1)\n",
+              "excerpt_digest": "sha256:9ef523b6fcdf7242fe2f72cfcade98b72a15cf1f6408ab2cabd6dd8d294c0d6b",
+              "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+              "fact_ids": [
+                "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "i == 0 and case_study"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+      ],
+      "bound_span_ids": [
+        "span:models/DyGFormer.py:169:169"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-8ebd977fd8a0b89d",
+          "span_id": "span:models/DyGFormer.py:169:169",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 169,
+          "line_end": 169,
+          "exact_excerpt": "        patches_nodes_neighbor_co_occurrence_features = torch.cat([src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1)\n",
+          "excerpt_digest": "sha256:9ef523b6fcdf7242fe2f72cfcade98b72a15cf1f6408ab2cabd6dd8d294c0d6b",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "fact_ids": [
+            "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "Co-occurrence",
+        "frequency",
+        "encoding",
+        "structural",
+        "similarity",
+        "neighbors",
+        "historical",
+        "neighbor",
+        "Capture",
+        "shared",
+        "between",
+        "target",
+        "node"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:b429a8c25540357971382b60bcccbc87b7a621c3104db7b5d40c20964a6b068e",
+      "schema_failures": [],
+      "content_digest": "sha256:650f1da7dc4ec600bb61d7bb29ce838dd4e8c81021e220263bb53e3814960428"
+    },
+    {
+      "facet_id": "facet-474697a48f990b43",
+      "alignment_id": "alignment:facet-474697a48f990b43",
+      "clause_id": "clause:O-COMPONENT-06-e711d58d:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim 'Project all encoding types to a common dimension and concatenate them.' The evidence array is empty and no closed-set evidence indices are provided. Without repository evidence, the operational description cannot be confirmed or refuted against the codebase."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Encoding",
+        "alignment",
+        "dimension",
+        "concatenate",
+        "Project",
+        "types",
+        "common"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:ef276c748269a65f5e246b27cd58edb2ee303bdc5a8e7eb8749b2119c545f8b0"
+    },
+    {
+      "facet_id": "facet-e343d4bc111c5b77",
+      "alignment_id": "alignment:facet-e343d4bc111c5b77",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; formula_expectation is 'required' but evidence array is empty, so the SSM core formula (redefined Δt, stable diagonal A) cannot be verified against any repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "DyG-Mamba",
+        "Continuous",
+        "redefined",
+        "timespan-dependent",
+        "diagonal",
+        "initialization",
+        "core",
+        "state",
+        "space",
+        "model",
+        "step",
+        "size",
+        "stable"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:e77f727ff6d5f46809aad3d03c8380790d225873070f780b534e08f2e24237c4"
+    },
+    {
+      "facet_id": "facet-3f8317dd772533f4",
+      "alignment_id": "alignment:facet-3f8317dd772533f4",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the claim about B/C being input-dependent with spectral norm constraints for timespan-aware forgetting and noise-robust reviewing. The evidence array is empty, so no claims, facts, spans, or equations can be bound to this field. The formula expectation is 'required' but no formula evidence is available to confirm or deny the described mechanism."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "input-dependent",
+        "spectral",
+        "constraints",
+        "timespan-aware",
+        "forgetting",
+        "noise-robust",
+        "reviewing",
+        "B",
+        "C",
+        "norm"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:181fd800b9b02e8a1bb10dc045c587fddd6a86d44a28335929b8ecfd719c47c0"
+    },
+    {
+      "facet_id": "facet-9d9902649b1ee4a5",
+      "alignment_id": "alignment:facet-9d9902649b1ee4a5",
+      "clause_id": "clause:O-COMPONENT-08-48efa86a:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this mechanism claim."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "MEAN",
+        "MLP",
+        "predictor",
+        "sequence",
+        "dimension",
+        "followed",
+        "prediction",
+        "classification",
+        "Readout",
+        "pooling",
+        "over",
+        "link",
+        "node"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:003d33d92a783c1bfbd614ee8993f99dbfcb7ca71bfc0da07b4ba919535f8d4e"
+    },
+    {
+      "facet_id": "facet-70bd392beebe42a0",
+      "alignment_id": "alignment:facet-70bd392beebe42a0",
+      "clause_id": "clause:O-ORGANIZATION-01-42774719:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate dynamic graph encoding of interaction sequences with heterogeneous features and alignment."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "encoding",
+        "interaction",
+        "sequences",
+        "represented",
+        "heterogeneous",
+        "features",
+        "Dynamic",
+        "graph",
+        "aligned"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:18c00c7023c650a0313ace1126f2c83d586d9cacf766d41e834d15dc4696c48e"
+    },
+    {
+      "facet_id": "facet-e5953e844f56e25a",
+      "alignment_id": "alignment:facet-e5953e844f56e25a",
+      "clause_id": "clause:O-ORGANIZATION-02-780817ba:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "interface"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "SSMs",
+        "Motivation",
+        "limitations",
+        "irregular",
+        "timespans",
+        "vulnerable",
+        "vanilla",
+        "they",
+        "ignore",
+        "input",
+        "noise"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:6258607a9a0c797051c6171e5303a40a0a4f9a5c21f7649e7fe37a28c942f9f8"
+    },
+    {
+      "facet_id": "facet-0564bcda9bc954d9",
+      "alignment_id": "alignment:facet-0564bcda9bc954d9",
+      "clause_id": "clause:O-ORGANIZATION-03-359984b4:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Δt",
+        "Redesign",
+        "timespan-informed",
+        "temporally",
+        "forgetting",
+        "redefined",
+        "spectral",
+        "selective",
+        "reviewing",
+        "aware",
+        "B",
+        "C",
+        "norm",
+        "robust"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:2ea3f4b1ac9f2308705b1d0cb516d6127b0fcd0eb71bed1b007808812d1dffe7"
+    },
+    {
+      "facet_id": "facet-42d2e9c04022ff46",
+      "alignment_id": "alignment:facet-42d2e9c04022ff46",
+      "clause_id": "clause:O-ORGANIZATION-04-a52145c2:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support the claim about downstream adaptation for link prediction and node classification setups and linear computational complexity."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "link",
+        "node",
+        "linear"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:c8bcbc947af30f947129f0233aa6c9f3babe063dcd914823e5a059deb43e7d63"
+    },
+    {
+      "facet_id": "facet-98231f06597ce972",
+      "alignment_id": "alignment:facet-98231f06597ce972",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-106180a0:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to bind a formula coupling SSM step size Δt to irregular timespans between interactions."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "Directly",
+        "irregular",
+        "timespans",
+        "interactions",
+        "couple",
+        "step",
+        "size",
+        "between"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:939d8f7f85c118753b25c73a56e64becb3b342719e7bdc5d439c1ae6ee28bfa4"
+    },
+    {
+      "facet_id": "facet-45205815214ce81d",
+      "alignment_id": "alignment:facet-45205815214ce81d",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-653d713f:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify or refute the formula goal 'Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.' without repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Initialize",
+        "diagonal",
+        "strictly",
+        "negative",
+        "real-part",
+        "eigenvalues",
+        "matrix"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:7b016e31c465921d4c4732ff3f43a2d4c8f21c069947802bc10ca5e7edc28b62"
+    },
+    {
+      "facet_id": "facet-e36d367d850a8273",
+      "alignment_id": "alignment:facet-e36d367d850a8273",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-117025ca:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support or refute the formula goal 'Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.'"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "W_B",
+        "W_C",
+        "input-dependent",
+        "Make",
+        "B",
+        "C",
+        "enforce"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:d742c231ee2f0864ee34430cb7c83bec4972ac1b1097b3139c377e97d508a5e7"
+    },
+    {
+      "facet_id": "facet-d45cd6959f91253e",
+      "alignment_id": "alignment:facet-d45cd6959f91253e",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-b41841c3:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this field."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "co-occurrence",
+        "frequency",
+        "encoding",
+        "lightweight",
+        "structural",
+        "feature"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:598855b88ea289aa64a29074eee6ed553f0a716e53db4384d537600ce7d8f8de"
+    },
+    {
+      "facet_id": "facet-997629f642278c49",
+      "alignment_id": "alignment:facet-997629f642278c49",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-e1bbed89:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support or refute the claim that source and destination sequences are processed independently before merging."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "destination",
+        "sequences",
+        "independently",
+        "Process",
+        "source",
+        "merging"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:8d8ccb6bedb9844026522603c62eef691d589fe3d8cffd793300d2ec8660dedf"
+    }
+  ]
+}

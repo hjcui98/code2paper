@@ -310,6 +310,7 @@ def compile_atomic_claims(
     project_tree_hash: str,
     evidence_packet_digest: str,
     explicit_code_gaps: list[ExplicitCodeGapV1] | None = None,
+    include_technical_claims: bool = True,
 ) -> tuple[AtomicClaimSetV3, list[ClaimAuthorizationReportV1]]:
     """Authorize a batch of claim proposals.
 
@@ -386,6 +387,10 @@ def compile_atomic_claims(
         semantic_stage_groups=stage_groups,
         content_digest=_digest(payload),
     )
+    if include_technical_claims:
+        from code2paper.agentic.scientific_claim_ir import append_technical_claims
+
+        claim_set = append_technical_claims(claim_set, facts)
     return claim_set, reports
 
 

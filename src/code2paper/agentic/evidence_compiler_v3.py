@@ -165,7 +165,8 @@ class AtomicClaimV3(CompilerV3Model):
     claim_id: str
     canonical_text: str
     claim_kind: Literal[
-        "implementation_behavior", "configuration_fact", "design_rationale", "performance_or_novelty"
+        "implementation_behavior", "configuration_fact", "design_rationale",
+        "performance_or_novelty", "technical_semantic",
     ] = "implementation_behavior"
     fact_ids: list[str]
     covers_obligation_ids: list[str] = Field(default_factory=list)
@@ -176,6 +177,9 @@ class AtomicClaimV3(CompilerV3Model):
     allowed_wording_boundary: str
     canonical_identity: str
     status: Literal["supported", "partial", "unsupported", "code_gap"] = "supported"
+    inference_level: Literal["E0", "E1", "E2", "E3"] = "E0"
+    parent_claim_ids: list[str] = Field(default_factory=list)
+    math_op_kind: str = ""
 
 class ExplicitCodeGapV1(CompilerV3Model):
     gap_id: str
@@ -403,7 +407,13 @@ def write_compiler_v3_artifacts(root: str | Path, result: EvidenceCompilerV3Resu
             json.dumps(payloads[key], ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-    return {key: str(path) for key, path in paths.items()}
+    written = {key: str(path) for key, path in paths.items()}
+    from code2paper.agentic.scientific_claim_ir import write_technical_claims_sidecar
+
+    written["technical_claims_v1"] = write_technical_claims_sidecar(
+        written["atomic_claims_v3"], result.claims
+    )
+    return written
 
 def load_atomic_claims_v3(path: str | Path) -> AtomicClaimSetV3:
     return AtomicClaimSetV3.model_validate_json(Path(path).read_text(encoding="utf-8"))

@@ -157,6 +157,11 @@ class FactCompilerInputV1(BaseModel):
     evidence span ids that anchor the packet, the guards that must hold for
     the behavior to be active, and the minimum source authority the facts
     may rely on.
+
+    Q1 (plan 19.5.3): ``guards`` is provenance/diagnostic metadata carried
+    for replay and packet audit.  It is deliberately NOT copied into each
+    fact's ``conditions``: a fact's truth scope may only carry the exact
+    behavior node's own guard or a proven CONTROL_DEPENDS_ON/branch guard.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -215,18 +220,84 @@ def _node_object(node: BehaviorNodeV1) -> str | list[str]:
     """
 
     if node.result:
+        # A value-producing operation needs both sides of the scientific
+        # transformation: inputs/operator and the produced representation.
+        # Returning only ``result`` erased mechanisms; returning only operands
+        # erased semantic outputs such as ``volume`` from
+        # ``volume = prod(scales)``. Keep both in one atomic fact.
+        if node.operands and node.predicate in {
+            "CALL", "CONSTRUCT", "TRANSFORM", "CONCAT", "STACK",
+            "NORMALIZE", "REDUCE", "AGGREGATE", "COMPUTE", "TOPK",
+            "SORT", "MASK", "FILTER", "RESHAPE", "PROJECT", "ATTEND",
+            "SAMPLE", "PROPAGATE",
+        }:
+            return [*node.operands, f"result={node.result}"]
         return node.result
     if node.operands:
         return list(node.operands)
     return BEHAVIOR_PREDICATE_TO_FACT[node.predicate]
 
 
-def _node_conditions(node: BehaviorNodeV1, input_guards: list[str]) -> list[str]:
+#: Relation kinds that PROVE an operation sits inside a guard (plan 19.5.3).
+#: Only an exact control-dependence/branch relation may attach a guard to an
+#: operation; same-file, same-obligation, adjacent-span or token overlap is
+#: never sufficient.
+_CONTROL_DEPENDENCE_KINDS = frozenset({
+    "CONTROL_DEPENDS_ON",
+    "TRUE_BRANCH",
+    "FALSE_BRANCH",
+})
+
+
+def _node_guard_by_id(graph: CodeBehaviorGraphV1, node_id: str) -> str:
+    for node in graph.nodes:
+        if node.node_id == node_id:
+            return node.guard
+    return ""
+
+
+def _control_dependence_conditions(
+    graph: CodeBehaviorGraphV1,
+    node_id: str,
+) -> list[str]:
+    """Exact guards proven by CONTROL_DEPENDS_ON / branch relations.
+
+    A guard applies to an operation only when an explicit control-dependence
+    relation targets that exact operation (its endpoint) and the guard is the
+    relation's own guard or the controlling node's guard.  No inference from
+    same file, same obligation, adjacent spans, or token overlap.
+    """
+
+    conditions: list[str] = []
+    for rel in graph.relations:
+        if rel.kind not in _CONTROL_DEPENDENCE_KINDS:
+            continue
+        if rel.target_node_id != node_id:
+            continue
+        guard = rel.guard or _node_guard_by_id(graph, rel.source_node_id)
+        if guard and guard not in conditions:
+            conditions.append(guard)
+    return conditions
+
+
+def _node_conditions(
+    node: BehaviorNodeV1,
+    graph: CodeBehaviorGraphV1,
+) -> list[str]:
+    """Exact condition ownership for a node-derived fact (plan 19.5.3).
+
+    A fact's conditions come only from the behavior node's own guard or an
+    explicit CONTROL_DEPENDS_ON/TRUE_BRANCH/FALSE_BRANCH relation proving the
+    operation sits inside that guard.  Packet-wide guard unions stay in the
+    packet provenance/diagnostic metadata and never enter a fact's truth
+    scope.
+    """
+
     conditions: list[str] = []
     if node.guard:
         conditions.append(node.guard)
-    for guard in input_guards:
-        if guard and guard not in conditions:
+    for guard in _control_dependence_conditions(graph, node.node_id):
+        if guard not in conditions:
             conditions.append(guard)
     return conditions
 
@@ -247,6 +318,7 @@ def _node_semantic_context(node: BehaviorNodeV1) -> list[str]:
         node.guard,
         node.iteration_context,
         *node.operands,
+        *node.shape_or_type_hints,
         *node.diagnostics,
     ]
     return [value for value in values if value]
@@ -387,7 +459,7 @@ def compile_facts_from_behavior_graph(
         predicate = BEHAVIOR_PREDICATE_TO_FACT[node.predicate]
         subject = _node_subject(node, compiler_input.symbol_display_names)
         obj = _node_object(node)
-        conditions = _node_conditions(node, compiler_input.guards)
+        conditions = _node_conditions(node, graph)
         identity = _digest({
             "snapshot": repo_snapshot_id,
             "scope": node.symbol_id,
@@ -449,7 +521,7 @@ def compile_facts_from_behavior_graph(
         first = chain[0]
         subject = _node_subject(first, compiler_input.symbol_display_names)
         obj = [n.result or n.operands[0] if n.operands else n.node_id for n in chain]
-        conditions = _node_conditions(first, compiler_input.guards)
+        conditions = _node_conditions(first, graph)
         identity = _digest({
             "snapshot": repo_snapshot_id,
             "scope": first.symbol_id,
@@ -541,9 +613,14 @@ def compile_facts_from_behavior_graph(
         )
         if not obj:
             continue
-        conditions = list(compiler_input.guards)
-        if rel.guard and rel.guard not in conditions:
+        # Exact condition ownership: the relation's own guard plus proven
+        # control dependence of its source endpoint; never the packet union.
+        conditions: list[str] = []
+        if rel.guard:
             conditions.append(rel.guard)
+        for guard in _control_dependence_conditions(graph, rel.source_node_id):
+            if guard not in conditions:
+                conditions.append(guard)
         identity = _digest({
             "snapshot": repo_snapshot_id,
             "scope": rel.source_symbol_id,

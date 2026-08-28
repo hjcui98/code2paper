@@ -1,0 +1,1233 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-6b45ad90",
+        "story:O-COMPONENT-11-27f310b2"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S1:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:4d91d2c6c7e46fc2c634a9adb921a2c9a806e1e0d294eb50da4458702da1de1c"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-6b45ad90",
+        "story:O-COMPONENT-11-27f310b2"
+      ],
+      "source_facet_ids": [
+        "facet-c5e7c214b56a659f"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the claim that ConTEB is an evaluation suite testing rerankers on cross-passage inference, document-wide context, and structural reasoning tasks."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S1:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "writer",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:b69021914906b591b4eb7c304519dba6da7f60e057ff2a6bb877c4f57e35d762"
+    },
+    {
+      "content_unit_id": "MA-S2:paragraph:MA-S2:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-02-54911271"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S2:unit",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "paragraph_id": "paragraph:MA-S2:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:b0fd277a8efd1ddb7c53547e8f8675a01d6048132eedb703f11eef5dd57b1d2a"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:e81e03a5bc622eeedb86beb4aeeb483cc12bf5f49654deac6530b2fc6cf54db4"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:2",
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:0fbfba29121f67e154545369d10f08caadf3447e0d873477b01d746acc964f2f"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:233f7d133114239662334283665d136993241d417f204514fa2320cb25d72403"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-ba08ce41d6e1d9b9"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the sinusoidal passage position encoding mechanism."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-4",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:03b3d2185ee0454dea2e4e6c79892427e13031cdeb7917e15c8e5a756cee8136"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-00e27dd88a70848f"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the shared full attention module mechanism claim against repository evidence."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-5",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-5",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:19707472a2edbd11722a592287a75332091a837c036b349998477e6d7840856a"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:6",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-6",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-6",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:6",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:cc8fae1f9092af9a47246b687576091c6e0b17b92b987124d6bc2939bdcf9c43"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:7",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-7",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-7",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:7",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:1b5aae5a48e0c45a598d2ec3e7e80ff471cd49ef522dc053767c1e70159cb03a"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:8",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-8",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-8",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:8",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:aef0fa5f82e57681ba41dcb2a66cdcbd93700201cc2cb560026910c1eedd5fda"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:9",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-9",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-9",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:9",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:45dfdb81e30b86008826116bdb5e6000b8ba3c14faf71648bca914676d120e7d"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:10",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-10",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-10",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:10",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:f4b321c16d2b9f934cd0e71812f34c4b9a4890479837c491c374e2adaed7f82d"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:11",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-bd2114e7ad9b1773"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim about Contriever retrieval and embedding preparation."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-11",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-11",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:11",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:614196c34f26ed9ca64e4cb3f15b48b3df5c5350671e75b0d52e1859eb8d6d41"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:12",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-308602a0138b57ea"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the structural augmentation mechanism (dynamic document ID embedding + sinusoidal passage-position encoding) against repository evidence."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-12",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-12",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:12",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:fd8f7ab7ccfca747885e5d8017f2667d9a792636711039224d24950bf312cd3f"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:13",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-df672e4efc3751e2"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; evidence array is empty and closed_sets.evidence_indices is empty. No claims, facts, spans, or equations are available to bind against the described hybrid-attention encoding mechanism."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-13",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-13",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:13",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:6a71470e8d61eaa415f053b2c3fa053559d267a383b0a13d0a10ee93717bca46"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:14",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-d87af6e7082cc916"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this field against."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-14",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-14",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:14",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:3e522108b1da7028c02f36728c794f453d821e0a6435502d30c27fdc576a3bbd"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:15",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-47997bc7d81ecdf5"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the hybrid attention mechanism claim against repository content."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-15",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-15",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:15",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:4aa8888eac0e3ebcf2698cd1e4001d7894cd42c3457e00ef8086ed64917457f0"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:16",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [
+        "facet-85ba5afaa2fbe7ac"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the masked multi-head attention mechanism claim."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S3:unit-16",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-16",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:16",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:1bfb0563ef965a6f02513ee8bdf08650d7c48c7440f9f5df7eb7255c21b8adc8"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:17",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S3:unit-17",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-17",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:17",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:26db2a9307b630435e292fc94f0e92706e1afa7ade1b41f5bfccf31b591f8bcf"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:853109498b5ada6cc07bdc885cffc8e168454b0f0ebcd127d5cf25814327aac8"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "source_facet_ids": [
+        "facet-6bc5ee440fdc8329"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support or refute the formula_goal claim about contrastive InfoNCE loss pulling positive passage embeddings toward fixed query embeddings and pushing negative passage embeddings away."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:fdb38c3e4447ea1057d87c13b8a547af50e7f985899af3b5470f8c4d136295fd"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "source_facet_ids": [
+        "facet-833638c7783e3952"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; formula expectation is required but no equation or supporting evidence is available to bind."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-3",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:fe7aedaefa1907678dece2c5a95bb3d6efedf997adec45849ec8e7810a1ce4a8"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S4:unit-4",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:aba70e4a04273dc50de6fc7796b3b7d8ea80036486823ec2158502518a341267"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "source_facet_ids": [
+        "facet-f6e629096087c520"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the claim that MLDR, SQuAD, and NarrativeQA are ConTEB training datasets for EBCAR covering entity disambiguation, span matching, and narrative comprehension."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S4:unit-5",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-5",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:03dcbe6a2485f4731f5b2a74c6401e1c8eeb421422df353dffd1499273227eee"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-05-baf0d276",
+        "story:O-STAGE-05-5b3d398a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "semantic_frame_id": "frame:MA-S5:unit-1",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:3d925c90e15ede5f97b0060d78dabd4281e75fd5260120a3ad38fca42b2d18a6"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-05-baf0d276",
+        "story:O-STAGE-05-5b3d398a"
+      ],
+      "source_facet_ids": [
+        "facet-cbc0a588831ac015"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim about dot-product similarity computation and descending sort."
+        }
+      ],
+      "semantic_frame_id": "frame:MA-S5:unit-2",
+      "ordered_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:2503f3862167af5f3bfd7a722accfef84a5c26f0184e4db5011865f51dbc9672"
+    }
+  ],
+  "summary": {
+    "rows": 27,
+    "sections": 5,
+    "planned_paragraphs": 27,
+    "rendered_paragraphs": 2,
+    "rendered_slots": 0,
+    "planned_edges": 0,
+    "rendered_edges": 0,
+    "formula_obligations": 1,
+    "consumed_formula_packages": 0,
+    "field_bound_rows": 0,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 2,
+    "rendered_invalid": 14,
+    "blocked_representation": 11,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0
+  },
+  "transaction_assessment_digest": "sha256:a91c792faed6add84320f2df506c3c8cecff1ce3cc0ef4a12605a9c170d9cc83",
+  "content_digest": "sha256:2d0d89cfe5c682423e991c104de61333cf3df57e7a95fe4cf8c5908a95ad69ba"
+}

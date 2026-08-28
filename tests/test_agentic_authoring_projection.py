@@ -976,6 +976,13 @@ def test_projection_partitions_repository_facts_by_lane() -> None:
         intent_obligation_graph_v2=_intent_graph(),
     )
     assert [item["claim_id"] for item in projection.repository_verified_facts] == ["v3-claim-1"]
+    assert projection.repository_verified_facts[0]["writing_role"] in {
+        "method_positive", "method_conditional", "audit_only",
+    }
+    assert all(
+        claim.writing_role in {"method_positive", "method_conditional", "audit_only"}
+        for claim in projection.projected_claims
+    )
     assert projection.repository_partial_facts == []
     assert projection.repository_mismatches == []
     # Writing policy is explicit about the authority split.

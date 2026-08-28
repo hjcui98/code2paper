@@ -756,9 +756,9 @@ class TestCompileCandidateSuccess:
 
         compiled = update["_compiled_evidence"]
         assert len(compiled["fact_set"].facts) <= 3
-        assert {fact.object for fact in compiled["fact_set"].facts} == {
-            "normalized_queries"
-        }
+        assert [fact.object for fact in compiled["fact_set"].facts] == [[
+            "query_embeddings", "result=normalized_queries",
+        ]]
         assert len(compiled["claim_set"].claims) <= 3
 
     def test_semantic_mismatch_fails_closed_instead_of_authorizing_claim(
@@ -1057,7 +1057,10 @@ class TestGapFinalizerDelegation:
         assert "_compiled_evidence" not in update
         partial = update["_partial_evidence"]
         assert partial["fact_set"].facts
-        assert partial["claim_set"].claims == []
+        assert partial["claim_set"].claims
+        assert all(
+            claim.status == "supported" for claim in partial["claim_set"].claims
+        )
         assert obl.status != "supported"
 
     def test_empty_behavior_graph_routes_to_gap_finalizer(

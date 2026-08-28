@@ -85,6 +85,8 @@ def test_lane_enum_and_policy_defaults_are_stable() -> None:
 
     policy = build_default_method_output_policy()
     assert "repository_verified" in policy.verified_positive_lanes
+    assert "repository_partial" not in policy.verified_positive_lanes
+    assert "repository_partial" in policy.review_required_lanes
     assert policy.unsupported_positive_blocks_verified is True
     assert policy.unresolved_blocks_candidate is False
     # An ordinary unresolved item is review-required but never candidate-blocking.

@@ -1,0 +1,80 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:9b3227f537a8d3e013f54d3f04b275d1108c58a195dbb1b500374c2e91130654",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 110,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1fece039c5f0fff7a294c3acbe8aa5682acade9cc34f3a4bc1b4bd3e86bc5172"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "Standard state-space models assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences, and their state update provides no explicit mechanism to suppress unreliable or noisy transitions.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 360,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:9535518f08491d7f16e357f4721938ef44bb82497e2f55c4ba77174f60c7a302"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "These two limitations motivate the timespan-aware and noise-robust design choices that follow.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 361,
+      "char_end": 455,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:2bfff47d8c4f04a5df5b2e24d90ff95679023cd967b2ef6a27aae52b0e8b55a8"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "Standard state-space models assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences, and their state update provides no explicit mechanism to suppress unreliable or noisy transitions.",
+      "normalized_text": "standard state space models assume uniform timesteps and therefore ignore the irregular timespans that characterize real world interaction sequences and their state update provides no explicit mechanism to suppress unreliable or noisy transitions",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 360,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:9535518f08491d7f16e357f4721938ef44bb82497e2f55c4ba77174f60c7a302"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "These two limitations motivate the timespan-aware and noise-robust design choices that follow.",
+      "normalized_text": "these two limitations motivate the timespan aware and noise robust design choices that follow",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 361,
+      "char_end": 455,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:2bfff47d8c4f04a5df5b2e24d90ff95679023cd967b2ef6a27aae52b0e8b55a8"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

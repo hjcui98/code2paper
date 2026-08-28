@@ -6,6 +6,36 @@
 
 ## 当前状态
 
+- [Method Authoring 原文—意图—代码—运行链质量诊断与下一阶段执行计划（2026-08-27）](method_authoring_source_ledger_quality_execution_plan_2026-08-27.md)：
+  基于三篇原文、作者意图、实际代码、冻结研究轨迹与 `225116` 产物，把质量损失分为
+  not-discovered、discovered-but-blocked、rendered-low-quality 和 intent-code mismatch；
+  定义 source-to-render 内容追踪、字段级对齐、段落合同、consumer-first Formalizer、
+  semantic-delta repair/callback 及逐文件 WP0–WP7。这是 2026-08-22 执行权威之下的下一阶段
+  工作包，不替代总体架构、Writer 规范或 Verified 门。
+- [Method Authoring 最近六轮产物、分析与修复汇报（2026-08-27）](method_authoring_six_round_report_2026-08-27.md)：
+  绑定 2026-08-25 23:09 至 2026-08-26 23:23 的 gated replay（`230920`→`011745`→
+  `090052`→四洞修复+`211757`→薄内容修复→`225116`）。只证明该窗口的代码、冻结研究、
+  模型与协议；不是执行权威，不是 `publication_ready` / D5 / §8 PASS。
+- [Method 意图优先写作：质量失败诊断、架构修订与代码级执行计划（2026-08-22）](method_intent_first_authoring_redesign_2026-08-22.md)：
+  绑定 DyG/LinearRAG live `133302`。Candidate 改为作者逻辑完整叙述 + 语义许可 +
+  写作期回搜代码 + 学术 Formalizer + Rewrite 去代码味；Verified 仍 fail-closed。
+  落实 2026-07-31 Writer 规范 §1.3/§1.6，并修订 2026-08-21「许可层纯确定性」仅针对
+  Candidate 措辞权。这是 Method Authoring 质量的当前执行权威；不是新的总体架构规范，
+  不得一次 `/implement` 全文。
+- [Method 论证包编译：用一次综合编译替换逐 cluster Concept Card（2026-08-21）](method_argument_brief_compile_replacing_concept_cards_plan_2026-08-21.md)：
+  冻结 Research 之后不再默认逐 cluster 生成 Concept Card；改为子句级许可的论证包。
+  WP-A/B/C 已于 2026-08-22 只读验收 PASS。Candidate 语义许可与写作回搜以 2026-08-22
+  意图优先计划为准。不是新的架构规范。
+- [Method Authoring R5 质量退化根因与分片执行路线图（2026-08-20）](method_authoring_r5_quality_root_cause_and_code_execution_plan_2026-08-20.md)：
+  R5 冻结 authoring 质量诊断与 WP0–WP6 分片。WP0 拷贝边界与后续 Writer/Formalizer/
+  callback 门仍有效；WP1 把 Concept Card 写入 `--rebuild-authoring` 主链的部分由
+  2026-08-21 论证包方案改道。不是新的架构规范，不得一次 `/implement` 全文。
+- [Method Agent 现状复盘、Master Agent 主线与下一阶段代码级修复方案（2026-08-17）](method_agent_master_agent_mainline_execution_repair_plan_2026-08-17.md)：
+  用户确认的新 Method Agent 唯一交付主线和独立上位文档；按实际代码梳理三条现存路线、
+  当前模块与调用链，定义 Master Agent 顶层 LangGraph、现有研究子图复用、Concept Card
+  精确绑定、真实研究回调、Writer 兼容迁移、父子检查点、旧路线冻结、逐文件修改和故障
+  测试矩阵。该文件在上述范围内取代旧执行计划，高于一次任务的 `.agent/` 协调文件，
+  但不取代总体架构和 Writer 规范。
 - [R8 六项目验收状态（2026-08-01）](r8_acceptance_status_2026-08-01.md)：
   当前 R8 pass/fail 的权威入口；六项目 6/6 accepted，并记录 matrix、报告 digest、
   resume digest、统一 17 项硬门以及尚待完成的 clean-checkout release freeze。
@@ -40,6 +70,19 @@
   authority 如何在不放松真实性的前提下形成完整论文叙事。
 - [Method 质量下一阶段执行计划](agentic_method_quality_next_execution_plan_2026-07-19.md)：
   R0–R8 的历史实施基线；当前进度和下一批开发由 R8 后执行计划跟踪。
+
+## 外部实现参考
+
+- [五个 Agent 仓库的代码级参考研究（2026-08-10）](reference_agent_framework_code_research_2026-08-10.md)：
+  面向当前 Research Agent 与 Method Writer 目标，对 Hermes Agent、OpenClaw、OpenHands SDK、
+  PydanticAI 和 PydanticAI Harness 的固定版本进行文件/核心代码级比较；属于架构参考，
+  不替代规范、执行计划或验收状态。
+- [五个 Agent 仓库运行时深挖（2026-08-10）](reference_agent_framework_runtime_deep_dive_2026-08-10.md)：
+  展开关键调用链、候选/提交/崩溃状态机、失败矩阵和外部测试代码证明链，并标明源码、测试、
+  推断与采用建议的证据等级。
+- [外部 Agent 机制落到 Code2Paper 的逐函数蓝图（2026-08-10）](reference_agent_framework_code2paper_blueprint_2026-08-10.md)：
+  校正本项目已实现机制，定位 budget、QualityState、semantic frame、callback receipt、terminal
+  identity 等真实调用链缺口，并给出文件级落点与纵向故障测试矩阵。
 
 ## 操作与验证
 

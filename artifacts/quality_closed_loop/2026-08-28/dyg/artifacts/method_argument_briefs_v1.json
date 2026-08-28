@@ -1,0 +1,1812 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "claims_digest": "sha256:a174265f58e104179aa7e794a26724b97dc559b108a07d030ce773a408eb50ba",
+  "completeness_digest": "sha256:1259ef27525290650bdea2b126d4c6e49775afd9fd9fd8eef0158ef3fd41a3f6",
+  "coverage_digest": "sha256:7e90cf75a0fc692124929cc9b818f8e0c929452a218f20a3de561c9e69e9019e",
+  "intent_digest": "sha256:9acc2aa2ad6026fe48bf1cdac4abef4f413dc2b7d466642f18680409a5bca64e",
+  "briefs": [
+    {
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+      "story_node_id": "story:O-METHOD-MAINLINE-01-3011c54d",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-METHOD-MAINLINE-01-3011c54d"
+      ],
+      "author_statement": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:0",
+          "text": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:1",
+          "text": "Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:2",
+          "text": "Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:3",
+          "text": "Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:4",
+          "text": "Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:5",
+          "text": "For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:6",
+          "text": "for node classification, use a single encoder without co-occurrence encoding.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264",
+        "span:models/DyGMamba.py:214:214",
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:138:140",
+        "span:models/DyGMamba.py:240:240"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-c38b8847c79fef21",
+        "brief_id": "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "text": "Mechanism sketch for the mainline algorithm step. The pipeline proceeds in three phases. Phase 1 (Encoding): For a target node, extract the ordered first-hop neighbor interaction sequence up to the prediction timestamp. Each interaction event is represented by a tuple of node identity, edge features, absolute interaction time, and co-occurrence context. The sequence is padded to a fixed maximum length and split into patches of a fixed size. Padded multi-channel data (node, edge, temporal, co-occurrence channels) are stacked along a new dimension to form a unified tensor. A learned router produces per-patch logits that are normalized via softmax to yield routing weights; a top-k selection retains the highest-scoring patches, and a weighted sum over the selected patches produces a compact node embedding. For link prediction, two independent encoder instances process the source and destination sequences separately; their outputs are pooled, concatenated, and passed through an MLP predictor. For node classification, a single encoder is used without the co-occurrence channel. Phase 2 (Timespan-Aware SSM): The aligned encoding is passed through a continuous-state-space model whose step size Δt is redefined as a learnable, monotonically increasing function of the elapsed time gap between consecutive interactions, inspired by the Ebbinghaus forgetting curve. The state transition matrix A is initialized as a diagonal matrix whose eigenvalues have negative real parts, guaranteeing that the state decays exponentially as the timespan grows. The input matrix B and output matrix C are redefined as input-dependent (i.e., functions of the current hidden state) with spectral norm constraints, so the model can selectively reinforce important historical interactions while suppressing noise. The intended mathematical role: Δt(τ) is a scalar function of the inter-event gap τ such that larger gaps produce larger Δt, which in turn causes the discrete-time state update to forget more of the previous state; the diagonal A with negative eigenvalues ensures the continuous-time decay factor exp(A·Δt) contracts toward zero as Δt increases. Phase 3 (Readout): Fixed-size node embeddings are read out from the sequential output and fed into task-specific heads. Supported facets: the padding, stacking, routing, top-k, and weighted-pooling operations are directly evidenced in the repository. Partially supported / author-intent facets: the SSM redesign (Δt redefinition, A initialization, B/C input-dependence with spectral norm) describes the intended mathematical role of the MambaTimeDelta module; the specific spectral norm constraint and Ebbinghaus-inspired monotonicity are design choices not directly visible in the provided fragments.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The SSM redesign facets (timespan-dependent Δt, diagonal A initialization, input-dependent B/C with spectral norm) are author-intent claims not directly evidenced in the provided fragments; they describe the intended mathematical role of the MambaTimeDelta component. The encoding pipeline and task-specific readout are supported by repository fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9a1ed70668b9de25"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9a1ed70668b9de25"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9a1ed70668b9de25"
+      ],
+      "facet_digest": "sha256:20d059f91c795b4a085eb1e8a5841143dac0a6e5ad393472a4d30931391483a4",
+      "content_digest": "sha256:51297ca2212ff7bc43485c67ae9d71cf41d5afa6f9da48e7ff576101e6e73841"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-01-06d7de36",
+      "story_node_id": "story:O-STAGE-01-06d7de36",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-01-06d7de36"
+      ],
+      "author_statement": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-01-06d7de36:0",
+          "text": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:211:211",
+        "span:models/DyGMamba.py:215:215"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-eddcd87f8489adef",
+        "brief_id": "brief:story:O-STAGE-01-06d7de36",
+        "text": "Mechanism sketch for the dynamic graph encoding stage. Raw interaction sequences are transformed into a unified, aligned feature representation that captures both temporal and structural context. Concretely: (1) For each target node, the first-hop neighbor events are collected and padded to a fixed sequence length. Multi-channel features (node identity, edge attributes, absolute timestamps, co-occurrence indicators) are assembled into a tensor of shape [batch, sequence_length, num_channels × channel_embedding_dim]. (2) The padded data are stacked along a new dimension to produce a 3-D tensor. (3) A learned router computes per-position logits; these are normalized via softmax to produce routing weights that sum to one over the sequence dimension. (4) A top-k selection retains the k highest-scoring positions (capped at the actual sequence length), and a weighted sum over the selected positions yields a compact embedding. The intended mathematical role of the channel combination: each channel contributes a learned embedding that is combined (via element-wise product or concatenation followed by a linear projection) to form a joint representation; the product form allows the model to learn interactions between channels (e.g., how edge type modulates the effect of temporal proximity). The output is a pair of node embeddings (source and destination) ready for downstream SSM processing. All operations in this stage are supported by the repository fragments.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+          "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+          "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+          "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize",
+          "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+          "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The encoding stage is supported by repository fragments showing the padding, stacking, routing, and pooling operations. The equation placeholder is a generic form; the intended mathematical role of the channel-wise product is described without forcing a specific equation citation.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e650301f08e6d4b3"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e650301f08e6d4b3"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e650301f08e6d4b3"
+      ],
+      "facet_digest": "sha256:97eeefcbe71fe7e4b3343756eaee230c50d89f97db328b8d3bd28a8616d57350",
+      "content_digest": "sha256:a7a891ff6d352a81a754127a70e1bbb32afb0737736f0faee67174c381a0670e"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-02-e02cd0f2",
+      "story_node_id": "story:O-STAGE-02-e02cd0f2",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-02-e02cd0f2"
+      ],
+      "author_statement": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-02-e02cd0f2:0",
+          "text": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/mamba_simple.py:497:525",
+        "span:models/mamba_simple.py:551:551",
+        "span:models/mamba_simple.py:471:471",
+        "span:models/mamba_simple.py:476:476"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-5a0b3ee9dc614e96",
+        "brief_id": "brief:story:O-STAGE-02-e02cd0f2",
+        "text": "Mechanism sketch for the timespan-aware forgetting stage within the SSM. The MambaTimeDelta module receives the aligned encoding from the previous stage and processes it through a continuous-state-space recurrence. The forward pass branches on whether time-aware mode is active and whether a time-delta tensor (dts) is provided. When active, the input is projected via a learned weight matrix and reshaped from [batch, length, dim] to [dim, batch × length] for the SSM scan. The key design choice: the step size Δt is not a fixed scalar but a learnable, monotonically increasing function of the inter-event time gap τ. The intended mathematical role: Δt(τ) = f(τ) where f is a monotone-increasing function (e.g., a softplus or exponential of a learned affine transform of τ), so that larger gaps produce larger effective step sizes. The state transition matrix A is initialized as a diagonal matrix with negative real-part eigenvalues, ensuring that the continuous-time decay factor exp(A·Δt) contracts the state toward zero as Δt grows, implementing a forgetting proportional to elapsed time. The input matrix B and output matrix C are made input-dependent (functions of the current hidden state) with spectral norm constraints to bound the gain and prevent instability. The forward pass computes the SSM scan, applies a gating mechanism (element-wise product of the scan output with a gated projection), and returns the processed output. The weighted-sum aggregation of contributing terms is performed over the sequence dimension. Supported facets: the branching logic, projection, and gating operations are evidenced in the repository. Author-intent facets: the specific form of f(τ), the diagonal A initialization, and the spectral norm constraints describe the intended mathematical role and are not directly visible in the provided fragments.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+          "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+          "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+          "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+          "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+          "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The timespan-aware forgetting mechanism is supported at the level of the MambaTimeDelta forward pass branching logic. The specific mathematical form of Δt(τ), the diagonal A initialization, and the spectral norm constraints on B/C are author-intent design choices; the provided fragments show the control flow and projection operations but not the closed-form decay equation.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e3de4791afd3b462"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e3de4791afd3b462"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e3de4791afd3b462"
+      ],
+      "facet_digest": "sha256:4db912803c6a0d0b38778cb63ca8f6c9012554d9ca3bca1b1be9f65b9371450e",
+      "content_digest": "sha256:e72e95a998ffe49d0ca930bec410d563489efb534bc579eb6e5801f15383764a"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-03-d47a86f4",
+      "story_node_id": "story:O-STAGE-03-d47a86f4",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-03-d47a86f4"
+      ],
+      "author_statement": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+          "text": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/FreeDyG.py:337:337",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/FreeDyG.py:330:330"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-8efe2333a8293675",
+        "brief_id": "brief:story:O-STAGE-03-d47a86f4",
+        "text": "Mechanism sketch for the robust selective reviewing stage. The FilterLayer operates on the SSM hidden states to enable input-dependent filtering of historical information. The forward pass computes a weighted sum of the input tensor and the hidden states, producing a filtered output that reinforces important interactions while suppressing noise. The intended mathematical role: the filter acts as a learned gate that modulates the contribution of each historical state based on its relevance to the current prediction context. The spectral norm constraint (an author-intent design choice) bounds the operator norm of the input-dependent matrices B and C, ensuring that the filtering operation does not amplify noise beyond a controlled threshold. This constraint is particularly important when B and C are made input-dependent, as unconstrained input-dependent matrices could otherwise introduce instability. The supported facet is the weighted-sum aggregation visible in the FilterLayer. The partially supported / author-intent facet is the spectral norm constraint and the explicit noise-suppression objective, which describe the intended mathematical role of the constraint rather than a specific repository equation.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+          "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+          "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+          "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+          "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "Partially supported. The FilterLayer weighted-sum operation is evidenced in the repository. The spectral norm constraint on input-dependent B/C matrices and the explicit noise-suppression objective are author-intent design choices not directly visible in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9a8892286042413e",
+        "facet-85dd07572b8a77e2"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9a8892286042413e",
+        "alignment:facet-85dd07572b8a77e2"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9a8892286042413e",
+        "policy:facet-85dd07572b8a77e2"
+      ],
+      "facet_digest": "sha256:107a248e6d91c29ea74c734c60dffaaa7421f4436aee1bb8742f1df8b11f4921",
+      "content_digest": "sha256:1efa933fd0ac3d6bd05f9dd11391091dc95ed564d794efbff485713726cbaf8d"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-04-a3a3e8ab",
+      "story_node_id": "story:O-STAGE-04-a3a3e8ab",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-04-a3a3e8ab"
+      ],
+      "author_statement": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-04-a3a3e8ab:0",
+          "text": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/EdgeBank.py:18:21",
+        "span:models/EdgeBank.py:23:23",
+        "span:models/EdgeBank.py:14:14",
+        "span:models/EdgeBank.py:108:108"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-9d349c9549fb506c",
+        "brief_id": "brief:story:O-STAGE-04-a3a3e8ab",
+        "text": "Mechanism sketch for the downstream prediction stage. Fixed-size node embeddings are read out from the sequential SSM output and fed into task-specific prediction heads. For link prediction: two independent DyG-Mamba encoders produce source and destination node embeddings; these are pooled (e.g., via mean or max over the sequence dimension), concatenated into a single vector, and passed through a multi-layer perceptron that outputs a scalar probability. The EdgeBank module maintains a memory of observed edges; at prediction time, it checks whether a candidate (source, destination) pair is already in the edge memory and returns a probability array for a batch of candidate links. For node classification: a single encoder (without the co-occurrence channel) produces a node embedding that is passed through a classification head. The supported facet is the EdgeBank memory-based link prediction pipeline. The author-intent facet is the specific pooling and MLP architecture for the two-encoder link prediction head, which is a design choice not directly visible in the provided fragments.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+          "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+          "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+          "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The downstream prediction stage is supported by repository fragments showing the EdgeBank link prediction pipeline. The specific MLP architecture and pooling strategy for the two-encoder link prediction head are author-intent details not directly evidenced in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-500349fe9389866d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-500349fe9389866d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-500349fe9389866d"
+      ],
+      "facet_digest": "sha256:68d46fb9b0bd74ba13456d4da97b41e1ab138fb33f33d03ed5f7137804896e4f",
+      "content_digest": "sha256:a340e6774765b1551369fae2fbed4cb641e0f506ac486d1095229ff93f51dc23"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-88e55e54",
+      "story_node_id": "story:O-COMPONENT-01-88e55e54",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-88e55e54"
+      ],
+      "author_statement": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-88e55e54:0",
+          "text": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "equation:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:127:127",
+        "span:models/GraphMixer.py:157:157",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:155:155",
+        "span:models/GraphMixer.py:152:152"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-88cb888fde70cf12",
+        "brief_id": "brief:story:O-COMPONENT-01-88e55e54",
+        "text": "Mechanism sketch for the setup / motivation component. The goal is to develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification. The GraphMixer component illustrates the encoding approach: raw edge features and neighbor time-gap features are concatenated along the feature dimension to form a combined representation. A weighted aggregation (mean of element-wise products of neighbor features and attention scores) produces a time-gap-aware neighbor aggregation. The output node features (raw node embeddings looked up by node ID) are concatenated with the combined features to form the final node embedding. The intended mathematical role of the time-gap weighting: the attention scores are computed as a function of the time gap between interactions, so that more recent interactions receive higher weight; the element-wise product followed by mean reduction implements a soft attention over the neighbor sequence. This design directly addresses the irregular time gap challenge by making the aggregation explicitly time-aware. The supported facet is the GraphMixer encoding pipeline. The author-intent facet is the high-level motivation framing (handling noise, targeting specific tasks) which contextualizes the supported operations.",
+        "cited_claim_ids": [
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+          "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+          "equation:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The setup clause is supported by repository fragments showing the GraphMixer encoding pipeline. The high-level motivation (handling irregular time gaps and noisy patterns) is an author-intent framing that contextualizes the supported operations.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-27117a1993cf169a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-27117a1993cf169a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-27117a1993cf169a"
+      ],
+      "facet_digest": "sha256:ebccce1cb38a6bcd956c11572071f65f1b01b29d4e7209be9fdc4b32d27b3257",
+      "content_digest": "sha256:28fc18e0bd67872ec3c9116c6e170fe2157ce2daa2c2fbe72db5768544ea0628"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-377afc18",
+      "story_node_id": "story:O-COMPONENT-01-377afc18",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-377afc18"
+      ],
+      "author_statement": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-377afc18:0",
+          "text": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/DyGFormer.py:207:212",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:212:212",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:85:85"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-f05e1728b2147a23",
+        "brief_id": "brief:story:O-COMPONENT-01-377afc18",
+        "text": "Mechanism sketch for the interaction sequence extraction component. For a target node, the ordered first-hop neighbor events are obtained up to a prediction timestamp. The DyGFormer component calls a neighbor sampler that retrieves all first-hop neighbors, their associated edge IDs, and their interaction times, filtered by a robustness rate parameter. The retrieved sequences are then processed: source and destination neighbor feature tensors are concatenated along the feature dimension, stacked into a patch tensor, and mean-reduced over the patch dimension to produce compact node embeddings. The intended mathematical role of the timestamp constraint: only interactions with timestamps strictly before the prediction time are included, ensuring the model does not use future information. The robust_rate parameter controls the fraction of neighbors retained, providing a mechanism to handle noisy or sparse interaction histories. The supported facet is the neighbor sampling call and the subsequent patching and reduction operations. The partially supported / author-intent facet is the explicit 'up to a prediction timestamp' constraint and the semantic role of robust_rate, which are design choices partially visible in the repository but not fully specified in the provided fragments.",
+        "cited_claim_ids": [
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+          "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "Partially supported. The neighbor sampling call is evidenced in the repository. The 'up to a prediction timestamp' constraint and the robust_rate parameter are author-intent details that are partially visible but not fully specified in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-fbcc6e92c1b73f4e"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-fbcc6e92c1b73f4e"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-fbcc6e92c1b73f4e"
+      ],
+      "facet_digest": "sha256:f3d8ba700b8886922d0af6bada18e517c53484594127efbf4a0d136ae640fac8",
+      "content_digest": "sha256:52686871905e5c014f2177d6f2864fb5d506bc9f72b7208d7c1becb9a99ed831"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-02-c39dd898",
+      "story_node_id": "story:O-COMPONENT-02-c39dd898",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-02-c39dd898"
+      ],
+      "author_statement": "Node encoding: Use raw node features; zero vectors when unavailable.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-02-c39dd898:0",
+          "text": "Node encoding: Use raw node features;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-02-c39dd898:1",
+          "text": "zero vectors when unavailable.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:157:157",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:155:155",
+        "span:models/GraphMixer.py:152:152"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-3110f5e33cbd8cd0",
+        "brief_id": "brief:story:O-COMPONENT-02-c39dd898",
+        "text": "Mechanism sketch for the node encoding component. Node representations are constructed from raw node features. When a node has available raw features, those features are used directly as the node embedding. When raw features are unavailable (e.g., for nodes that appear only in the test set or have no attribute information), a zero vector of the appropriate dimension is used as a fallback. The supported facet: the GraphMixer pipeline looks up node raw features by node ID and concatenates them with aggregated neighbor features to form the final node embedding. The author-intent facet: the zero-vector fallback for unavailable features is a design choice that ensures the model can handle nodes without attribute information without requiring a separate embedding table; it is a practical design decision not directly evidenced in the provided fragments. The intended mathematical role: the zero vector acts as a neutral element in the feature space, allowing the model to rely solely on structural and temporal signals for nodes lacking raw features.",
+        "cited_claim_ids": [
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+          "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+          "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The node encoding with raw features is supported by repository fragments. The 'zero vectors when unavailable' fallback is an author-intent design choice for handling missing node features; it is not directly evidenced in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-4e742dc0e3b52bae"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-4e742dc0e3b52bae"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-4e742dc0e3b52bae"
+      ],
+      "facet_digest": "sha256:b938de02d21d12da508b71e53f400d775c9b2abcc80280f70945f3a54466116d",
+      "content_digest": "sha256:b500dc85f74742273cccfe4e763b4d12a5cadf39ec01a3c374a1b93660ba2b22"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-03-2ae65141",
+      "story_node_id": "story:O-COMPONENT-03-2ae65141",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-03-2ae65141"
+      ],
+      "author_statement": "Edge encoding: Use raw edge features; zero vectors when unavailable.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-03-2ae65141:0",
+          "text": "Edge encoding: Use raw edge features;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-03-2ae65141:1",
+          "text": "zero vectors when unavailable.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/EdgeBank.py:118:118",
+        "span:models/EdgeBank.py:110:110",
+        "span:models/EdgeBank.py:119:119",
+        "span:models/EdgeBank.py:114:114",
+        "span:models/EdgeBank.py:110:112",
+        "span:models/EdgeBank.py:108:108"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-4a58b52f9f8601d1",
+        "brief_id": "brief:story:O-COMPONENT-03-2ae65141",
+        "text": "The edge encoding stage feeds raw edge features into the link-prediction pipeline. The edge_bank_link_prediction function accepts a set of positive edges and a set of negative edges, and for each set it calls predict_link_probabilities using a shared edge-memory tensor. The edge memory is computed by one of three strategies: a repeat-threshold memory that filters by interaction frequency, a time-window memory that restricts to a configurable temporal proportion, or an unlimited memory that uses the full history. When an edge feature is unavailable for a given interaction, a zero vector is substituted so that the encoding remains well-defined without introducing spurious signal. The function writes out positive_probabilities and negative_probabilities as its outputs.",
+        "cited_claim_ids": [
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+          "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The use of raw edge features and zero-vector fallback for unavailable features is an author design choice not directly evidenced in the repository fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-4d1239a88d3c0fce"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-4d1239a88d3c0fce"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-4d1239a88d3c0fce"
+      ],
+      "facet_digest": "sha256:62000e7559b4083455f628033bb4512f4647674fe7fe37c2cf9a1061fa4d081d",
+      "content_digest": "sha256:ee079e84200349df5a2f44c8173733852e150cc803f8dbead9cc7a83d553f35b"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-04-6d73cce5",
+      "story_node_id": "story:O-COMPONENT-04-6d73cce5",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-04-6d73cce5"
+      ],
+      "author_statement": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-04-6d73cce5:0",
+          "text": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "equation:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/DyGFormer.py:207:212",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/GraphMixer.py:118:118",
+        "span:models/DyGFormer.py:168:168"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-bdf1340d92bc678a",
+        "brief_id": "brief:story:O-COMPONENT-04-6d73cce5",
+        "text": "The absolute temporal encoding stage maps each interaction's timespan (the elapsed interval from that interaction to the prediction time) into a vector embedding. A trainable cosine-based periodic function is applied to the scalar timespan value, producing a fixed-length vector that captures the relative temporal position. The compute_src_dst_node_temporal_embeddings function branches on the case_study flag and separately computes source-side and destination-side patch node neighbor features. These are concatenated along the feature dimension to form a unified neighbor-node raw feature tensor. The contributing terms are aggregated by a weighted sum, yielding the final temporal embedding per node.",
+        "cited_claim_ids": [
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+          "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The specific cosine-based periodic encoding of timespans is an author intent not evidenced in the repository; the repository fragments show the aggregation structure (weighted sum over contributing terms) but not the cosine formulation itself.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9f2ea9661004e61a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9f2ea9661004e61a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9f2ea9661004e61a"
+      ],
+      "facet_digest": "sha256:1b27c6eec90a46cbdf1e15d3b1d5b67b4f3294118c37886635143d870346fdaf",
+      "content_digest": "sha256:e28605fd52ead2017e04794ee2ee5686b849bfa1b0b11ee250131dae2cac5e1d"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-05-8cd85daa",
+      "story_node_id": "story:O-COMPONENT-05-8cd85daa",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-05-8cd85daa"
+      ],
+      "author_statement": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-05-8cd85daa:0",
+          "text": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:models/DyGFormer.py:181:183",
+        "span:models/DyGFormer.py:169:169",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:212:212",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:166:166"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-59a9112e6ea74e4a",
+        "brief_id": "brief:story:O-COMPONENT-05-8cd85daa",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-8ebd977fd8a0b89d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-8ebd977fd8a0b89d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-8ebd977fd8a0b89d"
+      ],
+      "facet_digest": "sha256:87431b83dc2b9131745ddc951b9c3e3bb13c6101aa2fd8dd964462fa619cd9c6",
+      "content_digest": "sha256:3cbc72926d2f9fac51a482b32020524ac65e95c23bcc573d5b50289327613bf7"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-06-e711d58d",
+      "story_node_id": "story:O-COMPONENT-06-e711d58d",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-06-e711d58d"
+      ],
+      "author_statement": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-06-e711d58d:0",
+          "text": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-318018f2c414015b",
+        "brief_id": "brief:story:O-COMPONENT-06-e711d58d",
+        "text": "After the individual encoding streams (edge features, temporal embeddings, node attributes) are computed, each stream is projected to a common hidden dimension via a linear transformation. The resulting per-interaction vectors are then concatenated along the feature axis to form a single unified representation. This alignment ensures that downstream sequence models receive a consistent input width regardless of which encoding components are active.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The projection-to-common-dimension and concatenation alignment step is an author design choice; no repository fragment directly evidences this operation.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-474697a48f990b43"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-474697a48f990b43"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-474697a48f990b43"
+      ],
+      "facet_digest": "sha256:36b474973448630ed16e6189cee838b314ea452c9752908cfb111c7d53c5db49",
+      "content_digest": "sha256:b7d16e488d30a900a6881c7170d9c8205d4f373b55824c6e1808cc2057dd46f3"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-07-c430eb84",
+      "story_node_id": "story:O-COMPONENT-07-c430eb84",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-07-c430eb84"
+      ],
+      "author_statement": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+          "text": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-125808629d7e1a02",
+        "brief_id": "brief:story:O-COMPONENT-07-c430eb84",
+        "text": "The DyG-Mamba core replaces the standard discrete state-space model with a continuous formulation tailored to irregular interaction sequences. The step size is made timespan-dependent so that larger gaps between consecutive interactions induce stronger state decay, implementing a timespan-aware forgetting mechanism. The state transition matrix is initialized as a stable diagonal (eigenvalues with negative real parts) to guarantee bounded state evolution. The input and output projection matrices are made input-dependent and constrained via spectral norm to limit sensitivity to noisy transitions, providing noise-robust reviewing of the interaction history.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The specific SSM parameterizations (timespan-dependent step size, stable diagonal state matrix, spectral-norm-constrained input/output matrices) are author intent for the academic lane; no repository equation or fragment evidences these design choices.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e343d4bc111c5b77",
+        "facet-3f8317dd772533f4"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e343d4bc111c5b77",
+        "alignment:facet-3f8317dd772533f4"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e343d4bc111c5b77",
+        "policy:facet-3f8317dd772533f4"
+      ],
+      "facet_digest": "sha256:5f1f863a04e5b15ffe585a735203859da761c6d4a196beb18c4d5e71c5177472",
+      "content_digest": "sha256:5377002d71d4401a1c79bc45d1032249e8a39eaabe44efaee55f8b3b23f9fa48"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-08-48efa86a",
+      "story_node_id": "story:O-COMPONENT-08-48efa86a",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-08-48efa86a"
+      ],
+      "author_statement": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-08-48efa86a:0",
+          "text": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-fab9a9308b638277",
+        "brief_id": "brief:story:O-COMPONENT-08-48efa86a",
+        "text": "After the SSM processes the full interaction sequence, a MEAN pooling operation aggregates over the sequence (time) dimension to collapse the per-timestep hidden states into a single vector. This pooled vector is passed through a multi-layer perceptron that produces either a scalar link-prediction score or a class probability distribution for node classification, depending on the downstream task.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The MEAN-pooling-then-MLP readout architecture is an author design choice; no repository fragment directly evidences this specific readout configuration.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9d9902649b1ee4a5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9d9902649b1ee4a5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9d9902649b1ee4a5"
+      ],
+      "facet_digest": "sha256:aacec9f2d0091466a774f1acfee1ee402e2a5739a6ccbeaa011f98d5424f7cab",
+      "content_digest": "sha256:c50749db59461068dd7ca22d09bef058aad42f44f2af5ca8c8b37d32f2d8785a"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-01-42774719",
+      "story_node_id": "story:O-ORGANIZATION-01-42774719",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-01-42774719"
+      ],
+      "author_statement": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-01-42774719:0",
+          "text": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-2bc03cb3eb7125e2",
+        "brief_id": "brief:story:O-ORGANIZATION-01-42774719",
+        "text": "This section organizes the dynamic graph encoding pipeline. Interaction sequences are represented with heterogeneous features: node attributes, edge features, and temporal information. Each feature type is encoded by a dedicated sub-module, and the resulting representations are aligned to a common dimension before being fed to the sequence model. The section motivates why alignment is necessary and how the individual encoders interact.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The organizational framing of heterogeneous feature alignment is an author intent; no repository fragment directly evidences this structural description.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-70bd392beebe42a0"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-70bd392beebe42a0"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-70bd392beebe42a0"
+      ],
+      "facet_digest": "sha256:7dc4e23df801ed2b7b7590bb9cea83c4a0a9ad73c5435bddd7c00bb590cf9992",
+      "content_digest": "sha256:dd6cb790a8bf44e68072e58253f62390150b4392181cfdf796b2cac76b5fc414"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-02-780817ba",
+      "story_node_id": "story:O-ORGANIZATION-02-780817ba",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-02-780817ba"
+      ],
+      "author_statement": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-02-780817ba:0",
+          "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-79c51ee1bad2e8ad",
+        "brief_id": "brief:story:O-ORGANIZATION-02-780817ba",
+        "text": "The motivation section identifies two key limitations of vanilla state-space models when applied to dynamic graphs. First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences. Second, the state update in a vanilla SSM has no explicit mechanism to suppress unreliable or noisy transitions, making the model vulnerable to input noise. These limitations motivate the timespan-aware and noise-robust design choices that follow.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The stated limitations of vanilla SSMs (irregular-timespan blindness and noise vulnerability) are author motivation; no repository fragment directly evidences this framing.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e5953e844f56e25a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e5953e844f56e25a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e5953e844f56e25a"
+      ],
+      "facet_digest": "sha256:45e21a5554e698aabf3547a90cfc32a5fd2d955b7954b1a2f6ab6cb3a4096e41",
+      "content_digest": "sha256:006cf041d10c8caf5141e60a065324fe76fec7858524e07001460d4bd4ed15b8"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-03-359984b4",
+      "story_node_id": "story:O-ORGANIZATION-03-359984b4",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-03-359984b4"
+      ],
+      "author_statement": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-03-359984b4:0",
+          "text": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-757b6c1babafe907",
+        "brief_id": "brief:story:O-ORGANIZATION-03-359984b4",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-0564bcda9bc954d9"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-0564bcda9bc954d9"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-0564bcda9bc954d9"
+      ],
+      "facet_digest": "sha256:7f8a57f5bd709441eea6c2382435d29403f40b2fc554d69b4a00ba0276ec9b3d",
+      "content_digest": "sha256:b165d67547c6c9afb64fdfeefa3e54d07547a49fa5e81eaf24b1cf943be95037"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-04-a52145c2",
+      "story_node_id": "story:O-ORGANIZATION-04-a52145c2",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-04-a52145c2"
+      ],
+      "author_statement": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-04-a52145c2:0",
+          "text": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-d1d185545c725ba6",
+        "brief_id": "brief:story:O-ORGANIZATION-04-a52145c2",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-42d2e9c04022ff46"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-42d2e9c04022ff46"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-42d2e9c04022ff46"
+      ],
+      "facet_digest": "sha256:01a80248c18dfef015b07cda4779591f5c2a1c3f19b6cd5481cb222167e24779",
+      "content_digest": "sha256:83e762f803577e466962571f04470871a973ab0195af9ab75c17bb63c68c43cb"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-106180a0",
+      "story_node_id": "story:O-RATIONALE-CHECK-01-106180a0",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "author_statement": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-01-106180a0:0",
+          "text": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-0c7b4af5393cb748",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-01-106180a0",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-98231f06597ce972"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-98231f06597ce972"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-98231f06597ce972"
+      ],
+      "facet_digest": "sha256:076919f970b82d4d207930dc221ac8e95e679a9cc6df36b11520d8426815d61e",
+      "content_digest": "sha256:e7b20fe5a92936d517b0513d31436aeb348e90e9d8edc89d1d6eb9c3b967798b"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-653d713f",
+      "story_node_id": "story:O-RATIONALE-CHECK-02-653d713f",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "author_statement": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-02-653d713f:0",
+          "text": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-bcdb5b2afb652c4f",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-02-653d713f",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-45205815214ce81d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-45205815214ce81d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-45205815214ce81d"
+      ],
+      "facet_digest": "sha256:0eae7428f0d0691c56659364f0ab7e4bd60a4c6a406a28c264aebe4b078710fd",
+      "content_digest": "sha256:278c23a85a94b53beff67907e2c0f154724e696041f75dd231b1d4c6c29d3e87"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-117025ca",
+      "story_node_id": "story:O-RATIONALE-CHECK-03-117025ca",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "author_statement": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-03-117025ca:0",
+          "text": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-e5afb8b87618696f",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-03-117025ca",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e36d367d850a8273"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e36d367d850a8273"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e36d367d850a8273"
+      ],
+      "facet_digest": "sha256:835bfe42a309ed3bf23dd7a4cdf727d0cecb517a33dd874c6626e014954ad2e0",
+      "content_digest": "sha256:a9567b4d2e5a26bc182a9b6521ca70502a1355d813c6b73178991a1e5762ce68"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+      "story_node_id": "story:O-RATIONALE-CHECK-04-b41841c3",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-04-b41841c3"
+      ],
+      "author_statement": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-04-b41841c3:0",
+          "text": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-c415999c53d0da13",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-d45cd6959f91253e"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-d45cd6959f91253e"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-d45cd6959f91253e"
+      ],
+      "facet_digest": "sha256:14068ebe22d5e48728f74814bbb8eb4cb433017ddcd4f7a9df5150febd985032",
+      "content_digest": "sha256:ac80fb61c264a5050d3da877a24d5bd93d26afe6aaa3d68f68a47ea2b0153dad"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+      "story_node_id": "story:O-RATIONALE-CHECK-05-e1bbed89",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "author_statement": "Process source and destination sequences independently before merging.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-05-e1bbed89:0",
+          "text": "Process source and destination sequences independently before merging.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-420d704418e64b48",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-997629f642278c49"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-997629f642278c49"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-997629f642278c49"
+      ],
+      "facet_digest": "sha256:d0c2a6c77a2ee2e530d7b69ff19edc404a96a1831589f6cc4a966c700e6589a4",
+      "content_digest": "sha256:6679216d565bc55b6e4a2eb2df9bee3d839abd8a7ea3c0857d5b53278dc245e1"
+    }
+  ],
+  "planner_used": true,
+  "gaps": [
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-05-8cd85daa",
+      "obligation_id": "",
+      "message": "planner returned an incomplete brief draft set"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-03-359984b4",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-04-a52145c2",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-106180a0",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-653d713f",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-117025ca",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    }
+  ],
+  "planner_call_traces": [
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "brief:story:O-STAGE-01-06d7de36",
+        "brief:story:O-STAGE-02-e02cd0f2",
+        "brief:story:O-STAGE-03-d47a86f4",
+        "brief:story:O-STAGE-04-a3a3e8ab",
+        "brief:story:O-COMPONENT-01-88e55e54",
+        "brief:story:O-COMPONENT-01-377afc18",
+        "brief:story:O-COMPONENT-02-c39dd898"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\": [{\"brief_id\": \"brief:story:O-METHOD-MAINLINE-01-3011c54d\", \"caveat\": \"The SSM redesign facets (timespan-dependent Δt, diagonal A initialization, input-dependent B/C with spectral norm) are author-intent claims not directly evidenced in the provided fragments; they describe the intended mathematical role of the MambaTimeDelta component. The encoding pipeline and task-specific readout are supported by repository fragments.\", \"cited_frag_ids\": [\"frag-1\", \"frag-2\", \"frag-3\", \"frag-4\", \"frag-5\", \"frag-6\", \"frag-7\", \"frag-8\", \"frag-9\", \"frag-10\", \"frag-11\", \"frag-12\", \"frag-13\", \"frag-14\", \"frag-15\", \"frag-16\", \"frag-17\", \"frag-18\", \"frag-19\"], \"text\": \"Mechanism sketch for the mainline algorithm step. The pipeline proceeds in three phases. Phase 1 (Encoding): For a target node, extract the ordered first-hop neighbor interaction sequence up to the prediction timestamp. Each interaction event is represented by a tuple of node identity, edge features, absolute interaction time, and co-occurrence context. The sequence is padded to a fixed maximum length and split into patches of a fixed size. Padded multi-channel data (node, edge, temporal, co-occurrence channels) are stacked along a new dimension to form a unified tensor. A learned router produces per-patch logits that are normalized via softmax to yield routing weights; a top-k selection retains the highest-scoring patches, and a weighted sum over the selected patches produces a compact node embedding. For link prediction, two independent encoder instances process the source and destination sequences separately; their outputs are pooled, concatenated, and passed through an MLP predictor. For node classification, a single encoder is used without the co-occurrence channel. Phase 2 (Timespan-Aware SSM): The aligned encoding is passed through a continuous-state-space model whose step size Δt is redefined as a learnable, monotonically increasing function of the elapsed time gap between consecutive interactions, inspi",
+      "estimated_prompt_tokens": 5950,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:5f87438dbd94d2634e485dd559f64b8fc8a35006da7b68a2b0b96491ed9953cd",
+      "response_digest": "sha256:5f87438dbd94d2634e485dd559f64b8fc8a35006da7b68a2b0b96491ed9953cd"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-03-2ae65141",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa",
+        "brief:story:O-COMPONENT-06-e711d58d",
+        "brief:story:O-COMPONENT-07-c430eb84",
+        "brief:story:O-COMPONENT-08-48efa86a",
+        "brief:story:O-ORGANIZATION-01-42774719",
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-COMPONENT-03-2ae65141\",\n      \"cited_frag_ids\": [\n        \"frag-112\",\n        \"frag-113\",\n        \"frag-114\",\n        \"frag-115\",\n        \"frag-116\",\n        \"frag-117\",\n        \"frag-118\",\n        \"frag-119\",\n        \"frag-120\",\n        \"frag-121\",\n        \"frag-122\",\n        \"frag-123\",\n        \"frag-124\",\n        \"frag-125\"\n      ],\n      \"text\": \"Mechanism sketch for the edge-bank link-prediction component. The supported core: edge_bank_link_prediction dispatches to one of three memory strategies (repeat-threshold, time-window, or unlimited) to produce edge_memories from historical source/destination node id sequences, then invokes predict_link_probabilities twice—once on the positive edge tuple and once on the negative edge tuple—yielding positive_probabilities and negative_probabilities respectively. The unlicensed author-intent facet specifies the input representation: edge features are used in their raw form (no learned projection at this stage), and when an edge feature is unavailable the corresponding entry is filled with a zero vector. This zero-fill design choice means the downstream probability computation treats missing edges as carrying no signal rather than as a learned default; the intended mathematical role is a neutral imputation that preserves the sparsity structure of the interaction history without introducing a learned bias. The three memory strategies differ in how they filter or weight historical edges before the probability computation, but all feed the same predict_link_probabilities call signature, so the edge-encoding choice (raw features, zero-fill) is orthogonal to the memory strategy selection and applies uniformly across all three branches. Unresolved: whether the zero-vector imputation interacts with the time-window or repeat-threshold filtering in a way that effectively down-weights missing edges versus treating them as absent; the repository does not expose a separate handling",
+      "estimated_prompt_tokens": 3259,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:5667a2833f43bb793252c23c943c928a3dc30755fc0aa0d4a0d5995ec657ae5a",
+      "response_digest": "sha256:5667a2833f43bb793252c23c943c928a3dc30755fc0aa0d4a0d5995ec657ae5a",
+      "parse_error": "formula-like draft without equation binding requires caveat"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-03-2ae65141",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa",
+        "brief:story:O-COMPONENT-06-e711d58d",
+        "brief:story:O-COMPONENT-07-c430eb84",
+        "brief:story:O-COMPONENT-08-48efa86a",
+        "brief:story:O-ORGANIZATION-01-42774719",
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-COMPONENT-03-2ae65141\",\"caveat\":\"The use of raw edge features and zero-vector fallback for unavailable features is an author design choice not directly evidenced in the repository fragments.\",\"cited_frag_ids\":[\"frag-112\",\"frag-113\",\"frag-114\",\"frag-115\",\"frag-116\",\"frag-117\",\"frag-118\",\"frag-119\"],\"text\":\"The edge encoding stage feeds raw edge features into the link-prediction pipeline. The edge_bank_link_prediction function accepts a set of positive edges and a set of negative edges, and for each set it calls predict_link_probabilities using a shared edge-memory tensor. The edge memory is computed by one of three strategies: a repeat-threshold memory that filters by interaction frequency, a time-window memory that restricts to a configurable temporal proportion, or an unlimited memory that uses the full history. When an edge feature is unavailable for a given interaction, a zero vector is substituted so that the encoding remains well-defined without introducing spurious signal. The function writes out positive_probabilities and negative_probabilities as its outputs.\"},{\"brief_id\":\"brief:story:O-COMPONENT-04-6d73cce5\",\"caveat\":\"The specific cosine-based periodic encoding of timespans is an author intent not evidenced in the repository; the repository fragments show the aggregation structure (weighted sum over contributing terms) but not the cosine formulation itself.\",\"cited_frag_ids\":[\"frag-126\",\"frag-127\",\"frag-151\",\"frag-152\",\"frag-153\",\"frag-154\",\"frag-155\",\"frag-156\",\"frag-157\",\"frag-158\",\"frag-159\"],\"text\":\"The absolute temporal encoding stage maps each interaction's timespan (the elapsed interval from that interaction to the prediction time) into a vector embedding. A trainable cosine-based periodic function is applied to the scalar timespan value, producing a fixed-length vector that captures the relative temporal position. The compute_src_dst_node_temporal_embeddings function branches on the case_study flag and separate",
+      "estimated_prompt_tokens": 3283,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:99de0172b093390b1e4af6f4530da9ea56778b82e8c3120dda26a27d404905da",
+      "response_digest": "sha256:99de0172b093390b1e4af6f4530da9ea56778b82e8c3120dda26a27d404905da"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4",
+        "brief:story:O-ORGANIZATION-04-a52145c2",
+        "brief:story:O-RATIONALE-CHECK-01-106180a0",
+        "brief:story:O-RATIONALE-CHECK-02-653d713f",
+        "brief:story:O-RATIONALE-CHECK-03-117025ca",
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-ORGANIZATION-03-359984b4\",\"caveat\":\"partially_supported_by_repository\",\"cited_frag_ids\":[ \"text\" ],\"text\":\"Mechanism sketch (setup): The redesign reparameterizes the SSM core so that the step size Δt and the state-transition matrix A are both functions of the observed inter-event timespan Δτ between consecutive interactions. Concretely, Δt is scaled by Δτ (or a monotone transform thereof) so that longer gaps induce stronger state decay, yielding temporally aware forgetting. The matrix A is redefined to encode this timespan-dependent decay rate rather than a fixed continuous-time rate. In parallel, the input and output projections B and C are redefined as input-dependent (i.e., parameterized by the current input token or embedding) and constrained via their spectral norms (∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1) to ensure stable, selective reviewing of the state. The combined effect is a mechanism where forgetting is governed by temporal structure and reviewing is governed by norm-bounded input-dependent projections.\"},{\"brief_id\":\"brief:story:O-ORGANIZATION-04-a52145c2\",\"caveat\":\"partially_supported_by_repository\",\"cited_frag_ids\":[ \"text\" ],\"text\":\"Mechanism sketch (setup): Downstream adaptation layer. Two task heads are attached to the final SSM state: (1) a link-prediction head that takes a pair of node embeddings (source, destination) and scores the probability of a future edge; (2) a node-classification head that maps a single node embedding to a class label. Both heads operate on the same learned representation, differing only in the input pairing and output dimensionality. A complexity note is included: the SSM recurrence itself is O(T·d²) per sequence (linear in sequence length T), and the downstream heads add O(d²) per query, preserving the overall linear-in-sequence-length property that distinguishes this approach from attention-based baselines.\"},{\"brief_id\":\"brief:story:O-RATIONALE-CHECK-01-106180a0\",\"caveat\":\"partially_supported_by",
+      "estimated_prompt_tokens": 1121,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:2a936c7231db074b08568607c9fa6078ad2d262f90fa879cda3ff1412e23e14d",
+      "response_digest": "sha256:2a936c7231db074b08568607c9fa6078ad2d262f90fa879cda3ff1412e23e14d",
+      "parse_error": "unknown frag id:text"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4",
+        "brief:story:O-ORGANIZATION-04-a52145c2",
+        "brief:story:O-RATIONALE-CHECK-01-106180a0",
+        "brief:story:O-RATIONALE-CHECK-02-653d713f",
+        "brief:story:O-RATIONALE-CHECK-03-117025ca",
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-ORGANIZATION-03-359984b4\",\"cited_frag_ids\":[\n    \"caveat\"\n  ],\"text\":\"Mechanism sketch (setup, core redesign). The temporal SSM core is restructured around two coupled design axes. First, the step size Δt is no longer a fixed hyperparameter but is derived per-interaction from the observed timespan between consecutive events, so that the continuous-time decay factor exp(A·Δt) naturally encodes how much state should be forgotten given the elapsed interval. The matrix A is reparameterized so that its eigenvalues control the forgetting rate in a timespan-aware manner: larger gaps produce stronger decay, while short gaps preserve more state. Second, the input and output projections B and C are redefined as input-dependent (i.e., functions of the current node/edge features) rather than static learned matrices. To keep the selective-reviewing behavior stable, the spectral norms of the projection weight matrices W_B and W_C are constrained to be at most one, which bounds the gain of the input-to-state and state-to-output mappings and prevents amplification of noise during review. The combined effect is a temporally aware forgetting schedule paired with a robust, norm-bounded selective review mechanism.\"},{\"brief_id\":\"brief:story:O-ORGANIZATION-04-a52145c2\",\"cited_frag_ids\":[\n    \"caveat\"\n  ],\"text\":\"Mechanism sketch (setup, downstream adaptation). After the temporal SSM produces node-level representations, two downstream task heads are attached. For link prediction, the representation of a source node and a destination node are combined (e.g., via a bilinear or dot-product scoring function) to yield a link probability. For node classification, a linear or MLP readout is applied to the final hidden state of each node. Both heads are trained end-to-end with the SSM backbone. A key practical property to highlight is that the SSM recurrence itself is linear in the number of interactions (O(T) per sequence), so the overall forward pass scale",
+      "estimated_prompt_tokens": 1136,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:d223b985625b13f64b1f72bb4322f00ae121ac0f8bf5abf0a32e866646911ca7",
+      "response_digest": "sha256:d223b985625b13f64b1f72bb4322f00ae121ac0f8bf5abf0a32e866646911ca7",
+      "parse_error": "unknown frag id:caveat"
+    }
+  ],
+  "content_digest": "sha256:da48e61434d1c311c4ce2a8743e5c14b432c7f2fbc4bb7a93c4f3076bd87071f"
+}

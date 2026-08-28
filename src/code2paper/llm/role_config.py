@@ -62,7 +62,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 from code2paper.schemas import LLMConfig, LLMProvider
 
@@ -77,6 +77,9 @@ CODE_INTAKE: Final[str] = "code_intake"
 CODE_ANALYZER: Final[str] = "code_analyzer"
 INTENT_COMPILER: Final[str] = "intent_compiler"
 AUTHORING_PLANNER: Final[str] = "authoring_planner"
+METHOD_PROPOSITION_ARCHITECT: Final[str] = "method_proposition_architect"
+METHOD_MECHANISM_DRAFT_PLANNER: Final[str] = "method_mechanism_draft_planner"
+METHOD_SECTION_FORMALIZER: Final[str] = "method_section_formalizer"
 METHOD_WRITER: Final[str] = "method_writer"
 LOCAL_REWRITE: Final[str] = "local_rewrite"
 SEMANTIC_VERIFIER: Final[str] = "semantic_verifier"
@@ -93,6 +96,9 @@ LLM_CALLING_ROLES: Final[tuple[str, ...]] = (
     CODE_ANALYZER,
     RESEARCH_SUPERVISOR,
     AUTHORING_PLANNER,
+    METHOD_PROPOSITION_ARCHITECT,
+    METHOD_MECHANISM_DRAFT_PLANNER,
+    METHOD_SECTION_FORMALIZER,
     METHOD_WRITER,
     LOCAL_REWRITE,
     SEMANTIC_VERIFIER,
@@ -154,7 +160,7 @@ ROLE_GENERATION_CONFIGS: Final[dict[str, RoleGenerationConfig]] = {
     CODE_INTAKE: RoleGenerationConfig(
         role=CODE_INTAKE,
         temperature=0.20,
-        max_output_tokens_default=2048,
+        max_output_tokens_default=4096,
         top_p=0.90,
         top_k=40,
     ),
@@ -173,14 +179,36 @@ ROLE_GENERATION_CONFIGS: Final[dict[str, RoleGenerationConfig]] = {
     RESEARCH_SUPERVISOR: RoleGenerationConfig(
         role=RESEARCH_SUPERVISOR,
         temperature=0.20,
-        max_output_tokens_default=1536,
+        # A 3-tool-call proposal with goal/rationale/evidence payloads
+        # exceeds 1536 tokens; a truncated JSON forced llm_parse_error and
+        # a deterministic fallback on the fresh EBCAR run.  4096 keeps the
+        # answer bounded while fitting a complete schema-valid proposal.
+        max_output_tokens_default=4096,
         top_p=0.90,
         top_k=40,
     ),
     AUTHORING_PLANNER: RoleGenerationConfig(
         role=AUTHORING_PLANNER,
         temperature=0.40,
-        max_output_tokens_default=2048,
+        max_output_tokens_default=4096,
+    ),
+    METHOD_PROPOSITION_ARCHITECT: RoleGenerationConfig(
+        role=METHOD_PROPOSITION_ARCHITECT,
+        temperature=0.00,
+        max_output_tokens_default=6144,
+        seed=42,
+    ),
+    METHOD_MECHANISM_DRAFT_PLANNER: RoleGenerationConfig(
+        role=METHOD_MECHANISM_DRAFT_PLANNER,
+        temperature=0.00,
+        max_output_tokens_default=8192,
+        seed=42,
+    ),
+    METHOD_SECTION_FORMALIZER: RoleGenerationConfig(
+        role=METHOD_SECTION_FORMALIZER,
+        temperature=0.10,
+        max_output_tokens_default=8192,
+        seed=42,
     ),
     METHOD_WRITER: RoleGenerationConfig(
         role=METHOD_WRITER,
@@ -200,7 +228,7 @@ ROLE_GENERATION_CONFIGS: Final[dict[str, RoleGenerationConfig]] = {
     SEMANTIC_VERIFIER: RoleGenerationConfig(
         role=SEMANTIC_VERIFIER,
         temperature=0.00,
-        max_output_tokens_default=1024,
+        max_output_tokens_default=2048,
     ),
     DETERMINISTIC_COMPILER: RoleGenerationConfig(
         role=DETERMINISTIC_COMPILER,
@@ -405,6 +433,8 @@ def apply_role_config(
         if env_thinking_token_budget is not None
         else base_config.thinking_token_budget
     )
+    if role == METHOD_WRITER and final_thinking_token_budget is None:
+        final_thinking_token_budget = 1024
     if final_reasoning_effort == "none":
         final_thinking_token_budget = None
     if (
@@ -494,6 +524,41 @@ def _read_float(name: str) -> float | None:
         return None
 
 
+#: Local OpenAI-compatible context window used to judge whether a role
+#: default is far below remaining capacity (W8 budget audit).
+_LOCAL_CONTEXT_WINDOW = 131072
+
+#: Roles that previously truncated structured JSON in production traces.
+_STRUCTURED_TRUNCATION_HISTORY: frozenset[str] = frozenset({
+    RESEARCH_SUPERVISOR,
+})
+
+
+def role_output_budget_audit(*, context_window: int = _LOCAL_CONTEXT_WINDOW) -> tuple[dict[str, Any], ...]:
+    """Compare each role's default output budget with the local context.
+
+    Structured JSON roles whose default is far below the context window are
+    flagged so budgets are raised in one pass instead of after each truncation.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for role, config in ROLE_GENERATION_CONFIGS.items():
+        default = int(config.max_output_tokens_default or 0)
+        structured = role in LLM_CALLING_ROLES and not config.deterministic
+        far_below = structured and 0 < default < max(4096, context_window // 16)
+        rows.append({
+            "role": role,
+            "max_output_tokens_default": default,
+            "max_output_tokens_extended": config.max_output_tokens_extended,
+            "context_window": context_window,
+            "structured_json": structured,
+            "truncation_history": role in _STRUCTURED_TRUNCATION_HISTORY,
+            "default_far_below_context": far_below,
+            "finish_reason_observation": "length" if role in _STRUCTURED_TRUNCATION_HISTORY else "structured_complete",
+        })
+    return tuple(rows)
+
+
 def _read_int(name: str) -> int | None:
     value = os.environ.get(name)
     if value is None or value.strip() == "":
@@ -514,6 +579,9 @@ __all__ = [
     "INTENT_COMPILER",
     "LLM_CALLING_ROLES",
     "LOCAL_REWRITE",
+    "METHOD_MECHANISM_DRAFT_PLANNER",
+    "METHOD_SECTION_FORMALIZER",
+    "METHOD_PROPOSITION_ARCHITECT",
     "METHOD_WRITER",
     "RESEARCH_SUPERVISOR",
     "ROLE_GENERATION_CONFIGS",
@@ -524,6 +592,7 @@ __all__ = [
     "is_llm_calling_role",
     "known_role",
     "role_generation_config",
+    "role_output_budget_audit",
     "writer_cumulative_budget",
     "writer_default_budget",
     "writer_extended_budget",

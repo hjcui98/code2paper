@@ -94,6 +94,11 @@ _FAILURE_TO_REPAIR: dict[str, tuple[TextRepairFailureType, TextRepairScope, str]
         "wording_only",
         "Rewrite the sentence to stay within the allowed wording boundary.",
     ),
+    "comparison_polarity_flipped": (
+        "missing_qualifier",
+        "claim_decomposition",
+        "Restore the licensed comparison polarity from the parent fact.",
+    ),
     # A numeric token in the sentence is not backed by direct evidence ->
     # drop the sentence or record a gap.
     "numeric_token_not_in_direct_evidence": (
@@ -222,9 +227,56 @@ def derive_repair_issues(
 
 
 def _missing_relation_hint(verdict: TextClaimEvidenceVerdict) -> str:
-    """Build a compact hint about which relation/evidence is missing."""
+    """Build a compact hint about which relation/evidence is missing.
+
+    The hint must tell the Rewrite owner the exact missing content, not
+    just that something is missing.  For ``required_qualifier_missing``
+    the exact required qualifier tokens (derived by the validator from
+    the frozen projection) are the actionable payload; a generic "add the
+    required qualifier" instruction left the model guessing.
+    """
 
     parts: list[str] = []
+    if "required_qualifier_missing" in verdict.deterministic_failures:
+        if verdict.required_qualifiers:
+            parts.append(
+                "required_qualifiers_missing: "
+                + "; ".join(dict.fromkeys(verdict.required_qualifiers))
+            )
+            parts.append(
+                "qualifier_representation_rule: render each exact qualifier as "
+                "academic prose plus the exact predicate in ONE compact "
+                "parenthetical backtick binding, for example (when the chunk "
+                "identifiers match, `doc['chunk_id'] == query['chunk_id']`); "
+                "the backtick predicate must stay verbatim and is the "
+                "repository binding, not raw code narration"
+            )
+        else:
+            parts.append("required_qualifiers_missing: <validator listed no qualifier>")
+    if "allowed_wording_boundary_exceeded" in verdict.deterministic_failures:
+        parts.append(
+            "wording_boundary_exceeded: keep only repository-supported wording"
+        )
+    if "formula_not_in_direct_evidence" in verdict.deterministic_failures:
+        # The validator extracts comparison formulas (e.g. ``i == 0``)
+        # greedily up to punctuation, so an appended descriptive word
+        # (``configuration``, ``is enabled``) changes the formula token and
+        # the exact comparison can no longer match the frozen qualifier or
+        # evidence.  The fix is wording-only: reproduce the qualifier
+        # comparison verbatim and keep the general-path formula outside the
+        # branch scope.
+        parts.append(
+            "formula_comparison_must_be_verbatim: write the required qualifier "
+            "comparison exactly as listed (e.g. 'i == 0 and case_study') without "
+            "appending descriptive words such as 'configuration' or 'is enabled'; "
+            "state the branch condition separately from the general-path formula "
+            "it does not scope"
+        )
+        if verdict.required_qualifiers:
+            parts.append(
+                "required_qualifiers: "
+                + "; ".join(dict.fromkeys(verdict.required_qualifiers))
+            )
     if not verdict.direct_evidence_ids:
         parts.append("direct_evidence: none")
     if not verdict.relation_evidence_ids:

@@ -38,7 +38,12 @@ from code2paper.agentic.gemma_supervisor_backend import (
     _RESPONSE_SCHEMA,
     _SYSTEM_PROMPT,
     _TOOL_CALLING_ACTIONS,
+    infer_research_tool_name_from_arguments,
+    lift_harness_fields_from_tool_arguments,
+    sanitize_model_tool_arguments,
+    _ResearchManagerProposalV1,
     _parse_proposal,
+    _response_schema_for_tools,
 )
 from code2paper.agentic.research_models import (
     GlobalSafetyBudgetV1,
@@ -995,6 +1000,52 @@ def test_build_prompt_only_uses_context_fields() -> None:
     assert prompt["top_candidate_symbol_ids"] == ["models.predictor:forward"]
 
 
+def test_build_prompt_lists_forbidden_exact_reads() -> None:
+    """The prompt must surface already-executed exact reads so the LLM never
+    re-proposes a doomed duplicate read.
+
+    Regression (fresh EBCAR run): the manager repeatedly proposed reading
+    ``EBCarRerankerHybridAttention.forward`` after it had already been read
+    for another obligation; policy rejected each repeat as a duplicate
+    no-gain call, churning fallbacks until STOP_BLOCKED."""
+    from code2paper.agentic.research_supervisor import (
+        ExecutedToolCallSummaryV1,
+    )
+
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation()).model_copy(update={
+        "executed_tool_calls": (
+            ExecutedToolCallSummaryV1(
+                tool_name="read_symbol",
+                arguments={"path": "model.py", "symbol": "Encoder.forward"},
+                path_scope=("model.py",),
+                goal="read candidate",
+                obligation_id="obl-0",
+            ),
+            ExecutedToolCallSummaryV1(
+                tool_name="search_symbols",
+                arguments={"query": "train", "kind_filter": []},
+                path_scope=(),
+                goal="search symbols",
+                obligation_id="obl-0",
+            ),
+        ),
+    })
+    prompt = backend._build_prompt(ctx)
+
+    forbidden = prompt["forbidden_exact_reads"]
+    assert [item["tool_name"] for item in forbidden] == ["read_symbol"]
+    assert forbidden[0]["arguments"] == {
+        "path": "model.py",
+        "symbol": "Encoder.forward",
+    }
+    assert "forbidden_exact_reads" in _SYSTEM_PROMPT
+
+
 def test_build_prompt_includes_only_compact_template_search_hints() -> None:
     backend = GemmaSupervisorBackend(
         llm_config=_llm_config(),
@@ -1115,16 +1166,53 @@ def test_parse_proposal_rejects_no_json_object() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_response_schema_requires_action_rationale_goal() -> None:
-    assert "action" in _RESPONSE_SCHEMA["properties"]
+def test_response_schema_requires_concrete_calls_or_terminal_action() -> None:
+    assert "tool_calls" in _RESPONSE_SCHEMA["properties"]
+    assert "terminal_action" in _RESPONSE_SCHEMA["properties"]
     assert "rationale" in _RESPONSE_SCHEMA["properties"]
     assert "goal" in _RESPONSE_SCHEMA["properties"]
-    assert _RESPONSE_SCHEMA["required"] == ["action", "rationale", "goal"]
+    assert _RESPONSE_SCHEMA["required"] == [
+        "tool_calls", "terminal_action", "rationale", "goal",
+    ]
 
 
 def test_system_prompt_lists_allowed_actions_constraint() -> None:
-    assert "allowed_actions" in _SYSTEM_PROMPT
-    assert "PROPOSAL" in _SYSTEM_PROMPT
+    assert "ready_tools" in _SYSTEM_PROMPT
+    assert "executed_tool_calls" in _SYSTEM_PROMPT
+
+
+def test_response_schema_constrains_arguments_per_tool() -> None:
+    """Guided decoding must bind ``arguments`` to the tool's exact input
+    schema.
+
+    Regression (fresh EBCAR run): the response schema left ``arguments`` as
+    an open object, the model invented fields such as ``regex`` on
+    ``search_code``, the strict tool validator rejected the whole proposal
+    as ``invalid_tool_proposal``, and the run churned 8 deterministic
+    fallbacks."""
+    schema = _response_schema_for_tools(
+        ["search_symbols", "search_code", "read_symbol"]
+    )
+    items = schema["properties"]["tool_calls"]["items"]
+    assert "allOf" in items
+    branches = {
+        branch["if"]["properties"]["tool_name"]["const"]: branch["then"][
+            "properties"
+        ]["arguments"]
+        for branch in items["allOf"]
+    }
+    assert set(branches) == {"search_symbols", "search_code", "read_symbol"}
+    # search_code has no regex field; search_symbols does.
+    assert "regex" not in branches["search_code"]["properties"]
+    assert "regex" in branches["search_symbols"]["properties"]
+    assert branches["search_code"]["required"] == ["query"]
+    assert branches["search_code"]["additionalProperties"] is False
+    assert branches["read_symbol"]["required"] == ["path", "symbol"]
+    # Unseen tools are not constrained but remain available via enum.
+    assert "search_code" in schema["properties"]["tool_calls"]["items"][
+        "properties"
+    ]["tool_name"]["enum"]
+    assert "COMPILE_EVIDENCE" in _SYSTEM_PROMPT
 
 
 def test_llm_allowed_actions_exclude_r4_r6_tools() -> None:
@@ -1140,6 +1228,265 @@ def test_llm_allowed_actions_exclude_r4_r6_tools() -> None:
 
 def test_tool_calling_actions_subset_of_allowed() -> None:
     assert _TOOL_CALLING_ACTIONS.issubset(_LLM_ALLOWED_ACTIONS_SET)
+
+
+def test_infer_tool_name_from_path_and_context_lines() -> None:
+    assert infer_research_tool_name_from_arguments({
+        "path": "models/encoder.py",
+        "context_lines": 0,
+    }) == "read_code_span"
+    assert infer_research_tool_name_from_arguments({
+        "path": "models/encoder.py",
+        "symbol": "forward",
+    }) == "read_symbol"
+    assert infer_research_tool_name_from_arguments({"query": "step size"}) == (
+        "search_symbols"
+    )
+    assert infer_research_tool_name_from_arguments({"path": "models/encoder.py"}) == ""
+
+
+def test_sanitize_drops_unknown_tool_arguments() -> None:
+    cleaned = sanitize_model_tool_arguments(
+        "read_code_span",
+        {
+            "path": ["models/encoder.py"],
+            "context_lines": 0,
+            "start_line": 1,
+            "end_line": 40,
+        },
+    )
+    assert cleaned["path"] == "models/encoder.py"
+    assert "context_lines" not in cleaned
+    assert cleaned["start_line"] == 1
+
+
+def test_proposal_recovers_missing_tool_name() -> None:
+    parsed = _ResearchManagerProposalV1.model_validate({
+        "goal": "Read the step-size implementation",
+        "rationale": "The candidate file is already known",
+        "terminal_action": "",
+        "tool_calls": [
+            {
+                "arguments": {
+                    "path": "models/encoder.py",
+                    "context_lines": 0,
+                },
+                "top_k": 0,
+            }
+        ],
+    })
+    assert parsed.tool_calls[0].tool_name == "read_code_span"
+
+
+def test_infer_tool_name_from_trace_argument_shapes() -> None:
+    assert infer_research_tool_name_from_arguments({
+        "source_symbol": "encode",
+        "target_symbol": "decode",
+    }) == "trace_call_path"
+    assert infer_research_tool_name_from_arguments({
+        "symbol": "encode",
+        "direction": "downstream",
+    }) == "trace_data_flow"
+    assert infer_research_tool_name_from_arguments({"symbol": "encode"}) == (
+        "find_references"
+    )
+    assert infer_research_tool_name_from_arguments({
+        "symbol": "encode",
+        "direction": "both",
+    }) != "find_references"
+
+
+def test_proposal_aliases_tool_field_and_drops_empty_list_items() -> None:
+    parsed = _ResearchManagerProposalV1.model_validate({
+        "goal": "Trace the encoder",
+        "rationale": "Both symbols are already known",
+        "terminal_action": "",
+        "tool_calls": [
+            [],
+            {
+                "tool": "trace_call_path",
+                "arguments": {
+                    "source_symbol": "encode",
+                    "target_symbol": "decode",
+                },
+            },
+        ],
+    })
+    assert len(parsed.tool_calls) == 1
+    assert parsed.tool_calls[0].tool_name == "trace_call_path"
+
+
+def test_proposal_unwraps_nested_tool_call_list() -> None:
+    parsed = _ResearchManagerProposalV1.model_validate({
+        "goal": "Search the ranker",
+        "rationale": "Need a symbol",
+        "terminal_action": "",
+        "tool_calls": [[{
+            "tool_name": "search_symbols",
+            "arguments": {"query": "rank"},
+        }]],
+    })
+    assert parsed.tool_calls[0].tool_name == "search_symbols"
+
+
+def test_lift_nested_top_k_off_arguments() -> None:
+    lifted = lift_harness_fields_from_tool_arguments({
+        "tool_name": "search_symbols",
+        "arguments": {"query": "rank", "top_k": 8},
+    })
+    assert lifted["top_k"] == 8
+    assert "top_k" not in lifted["arguments"]
+
+
+def test_record_gap_with_named_tools_executes_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({
+        "terminal_action": "RECORD_GAP",
+        "goal": "search the ranker",
+        "rationale": "still missing the symbol",
+        "tool_calls": [{
+            "tool_name": "search_symbols",
+            "arguments": {"query": "rank"},
+        }],
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+    assert decision.produced_by == "llm_proposal"
+    assert decision.action == "SEARCH_SYMBOLS"
+    assert len(decision.selected_tool_calls) == 1
+    assert decision.selected_tool_calls[0].tool_name == "search_symbols"
+
+
+def test_compile_evidence_still_defers_follow_up_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({
+        "terminal_action": "COMPILE_EVIDENCE",
+        "goal": "compile what is known",
+        "rationale": "enough spans to compile",
+        "tool_calls": [{
+            "tool_name": "search_symbols",
+            "arguments": {"query": "rank"},
+        }],
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+    assert decision.produced_by == "llm_proposal"
+    assert decision.action == "COMPILE_EVIDENCE"
+    assert decision.selected_tool_calls == ()
+
+
+def test_nested_top_k_is_lifted_not_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({
+        "terminal_action": "",
+        "goal": "search the ranker",
+        "rationale": "need hits",
+        "tool_calls": [{
+            "tool_name": "search_symbols",
+            "arguments": {"query": "rank", "top_k": 8},
+        }],
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+    assert decision.produced_by == "llm_proposal"
+    assert decision.action == "SEARCH_SYMBOLS"
+    assert decision.selected_tool_calls[0].top_k == 8
+
+
+def test_mixed_parallel_moves_keep_the_first_legal_move(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({
+        "terminal_action": "",
+        "goal": "search then read",
+        "rationale": "need both",
+        "tool_calls": [
+            {
+                "tool_name": "search_symbols",
+                "arguments": {"query": "rank"},
+            },
+            {
+                "tool_name": "read_symbol",
+                "arguments": {"path": "rank.py", "symbol": "rank"},
+            },
+        ],
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+    assert decision.produced_by == "llm_proposal"
+    assert decision.action == "SEARCH_SYMBOLS"
+    assert [call.tool_name for call in decision.selected_tool_calls] == [
+        "search_symbols"
+    ]
+    assert "read_symbol" in decision.rationale
+
+
+def test_tool_alias_trace_call_path_is_executable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ready = (
+        "find_entrypoints",
+        "search_symbols",
+        "read_symbol",
+        "find_references",
+        "build_behavior_subgraph",
+        "trace_call_path",
+        "trace_data_flow",
+    )
+    payload = json.dumps({
+        "terminal_action": "",
+        "goal": "trace encoder to decoder",
+        "rationale": "both symbols are known",
+        "tool_calls": [{
+            "tool": "trace_call_path",
+            "arguments": {
+                "source_symbol": "encode",
+                "target_symbol": "decode",
+            },
+        }],
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+        ready_tools=ready,
+    )
+    ctx = _context(
+        active_obligation=_obligation(typed_targets=(_typed_target(),)),
+        ready_tools=ready,
+    )
+    decision = backend.decide(ctx)
+    assert decision.produced_by == "llm_proposal"
+    assert decision.action == "TRACE_CALLS"
+    assert decision.selected_tool_calls[0].tool_name == "trace_call_path"
 
 
 # ---------------------------------------------------------------------------

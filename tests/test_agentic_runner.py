@@ -58,11 +58,16 @@ class AgenticRunnerTests(unittest.TestCase):
             quality_path.write_text(quality.model_dump_json(), encoding="utf-8")
             validation_path.write_text(validation.model_dump_json(), encoding="utf-8")
             ledger_path.write_text(ledger.model_dump_json(), encoding="utf-8")
+            # Q0 candidate-first: the runner upgrades a durable-candidate run
+            # from the reconciled quality gate; a result without any durable
+            # candidate stays a generation-failure candidate.
             writer_result_path.write_text(
                 PublicationWriterRunResultV1(
                     status="incomplete",
                     plan_digest="sha256:plan",
                     claim_digest="sha256:claims",
+                    candidate_generation_status="generated",
+                    candidate_available=True,
                 ).model_dump_json(),
                 encoding="utf-8",
             )
@@ -106,11 +111,32 @@ class AgenticRunnerTests(unittest.TestCase):
             writer_blocked = PublicationWriterRunResultV1.model_validate_json(
                 writer_result_path.read_text(encoding="utf-8")
             )
-            self.assertEqual(writer_blocked.status, "blocked")
-            self.assertIn(
+            # Q0: validation failure with a durable candidate is a warning run,
+            # never a blocked product run; the candidate stays available.
+            self.assertEqual(writer_blocked.status, "incomplete")
+            self.assertTrue(writer_blocked.candidate_available)
+            self.assertEqual(writer_blocked.candidate_validation_status, "warnings")
+            self.assertEqual(writer_blocked.verified_validation_status, "incomplete")
+            self.assertFalse(writer_blocked.publication_ready)
+            self.assertNotIn(
                 "publication_final_reverse_validation_failed",
                 writer_blocked.binding_failures,
             )
+            # Without any durable candidate the old fail-closed semantics
+            # remain: a blocked quality gate keeps the run blocked.
+            legacy_result_path = root / "writer_legacy.json"
+            legacy_result_path.write_text(
+                PublicationWriterRunResultV1(
+                    status="incomplete",
+                    plan_digest="sha256:plan",
+                    claim_digest="sha256:claims",
+                ).model_dump_json(),
+                encoding="utf-8",
+            )
+            legacy = PublicationWriterRunResultV1.model_validate_json(
+                legacy_result_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(legacy.status, "incomplete")
 
     def test_runner_blocks_when_invariant_audit_fails(self) -> None:
         def fake_graph(payload):

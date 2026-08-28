@@ -1,0 +1,13 @@
+{
+  "profile_name": "qwen38_vllm_budgeted",
+  "provider": "openai",
+  "model": "qwen38-27b-nvfp4",
+  "response_mode": "native_json_schema",
+  "source": "tracked_live_profile",
+  "inference_mode": "mtp",
+  "tensor_parallel_size": 1,
+  "speculative_tokens": 2,
+  "draft_tensor_parallel_size": 1,
+  "assistant_model_name": "",
+  "max_model_len": 131072
+}

@@ -288,7 +288,6 @@ class MethodOutputPolicyV1(_ProductModel):
 
     verified_positive_lanes: tuple[MethodEvidenceLane, ...] = (
         "repository_verified",
-        "repository_partial",
     )
     candidate_allowed_lanes: tuple[MethodEvidenceLane, ...] = (
         "repository_verified",
@@ -301,6 +300,7 @@ class MethodOutputPolicyV1(_ProductModel):
         "formalization_pending",
     )
     review_required_lanes: tuple[MethodEvidenceLane, ...] = (
+        "repository_partial",
         "author_intent_unverified",
         "repository_mismatch",
         "literature_pending",
@@ -556,23 +556,18 @@ def assess_plan_product_readiness(
             for item in non_positive_rows
         )
 
-        # Verified eligibility: the unit must bind at least one positive row,
+        # Verified eligibility: the *whole unit* must bind only fully
+        # repository-supported rows.  A partially-supported author
+        # obligation remains candidate/review material even when several
+        # exact repository propositions inside it can independently enter the
+        # sentence-level verified output.
         # every bound row must be positive, the unit must not be incomplete,
         # and no review-required lane may dominate.  ``repository_partial``
         # additionally requires a qualifying row record; without one the unit
         # stays candidate-only (audit warning).
         can_enter_verified = False
         if positive_rows and not non_positive_rows and unit.supported and lane not in policy.review_required_lanes:
-            if lane == "repository_partial":
-                if any(item.status == "partially_supported_by_repository" for item in positive_rows):
-                    can_enter_verified = True
-                else:
-                    audit_warnings.append(
-                        f"unit {unit.argument_unit_id}: partial lane without a qualifying row; "
-                        "verified inclusion requires a preserved qualifier"
-                    )
-            else:
-                can_enter_verified = True
+            can_enter_verified = True
         elif not rows and completeness is None:
             audit_warnings.append(
                 f"unit {unit.argument_unit_id}: no completeness matrix; verified inclusion unavailable"

@@ -1,0 +1,109 @@
+{
+  "claims": [
+    {
+      "claim_id": "C-V3-83c43c3920c97025",
+      "claim_text": "train_ebcar branches on cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cd3ed51d21d7c1b1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-29a7c45167da3ffa",
+      "claim_text": "train_ebcar returns reranker",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-b77791d52b625583"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-02f690e1711b7afb",
+      "claim_text": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d009fa59ec15421c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-4c09a3f1326a9d17",
+      "claim_text": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-dd8b7df60b19e38e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-1b4ba8e0499d4659",
+      "claim_text": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6b838f9649a3cfd1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-909e9ae6575e5fc9",
+      "claim_text": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-840f7bfae148fbf4"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-2728c7cf000a4058",
+      "claim_text": "train_ebcar computes formula train_loss, len(train_loader)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e62792456fca35cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-200c2636987a0e14",
+      "claim_text": "train_ebcar configured by cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cd3ed51d21d7c1b1",
+        "E-V3-dd8b7df60b19e38e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    }
+  ]
+}

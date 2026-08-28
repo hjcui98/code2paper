@@ -56,6 +56,7 @@ ResearchAction = Literal[
     "COMPILE_FACTS",
     "DECOMPOSE_CLAIMS",
     "REWRITE_SENTENCES",
+    "COMPILE_EVIDENCE",
     "RECORD_GAP",
     "PLAN_METHOD",
     "STOP_BLOCKED",
@@ -75,6 +76,7 @@ RESEARCH_ACTIONS: tuple[ResearchAction, ...] = (
     "COMPILE_FACTS",
     "DECOMPOSE_CLAIMS",
     "REWRITE_SENTENCES",
+    "COMPILE_EVIDENCE",
     "RECORD_GAP",
     "PLAN_METHOD",
     "STOP_BLOCKED",
@@ -156,6 +158,10 @@ TextRepairFailureType = Literal[
     "semantic_verifier_exhausted",
     "method_language_style",
     "supported_claim_not_rendered",
+    "reader_facing_internal_id",
+    "section_structure",
+    "formula_not_rendered",
+    "heading_tail_leaked_into_body",
 ]
 
 
@@ -166,6 +172,7 @@ TextRepairScope = Literal[
     "packet_relation",
     "code_search",
     "drop_or_gap",
+    "formula_rendering",
 ]
 
 
@@ -181,6 +188,10 @@ TEXT_REPAIR_FAILURE_TYPES: tuple[TextRepairFailureType, ...] = (
     "semantic_verifier_exhausted",
     "method_language_style",
     "supported_claim_not_rendered",
+    "reader_facing_internal_id",
+    "section_structure",
+    "formula_not_rendered",
+    "heading_tail_leaked_into_body",
 )
 
 
@@ -191,6 +202,7 @@ TEXT_REPAIR_SCOPES: tuple[TextRepairScope, ...] = (
     "packet_relation",
     "code_search",
     "drop_or_gap",
+    "formula_rendering",
 )
 
 
@@ -205,9 +217,110 @@ class _ResearchModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ResearchContinuationSeedV1(_ResearchModel):
+    """Honest starting point for writing-time research without a checkpoint.
+
+    A replay may have frozen, digest-pinned evidence but no persisted Research
+    stage checkpoint.  This seed authorizes a new scoped continuation from
+    that frozen authority; it does not claim to contain the old supervisor
+    decisions or LangGraph history.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    run_id: str
+    repo_snapshot_id: str
+    project_tree_hash: str
+    origin: Literal["reconstructed_from_frozen_authority"] = (
+        "reconstructed_from_frozen_authority"
+    )
+    past_decision_trace_available: bool = False
+    source_digests: dict[str, str] = Field(default_factory=dict)
+    source_paths: dict[str, str] = Field(default_factory=dict)
+    intent_digest: str = ""
+    agenda_digest: str = ""
+    evidence_digest: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _honest_provenance(self) -> "ResearchContinuationSeedV1":
+        if not self.run_id.strip():
+            raise ValueError("research continuation seed requires run id")
+        if not self.repo_snapshot_id.strip():
+            raise ValueError("research continuation seed requires snapshot id")
+        if not self.project_tree_hash.strip():
+            raise ValueError("research continuation seed requires tree hash")
+        if self.past_decision_trace_available:
+            raise ValueError(
+                "reconstructed research continuation seed cannot claim past decision trace"
+            )
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        encoded = json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        object.__setattr__(
+            self,
+            "content_digest",
+            "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        )
+        return self
+
+    @property
+    def source_artifact_digests(self) -> dict[str, str]:
+        """Compatibility/readability alias for the frozen authority digests."""
+
+        return dict(self.source_digests)
+
+
 # ---------------------------------------------------------------------------
 # Research agenda
 # ---------------------------------------------------------------------------
+
+
+class ResearchSemanticSlotV1(_ResearchModel):
+    """Mandatory semantic unit used to schedule repository research.
+
+    Slots are intentionally smaller than a claim: an input, operation,
+    condition, output, or required relation can be closed independently.  A
+    slot status is an observation for scheduling only; it never grants prose
+    or Verified authority.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    slot_id: str
+    slot_kind: Literal[
+        "entrypoint",
+        "input",
+        "transformation",
+        "decision",
+        "condition",
+        "output",
+        "relation",
+        "formula",
+    ]
+    terms: tuple[str, ...] = Field(default_factory=tuple)
+    required: bool = True
+    polarity: str = "unknown"
+    status: Literal["open", "discovered_partial", "bound", "gap"] = "open"
+    bound_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+    @field_validator("slot_id")
+    @classmethod
+    def _slot_id_nonempty(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("semantic slot id must not be empty")
+        return str(value).strip()
+
+    @field_validator("terms", "bound_fact_ids", "bound_span_ids")
+    @classmethod
+    def _slot_values_unique(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(str(item).strip() for item in value if str(item).strip()))
 
 
 class TypedBehaviorTargetV1(_ResearchModel):
@@ -243,6 +356,59 @@ class TypedBehaviorTargetV1(_ResearchModel):
     aliases: tuple[str, ...] = Field(default_factory=tuple)
     organization_preference: str = ""
     risk_level: Literal["low", "medium", "high"] = "medium"
+    semantic_slots: tuple[ResearchSemanticSlotV1, ...] = Field(default_factory=tuple)
+
+    @model_validator(mode="after")
+    def _derive_semantic_slots(self) -> "TypedBehaviorTargetV1":
+        """Populate deterministic mandatory slots when legacy callers omit them."""
+
+        if self.semantic_slots:
+            return self
+        values: tuple[tuple[str, tuple[str, ...]], ...] = (
+            ("entrypoint", self.inputs),
+            ("transformation", self.transformations or self.desired_predicates),
+            ("decision", self.decisions),
+            ("condition", self.conditions),
+            ("output", self.outputs),
+            ("relation", self.required_relations),
+        )
+        slots: list[ResearchSemanticSlotV1] = []
+        for kind, terms in values:
+            cleaned = tuple(dict.fromkeys(str(item).strip() for item in terms if str(item).strip()))
+            if not cleaned:
+                continue
+            slots.append(ResearchSemanticSlotV1(
+                slot_id=f"{self.target_id}:slot:{kind}",
+                slot_kind=kind,  # type: ignore[arg-type]
+                terms=cleaned,
+                polarity=(
+                    _condition_polarity(cleaned)
+                    if kind == "condition"
+                    else "unknown"
+                ),
+            ))
+        object.__setattr__(self, "semantic_slots", tuple(slots))
+        return self
+
+
+def _condition_polarity(values: tuple[str, ...]) -> str:
+    """Map explicit comparison syntax to a direction without guessing prose.
+
+    The comparison operator is carried from the author-intent condition into
+    the research slot.  A bare condition stays ``unknown`` and therefore
+    cannot be treated as an exclude/select witness by downstream validation.
+    """
+
+    text = " ".join(str(value) for value in values)
+    if "<=" in text or "≤" in text:
+        return "threshold_lte_excludes"
+    if ">=" in text or "≥" in text:
+        return "threshold_gte_selects"
+    if "<" in text:
+        return "threshold_lt_excludes"
+    if ">" in text:
+        return "threshold_gt_selects"
+    return "unknown"
 
 
 class GapRequirementV1(_ResearchModel):
@@ -410,6 +576,25 @@ class ResearchObservationDiagnosticsV1(_ResearchModel):
     notes: tuple[str, ...] = Field(default_factory=tuple)
 
 
+class ResearchObservationNotebookV1(_ResearchModel):
+    """Bounded, reader-facing observation content for the research manager.
+
+    ``ResearchObservationV1`` remains the authority/provenance record.  This
+    notebook view is deliberately *not* evidence: it is a compact projection
+    that lets the model understand what a search or read actually found and
+    decide the next query.  Exact spans and refs remain available separately
+    and are still validated by the deterministic evidence data plane.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    summary: str = ""
+    code_excerpt: str = ""
+    discovered_symbols: tuple[str, ...] = Field(default_factory=tuple)
+    discovered_relations: tuple[str, ...] = Field(default_factory=tuple)
+    enclosing_symbol_refs: tuple[str, ...] = Field(default_factory=tuple)
+
+
 class ResearchObservationV1(_ResearchModel):
     """Deterministic result of executing a ``ResearchToolCallV1``.
 
@@ -440,6 +625,9 @@ class ResearchObservationV1(_ResearchModel):
     exact_span_ids: tuple[str, ...] = Field(default_factory=tuple)
     diagnostics: ResearchObservationDiagnosticsV1 = Field(
         default_factory=ResearchObservationDiagnosticsV1
+    )
+    notebook: ResearchObservationNotebookV1 = Field(
+        default_factory=ResearchObservationNotebookV1
     )
     input_digest: str = ""
     output_digest: str = ""
@@ -574,7 +762,9 @@ class ResearchDecisionV1(_ResearchModel):
                 f"action {self.action} requires at least one selected_tool_call"
             )
         # STOP_BLOCKED and RECORD_GAP must not issue tool calls.
-        terminal_actions = {"STOP_BLOCKED", "RECORD_GAP", "PLAN_METHOD"}
+        terminal_actions = {
+            "STOP_BLOCKED", "RECORD_GAP", "COMPILE_EVIDENCE", "PLAN_METHOD"
+        }
         if self.action in terminal_actions and self.selected_tool_calls:
             raise ValueError(
                 f"action {self.action} must not select tool calls"
@@ -961,6 +1151,7 @@ def make_observation(
     result_refs: tuple[str, ...] = (),
     exact_span_ids: tuple[str, ...] = (),
     diagnostics: ResearchObservationDiagnosticsV1 | None = None,
+    notebook: ResearchObservationNotebookV1 | None = None,
     error_message: str = "",
     output_payload: Any = None,
 ) -> ResearchObservationV1:
@@ -987,6 +1178,7 @@ def make_observation(
             "result_refs": list(result_refs),
             "exact_span_ids": list(exact_span_ids),
             "diagnostics": (diagnostics or ResearchObservationDiagnosticsV1()).model_dump(mode="json"),
+            "notebook": (notebook or ResearchObservationNotebookV1()).model_dump(mode="json"),
             "error_message": error_message,
             "output_payload": output_payload,
         }
@@ -1004,6 +1196,7 @@ def make_observation(
         result_refs=result_refs,
         exact_span_ids=exact_span_ids,
         diagnostics=diagnostics or ResearchObservationDiagnosticsV1(),
+        notebook=notebook or ResearchObservationNotebookV1(),
         input_digest=input_digest,
         output_digest=output_digest,
         error_message=error_message,
@@ -1069,9 +1262,11 @@ __all__ = [
     "ResearchAgendaItemStatus",
     "ResearchAgendaItemV1",
     "ResearchAgendaV1",
+    "ResearchContinuationSeedV1",
     "ResearchDecisionV1",
     "ResearchIssueV1",
     "ResearchObservationDiagnosticsV1",
+    "ResearchObservationNotebookV1",
     "ResearchObservationStatus",
     "ResearchObservationV1",
     "ResearchToolCallV1",

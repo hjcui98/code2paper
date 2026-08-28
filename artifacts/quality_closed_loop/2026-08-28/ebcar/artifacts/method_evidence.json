@@ -1,0 +1,257 @@
+{
+  "project_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "author_mode": "none",
+  "author_confirmation_required": true,
+  "method_name": "EBCAR",
+  "method_goal": "Describe only the code-supported claims in the authoring projection.",
+  "implementation_scope": "/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker",
+  "latex_expression_preference": "balanced",
+  "entrypoints": [
+    "conf/__init__.py"
+  ],
+  "stages": [
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_1",
+          "description": "Executable details supporting the method beyond the named pipeline stages.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-6b838f9649a3cfd1",
+            "E-V3-840f7bfae148fbf4",
+            "E-V3-b77791d52b625583",
+            "E-V3-cd3ed51d21d7c1b1",
+            "E-V3-d009fa59ec15421c",
+            "E-V3-dd8b7df60b19e38e",
+            "E-V3-e62792456fca35cc"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    }
+  ],
+  "behavior_patterns": [],
+  "equation_candidates": [
+    {
+      "equation_id": "EQ-V3-8f70993bb80bd8b9",
+      "name": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-3cdeccb52f127fce",
+      "name": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "latex": "x / y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-ed3e02d077f35f7d",
+      "name": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "latex": "x / y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "cfg.use_dedicated_attention"
+      ]
+    }
+  ],
+  "architecture_parameters": [],
+  "tensor_roles": [],
+  "innovation_candidates": [],
+  "paper_module_aliases": [],
+  "method_overview": {},
+  "stage_packets": [
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "stage_claim": "train_ebcar loads weights cfg.use_dedicated_attention train_ebcar branches on cfg.use_dedicated_attention train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss train_ebcar returns reranker train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name train_ebcar computes formula train_loss, len(train_loader) train_ebcar configured by cfg.use_dedicated_attention",
+      "claim_ids": [
+        "C-V3-4c09a3f1326a9d17",
+        "C-V3-83c43c3920c97025",
+        "C-V3-02f690e1711b7afb",
+        "C-V3-1b4ba8e0499d4659",
+        "C-V3-29a7c45167da3ffa",
+        "C-V3-909e9ae6575e5fc9",
+        "C-V3-2728c7cf000a4058",
+        "C-V3-200c2636987a0e14"
+      ],
+      "evidence_ids": [
+        "E-V3-dd8b7df60b19e38e",
+        "E-V3-cd3ed51d21d7c1b1",
+        "E-V3-d009fa59ec15421c",
+        "E-V3-6b838f9649a3cfd1",
+        "E-V3-b77791d52b625583",
+        "E-V3-840f7bfae148fbf4",
+        "E-V3-e62792456fca35cc"
+      ],
+      "relation_evidence_ids": [
+        "E-V3-4ef15a80fa4c565a"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "organization_priority": 6
+    }
+  ],
+  "writing_constraints": [
+    "The projection is the writer's only positive method-fact input.",
+    "Follow semantic stage groups in organization_priority order.",
+    "Use only each stage group's ordered authorized claims and relation evidence.",
+    "Author-attested fragments remain caveated and never become repository evidence.",
+    "Do not introduce explicit gaps or unsupported author fragments as positive prose.",
+    "Compatibility evidence id E-V3-4ef15a80fa4c565a maps to rel:7a74e9e69f2aa0ab.",
+    "Compatibility evidence id E-V3-dd8b7df60b19e38e maps to span:src/train_ebcar.py:116:116.",
+    "Compatibility evidence id E-V3-cd3ed51d21d7c1b1 maps to span:src/train_ebcar.py:116:117.",
+    "Compatibility evidence id E-V3-840f7bfae148fbf4 maps to span:src/train_ebcar.py:117:117.",
+    "Compatibility evidence id E-V3-6b838f9649a3cfd1 maps to span:src/train_ebcar.py:183:185.",
+    "Compatibility evidence id E-V3-e62792456fca35cc maps to span:src/train_ebcar.py:240:240.",
+    "Compatibility evidence id E-V3-d009fa59ec15421c maps to span:src/train_ebcar.py:291:291.",
+    "Compatibility evidence id E-V3-b77791d52b625583 maps to span:src/train_ebcar.py:318:318.",
+    "Compatibility claim id C-V3-4c09a3f1326a9d17 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83.",
+    "Compatibility claim id C-V3-83c43c3920c97025 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b.",
+    "Compatibility claim id C-V3-02f690e1711b7afb maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3.",
+    "Compatibility claim id C-V3-1b4ba8e0499d4659 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee.",
+    "Compatibility claim id C-V3-29a7c45167da3ffa maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18.",
+    "Compatibility claim id C-V3-909e9ae6575e5fc9 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c.",
+    "Compatibility claim id C-V3-2728c7cf000a4058 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e.",
+    "Compatibility claim id C-V3-200c2636987a0e14 maps to claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7."
+  ],
+  "alignment_notes": [],
+  "excluded_sources": [],
+  "author_logic_priority": true,
+  "frozen_mechanisms": [],
+  "distinguishing_mechanisms": [],
+  "author_logic_mapping": {
+    "author_proposed_flow": [],
+    "author_supported_flow": [],
+    "author_unsupported_parts": []
+  },
+  "unsupported_author_parts": [],
+  "claim_contracts": [
+    {
+      "claim_id": "C-V3-83c43c3920c97025",
+      "claim_intent": "train_ebcar branches on cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cd3ed51d21d7c1b1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-29a7c45167da3ffa",
+      "claim_intent": "train_ebcar returns reranker",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-b77791d52b625583"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-02f690e1711b7afb",
+      "claim_intent": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d009fa59ec15421c"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-4c09a3f1326a9d17",
+      "claim_intent": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-dd8b7df60b19e38e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-1b4ba8e0499d4659",
+      "claim_intent": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6b838f9649a3cfd1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-909e9ae6575e5fc9",
+      "claim_intent": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-840f7bfae148fbf4"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-2728c7cf000a4058",
+      "claim_intent": "train_ebcar computes formula train_loss, len(train_loader)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-e62792456fca35cc"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-200c2636987a0e14",
+      "claim_intent": "train_ebcar configured by cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cd3ed51d21d7c1b1",
+        "E-V3-dd8b7df60b19e38e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "review_question_id": ""
+    }
+  ],
+  "negative_scope": []
+}

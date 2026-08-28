@@ -56,9 +56,23 @@ class TestMethodAgentCommand:
         summary = json.loads(
             (product_dir / "run_summary.json").read_text(encoding="utf-8")
         )
-        assert summary["research"]["status"] in {"trusted", "incomplete"}
+        # ``degraded`` is the honest product status for a deterministic
+        # ``--no-live-llm`` run whose research still completed with usable
+        # evidence (all obligations terminal, no synthetic support).  The
+        # assertion guards against ``blocked`` (fallback exhaustion).
+        research = summary["research"]
+        assert research["status"] in {"trusted", "incomplete", "degraded"}
+        # The deterministic fixture must terminate with every obligation
+        # resolved (plan 13.3): not ``stop_blocked``, not turn-budget
+        # truncation, and a non-empty repository evidence chain.
+        assert research["termination_reason"] == "all_obligations_terminal"
+        evidence = summary["evidence"]
+        assert evidence["unresolved_obligations"] == 0
+        assert evidence["evidence_packets"] > 0
+        assert evidence["verified_facts"] > 0
+        assert evidence["supported_claims"] > 0
+        assert evidence["synthetic_support_used"] is False
         assert summary["plan"]["plan_built"] is True
-        assert summary["evidence"]["synthetic_support_used"] is False
 
     def test_claims_input_reaches_research(
         self,

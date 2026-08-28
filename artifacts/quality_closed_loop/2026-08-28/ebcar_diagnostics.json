@@ -1,0 +1,205 @@
+[
+  {
+    "schema_version": "1.0",
+    "run_root": "/tmp/c2p-quality-closed-loop-retain-ebcar-20260828",
+    "artifact_presence": {
+      "method_propositions_v1": false,
+      "method_proposition_alignment_v1": true,
+      "publication_candidate_method": true,
+      "repository_verified_method": true,
+      "author_review_candidates": true,
+      "text_evidence_validation": true,
+      "method_content_trace_v1": true,
+      "publication_paragraph_transaction_assessments_v1": true,
+      "authoring_structural_exit_v1": true
+    },
+    "output_bytes": {
+      "candidate": 7519,
+      "verified": 0,
+      "review": 52977
+    },
+    "propositions": {
+      "planned": 0,
+      "gaps": 0,
+      "rendered": 0,
+      "validated": 0,
+      "semantic_alignment_calls": 0
+    },
+    "reverse_validation": {
+      "status": "failed",
+      "supported": 0,
+      "caveated": 0,
+      "unsupported": 4,
+      "unverified": 0,
+      "failures_by_type": {
+        "direct_evidence_missing": 4,
+        "no_semantically_matching_projected_claim": 4
+      }
+    },
+    "quality": {
+      "status": "blocked",
+      "planned_proposition_recall": null,
+      "rendered_proposition_recall": null,
+      "validated_proposition_recall": null,
+      "unsupported_positive_claims": 4,
+      "issue_codes": [
+        "final_text_validation_failed",
+        "final_text_claim_validation_failed",
+        "final_text_claim_validation_failed",
+        "final_text_claim_validation_failed",
+        "final_text_claim_validation_failed",
+        "writer_binding_failed",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "required_argument_move_missing",
+        "move_unanchored",
+        "move_unanchored",
+        "section_dependency_incomplete",
+        "writing_research_request_open",
+        "writing_research_request_open",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "publication_utility_failure",
+        "supported_unit_missing_from_final"
+      ]
+    },
+    "content_chain": {
+      "summary": {
+        "rows": 27,
+        "sections": 5,
+        "planned_paragraphs": 27,
+        "rendered_paragraphs": 2,
+        "rendered_slots": 0,
+        "planned_edges": 0,
+        "rendered_edges": 0,
+        "formula_obligations": 1,
+        "consumed_formula_packages": 0,
+        "field_bound_rows": 0,
+        "condition_polarity_witness_rows": 0,
+        "not_discovered": 0,
+        "discovered_partial": 0,
+        "discovered_bound": 0,
+        "planned": 0,
+        "rendered": 2,
+        "rendered_invalid": 14,
+        "blocked_representation": 11,
+        "intent_code_mismatch": 0,
+        "deferred_with_reason": 0
+      },
+      "content_digest": "sha256:2d0d89cfe5c682423e991c104de61333cf3df57e7a95fe4cf8c5908a95ad69ba",
+      "terminal_states": [
+        "blocked_representation",
+        "rendered",
+        "rendered_invalid"
+      ]
+    },
+    "transactions": {
+      "editor": 0,
+      "rewrite": 0,
+      "rewrite_applied": 0,
+      "paragraph_assessments": 27,
+      "paragraph_assessments_valid": 11,
+      "paragraph_assessments_invalid": 16
+    },
+    "structural_exit": {
+      "eligible": false,
+      "reasons": [
+        "required_paragraph_invalid:MA-S1:paragraph:MA-S1:2",
+        "required_target_uncovered:MA-S1:paragraph:MA-S1:2:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:2",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:2:slot",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:2:formula",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:4",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:4:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:5",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:5:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:11",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:11:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:12",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:12:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:13",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:13:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:14",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:14:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:15",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:15:facet",
+        "required_paragraph_invalid:MA-S3:paragraph:MA-S3:16",
+        "required_target_uncovered:MA-S3:paragraph:MA-S3:16:facet",
+        "required_paragraph_invalid:MA-S4:paragraph:MA-S4:2",
+        "required_target_uncovered:MA-S4:paragraph:MA-S4:2:facet",
+        "required_paragraph_invalid:MA-S4:paragraph:MA-S4:3",
+        "required_target_uncovered:MA-S4:paragraph:MA-S4:3:facet",
+        "required_paragraph_invalid:MA-S4:paragraph:MA-S4:5",
+        "required_target_uncovered:MA-S4:paragraph:MA-S4:5:facet",
+        "required_paragraph_invalid:MA-S5:paragraph:MA-S5:2",
+        "required_target_uncovered:MA-S5:paragraph:MA-S5:2:facet",
+        "rendered_invalid:15",
+        "blocked_representation:11",
+        "required_target_coverage_incomplete",
+        "required_slot_coverage_incomplete",
+        "callback_request_targets_not_unique"
+      ],
+      "required_targets": 22,
+      "valid_targets": 0,
+      "accepted_formula_packages": 0,
+      "consumed_formula_packages": 0,
+      "content_digest": "sha256:227856f40a4ace217e739e238e5b27236436f95bbbea1a811239211d99505b43"
+    },
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "writer_text": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nExisting dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.\n\nThe ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+        "declared_rendered_proposition_ids": [],
+        "declared_deferred_proposition_ids": [],
+        "validated_proposition_ids": [],
+        "missing_proposition_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S1:1",
+          "paragraph:MA-S1:2"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_equation_ids": []
+      },
+      {
+        "section_id": "MA-S2",
+        "writer_text": "## Embedding‑based reranking formulation and overall framework.\n\nThis section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+        "declared_rendered_proposition_ids": [],
+        "declared_deferred_proposition_ids": [],
+        "validated_proposition_ids": [],
+        "missing_proposition_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_equation_ids": []
+      }
+    ]
+  }
+]

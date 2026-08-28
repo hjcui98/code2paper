@@ -1,0 +1,2226 @@
+{
+  "schema_version": "2.0",
+  "mode": "obligation-coverage-v2",
+  "intent_graph_digest": "sha256:32cb33d746c92e1e3adc7d4f30c6c362492c80ac203ad6d7e0f171d62f74f620",
+  "fact_set_digest": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+  "claim_set_digest": "sha256:b5602e9f254a4bd7f1b7db4293311821872b0be54d9d655ca476935fc9702e59",
+  "items": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "obligation_kind": "method_mainline",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-ea364367e4d9",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-12488d4db899",
+          "target_scope": "any",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-d9c93c39b278",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        },
+        {
+          "target_id": "target-ed708b2e32f0",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "SELECT"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-28d15b78c376",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-166f0db0c840",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        },
+        {
+          "target_id": "target-7b0da5299b1e",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-22340e7ccc67",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-c6e8f7d3966e",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-b893dce46655",
+          "target_scope": "any",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-850961f454f2",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "SELECT"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-d8a107f2cfbf",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-87c16fd5fd33",
+          "target_scope": "any",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-bf37b467e173",
+          "target_scope": "any",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-c56c2da81fd1",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-b28bcf95a54c",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-5080a772ca62",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-e667cf8e0ba6",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-c6f71eef43fc",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-f4fead4e0490",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        },
+        {
+          "target_id": "target-b09e43c14e92",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "SELECT"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-473e548225b9",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-5f4b53f1da9c",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-67918d951a54",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "outputs",
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "outputs",
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-cda688f649bf",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "SELECT"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "No supported code fact covers any typed behavior target."
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-571a422b2a0e",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-e28d642a7a25",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-0d31c0bab169",
+          "target_scope": "any",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-e7e67605b8cf",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-b8e8027b6d0c",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-7c410a90ce46",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-5d2a619b6f7a",
+          "target_scope": "any",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "COMPUTE",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-139c62ef9a52",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-537e7728def0",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-19c35496e0f9",
+          "target_scope": "any",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "COMPUTE",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-33eb8841bbb0",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-309f3c6c5408",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-5d034f2eee9e",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-25fdf28be45a",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        },
+        {
+          "target_id": "target-4c89e926ecf2",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-ef8213ef3c01",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-642a04a86ca2",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-81fb93a418e6",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-54911271",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-895e20b74de9",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-85484bb8b8d8",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-cae14d633efb",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-ebab977b2219",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-6719102f5449",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-c1aa9e25e946",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-f240dc275baa",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-7d8fea722a15",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-f29322605dfb",
+          "target_scope": "any",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-9b6ba4dca2b8",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-d0b881d04cf9",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [],
+          "matched_predicates": [],
+          "unmatched_predicates": [
+            "FILTER"
+          ],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "unresolved"
+        },
+        {
+          "target_id": "target-18b224e432d1",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-ec99c0352d36",
+          "target_scope": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-85bad4b3019f",
+          "target_scope": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+          ],
+          "matched_predicates": [
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    }
+  ],
+  "must_cover_count": 6,
+  "terminal_must_cover_count": 6,
+  "supported_must_cover_count": 0,
+  "unresolved_must_cover_ids": [],
+  "explicit_gap_count": 0,
+  "content_digest": "sha256:888d171a625c8992f299631f53f806b4ba105a7cfbb04f9f59a5e7fbe1b2688e"
+}

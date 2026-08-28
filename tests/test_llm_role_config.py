@@ -20,6 +20,8 @@ from code2paper.llm.role_config import (
     INTENT_COMPILER,
     LLM_CALLING_ROLES,
     LOCAL_REWRITE,
+    METHOD_MECHANISM_DRAFT_PLANNER,
+    METHOD_SECTION_FORMALIZER,
     METHOD_WRITER,
     RESEARCH_SUPERVISOR,
     ROLE_GENERATION_CONFIGS,
@@ -54,13 +56,15 @@ def _base_config(**overrides) -> LLMConfig:
 class RoleRegistryTests(unittest.TestCase):
     """Tests for the role registry constants."""
 
-    def test_llm_calling_roles_has_eight_roles(self) -> None:
-        self.assertEqual(len(LLM_CALLING_ROLES), 8)
+    def test_llm_calling_roles_has_eleven_roles(self) -> None:
+        self.assertEqual(len(LLM_CALLING_ROLES), 11)
         self.assertIn(INTENT_COMPILER, LLM_CALLING_ROLES)
         self.assertIn(CODE_INTAKE, LLM_CALLING_ROLES)
         self.assertIn(CODE_ANALYZER, LLM_CALLING_ROLES)
         self.assertIn(RESEARCH_SUPERVISOR, LLM_CALLING_ROLES)
         self.assertIn(AUTHORING_PLANNER, LLM_CALLING_ROLES)
+        self.assertIn(METHOD_MECHANISM_DRAFT_PLANNER, LLM_CALLING_ROLES)
+        self.assertIn(METHOD_SECTION_FORMALIZER, LLM_CALLING_ROLES)
         self.assertIn(METHOD_WRITER, LLM_CALLING_ROLES)
         self.assertIn(LOCAL_REWRITE, LLM_CALLING_ROLES)
         self.assertIn(SEMANTIC_VERIFIER, LLM_CALLING_ROLES)
@@ -124,17 +128,32 @@ class RoleGenerationConfigTableTests(unittest.TestCase):
     def test_method_writer_temperature_is_0_70(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[METHOD_WRITER].temperature, 0.70)
 
+    def test_mechanism_draft_planner_budget_is_8192(self) -> None:
+        self.assertEqual(
+            ROLE_GENERATION_CONFIGS[METHOD_MECHANISM_DRAFT_PLANNER].max_output_tokens_default,
+            8192,
+        )
+
+    def test_section_formalizer_uses_low_temperature_and_8192_budget(self) -> None:
+        config = ROLE_GENERATION_CONFIGS[METHOD_SECTION_FORMALIZER]
+        self.assertLessEqual(config.temperature, 0.2)
+        self.assertEqual(config.max_output_tokens_default, 8192)
+
     def test_local_rewrite_temperature_is_0_35(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[LOCAL_REWRITE].temperature, 0.35)
 
     def test_semantic_verifier_temperature_is_0_00(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[SEMANTIC_VERIFIER].temperature, 0.00)
 
-    def test_research_supervisor_default_budget_is_1536(self) -> None:
-        self.assertEqual(ROLE_GENERATION_CONFIGS[RESEARCH_SUPERVISOR].max_output_tokens_default, 1536)
+    def test_research_supervisor_default_budget_is_4096(self) -> None:
+        # A 3-tool-call proposal with goal/rationale/evidence payloads
+        # exceeded 1536 tokens on the fresh EBCAR run (truncated JSON,
+        # llm_parse_error); the budget was raised again after the 3072
+        # envelope still sat far below the local 131072 context window.
+        self.assertEqual(ROLE_GENERATION_CONFIGS[RESEARCH_SUPERVISOR].max_output_tokens_default, 4096)
 
     def test_embedded_intake_and_analyzer_budgets_have_distinct_roles(self) -> None:
-        self.assertEqual(ROLE_GENERATION_CONFIGS[CODE_INTAKE].max_output_tokens_default, 2048)
+        self.assertEqual(ROLE_GENERATION_CONFIGS[CODE_INTAKE].max_output_tokens_default, 4096)
         self.assertEqual(ROLE_GENERATION_CONFIGS[CODE_ANALYZER].max_output_tokens_default, 4096)
 
     def test_research_supervisor_sampling_defaults_are_gemma_tuned(self) -> None:
@@ -142,8 +161,8 @@ class RoleGenerationConfigTableTests(unittest.TestCase):
         self.assertEqual(config.top_p, 0.90)
         self.assertEqual(config.top_k, 40)
 
-    def test_authoring_planner_default_budget_is_2048(self) -> None:
-        self.assertEqual(ROLE_GENERATION_CONFIGS[AUTHORING_PLANNER].max_output_tokens_default, 2048)
+    def test_authoring_planner_default_budget_is_4096(self) -> None:
+        self.assertEqual(ROLE_GENERATION_CONFIGS[AUTHORING_PLANNER].max_output_tokens_default, 4096)
 
     def test_method_writer_default_budget_is_8192(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[METHOD_WRITER].max_output_tokens_default, 8192)
@@ -164,8 +183,8 @@ class RoleGenerationConfigTableTests(unittest.TestCase):
     def test_local_rewrite_default_budget_is_3072(self) -> None:
         self.assertEqual(ROLE_GENERATION_CONFIGS[LOCAL_REWRITE].max_output_tokens_default, 3072)
 
-    def test_semantic_verifier_default_budget_is_1024(self) -> None:
-        self.assertEqual(ROLE_GENERATION_CONFIGS[SEMANTIC_VERIFIER].max_output_tokens_default, 1024)
+    def test_semantic_verifier_default_budget_is_2048(self) -> None:
+        self.assertEqual(ROLE_GENERATION_CONFIGS[SEMANTIC_VERIFIER].max_output_tokens_default, 2048)
 
     def test_deterministic_compiler_is_marked_deterministic(self) -> None:
         self.assertTrue(ROLE_GENERATION_CONFIGS[DETERMINISTIC_COMPILER].deterministic)
@@ -190,7 +209,7 @@ class RoleGenerationConfigTableTests(unittest.TestCase):
         # even when extended=True is requested.
         cfg = ROLE_GENERATION_CONFIGS[RESEARCH_SUPERVISOR]
         self.assertIsNone(cfg.max_output_tokens_extended)
-        self.assertEqual(cfg.max_output_tokens(extended=True), 1536)
+        self.assertEqual(cfg.max_output_tokens(extended=True), 4096)
 
 
 class WriterBudgetHelpersTests(unittest.TestCase):
@@ -218,8 +237,13 @@ class ApplyRoleConfigTests(unittest.TestCase):
         self.assertEqual(cfg.temperature, 0.20)
 
     def test_apply_role_config_uses_role_default_max_output_tokens(self) -> None:
-        cfg = apply_role_config(_base_config(), AUTHORING_PLANNER)
-        self.assertEqual(cfg.max_output_tokens, 2048)
+        env = {
+            "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS_AUTHORING_PLANNER": "",
+            "CODE2PAPER_LLM_MAX_OUTPUT_TOKENS": "",
+        }
+        with patch.dict("os.environ", env, clear=False):
+            cfg = apply_role_config(_base_config(), AUTHORING_PLANNER)
+            self.assertEqual(cfg.max_output_tokens, 4096)
 
     def test_apply_role_config_writer_default_budget_is_8192(self) -> None:
         cfg = apply_role_config(_base_config(), METHOD_WRITER)
@@ -428,6 +452,23 @@ class RoleGenerationConfigDataclassTests(unittest.TestCase):
         cfg = RoleGenerationConfig(role="x", temperature=0.0, max_output_tokens_default=1)
         with self.assertRaises(Exception):
             cfg.temperature = 1.0  # type: ignore[misc]
+
+    def test_role_output_budget_audit_covers_every_registered_role(self) -> None:
+        from code2paper.llm.role_config import (
+            LLM_CALLING_ROLES,
+            ROLE_GENERATION_CONFIGS,
+            role_output_budget_audit,
+        )
+
+        rows = role_output_budget_audit()
+        self.assertEqual(
+            {row["role"] for row in rows},
+            set(ROLE_GENERATION_CONFIGS),
+        )
+        for row in rows:
+            self.assertIn(row["finish_reason_observation"], {"length", "structured_complete"})
+            if row["role"] in LLM_CALLING_ROLES and row["max_output_tokens_default"] > 0:
+                self.assertGreaterEqual(row["max_output_tokens_default"], 2048)
 
 
 if __name__ == "__main__":

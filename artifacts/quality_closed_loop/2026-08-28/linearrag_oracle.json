@@ -1,0 +1,59 @@
+{
+  "project_id": "linearrag",
+  "fixture_authority": "diagnostic_non_authorizing",
+  "units": [
+    {
+      "unit_id": "linearrag_offline_two_vertex_graph",
+      "story_role": "offline_construction",
+      "original_covered": true,
+      "candidate_covered": true,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "linearrag_stage1_activation_chain",
+      "story_role": "stage1",
+      "original_covered": false,
+      "candidate_covered": true,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "linearrag_threshold_excludes_below",
+      "story_role": "stage1",
+      "original_covered": true,
+      "candidate_covered": true,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "linearrag_stage2_hybrid_ppr",
+      "story_role": "stage2",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [
+        [
+          "descending",
+          "rank"
+        ]
+      ],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    }
+  ],
+  "original_covered_units": 3,
+  "candidate_covered_units": 3,
+  "total_units": 4,
+  "content_digest": "sha256:8a11d05de691579c2cff29ee98c3ce9744e0dd34630afe3a1a9efbb20f83dfa8"
+}

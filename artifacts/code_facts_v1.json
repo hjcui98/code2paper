@@ -1,0 +1,732 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "evidence_packet_digest": "sha256:bdbb09acafcceb6207de3ac55a8791f3e08a756953827b6f65ab362b1e5b33de",
+  "facts": [
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "loads_weights",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "relation_evidence_ids": [
+        "rel:4024da979f792194"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "LOAD",
+        "self.config.use_vectorized_retrieval",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:980d1dbaa01f57bac207f417b0d744f1c43f09cdfac618851f9e0e6534513842",
+      "canonical_identity": "sha256:908c203d576d87904cc3210e49558b3e7da83a2a3841c0c053951e409eb85977",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "branches_on",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:187:190"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "relation_evidence_ids": [
+        "rel:4024da979f792194"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "BRANCH",
+        "self.config.use_vectorized_retrieval",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:3a16c9d1d1ac6ef9abf67ee69c93b3eb17e0f245c60099aa3b8044aadc01b01f",
+      "canonical_identity": "sha256:cdfb8e2122b402a1f682a321eb9fb042d0f52baf99e72fde9a3032ec550c2e06",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "computes_formula",
+      "object": [
+        "entity_weights",
+        "passage_weights",
+        "result=node_weights"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "COMPUTE",
+        "node_weights",
+        "entity_weights",
+        "passage_weights",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971",
+      "canonical_identity": "sha256:06739a01e239198af8952d62946fe3ac5c63b2e928ae14a7a407d6a967ca7a4b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "calls",
+      "object": [
+        "self.run_ppr",
+        "node_weights",
+        "result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "CALL",
+        "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+        "self.run_ppr",
+        "node_weights",
+        "attr:run_ppr"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:5593078131b980aa5ed824c384e85c1dbce78624a9722d62920a632085ff61af",
+      "canonical_identity": "sha256:6515783f2bbf3e9e2c236c0ef74f9753a0600f43cc7a1a37d9448a2e400fab0d",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "returns",
+      "object": [
+        "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "RETURN",
+        "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:f673ff30306d49856f630c73def9eab38e57af5cc23a905cc96f5ce2c42f50b6",
+      "canonical_identity": "sha256:4b00c1be91d20eb855205b1ce5366c615211b8e0d8aaf1026aed3bb3d59acc45",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "configured_by",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:4024da979f792194"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "node:d1fc21e482f6ab9b",
+        "LOAD",
+        "self.config.use_vectorized_retrieval",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c9626a5ad1c5bf7f58bc7b7c6f3009847572430a64beaac93c8a2ed10f3cefc1",
+      "canonical_identity": "sha256:1bbbd79ae01862d51000a294fb1a931504273c917cb4079315da306e7c3882fd",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+      "subject": "LinearRAG.index",
+      "predicate": "branches_on",
+      "object": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "scope": "sym:eb8aac3092d3f167",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:eb8aac3092d3f167",
+        "BRANCH",
+        "len(new_passage_hash_ids) > 0",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:4e17347b01026326272e7794c43ffc7f107ba1d16b46867b52ab488b0e23b36d",
+      "canonical_identity": "sha256:570d8433a5def8a6b1a1f855054d8a4fbfaba1b71f0da9526c40282cf4a4bab9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+      "subject": "LinearRAG.index",
+      "predicate": "calls",
+      "object": [
+        "self.extract_nodes_and_edges",
+        "existing_passage_hash_id_to_entities",
+        "existing_sentence_to_entities",
+        "result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "scope": "sym:eb8aac3092d3f167",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:eb8aac3092d3f167",
+        "CALL",
+        "(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+        "self.extract_nodes_and_edges",
+        "existing_passage_hash_id_to_entities",
+        "existing_sentence_to_entities",
+        "attr:extract_nodes_and_edges"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:ffde3592c5cf3d33844a0092c10a13aa7cc1d6e94193bd35d5310ac95c60f746",
+      "canonical_identity": "sha256:7df226b77d9ee7615ee4d6c394e7f41c000d684856ebe7932fb0e0c1b33df413",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "calls",
+      "object": [
+        "self.calculate_entity_scores_vectorized",
+        "question_embedding",
+        "seed_entity_indices",
+        "seed_entities",
+        "seed_entity_hash_ids",
+        "seed_entity_scores",
+        "result=(entity_weights, actived_entities)"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "CALL",
+        "(entity_weights, actived_entities)",
+        "self.calculate_entity_scores_vectorized",
+        "question_embedding",
+        "seed_entity_indices",
+        "seed_entities",
+        "seed_entity_hash_ids",
+        "seed_entity_scores",
+        "attr:calculate_entity_scores_vectorized"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:d025dc6d50626991035bce023e464e8eb3bd4e9695a43a66e44438798f5e77d4",
+      "canonical_identity": "sha256:33ef770ffff6fe22585aa43fd5d2491220e2ce8c635751c2521bfaf8ccbbee8d",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "computes_formula",
+      "object": [
+        "entity_weights",
+        "passage_weights",
+        "result=node_weights"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "COMPUTE",
+        "node_weights",
+        "entity_weights",
+        "passage_weights",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971",
+      "canonical_identity": "sha256:e56f231e54d2ded9d9c44e8844ccedf1306ca3e102b1b88d9e26d0377f2f8592",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+      "subject": "LinearRAG.graph_search_with_seed_entities",
+      "predicate": "returns",
+      "object": [
+        "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "scope": "sym:0310037f50fb51c0",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:0310037f50fb51c0",
+        "RETURN",
+        "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:f673ff30306d49856f630c73def9eab38e57af5cc23a905cc96f5ce2c42f50b6",
+      "canonical_identity": "sha256:1f7d29261bfe6a284ff7874c54b6b3b80c54f64dcd8cdc1a4b18422020480b71",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+      "subject": "SpacyNER.extract_entities_sentences",
+      "predicate": "filters_by",
+      "object": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "scope": "sym:91c2d36974bb3855",
+      "direct_span_ids": [
+        "span:src/ner.py:32:33"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:91c2d36974bb3855",
+        "FILTER",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "guarded_continue"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:89035db568eb1f10d748cd6207e63b9d43a283f3c1b82bcfb91f1307fddd945f",
+      "canonical_identity": "sha256:85e0a978ceb67c05dca641f087e100baf04a2decd6abd31e08c1bdeec92cf883",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+      "subject": "SpacyNER.extract_entities_sentences",
+      "predicate": "branches_on",
+      "object": [
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "conditions": [
+        "ent_text not in sentence_to_entities[sent_text]",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'"
+      ],
+      "scope": "sym:91c2d36974bb3855",
+      "direct_span_ids": [
+        "span:src/ner.py:36:37"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:91c2d36974bb3855",
+        "BRANCH",
+        "ent_text not in sentence_to_entities[sent_text]",
+        "ent_text not in sentence_to_entities[sent_text]",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:cb1426c7633c0817decaa9e79ddad815a582f654ddf51b68e433b105222c8726",
+      "canonical_identity": "sha256:cd30ffa83eaaf31235e8725852601e2749ba80e393cfd0cd1fa78bfaa8547120",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0",
+      "subject": "LinearRAG.run_ppr",
+      "predicate": "propagates",
+      "object": [
+        "self.graph.personalized_pagerank",
+        "vertices=range(len(self.node_name_to_vertex_idx))",
+        "damping=self.config.damping",
+        "directed=False",
+        "weights='weight'",
+        "reset=reset_prob",
+        "implementation='prpack'",
+        "result=pagerank_scores"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:8e5d796ba2b673e3",
+        "PROPAGATE",
+        "pagerank_scores",
+        "self.graph.personalized_pagerank",
+        "vertices=range(len(self.node_name_to_vertex_idx))",
+        "damping=self.config.damping",
+        "directed=False",
+        "weights='weight'",
+        "reset=reset_prob",
+        "implementation='prpack'",
+        "method:personalized_pagerank"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:58c7e1f7aa900599ee3cbd7587194842550ad4bafd5e6012e9726de5643066be",
+      "canonical_identity": "sha256:f1d7d3c96f5ff0813267cf1ee16a2692a0b8e7f7a3d7fed5fee08ab438481f4a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+      "subject": "LinearRAG.run_ppr",
+      "predicate": "sorts_by",
+      "object": [
+        "np.argsort",
+        "doc_scores",
+        "result=sorted_indices_in_doc_scores"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:8e5d796ba2b673e3",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:8e5d796ba2b673e3",
+        "SORT",
+        "sorted_indices_in_doc_scores",
+        "np.argsort",
+        "doc_scores",
+        "method:argsort"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:02b8526b21b644844a110a320272c38a921b4f4012e86583c026d980f50dfa33",
+      "canonical_identity": "sha256:1cc3debfa12ca1deac94583823614153ca54ddde053827f5fd6db413bdae71aa",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "loads_weights",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "relation_evidence_ids": [
+        "rel:406492bde7696947"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "LOAD",
+        "self.config.use_vectorized_retrieval",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:dc8ccbed6ad5c1ebcf02b5805577c1646687684078380f9845f13cd996f8ce61",
+      "canonical_identity": "sha256:6ff9d5ba963b8ec0c056fccbd47999586f895a7b124c5cf7fa5215a2decb5e57",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "branches_on",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:95:105"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "relation_evidence_ids": [
+        "rel:9c39c339b8028cfc",
+        "rel:406492bde7696947"
+      ],
+      "relation_kinds": [
+        "TRUE_BRANCH",
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "BRANCH",
+        "self.config.use_vectorized_retrieval",
+        "self.config.use_vectorized_retrieval",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:afcd7b94c194c07ddff0e1bbae1dcf730a2a8c232954792333dc736bf21a9ae0",
+      "canonical_identity": "sha256:b6b03f6b81f93b9ead36c7bd7cc82174a529716f57d0bec5cb5d2a83863f6055",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "calls",
+      "object": [
+        "logger.info",
+        "'Precomputing sparse adjacency matrices for vectorized retrieval...'"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "relation_span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "relation_evidence_ids": [
+        "rel:9c39c339b8028cfc"
+      ],
+      "relation_kinds": [
+        "TRUE_BRANCH"
+      ],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "CALL",
+        "logger.info",
+        "'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+        "attr:info"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:456f4ec7498966dfd14ec33527f6c962e3dae7d91ffad3d5d876e0d08412e5fd",
+      "canonical_identity": "sha256:99c695c3d8ad04edd93d23f6fb6a13e93477230f9c5180fb53326e1400caa3bc",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "computes_formula",
+      "object": [
+        "e2s_shape[0]",
+        "e2s_shape[1]"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:103:103"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "COMPUTE",
+        "e2s_shape[0]",
+        "e2s_shape[1]",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:67a843dc2a355f9a9c270c936bf962daa007a2719b7558593913a6126ea171ed",
+      "canonical_identity": "sha256:d09c6bebf6baa88532a781ee594036d1f532467c1d7c2ac1513cf867312c24af",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "returns",
+      "object": [
+        "retrieval_results"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:129:129"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "RETURN",
+        "retrieval_results"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:70751f3cdde93a4c52d6d602df4f9306da9ae345ab853d45a2ed4d1be1632612",
+      "canonical_identity": "sha256:5c19d28d9cf66a0e20d780bdfb7a7c28b7ebf9c6fede74291b9831804bf7dc90",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2",
+      "subject": "LinearRAG.retrieve",
+      "predicate": "configured_by",
+      "object": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "scope": "sym:b6756a18e320d0fe",
+      "direct_span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:406492bde7696947"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:b6756a18e320d0fe",
+        "sym:b6756a18e320d0fe",
+        "node:052ae362dcc53aad",
+        "sym:b6756a18e320d0fe",
+        "LOAD",
+        "self.config.use_vectorized_retrieval",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:4d32bc25d18b97b86893f1cbe7023492548babfa6a4fb8cdbeadc9e8b3743341",
+      "canonical_identity": "sha256:d1cadbe4fd470efe67242ce7acacd953ae20328ad3ef2671b657e2e84e5d32e6",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:306171914145de302997a6e9b4e9831b7ab081c8684654fa6b5b6168e2a6a7c7"
+}

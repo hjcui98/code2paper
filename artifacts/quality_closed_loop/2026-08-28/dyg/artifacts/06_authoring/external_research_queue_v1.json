@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "nr:MA-S1:unit-1:mechanism_overview",
+      "lane": "expository_bridge",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "exact_question": "Which repository evidence anchors the mechanism_overview move for the dynamic graph encoding pipeline, specifically the transformation of raw interaction sequences into a unified aligned representation via heterogeneous feature channels?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: Which repository evidence anchors the mechanism_overview move for the dynamic graph encoding pipeline, specifically the transformation of raw interaction sequences into a unified aligned representation via heterogeneous feature channels.",
+      "needed_evidence": [
+        "mechanism_overview"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "nr:MA-S1:unit-1:mechanism_overview"
+      ],
+      "content_digest": "sha256:361dd8229568d6843ba9f3fd44b45eb2c7653a421d1ce6b97c4d8d8b06db65f3"
+    },
+    {
+      "request_id": "rr-ma-s3-mechanism-overview",
+      "lane": "expository_bridge",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "exact_question": "What repository evidence anchors the mechanism_overview rhetorical move for the timespan-aware forgetting stage, specifically the MambaTimeDelta module's branching logic, input projection, and gating operations?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What repository evidence anchors the mechanism_overview rhetorical move for the timespan-aware forgetting stage, specifically the MambaTimeDelta module's branching logic, input projection, and gating operations.",
+      "needed_evidence": [
+        "mechanism_overview"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "rr-ma-s3-mechanism-overview"
+      ],
+      "content_digest": "sha256:13dec8870a02d7541f7c57a65b0b47829de4febdddfe267c0af265146fd29b51"
+    },
+    {
+      "request_id": "MA-S4:r-001",
+      "lane": "expository_bridge",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "exact_question": "How is the shared edge-memory tensor constructed and updated across the three strategies, and how does it feed into predict_link_probabilities?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: How is the shared edge-memory tensor constructed and updated across the three strategies, and how does it feed into predict_link_probabilities.",
+      "needed_evidence": [
+        "strategy",
+        "interface",
+        "contract",
+        "edge-memory",
+        "prediction",
+        "function",
+        "precise",
+        "tensor",
+        "layout",
+        "update",
+        "rule",
+        "between"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S4:r-001"
+      ],
+      "content_digest": "sha256:704f8432fff585b7c82d28b967694aa0cf3cdb95c6e1d3dd38027e51b2e40224"
+    },
+    {
+      "request_id": "rq:MA-S5:unit-2:component-07",
+      "lane": "expository_bridge",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "exact_question": "How does the continuous formulation of the DyG-Mamba SSM core redefine the step size Δt as a function of the interaction timespan, and how does the stable diagonal initialization of A guarantee bounded state evolution for irregular sequences?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: How does the continuous formulation of the DyG-Mamba SSM core redefine the step size Δt as a function of the interaction timespan, and how does the stable diagonal initialization of A guarantee bounded state evolution for irregular sequences.",
+      "needed_evidence": [
+        "facet-85dd07572b77e2",
+        "facet-e343d4bc111c5b77",
+        "facet-3f8317dd772533f4",
+        "formula",
+        "facet"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "rq:MA-S5:unit-2:component-07"
+      ],
+      "content_digest": "sha256:ceb1c07564ba655d344596c8a6b53a13cbd7098a90ca0b4b0bf76f82f614c82d"
+    }
+  ]
+}

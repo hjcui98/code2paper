@@ -1,0 +1,1085 @@
+{
+  "schema_version": "1.0",
+  "policies": [
+    {
+      "facet_id": "facet-d57e6b007d62768e",
+      "policy_id": "policy:facet-d57e6b007d62768e",
+      "alignment_id": "alignment:facet-d57e6b007d62768e",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c1757badadfc864bf507eb647a8bf52214898860f98ad09d85f79d79dcc4c6a6"
+    },
+    {
+      "facet_id": "facet-bd2114e7ad9b1773",
+      "policy_id": "policy:facet-bd2114e7ad9b1773",
+      "alignment_id": "alignment:facet-bd2114e7ad9b1773",
+      "clause_id": "clause:O-STAGE-01-039a963a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim about Contriever retrieval and embedding preparation."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:bd6e762b02776229f6edbd9e75210483813300c6b1a95dddcc5505a1bb9f7326"
+    },
+    {
+      "facet_id": "facet-308602a0138b57ea",
+      "policy_id": "policy:facet-308602a0138b57ea",
+      "alignment_id": "alignment:facet-308602a0138b57ea",
+      "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the structural augmentation mechanism (dynamic document ID embedding + sinusoidal passage-position encoding) against repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:171b3f611abe4ba1a4380fcf8349daf16f1a6891f62875c7deb0cfe5c8ee7d7a"
+    },
+    {
+      "facet_id": "facet-df672e4efc3751e2",
+      "policy_id": "policy:facet-df672e4efc3751e2",
+      "alignment_id": "alignment:facet-df672e4efc3751e2",
+      "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; evidence array is empty and closed_sets.evidence_indices is empty. No claims, facts, spans, or equations are available to bind against the described hybrid-attention encoding mechanism."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:3d75923895d22c7ebbdf25fed21ace63b70b5d6db46d9af2739fd41b0cd49f01"
+    },
+    {
+      "facet_id": "facet-6bc5ee440fdc8329",
+      "policy_id": "policy:facet-6bc5ee440fdc8329",
+      "alignment_id": "alignment:facet-6bc5ee440fdc8329",
+      "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support or refute the formula_goal claim about contrastive InfoNCE loss pulling positive passage embeddings toward fixed query embeddings and pushing negative passage embeddings away."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:377fcda677921a7bd913a62ff2735107abc2aaa9dda5ce0989f82986ddb2b3c5"
+    },
+    {
+      "facet_id": "facet-cbc0a588831ac015",
+      "policy_id": "policy:facet-cbc0a588831ac015",
+      "alignment_id": "alignment:facet-cbc0a588831ac015",
+      "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim about dot-product similarity computation and descending sort."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:71ea6f1b4bf3839d84f2f73868bc0c9b4bcb06a67298e013094ed164292dec59"
+    },
+    {
+      "facet_id": "facet-14d4dbe911667c07",
+      "policy_id": "policy:facet-14d4dbe911667c07",
+      "alignment_id": "alignment:facet-14d4dbe911667c07",
+      "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim about improving reranking in RAG systems addressing inference efficiency and cross-passage reasoning with coreference/structural context resolution."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:5a551abfc7386e89e82ad4f7f7551f7fec364f573c896774492c1677cab6bdc0"
+    },
+    {
+      "facet_id": "facet-c70f411cffdc0a8f",
+      "policy_id": "policy:facet-c70f411cffdc0a8f",
+      "alignment_id": "alignment:facet-c70f411cffdc0a8f",
+      "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the claim that Contriever is a dense retriever providing initial passage embeddings and top-k retrieval."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:cff6ae7a6fd62cfd7ff0e462b479f99479d548d6d1392c6cbbcdb4ea7a217e1d"
+    },
+    {
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "policy_id": "policy:facet-676fcfceb7eddd8a",
+      "alignment_id": "alignment:facet-676fcfceb7eddd8a",
+      "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify or contradict the claim that passage embeddings (pi) are fixed dense representations of candidate passages obtained from Contriever."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:9c697cf3e9fbe2536db674e2606397466303f682056b873f19faf3bb7e3b268b"
+    },
+    {
+      "facet_id": "facet-d87af6e7082cc916",
+      "policy_id": "policy:facet-d87af6e7082cc916",
+      "alignment_id": "alignment:facet-d87af6e7082cc916",
+      "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this field against."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:5597b44f16b6999f6a2914752f1681f87dc84966edac0e5ea8d178d3171290b2"
+    },
+    {
+      "facet_id": "facet-ba08ce41d6e1d9b9",
+      "policy_id": "policy:facet-ba08ce41d6e1d9b9",
+      "alignment_id": "alignment:facet-ba08ce41d6e1d9b9",
+      "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the sinusoidal passage position encoding mechanism."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:f2e381fd56cabfac652d7da615a5190efbc75d8457f541f4f3c41bc053665689"
+    },
+    {
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "policy_id": "policy:facet-47997bc7d81ecdf5",
+      "alignment_id": "alignment:facet-47997bc7d81ecdf5",
+      "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the hybrid attention mechanism claim against repository content."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:6b49cf36e531b16d082709c579cc7f5c9243d82bd13d2c87c5a629bc83170aec"
+    },
+    {
+      "facet_id": "facet-00e27dd88a70848f",
+      "policy_id": "policy:facet-00e27dd88a70848f",
+      "alignment_id": "alignment:facet-00e27dd88a70848f",
+      "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the shared full attention module mechanism claim against repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:6089c05b28b94e8a8253406f9eee77a27621c90d6002f84c22d5623d4b2c7a6b"
+    },
+    {
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "policy_id": "policy:facet-85ba5afaa2fbe7ac",
+      "alignment_id": "alignment:facet-85ba5afaa2fbe7ac",
+      "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the masked multi-head attention mechanism claim."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:246c3285d3e9045ecd42596645b119ade50f6041e27c7d414fb21fe13449689e"
+    },
+    {
+      "facet_id": "facet-0bce6b6595a44f58",
+      "policy_id": "policy:facet-0bce6b6595a44f58",
+      "alignment_id": "alignment:facet-0bce6b6595a44f58",
+      "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim about Transformer encoder stack processing combined sequences to produce contextualized passage embeddings."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:25a3f8f883b9e07be0c6bff11f21a1d3b29e9d83825166015ec7411647d8431e"
+    },
+    {
+      "facet_id": "facet-833638c7783e3952",
+      "policy_id": "policy:facet-833638c7783e3952",
+      "alignment_id": "alignment:facet-833638c7783e3952",
+      "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; formula expectation is required but no equation or supporting evidence is available to bind."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c212a1b5cc3b38ecb65fc44c36b7bedc1c3f1178bc1865d8ea978b23abe1904a"
+    },
+    {
+      "facet_id": "facet-3c6a3824f6a9641a",
+      "policy_id": "policy:facet-3c6a3824f6a9641a",
+      "alignment_id": "alignment:facet-3c6a3824f6a9641a",
+      "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "guarantee"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "guarantee",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify that the original query embedding remains unchanged during training/inference as a stable reference in the contrastive objective."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:5980e1fa4de43b4acfcf8bfbd9d0fb2f8f73dee01e5553c8bbd1d4773a31d528"
+    },
+    {
+      "facet_id": "facet-c5e7c214b56a659f",
+      "policy_id": "policy:facet-c5e7c214b56a659f",
+      "alignment_id": "alignment:facet-c5e7c214b56a659f",
+      "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the claim that ConTEB is an evaluation suite testing rerankers on cross-passage inference, document-wide context, and structural reasoning tasks."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:4a62c3500b5eecd66f21433a63c72059aa5bf4b2825c5fa41512aaae4044bec5"
+    },
+    {
+      "facet_id": "facet-f6e629096087c520",
+      "policy_id": "policy:facet-f6e629096087c520",
+      "alignment_id": "alignment:facet-f6e629096087c520",
+      "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the claim that MLDR, SQuAD, and NarrativeQA are ConTEB training datasets for EBCAR covering entity disambiguation, span matching, and narrative comprehension."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:766fd43cdfee944c70ebae4c1dc81d867f4f93d8f99b9580b157e3cf086b5d91"
+    },
+    {
+      "facet_id": "facet-9e754ab14c6fde20",
+      "policy_id": "policy:facet-9e754ab14c6fde20",
+      "alignment_id": "alignment:facet-9e754ab14c6fde20",
+      "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to bind or refute the motivation claim about efficiency and cross-passage inference challenges in existing rerankers. The evidence array is empty, so no ordinal indices can be referenced to support or contradict this field. The claim remains unverified against the repository record."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:aa9a44d161eea1e741bdc40e82368e35c424e23769c3ebf5cea73f313f3d0dc7"
+    },
+    {
+      "facet_id": "facet-b9735878c5548c4a",
+      "policy_id": "policy:facet-b9735878c5548c4a",
+      "alignment_id": "alignment:facet-b9735878c5548c4a",
+      "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate the embedding-based reranking formulation and overall framework."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:0f1162cf1764d2d558e61a4c0d627ba4da4b40a4555634c517943e16cc127c06"
+    },
+    {
+      "facet_id": "facet-68ed73e7a64fbbfd",
+      "policy_id": "policy:facet-68ed73e7a64fbbfd",
+      "alignment_id": "alignment:facet-68ed73e7a64fbbfd",
+      "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim about enriching embeddings with document ID and position, or the Transformer encoder with hybrid attention (shared full + dedicated masked). No claims, facts, spans, or equations are available to bind against this semantic field."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:03707177bc8f5f62765fb55a477bad1f682b51d1f06e26a1888846ac0f70196e"
+    },
+    {
+      "facet_id": "facet-71df0ec224b91883",
+      "policy_id": "policy:facet-71df0ec224b91883",
+      "alignment_id": "alignment:facet-71df0ec224b91883",
+      "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate the formula goal claim about InfoNCE loss with fixed query anchor."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:775c541dcf6ed0ce73b9a492ecd6a06f7c912ef0e60dc1a7b04cf38b5bfb2417"
+    },
+    {
+      "facet_id": "facet-f55b63fbde1d45df",
+      "policy_id": "policy:facet-f55b63fbde1d45df",
+      "alignment_id": "alignment:facet-f55b63fbde1d45df",
+      "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism 'Inference procedure.' against repository content."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:58b06bf702f9742e239b01c408e7c9c8795d4013af81280f477555849a65162a"
+    },
+    {
+      "facet_id": "facet-c8bf8030283400b2",
+      "policy_id": "policy:facet-c8bf8030283400b2",
+      "alignment_id": "alignment:facet-c8bf8030283400b2",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify or refute the mechanism claim about avoiding full-text processing and autoregressive generation to reduce inference latency."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:dcc854b9ab037323c0c68b53e53ec585f24f0c305993f1382534572f677cdfa3"
+    },
+    {
+      "facet_id": "facet-e517f869034a38aa",
+      "policy_id": "policy:facet-e517f869034a38aa",
+      "alignment_id": "alignment:facet-e517f869034a38aa",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism claim that document-level structural knowledge is injected into passage embeddings to support cross-passage inference."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:609aa4c18de20d6c4b65602d8a3c32528638a3ade1bde2bbd4f89e90d0cf12e4"
+    },
+    {
+      "facet_id": "facet-d27285ebc144a3fa",
+      "policy_id": "policy:facet-d27285ebc144a3fa",
+      "alignment_id": "alignment:facet-d27285ebc144a3fa",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot verify the mechanism claim of two complementary attention patterns (global and document-local) co-existing in each layer."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:979ba17c95318fe4c609fa5e833f55ab99991207d525516c0693f176c7fab5b4"
+    },
+    {
+      "facet_id": "facet-f49282e62c6e52fe",
+      "policy_id": "policy:facet-f49282e62c6e52fe",
+      "alignment_id": "alignment:facet-f49282e62c6e52fe",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to support or contradict the claim that relative, dynamic document ID assignments should be used rather than global corpus-level IDs."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:752a40781ce89446bb62ad0f66bf84cc31653c09049204aaeb1c3aa0a54ddc6e"
+    },
+    {
+      "facet_id": "facet-c0d9a5e725c77367",
+      "policy_id": "policy:facet-c0d9a5e725c77367",
+      "alignment_id": "alignment:facet-c0d9a5e725c77367",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to bind this field."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:b6bd2d34fa73484e80041addeaff875b550461d8bb086845246c9f7f73003f73"
+    },
+    {
+      "facet_id": "facet-ecd069d8ab3be38f",
+      "policy_id": "policy:facet-ecd069d8ab3be38f",
+      "alignment_id": "alignment:facet-ecd069d8ab3be38f",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate this field against the repository."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:fc6595fcd1cbca350bd4020794412ed8aef5c66907c39002744fed4b84a6ebd8"
+    }
+  ]
+}

@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -133,11 +134,14 @@ def apply_policy_merge(
     ready_tools: tuple[str, ...],
     recent_tool_call_ids: tuple[str, ...] = (),
     no_progress_tool_call_ids: tuple[str, ...] = (),
+    executed_read_signatures: tuple[str, ...] = (),
+    executed_tool_calls: tuple[Any, ...] = (),
     repo_snapshot_paths: tuple[str, ...] | None = None,
     fallback_backend: SupervisorBackend | None = None,
     context_run_id: str = "",
     context_repo_snapshot_id: str = "",
     context_turn_index: int = 0,
+    gap_justified: bool = False,
 ) -> PolicyMergeResult:
     """Validate a supervisor proposal against the R3.3 hard rules.
 
@@ -146,10 +150,30 @@ def apply_policy_merge(
     ``consumed_budgets`` to the state after executing the accepted
     decision.
 
+    ``executed_read_signatures`` carries the normalized content-read keys
+    already executed anywhere in this run (across obligations), so policy
+    can reject a proposal that re-reads an exact source span whose bytes
+    are already known.  The graph layer builds it from the executed tool
+    calls; callers without access to that history (unit tests) simply
+    omit it.
+
+    ``executed_tool_calls`` carries the compact executed-call summaries so
+    the deterministic fallback context can avoid proposing a doomed exact
+    repeat: without them the fallback re-reads the same symbol, policy
+    rejects the fallback too, and the run dies in STOP_BLOCKED from
+    fallback exhaustion instead of switching strategy.
+
     ``repo_snapshot_paths`` is optional: when provided, every path scope
     and ``read_symbol`` / ``build_behavior_subgraph`` argument path is
     checked against it.  When omitted, the scope check is skipped (used
     by unit tests that only exercise the budget / obligation rules).
+
+    ``gap_justified`` reports whether the graph's gain tracker considers
+    the active obligation exhausted enough for an explicit gap (three
+    consecutive no-gain turns or targeted search exhaustion).  It gates
+    the second-level RECORD_GAP fallback so a rejected fallback cannot
+    manufacture an unjustified gap (the gap finalizer validates the same
+    condition fail-closed).
     """
 
     rejections: list[PolicyRejectionV1] = []
@@ -174,7 +198,11 @@ def apply_policy_merge(
 
     # Rule 5: no duplicate no-gain calls.
     _no_duplicate_no_gain(
-        proposal, no_progress_tool_call_ids, recent_tool_call_ids, rejections
+        proposal,
+        no_progress_tool_call_ids,
+        recent_tool_call_ids,
+        rejections,
+        executed_read_signatures=executed_read_signatures,
     )
 
     # Rule 6: no authority overreach.
@@ -207,6 +235,7 @@ def apply_policy_merge(
         ready_tools=ready_tools,
         recent_tool_call_ids=recent_tool_call_ids,
         no_progress_tool_call_ids=no_progress_tool_call_ids,
+        executed_tool_calls=executed_tool_calls,
         repo_snapshot_paths=repo_snapshot_paths,
         fallback_backend=fallback_backend,
         context_run_id=context_run_id or proposal.run_id,
@@ -215,6 +244,56 @@ def apply_policy_merge(
     )
 
     if fallback_decision is None:
+        # Fallback also rejected.  Per the R3.3 fallback table the
+        # decision's ``fallback_action`` is the documented next move when
+        # the fallback is itself rejected (usually RECORD_GAP or
+        # STOP_BLOCKED).  Try RECORD_GAP before dying in STOP_BLOCKED from
+        # fallback exhaustion -- but only when the graph reports the gap is
+        # justified (no-progress threshold met or targeted search
+        # exhausted); the gap finalizer still validates exhaustiveness
+        # fail-closed.  Without the gate, a rejected RECORD_GAP would
+        # route straight back to the same supervisor proposal and churn.
+        if (
+            proposal.fallback_action == "RECORD_GAP"
+            and gap_justified
+        ):
+            gap_decision = _record_gap_decision(
+                run_id=context_run_id or proposal.run_id,
+                turn_index=proposal.turn_index,
+                obligation_id=proposal.obligation_id,
+                issue_id=proposal.issue_id,
+                rationale="policy_merge_fallback_exhausted",
+            )
+            gap_rejections: list[PolicyRejectionV1] = []
+            _structural_rejections(gap_decision, gap_rejections)
+            _action_issue_match(gap_decision, active_issue, gap_rejections)
+            _obligation_exists(gap_decision, agenda, gap_rejections)
+            _tools_ready(gap_decision, ready_tools, gap_rejections)
+            if repo_snapshot_paths is not None:
+                _scope_in_snapshot(gap_decision, repo_snapshot_paths, gap_rejections)
+            _no_duplicate_no_gain(
+                gap_decision,
+                no_progress_tool_call_ids,
+                recent_tool_call_ids,
+                gap_rejections,
+                executed_read_signatures=executed_read_signatures,
+            )
+            _no_authority_overreach(gap_decision, gap_rejections)
+            _budgets_available(
+                gap_decision, per_obligation_budgets, gap_rejections
+            )
+            if not gap_rejections:
+                return PolicyMergeResult(
+                    accepted=True,
+                    decision=gap_decision,
+                    rejections=tuple(rejections),
+                    fallback_used=True,
+                    fallback_rejection=fallback_rejection,
+                    consumed_budgets={},
+                    trace_ref=_trace_ref(
+                        gap_decision, fallback_used=True, rejections=rejections
+                    ),
+                )
         # Fallback also rejected: route to STOP_BLOCKED.
         stop_decision = _stop_blocked_decision(
             run_id=context_run_id or proposal.run_id,
@@ -267,7 +346,9 @@ def _structural_rejections(
         "BUILD_BEHAVIOR_SUBGRAPH", "PROPOSE_PACKET", "COMPILE_FACTS",
         "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES",
     }
-    terminal_actions = {"STOP_BLOCKED", "RECORD_GAP", "PLAN_METHOD"}
+    terminal_actions = {
+        "STOP_BLOCKED", "RECORD_GAP", "COMPILE_EVIDENCE", "PLAN_METHOD"
+    }
 
     if decision.action in tool_calling_actions and not decision.selected_tool_calls:
         rejections.append(
@@ -303,8 +384,12 @@ def _action_issue_match(
         # No-issue proposals accept any tool-calling or terminal action.
         return
     expected_action, _ = fallback_action_for_issue(active_issue)
-    # Allow the expected action OR RECORD_GAP / STOP_BLOCKED as safe terminals.
-    allowed = {expected_action, "RECORD_GAP", "STOP_BLOCKED"}
+    # Compilation is always a valid next move once the manager judges that
+    # the observations answer the active issue.  The deterministic compiler
+    # will still return a typed partial result when evidence is insufficient;
+    # forbidding this action here forced the manager to keep searching (or
+    # claim STOP_BLOCKED) after it had already found the needed code.
+    allowed = {expected_action, "COMPILE_EVIDENCE", "RECORD_GAP", "STOP_BLOCKED"}
     # For trace_data_flow / inspect_branch / inspect_config we also accept the
     # closely related actions (the fallback table is intentionally coarse).
     if expected_action == "TRACE_CALLS":
@@ -451,19 +536,28 @@ def _no_duplicate_no_gain(
     no_progress_tool_call_ids: tuple[str, ...],
     recent_tool_call_ids: tuple[str, ...],
     rejections: list[PolicyRejectionV1],
+    *,
+    executed_read_signatures: tuple[str, ...] = (),
 ) -> None:
     """Rule 5: no duplicate no-gain calls.
 
-    A call is a duplicate no-gain call when its ``(tool_name, arguments)``
-    signature matches a call that already produced no information gain
-    (recorded in ``no_progress_tool_call_ids``).  We use the tool_call_id
-    as the join key: the supervisor reuses the same id for the same
-    (turn, tool, obligation) tuple, so a duplicate id within the no-progress
-    window is a strong signal.
+    Tool-call ids are stable execution signatures generated from tool name,
+    obligation, canonical typed arguments, scope and local limits. They do
+    not contain the turn index, so an exact rerun remains visible across
+    turns and can be rejected after no gain.
+
+    ``executed_read_signatures`` additionally carries the normalized
+    content-read keys (``read_symbol`` path+symbol, ``read_code_span``
+    path+span) already executed in this run, across obligations.  Reading
+    the same exact source span returns the same bytes inside one repo
+    snapshot, so a cross-obligation re-read produces no new information;
+    the Manager must instead trace a caller/data/control/config relation
+    or read a different span.
     """
 
     no_progress_set = set(no_progress_tool_call_ids)
     recent_set = set(recent_tool_call_ids)
+    executed_read_set = set(executed_read_signatures)
     for call in decision.selected_tool_calls:
         if call.tool_call_id in no_progress_set:
             rejections.append(
@@ -486,6 +580,34 @@ def _no_duplicate_no_gain(
                     tool_call_id=call.tool_call_id,
                 )
             )
+        read_signature = _content_read_signature(call)
+        if read_signature and read_signature in executed_read_set:
+            rejections.append(
+                PolicyRejectionV1(
+                    rule="duplicate_no_gain_call",
+                    reason=(
+                        "content read already executed for another "
+                        "obligation in this snapshot"
+                    ),
+                    detail=f"read_signature={read_signature}",
+                    tool_call_id=call.tool_call_id,
+                )
+            )
+
+
+def _content_read_signature(call: ResearchToolCallV1) -> str:
+    """Normalized identity of a content read within one repo snapshot.
+
+    Delegates to the shared canonical identity so policy merge and the
+    deterministic supervisor cannot drift apart.  The signature
+    deliberately omits obligation id and turn index: the returned source
+    bytes are identical whenever the same span is read again in the same
+    snapshot, regardless of which obligation prompted the read.
+    """
+
+    from code2paper.agentic.research_read_identity import content_read_signature
+
+    return content_read_signature(call.tool_name, call.arguments)
 
 
 def _no_authority_overreach(
@@ -542,15 +664,26 @@ def _budgets_available(
             )
         return False
     ok = True
-    for call in decision.selected_tool_calls:
-        remaining = budget.remaining(call.tool_kind)
-        if remaining <= 0:
+    required_by_kind = Counter(call.tool_kind for call in decision.selected_tool_calls)
+    for tool_kind, required in required_by_kind.items():
+        remaining = budget.remaining(tool_kind)
+        if remaining < required:
+            affected = next(
+                call for call in decision.selected_tool_calls
+                if call.tool_kind == tool_kind
+            )
             rejections.append(
                 PolicyRejectionV1(
                     rule="budget_exhausted",
-                    reason=f"budget for {call.tool_kind} exhausted on obligation {obligation_id}",
-                    detail=f"tool_call_id={call.tool_call_id} remaining={remaining}",
-                    tool_call_id=call.tool_call_id,
+                    reason=(
+                        f"budget for {tool_kind} cannot cover {required} calls "
+                        f"on obligation {obligation_id}"
+                    ),
+                    detail=(
+                        f"tool_call_id={affected.tool_call_id} "
+                        f"remaining={remaining} required={required}"
+                    ),
+                    tool_call_id=affected.tool_call_id,
                 )
             )
             ok = False
@@ -572,6 +705,7 @@ def _build_fallback_decision(
     ready_tools: tuple[str, ...],
     recent_tool_call_ids: tuple[str, ...],
     no_progress_tool_call_ids: tuple[str, ...],
+    executed_tool_calls: tuple[Any, ...] = (),
     repo_snapshot_paths: tuple[str, ...] | None,
     fallback_backend: SupervisorBackend | None,
     context_run_id: str,
@@ -632,6 +766,14 @@ def _build_fallback_decision(
         ready_tools=tuple(ready_tools),
         allowed_actions=("SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS",
                           "RECORD_GAP", "STOP_BLOCKED"),
+        # The deterministic supervisor must see what already ran, exactly as
+        # the LLM supervisor does, or it re-proposes the same doomed exact
+        # read/search that policy rejected for the original proposal; policy
+        # then rejects the fallback too and the run dies in STOP_BLOCKED
+        # from fallback exhaustion.  With the summaries it can switch to a
+        # fresh strategy (trace/data flow/branch/config) or record a gap.
+        executed_tool_calls=tuple(executed_tool_calls),
+        no_progress_tool_call_ids=tuple(no_progress_tool_call_ids),
     )
     fallback_decision = backend.decide(fallback_context)
 
@@ -678,6 +820,43 @@ def _stop_blocked_decision(
         selected_tool_calls=(),
         candidate_scope=(),
         expected_information_gain="terminal_blocked",
+        evidence_needed=(),
+        stop_condition="policy_merge_fallback_exhausted",
+        fallback_action=None,
+        rationale=rationale,
+        produced_by="policy_override",
+    )
+
+
+def _record_gap_decision(
+    *,
+    run_id: str,
+    turn_index: int,
+    obligation_id: str,
+    issue_id: str,
+    rationale: str,
+) -> ResearchDecisionV1:
+    """Build a RECORD_GAP decision as the second-level fallback.
+
+    When the deterministic fallback is itself rejected (for example a
+    duplicate no-gain call), the run must not die in STOP_BLOCKED from
+    fallback exhaustion: per the R3.3 fallback table the decision's
+    ``fallback_action`` (usually RECORD_GAP) is the documented next move.
+    The graph's gap finalizer still validates exhaustiveness fail-closed
+    before the obligation is marked ``explicit_gap``.
+    """
+
+    return ResearchDecisionV1(
+        decision_id=_fallback_decision_id(run_id, turn_index, "RECORD_GAP"),
+        run_id=run_id,
+        turn_index=turn_index,
+        action="RECORD_GAP",
+        obligation_id=obligation_id,
+        issue_id=issue_id,
+        goal="policy_merge_fallback_exhausted",
+        selected_tool_calls=(),
+        candidate_scope=(),
+        expected_information_gain="typed_gap",
         evidence_needed=(),
         stop_condition="policy_merge_fallback_exhausted",
         fallback_action=None,

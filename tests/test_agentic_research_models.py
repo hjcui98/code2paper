@@ -625,7 +625,11 @@ def test_global_safety_budget_rejects_negative() -> None:
 def test_research_actions_canonical() -> None:
     assert "STOP_BLOCKED" in RESEARCH_ACTIONS
     assert "SEARCH_SYMBOLS" in RESEARCH_ACTIONS
-    assert len(RESEARCH_ACTIONS) == 15
+    # COMPILE_EVIDENCE was added so the Research Manager can submit the
+    # deterministic evidence compiler once it judges the observations answer
+    # the active issue (policy accepts it for any issue kind).
+    assert "COMPILE_EVIDENCE" in RESEARCH_ACTIONS
+    assert len(RESEARCH_ACTIONS) == 16
 
 
 def test_tool_kinds_canonical() -> None:

@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:642c52b39d1e83646f74111a7e5695555d184842f1946fad66dd765e9201680b",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+    "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nStandard state-space models assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences, and their state update provides no explicit mechanism to suppress unreliable or noisy transitions. These two limitations motivate the timespan-aware and noise-robust design choices that follow.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-780817ba"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "Standard state-space models assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences, and their state update provides no explicit mechanism to suppress unreliable or noisy transitions. These two limitations motivate the timespan-aware and noise-robust design choices that follow.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:f69d9054cebea52d395fc941e64655cd92552375190d09679ed0e51851fd84db",
+  "content_digest": "sha256:9ea51cb8e3c256cc6d5f0e75e5e91920c7fbedc2129911c7016ddb98d7e22af8"
+}

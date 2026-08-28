@@ -282,6 +282,7 @@ def analyze_python_holdout(
             repo_snapshot_id=snapshot.snapshot_id,
             project_tree_hash=snapshot.project_tree_hash,
             evidence_packet_digest=graph.content_digest,
+            include_technical_claims=False,
         )
     return HoldoutAnalysis(snapshot=snapshot, graph=graph, facts=facts, claims=claims)
 
@@ -394,6 +395,7 @@ def materialize_holdout_artifacts(
             repo_snapshot_id=analysis.snapshot.snapshot_id,
             project_tree_hash=analysis.snapshot.project_tree_hash,
             evidence_packet_digest=packet_set.content_digest,
+            include_technical_claims=False,
         )
 
     authorized_ids = {

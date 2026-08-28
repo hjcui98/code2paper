@@ -1,0 +1,288 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-equation-compiler-v1",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "code_fact_digest": "sha256:55dd2fc387af295879ddad0d5bb7112a8b65dee03f45c3819f8f6fdf78317741",
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+          "operand_role": "object",
+          "operand_value": "entity_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+          "operand_role": "object",
+          "operand_value": "top_sentence_score"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "next_entity_score",
+        "entity_score",
+        "top_sentence_score",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:202e72f9eb2b79c6600a1121f4beb24408d57584c43cd9690911f12f8bb3949e"
+      ],
+      "formula_role": "operation_atom",
+      "canonical_identity": "sha256:51cf51d9aa4fe3951ccf83973a79e3bfebd38a8aa7d69d6cf6c72ab953818775",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+      "expression": "x / y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "operand_role": "object",
+          "operand_value": "entity_score * math.log(1 + entity_occurrences)"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "operand_role": "object",
+          "operand_value": "denom"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "entity_score * math.log(1 + entity_occurrences)",
+        "div",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:e72e4058d3d88cc9da7e5abac7544b8b83606b2ff6f71081e3ee84247720cb7e"
+      ],
+      "formula_role": "operation_atom",
+      "canonical_identity": "sha256:d24407fe811d31d1b046a8407de28496c6ad53548c50c23e04f827085379b06c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+      "expression": "x + y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "operand_role": "object",
+          "operand_value": "self.config.passage_ratio * dpr_passage_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "operand_role": "object",
+          "operand_value": "math.log(1 + total_entity_bonus)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "passage_score",
+        "self.config.passage_ratio * dpr_passage_score",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:af30b2aa90ee91aa"
+      ],
+      "exact_source_digests": [
+        "sha256:5fc1673be0579c797137ab3e6f9d29149d1a1daff73a8446a6ff2c0aed9d397a"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:11dedba2bec7b346f669038f489e4c5eba082c79138e1309d0a1e5d0a548561b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+      "expression": "x * y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "operand_role": "object",
+          "operand_value": "passage_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "operand_role": "object",
+          "operand_value": "self.config.passage_node_weight"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "passage_score",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:607e7d9f2246f485"
+      ],
+      "exact_source_digests": [
+        "sha256:41fb5012cbbcbb34e51ea585ed0dc0eeb299e5f2fa1826b6f532856f58d14e1a"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:ca105005060fc5b0b089ac3f73bd48d0ba66bff4a61d513ccd1dda89f00ed461",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+      "expression": "x + y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "formula_role": "operation_atom",
+      "canonical_identity": "sha256:1cbc39784dc04783b0c3bfc73dc35f0f5604866be6a4984d9c18293ee3b1af98",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+          "operand_role": "object",
+          "operand_value": "sentence_activation"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+          "operand_role": "object",
+          "operand_value": "sentence_similarities"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "weighted_sentence_scores",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:69a7bf35454a9f0a93a4d017fef6c3bd4608c289a92f73334512d0ca90368391"
+      ],
+      "formula_role": "operation_atom",
+      "canonical_identity": "sha256:a341ab6196426e023b7e825c2f07c738dcdb45bf9cd028803f121bfdaf6628f4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[0]"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[1]"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:67a843dc2a355f9a9c270c936bf962daa007a2719b7558593913a6126ea171ed"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:b7188c882934896ba2497a8f84970fca0e2d6feb46bb72f9d753354832779b6e",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:63fa2af911cb2f27a3a1b37abb9a64cbc86388bf104bbe7f12160a9be8e2e195"
+}

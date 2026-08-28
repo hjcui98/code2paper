@@ -21,6 +21,9 @@ class ProjectedClaim(TrustModel):
     required_qualifiers: list[str] = Field(default_factory=list)
     allowed_wording_boundary: str
     source: str = ""
+    writing_role: Literal["method_positive", "method_conditional", "audit_only"] = "method_positive"
+    inference_level: Literal["E0", "E1", "E2", "E3"] = "E0"
+    parent_claim_ids: list[str] = Field(default_factory=list)
     input_digest: str
 
     @model_validator(mode="after")
@@ -129,6 +132,11 @@ class FinalAtomicClaim(TrustModel):
     char_start: int
     char_end: int
     candidate_projection_claim_ids: list[str] = Field(default_factory=list)
+    # Closed conceptual cards selected before the evidence gate.  These IDs
+    # are navigation metadata only: they can expand through the digest-bound
+    # proposition sidecar to existing projection claims, but never authorize
+    # evidence or a verdict by themselves.
+    candidate_method_proposition_ids: list[str] = Field(default_factory=list)
     candidate_author_attested_ids: list[str] = Field(default_factory=list)
     # Candidate-only narrative points come from the author-intent,
     # repository-partial, mismatch, literature-pending, or formalization
@@ -155,6 +163,7 @@ class TextClaimEvidenceVerdict(TrustModel):
     atomic_claim_id: str
     status: Literal["supported", "caveated", "unsupported", "unverified"]
     matched_projection_claim_ids: list[str] = Field(default_factory=list)
+    matched_method_proposition_ids: list[str] = Field(default_factory=list)
     direct_evidence_ids: list[str] = Field(default_factory=list)
     relation_evidence_ids: list[str] = Field(default_factory=list)
     supported_fragment: str = ""
@@ -181,6 +190,7 @@ class TextEvidenceValidationReport(TrustModel):
     unsupported_claims: int = 0
     unverified_claims: int = 0
     semantic_verifier_calls: int = 0
+    verification_mode: Literal["lexical_only", "semantic"] = "lexical_only"
     verdicts: list[TextClaimEvidenceVerdict] = Field(default_factory=list)
     recommended_actions: list[str] = Field(default_factory=list)
 

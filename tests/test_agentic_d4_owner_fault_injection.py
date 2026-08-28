@@ -264,6 +264,47 @@ def test_local_rewrite_repairs_unique_exact_span_coordinates_only() -> None:
     )
 
 
+def test_local_rewrite_restores_unchanged_heading_for_full_section_patch() -> None:
+    incumbent = "## Encoder mechanism\n\n`Encoder.forward` loads the input tensor."
+    issue = TextRepairIssueV1(
+        sentence_id="style:encoder",
+        failure_type="method_language_style",
+        allowed_repair_scope="wording_only",
+    )
+
+    def caller(_config, _request):
+        return LLMResponse(
+            text=json.dumps({
+                "patches": [{
+                    "patch_id": "academic-section",
+                    "start": 0,
+                    "end": len(incumbent),
+                    "original_text": incumbent,
+                    "replacement_text": "The encoder maps the input into a latent representation.",
+                    "issue_ids": ["style:encoder"],
+                    "allowed_scope": "wording_only",
+                }],
+            }),
+            response_hash="sha256:rewrite-heading-repair",
+            finish_reason="stop",
+        )
+
+    result = LocalRewriteAgent(
+        config=LLMConfig(provider=LLMProvider.NONE, model="fault-injection", cache=False),
+        caller=caller,
+    ).rewrite(
+        incumbent,
+        issues=[issue],
+        section_context={"writer_heading": "Encoder mechanism"},
+    )
+
+    assert result.status == "applied"
+    assert result.candidate_text.startswith("## Encoder mechanism\n\nThe encoder maps")
+    assert "restore_unchanged_section_heading" in (
+        result.response_recovery_trace["operations"]
+    )
+
+
 def test_local_rewrite_owner_accepts_most_permissive_scope_among_issues() -> None:
     """When a sentence carries several issues, the repair contract permits
     the most permissive scope among them (``derive_repair_issues`` /
@@ -357,3 +398,101 @@ def test_local_rewrite_rejects_deleting_an_authorized_method_section() -> None:
     assert result.status == "rejected"
     assert result.blocked_reason == "rewrite_candidate_not_readable"
     assert "candidate_body_is_connective_debris" in result.patch_failures
+
+
+def test_local_rewrite_rejects_patch_referencing_out_of_cluster_issue_id() -> None:
+    """The patch contract accepts only issue_ids from the assigned cluster.
+
+    Regression: the section context exposed every section failure (including
+    structure:* ids from another cluster), the model referenced them in its
+    patch, and the whole repair was rejected as unknown_issue even though the
+    span was exact."""
+    issue = TextRepairIssueV1(
+        sentence_id="S1",
+        atomic_claim_id="FAC1",
+        failure_type="missing_qualifier",
+        allowed_repair_scope="wording_only",
+    )
+
+    def caller(_config, _request):
+        return LLMResponse(
+            text=json.dumps({
+                "patches": [{
+                    "patch_id": "tainted",
+                    "start": 0,
+                    "end": len("The incumbent sentence."),
+                    "original_text": "The incumbent sentence.",
+                    "replacement_text": "The incumbent sentence, under case_study.",
+                    "issue_ids": ["FAC1", "structure:MA-S2:fused-heading-suffix"],
+                    "allowed_scope": "wording_only",
+                }],
+            }),
+            response_hash="sha256:rewrite-out-of-cluster",
+            finish_reason="stop",
+        )
+
+    result = LocalRewriteAgent(
+        config=LLMConfig(provider=LLMProvider.NONE, model="fault-injection", cache=False),
+        caller=caller,
+    ).rewrite("The incumbent sentence.", issues=[issue])
+
+    assert result.status == "rejected"
+    assert result.blocked_reason == "rewrite_patch_contract_failed"
+    assert result.patch_failures == ("patch:tainted:unknown_issue",)
+    assert result.candidate_text == "The incumbent sentence."
+
+
+def test_local_rewrite_applies_multiple_disjoint_exact_patches() -> None:
+    """Multiple disjoint exact spans are applied in one Rewrite call.
+
+    Regression: patches were capped at one, forcing a single full-section
+    span that the model could not reproduce byte-exactly, so multi-claim
+    paragraphs churned on incumbent_span_mismatch until the attempt budget
+    was exhausted."""
+    incumbent = "First sentence stands. Second sentence stands. Third sentence stands."
+    issue = TextRepairIssueV1(
+        sentence_id="S2",
+        atomic_claim_id="FAC2",
+        failure_type="missing_qualifier",
+        allowed_repair_scope="wording_only",
+    )
+
+    def caller(_config, _request):
+        return LLMResponse(
+            text=json.dumps({
+                "patches": [
+                    {
+                        "patch_id": "p2",
+                        "start": incumbent.index("Second sentence stands."),
+                        "end": incumbent.index("Second sentence stands.") + len("Second sentence stands."),
+                        "original_text": "Second sentence stands.",
+                        "replacement_text": "Second sentence runs, under case_study.",
+                        "issue_ids": ["FAC2"],
+                        "allowed_scope": "wording_only",
+                    },
+                    {
+                        "patch_id": "p3",
+                        "start": incumbent.index("Third sentence stands."),
+                        "end": incumbent.index("Third sentence stands.") + len("Third sentence stands."),
+                        "original_text": "Third sentence stands.",
+                        "replacement_text": "Third sentence proceeds.",
+                        "issue_ids": ["FAC2"],
+                        "allowed_scope": "wording_only",
+                    },
+                ],
+            }),
+            response_hash="sha256:rewrite-multi-patch",
+            finish_reason="stop",
+        )
+
+    result = LocalRewriteAgent(
+        config=LLMConfig(provider=LLMProvider.NONE, model="fault-injection", cache=False),
+        caller=caller,
+    ).rewrite(incumbent, issues=[issue])
+
+    assert result.status == "applied"
+    assert result.candidate_text == (
+        "First sentence stands. Second sentence runs, under case_study. "
+        "Third sentence proceeds."
+    )
+    assert len(result.output.patches) == 2

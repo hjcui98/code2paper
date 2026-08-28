@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "notes": "Frozen discriminator scores from LinearRAG Method audit. Not a production gate. Realization is 0-4 information equivalence, not BLEU.",
+  "baselines": [
+    {
+      "run_id": "fresh-linearrag-e2e-20260825-164605",
+      "condition": "product_empty_mas4",
+      "funnel_counts": {
+        "available": 43,
+        "found": 40,
+        "compiled": 35,
+        "bound_correct_h2": 18,
+        "delivered": 16,
+        "used": 8,
+        "total": 43
+      },
+      "stage1_used": 0,
+      "stage1_total": 14,
+      "stage1_mean_realization": 0.0,
+      "notes": "STAGE-02 claims folded into Motivation; MA-S4 empty shell."
+    },
+    {
+      "run_id": "c2p-binding-only-mas4-20260825",
+      "condition": "binding_only",
+      "funnel_counts": {
+        "available": 43,
+        "found": 40,
+        "compiled": 35,
+        "bound_correct_h2": 18,
+        "delivered": 16,
+        "used": 14,
+        "total": 43
+      },
+      "stage1_used": 4,
+      "stage1_total": 14,
+      "stage1_mean_realization": 2.0,
+      "notes": "Correct H2 outline plus copied comparison predicate; used_claim_ids empty."
+    },
+    {
+      "run_id": "c2p-oracle-writer-mas4-20260825",
+      "condition": "oracle_writer",
+      "funnel_counts": {
+        "available": 43,
+        "found": 40,
+        "compiled": 35,
+        "bound_correct_h2": 18,
+        "delivered": 16,
+        "used": 14,
+        "total": 43
+      },
+      "stage1_used": 11,
+      "stage1_total": 14,
+      "stage1_mean_realization": 3.5,
+      "notes": "Same model, no FAC/schema/L0 wording boundary. Fusion including sparse incidence."
+    }
+  ],
+  "source_to_render_baseline": {
+    "run_id": "c2p-synth-20260826-225116",
+    "protocol": {
+      "callback_rounds": 0,
+      "revision_budget": 0,
+      "authority": "frozen_research_artifacts"
+    },
+    "projects": {
+      "linearrag": {
+        "facet_status_counts": {
+          "entailed": 1,
+          "partial": 0,
+          "unresolved": 5,
+          "mismatch": 16
+        },
+        "draft_nonempty": true,
+        "writer_call_count": 11,
+        "writer_repair_rounds": 2,
+        "writer_repair_commits": 0,
+        "formalizer_call_count": 2,
+        "formula_package_count": 2,
+        "used_equation_count": 0,
+        "planned_paragraph_count": 0,
+        "rendered_paragraph_count": 0,
+        "content_states": {
+          "not_discovered": 5,
+          "blocked_representation": 0,
+          "low_quality_rendered": 5
+        },
+        "dropped_section_ids": ["MA-S3", "MA-S4"]
+      },
+      "dyg": {
+        "facet_status_counts": {
+          "entailed": 0,
+          "partial": 2,
+          "unresolved": 7,
+          "mismatch": 16
+        },
+        "draft_nonempty": true,
+        "writer_call_count": 21,
+        "writer_repair_rounds": 4,
+        "writer_repair_commits": 0,
+        "formalizer_call_count": 3,
+        "formula_package_count": 3,
+        "used_equation_count": 0,
+        "planned_paragraph_count": 0,
+        "rendered_paragraph_count": 0,
+        "content_states": {
+          "not_discovered": 7,
+          "blocked_representation": 1,
+          "low_quality_rendered": 4
+        },
+        "dropped_section_ids": ["MA-S4"]
+      },
+      "ebcar": {
+        "facet_status_counts": {
+          "entailed": 0,
+          "partial": 0,
+          "unresolved": 2,
+          "mismatch": 28
+        },
+        "draft_nonempty": true,
+        "writer_call_count": 15,
+        "writer_repair_rounds": 4,
+        "writer_repair_commits": 0,
+        "formalizer_call_count": 0,
+        "formula_package_count": 0,
+        "used_equation_count": 0,
+        "planned_paragraph_count": 0,
+        "rendered_paragraph_count": 0,
+        "content_states": {
+          "not_discovered": 2,
+          "blocked_representation": 0,
+          "low_quality_rendered": 5
+        },
+        "dropped_section_ids": []
+      }
+    }
+  }
+}

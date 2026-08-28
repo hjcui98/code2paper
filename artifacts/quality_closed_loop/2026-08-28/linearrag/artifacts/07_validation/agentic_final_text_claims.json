@@ -1,0 +1,162 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:fb64252c784ae6c7857a2aea6610721a09579362c6e1dd210ea82807b7c20662",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 76,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:f23e9f5366718fb92c90c4d2b2c8be522be1306614e52174fec2f4c26c974f3d"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 78,
+      "char_end": 272,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:bdb86353eeeba9147753002ff3018f27662fd2c88108ed2e166989c6768ef1c7"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 273,
+      "char_end": 472,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:ad996e7345b5708ec1d36624b511de59be861a857f71f092c17bde3da73bf665"
+    },
+    {
+      "unit_id": "FTU4",
+      "kind": "heading",
+      "text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "line_start": 5,
+      "line_end": 5,
+      "char_start": 477,
+      "char_end": 549,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:6d8e55b41ed5731f2f34c194edb16cf763d4e57145ca9e79b82dca8cbb0ab3b5"
+    },
+    {
+      "unit_id": "FTU5",
+      "kind": "sentence",
+      "text": "The LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 551,
+      "char_end": 718,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:8c787e4781d7f18f0bd474f317ae9cdab6502874afdd926f1fbc68e30e703607"
+    },
+    {
+      "unit_id": "FTU6",
+      "kind": "sentence",
+      "text": "Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 719,
+      "char_end": 956,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:c45ee25db73c727e3360e79711dec7a5e1d16d130cbc63a6618a048ce5f55225"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality.",
+      "normalized_text": "graphrag systems that rely on pre extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges degrading downstream retrieval quality",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 78,
+      "char_end": 272,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:bdb86353eeeba9147753002ff3018f27662fd2c88108ed2e166989c6768ef1c7"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+      "normalized_text": "this work revisits that dependency by adopting a graph structured retrieval formulation that does not require a separate relation extraction stage thereby eliminating the error source at its origin",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 273,
+      "char_end": 472,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:ad996e7345b5708ec1d36624b511de59be861a857f71f092c17bde3da73bf665"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "unit_id": "FTU5",
+      "text": "The LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices.",
+      "normalized_text": "the linearrag system structures retrieval around a tri graph a graph whose three node types entities sentences and passages are linked by sparse adjacency matrices",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 551,
+      "char_end": 718,
+      "candidate_projection_claim_ids": [
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "candidate_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:8c787e4781d7f18f0bd474f317ae9cdab6502874afdd926f1fbc68e30e703607"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "unit_id": "FTU6",
+      "text": "Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+      "normalized_text": "retrieval proceeds in two stages the first stage activates entity nodes to perform local semantic bridging and the second stage propagates importance across the graph via personalized pagerank to select passages for global relevance",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 719,
+      "char_end": 956,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:c45ee25db73c727e3360e79711dec7a5e1d16d130cbc63a6618a048ce5f55225"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

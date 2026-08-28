@@ -1,0 +1,436 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "fact_digest": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+  "equation_digest": "sha256:e9dca969feff0109396de0771fd6208e4a0c90e19b39f74d905c07cc3e50ed5f",
+  "symbols": [
+    {
+      "symbol": "train_ebcar",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:116:116",
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "cfg.use_dedicated_attention",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:116:116",
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "'hybrid_attention_'",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "run_name",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "result=run_name",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "reranker",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "query",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "passage",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "label",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "document_id",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "passage_id",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "passage_text",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "result=loss",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "train_loss",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "len(train_loader)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "val_loss",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "len(val_loader)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "symbol": "result=best_val_loss",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ]
+    }
+  ],
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "'hybrid_attention_'"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "run_name"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:e570cebd53c158c8b2f9f90d8067fab6067a699858d36e918af9590ae1dc7c87"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:5c97f00f864de7edc86df09ede16baee8dfcec2f96c93b4feb0795fbebee84d7",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "train_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "len(train_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:cb165e8feb6f2de0ee45d7a9839b7c72f790f88f45287a15e6fd1795a7ec7cfd"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:6a00d7f2c73d4ea8887d74498c6ac5559550c3a81d0dda8cdb2ef833321fb0d9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "val_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "len(val_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:631b7f9d196fd61ef02886faff14e235fad7855e7517ae50e035b9a237ae802c"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:5993c68f7af79f2633758ef2ce9972a6bcad43a0d1af2c0f19f3f54cf6d1fa49",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "proof_obligations": [
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c.",
+      "assumptions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "derivation_steps": [
+        "Bind x to 'hybrid_attention_' from fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c.",
+        "Bind y to run_name from fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:3f0e5c7d062e70d0bd5df8c5493f8fa053caabf66e21aac9e7feb463146e63f5"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e.",
+      "assumptions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conclusion": "x / y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "derivation_steps": [
+        "Bind x to train_loss from fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e.",
+        "Bind y to len(train_loader) from fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:a0a7278392365ee299c8276a8dfaa5512a44575b3a8c1b9cdb636afd6bb01b07"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3.",
+      "assumptions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conclusion": "x / y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "derivation_steps": [
+        "Bind x to val_loss from fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3.",
+        "Bind y to len(val_loader) from fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:3a41a506cd3f1b222fc99313d7bd49d66306228b11ba4708ca30f1b9d2d2cf5b"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "risk:missing_assumptions",
+      "kind": "missing_assumptions",
+      "message": "A formal expression is available, but no independent assumptions were supplied.",
+      "fact_ids": [],
+      "blocking": false
+    }
+  ],
+  "proposal_items": [],
+  "content_digest": "sha256:cb33ed600ecdf1e8e533f4826e54b41cc05501ca3bda6b7c630714e57133869f"
+}

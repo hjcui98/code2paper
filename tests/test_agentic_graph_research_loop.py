@@ -570,3 +570,83 @@ class TestLoopStateManagement:
         runtime = _runtime(snapshot, agenda, run_id="run-max")
         result = run_research_loop(runtime, max_turns=3)
         assert result.terminated or result.termination_reason == "max_turns_reached"
+
+    def test_executed_read_signatures_span_obligations(self, snapshot: RepoSnapshot) -> None:
+        # A read executed for one obligation must be visible to the policy
+        # layer when another obligation is active, so the Manager cannot
+        # re-read the same exact span.  This is the regression for the
+        # canary where the LLM re-read ``get_prune_input_f15`` on two
+        # consecutive component obligations.
+        from code2paper.agentic.research_graph import _executed_read_signatures
+        from code2paper.agentic.research_models import ResearchToolCallV1
+
+        runtime = _runtime(
+            snapshot,
+            _agenda("run-sig", snapshot, _obligation("obl-a")),
+            run_id="run-sig",
+        )
+        loop = initial_loop_state(runtime)
+        read_call = ResearchToolCallV1(
+            tool_call_id="tc-read-1",
+            tool_name="read_symbol",
+            tool_kind="code_read",
+            obligation_id="obl-a",
+            goal="read feature constructor",
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            arguments={
+                "path": "utils/gaussian_model.py",
+                "symbol": "GaussianModel.get_prune_input_f15",
+            },
+        )
+        # Simulate: the call was executed (id in recent_tool_call_ids) while
+        # the decision trace records it under its own obligation.
+        loop.recent_tool_call_ids.add("tc-read-1")
+        decision = ResearchDecisionV1(
+            decision_id="d-1",
+            run_id="run-sig",
+            turn_index=0,
+            action="READ_CANDIDATE",
+            obligation_id="obl-a",
+            goal="read feature constructor",
+            selected_tool_calls=(read_call,),
+        )
+        loop.decision_trace.append(decision)
+        signatures = _executed_read_signatures(loop)
+        assert "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15" in signatures
+
+    def test_executed_read_signatures_skip_rejected_calls(self, snapshot: RepoSnapshot) -> None:
+        from code2paper.agentic.research_graph import _executed_read_signatures
+        from code2paper.agentic.research_models import ResearchToolCallV1
+
+        runtime = _runtime(
+            snapshot,
+            _agenda("run-sig2", snapshot, _obligation("obl-a")),
+            run_id="run-sig2",
+        )
+        loop = initial_loop_state(runtime)
+        rejected_call = ResearchToolCallV1(
+            tool_call_id="tc-rejected",
+            tool_name="read_symbol",
+            tool_kind="code_read",
+            obligation_id="obl-a",
+            goal="read rejected span",
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            arguments={
+                "path": "utils/gaussian_model.py",
+                "symbol": "GaussianModel.prune_points",
+            },
+        )
+        decision = ResearchDecisionV1(
+            decision_id="d-rej",
+            run_id="run-sig2",
+            turn_index=0,
+            action="READ_CANDIDATE",
+            obligation_id="obl-a",
+            goal="read rejected span",
+            selected_tool_calls=(rejected_call,),
+        )
+        loop.decision_trace.append(decision)
+        # The id is NOT in recent_tool_call_ids => the call was never
+        # executed, so it must not enter the read-signature set.
+        signatures = _executed_read_signatures(loop)
+        assert "read_symbol:utils/gaussian_model.py::GaussianModel.prune_points" not in signatures

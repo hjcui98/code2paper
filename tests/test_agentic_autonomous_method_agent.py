@@ -221,6 +221,48 @@ class TestTypedGaps:
             assert "synthetic" not in gap.gap_id
             assert gap.reason
 
+    def test_empty_attempts_are_never_attempted_not_stop_blocked(self) -> None:
+        from types import SimpleNamespace
+
+        from code2paper.agentic.research_models import (
+            ResearchAgendaItemV1,
+            ResearchAgendaV1,
+        )
+
+        agenda = ResearchAgendaV1(
+            run_id="run-gaps",
+            repo_snapshot_id="repo:gaps",
+            project_tree_hash="sha256:tree",
+            items=[
+                ResearchAgendaItemV1(
+                    obligation_id="O-COMPONENT-01",
+                    priority="must_cover",
+                    status="pending",
+                ),
+                ResearchAgendaItemV1(
+                    obligation_id="O-STAGE-01",
+                    priority="must_cover",
+                    status="in_progress",
+                    attempted_actions=["SEARCH_SYMBOLS"],
+                ),
+                ResearchAgendaItemV1(
+                    obligation_id="O-ORGANIZATION-01",
+                    priority="preference",
+                    status="pending",
+                ),
+            ],
+        )
+        gaps = build_typed_gaps(
+            SimpleNamespace(agenda=agenda),
+            SimpleNamespace(termination_reason="max_turns_reached"),
+            claim_set=None,
+        )
+        by_id = {gap.obligation_id: gap for gap in gaps}
+        assert by_id["O-COMPONENT-01"].stopping_reason == "never_attempted"
+        assert by_id["O-STAGE-01"].stopping_reason == "max_turns_reached"
+        assert by_id["O-ORGANIZATION-01"].stopping_reason == "organization_preference"
+        assert by_id["O-COMPONENT-01"].attempted_tools == ()
+
 
 class TestRunAutonomousMethodAgent:
     def test_full_product_run_writes_research_artifacts(
@@ -360,6 +402,92 @@ class TestRunAutonomousMethodAgent:
                 claims_path=tmp_path / "nope.json",
                 out_root=tmp_path / "out4",
             )
+
+    def test_concept_cards_lane_persists_cards_and_skips_propositions(
+        self,
+        tmp_path: Path,
+        llm_none: LLMConfig,
+    ) -> None:
+        """Stage 6: a full RAP run with a MethodConceptCardSetV1 switches the
+        plan and writer artifacts to the concept lane (cards persisted,
+        proposition artifacts absent)."""
+        from code2paper.agentic.method_concept_card_models import (
+            ConceptCardBindingV1,
+            ConceptCardEvidenceVerdictV1,
+            ConceptCardFieldJudgmentV1,
+            MethodConceptCardSetV1,
+            MethodConceptCardV1,
+        )
+
+        cards = MethodConceptCardSetV1(
+            repo_snapshot_id="snap", project_tree_hash="tree",
+            cards=[MethodConceptCardV1(
+                concept_key="CK-V", cluster_id="CC-1",
+                authority_lane="repository",
+                method_subject="descriptor",
+                operation="concatenates statistics",
+                may_enter_verified=True,
+                evidence_verdict="entailed",
+            )],
+            evidence_verdicts=[ConceptCardEvidenceVerdictV1(
+                concept_key="CK-V",
+                field_judgments=[ConceptCardFieldJudgmentV1(
+                    field_name="operation", proposed_value="concatenates",
+                    verdict="entailed", evidence_fragment_refs=("frag-1",),
+                    rationale="frag-1 establishes the operation",
+                )],
+                overall_verdict="entailed", rationale="all entailed",
+            )],
+            bindings=[ConceptCardBindingV1(
+                concept_key="CK-V",
+                field_bindings=(("operation", ("frag-1",)),),
+                source_obligation_ids=("O-METHOD-MAINLINE-01-92ebb7fd",),
+            )],
+        )
+        out_root = tmp_path / "out-concept"
+        result = run_autonomous_method_agent(
+            repo_path=FIXTURE_REPO,
+            author_intent_path=FIXTURE_INTENT,
+            out_root=out_root,
+            llm_config=llm_none,
+            max_research_turns=12,
+            concept_cards=cards,
+        )
+        assert "method_concept_cards_v1" in result.artifact_paths
+        persisted = json.loads(
+            Path(result.artifact_paths["method_concept_cards_v1"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert persisted["cards"][0]["concept_key"] == "CK-V"
+        # Proposition artifacts are absent in the concept lane.
+        assert "method_propositions_v1" not in result.artifact_paths
+        assert "method_proposition_bindings_v1" not in result.artifact_paths
+        plan = json.loads(
+            Path(result.artifact_paths["method_section_plan_v2"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert plan["argument_units"][0]["concept_card_ids"] == ["CK-V"]
+
+    def test_compile_concept_cards_is_noop_without_live_llm(
+        self,
+        tmp_path: Path,
+        llm_none: LLMConfig,
+    ) -> None:
+        """Deprecated concept-card compile is ignored; briefs compile deterministically."""
+        out_root = tmp_path / "out-compile"
+        result = run_autonomous_method_agent(
+            repo_path=FIXTURE_REPO,
+            author_intent_path=FIXTURE_INTENT,
+            out_root=out_root,
+            llm_config=llm_none,
+            max_research_turns=12,
+            compile_concept_cards=True,
+        )
+        assert "method_concept_cards_v1" not in result.artifact_paths
+        assert "method_argument_briefs_v1" in result.artifact_paths
+        assert "method_propositions_v1" not in result.artifact_paths
 
     def test_max_research_turns_must_be_positive(
         self,

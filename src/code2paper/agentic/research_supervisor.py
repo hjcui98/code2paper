@@ -54,6 +54,11 @@ from code2paper.agentic.typed_refs import (
     is_symbol_ref,
     split_symbol_ref,
 )
+from code2paper.agentic.behavior_graph import make_symbol_id
+from code2paper.agentic.research_read_identity import (
+    content_read_covers_line,
+    span_covers_line,
+)
 
 
 _PREDICATE_SEARCH_QUERIES: dict[str, str] = {
@@ -215,6 +220,11 @@ class RecentObservationSummaryV1(BaseModel):
     candidate_count: int = 0
     obligation_id: str = ""
     query: str = ""
+    semantic_summary: str = ""
+    code_excerpt: str = ""
+    discovered_symbols: tuple[str, ...] = Field(default_factory=tuple)
+    discovered_relations: tuple[str, ...] = Field(default_factory=tuple)
+    enclosing_symbol_refs: tuple[str, ...] = Field(default_factory=tuple)
 
 
 class BehaviorTemplateSearchHintV1(BaseModel):
@@ -229,6 +239,31 @@ class BehaviorTemplateSearchHintV1(BaseModel):
     missing_relation_kinds: tuple[str, ...] = Field(default_factory=tuple)
     resolved_role_symbols: dict[str, str] = Field(default_factory=dict)
     predicate_order_hint: tuple[str, ...] = Field(default_factory=tuple)
+
+
+class ExecutedToolCallSummaryV1(BaseModel):
+    """A prior repository action shown back to the Research Manager.
+
+    Tool-call IDs are deliberately omitted.  The model needs the semantic
+    action and exact arguments in order to choose a different query or
+    symbol; stable IDs remain harness-owned policy state.
+
+    The summaries are assembled across obligations (``obligation_id`` is
+    carried so the model can distinguish a fresh search for a new story
+    question from an exact re-read of code it already inspected).  The
+    policy layer additionally rejects exact re-runs of content-reading
+    calls even when the obligation differs, because the source span
+    returned by ``read_symbol`` / ``read_code_span`` is identical within
+    one repo snapshot.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    tool_name: str
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    path_scope: tuple[str, ...] = Field(default_factory=tuple)
+    goal: str = ""
+    obligation_id: str = ""
 
 
 class ResearchDecisionContextV1(BaseModel):
@@ -252,10 +287,18 @@ class ResearchDecisionContextV1(BaseModel):
     active_issue: ResearchIssueV1 | None = None
     typed_behavior_targets: tuple[TypedBehaviorTargetV1, ...] = Field(default_factory=tuple)
     current_supported_claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    current_supported_claim_statements: tuple[str, ...] = Field(default_factory=tuple)
     missing_information: tuple[str, ...] = Field(default_factory=tuple)
     top_candidate_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     top_candidate_behavior_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Behavior nodes that bind to the exact candidate symbol/source span
+    # (symbol_id match or covering source span).  A non-empty but unrelated
+    # node list must not authorize COMPILE_EVIDENCE from a reused read.
+    candidate_bound_behavior_node_ids: tuple[str, ...] = Field(default_factory=tuple)
     recent_observations: tuple[RecentObservationSummaryV1, ...] = Field(default_factory=tuple)
+    executed_tool_calls: tuple[ExecutedToolCallSummaryV1, ...] = Field(default_factory=tuple)
+    policy_feedback: tuple[str, ...] = Field(default_factory=tuple)
+    no_progress_tool_call_ids: tuple[str, ...] = Field(default_factory=tuple)
     no_progress_counter: int = 0
     no_progress_history: tuple[str, ...] = Field(default_factory=tuple)
     remaining_budgets: dict[str, int] = Field(default_factory=dict)
@@ -456,6 +499,19 @@ class DeterministicSupervisorBackend:
                 else:
                     action = "STOP_BLOCKED"
                     fallback = "STOP_BLOCKED"
+        elif (
+            action in tool_calling_actions
+            and self._proposed_call_already_executed(context, action)
+        ):
+            # The exact deterministic call (same tool, obligation, arguments
+            # and path scope) was already executed in this run; policy
+            # rejects the repeat as a duplicate no-gain call and the
+            # fallback repeats the same doomed call.  Switch strategy so the
+            # loop can either find genuinely new evidence or escalate the
+            # no-progress counter to a typed gap -- never burn turns into
+            # fallback exhaustion.
+            action, fallback = self._strategy_switch(context)
+            tool_calls = self._build_tool_calls(context, action)
         obligation_id = context.active_obligation.obligation_id if context.active_obligation else ""
         issue_id = context.active_issue.issue_id if context.active_issue else ""
         goal = self._goal_for(action, context)
@@ -546,6 +602,21 @@ class DeterministicSupervisorBackend:
             # recorded an explicit gap even when other symbols implemented
             # the missing operation.
             if searched_candidate_ready or self._predicate_candidate_ref(context) is not None:
+                # The top result may already have been read for another
+                # obligation in this snapshot (same exact identity rule as
+                # the authority-boundary gate below).  Compile from the
+                # existing candidate-bound graph nodes instead of proposing
+                # a read that policy must reject as a duplicate.  The loop
+                # treats ``partial`` as terminal when the round-robin
+                # returns the same obligation, so recompiling cannot churn
+                # past the run's terminal boundary.
+                if self._candidate_read_already_executed(context):
+                    if (
+                        context.candidate_bound_behavior_node_ids
+                        and not context.current_supported_claim_ids
+                    ):
+                        return ("COMPILE_EVIDENCE", "RECORD_GAP")
+                    return self._strategy_switch(context)
                 return ("READ_CANDIDATE", "RECORD_GAP")
             return ("SEARCH_SYMBOLS", "RECORD_GAP")
         if semantic_missing and any(
@@ -563,6 +634,13 @@ class DeterministicSupervisorBackend:
             if searched_candidate_ready and (
                 not latest_query or latest_query == expected_query
             ):
+                if self._candidate_read_already_executed(context):
+                    if (
+                        context.candidate_bound_behavior_node_ids
+                        and not context.current_supported_claim_ids
+                    ):
+                        return ("COMPILE_EVIDENCE", "RECORD_GAP")
+                    return self._strategy_switch(context)
                 return ("READ_CANDIDATE", "RECORD_GAP")
             return ("SEARCH_SYMBOLS", "RECORD_GAP")
         # Author text and candidate-path hints often contain words such as
@@ -578,6 +656,30 @@ class DeterministicSupervisorBackend:
         # are intentionally more specific.
         if not has_exact_source_span:
             if searched_candidate_ready:
+                # The exact read this obligation needs may already have been
+                # executed for another obligation in the same snapshot.
+                # Policy rejects a re-read of identical bytes, so proposing
+                # READ_CANDIDATE here would be rejected and the loop would
+                # burn turns until a fallback-exhaustion STOP_BLOCKED.  When
+                # the behavior graph already carries nodes that bind to this
+                # obligation's exact candidate symbol/span, the evidence is
+                # already in the run: compile from the existing graph
+                # instead of re-reading.  A non-empty but unrelated node
+                # projection (same file, different symbol) must NOT authorize
+                # compilation from a reused read.
+                if self._candidate_read_already_executed(context):
+                    if context.candidate_bound_behavior_node_ids:
+                        return ("COMPILE_EVIDENCE", "RECORD_GAP")
+                    # No candidate-bound graph nodes yet: switch strategy
+                    # (same escalation as the no-progress rule) rather than
+                    # repeat a doomed read; the next search may find
+                    # cooperating code or a different span.
+                    recent_tools = {
+                        obs.tool_name for obs in context.recent_observations
+                    }
+                    if "search_symbols" in recent_tools or "find_entrypoints" in recent_tools:
+                        return ("TRACE_CALLS", "RECORD_GAP")
+                    return ("SEARCH_HINTS", "RECORD_GAP")
                 return ("READ_CANDIDATE", "RECORD_GAP")
             return ("SEARCH_SYMBOLS", "RECORD_GAP")
         if semantic_missing and any(
@@ -619,7 +721,7 @@ class DeterministicSupervisorBackend:
     def _build_tool_calls(
         self, context: ResearchDecisionContextV1, action: ResearchAction
     ) -> tuple[ResearchToolCallV1, ...]:
-        if action in {"STOP_BLOCKED", "RECORD_GAP", "PLAN_METHOD"}:
+        if action in {"STOP_BLOCKED", "RECORD_GAP", "COMPILE_EVIDENCE", "PLAN_METHOD"}:
             return ()
 
         obligation_id = (
@@ -630,22 +732,36 @@ class DeterministicSupervisorBackend:
             return ()
 
         tool_name = _action_default_tool(action)
+        if (
+            action == "SEARCH_SYMBOLS"
+            and context.no_progress_counter > 0
+            and "search_code" in self._ready_tools
+            and any(
+                observation.tool_name == "search_symbols"
+                and observation.status in {"success_empty", "scope_exhausted"}
+                for observation in context.recent_observations
+            )
+        ):
+            # Broaden an empty structural lookup to literal source search.
+            # Repeating the same stable symbol-search call is neither useful
+            # research nor a valid policy fallback.
+            tool_name = "search_code"
         if tool_name is None or tool_name not in self._ready_tools:
             return ()
 
         tool_kind = _tool_kind_for(tool_name)
         turn = context.turn_index
-        # Stable id so the same (turn, tool, obligation) yields the same id
-        # in tests.  No random component.
-        tool_call_id = _stable_tool_call_id(
-            self._run_id, turn, tool_name, obligation_id
-        )
-
         arguments: dict[str, Any] = {}
         if tool_name == "search_symbols":
             query = self._search_query(context)
             arguments["query"] = query
             arguments["top_k"] = 10
+        elif tool_name == "search_code":
+            query = self._search_query(context)
+            if not query:
+                return ()
+            arguments["query"] = query
+            arguments["top_k"] = 20
         elif tool_name == "read_symbol":
             symbol = self._read_symbol_target(context)
             path = self._read_symbol_path(context)
@@ -728,6 +844,13 @@ class DeterministicSupervisorBackend:
             # module, but it must not escape an author-provided implementation
             # scope and silently select a sibling/baseline model.
             path_scope = ()
+        tool_call_id = _stable_tool_call_id(
+            self._run_id,
+            tool_name,
+            obligation_id,
+            arguments=arguments,
+            path_scope=path_scope,
+        )
         call = ResearchToolCallV1(
             tool_call_id=tool_call_id,
             tool_name=tool_name,
@@ -796,6 +919,28 @@ class DeterministicSupervisorBackend:
         ).casefold()
         if "entrypoint" in entrypoint_text or "::main" in entrypoint_text:
             return "main"
+        # Quantitative outputs and named equations are often the strongest
+        # bridge from an author description to an implementation identifier
+        # (for example ``15-dimensional`` -> ``input_f15``).  Preserve these
+        # before generic role/search terms so the initial retrieval does not
+        # collapse to broad words such as "feature" or "model".
+        exact_output_terms: list[str] = []
+        for target in obl.typed_behavior_targets:
+            for output in target.outputs:
+                exact_output_terms.extend(
+                    _expand_semantic_search_terms((output,))
+                )
+        if exact_output_terms:
+            implementation_terms = _identifier_author_search_terms(obl.author_text)
+            retrieval_terms = [
+                term
+                for term in dict.fromkeys(
+                    [*implementation_terms, *exact_output_terms]
+                )
+                if term
+            ]
+            if retrieval_terms:
+                return " ".join(retrieval_terms[:12])
         # Prefer typed behavior target search terms, then fall back to the
         # obligation id's trailing slug.
         for target in obl.typed_behavior_targets:
@@ -918,6 +1063,190 @@ class DeterministicSupervisorBackend:
             if ":" in first:
                 return first.split(":", 1)[0]
         return None
+
+    def _candidate_symbol_line(
+        self, context: ResearchDecisionContextV1
+    ) -> int | None:
+        """Return the candidate's source line, when recoverable.
+
+        The line comes from the same typed symbol reference the read would
+        target: the latest search result first, then the obligation's typed
+        candidate refs.  A bare path or unparsable ref yields ``None``, in
+        which case a prior ``read_code_span`` on the same file must NOT be
+        treated as covering the candidate.
+        """
+
+        latest = self._latest_search_symbol_ref(context)
+        ref: str | None = latest
+        if ref is None:
+            obl = context.active_obligation
+            if obl is not None:
+                ref = next(
+                    (
+                        value
+                        for value in reversed(obl.candidate_symbol_ids)
+                        if is_symbol_ref(value)
+                    ),
+                    None,
+                )
+        if ref is None:
+            return None
+        parsed = split_symbol_ref(ref)
+        if parsed is None:
+            return None
+        return parsed[2]
+
+    def _candidate_read_already_executed(
+        self, context: ResearchDecisionContextV1
+    ) -> bool:
+        """Return whether the exact read for the top candidate already ran.
+
+        The executed-call summaries are assembled across obligations: a
+        ``read_symbol`` / ``read_code_span`` executed while answering another
+        obligation returned the same snapshot-bound source bytes, so policy
+        correctly rejects a re-read.  The deterministic supervisor must not
+        keep proposing a doomed READ_CANDIDATE; callers switch to
+        COMPILE_EVIDENCE (when the behavior graph carries the candidate) or
+        to a different search strategy.
+
+        Identity is exact and fail-closed:
+
+        - ``read_symbol`` counts only for the same repository-relative path
+          AND the same symbol name (a same-named symbol in another path or a
+          different symbol in the same file is a different read);
+        - ``read_code_span`` counts only for the same path AND an interval
+          that covers the candidate's source line.  A different or merely
+          adjacent interval in the same file does not count; without a
+          recoverable candidate line, a span read never counts.
+        """
+
+        target = self._read_symbol_target(context)
+        path = self._read_symbol_path(context)
+        if target is None or path is None:
+            return False
+        candidate_line = self._candidate_symbol_line(context)
+        for summary in context.executed_tool_calls:
+            if summary.tool_name not in {"read_symbol", "read_code_span"}:
+                continue
+            arguments = summary.arguments or {}
+            if content_read_covers_line(
+                summary.tool_name,
+                arguments,
+                path=path,
+                symbol=target,
+                line=candidate_line,
+            ):
+                return True
+        return False
+
+    def _strategy_switch(
+        self, context: ResearchDecisionContextV1
+    ) -> tuple[ResearchAction, ResearchAction]:
+        """Pick the alternative strategy after a doomed exact repeat.
+
+        The chosen strategy must itself not repeat an already-executed
+        exact call: policy would reject it the same way.  Try every
+        deterministic tool-calling strategy in priority order (call trace,
+        data flow, branch inspection, configuration, semantic hints,
+        behavior subgraph) and pick the first whose exact call is fresh.
+        Only when every strategy's exact call already ran (the obligation
+        is genuinely exhausted on this runtime) propose a typed gap; the
+        gap finalizer still validates exhaustiveness fail-closed.
+        """
+
+        candidates: tuple[ResearchAction, ...] = (
+            "TRACE_CALLS",
+            "TRACE_DATA_FLOW",
+            "INSPECT_BRANCH",
+            "INSPECT_CONFIG",
+            "SEARCH_HINTS",
+            "BUILD_BEHAVIOR_SUBGRAPH",
+        )
+        for candidate in candidates:
+            if self._proposed_call_already_executed(context, candidate):
+                continue
+            if not self._build_tool_calls(context, candidate):
+                # Tool not registered for this runtime (e.g. SEARCH_HINTS
+                # without ``search_semantic_hints``): skip.
+                continue
+            return (candidate, "RECORD_GAP")
+        # Every strategy is exhausted or unavailable: the obligation cannot
+        # make further progress with this runtime; propose a typed gap (the
+        # gap finalizer still validates exhaustiveness fail-closed).
+        return ("RECORD_GAP", "STOP_BLOCKED")
+
+    def _candidate_search_already_executed(
+        self, context: ResearchDecisionContextV1
+    ) -> bool:
+        """Whether the exact search this obligation would propose already ran
+        with no information gain.
+
+        The deterministic search query is stable for a given obligation
+        state, so re-proposing it produces the same stable tool-call id,
+        which policy correctly rejects as a duplicate no-gain call.  The
+        supervisor must switch strategy instead of burning turns until
+        fallback-exhaustion STOP_BLOCKED.  The obligation id is part of the
+        identity: the same query for another obligation is a fresh search.
+
+        Only an executed search whose tool-call id sits in the no-progress
+        window counts: a prior search that *gained* symbols was useful and
+        must not be suppressed (the read of its top result may still be
+        pending).
+        """
+
+        return self._proposed_call_already_executed(context, "SEARCH_SYMBOLS")
+
+    def _proposed_call_already_executed(
+        self, context: ResearchDecisionContextV1, action: ResearchAction
+    ) -> bool:
+        """Whether the exact call this action would build already ran.
+
+        The deterministic tool arguments are stable for a given obligation
+        state, so re-proposing an action produces the same stable tool-call
+        id that policy rejects as a duplicate no-gain call (either because
+        it is in the no-progress window or because it was just executed).
+        The supervisor must switch strategy instead of burning turns until
+        fallback-exhaustion STOP_BLOCKED.  The obligation id is part of the
+        identity: the same tool for another obligation is a fresh call.
+
+        The executed-call summaries are the recent executed window; a
+        would-be call whose stable id matches one of them is a guaranteed
+        policy rejection.
+        """
+
+        obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None
+            else ""
+        )
+        if not obligation_id:
+            return False
+        calls = self._build_tool_calls(context, action)
+        if not calls:
+            return False
+        proposed = calls[0]
+        proposed_id = _stable_tool_call_id(
+            context.run_id,
+            proposed.tool_name,
+            obligation_id,
+            arguments=dict(proposed.arguments or {}),
+            path_scope=proposed.path_scope,
+        )
+        for summary in context.executed_tool_calls:
+            if summary.tool_name != proposed.tool_name:
+                continue
+            if summary.obligation_id and summary.obligation_id != obligation_id:
+                continue
+            executed_id = _stable_tool_call_id(
+                context.run_id,
+                summary.tool_name,
+                obligation_id,
+                arguments=dict(summary.arguments or {}),
+                path_scope=summary.path_scope,
+            )
+            if executed_id == proposed_id:
+                return True
+        return False
 
     @staticmethod
     def _latest_search_symbol_ref(
@@ -1156,6 +1485,7 @@ _ACTION_DEFAULT_TOOL: dict[ResearchAction, str | None] = {
     "DECOMPOSE_CLAIMS": "decompose_atomic_claims",
     "REWRITE_SENTENCES": None,  # R6 tool
     "RECORD_GAP": None,
+    "COMPILE_EVIDENCE": None,
     "PLAN_METHOD": None,
     "STOP_BLOCKED": None,
 }
@@ -1217,9 +1547,12 @@ def build_decision_context(
     global_safety_budget: GlobalSafetyBudgetV1 | None,
     no_progress_counter: int = 0,
     no_progress_history: tuple[str, ...] = (),
+    no_progress_tool_call_ids: tuple[str, ...] = (),
     ready_tools: tuple[str, ...] = (),
     hard_rules: tuple[str, ...] = (),
     current_supported_claim_ids: tuple[str, ...] = (),
+    current_supported_claim_statements: tuple[str, ...] = (),
+    executed_tool_calls: tuple[ExecutedToolCallSummaryV1, ...] = (),
     unresolved_must_cover_ids: tuple[str, ...] | None = None,
     behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = (),
     behavior_graph: Any | None = None,
@@ -1237,6 +1570,7 @@ def build_decision_context(
     missing_info: tuple[str, ...] = ()
     top_symbols: tuple[str, ...] = ()
     top_nodes: tuple[str, ...] = ()
+    candidate_bound_node_ids: tuple[str, ...] = ()
     if agenda is not None and active_obligation_id:
         for item in agenda.items:
             if item.obligation_id == active_obligation_id:
@@ -1246,6 +1580,62 @@ def build_decision_context(
                 top_symbols = tuple(item.candidate_symbol_ids)
                 top_nodes = tuple(item.candidate_behavior_node_ids)
                 break
+
+    # A candidate whose exact read already executed (for any obligation in
+    # this snapshot) is not a fresh read: policy rejects it as a duplicate
+    # no-gain call, so advertising it as a top candidate makes both the LLM
+    # and the deterministic supervisor propose a doomed READ_CANDIDATE.
+    # Filter it out here so both owners move to a trace/inspect/search
+    # strategy or a different span instead of churning policy fallbacks.
+    if active_obligation is not None and executed_tool_calls:
+        kept_symbols: list[str] = []
+        for candidate in top_symbols:
+            parsed = (
+                split_symbol_ref(candidate)
+                if is_symbol_ref(candidate)
+                else None
+            )
+            if parsed is None:
+                # ``sym:<path>:<name>`` and legacy ``<path>:<name>`` refs
+                # have no line; compare by path+symbol only, exactly as
+                # ``_read_symbol_path``/``_read_symbol_target`` do.
+                body = candidate
+                if body.startswith("sym:") or body.startswith("symbol:"):
+                    body = body.split(":", 1)[1]
+                if ":" not in body:
+                    kept_symbols.append(candidate)
+                    continue
+                cand_path, cand_symbol = body.rsplit(":", 1)
+                read_already = any(
+                    content_read_covers_line(
+                        summary.tool_name,
+                        summary.arguments or {},
+                        path=cand_path,
+                        symbol=cand_symbol,
+                        line=None,
+                    )
+                    for summary in executed_tool_calls
+                    if summary.tool_name in {"read_symbol", "read_code_span"}
+                )
+                if not read_already:
+                    kept_symbols.append(candidate)
+                continue
+            cand_path, cand_symbol, cand_line = parsed
+            read_already = any(
+                content_read_covers_line(
+                    summary.tool_name,
+                    summary.arguments or {},
+                    path=cand_path,
+                    symbol=cand_symbol,
+                    line=cand_line,
+                )
+                for summary in executed_tool_calls
+                if summary.tool_name in {"read_symbol", "read_code_span"}
+            )
+            if not read_already:
+                kept_symbols.append(candidate)
+        if len(kept_symbols) != len(top_symbols):
+            top_symbols = tuple(kept_symbols)
 
     # A resumed loop may already carry an exact behavior graph even though
     # the compact recent-observation window no longer contains the read that
@@ -1274,6 +1664,33 @@ def build_decision_context(
         )
         top_nodes = tuple(dict.fromkeys((*top_nodes, *graph_node_ids)))
 
+        # Candidate-specific graph support: nodes whose symbol_id equals a
+        # typed candidate symbol, or whose source span covers the candidate
+        # line.  Path-prefix matches above are discovery projections; this
+        # second pass is the fail-closed binding the supervisor requires
+        # before compiling from a reused read.
+        bound: list[str] = []
+        bound_seen: set[str] = set()
+        for candidate in active_obligation.candidate_symbol_ids:
+            parsed = (
+                split_symbol_ref(candidate)
+                if is_symbol_ref(candidate)
+                else None
+            )
+            if parsed is None:
+                continue
+            cand_path, cand_name, cand_line = parsed
+            cand_symbol_id = make_symbol_id(cand_path, cand_name, cand_line)
+            for node in getattr(behavior_graph, "nodes", ()):
+                if node.node_id in bound_seen:
+                    continue
+                if node.symbol_id == cand_symbol_id or span_covers_line(
+                    node.source_span_id or "", cand_line
+                ):
+                    bound_seen.add(node.node_id)
+                    bound.append(node.node_id)
+        candidate_bound_node_ids = tuple(bound)
+
     recent_summaries = tuple(
         RecentObservationSummaryV1(
             observation_id=obs.observation_id,
@@ -1295,6 +1712,11 @@ def build_decision_context(
                 ),
                 "",
             ),
+            semantic_summary=obs.notebook.summary,
+            code_excerpt=obs.notebook.code_excerpt,
+            discovered_symbols=obs.notebook.discovered_symbols,
+            discovered_relations=obs.notebook.discovered_relations,
+            enclosing_symbol_refs=obs.notebook.enclosing_symbol_refs,
         )
         for obs in recent_observations
     )
@@ -1323,6 +1745,7 @@ def build_decision_context(
                 "INSPECT_CONFIG",
                 "SEARCH_HINTS",
                 "BUILD_BEHAVIOR_SUBGRAPH",
+                "COMPILE_EVIDENCE",
                 "RECORD_GAP",
             ]
         )
@@ -1335,12 +1758,18 @@ def build_decision_context(
         active_issue=active_issue,
         typed_behavior_targets=typed_targets,
         current_supported_claim_ids=tuple(current_supported_claim_ids),
+        current_supported_claim_statements=tuple(
+            current_supported_claim_statements
+        ),
         missing_information=missing_info,
         top_candidate_symbol_ids=top_symbols,
         top_candidate_behavior_node_ids=top_nodes,
+        candidate_bound_behavior_node_ids=candidate_bound_node_ids,
         recent_observations=recent_summaries,
+        executed_tool_calls=tuple(executed_tool_calls),
         no_progress_counter=no_progress_counter,
         no_progress_history=no_progress_history,
+        no_progress_tool_call_ids=tuple(no_progress_tool_call_ids),
         remaining_budgets=remaining_per_kind,
         per_obligation_remaining=remaining_per_kind,
         allowed_actions=tuple(allowed),
@@ -1367,6 +1796,7 @@ def supervisor_node(
     global_safety_budget: GlobalSafetyBudgetV1 | None = None,
     no_progress_counter: int = 0,
     no_progress_history: tuple[str, ...] = (),
+    no_progress_tool_call_ids: tuple[str, ...] = (),
     turn_index: int = 0,
     ready_tools: tuple[str, ...] = (),
     hard_rules: tuple[str, ...] = (),
@@ -1396,6 +1826,7 @@ def supervisor_node(
         global_safety_budget=global_safety_budget,
         no_progress_counter=no_progress_counter,
         no_progress_history=no_progress_history,
+        no_progress_tool_call_ids=no_progress_tool_call_ids,
         ready_tools=ready_tools,
         hard_rules=hard_rules,
         current_supported_claim_ids=current_supported_claim_ids,
@@ -1445,9 +1876,24 @@ def _decision_ref(decision: ResearchDecisionV1) -> str:
 
 
 def _stable_tool_call_id(
-    run_id: str, turn_index: int, tool_name: str, obligation_id: str
+    run_id: str,
+    tool_name: str,
+    obligation_id: str,
+    *,
+    arguments: dict[str, Any] | None = None,
+    path_scope: tuple[str, ...] = (),
 ) -> str:
-    material = f"{run_id}|{turn_index}|{tool_name}|{obligation_id}".encode("utf-8")
+    material = json.dumps(
+        {
+            "run": run_id,
+            "tool": tool_name,
+            "obligation": obligation_id,
+            "arguments": arguments or {},
+            "path_scope": sorted(path_scope),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     digest = hashlib.sha256(material).hexdigest()[:12]
     return f"tc-{digest}"
 

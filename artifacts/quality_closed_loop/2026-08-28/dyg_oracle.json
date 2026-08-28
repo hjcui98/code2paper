@@ -1,0 +1,82 @@
+{
+  "project_id": "dyg",
+  "fixture_authority": "diagnostic_non_authorizing",
+  "units": [
+    {
+      "unit_id": "dyg_first_hop_sequence_contract",
+      "story_role": "encoding",
+      "original_covered": false,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [
+        [
+          "truncate",
+          "recent"
+        ],
+        [
+          "padded",
+          "padding"
+        ]
+      ],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "dyg_four_signal_channels",
+      "story_role": "encoding",
+      "original_covered": true,
+      "candidate_covered": true,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "dyg_continuous_ssm_update",
+      "story_role": "ssm",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    },
+    {
+      "unit_id": "dyg_timespan_step_and_bc_path",
+      "story_role": "timespan_redesign",
+      "original_covered": true,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": true,
+      "candidate_has_display_math": false,
+      "polarity_ok": false
+    },
+    {
+      "unit_id": "dyg_cross_attention_topk_readout",
+      "story_role": "readout",
+      "original_covered": false,
+      "candidate_covered": false,
+      "candidate_missing_alias_groups": [
+        [
+          "cross-attention",
+          "cross attention"
+        ],
+        [
+          "softmax"
+        ]
+      ],
+      "candidate_missing_formula_groups": [],
+      "candidate_heading_found": false,
+      "candidate_has_display_math": false,
+      "polarity_ok": true
+    }
+  ],
+  "original_covered_units": 3,
+  "candidate_covered_units": 1,
+  "total_units": 5,
+  "content_digest": "sha256:3fb3c8d48c993c0ddb09a2a2cf0cbcba2cc7b6974708296efc1336c4160ca3d9"
+}

@@ -1,0 +1,110 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:fb64252c784ae6c7857a2aea6610721a09579362c6e1dd210ea82807b7c20662",
+  "projection_digest": "sha256:bea0e3803822b2f0d7aee819f09d3f05e5b1cd1895db9226b9483e667fdb2b44",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 4,
+  "supported_claims": 0,
+  "caveated_claims": 1,
+  "unsupported_claims": 3,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "direct_evidence_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "direct_evidence_ids": [
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "relation_evidence_ids": [
+        "rel:9c39c339b8028cfc"
+      ],
+      "supported_fragment": "",
+      "unsupported_fragment": "The LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices.",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "deterministic_failures": [
+        "required_qualifier_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "required_qualifier_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

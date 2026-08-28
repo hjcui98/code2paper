@@ -19,8 +19,50 @@ METHOD_PLAN_SCHEMA = "method_plan"
 METHOD_DRAFT_SCHEMA = "method_draft"
 PUBLICATION_METHOD_SECTION_SCHEMA = "publication_method_section_v1"
 PUBLICATION_METHOD_EDITOR_SCHEMA = "publication_method_editor_v1"
+METHOD_FACET_DECOMPOSITION_SCHEMA = "method_facet_decomposition_v1"
+METHOD_FACET_ALIGNMENT_SCHEMA = "method_facet_alignment_v1"
 
 T = TypeVar("T", bound=BaseModel)
+
+
+class PublicationUnresolvedPointV1(BaseModel):
+    """Typed unresolved point surfaced by the Writer (WP2)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    target_concept_key: str = ""
+    slot_kind: str = ""
+    authority_lane: str = ""
+    reason: str = Field(min_length=1, max_length=800)
+
+
+class PublicationContentWitnessV1(BaseModel):
+    """Exact textual witness for one paragraph-level binding."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    witness_kind: Literal["facet", "slot", "edge", "formula", "claim", "equation"]
+    target_id: str = Field(min_length=1, max_length=240)
+    exact_text: str = Field(min_length=1, max_length=4000)
+
+
+class PublicationMethodParagraphOutputV1(BaseModel):
+    """Transactional Writer output for exactly one planned paragraph."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    paragraph_id: str = Field(min_length=1, max_length=240)
+    paragraph_markdown: str = Field(min_length=1, max_length=16000)
+    rendered_from_facet_ids: list[str] = Field(default_factory=list, max_length=32)
+    rendered_slot_ids: list[str] = Field(default_factory=list, max_length=64)
+    rendered_edge_ids: list[str] = Field(default_factory=list, max_length=32)
+    used_formula_package_ids: list[str] = Field(default_factory=list, max_length=8)
+    used_claim_ids: list[str] = Field(default_factory=list, max_length=64)
+    used_equation_ids: list[str] = Field(default_factory=list, max_length=32)
+    witnesses: list[PublicationContentWitnessV1] = Field(
+        default_factory=list,
+        max_length=128,
+    )
 
 
 class PublicationMethodSectionOutputV1(BaseModel):
@@ -36,7 +78,24 @@ class PublicationMethodSectionOutputV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     section_id: str = ""
-    section_markdown: str
+    heading_text: str = ""
+    section_markdown: str = ""
+    rendered_proposition_ids: list[str] = Field(default_factory=list)
+    deferred_proposition_ids: list[str] = Field(default_factory=list)
+    rendered_concept_keys: list[str] = Field(default_factory=list)
+    deferred_concept_keys: list[str] = Field(default_factory=list)
+    rendered_brief_ids: list[str] = Field(default_factory=list)
+    deferred_brief_ids: list[str] = Field(default_factory=list)
+    rendered_from_facet_ids: list[str] = Field(default_factory=list)
+    deferred_facet_ids: list[str] = Field(default_factory=list)
+    # Paragraph/slot/formula witnesses make content coverage auditable.  They
+    # are optional for backward-compatible replay; the harness validates any
+    # emitted ids against the section contract and never treats self-report as
+    # evidence authority.
+    rendered_paragraph_ids: list[str] = Field(default_factory=list)
+    rendered_slot_ids: list[str] = Field(default_factory=list)
+    rendered_edge_ids: list[str] = Field(default_factory=list)
+    used_formula_package_ids: list[str] = Field(default_factory=list)
     used_argument_unit_ids: list[str] = Field(default_factory=list)
     used_claim_ids: list[str] = Field(default_factory=list)
     used_equation_ids: list[str] = Field(default_factory=list)
@@ -44,7 +103,126 @@ class PublicationMethodSectionOutputV1(BaseModel):
     completed_rhetorical_moves: list[str] = Field(default_factory=list)
     new_research_requests: list[dict[str, Any]] = Field(default_factory=list)
     self_identified_risks: list[str] = Field(default_factory=list)
-    unresolved_points: list[str] = Field(default_factory=list)
+    unresolved_points: list[PublicationUnresolvedPointV1] = Field(default_factory=list)
+    # New production path: one independently validated transaction per
+    # paragraph.  The field stays optional for frozen replay artifacts that
+    # predate the transaction contract.
+    paragraphs: list[PublicationMethodParagraphOutputV1] = Field(
+        default_factory=list,
+        max_length=64,
+    )
+
+
+class MethodMechanismFacetProposalV1(BaseModel):
+    """LLM proposal for one author-clause semantic facet.
+
+    The proposal uses an ordinal clause/facet index rather than repository
+    identifiers.  The harness maps those ordinals back to stable ids only
+    after checking that the quoted text is an exact substring of the supplied
+    author clause.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_clause_index: int = Field(ge=0)
+    exact_source_quote: str = Field(min_length=1, max_length=4000)
+    facet_kind: Literal[
+        "mechanism",
+        "motivation",
+        "guarantee",
+        "constraint",
+        "interface",
+        "formula",
+    ] = "mechanism"
+    semantic_fields: dict[str, Any] = Field(default_factory=dict)
+    formula_expectation: Literal["required", "preferred", "none"] = "none"
+    search_terms: list[str] = Field(default_factory=list, max_length=32)
+
+
+class MethodMechanismFacetProposalBatchV1(BaseModel):
+    """Batch response for author-intent facet decomposition."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    facets: list[MethodMechanismFacetProposalV1] = Field(
+        default_factory=list,
+        max_length=128,
+    )
+
+
+class FacetFieldAlignmentProposalV1(BaseModel):
+    """One closed-set semantic-field alignment proposal.
+
+    Aggregate facet verdicts are too coarse for compound author clauses: a
+    code excerpt may support the operation while not supporting the claimed
+    guarantee or condition.  The field contract keeps those distinctions
+    explicit and uses ordinals so the harness remains the only source of
+    repository identifiers.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    field_name: Literal[
+        "subject",
+        "operation",
+        "inputs",
+        "outputs",
+        "conditions",
+        "effects",
+        "interface",
+        "formula_goal",
+        "guarantee",
+    ]
+    status: Literal["entailed", "partial", "mismatch", "unresolved"] = "unresolved"
+    polarity: Literal[
+        "positive",
+        "negative",
+        "threshold_lt_excludes",
+        "threshold_lte_excludes",
+        "threshold_gt_selects",
+        "threshold_gte_selects",
+        "conditional",
+        "unknown",
+    ] = "unknown"
+    bound_claim_indices: list[int] = Field(default_factory=list, max_length=64)
+    bound_fact_indices: list[int] = Field(default_factory=list, max_length=64)
+    bound_span_indices: list[int] = Field(default_factory=list, max_length=64)
+    bound_equation_indices: list[int] = Field(default_factory=list, max_length=64)
+    exact_excerpt_indices: list[int] = Field(default_factory=list, max_length=64)
+    active_path_conditions: list[str] = Field(default_factory=list, max_length=32)
+    unsupported_reason: str = Field(default="", max_length=800)
+
+
+class FacetEvidenceAlignmentProposalV1(BaseModel):
+    """Field-level alignment proposal over ordinal closed-set evidence rows."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    facet_index: int = Field(ge=0)
+    status: Literal["entailed", "partial", "mismatch", "unresolved"] = "unresolved"
+    supported_fields: list[str] = Field(default_factory=list, max_length=64)
+    unsupported_fields: list[str] = Field(default_factory=list, max_length=64)
+    bound_claim_indices: list[int] = Field(default_factory=list, max_length=64)
+    bound_span_indices: list[int] = Field(default_factory=list, max_length=64)
+    bound_equation_indices: list[int] = Field(default_factory=list, max_length=64)
+    exact_excerpt_indices: list[int] = Field(default_factory=list, max_length=64)
+    field_bindings: list[FacetFieldAlignmentProposalV1] = Field(
+        default_factory=list,
+        max_length=64,
+    )
+    search_terms: list[str] = Field(default_factory=list, max_length=32)
+    rationale: str = Field(default="", max_length=2000)
+
+
+class FacetEvidenceAlignmentProposalBatchV1(BaseModel):
+    """Batch response for facet-level evidence alignment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    alignments: list[FacetEvidenceAlignmentProposalV1] = Field(
+        default_factory=list,
+        max_length=128,
+    )
 
 
 class PublicationMethodEditorPatchV1(BaseModel):
@@ -68,6 +246,31 @@ class PublicationMethodEditorOutputV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     patches: list[PublicationMethodEditorPatchV1] = Field(default_factory=list, max_length=8)
+
+
+class PublicationMethodEditorSectionRevisionV2(BaseModel):
+    """Semantic academic revision; byte-level provenance stays in the harness."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    section_id: str = Field(min_length=1, max_length=160)
+    revised_body_markdown: str = Field(min_length=1, max_length=24000)
+    rendered_proposition_ids: list[str] = Field(default_factory=list, max_length=64)
+    caveated_proposition_ids: list[str] = Field(default_factory=list, max_length=64)
+    deferred_proposition_ids: list[str] = Field(default_factory=list, max_length=64)
+    addressed_revision_goals: list[str] = Field(default_factory=list, max_length=12)
+    unresolved_notes: list[str] = Field(default_factory=list, max_length=12)
+
+
+class PublicationMethodEditorOutputV2(BaseModel):
+    """One atomic, whole-body academic revision per affected section."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    revisions: list[PublicationMethodEditorSectionRevisionV2] = Field(
+        default_factory=list,
+        max_length=6,
+    )
 
 
 class StructuredResponseRecoveryTraceV1(BaseModel):
@@ -183,6 +386,11 @@ def _loads_json_or_extract_object(text: str) -> object:
             repaired_braces.append(candidate[:-1])
         if candidate.startswith("{{") and candidate.endswith("}}"):
             repaired_braces.append(candidate[1:-1])
+        # Qwen3.6 occasionally prefixes the object with a quoted brace
+        # (``{"{...``) when the structured schema is large; the quoted
+        # ``{"`` is representation noise, not content.
+        if candidate.startswith('{"{'):
+            repaired_braces.append(candidate[2:])
         for repaired in repaired_braces:
             if repaired not in parse_attempts:
                 parse_attempts.append(repaired)
@@ -244,6 +452,12 @@ def _best_effort_json_text_repair(text: str) -> str:
     repaired = re.sub(r",(\s*[}\]])", r"\1", repaired)
     # fix common missing comma between adjacent key-value pairs
     repaired = re.sub(r'([}\]"0-9])(\s*)("([^"\\]|\\.)+"\s*:)', r"\1,\2\3", repaired)
+    # Representation-only LaTeX escape repair: models frequently emit raw
+    # single backslashes inside JSON strings (``"\Delta"``, ``"\mathbf"``),
+    # which are invalid JSON escapes.  Escaping the backslash preserves the
+    # exact LaTeX content while making the payload parseable.  Valid JSON
+    # escapes (``\\``, ``\"``, ``\n``, ``\t``, ``\uXXXX`` ...) are untouched.
+    repaired = re.sub(r"\\([^\\\"/bfnrtu])", r"\\\\\1", repaired)
     return repaired
 
 
@@ -420,6 +634,8 @@ def _best_effort_schema_repair(payload: object, model_type: type[BaseModel]) -> 
     if model_name == "TargetedCodeTracing" and isinstance(payload, dict):
         if "claims" in payload and "author_claim_verification" not in payload:
             return _repair_targeted_code_tracing(payload)
+    if model_name == "_ResearchManagerProposalV1" and isinstance(payload, dict):
+        return _repair_research_manager_proposal(payload)
     if model_name == "CodeMethodAnalysis" and isinstance(payload, dict):
         if "frozen_mechanisms" in payload and "candidate_mechanisms" not in payload:
             return _repair_code_method_analysis(payload)
@@ -431,6 +647,23 @@ def _best_effort_schema_repair(payload: object, model_type: type[BaseModel]) -> 
         return _repair_method_outline(payload)
     if model_name == "TerminologyTable" and isinstance(payload, dict):
         return _repair_terminology_table(payload)
+    if model_name == "PublicationMethodSectionOutputV1" and isinstance(payload, dict):
+        unresolved = payload.get("unresolved_points")
+        if isinstance(unresolved, list):
+            cleaned: list[dict[str, str]] = []
+            for item in unresolved:
+                if isinstance(item, str) and item.strip():
+                    cleaned.append({
+                        "target_concept_key": "",
+                        "slot_kind": "writer_unresolved",
+                        "authority_lane": "author_intent",
+                        "reason": item.strip(),
+                    })
+                elif isinstance(item, dict):
+                    cleaned.append(item)
+            if cleaned != unresolved:
+                payload = {**payload, "unresolved_points": cleaned}
+        return payload
     if model_name == "DraftMarkdownOutput" and isinstance(payload, dict):
         markdown = payload.get("markdown") or payload.get("method_draft_md") or payload.get("draft_markdown") or payload.get("content") or payload.get("text")
         return {"markdown": str(markdown or "")}
@@ -490,6 +723,50 @@ def _best_effort_schema_repair(payload: object, model_type: type[BaseModel]) -> 
                 )
             return {"issues": cleaned_issues}
     return payload
+
+
+def _repair_research_manager_proposal(payload: dict[str, Any]) -> dict[str, Any]:
+    """Representation-only repair for the repository Research Manager.
+
+    Schema-guided models occasionally echo harness-owned identity fields
+    (``obligation_id``, ``repo_snapshot_id``, ``tool_call_id``,
+    ``source_authority``) as siblings of ``arguments`` inside each
+    tool-call item.  Those fields are always re-derived from the decision
+    context by the backend; echoing them is noise, not content.  Drop any
+    key outside the model-owned item schema before strict validation.
+    Unknown fields are never honored, so the harness contract is
+    unchanged.
+    """
+
+    tool_calls = payload.get("tool_calls")
+    if not isinstance(tool_calls, list):
+        return payload
+    model_item_fields = {
+        "tool_name",
+        "arguments",
+        "path_scope",
+        "goal",
+        "top_k",
+        "depth",
+        "node_budget",
+    }
+    cleaned: list[dict[str, Any]] = []
+    changed = False
+    for item in tool_calls:
+        if not isinstance(item, dict):
+            cleaned.append(item)  # type: ignore[arg-type]
+            continue
+        narrowed = {
+            key: value
+            for key, value in item.items()
+            if key in model_item_fields
+        }
+        if len(narrowed) != len(item):
+            changed = True
+        cleaned.append(narrowed)
+    if not changed:
+        return payload
+    return {**payload, "tool_calls": cleaned}
 
 
 def _repair_method_outline(payload: dict[str, Any]) -> dict[str, Any]:

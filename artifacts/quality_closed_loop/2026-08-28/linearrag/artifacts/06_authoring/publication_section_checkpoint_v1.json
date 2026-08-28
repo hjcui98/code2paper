@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.1",
+  "checkpoint_format": "immutable_section_refs_v1",
+  "sections": {
+    "MA-S1": {
+      "output_ref": "immutable_section_checkpoints/4ef10346605142282bc30894a70e2029eeb9a8f50c0eb4d4d5b1548419c76c47.json",
+      "output_digest": "sha256:3ad34680d20230e35ee4268729838b933a061a125b197ab52557289dd22c2c6d",
+      "response_ref": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1"
+    },
+    "MA-S2": {
+      "output_ref": "immutable_section_checkpoints/f0a47dbb4f6728c7c8fd66a7b2dc553b697acf57a1adac27eb15a5102dcfa78f.json",
+      "output_digest": "sha256:bd34db92dbf87355f383361b9aaad0f0cf5cb0a1164fa27a5bda3375fcc6b3e6",
+      "response_ref": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9"
+    }
+  },
+  "proposition_set_digest": "",
+  "content_digest": "sha256:19657f59fb0424df760ad9d5fc767d4ce127b02d87ee2f23d764c3d9c137b444"
+}

@@ -1,0 +1,163 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "packets": [
+    {
+      "packet_id": "pkt-O-METHOD-MAINLINE-01-c8146479-a26a36655a9c",
+      "obligation_tags": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "anchor_span_ids": [
+        "span:src/train_ebcar.py:117:117",
+        "span:src/train_ebcar.py:291:291",
+        "span:src/train_ebcar.py:183:185",
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:240:240",
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "relation_span_ids": [
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:src/train_ebcar.py:117:117",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 117,
+          "line_end": 117,
+          "exact_excerpt": "        run_name = \"hybrid_attention_\" + run_name\n",
+          "excerpt_digest": "sha256:28dc5f7cb216be55ef79f6c7d22b3ee4e931692ba231aa4db8794be2d068f385",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:291:291",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 291,
+          "line_end": 291,
+          "exact_excerpt": "            best_val_loss = val_loss / len(val_loader)\n",
+          "excerpt_digest": "sha256:a0033452d1f0b3f4528fe399b6a70cad243b82dcdbe368ed4076304566ad64d2",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:183:185",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 183,
+          "line_end": 185,
+          "exact_excerpt": "            loss = reranker(\n                query, passage, label, document_id, passage_id, passage_text\n            )\n",
+          "excerpt_digest": "sha256:7ee7c0f6903140b363f237b74ae6de5c3344b38ed1bde853598ab572573a7ad0",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:116:117",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 116,
+          "line_end": 117,
+          "exact_excerpt": "    if cfg.use_dedicated_attention:\n        run_name = \"hybrid_attention_\" + run_name\n",
+          "excerpt_digest": "sha256:63dda24e9e40f89cb537026cc9322082a788d172f17fda0a61000ee97b6567fd",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:240:240",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "            f\"Epoch {epoch + 1} training loss: {train_loss / len(train_loader)}\",\n",
+          "excerpt_digest": "sha256:4b2d68b476f5ba59d875762cb5a777ddb69ce330f8e8e73333031000382f8799",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:318:318",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 318,
+          "line_end": 318,
+          "exact_excerpt": "    return reranker\n",
+          "excerpt_digest": "sha256:4d957a50f7b3efaf2a4961ce56a25e64de2231a11d7aa45f00124f5e656eddd1",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:src/train_ebcar.py:116:116",
+          "snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+          "path": "src/train_ebcar.py",
+          "symbol": "sym:84125bba4b81722f",
+          "line_start": 116,
+          "line_end": 116,
+          "exact_excerpt": "    if cfg.use_dedicated_attention:\n",
+          "excerpt_digest": "sha256:aa60d1679e2d89957db72d87a801414b58bde27d1eedcd82c3d9a36bc5bdf0e9",
+          "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+          "role": "relation"
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "rel:7a74e9e69f2aa0ab",
+          "relation_type": "configuration_binding",
+          "source_symbol": "sym:84125bba4b81722f",
+          "target_symbol": "sym:84125bba4b81722f",
+          "source_endpoint": {
+            "node_id": "node:a8b114c68150b33d",
+            "symbol_id": "sym:84125bba4b81722f",
+            "operation_subject": "sym:84125bba4b81722f",
+            "predicate": "BRANCH",
+            "operands": [
+              "cfg.use_dedicated_attention"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/train_ebcar.py:116:117"
+          },
+          "target_endpoint": {
+            "node_id": "node:f72b2672c46173ed",
+            "symbol_id": "sym:84125bba4b81722f",
+            "operation_subject": "sym:84125bba4b81722f",
+            "predicate": "LOAD",
+            "operands": [
+              "cfg.use_dedicated_attention"
+            ],
+            "produced_entity": "",
+            "source_span_id": "span:src/train_ebcar.py:116:116"
+          },
+          "direct_span_ids": [
+            "span:src/train_ebcar.py:116:117",
+            "span:src/train_ebcar.py:116:116"
+          ],
+          "conditions": [],
+          "statement": "CONFIGURED_BY: sym:84125bba4b81722f -> sym:84125bba4b81722f"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "composition_rationale": "Deterministic selection covers 6 anchor spans and 1 relation spans across 6 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:07836caae0d906f56db3e9ef632d816f56fc51e1e74cc90a6dac97d85adfc3ec"
+    }
+  ],
+  "content_digest": "sha256:30009e19729bcfc04139957e029a04104cafdaf7a62c1f5fce26cebeb473b1db"
+}

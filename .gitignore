@@ -24,6 +24,10 @@ checkpoint/
 .agent-team/
 .omo/
 
+# Local OpenCode dependencies are reproducible from package-lock.json and
+# should not be committed with the repository.
+.opencode/node_modules/
+
 .env
 .env.*
 !.env.example

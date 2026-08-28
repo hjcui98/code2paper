@@ -805,6 +805,20 @@ def write_v3_evidence_artifacts(
             json.dumps(claim_set.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
         )
         paths["atomic_claims_v3"] = str(path)
+        # Keep the legacy four-artifact contract when no L2 rows exist.  A
+        # technical sidecar is an additive artifact only when the claim set
+        # actually contains technical-semantic claims; this also avoids
+        # creating an empty, non-provenance file on every ordinary L0 run.
+        if any(
+            getattr(claim, "claim_kind", "") == "technical_semantic"
+            or getattr(claim, "inference_level", "") in {"E2", "E3"}
+            for claim in claim_set.claims
+        ):
+            from code2paper.agentic.scientific_claim_ir import write_technical_claims_sidecar
+
+            paths["technical_claims_v1"] = write_technical_claims_sidecar(
+                paths["atomic_claims_v3"], claim_set
+            )
     if equation_set is None and fact_set is not None:
         proposals = derive_equation_proposals_from_facts(fact_set)
         equation_set, _reports = compile_equation_claims(

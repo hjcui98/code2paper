@@ -282,6 +282,161 @@ def test_claim_binding_rebuilds_author_stages_and_excludes_verify_only_groups() 
     assert rebound.semantic_stage_groups[0].ordered_claim_ids == ["claim-stage"]
 
 
+def test_unassigned_executable_claims_fold_into_nearest_stage_not_additional_dump() -> None:
+    graph = compile_intent_obligation_graph_v2(AuthorIntentSummary(
+        method_mainline="Build a graph then rank passages.",
+        pipeline_steps=[
+            "Offline graph construction: build adjacency from corpus units.",
+            "Passage ranking: compute scores and sort passages.",
+        ],
+    ))
+    stages = sorted(
+        (item for item in graph.obligations if item.kind == "stage"),
+        key=lambda item: item.source_index,
+    )
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    facts = [
+        _make_fact("stage-fact", predicate="sorts_by"),
+        _make_fact("graph-fact", predicate="constructs"),
+    ]
+    fact_set = CodeFactSetV1(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        facts=facts,
+        content_digest="sha256:facts",
+    )
+    claims = [
+        AtomicClaimV3(
+            claim_id="claim-stage",
+            canonical_text="Ranker sorts passage scores.",
+            fact_ids=["stage-fact"],
+            covers_obligation_ids=[stages[1].obligation_id],
+            direct_evidence_ids=["span-1"],
+            allowed_wording_boundary="sorting only",
+            canonical_identity="sha256:stage",
+        ),
+        AtomicClaimV3(
+            claim_id="claim-graph",
+            canonical_text="Indexer builds an adjacency matrix from corpus units.",
+            fact_ids=["graph-fact"],
+            covers_obligation_ids=[mainline.obligation_id],
+            direct_evidence_ids=["span-2"],
+            allowed_wording_boundary="adjacency only",
+            canonical_identity="sha256:graph",
+        ),
+    ]
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=claims,
+        content_digest="sha256:claims",
+    )
+
+    rebound = bind_claims_to_obligations(graph, fact_set=fact_set, claim_set=claim_set)
+    names = [group.name for group in rebound.semantic_stage_groups]
+    assert "Additional repository-verified mechanisms" not in names
+    by_claim = {
+        claim_id: group.name
+        for group in rebound.semantic_stage_groups
+        for claim_id in group.ordered_claim_ids
+    }
+    assert "claim-graph" in by_claim
+    assert by_claim["claim-graph"].casefold() in {
+        "offline graph construction",
+        "passage ranking",
+    }
+    assert "claim-stage" in by_claim
+
+
+def test_stage_expansion_does_not_swallow_unrelated_global_subject() -> None:
+    graph = compile_intent_obligation_graph_v2(AuthorIntentSummary(
+        method_mainline="Activate locally then rank globally.",
+        pipeline_steps=[
+            "First retrieval: local entity activation and threshold pruning.",
+            "Second retrieval: global passage ranking via pagerank.",
+        ],
+    ))
+    stages = sorted(
+        (item for item in graph.obligations if item.kind == "stage"),
+        key=lambda item: item.source_index,
+    )
+    mainline = next(item for item in graph.obligations if item.kind == "method_mainline")
+    facts = [
+        CodeFactV1(
+            fact_id="act-fact",
+            subject="activate",
+            predicate="branches_on",
+            object="score < threshold",
+            conditions=["continue"],
+            scope="function",
+            direct_span_ids=["span-activate"],
+            exact_source_digest="sha256:act",
+            canonical_identity="fixture:act-fact",
+        ),
+        CodeFactV1(
+            fact_id="ppr-fact",
+            subject="run_ppr",
+            predicate="computes",
+            object="hybrid passage pagerank",
+            conditions=[],
+            scope="function",
+            direct_span_ids=["span-ppr"],
+            exact_source_digest="sha256:ppr",
+            canonical_identity="fixture:ppr-fact",
+        ),
+    ]
+    fact_set = CodeFactSetV1(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        facts=facts,
+        content_digest="sha256:facts",
+    )
+    claims = [
+        AtomicClaimV3(
+            claim_id="claim-act",
+            canonical_text="activate branches_on score < threshold",
+            fact_ids=["act-fact"],
+            covers_obligation_ids=[stages[0].obligation_id],
+            direct_evidence_ids=["span-activate"],
+            allowed_wording_boundary="activation only",
+            canonical_identity="sha256:act",
+        ),
+        AtomicClaimV3(
+            claim_id="claim-ppr",
+            canonical_text="run_ppr computes hybrid passage pagerank",
+            fact_ids=["ppr-fact"],
+            covers_obligation_ids=[mainline.obligation_id],
+            direct_evidence_ids=["span-ppr"],
+            allowed_wording_boundary="pagerank only",
+            canonical_identity="sha256:ppr",
+        ),
+    ]
+    claim_set = AtomicClaimSetV3(
+        repo_snapshot_id="repo-test",
+        project_tree_hash="tree-test",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=claims,
+        content_digest="sha256:claims",
+    )
+    rebound = bind_claims_to_obligations(graph, fact_set=fact_set, claim_set=claim_set)
+    by_claim = {
+        claim_id: group.name
+        for group in rebound.semantic_stage_groups
+        for claim_id in group.ordered_claim_ids
+    }
+    assert "claim-act" in by_claim
+    assert "claim-ppr" in by_claim
+    assert "activat" in by_claim["claim-act"].casefold() or "first" in by_claim["claim-act"].casefold()
+    assert "pagerank" in by_claim["claim-ppr"].casefold() or "second" in by_claim["claim-ppr"].casefold() or "rank" in by_claim["claim-ppr"].casefold()
+    assert by_claim["claim-act"] != by_claim["claim-ppr"]
+    assert "run_ppr" not in by_claim["claim-act"].casefold()
+
+
 def test_numeric_dimension_semantics_align_with_parameter_default() -> None:
     target = TypedBehaviorTargetV1(
         target_id="target-dimension",

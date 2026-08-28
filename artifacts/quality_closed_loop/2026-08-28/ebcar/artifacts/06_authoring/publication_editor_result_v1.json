@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "MA-S1": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nExisting dense and listwise rerankers face two coupled pressures: inference efficiency at scale and the need to perform cross‑passage inference when a query's answer requires integrating evidence distributed across multiple passages. These pressures motivate the design of evaluation tasks that isolate cross‑passage reasoning from single‑passage retrieval.\n\nThe ConTEB benchmark is an evaluation suite that tests rerankers on tasks requiring cross‑passage inference, document‑wide context, and structural reasoning, thereby exposing the limits of existing rerankers on precisely the inference patterns that efficiency‑constrained architectures struggle to model.",
+    "MA-S2": "## Embedding‑based reranking formulation and overall framework.\n\nThis section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking."
+  },
+  "patches": [],
+  "duplicate_signatures": [],
+  "blocked_reason": "",
+  "response_ref": "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7",
+  "response_refs": [
+    "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7"
+  ],
+  "call_failures": [],
+  "content_digest": "sha256:5e341600dbf3abf26778f4a9a648ea5a3843b9176843196953a453f93e64f3fa"
+}

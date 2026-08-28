@@ -104,9 +104,13 @@ BEHAVIOR_PREDICATE_ALIASES: dict[str, frozenset[str]] = {
     # AGGREGATE = collect/combine multiple items into a group; in Python
     # code this is implemented via concatenation, stacking, or reduction.
     "AGGREGATE": frozenset({"CONCAT", "STACK", "REDUCE"}),
-    # CONSTRUCT = create a new object/instance; in Python code this is a
-    # constructor call (tagged as CALL by the adapter) or a load.
-    "CONSTRUCT": frozenset({"CALL", "LOAD"}),
+    # CONSTRUCT is an intent-level operation, not just an object constructor.
+    # A learned representation or descriptor is commonly constructed by
+    # concatenating/stacking/computing tensors.  Restricting this alias to
+    # CALL/LOAD made a helper that merely enumerated attribute names outrank
+    # the executable tensor assembly that the author actually wanted to
+    # describe.
+    "CONSTRUCT": frozenset({"CALL", "LOAD", "CONCAT", "STACK", "COMPUTE", "PROJECT"}),
     # The intent vocabulary uses READ/TRANSFORM as semantic umbrellas while
     # the AST adapter records the concrete operation performed.
     "READ": frozenset({"LOAD"}),
@@ -234,6 +238,8 @@ class TargetAlignmentV1(BaseModel):
     required_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
     matched_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
     unmatched_semantic_fields: tuple[str, ...] = Field(default_factory=tuple)
+    matched_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unmatched_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
     scope_blocked_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     status: str = "unresolved"  # resolved | partial | unresolved | scope_blocked
 
@@ -440,6 +446,32 @@ def align_target_to_facts(
     unmatched_semantic_fields = sorted(
         set(semantic_requirements) - set(matched_semantic_fields)
     )
+    matched_slot_ids: list[str] = []
+    unmatched_slot_ids: list[str] = []
+    for slot in getattr(target, "semantic_slots", ()) or ():
+        slot_id = str(getattr(slot, "slot_id", "") or "").strip()
+        if not slot_id or not bool(getattr(slot, "required", True)):
+            continue
+        slot_terms = set(
+            term
+            for value in (getattr(slot, "terms", ()) or ())
+            for term in _semantic_terms(value)
+        )
+        slot_kind = str(getattr(slot, "slot_kind", "") or "")
+        slot_matched = (
+            any(
+                slot_terms <= witness
+                for witness in semantic_witnesses
+            )
+            if slot_terms
+            else slot_kind in matched_semantic_fields
+        )
+        if slot_kind == "relation":
+            slot_matched = slot_matched and not unmatched_relations
+        if slot_matched:
+            matched_slot_ids.append(slot_id)
+        else:
+            unmatched_slot_ids.append(slot_id)
     matched_sorted = sorted(matched_predicates)
     if (
         matched_predicates
@@ -469,6 +501,8 @@ def align_target_to_facts(
         required_semantic_fields=tuple(sorted(semantic_requirements)),
         matched_semantic_fields=tuple(matched_semantic_fields),
         unmatched_semantic_fields=tuple(unmatched_semantic_fields),
+        matched_slot_ids=tuple(matched_slot_ids),
+        unmatched_slot_ids=tuple(unmatched_slot_ids),
         scope_blocked_fact_ids=tuple(scope_blocked_fact_ids),
         status=status,
     )
@@ -570,12 +604,20 @@ def _semantic_terms(value: Any) -> set[str]:
     text = original
     text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
     raw = re.findall(r"[A-Za-z][A-Za-z0-9]+|\d+", text.replace("_", " ").lower())
-    return compact_identifiers | {
+    terms = compact_identifiers | {
         normalized
         for token in raw
         if (len(token) >= 3 or token.isdigit()) and token not in _SEMANTIC_STOP_WORDS
         if (normalized := _normalize_semantic_token(token))
     }
+    # Executable identifiers frequently encode a feature width as ``f15`` or
+    # ``dim128``. Unlike retrieval ranking, semantic replay only sees these
+    # after an exact source span has been read and compiled. Preserve the
+    # explicit numeric width so a fact from ``get_*_f15`` can witness the
+    # author's "15-dimensional" constraint without a project dictionary.
+    for match in re.finditer(r"(?:^|[_\W])(?:f|d|dim)(\d+)(?:$|[_\W])", original, re.IGNORECASE):
+        terms.update({"dimension", match.group(1)})
+    return terms
 
 
 def _normalize_semantic_token(token: str) -> str:
@@ -598,6 +640,13 @@ def _normalize_semantic_token(token: str) -> str:
         "mamba": "state_space", "ssm": "state_space",
         "ppr": "pagerank", "pagerank": "pagerank",
         "topk": "topk",
+        "cat": "concat", "concat": "concat",
+        "concatenate": "concat", "concatenates": "concat",
+        "concatenated": "concat", "concatenating": "concat",
+        "concatenation": "concat",
+        "normalize": "normalize", "normalizes": "normalize",
+        "normalized": "normalize", "normalizing": "normalize",
+        "normalization": "normalize",
     }
     if token in aliases:
         return aliases[token]
@@ -1065,6 +1114,18 @@ def _intent_stage_groups(
             for fact_id in claim_by_id[claim_id].fact_ids
             if fact_id in fact_by_id
         }
+        explicit_spans = {
+            str(span_id)
+            for claim_id in explicit_ids
+            for span_id in claim_by_id[claim_id].direct_evidence_ids
+            if str(span_id)
+        }
+        typed_predicates = {
+            str(predicate)
+            for target in getattr(stage, "typed_behavior_targets", ()) or ()
+            for predicate in getattr(target, "desired_predicates", ()) or ()
+            if str(predicate)
+        }
         expanded_ids = [
             claim.claim_id
             for claim in claims
@@ -1081,10 +1142,13 @@ def _intent_stage_groups(
                 oid in stage_obligation_ids and oid != stage.obligation_id
                 for oid in claim.covers_obligation_ids
             )
-            and anchor_subjects.intersection(
-                fact_by_id[fact_id].subject
-                for fact_id in claim.fact_ids
-                if fact_id in fact_by_id
+            and _claim_joins_stage_by_span(
+                claim=claim,
+                explicit_span_ids=explicit_spans,
+                explicit_subjects=anchor_subjects,
+                fact_by_id=fact_by_id,
+                stage_text=stage.author_text,
+                typed_predicates=typed_predicates,
             )
         ]
         ordered_ids = list(dict.fromkeys([*explicit_ids, *expanded_ids]))
@@ -1114,26 +1178,260 @@ def _intent_stage_groups(
     ]
     if remaining:
         remaining.sort()
-        groups.append(SemanticStageGroupV1(
-            stage_id="SG-INTENT-ADDITIONAL",
-            name="Additional repository-verified mechanisms",
-            purpose="Executable details supporting the method beyond the named pipeline stages.",
-            ordered_claim_ids=remaining,
-            covers_obligation_ids=list(dict.fromkeys(
+        _fold_unassigned_claims_into_nearest_stage(
+            remaining=remaining,
+            groups=groups,
+            stages=stages,
+            claim_by_id=claim_by_id,
+            obligation_by_id=obligation_by_id,
+        )
+    return groups
+
+
+_STAGE_FOLD_STOPWORDS: frozenset[str] = frozenset({
+    "a", "an", "and", "as", "by", "for", "from", "in", "into", "of",
+    "on", "or", "the", "to", "via", "with", "method", "framework",
+    "module", "mechanism", "system", "approach", "design", "process",
+})
+_LOCAL_STAGE_RE = re.compile(
+    r"\b(activat|bridg|frontier|threshold|prune|exclude|first retriev)\b",
+    re.I,
+)
+_GLOBAL_STAGE_RE = re.compile(
+    r"\b(pagerank|ppr|hybrid|damping|global rank|passage retriev)\b",
+    re.I,
+)
+
+
+def _stage_family(text: str) -> str:
+    value = str(text or "")
+    if _GLOBAL_STAGE_RE.search(value):
+        return "global"
+    if _LOCAL_STAGE_RE.search(value):
+        return "local"
+    return "other"
+
+
+def _claim_joins_stage_by_span(
+    *,
+    claim: AtomicClaimV3,
+    explicit_span_ids: set[str],
+    explicit_subjects: set[str],
+    fact_by_id: dict[str, CodeFactV1],
+    stage_text: str,
+    typed_predicates: set[str],
+) -> bool:
+    """A leftover fact may join a STAGE only via span/symbol identity."""
+
+    claim_family = _stage_family(claim.canonical_text)
+    stage_family = _stage_family(stage_text)
+    if (
+        stage_family in {"local", "global"}
+        and claim_family in {"local", "global"}
+        and claim_family != stage_family
+    ):
+        return False
+    claim_spans = {str(item) for item in claim.direct_evidence_ids if str(item)}
+    if explicit_span_ids and claim_spans & explicit_span_ids:
+        return True
+    claim_subjects = {
+        fact_by_id[fact_id].subject
+        for fact_id in claim.fact_ids
+        if fact_id in fact_by_id
+    }
+    if typed_predicates:
+        claim_predicates = {
+            fact_by_id[fact_id].predicate
+            for fact_id in claim.fact_ids
+            if fact_id in fact_by_id
+        }
+        if not (claim_predicates & typed_predicates):
+            return False
+        return bool(explicit_subjects & claim_subjects) or bool(
+            explicit_span_ids and claim_spans & explicit_span_ids
+        )
+    return bool(explicit_subjects & claim_subjects) and (
+        stage_family == "other" or claim_family in {stage_family, "other"}
+    )
+
+
+def _stage_fold_tokens(value: str) -> set[str]:
+    return {
+        token for token in re.findall(r"[a-z0-9]+", str(value).lower())
+        if len(token) > 2 and token not in _STAGE_FOLD_STOPWORDS
+    }
+
+
+def _fold_unassigned_claims_into_nearest_stage(
+    *,
+    remaining: list[str],
+    groups: list[SemanticStageGroupV1],
+    stages: list[Any],
+    claim_by_id: dict[str, AtomicClaimV3],
+    obligation_by_id: dict[str, Any],
+) -> None:
+    """Place leftover executable claims in the nearest author stage.
+
+    Representation/routing only: claims stay exactly as compiled.  This
+    avoids a standalone verified-dump heading that displaces the author's
+    pipeline story.
+    """
+
+    if not remaining or not stages:
+        return
+    if not groups:
+        assigned_by_stage: dict[str, list[str]] = {
+            stage.obligation_id: [] for stage in stages
+        }
+        for claim_id in remaining:
+            stage = _nearest_pipeline_stage(
+                claim=claim_by_id[claim_id],
+                stages=stages,
+                obligation_by_id=obligation_by_id,
+            )
+            assigned_by_stage[stage.obligation_id].append(claim_id)
+        for stage in stages:
+            ordered_ids = assigned_by_stage[stage.obligation_id]
+            if not ordered_ids:
+                continue
+            heading = stage.author_text.split(":", 1)[0].strip()
+            if not heading or len(heading) > 120:
+                heading = f"Method stage {stage.source_index + 1}"
+            groups.append(SemanticStageGroupV1(
+                stage_id=f"SG-INTENT-{stage.source_index + 1:02d}-{stage.obligation_id.rsplit('-', 1)[-1]}",
+                name=heading,
+                purpose=stage.author_text,
+                ordered_claim_ids=ordered_ids,
+                covers_obligation_ids=[stage.obligation_id],
+                relation_evidence_ids=list(dict.fromkeys(
+                    relation_id
+                    for claim_id in ordered_ids
+                    for relation_id in claim_by_id[claim_id].relation_evidence_ids
+                )),
+                organization_priority=stage.source_index + 1,
+            ))
+        return
+
+    for claim_id in remaining:
+        claim = claim_by_id[claim_id]
+        claim_tokens = _stage_fold_tokens(claim.canonical_text)
+        scores: list[float] = []
+        for group in groups:
+            group_text = f"{group.name} {group.purpose}"
+            group_tokens = _stage_fold_tokens(group_text)
+            if re.search(r"\b(motivation|overview|related.?work)\b", group_text, re.I):
+                scores.append(-1.0)
+                continue
+            union = claim_tokens | group_tokens
+            score = (len(claim_tokens & group_tokens) / len(union)) if union else 0.0
+            claim_family = _stage_family(claim.canonical_text)
+            group_family = _stage_family(group_text)
+            if (
+                claim_family in {"local", "global"}
+                and group_family in {"local", "global"}
+                and claim_family != group_family
+            ):
+                score = -1.0
+            elif claim_family != "other" and claim_family == group_family:
+                score += 0.5
+            scores.append(score)
+        best = max(scores) if scores else 0.0
+        if scores and best >= 0.25:
+            target = groups[scores.index(best)]
+        else:
+            target = _nearest_existing_stage_group(
+                claim=claim,
+                groups=groups,
+                stages=stages,
+                obligation_by_id=obligation_by_id,
+            )
+        target.ordered_claim_ids.append(claim_id)
+        target.covers_obligation_ids = list(dict.fromkeys([
+            *target.covers_obligation_ids,
+            *(
                 obligation_id
-                for claim_id in remaining
-                for obligation_id in claim_by_id[claim_id].covers_obligation_ids
+                for obligation_id in claim.covers_obligation_ids
                 if obligation_by_id.get(obligation_id) is not None
                 and obligation_by_id[obligation_id].priority in {"must_cover", "should_cover"}
-            )),
-            relation_evidence_ids=list(dict.fromkeys(
-                relation_id
-                for claim_id in remaining
-                for relation_id in claim_by_id[claim_id].relation_evidence_ids
-            )),
-            organization_priority=len(stages) + 1,
-        ))
-    return groups
+            ),
+        ]))
+        target.relation_evidence_ids = list(dict.fromkeys([
+            *target.relation_evidence_ids,
+            *claim.relation_evidence_ids,
+        ]))
+
+
+def _nearest_pipeline_stage(
+    *,
+    claim: AtomicClaimV3,
+    stages: list[Any],
+    obligation_by_id: dict[str, Any],
+) -> Any:
+    claim_tokens = _stage_fold_tokens(claim.canonical_text)
+    claim_family = _stage_family(claim.canonical_text)
+    scored: list[tuple[float, Any]] = []
+    for stage in stages:
+        stage_family = _stage_family(stage.author_text)
+        if (
+            claim_family in {"local", "global"}
+            and stage_family in {"local", "global"}
+            and claim_family != stage_family
+        ):
+            scored.append((-1.0, stage))
+            continue
+        union = claim_tokens | _stage_fold_tokens(stage.author_text)
+        score = (
+            len(claim_tokens & _stage_fold_tokens(stage.author_text)) / len(union)
+            if union else 0.0
+        )
+        if claim_family != "other" and claim_family == stage_family:
+            score += 0.5
+        scored.append((score, stage))
+    best_score, best_stage = max(scored, key=lambda item: item[0])
+    if best_score > 0:
+        return best_stage
+    compatible = [stage for score, stage in scored if score >= 0.0]
+    if compatible:
+        return compatible[-1]
+    return stages[0]
+
+
+def _ensure_stage_group(
+    *,
+    stage: Any,
+    groups: list[SemanticStageGroupV1],
+) -> SemanticStageGroupV1:
+    for group in groups:
+        if stage.obligation_id in group.covers_obligation_ids:
+            return group
+    heading = stage.author_text.split(":", 1)[0].strip()
+    if not heading or len(heading) > 120:
+        heading = f"Method stage {stage.source_index + 1}"
+    group = SemanticStageGroupV1(
+        stage_id=f"SG-INTENT-{stage.source_index + 1:02d}-{stage.obligation_id.rsplit('-', 1)[-1]}",
+        name=heading,
+        purpose=stage.author_text,
+        ordered_claim_ids=[],
+        covers_obligation_ids=[stage.obligation_id],
+        organization_priority=stage.source_index + 1,
+    )
+    groups.append(group)
+    return group
+
+
+def _nearest_existing_stage_group(
+    *,
+    claim: AtomicClaimV3,
+    groups: list[SemanticStageGroupV1],
+    stages: list[Any],
+    obligation_by_id: dict[str, Any],
+) -> SemanticStageGroupV1:
+    stage = _nearest_pipeline_stage(
+        claim=claim,
+        stages=stages,
+        obligation_by_id=obligation_by_id,
+    )
+    return _ensure_stage_group(stage=stage, groups=groups)
 
 
 # ---------------------------------------------------------------------------

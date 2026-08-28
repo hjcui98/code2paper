@@ -119,7 +119,7 @@ class AgentJsonRetryTests(unittest.TestCase):
             LangGraphAgent("sys", config, agent_name="code_analyzer").step("message")
 
         self.assertEqual([item.role for item in seen], ["code_intake", "code_analyzer"])
-        self.assertEqual([item.max_output_tokens for item in seen], [2048, 4096])
+        self.assertEqual([item.max_output_tokens for item in seen], [4096, 4096])
         self.assertEqual([item.temperature for item in seen], [0.20, 0.20])
 
 

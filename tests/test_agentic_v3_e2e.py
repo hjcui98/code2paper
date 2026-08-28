@@ -784,8 +784,12 @@ class TestV3SubgraphCrossInstanceResume:
         assert result is not None
         assert result.termination_reason == "all_obligations_terminal"
         assert result.loop_state.compiled_evidence
+        # ``partial`` is a terminal per-obligation status (design 8.4:
+        # "可写边界与 required qualifier 明确") when no other obligation can
+        # make progress; the loop must terminate instead of re-entering the
+        # supervisor with only exact-repeat calls available.
         assert all(
-            item.status in {"supported", "explicit_gap", "blocked"}
+            item.status in {"supported", "partial", "explicit_gap", "blocked"}
             for item in result.loop_state.runtime.agenda.items
         )
 

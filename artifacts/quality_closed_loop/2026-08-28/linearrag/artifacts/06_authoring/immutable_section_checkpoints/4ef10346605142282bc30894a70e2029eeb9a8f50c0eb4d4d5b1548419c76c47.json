@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S1",
+  "response_ref": "sha256:a262b97311e9cb9c28868f2632fbccc3c394d2b3d2d7d0b799a518aca62d73a1",
+  "output": {
+    "section_id": "MA-S1",
+    "heading_text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+    "section_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nGraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality. This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S1:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S1:unit",
+        "candidate_symbols_or_terms": [
+          "GraphRAG"
+        ],
+        "current_known_facts": [
+          "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality."
+        ],
+        "evidence_refs_used": [],
+        "exact_question": "Which specific relation extraction error modes in GraphRAG pipelines most significantly degrade downstream retrieval quality, and under what corpus conditions do they dominate?",
+        "missing_parts": [
+          "grounded evidence of which specific relation extraction error modes dominate in practice"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "request:MA-S1:1:1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S1",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+        ],
+        "target_clause_ids": [
+          "clause:MA-S1:unit"
+        ],
+        "why_needed_for_reader": "The motivation paragraph currently asserts a general vulnerability to relation extraction error propagation without grounding which specific error modes are most consequential; a grounded identification would strengthen the problem framing and justify the design choice to eliminate the extraction stage."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S1:1",
+        "paragraph_markdown": "GraphRAG systems that rely on pre-extracted relations are vulnerable to error propagation when the extraction step produces incomplete or incorrect edges, degrading downstream retrieval quality. This work revisits that dependency by adopting a graph-structured retrieval formulation that does not require a separate relation extraction stage, thereby eliminating the error source at its origin.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:3ad34680d20230e35ee4268729838b933a061a125b197ab52557289dd22c2c6d",
+  "content_digest": "sha256:4ef10346605142282bc30894a70e2029eeb9a8f50c0eb4d4d5b1548419c76c47"
+}

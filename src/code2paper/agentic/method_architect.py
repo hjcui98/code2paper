@@ -12,6 +12,7 @@ from code2paper.agentic.equation_claims import EquationClaimSetV1
 from code2paper.agentic.method_argument_models import (
     ConfigurationClaimSetV1,
     MethodArgumentUnitV1,
+    MethodCompletenessItemV1,
     MethodCompletenessMatrixV1,
     MethodSectionPlanV2,
     MoveAuthorityProofV1,
@@ -19,6 +20,8 @@ from code2paper.agentic.method_argument_models import (
     ReferenceMethodAgendaV1,
     SectionArgumentGraphV1,
     SectionArgumentMoveV1,
+    SectionParagraphPlanV1,
+    SectionContentOpenSlotV1,
     SemanticArgumentFrameV1,
     SemanticFlowEdgeV1,
     SemanticFlowSlotV1,
@@ -29,6 +32,8 @@ from code2paper.agentic.method_product_models import (
     MethodPlanProductReadinessV1,
     assess_plan_product_readiness,
 )
+from code2paper.agentic.method_proposition_models import MethodPropositionSetV1
+from code2paper.agentic.publication_quality import coherent_heading, heading_is_truncated
 
 
 def _digest(value: Any) -> str:
@@ -102,6 +107,10 @@ def build_method_section_plan_with_trace(
     audience: str = "method readers",
     page_budget: float = 0.0,
     story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
+    propositions: MethodPropositionSetV1 | None = None,
+    concept_cards: Any | None = None,
+    argument_briefs: Any | None = None,
+    prior_plan: MethodSectionPlanV2 | None = None,
 ) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
     """Create argument units and section graphs from authorized artifacts.
 
@@ -110,6 +119,10 @@ def build_method_section_plan_with_trace(
     Claims that are not in a group are assigned to a final generic section so
     a new repository cannot disappear merely because an organization hint was
     incomplete.  No project-specific heading or factual sentence is created.
+
+    ``concept_cards`` (optional ``MethodConceptCardSetV1``) binds Stage 2/3
+    concept cards to units through exact obligation ids, separating verified
+    from caveated cards.  Each card is assigned to exactly one unit.
     """
 
     claim_by_id = {item.claim_id: item for item in claims.claims}
@@ -141,6 +154,18 @@ def build_method_section_plan_with_trace(
         item for item in claims.claims
         if item.claim_id not in used and item.status in {"supported", "partial"}
     ]
+    # A semantic stage compiler is allowed to select only the most salient
+    # claims for its initial stage.  Claims discovered by a later read of the
+    # same obligation are continuations of that stage, not a new Method
+    # section.  Coalesce them through the exact obligation edge before using
+    # the generic ungrouped fallback.  Without this step the same obligation
+    # was rendered twice (once as the named stage and once as "Additional
+    # method mechanism"), and proposition binding then copied the complete
+    # concept set into both sections.
+    groups, remaining = _coalesce_remaining_claims_by_obligation(
+        groups=groups,
+        remaining=remaining,
+    )
     # Intent-organized groups are an allow-list: ungrouped claims are commonly
     # verify-only rationale checks retained for audit, not authoring content.
     # Legacy/generic claim sets without intent groups keep the safe fallback.
@@ -177,6 +202,10 @@ def build_method_section_plan_with_trace(
         completeness=completeness,
         realized_obligation_ids=_realized_obligation_ids(groups, claim_by_id),
     )
+    candidate_buckets = _fold_leftover_author_statement_buckets(
+        claim_buckets=section_buckets,
+        candidate_buckets=candidate_buckets,
+    )
 
     # Merge claim and candidate buckets in story-spine order so author intent
     # (not repository code order) drives the section sequence.
@@ -188,7 +217,14 @@ def build_method_section_plan_with_trace(
     merged_buckets = _consolidate_buckets_under_organization_spine(
         merged_buckets,
         story_spine=story_spine,
+        completeness=completeness,
     )
+    merged_buckets = _merge_near_duplicate_section_buckets(merged_buckets)
+    # A one-section Method should carry the author-supplied method/component
+    # name rather than an internal compiler label such as "Implementation
+    # stage 1".  This is organization only; it does not authorize prose.
+    if len(merged_buckets) == 1 and method_name.strip():
+        merged_buckets = [(method_name.strip(), merged_buckets[0][1])]
 
     units: list[MethodArgumentUnitV1] = []
     graphs: list[SectionArgumentGraphV1] = []
@@ -204,12 +240,31 @@ def build_method_section_plan_with_trace(
                     story_node=item.story_node,
                     section_id=section_id,
                     unit_id=f"{section_id}:unit" if len(bucket) == 1 else f"{section_id}:unit-{unit_index}",
+                    heading=heading,
                 )
                 units.append(unit)
                 section_units.append(unit)
                 unit_required_moves[unit.argument_unit_id] = frozenset(
                     move for move in unit.allowed_expository_moves
-                    if move not in {"transition_to_next_section"}
+                    if move in {
+                        "problem_or_local_context",
+                        "design_objective",
+                        "mechanism_overview",
+                    }
+                    or (
+                        move == "equation_or_derivation"
+                        and bool(unit.equation_ids)
+                    )
+                    or (
+                        move == "configuration_and_branches"
+                        and bool(unit.configuration_ids)
+                    )
+                    or (
+                        move == "limitations_or_mismatch"
+                        and _unresolved_requires_limitation_move(
+                            unit.unresolved_inputs
+                        )
+                    )
                 )
                 trace_rows.append({
                     "section_id": section_id,
@@ -237,14 +292,32 @@ def build_method_section_plan_with_trace(
                 for config in config_items
                 if config.active and _configuration_binds_unit(config, selected)
             )
-            unresolved = _unresolved_for_obligations(obligation_ids, matrix_by_id)
+            # Compiler stage groups may omit obligation ids even though their
+            # selected claims carry exact coverage.  Preserve that closed
+            # claim-to-obligation edge so story-spine and proposition binding
+            # do not silently lose repository-backed concept cards.
+            effective_obligation_ids = tuple(dict.fromkeys((
+                *obligation_ids,
+                *(
+                    obligation_id
+                    for selected_claim in selected
+                    for obligation_id in selected_claim.covers_obligation_ids
+                ),
+            )))
+            unresolved = _unresolved_for_obligations(effective_obligation_ids, matrix_by_id)
             lanes = ["executable_hard"]
             if equation_ids:
                 lanes.append("formal_derivation")
             if configuration_ids:
                 lanes.append("configuration_resolved")
             unit_id = f"{section_id}:unit" if len(bucket) == 1 else f"{section_id}:unit-{unit_index}"
-            moves, required_moves = _moves(selected, bool(equation_ids), bool(configuration_ids), bool(unresolved))
+            moves, required_moves = _moves(
+                selected,
+                bool(equation_ids),
+                bool(configuration_ids),
+                unresolved,
+                heading=heading,
+            )
             unit_required_moves[unit_id] = required_moves
             trace_rows.append({
                 "section_id": section_id,
@@ -255,7 +328,7 @@ def build_method_section_plan_with_trace(
                 "configuration_ids": list(configuration_ids),
                 "moves": list(moves),
                 "required_moves": sorted(required_moves),
-                "obligation_ids": list(obligation_ids),
+                "obligation_ids": list(effective_obligation_ids),
                 "unresolved": unresolved,
             })
             unit = MethodArgumentUnitV1(
@@ -279,7 +352,7 @@ def build_method_section_plan_with_trace(
                     for claim in selected
                     for evidence_id in (claim.direct_evidence_ids + claim.relation_evidence_ids)
                 ),
-                source_obligation_ids=tuple(dict.fromkeys(obligation_ids)),
+                source_obligation_ids=effective_obligation_ids,
                 supported=not unresolved,
                 information_weight=max(1.0, len(selected) + 0.75 * len(equation_ids) + 0.5 * len(configuration_ids)),
             )
@@ -296,42 +369,65 @@ def build_method_section_plan_with_trace(
             item for unit in section_units for item in unit.unresolved_inputs
         ))
         move_objects = tuple(
-            SectionArgumentMoveV1(
-                move=move,
-                argument_unit_ids=tuple(
-                    unit.argument_unit_id
-                    for unit in section_units
-                    if move in unit.allowed_expository_moves
-                ),
-                paragraph_budget=0 if move == "transition_to_next_section" else max(
-                    1, min(3, round(sum(
+            _bind_move_anchor(
+                SectionArgumentMoveV1(
+                    move=move,
+                    argument_unit_ids=tuple(
+                        unit.argument_unit_id
+                        for unit in section_units
+                        if move in unit.allowed_expository_moves
+                    ),
+                    paragraph_budget=0 if move == "transition_to_next_section" else max(
+                        1, min(3, round(sum(
+                            unit.information_weight for unit in section_units
+                            if move in unit.allowed_expository_moves
+                        ) / 8)),
+                    ),
+                    information_budget=max(0.25, round(sum(
                         unit.information_weight for unit in section_units
                         if move in unit.allowed_expository_moves
-                    ) / 8)),
+                    ) / max(1, len(section_moves)), 3)),
+                    allowed_authority_lanes=_move_authority_lanes(
+                        move,
+                        all_lanes=all_lanes,
+                    ),
+                    required=any(
+                        move in unit_required_moves.get(unit.argument_unit_id, frozenset())
+                        for unit in section_units
+                        if move in unit.allowed_expository_moves
+                    ) or (
+                        move == "configuration_and_branches" and any(unit.configuration_ids for unit in section_units)
+                    ) or (
+                        move == "limitations_or_mismatch"
+                        and _unresolved_requires_limitation_move(unresolved)
+                    ),
                 ),
-                information_budget=max(0.25, round(sum(
-                    unit.information_weight for unit in section_units
-                    if move in unit.allowed_expository_moves
-                ) / max(1, len(section_moves)), 3)),
-                allowed_authority_lanes=_move_authority_lanes(
-                    move,
-                    all_lanes=all_lanes,
-                ),
-                required=any(
-                    move in unit_required_moves.get(unit.argument_unit_id, frozenset())
-                    for unit in section_units
-                    if move in unit.allowed_expository_moves
-                ) or (
-                    move == "configuration_and_branches" and any(unit.configuration_ids for unit in section_units)
-                ) or (move == "limitations_or_mismatch" and bool(unresolved)),
+                section_units=section_units,
             )
             for move in section_moves
         )
+        move_objects = _ensure_unanchored_formula_move(
+            move_objects, section_units=section_units, heading=heading,
+        )
+        if section_index == len(merged_buckets):
+            move_objects = tuple(
+                move.model_copy(update={"required": False})
+                if move.move == "transition_to_next_section"
+                else move
+                for move in move_objects
+            )
         total_information = sum(unit.information_weight for unit in section_units)
+        heading, heading_constraints = _planning_section_heading(
+            heading,
+            bucket=bucket,
+        )
         graphs.append(SectionArgumentGraphV1(
             section_id=section_id,
             heading=heading,
-            reader_question=f"How does {heading.rstrip('.').lower()} transform its inputs into outputs?",
+            reader_question=_story_reader_question(
+                heading=heading,
+                bucket=bucket,
+            ),
             argument_unit_ids=tuple(unit.argument_unit_id for unit in section_units),
             moves=move_objects,
             dependencies=tuple(graphs[-1].section_id for _ in graphs[-1:]),
@@ -339,7 +435,107 @@ def build_method_section_plan_with_trace(
             depth_budget=max(1, min(12, len(move_objects) + (len(section_units) - 1) // 2)),
             page_budget=max(0.5, min(8.0, round(total_information * 0.12 + len(move_objects) * 0.12, 3))),
             incomplete=bool(unresolved),
+            heading_constraints=heading_constraints,
+            paragraphs=_build_section_paragraph_plans(
+                section_id=section_id,
+                section_units=section_units,
+                move_objects=move_objects,
+            ),
         ))
+
+    # Bind proposition cards to argument units through exact obligation IDs.
+    # This changes only the Writer-facing conceptual plan; evidence authority
+    # remains in the separately persisted binding sidecar.
+    if propositions is not None:
+        units = [
+            unit.model_copy(update={
+                "proposition_ids": (ordered := tuple(
+                    proposition.proposition_id
+                    for proposition in propositions.propositions
+                    if set(proposition.source_obligation_ids).intersection(unit.source_obligation_ids)
+                )),
+                "positive_proposition_ids": tuple(
+                    proposition.proposition_id
+                    for proposition in propositions.propositions
+                    if proposition.proposition_id in ordered
+                    and not proposition.requires_caveat
+                ),
+                "caveated_proposition_ids": tuple(
+                    proposition.proposition_id
+                    for proposition in propositions.propositions
+                    if proposition.proposition_id in ordered
+                    and proposition.requires_caveat
+                ),
+                "proposition_order": ordered,
+                # Adjacent edges encode the reader-facing order already
+                # selected for this unit.  The model contract validates that
+                # this graph is closed and acyclic; it is not a source-code
+                # control-flow graph.
+                "proposition_dependencies": tuple(zip(ordered, ordered[1:])),
+            })
+            for unit in units
+        ]
+
+    # Bind Stage 2/3 concept cards to argument units through exact
+    # obligation IDs.  Every card is assigned to exactly one unit; verified
+    # and caveated cards are separated for the Writer's four-layer view.
+    if concept_cards is not None:
+        cards = tuple(getattr(concept_cards, "cards", ()) or ())
+        card_by_key = {card.concept_key: card for card in cards}
+        # Obligation linkage lives in the digest-covered binding sidecar.
+        obligation_by_card: dict[str, tuple[str, ...]] = {}
+        for binding in getattr(concept_cards, "bindings", ()) or ():
+            obligation_by_card[binding.concept_key] = tuple(
+                binding.source_obligation_ids
+            )
+        placed_keys: set[str] = set()
+        for unit_index, unit in enumerate(units):
+            ordered_concepts = tuple(
+                card.concept_key
+                for card in cards
+                if set(obligation_by_card.get(card.concept_key, ())).intersection(
+                    unit.source_obligation_ids
+                )
+                and card.concept_key not in placed_keys
+            )
+            placed_keys.update(ordered_concepts)
+            units[unit_index] = unit.model_copy(update={
+                "concept_card_ids": ordered_concepts,
+                "verified_concept_card_ids": tuple(
+                    key for key in ordered_concepts
+                    if card_by_key[key].may_enter_verified
+                ),
+                "caveated_concept_card_ids": tuple(
+                    key for key in ordered_concepts
+                    if not card_by_key[key].may_enter_verified
+                ),
+                "concept_card_order": ordered_concepts,
+            })
+
+    if argument_briefs is not None:
+        briefs = tuple(getattr(argument_briefs, "briefs", ()) or ())
+        brief_by_id = {brief.brief_id: brief for brief in briefs}
+        placed_brief_ids: set[str] = set()
+        for unit_index, unit in enumerate(units):
+            ordered_briefs = tuple(
+                brief.brief_id
+                for brief in briefs
+                if set(brief.obligation_ids).intersection(unit.source_obligation_ids)
+                and brief.brief_id not in placed_brief_ids
+            )
+            placed_brief_ids.update(ordered_briefs)
+            units[unit_index] = unit.model_copy(update={
+                "brief_ids": ordered_briefs,
+                "verified_brief_ids": tuple(
+                    brief_id for brief_id in ordered_briefs
+                    if brief_by_id[brief_id].may_enter_verified
+                ),
+                "caveated_brief_ids": tuple(
+                    brief_id for brief_id in ordered_briefs
+                    if not brief_by_id[brief_id].may_enter_verified
+                ),
+                "brief_order": ordered_briefs,
+            })
 
     incomplete_ids = [graph.section_id for graph in graphs if graph.incomplete]
     if completeness is not None:
@@ -350,6 +546,20 @@ def build_method_section_plan_with_trace(
             and item.status == "unverified_by_repository"
         )
     incomplete = tuple(dict.fromkeys(incomplete_ids))
+    graphs = _enrich_section_content_contracts(
+        graphs,
+        units,
+        story_spine=story_spine,
+        concept_cards=concept_cards,
+        argument_briefs=argument_briefs,
+        equations=equations,
+    )
+    if prior_plan is not None:
+        units, graphs = _stabilize_plan_section_ids(
+            units=units,
+            graphs=graphs,
+            prior_plan=prior_plan,
+        )
     total_page_budget = page_budget or sum(graph.page_budget for graph in graphs)
     plan_id = "method-plan:" + _digest({
         "claims": claims.content_digest,
@@ -402,6 +612,72 @@ def _story_spine_obligation_order(
         for obligation_id in node.linked_obligation_ids:
             order.setdefault(str(obligation_id), index)
     return order
+
+
+def _coalesce_remaining_claims_by_obligation(
+    *,
+    groups: list[tuple[str, str, str, list[AtomicClaimV3], tuple[str, ...]]],
+    remaining: list[AtomicClaimV3],
+) -> tuple[
+    list[tuple[str, str, str, list[AtomicClaimV3], tuple[str, ...]]],
+    list[AtomicClaimV3],
+]:
+    """Attach late claims to an existing stage through exact obligations.
+
+    This is deliberately not a lexical clustering heuristic.  A claim joins
+    a stage only when its closed ``covers_obligation_ids`` intersects the
+    stage's declared obligations or those of the claims already in the
+    stage.  Ambiguous matches choose the stage with the largest exact overlap
+    and preserve compiler order as the stable tie-break.  Truly unbound
+    claims remain available to the generic fallback.
+    """
+
+    mutable = [
+        [group_id, heading, purpose, list(selected), list(obligation_ids)]
+        for group_id, heading, purpose, selected, obligation_ids in groups
+    ]
+    unassigned: list[AtomicClaimV3] = []
+    for claim in remaining:
+        claim_obligations = {
+            str(item) for item in claim.covers_obligation_ids if str(item)
+        }
+        candidates: list[tuple[int, int]] = []
+        if claim_obligations:
+            for index, group in enumerate(mutable):
+                group_obligations = {
+                    str(item) for item in group[4] if str(item)
+                }
+                for selected_claim in group[3]:
+                    group_obligations.update(
+                        str(item)
+                        for item in selected_claim.covers_obligation_ids
+                        if str(item)
+                    )
+                overlap = len(claim_obligations.intersection(group_obligations))
+                if overlap:
+                    candidates.append((overlap, index))
+        if not candidates:
+            unassigned.append(claim)
+            continue
+        _overlap, target = max(candidates, key=lambda item: (item[0], -item[1]))
+        mutable[target][3].append(claim)
+        mutable[target][4].extend(
+            item for item in claim.covers_obligation_ids
+            if item not in mutable[target][4]
+        )
+    return (
+        [
+            (
+                str(group[0]),
+                str(group[1]),
+                str(group[2]),
+                list(group[3]),
+                tuple(group[4]),
+            )
+            for group in mutable
+        ],
+        unassigned,
+    )
 
 
 def _group_organization_key(group: Any, spine_order: dict[str, int]) -> tuple[int, int, str]:
@@ -472,6 +748,17 @@ def _realized_obligation_ids(
     return realized
 
 
+def _row_links_organization(row: Any, story_node: Any | None) -> bool:
+    obligation_id = str(getattr(row, "obligation_id", "") or "")
+    story_id = str(getattr(story_node, "story_node_id", "") or "")
+    role = str(getattr(row, "role", "") or "")
+    return (
+        "ORGANIZATION" in obligation_id.upper()
+        or "ORGANIZATION" in story_id.upper()
+        or role.strip().lower() == "organization"
+    )
+
+
 def _candidate_buckets_from_story_and_completeness(
     *,
     story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1],
@@ -482,7 +769,9 @@ def _candidate_buckets_from_story_and_completeness(
 
     partial / author-confirmation / explicit-gap / external / formalization /
     mismatch rows become candidate argument units (never verified-capable);
-    ``out_of_scope`` rows are skipped.  Buckets are keyed by the story node
+    ``out_of_scope`` rows are skipped.  Organization story nodes remain
+    section anchors even when the completeness row is still
+    ``unverified_by_repository``.  Buckets are keyed by the story node
     title when the row is linked, else the row statement/role.
     """
 
@@ -495,17 +784,26 @@ def _candidate_buckets_from_story_and_completeness(
     buckets: list[tuple[str, list[_CandidateRowEntry]]] = []
     bucket_by_heading: dict[str, int] = {}
     for row in completeness.items:
-        if str(row.status) not in _CANDIDATE_ROW_STATUSES:
+        story_node = story_node_by_obligation.get(row.obligation_id)
+        is_org = _row_links_organization(row, story_node)
+        status = str(row.status)
+        if status == "out_of_scope":
+            continue
+        if status not in _CANDIDATE_ROW_STATUSES and not (
+            is_org and status != "supported_by_repository"
+        ):
             continue
         if row.obligation_id in realized_obligation_ids:
             continue
-        story_node = story_node_by_obligation.get(row.obligation_id)
         heading = (
             story_node.title
             if story_node is not None and story_node.title.strip()
             else (row.statement or row.role or f"Method point {row.obligation_id}")
         )
-        heading = " ".join(heading.split())[:120]
+        heading, heading_constraints = _planning_section_heading(
+            heading,
+            bucket=[_CandidateRowEntry(row, story_node)],
+        )
         key = " ".join(re.findall(r"[a-z0-9]+", heading.lower())) or row.obligation_id
         if key not in bucket_by_heading:
             bucket_by_heading[key] = len(buckets)
@@ -513,6 +811,171 @@ def _candidate_buckets_from_story_and_completeness(
         else:
             buckets[bucket_by_heading[key]][1].append(_CandidateRowEntry(row, story_node))
     return buckets
+
+
+_IMPERATIVE_HEAD_WORDS = frozenset({
+    "initialize",
+    "compute",
+    "define",
+    "set",
+    "use",
+    "apply",
+    "build",
+    "create",
+    "update",
+    "construct",
+    "derive",
+    "calculate",
+    "encode",
+    "decode",
+    "train",
+    "learn",
+    "select",
+    "extract",
+    "aggregate",
+    "normalize",
+    "sample",
+    "project",
+    "embed",
+})
+
+
+def _heading_is_author_instruction(heading: str) -> bool:
+    """Short imperative author instructions should fold into claim sections."""
+
+    text = str(heading or "").strip()
+    if not text:
+        return False
+    words = text.split()
+    if not words:
+        return False
+    first = re.sub(r"[^a-z]", "", words[0].casefold())
+    if first in _IMPERATIVE_HEAD_WORDS:
+        return True
+    if len(words) <= 16 and text.endswith(".") and not text.endswith("..."):
+        return True
+    return False
+
+
+def _bucket_links_organization(bucket: tuple[str, list[Any]]) -> bool:
+    """True when the bucket is an author organization-spine node.
+
+    Long organization headings (multi-clause stage titles) must not be
+    treated as leftover author-sentence fragments and Jaccard-merged into
+    a neighboring stage.
+    """
+
+    for item in bucket[1]:
+        if not isinstance(item, _CandidateRowEntry):
+            continue
+        obligation_id = str(item.obligation_id or "")
+        story_id = str(getattr(item.story_node, "story_node_id", "") or "")
+        if "ORGANIZATION" in obligation_id.upper() or "ORGANIZATION" in story_id.upper():
+            return True
+    return False
+
+
+def _bucket_is_leftover_author_statement(bucket: tuple[str, list[Any]]) -> bool:
+    if not bucket[1]:
+        return False
+    if _bucket_links_organization(bucket):
+        return False
+    if not all(isinstance(item, _CandidateRowEntry) for item in bucket[1]):
+        return False
+    heading = str(bucket[0] or "").strip()
+    source = _bucket_story_text(bucket)
+    coherent = coherent_heading(
+        heading,
+        limit=120,
+        intended_role=_bucket_intended_role(bucket[1]),
+        source_text=source or heading,
+    )
+    return (
+        _heading_is_author_instruction(heading)
+        or len(heading.split()) > 12
+        or len(heading) > 96
+        or heading_is_truncated(coherent)
+    )
+
+
+def _fold_leftover_author_statement_buckets(
+    *,
+    claim_buckets: list[tuple[str, list[Any]]],
+    candidate_buckets: list[tuple[str, list[_CandidateRowEntry]]],
+) -> list[tuple[str, list[_CandidateRowEntry]]]:
+    """Fold truncated author-sentence candidate buckets into claim sections."""
+
+    if not claim_buckets or not candidate_buckets:
+        return candidate_buckets
+    claim_tokens = [
+        _section_cluster_tokens(_bucket_story_text(bucket))
+        for bucket in claim_buckets
+    ]
+    retained: list[tuple[str, list[_CandidateRowEntry]]] = []
+    for bucket in candidate_buckets:
+        if _bucket_links_organization(bucket) or not _bucket_is_leftover_author_statement(bucket):
+            retained.append(bucket)
+            continue
+        tokens = _section_cluster_tokens(_bucket_story_text(bucket))
+        scores = [
+            len(tokens & target) / max(1, len(tokens | target))
+            for target in claim_tokens
+        ]
+        if scores and max(scores) > 0:
+            target_index = scores.index(max(scores))
+        else:
+            target_index = len(claim_buckets) - 1
+        claim_buckets[target_index][1].extend(bucket[1])
+    return retained
+
+
+def _graph_stable_key(graph: SectionArgumentGraphV1) -> tuple[str, ...]:
+    brief_ids = tuple(sorted(str(value) for value in graph.primary_brief_ids if str(value).strip()))
+    story_ids = tuple(sorted(str(value) for value in graph.story_node_ids if str(value).strip()))
+    if brief_ids or story_ids:
+        return tuple(sorted(set(brief_ids) | set(story_ids)))
+    unit_ids = tuple(sorted(str(value) for value in graph.argument_unit_ids if str(value).strip()))
+    return unit_ids
+
+
+def _stabilize_plan_section_ids(
+    *,
+    units: list[MethodArgumentUnitV1],
+    graphs: list[SectionArgumentGraphV1],
+    prior_plan: MethodSectionPlanV2,
+) -> tuple[list[MethodArgumentUnitV1], list[SectionArgumentGraphV1]]:
+    """Reuse prior ``MA-S*`` ids when section binding keys still match."""
+
+    prior_by_key: dict[tuple[str, ...], str] = {}
+    for graph in prior_plan.sections:
+        key = _graph_stable_key(graph)
+        if key and graph.section_id not in prior_by_key.values():
+            prior_by_key[key] = graph.section_id
+    remap: dict[str, str] = {}
+    for graph in graphs:
+        key = _graph_stable_key(graph)
+        prior_id = prior_by_key.get(key)
+        if prior_id and prior_id != graph.section_id:
+            remap[graph.section_id] = prior_id
+    if not remap:
+        return units, graphs
+    updated_units: list[MethodArgumentUnitV1] = []
+    for unit in units:
+        new_unit = unit
+        for old_section, new_section in remap.items():
+            if unit.argument_unit_id.startswith(f"{old_section}:"):
+                new_unit = unit.model_copy(update={
+                    "argument_unit_id": unit.argument_unit_id.replace(
+                        old_section, new_section, 1
+                    ),
+                })
+                break
+        updated_units.append(new_unit)
+    updated_graphs: list[SectionArgumentGraphV1] = []
+    for graph in graphs:
+        new_section = remap.get(graph.section_id, graph.section_id)
+        updated_graphs.append(graph.model_copy(update={"section_id": new_section}))
+    return updated_units, updated_graphs
 
 
 def _merge_plan_buckets(
@@ -571,6 +1034,400 @@ def _section_cluster_tokens(value: str) -> set[str]:
     }
 
 
+def _truncate_heading(
+    value: str,
+    *,
+    limit: int = 120,
+    intended_role: str = "",
+    source_text: str = "",
+) -> str:
+    """Bound a heading at a complete clause, never a dangling connective."""
+
+    return coherent_heading(
+        value,
+        limit=limit,
+        intended_role=intended_role,
+        source_text=source_text,
+    )
+
+
+def _planning_section_heading(
+    heading: str,
+    *,
+    bucket: list[Any],
+    limit: int = 120,
+) -> tuple[str, tuple[str, ...]]:
+    """Structural planning heading plus Writer-facing heading constraints.
+
+    Author statements stay in constraints; truncated statement fragments are
+  never promoted to the section graph heading.
+    """
+
+    role = _bucket_intended_role(bucket)
+    source = _bucket_story_text((heading, bucket)).strip() or str(heading or "").strip()
+    raw = " ".join(str(heading or "").split()).strip()
+    constraints: list[str] = [
+        "writer_must_produce_heading_text",
+        f"max_length:{limit}",
+        "must_not_use_truncated_author_statement",
+    ]
+    if source:
+        constraints.append(f"author_statement:{source}")
+    basis = raw
+    if (
+        len(raw) > 96
+        or len(raw.split()) > 12
+        or heading_is_truncated(coherent_heading(raw, limit=limit, intended_role=role, source_text=source or raw))
+    ):
+        basis = source or raw
+    structural = coherent_heading(
+        basis,
+        limit=limit,
+        intended_role=role,
+        source_text=source or basis,
+    )
+    return structural, tuple(dict.fromkeys(constraints))
+
+
+def _enrich_section_content_contracts(
+    graphs: list[SectionArgumentGraphV1],
+    units: list[MethodArgumentUnitV1],
+    *,
+    story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
+    concept_cards: Any | None = None,
+    argument_briefs: Any | None = None,
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+    equations: EquationClaimSetV1 | None = None,
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
+) -> list[SectionArgumentGraphV1]:
+    """Populate WP1 section content contract fields on each section graph."""
+
+    from code2paper.agentic.publication_relevance import classify_concept_card_writing_role
+
+    card_by_key = {
+        card.concept_key: card
+        for card in (getattr(concept_cards, "cards", ()) or ())
+    }
+    brief_by_id = {
+        brief.brief_id: brief
+        for brief in (getattr(argument_briefs, "briefs", ()) or ())
+    }
+    facet_by_id = {
+        str(facet.facet_id): facet
+        for facet in (argument_facets or ())
+        if str(getattr(facet, "facet_id", "") or "").strip()
+    }
+    alignment_by_facet_id = {
+        str(alignment.facet_id): alignment
+        for alignment in (facet_alignments or ())
+        if str(getattr(alignment, "facet_id", "") or "").strip()
+    }
+    story_by_id = {node.story_node_id: node for node in story_spine}
+    story_order = {node.story_node_id: index for index, node in enumerate(story_spine)}
+    units_by_id = {unit.argument_unit_id: unit for unit in units}
+    enriched: list[SectionArgumentGraphV1] = []
+
+    for graph in graphs:
+        section_units = [
+            units_by_id[unit_id]
+            for unit_id in graph.argument_unit_ids
+            if unit_id in units_by_id
+        ]
+        section_card_keys = tuple(dict.fromkeys(
+            key
+            for unit in section_units
+            for key in unit.concept_card_ids
+        ))
+        section_brief_ids = tuple(dict.fromkeys(
+            brief_id
+            for unit in section_units
+            for brief_id in unit.brief_ids
+        ))
+        audit_only: list[str] = []
+        primary: list[str] = []
+        supporting: list[str] = []
+        primary_briefs: list[str] = []
+        supporting_briefs: list[str] = []
+        if brief_by_id and section_brief_ids:
+            section_story_ids = {
+                node.story_node_id
+                for unit in section_units
+                for obligation_id in unit.source_obligation_ids
+                for node in story_spine
+                if obligation_id in node.linked_obligation_ids
+            }
+            for brief_id in section_brief_ids:
+                brief = brief_by_id.get(brief_id)
+                if brief is None:
+                    continue
+                if brief.story_node_id in section_story_ids:
+                    primary_briefs.append(brief_id)
+                else:
+                    supporting_briefs.append(brief_id)
+        # Replanning is allowed to run with a legacy/missing projection, but
+        # it must never erase an already-bound author story.  The persisted
+        # graph is the fallback authority until a fresh source projection is
+        # available; a source projection may only add/confirm identities.
+        if not brief_by_id:
+            primary_briefs.extend(graph.primary_brief_ids)
+            supporting_briefs.extend(graph.supporting_brief_ids)
+        else:
+            primary_briefs.extend(
+                brief_id for brief_id in graph.primary_brief_ids
+                if brief_id not in primary_briefs
+            )
+            supporting_briefs.extend(
+                brief_id for brief_id in graph.supporting_brief_ids
+                if brief_id not in supporting_briefs and brief_id not in primary_briefs
+            )
+        for key in section_card_keys:
+            card = card_by_key.get(key)
+            if card is None:
+                continue
+            story_selected = bool(card.realized_story_node_ids)
+            role = classify_concept_card_writing_role(
+                card,
+                story_selected=story_selected,
+            )
+            if role == "audit_only":
+                audit_only.append(key)
+            elif story_selected:
+                primary.append(key)
+            else:
+                supporting.append(key)
+        if not card_by_key:
+            # Preserve the frozen concept classification when the optional
+            # concept-card artifact is unavailable during a typed replan.
+            primary.extend(graph.primary_concept_keys)
+            supporting.extend(graph.supporting_concept_keys)
+            audit_only.extend(graph.audit_only_concept_keys)
+
+        def _primary_sort(key: str) -> tuple[int, str]:
+            card = card_by_key.get(key)
+            if card is None or not card.realized_story_node_ids:
+                return (len(story_spine), key)
+            return (
+                min(
+                    story_order.get(story_id, len(story_spine))
+                    for story_id in card.realized_story_node_ids
+                ),
+                key,
+            )
+
+        primary.sort(key=_primary_sort)
+        story_ids: list[str] = []
+        for unit in section_units:
+            for obligation_id in unit.source_obligation_ids:
+                for node in story_spine:
+                    if obligation_id in node.linked_obligation_ids:
+                        story_ids.append(node.story_node_id)
+        for key in primary:
+            card = card_by_key.get(key)
+            if card is not None:
+                story_ids.extend(card.realized_story_node_ids)
+        if not story_spine:
+            story_ids.extend(graph.story_node_ids)
+        else:
+            story_ids.extend(
+                story_id for story_id in graph.story_node_ids
+                if story_id not in story_ids
+            )
+        story_node_ids = tuple(dict.fromkeys(story_ids))
+
+        required_equation_move = any(
+            move.move == "equation_or_derivation" and move.required
+            for move in graph.moves
+        )
+        equation_by_id = {
+            str(equation.equation_id): equation
+            for equation in (equations.equations if equations is not None else ())
+        }
+        equation_ids = tuple(dict.fromkeys(
+            equation_id
+            for unit in section_units
+            for equation_id in unit.equation_ids
+            if str(equation_id) not in equation_by_id
+            or str(getattr(equation_by_id[str(equation_id)], "formula_role", "") or "")
+            != "incidental"
+        ))
+        primary_formula = any(
+            card_by_key.get(key) is not None
+            and card_by_key[key].formula_constraints
+            for key in primary
+        )
+        formula_obligation_ids: tuple[str, ...] = ()
+        formula_not_applicable = False
+        formula_not_applicable_reason = ""
+        if equation_ids:
+            formula_obligation_ids = tuple(
+                f"formula:{equation_id}" for equation_id in equation_ids
+            )
+        elif required_equation_move or primary_formula:
+            formula_obligation_ids = (
+                f"formula:section:{graph.section_id}:derivation",
+            )
+        else:
+            formula_not_applicable = True
+            formula_not_applicable_reason = (
+                "no primary formula role and no bound equations for this section"
+            )
+
+        dataflow_ids = tuple(dict.fromkeys(
+            relation_id
+            for unit in section_units
+            for relation_id in unit.behavior_relation_ids
+        ))
+        open_slots: list[SectionContentOpenSlotV1] = []
+        if not primary and not primary_briefs and story_node_ids:
+            for story_id in story_node_ids:
+                if story_id not in story_by_id:
+                    continue
+                open_slots.append(SectionContentOpenSlotV1(
+                    slot_id=f"slot:{graph.section_id}:{story_id}",
+                    owner="architect",
+                    authority_lane="author_intent_unverified",
+                    target_concept_key="",
+                    slot_kind="missing_primary_concept",
+                    blocking_for_candidate=True,
+                    blocking_for_verified=True,
+                ))
+
+        extra_constraints = [
+            f"author_statement:{story_by_id[story_id].author_statement.strip()}"
+            for story_id in story_node_ids
+            if story_id in story_by_id
+            and str(story_by_id[story_id].author_statement or "").strip()
+        ]
+        heading_constraints = tuple(dict.fromkeys([
+            *graph.heading_constraints,
+            *extra_constraints,
+        ]))
+
+        enriched_graph = graph.model_copy(update={
+            "story_node_ids": story_node_ids,
+            "primary_concept_keys": tuple(primary),
+            "supporting_concept_keys": tuple(supporting),
+            "audit_only_concept_keys": tuple(audit_only),
+            "primary_brief_ids": tuple(primary_briefs),
+            "supporting_brief_ids": tuple(supporting_briefs),
+            "required_dataflow_relation_ids": dataflow_ids,
+            "formula_obligation_ids": formula_obligation_ids,
+            "formula_not_applicable": formula_not_applicable,
+            "formula_not_applicable_reason": formula_not_applicable_reason,
+            "open_slots": tuple(open_slots),
+            "heading_constraints": heading_constraints,
+        })
+        enriched.append(enriched_graph.model_copy(update={
+            "paragraphs": _build_section_paragraph_plans(
+                section_id=enriched_graph.section_id,
+                section_units=section_units,
+                move_objects=enriched_graph.moves,
+                formula_obligation_ids=formula_obligation_ids,
+                unit_frames=unit_frames,
+                argument_facets=argument_facets,
+                facet_alignments=facet_alignments,
+            ),
+        }))
+    return enriched
+
+
+def _bucket_intended_role(bucket: list[Any]) -> str:
+    for item in bucket:
+        if isinstance(item, _CandidateRowEntry):
+            role = str(getattr(item.story_node, "intended_role", "") or "")
+            if role:
+                return role
+    return ""
+
+
+def _bucket_story_node(bucket: list[Any]) -> Any | None:
+    for item in bucket:
+        if isinstance(item, _CandidateRowEntry) and item.story_node is not None:
+            return item.story_node
+    return None
+
+
+def _story_reader_question(*, heading: str, bucket: list[Any] | None = None, story_node: Any = None) -> str:
+    """Derive the section's scientific question from the author story.
+
+    Never uses the transform-inputs-into-outputs template.
+    """
+
+    node = story_node if story_node is not None else (
+        _bucket_story_node(bucket) if bucket is not None else None
+    )
+    title = str(getattr(node, "title", "") or heading).strip()
+    statement = str(getattr(node, "author_statement", "") or "").strip()
+    role = str(getattr(node, "intended_role", "") or "").replace("_", " ").strip()
+    focus = statement or title or heading
+    focus = " ".join(focus.split())
+    if len(focus) > 220:
+        focus = coherent_heading(focus, limit=220, intended_role=role, source_text=focus)
+    if role:
+        return f"How does this {role} realize {focus.rstrip('.')}?"
+    return f"What method mechanism does this section realize: {focus.rstrip('.')}?"
+
+
+def _bind_move_anchor(
+    move: SectionArgumentMoveV1,
+    *,
+    section_units: list[MethodArgumentUnitV1],
+) -> SectionArgumentMoveV1:
+    """Bind requiredness to authorized anchors; unanchored moves keep an owner."""
+
+    has_equations = any(unit.equation_ids for unit in section_units)
+    has_configurations = any(unit.configuration_ids for unit in section_units)
+    if move.move == "equation_or_derivation":
+        if has_equations:
+            return move.model_copy(update={"required": True, "unanchored": False, "unanchored_owner": ""})
+        return move.model_copy(update={
+            "required": False,
+            "unanchored": True,
+            "unanchored_owner": "Formalizer",
+        })
+    if move.move == "configuration_and_branches":
+        if has_configurations:
+            return move.model_copy(update={"required": True, "unanchored": False, "unanchored_owner": ""})
+        return move.model_copy(update={
+            "required": False,
+            "unanchored": True,
+            "unanchored_owner": "Research",
+        })
+    return move
+
+
+def _ensure_unanchored_formula_move(
+    move_objects: tuple[SectionArgumentMoveV1, ...],
+    *,
+    section_units: list[MethodArgumentUnitV1],
+    heading: str = "",
+) -> tuple[SectionArgumentMoveV1, ...]:
+    """Keep a typed formula obligation when the section has no equation evidence."""
+
+    if _heading_is_rhetorical_frame(heading):
+        return tuple(
+            item for item in move_objects
+            if item.move not in {"equation_or_derivation", "mechanism_overview"}
+        )
+    has_equations = any(unit.equation_ids for unit in section_units)
+    if has_equations or any(item.move == "equation_or_derivation" for item in move_objects):
+        return move_objects
+    unit_ids = tuple(unit.argument_unit_id for unit in section_units)
+    extra = _bind_move_anchor(
+        SectionArgumentMoveV1(
+            move="equation_or_derivation",
+            argument_unit_ids=unit_ids,
+            paragraph_budget=1,
+            information_budget=0.25,
+            allowed_authority_lanes=("formal_derivation",),
+            required=False,
+        ),
+        section_units=section_units,
+    )
+    return (*move_objects, extra)
+
+
 def _bucket_story_text(bucket: tuple[str, list[Any]]) -> str:
     parts = [bucket[0]]
     for item in bucket[1]:
@@ -585,69 +1442,378 @@ def _bucket_story_text(bucket: tuple[str, list[Any]]) -> str:
     return " ".join(parts)
 
 
+def _organization_story_nodes(
+    story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1],
+) -> list[AuthorStoryNodeV1]:
+    return [
+        node
+        for node in story_spine
+        if "ORGANIZATION" in str(node.story_node_id).upper()
+    ]
+
+
+def _bucket_obligation_ids(bucket: tuple[str, list[Any]]) -> set[str]:
+    ids: set[str] = set()
+    for item in bucket[1]:
+        if isinstance(item, _CandidateRowEntry):
+            ids.add(str(item.obligation_id))
+            continue
+        ids.update(str(obligation_id) for obligation_id in item[4])
+    return ids
+
+
+def _heading_token_jaccard(left: str, right: str) -> float:
+    left_tokens = _section_cluster_tokens(left)
+    right_tokens = _section_cluster_tokens(right)
+    union = left_tokens | right_tokens
+    if not union:
+        return 0.0
+    return len(left_tokens & right_tokens) / len(union)
+
+
+def _organization_stub_row(
+    node: AuthorStoryNodeV1,
+    *,
+    completeness: MethodCompletenessMatrixV1 | None,
+) -> MethodCompletenessItemV1:
+    row_by_id = completeness.by_id() if completeness is not None else {}
+    for obligation_id in node.linked_obligation_ids:
+        row = row_by_id.get(str(obligation_id))
+        if row is not None and str(row.status) != "out_of_scope":
+            return row
+    obligation_id = (
+        str(node.linked_obligation_ids[0])
+        if node.linked_obligation_ids
+        else str(node.story_node_id)
+    )
+    return MethodCompletenessItemV1(
+        obligation_id=obligation_id,
+        role="organization",
+        statement=node.author_statement or node.title,
+        status="author_confirmation_required",
+        importance="high",
+    )
+
+
 def _consolidate_buckets_under_organization_spine(
     buckets: list[tuple[str, list[Any]]],
     *,
     story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1],
+    completeness: MethodCompletenessMatrixV1 | None = None,
 ) -> list[tuple[str, list[Any]]]:
     """Restore the author's document hierarchy without dropping obligations.
 
     Intent compilation exposes organization headings, stages, components and
     rationale checks as sibling story nodes.  Treating every sibling as a
     section produced 20+ one-paragraph headings.  When the author supplied a
-    genuine organization spine, use those nodes as section anchors and place
-    every other bucket inside the nearest semantic anchor.  Argument units and
-    exact obligation bindings remain unchanged; only their section grouping is
+    genuine organization spine, use those nodes as section anchors even if
+    their completeness rows are still unresolved, and place every other
+    bucket inside the nearest semantic anchor.  Argument units and exact
+    obligation bindings remain unchanged; only their section grouping is
     consolidated.
     """
 
+    org_nodes = _organization_story_nodes(story_spine)
+    if 2 <= len(org_nodes) <= 8:
+        return _anchors_from_organization_nodes(
+            buckets,
+            org_nodes=org_nodes,
+            completeness=completeness,
+        )
+
     organization_ids = {
         str(obligation_id)
-        for node in story_spine
-        if "ORGANIZATION" in str(node.story_node_id).upper()
+        for node in org_nodes
         for obligation_id in node.linked_obligation_ids
     }
     anchors: list[tuple[int, tuple[str, list[Any]]]] = []
     for index, bucket in enumerate(buckets):
-        obligation_ids = {
-            item.obligation_id
-            for item in bucket[1]
-            if isinstance(item, _CandidateRowEntry)
-        }
-        if obligation_ids & organization_ids:
+        obligation_ids = _bucket_obligation_ids(bucket)
+        if obligation_ids & organization_ids or _bucket_links_organization(bucket):
             anchors.append((index, bucket))
     # Two to eight explicit organization nodes are a usable document spine.
     # Outside that range, retain the original plan rather than inventing one.
     if not 2 <= len(anchors) <= 8:
         return buckets
+    return _fold_non_anchors(buckets, anchors)
 
-    anchor_indexes = {index for index, _bucket in anchors}
+
+def _anchors_from_organization_nodes(
+    buckets: list[tuple[str, list[Any]]],
+    *,
+    org_nodes: list[AuthorStoryNodeV1],
+    completeness: MethodCompletenessMatrixV1 | None,
+) -> list[tuple[str, list[Any]]]:
+    used_indexes: set[int] = set()
+    anchors: list[tuple[str, list[Any]]] = []
+    for node in org_nodes:
+        org_ids = {str(item) for item in node.linked_obligation_ids}
+        match_index: int | None = None
+        for index, bucket in enumerate(buckets):
+            if index in used_indexes:
+                continue
+            if _bucket_obligation_ids(bucket) & org_ids or (
+                _bucket_links_organization(bucket)
+                and any(
+                    str(getattr(getattr(item, "story_node", None), "story_node_id", "") or "")
+                    == str(node.story_node_id)
+                    for item in bucket[1]
+                    if isinstance(item, _CandidateRowEntry)
+                )
+            ):
+                match_index = index
+                break
+        if match_index is None:
+            node_text = " ".join((node.title, node.author_statement))
+            rhetorical_anchor = _heading_is_rhetorical_frame(node.title)
+            scores = []
+            for index, bucket in enumerate(buckets):
+                if index in used_indexes:
+                    continue
+                stage_bucket = _bucket_has_stage_obligation(bucket)
+                if stage_bucket and rhetorical_anchor:
+                    continue
+                score = _heading_token_jaccard(node_text, _bucket_story_text(bucket))
+                if stage_bucket:
+                    node_family = _heading_family(node_text)
+                    bucket_family = _heading_family(_bucket_story_text(bucket))
+                    if node_family != "other" and node_family == bucket_family:
+                        score += 0.5
+                    if score < 0.25:
+                        continue
+                scores.append((index, score))
+            if scores:
+                best_index, best_score = max(scores, key=lambda item: item[1])
+                if best_score > 0:
+                    match_index = best_index
+        if match_index is not None:
+            used_indexes.add(match_index)
+            heading, items = buckets[match_index]
+            anchors.append((node.title or heading, list(items)))
+            continue
+        row = _organization_stub_row(node, completeness=completeness)
+        heading, _constraints = _planning_section_heading(
+            node.title,
+            bucket=[_CandidateRowEntry(row, node)],
+        )
+        anchors.append((heading, [_CandidateRowEntry(row, node)]))
+
+    non_anchor = [
+        (index, bucket) for index, bucket in enumerate(buckets)
+        if index not in used_indexes
+    ]
+    return _fold_non_anchor_buckets(anchors, non_anchor)
+
+
+def _fold_non_anchors(
+    buckets: list[tuple[str, list[Any]]],
+    anchors: list[tuple[int, tuple[str, list[Any]]]],
+) -> list[tuple[str, list[Any]]]:
     consolidated: list[tuple[str, list[Any]]] = [
         (bucket[0], list(bucket[1])) for _index, bucket in anchors
     ]
-    anchor_tokens = [_section_cluster_tokens(_bucket_story_text(bucket)) for _i, bucket in anchors]
+    anchor_indexes = {index for index, _bucket in anchors}
     non_anchor = [
         (index, bucket) for index, bucket in enumerate(buckets)
         if index not in anchor_indexes
     ]
+    return _fold_non_anchor_buckets(consolidated, non_anchor)
+
+
+def _heading_is_rhetorical_frame(heading: str) -> bool:
+    return bool(re.search(
+        r"\b(motivation|overview|related.?work|background|introduction|overall framework)\b",
+        str(heading or ""),
+        re.I,
+    ))
+
+
+_LOCAL_FAMILY_RE = re.compile(
+    r"\b(?:first|activat(?:e|ion|ed|ing)?|bridg(?:e|ing)?|frontier|threshold|prune|exclude)\b",
+    re.I,
+)
+_GLOBAL_FAMILY_RE = re.compile(
+    r"\b(?:second|pagerank|ppr|damping|global|aggregat(?:e|ion|ed|ing)?|rank)\b",
+    re.I,
+)
+_OFFLINE_FAMILY_RE = re.compile(
+    r"\b(?:offline|construct|index|corpus|adjacenc)\b",
+    re.I,
+)
+_TRAINING_FAMILY_RE = re.compile(
+    r"\b(?:train(?:ing|s|ed)?|loss(?:es)?|optimiz(?:e|ation|er)?)\b",
+    re.I,
+)
+_ARCHITECTURE_FAMILY_RE = re.compile(
+    r"\b(?:architectur\w*|encod(?:e|ing|er|ed)?|embed(?:ding)?s?|attention|augment(?:ation|ed)?|transformer|sinusoid(?:al)?|hybrid|retriev(?:e|al|ed|ing)?)\b",
+    re.I,
+)
+
+
+def _heading_family(text: str) -> str:
+    value = str(text or "")
+    if _heading_is_rhetorical_frame(value):
+        return "frame"
+    if _TRAINING_FAMILY_RE.search(value):
+        return "training"
+    if _LOCAL_FAMILY_RE.search(value):
+        return "local"
+    if _GLOBAL_FAMILY_RE.search(value):
+        return "global"
+    if _OFFLINE_FAMILY_RE.search(value):
+        return "offline"
+    if _ARCHITECTURE_FAMILY_RE.search(value):
+        return "architecture"
+    return "other"
+
+
+def _heading_token_containment(subset: str, container: str) -> bool:
+    left = _section_cluster_tokens(subset)
+    right = _section_cluster_tokens(container)
+    if len(left) < 2 or not right:
+        return False
+    return left <= right
+
+
+def _compatible_stage_fold_target(bucket_heading: str, target_heading: str) -> bool:
+    if _heading_is_rhetorical_frame(target_heading):
+        return False
+    source = _heading_family(bucket_heading)
+    target = _heading_family(target_heading)
+    if source == "training" or target == "training":
+        return source == target
+    if source in {"local", "global"} and target in {"local", "global"} and source != target:
+        return False
+    if source in {"local", "global", "offline"} and target == "architecture":
+        return False
+    return True
+
+
+def _stage_fold_score(bucket_heading: str, target_heading: str) -> float:
+    if not _compatible_stage_fold_target(bucket_heading, target_heading):
+        return -1.0
+    score = _heading_token_jaccard(bucket_heading, target_heading)
+    if (
+        _heading_token_containment(bucket_heading, target_heading)
+        or _heading_token_containment(target_heading, bucket_heading)
+    ):
+        score = max(score, 0.51)
+    source_family = _heading_family(bucket_heading)
+    target_family = _heading_family(target_heading)
+    if source_family not in {"other", "frame"} and source_family == target_family:
+        score += 0.5
+    return score
+
+
+def _bucket_has_stage_obligation(bucket: tuple[str, list[Any]]) -> bool:
+    return any(
+        re.search(r"(STAGE|PIPELINE)", str(obligation_id), re.I)
+        for obligation_id in _bucket_obligation_ids(bucket)
+    )
+
+
+def _fold_non_anchor_buckets(
+    consolidated: list[tuple[str, list[Any]]],
+    non_anchor: list[tuple[int, tuple[str, list[Any]]]],
+) -> list[tuple[str, list[Any]]]:
+    if not consolidated:
+        return [bucket for _index, bucket in non_anchor]
+    leftover: list[tuple[str, list[Any]]] = []
+    heading_tokens = [_section_cluster_tokens(bucket[0]) for bucket in consolidated]
     for ordinal, (_index, bucket) in enumerate(non_anchor):
         tokens = _section_cluster_tokens(_bucket_story_text(bucket))
-        scores = [
-            len(tokens & target_tokens) / max(1, len(tokens | target_tokens))
-            for target_tokens in anchor_tokens
-        ]
+        stage_bucket = _bucket_has_stage_obligation(bucket)
+        scores: list[float] = []
+        for idx, (heading, _items) in enumerate(consolidated):
+            if stage_bucket:
+                scores.append(_stage_fold_score(bucket[0], heading))
+                continue
+            target_tokens = heading_tokens[idx]
+            union = tokens | target_tokens
+            scores.append((len(tokens & target_tokens) / len(union)) if union else 0.0)
         best_score = max(scores, default=0.0)
-        if best_score > 0:
+        floor = 0.25 if stage_bucket else 0.0
+        merge = best_score >= floor and best_score > 0
+        if (
+            stage_bucket
+            and not merge
+            and 0.15 <= best_score < 0.25
+        ):
+            target_heading = consolidated[scores.index(best_score)][0]
+            source_family = _heading_family(bucket[0])
+            if source_family not in {"frame", "other"} and source_family == _heading_family(target_heading):
+                merge = True
+            elif _heading_token_containment(bucket[0], target_heading):
+                merge = True
+        if merge:
             target = scores.index(best_score)
-        else:
-            # Preserve relative story position when vocabulary alone cannot
-            # distinguish an organizational bridge.
-            target = min(
-                len(consolidated) - 1,
-                (ordinal * len(consolidated)) // max(1, len(non_anchor)),
+            consolidated[target] = (
+                consolidated[target][0],
+                [*consolidated[target][1], *bucket[1]],
             )
-        consolidated[target][1].extend(bucket[1])
-    return consolidated
+            continue
+        if stage_bucket:
+            leftover.append(bucket)
+            continue
+        target = min(
+            len(consolidated) - 1,
+            (ordinal * len(consolidated)) // max(1, len(non_anchor)),
+        )
+        consolidated[target] = (
+            consolidated[target][0],
+            [*consolidated[target][1], *bucket[1]],
+        )
+    return [*consolidated, *leftover]
+
+
+def _merge_near_duplicate_section_buckets(
+    buckets: list[tuple[str, list[Any]]],
+) -> list[tuple[str, list[Any]]]:
+    """Collapse high-overlap headings that are not distinct organization anchors."""
+
+    if len(buckets) < 2:
+        return buckets
+    merged: list[tuple[str, list[Any]]] = []
+    used: set[int] = set()
+    for index, bucket in enumerate(buckets):
+        if index in used:
+            continue
+        heading, items = bucket[0], list(bucket[1])
+        heading_tokens = _section_cluster_tokens(heading)
+        used.add(index)
+        for other_index in range(index + 1, len(buckets)):
+            if other_index in used:
+                continue
+            other = buckets[other_index]
+            if _bucket_links_organization(bucket) and _bucket_links_organization(other):
+                continue
+            other_tokens = _section_cluster_tokens(other[0])
+            union = heading_tokens | other_tokens
+            shared = heading_tokens & other_tokens
+            if not union or len(shared) < 2:
+                continue
+            org_xor_stage = (
+                _bucket_links_organization(bucket) != _bucket_links_organization(other)
+            )
+            overlap = len(shared) / len(union)
+            contained = (
+                _heading_token_containment(other[0], heading)
+                or _heading_token_containment(heading, other[0])
+            )
+            if org_xor_stage:
+                if not _compatible_stage_fold_target(
+                    bucket[0] if _bucket_has_stage_obligation(bucket) else other[0],
+                    other[0] if _bucket_has_stage_obligation(bucket) else heading,
+                ):
+                    continue
+                if not contained and overlap < 0.45:
+                    continue
+            elif overlap < 0.6:
+                continue
+            items.extend(other[1])
+            used.add(other_index)
+        merged.append((heading, items))
+    return merged
 
 
 def _candidate_argument_unit(
@@ -656,6 +1822,7 @@ def _candidate_argument_unit(
     story_node: AuthorStoryNodeV1 | None,
     section_id: str,
     unit_id: str,
+    heading: str = "",
 ) -> MethodArgumentUnitV1:
     """One candidate-only argument unit from a completeness row.
 
@@ -682,7 +1849,47 @@ def _candidate_argument_unit(
         lanes = ("formal_derivation",)
     else:
         lanes = ("executable_hard",)
-    moves: list[str] = ["mechanism_overview"]
+    if _heading_is_rhetorical_frame(heading):
+        moves = ["problem_or_local_context", "design_objective"]
+        if status in {
+            "partially_supported_by_repository",
+            "paper_code_mismatch",
+            "author_confirmation_required",
+            "unverified_by_repository",
+            "explicit_code_gap",
+            "external_evidence_required",
+        }:
+            moves.append("limitations_or_mismatch")
+        moves.append("transition_to_next_section")
+        unresolved = (f"{row.obligation_id}:{status}",)
+        return MethodArgumentUnitV1(
+            argument_unit_id=unit_id,
+            section_role=str(row.role or "") or (story_node.intended_role if story_node is not None else "stage"),
+            research_question=(
+                story_node.title if story_node is not None and story_node.title.strip()
+                else (row.statement or row.role or f"Method point {row.obligation_id}")
+            ),
+            design_objective=statement,
+            claim_ids=tuple(row.claim_ids),
+            equation_ids=tuple(row.equation_ids),
+            configuration_ids=tuple(row.configuration_ids),
+            allowed_expository_moves=tuple(moves),
+            unresolved_inputs=unresolved,
+            authority_lanes=lanes,
+            source_artifact_ids=tuple(dict.fromkeys([
+                *row.source_artifact_ids,
+                *row.matched_fact_ids,
+                *row.matched_span_ids,
+            ])),
+            source_obligation_ids=(row.obligation_id,),
+            supported=False,
+            information_weight=1.0,
+        )
+    moves: list[str] = (
+        ["problem_or_local_context", "design_objective"]
+        if not tuple(row.claim_ids)
+        else ["mechanism_overview"]
+    )
     if status == "partially_supported_by_repository":
         moves.append("implementation_realization")
         if any(token in role for token in ("train", "loss", "objective")):
@@ -692,7 +1899,9 @@ def _candidate_argument_unit(
         if any(token in role for token in ("config", "parameter", "branch")):
             moves.append("configuration_and_branches")
     else:
-        if any(token in role for token in ("equation", "formula", "derivation", "notation")):
+        if status == "formalization_required" or any(
+            token in role for token in ("equation", "formula", "derivation", "notation")
+        ):
             moves.append("equation_or_derivation")
         if any(token in role for token in ("config", "parameter", "branch")):
             moves.append("configuration_and_branches")
@@ -700,7 +1909,17 @@ def _candidate_argument_unit(
             moves.append("inference_and_output")
         if any(token in role for token in ("train", "loss", "objective")):
             moves.append("training_objective")
-    moves = [*dict.fromkeys([*moves, "limitations_or_mismatch", "transition_to_next_section"])]
+    moves = [*dict.fromkeys(moves)]
+    if status in {
+        "partially_supported_by_repository",
+        "paper_code_mismatch",
+        "author_confirmation_required",
+        "unverified_by_repository",
+        "explicit_code_gap",
+        "external_evidence_required",
+    }:
+        moves.append("limitations_or_mismatch")
+    moves.append("transition_to_next_section")
     unresolved = (f"{row.obligation_id}:{status}",)
     return MethodArgumentUnitV1(
         argument_unit_id=unit_id,
@@ -790,6 +2009,10 @@ def build_method_section_plan_with_product_readiness(
     page_budget: float = 0.0,
     story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
     policy: MethodOutputPolicyV1 | None = None,
+    propositions: MethodPropositionSetV1 | None = None,
+    concept_cards: Any | None = None,
+    argument_briefs: Any | None = None,
+    prior_plan: MethodSectionPlanV2 | None = None,
 ) -> tuple[MethodSectionPlanV2, MethodPlanProductReadinessV1, dict[str, Any]]:
     """Build the section plan together with its graded product readiness.
 
@@ -799,6 +2022,9 @@ def build_method_section_plan_with_product_readiness(
     ``candidate_ready_with_review`` / ``blocked_for_safety``.  Exact
     placement, move-authority and semantic-frame closure appear only as audit
     warnings inside the readiness report and never block candidate planning.
+
+    ``concept_cards`` binds Stage 2/3 cards to units (verified/caveated
+    separation, one placement per card).
     """
 
     plan, trace = build_method_section_plan_with_trace(
@@ -811,6 +2037,10 @@ def build_method_section_plan_with_product_readiness(
         audience=audience,
         page_budget=page_budget,
         story_spine=story_spine,
+        propositions=propositions,
+        concept_cards=concept_cards,
+        argument_briefs=argument_briefs,
+        prior_plan=prior_plan,
     )
     readiness = assess_plan_product_readiness(
         plan=plan,
@@ -829,7 +2059,7 @@ def _unresolved_for_obligations(obligation_ids: tuple[str, ...], matrix: dict[st
         if item is None:
             continue
         status = str(item.status)
-        if status not in {"supported_by_repository", "partially_supported_by_repository"}:
+        if status != "supported_by_repository":
             unresolved.append(f"{obligation_id}:{status}")
     return unresolved
 
@@ -872,8 +2102,9 @@ def _moves(
     claims: list[AtomicClaimV3],
     has_equations: bool,
     has_configurations: bool,
-    has_unresolved: bool,
-) -> tuple[str, ...]:
+    unresolved: list[str] | tuple[str, ...] | bool = (),
+    heading: str = "",
+) -> tuple[tuple[str, ...], frozenset[str]]:
     """Derive the move template from the unit's authorized content.
 
     Required moves follow the argument's actual content instead of applying
@@ -881,10 +2112,33 @@ def _moves(
     are required only when the unit's claims carry the corresponding
     operations, and the output move only when the unit describes an output.
     Optional moves are still planned when their content (equations, branches,
-    training vocabulary) is present.
+    training vocabulary) is present.  ``limitations_or_mismatch`` is required
+    only for mismatch/gap statuses, never for ordinary partial support.
+    Motivation/overview headings keep rhetorical moves only.
     """
 
+    if _heading_is_rhetorical_frame(heading):
+        moves = (
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        )
+        return moves, frozenset(moves)
+
+    if not claims and not has_equations:
+        moves = (
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        )
+        return moves, frozenset(moves)
+
     texts = " ".join(claim.canonical_text.lower() for claim in claims)
+    unresolved_rows: tuple[str, ...]
+    if isinstance(unresolved, bool):
+        unresolved_rows = ()
+    else:
+        unresolved_rows = tuple(unresolved)
 
     def has(pattern: str) -> bool:
         return re.search(pattern, texts, re.IGNORECASE) is not None
@@ -903,7 +2157,8 @@ def _moves(
         moves.append("training_objective")
     if has(r"\b(?:returns|emits|outputs|writes back)\b") or has(r"\boutput\b"):
         moves.append("inference_and_output")
-    if has_unresolved:
+    require_limitations = _unresolved_requires_limitation_move(unresolved_rows)
+    if require_limitations:
         moves.append("limitations_or_mismatch")
     moves.append("transition_to_next_section")
     # Every unit keeps the core overview/organization moves required; the
@@ -927,7 +2182,7 @@ def _moves(
         required_moves.add("implementation_realization")
     if has(r"\b(?:returns|emits|outputs|writes back)\b") or has(r"\boutput\b"):
         required_moves.add("inference_and_output")
-    if has_unresolved:
+    if require_limitations:
         required_moves.add("limitations_or_mismatch")
     return tuple(dict.fromkeys(moves)), frozenset(required_moves)
 
@@ -1524,10 +2779,25 @@ def _frame_moves(
     equation_ids: tuple[str, ...],
     configuration_ids: tuple[str, ...],
     unresolved: list[str],
+    heading: str = "",
 ) -> tuple[tuple[str, ...], frozenset[str]]:
     """Move template from the unit's semantic frame roles (not claim regexes)."""
 
+    if _heading_is_rhetorical_frame(heading):
+        moves = (
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        )
+        return moves, frozenset(moves)
     slot_roles = {str(slot.get("role") or "") for slot in frame.get("slots") or ()}
+    if not slot_roles and not equation_ids:
+        moves = (
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        )
+        return moves, frozenset(moves)
     moves: list[str] = [
         "problem_or_local_context", "design_objective", "mechanism_overview",
     ]
@@ -1550,7 +2820,7 @@ def _frame_moves(
     if "output" in slot_roles:
         moves.append("inference_and_output")
         required.add("inference_and_output")
-    if unresolved:
+    if _unresolved_requires_limitation_move(unresolved):
         moves.append("limitations_or_mismatch")
         required.add("limitations_or_mismatch")
     moves.append("transition_to_next_section")
@@ -1618,6 +2888,12 @@ def replan_moves_with_trace(
     agenda: ReferenceMethodAgendaV1 | None = None,
     coverage_by_obligation: dict[str, tuple[str, ...]] | None = None,
     proposal_caller: Any | None = None,
+    story_spine: tuple[AuthorStoryNodeV1, ...] | list[AuthorStoryNodeV1] = (),
+    argument_briefs: Any | None = None,
+    concept_cards: Any | None = None,
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+    facet_policies: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
     """Re-derive the typed semantic graph on the frozen plan's structure.
 
@@ -1669,6 +2945,11 @@ def replan_moves_with_trace(
     unit_source_obligation_ids: dict[str, set[str]] = {}
     unit_anchor_ids: dict[str, dict[str, tuple[str, ...]]] = {}
     unit_unresolved_assignments: dict[str, list[ObligationMoveAssignmentV1]] = {}
+    heading_by_unit = {
+        unit_id: section.heading
+        for section in base_plan.sections
+        for unit_id in section.argument_unit_ids
+    }
     for unit in base_plan.argument_units:
         equation_ids = tuple(
             equation_by_claim[claim_id].equation_id
@@ -1748,7 +3029,12 @@ def replan_moves_with_trace(
         )
         unit_anchor_ids[unit.argument_unit_id] = {
             move: _move_anchor_ids(move, frame, equation_ids, configuration_ids)
-            for move in _moves_from_frame(frame, equation_ids, configuration_ids)
+            for move in _moves_from_frame(
+                frame,
+                equation_ids,
+                configuration_ids,
+                heading=heading_by_unit.get(unit.argument_unit_id, ""),
+            )
         }
 
     assignments, placement_trace = place_obligation_assignments(
@@ -1786,6 +3072,7 @@ def replan_moves_with_trace(
             frame,
             unit_equation_ids.get(unit.argument_unit_id, ()),
             unit_configuration_ids.get(unit.argument_unit_id, ()),
+            heading=heading_by_unit.get(unit.argument_unit_id, ""),
         )
         moves = (*moves, *(
             item.required_move for item in assignments
@@ -1793,7 +3080,9 @@ def replan_moves_with_trace(
             and item.placement_state in {"assigned", "external_pending"}
             and item.required_move
         ))
-        if unit_unresolved_assignments.get(unit.argument_unit_id):
+        if _unresolved_requires_limitation_move(
+            unit_unresolved_assignments.get(unit.argument_unit_id, [])
+        ):
             moves = (*moves, "limitations_or_mismatch")
         unit_moves[unit.argument_unit_id] = tuple(dict.fromkeys(moves))
 
@@ -1913,38 +3202,52 @@ def replan_moves_with_trace(
             for move in unit_moves.get(unit.argument_unit_id, ())
         ))
         move_objects = tuple(
-            SectionArgumentMoveV1(
-                move=move,
-                argument_unit_ids=tuple(
-                    unit.argument_unit_id
-                    for unit in section_units
-                    if move in unit_moves.get(unit.argument_unit_id, ())
-                ),
-                paragraph_budget=0 if move == "transition_to_next_section" else max(
-                    1, min(3, round(sum(
+            _bind_move_anchor(
+                SectionArgumentMoveV1(
+                    move=move,
+                    argument_unit_ids=tuple(
+                        unit.argument_unit_id
+                        for unit in section_units
+                        if move in unit_moves.get(unit.argument_unit_id, ())
+                    ),
+                    paragraph_budget=0 if move == "transition_to_next_section" else max(
+                        1, min(3, round(sum(
+                            unit.information_weight for unit in section_units
+                            if move in unit_moves.get(unit.argument_unit_id, ())
+                        ) / 8)),
+                    ),
+                    information_budget=max(0.25, round(sum(
                         unit.information_weight for unit in section_units
                         if move in unit_moves.get(unit.argument_unit_id, ())
-                    ) / 8)),
+                    ) / max(1, len(section_moves)), 3)),
+                    allowed_authority_lanes=_move_authority_lanes(
+                        move,
+                        all_lanes=all_lanes,
+                    ),
+                    required=_required_move(
+                        move,
+                        section_units,
+                        unit_frames,
+                        unit_equation_ids,
+                        unit_configuration_ids,
+                        unit_unresolved_assignments,
+                        heading=section.heading,
+                    ),
                 ),
-                information_budget=max(0.25, round(sum(
-                    unit.information_weight for unit in section_units
-                    if move in unit_moves.get(unit.argument_unit_id, ())
-                ) / max(1, len(section_moves)), 3)),
-                allowed_authority_lanes=_move_authority_lanes(
-                    move,
-                    all_lanes=all_lanes,
-                ),
-                required=_required_move(
-                    move,
-                    section_units,
-                    unit_frames,
-                    unit_equation_ids,
-                    unit_configuration_ids,
-                    unit_unresolved_assignments,
-                ),
+                section_units=section_units,
             )
             for move in section_moves
         )
+        move_objects = _ensure_unanchored_formula_move(
+            move_objects, section_units=section_units, heading=section.heading,
+        )
+        if section.section_id == ordered_section_ids[-1]:
+            move_objects = tuple(
+                move.model_copy(update={"required": False})
+                if move.move == "transition_to_next_section"
+                else move
+                for move in move_objects
+            )
         rebuilt_sections.append(_rebuild_section(
             section=section,
             section_units=section_units,
@@ -1952,7 +3255,61 @@ def replan_moves_with_trace(
             unit_planning=unit_planning,
             section_dependencies=section_dependencies,
             section_unresolved=section_unresolved,
+            unit_frames=unit_frames,
+            argument_facets=argument_facets,
+            facet_alignments=facet_alignments,
         ))
+    rebuilt_sections = _enrich_section_content_contracts(
+        rebuilt_sections,
+        list(base_plan.argument_units),
+        story_spine=story_spine,
+        concept_cards=concept_cards,
+        argument_briefs=argument_briefs,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        equations=equations,
+        unit_frames=unit_frames,
+    )
+    # A trace-backed replan is an upgrade of the frozen organization, not a
+    # lossy rebuild.  Fail closed if any existing story/brief/facet identity
+    # disappears under the same source inputs.  This catches the historical
+    # empty-projection bug before the Writer receives a degraded plan.
+    before_by_section = {
+        graph.section_id: {
+            "story_node_ids": set(graph.story_node_ids),
+            "primary_brief_ids": set(graph.primary_brief_ids),
+            "supporting_brief_ids": set(graph.supporting_brief_ids),
+            "facet_ids": {
+                facet_id
+                for paragraph in (graph.paragraphs or ())
+                for facet_id in paragraph.required_facet_ids
+            },
+        }
+        for graph in base_plan.sections
+    }
+    identity_regressions: list[str] = []
+    for graph in rebuilt_sections:
+        before = before_by_section.get(graph.section_id, {})
+        after = {
+            "story_node_ids": set(graph.story_node_ids),
+            "primary_brief_ids": set(graph.primary_brief_ids),
+            "supporting_brief_ids": set(graph.supporting_brief_ids),
+            "facet_ids": {
+                facet_id
+                for paragraph in (graph.paragraphs or ())
+                for facet_id in paragraph.required_facet_ids
+            },
+        }
+        for name in before:
+            removed = sorted(before[name] - after[name])
+            if removed:
+                identity_regressions.append(
+                    f"{graph.section_id}:{name}:{','.join(removed)}"
+                )
+    if identity_regressions:
+        raise ValueError(
+            "replan_identity_regression:" + ";".join(identity_regressions)
+        )
     proofs = resolve_move_authority_proofs(
         sections=tuple(rebuilt_sections),
         units=base_plan.argument_units,
@@ -2050,8 +3407,38 @@ def replan_moves_with_trace(
 
 _SUPPORTED_STATUSES = frozenset({
     "supported_by_repository",
-    "partially_supported_by_repository",
 })
+
+# Gap rows that actually need the caveat/mismatch rhetorical move.  Ordinary
+# partial support and author/literature confirmation hang on the owning
+# content move (or the review queue) instead of a generic limitations bucket.
+_LIMITATION_REQUIRED_STATUSES = frozenset({
+    "paper_code_mismatch",
+    "explicit_code_gap",
+    "out_of_scope",
+    "unverified_by_repository",
+})
+
+
+def _unresolved_status(item: Any) -> str:
+    """Status token from an assignment object or ``obligation:status`` string."""
+
+    status = getattr(item, "status", None)
+    if status is not None:
+        return str(status)
+    text = str(item or "")
+    if ":" in text:
+        return text.rsplit(":", 1)[-1]
+    return text
+
+
+def _unresolved_requires_limitation_move(unresolved: Any) -> bool:
+    """True only when a row is a real mismatch/gap, not partial support."""
+
+    return any(
+        _unresolved_status(item) in _LIMITATION_REQUIRED_STATUSES
+        for item in (unresolved or ())
+    )
 
 
 def _required_move(
@@ -2061,9 +3448,16 @@ def _required_move(
     unit_equation_ids: dict[str, tuple[str, ...]],
     unit_configuration_ids: dict[str, tuple[str, ...]],
     unit_unresolved_assignments: dict[str, list[ObligationMoveAssignmentV1]],
+    heading: str = "",
 ) -> bool:
     """Deterministic required-move resolution from exact frame records."""
 
+    if _heading_is_rhetorical_frame(heading):
+        return move in {
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        }
     if move in {"problem_or_local_context", "design_objective", "mechanism_overview", "transition_to_next_section"}:
         return True
     has_transformation = any(
@@ -2088,9 +3482,6 @@ def _required_move(
     has_configurations = any(
         bool(unit_configuration_ids.get(unit.argument_unit_id)) for unit in section_units
     )
-    has_unresolved = any(
-        bool(unit_unresolved_assignments.get(unit.argument_unit_id)) for unit in section_units
-    )
     if move == "algorithm_or_data_flow":
         return has_transformation or has_equations
     if move == "implementation_realization":
@@ -2104,7 +3495,12 @@ def _required_move(
     if move == "training_objective":
         return False
     if move == "limitations_or_mismatch":
-        return has_unresolved
+        return any(
+            _unresolved_requires_limitation_move(
+                unit_unresolved_assignments.get(unit.argument_unit_id, [])
+            )
+            for unit in section_units
+        )
     return False
 
 
@@ -2116,6 +3512,9 @@ def _rebuild_section(
     unit_planning: dict[str, dict[str, str]],
     section_dependencies: dict[str, list[str]],
     section_unresolved: tuple[ObligationMoveAssignmentV1, ...],
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
 ) -> SectionArgumentGraphV1:
     """Apply reader-facing planning and move objects to one section graph."""
 
@@ -2150,6 +3549,15 @@ def _rebuild_section(
     dependencies = tuple(dict.fromkeys(
         section_dependencies.get(section.section_id, [])
     ))
+    paragraphs = _build_section_paragraph_plans(
+        section_id=section.section_id,
+        section_units=section_units,
+        move_objects=move_objects,
+        formula_obligation_ids=tuple(section.formula_obligation_ids),
+        unit_frames=unit_frames,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+    )
     return section.model_copy(update={
         "heading": heading,
         "reader_question": reader_question,
@@ -2158,16 +3566,283 @@ def _rebuild_section(
         "unresolved_inputs": tuple(
             f"{item.obligation_id}:{item.status}" for item in section_unresolved
         ),
+        "paragraphs": paragraphs,
     })
+
+
+def _build_section_paragraph_plans(
+    *,
+    section_id: str,
+    section_units: list[MethodArgumentUnitV1] | tuple[MethodArgumentUnitV1, ...],
+    move_objects: tuple[SectionArgumentMoveV1, ...],
+    formula_obligation_ids: tuple[str, ...] = (),
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+    facet_alignments: tuple[Any, ...] | list[Any] = (),
+) -> tuple[SectionParagraphPlanV1, ...]:
+    """Build deterministic paragraph contracts from ordered semantic slots.
+
+    The old graph exposed only a per-move ``paragraph_budget``.  That number
+    could not tell the Writer where a condition or output belonged, so a
+    long mechanism frequently became one paragraph wall.  This helper keeps
+    the same move graph but emits small ordered clusters; it is purely
+    organizational and does not create evidence.
+    """
+
+    plans: list[SectionParagraphPlanV1] = []
+    paragraph_index = 0
+    for unit in section_units:
+        # During trace-backed replanning, frames are derived from the current
+        # evidence but are attached to rebuilt units only after sections have
+        # been rebuilt.  Use that authoritative map here so paragraph
+        # contracts retain their semantic slots, edges, and formula consumers
+        # instead of collapsing every unit to an unbound overview paragraph.
+        frame = (
+            unit_frames.get(unit.argument_unit_id)
+            if unit_frames is not None
+            else unit.semantic_frame
+        )
+        ordered_slots = list(
+            frame.ordered_slot_ids if frame is not None else ()
+        )
+        slot_by_id = {
+            slot.slot_id: slot
+            for slot in (frame.slots if frame is not None else ())
+        }
+        if not ordered_slots:
+            ordered_chunks = [()]
+        elif len(ordered_slots) <= 8:
+            ordered_chunks = [tuple(ordered_slots)]
+        else:
+            # Keep a bounded semantic cluster together.  Three-slot chunks
+            # over-split dense implementation units (e.g. one retrieval
+            # stage with dozens of code facts) into a Writer-sized wall of
+            # paragraphs.  Eight slots preserves the order and condition /
+            # output witnesses while keeping a section renderable.
+            first = tuple(ordered_slots[:8])
+            rest = ordered_slots[8:]
+            ordered_chunks = [first]
+            ordered_chunks.extend(tuple(rest[index:index + 8]) for index in range(0, len(rest), 8))
+        unit_moves = [
+            move for move in move_objects
+            if unit.argument_unit_id in (move.argument_unit_ids or ())
+            and move.move != "transition_to_next_section"
+        ]
+        for chunk_index, chunk in enumerate(ordered_chunks, start=1):
+            paragraph_index += 1
+            chunk_roles = {slot_by_id[item].role for item in chunk if item in slot_by_id}
+            if chunk_index == 1 and "input" in chunk_roles:
+                role = "construction"
+            elif "output" in chunk_roles:
+                role = "output"
+            elif any(
+                move.move in {"interface", "inference_and_output"}
+                for move in unit_moves
+            ):
+                role = "interface"
+            else:
+                role = "step_sequence"
+            if unit.equation_ids and chunk_index == len(ordered_chunks):
+                role = "formula"
+            move_names = {move.move for move in unit_moves}
+            if chunk_index == 1 and not chunk_roles:
+                role = "overview"
+            required_edges = tuple(
+                edge.relation_id
+                for edge in (frame.edges if frame is not None else ())
+                if set(edge.source_slot_ids).intersection(chunk)
+                or set(edge.target_slot_ids).intersection(chunk)
+            )
+            plans.append(SectionParagraphPlanV1(
+                paragraph_id=f"paragraph:{section_id}:{paragraph_index}",
+                paragraph_role=role,  # type: ignore[arg-type]
+                argument_unit_ids=(unit.argument_unit_id,),
+                ordered_semantic_slot_ids=tuple(chunk),
+                required_edge_ids=required_edges,
+                formula_obligation_ids=(
+                    tuple(formula_obligation_ids)
+                    if chunk_index == len(ordered_chunks)
+                    and unit.equation_ids
+                    else ()
+                ),
+                expected_sentence_range=(1, max(2, min(5, len(chunk) + 1))),
+                transition_from=(
+                    plans[-1].paragraph_id if plans else ""
+                ),
+                transition_to="",
+            ))
+    # Bind required author facets to the smallest paragraph that carries the
+    # corresponding evidence/semantic role.  This is deliberately computed
+    # from exact field bindings and frame slots; a facet id in Writer output
+    # is not itself evidence of coverage.
+    facet_by_id = {
+        str(facet.facet_id): facet
+        for facet in (argument_facets or ())
+        if str(getattr(facet, "facet_id", "") or "").strip()
+    }
+    alignment_by_facet_id = {
+        str(alignment.facet_id): alignment
+        for alignment in (facet_alignments or ())
+        if str(getattr(alignment, "facet_id", "") or "").strip()
+    }
+    for unit in section_units:
+        paragraph_indexes = [
+            index for index, paragraph in enumerate(plans)
+            if unit.argument_unit_id in (paragraph.argument_unit_ids or ())
+        ]
+        if not paragraph_indexes:
+            continue
+        brief_ids = {
+            str(value).strip()
+            for value in (unit.brief_order or unit.brief_ids or ())
+            if str(value).strip()
+        }
+        unit_facets = [
+            facet for facet in facet_by_id.values()
+            if getattr(facet, "required", False)
+            and (
+                not str(getattr(facet, "brief_id", "") or "").strip()
+                or str(getattr(facet, "brief_id", "") or "").strip() in brief_ids
+            )
+        ]
+        frame = (
+            unit_frames.get(unit.argument_unit_id)
+            if unit_frames is not None
+            else unit.semantic_frame
+        )
+        slot_by_id = {
+            slot.slot_id: slot for slot in (frame.slots if frame is not None else ())
+        }
+        for facet in unit_facets:
+            facet_id = str(facet.facet_id)
+            if any(facet_id in plans[index].required_facet_ids for index in paragraph_indexes):
+                continue
+            alignment = alignment_by_facet_id.get(facet_id)
+            bound_fact_ids = {
+                str(value)
+                for value in (
+                    getattr(alignment, "bound_fact_ids", ()) or ()
+                )
+                if str(value).strip()
+            }
+            bound_equation_ids = {
+                str(value)
+                for value in (
+                    getattr(alignment, "bound_equation_ids", ()) or ()
+                )
+                if str(value).strip()
+            }
+            for binding in (getattr(alignment, "field_bindings", ()) or ()):
+                bound_fact_ids.update(
+                    str(value) for value in (getattr(binding, "bound_fact_ids", ()) or ())
+                    if str(value).strip()
+                )
+                bound_equation_ids.update(
+                    str(value) for value in (getattr(binding, "bound_equation_ids", ()) or ())
+                    if str(value).strip()
+                )
+            for excerpt in (getattr(alignment, "exact_excerpts", ()) or ()):
+                bound_fact_ids.update(
+                    str(value) for value in (getattr(excerpt, "fact_ids", ()) or ())
+                    if str(value).strip()
+                )
+                bound_equation_ids.update(
+                    str(value) for value in (getattr(excerpt, "equation_ids", ()) or ())
+                    if str(value).strip()
+                )
+            fields = {
+                str(key).casefold()
+                for key in (getattr(facet, "semantic_fields", {}) or {})
+            }
+            kind = str(getattr(facet, "facet_kind", "") or "").casefold()
+            scores: dict[int, int] = {}
+            for index in paragraph_indexes:
+                paragraph = plans[index]
+                slot_ids = set(paragraph.ordered_semantic_slot_ids or ())
+                slots = [slot_by_id[slot_id] for slot_id in slot_ids if slot_id in slot_by_id]
+                slot_facts = {
+                    str(fact_id)
+                    for slot in slots
+                    for fact_id in (slot.fact_ids or ())
+                }
+                slot_roles = {str(slot.role).casefold() for slot in slots}
+                role = str(paragraph.paragraph_role).casefold()
+                score = 0
+                if bound_fact_ids.intersection(slot_facts):
+                    score += 100
+                if bound_equation_ids.intersection(
+                    str(value) for value in unit.equation_ids
+                ) and role == "formula":
+                    score += 120
+                if kind == "formula" or "formula_goal" in fields:
+                    score += 80 if role == "formula" else 0
+                if fields.intersection({"conditions", "condition"}):
+                    score += 35 if "condition" in slot_roles else 0
+                if fields.intersection({"outputs", "output", "effects", "effect"}):
+                    score += 35 if "output" in slot_roles or role == "output" else 0
+                if fields.intersection({"inputs", "input"}):
+                    score += 25 if "input" in slot_roles else 0
+                if fields.intersection({"interface"}):
+                    score += 25 if role == "interface" else 0
+                if fields.intersection({"operation", "mechanism", "subject"}):
+                    score += 10 if slot_roles.intersection({"transformation", "input"}) else 0
+                scores[index] = score
+            max_score = max(scores.values(), default=0)
+            best = [index for index in paragraph_indexes if scores.get(index, 0) == max_score]
+            # Author-only facets are kept on the unit's overview paragraph;
+            # evidence-backed facets use the earliest tied paragraph to
+            # preserve ordered procedure narration.
+            target_index = best[0] if best else paragraph_indexes[0]
+            if max_score == 0:
+                overview = [
+                    index for index in paragraph_indexes
+                    if plans[index].paragraph_role == "overview"
+                ]
+                target_index = overview[0] if overview else paragraph_indexes[0]
+            target = plans[target_index]
+            plans[target_index] = target.model_copy(update={
+                "required_facet_ids": tuple(dict.fromkeys([
+                    *target.required_facet_ids,
+                    facet_id,
+                ])),
+            })
+    # A formula consumer is explicit and follows the mechanism paragraph. If
+    # an unbound frame leaves the final chunk without a consumer, add exactly
+    # one at the end of that unit.  Do not walk paragraph-by-paragraph: the
+    # old loop propagated the same formula obligation to every later chunk.
+    for unit in section_units:
+        if not unit.equation_ids:
+            continue
+        unit_indexes = [
+            index for index, paragraph in enumerate(plans)
+            if paragraph.argument_unit_ids == (unit.argument_unit_id,)
+        ]
+        if not unit_indexes or any(
+            plans[index].formula_obligation_ids for index in unit_indexes
+        ):
+            continue
+        index = unit_indexes[-1]
+        plans[index] = plans[index].model_copy(update={
+            "paragraph_role": "formula",
+            "formula_obligation_ids": tuple(formula_obligation_ids),
+        })
+    return tuple(plans)
 
 
 def _moves_from_frame(
     frame: SemanticArgumentFrameV1 | None,
     equation_ids: tuple[str, ...],
     configuration_ids: tuple[str, ...],
+    heading: str = "",
 ) -> tuple[str, ...]:
     """Move template from the typed semantic frame roles (not claim regexes)."""
 
+    if _heading_is_rhetorical_frame(heading):
+        return (
+            "problem_or_local_context",
+            "design_objective",
+            "transition_to_next_section",
+        )
     if frame is None:
         return ()
     slot_roles = {item.role for item in frame.slots}
@@ -2505,47 +4180,60 @@ def _frame_term_set(frame: SemanticArgumentFrameV1 | None) -> set[str]:
     return {item for item in terms if item}
 
 
+def _content_move_from_role(role: str) -> str:
+    """Owning content move for a completeness row that is not a mismatch gap."""
+
+    lowered = str(role or "").lower()
+    if any(token in lowered for token in ("equation", "formula", "derivation", "notation")):
+        return "equation_or_derivation"
+    if any(token in lowered for token in ("config", "parameter", "branch")):
+        return "configuration_and_branches"
+    if any(token in lowered for token in ("output", "return", "inference", "prediction")):
+        return "inference_and_output"
+    if "training" in lowered:
+        return "training_objective"
+    return "algorithm_or_data_flow"
+
+
 def _derive_move_and_lane(item: Any) -> tuple[str, str]:
     """Derive the required move and authority lane from the exact row.
 
-    Gap statuses (unverified, explicit_code_gap, author/external/formulation
-    required, mismatch, out of scope) resolve to ``limitations_or_mismatch``
-    with the lane from the row's contract: an ``explicit_code_gap`` is
-    accepted by the author unless the next action authorizes a widened
-    repository search; an ``unverified`` row with a repository-research next
-    action stays executable_hard with exact candidates.  Supported rows keep
-    their content move anchored by the bound claims/facts.
+    Mismatch and unverified-search rows resolve to ``limitations_or_mismatch``.
+    Partial support, author confirmation, and external evidence hang on the
+    owning content move so Writer can caveat the mechanism instead of opening
+    a generic executable_hard limitations callback.  Formalization stays on
+    ``equation_or_derivation``.
     """
 
     status = str(item.status)
-    role = str(getattr(item, "role", "") or "").lower()
+    role = str(getattr(item, "role", "") or "")
     next_action = str(getattr(item, "next_action", "") or "").lower()
-    if status in _GAP_STATUSES:
-        if status == "explicit_code_gap":
-            if "widen" in next_action or "search" in next_action:
-                return "limitations_or_mismatch", "executable_hard"
-            return "limitations_or_mismatch", "author_attested"
-        if status == "author_confirmation_required":
-            return "limitations_or_mismatch", "author_attested"
-        if status == "external_evidence_required":
-            return "limitations_or_mismatch", "external_literature"
-        if status == "formalization_required":
-            return "limitations_or_mismatch", "formal_derivation"
+    if status == "formalization_required":
+        return "equation_or_derivation", "formal_derivation"
+    if status == "explicit_code_gap":
+        if "widen" in next_action or "search" in next_action:
+            return "limitations_or_mismatch", "executable_hard"
+        return "limitations_or_mismatch", "author_attested"
+    if status in {"paper_code_mismatch", "out_of_scope"}:
         return "limitations_or_mismatch", str(item.authority_lane) or "executable_hard"
-    if any(token in role for token in ("equation", "formula", "derivation", "notation")):
-        move = "equation_or_derivation"
-    elif any(token in role for token in ("config", "parameter", "branch")):
-        move = "configuration_and_branches"
-    elif any(token in role for token in ("output", "return", "inference", "prediction")):
-        move = "inference_and_output"
-    elif "training" in role:
-        move = "training_objective"
-    else:
-        move = "algorithm_or_data_flow"
-    return move, str(item.authority_lane) or "executable_hard"
+    if status == "unverified_by_repository":
+        lane = str(item.authority_lane) or "executable_hard"
+        if "widen" in next_action or "search" in next_action or "research" in next_action:
+            return "limitations_or_mismatch", "executable_hard"
+        return "limitations_or_mismatch", lane
+    if status == "partially_supported_by_repository":
+        return _content_move_from_role(role), str(item.authority_lane) or "executable_hard"
+    if status == "author_confirmation_required":
+        return _content_move_from_role(role), "author_attested"
+    if status == "external_evidence_required":
+        return _content_move_from_role(role), "external_literature"
+    if status in _GAP_STATUSES:
+        return "limitations_or_mismatch", str(item.authority_lane) or "executable_hard"
+    return _content_move_from_role(role), str(item.authority_lane) or "executable_hard"
 
 
 _GAP_STATUSES = frozenset({
+    "partially_supported_by_repository",
     "unverified_by_repository",
     "explicit_code_gap",
     "author_confirmation_required",
@@ -2627,6 +4315,7 @@ def resolve_move_authority_proofs(
                     unit_frames.get(unit.argument_unit_id),
                     unit_equation_ids.get(unit.argument_unit_id, ()),
                     unit_configuration_ids.get(unit.argument_unit_id, ()),
+                    heading=section.heading,
                 )
             ]
             move_unit_ids = tuple(unit.argument_unit_id for unit in move_units)
@@ -2664,6 +4353,21 @@ def resolve_move_authority_proofs(
                     if lane in {"author_attested", "empirical_artifact", "external_literature", "expository_bridge"}
                     else "open"
                 )
+            elif getattr(move, "unanchored", False):
+                owner = str(getattr(move, "unanchored_owner", "") or "")
+                if owner == "Formalizer" or move.move == "equation_or_derivation":
+                    lane = "formal_derivation"
+                elif owner == "Research" or move.move in {
+                    "algorithm_or_data_flow", "mechanism_overview",
+                }:
+                    lane = "executable_hard"
+                else:
+                    lane = "author_attested"
+                state = (
+                    "external_pending"
+                    if lane in {"author_attested", "empirical_artifact", "external_literature", "expository_bridge"}
+                    else "open"
+                )
             elif move.move in _ORGANIZATION_MOVES or _expository_move(move.move):
                 state = "bridge"
                 lane = "expository_bridge"
@@ -2676,17 +4380,31 @@ def resolve_move_authority_proofs(
                     else "open"
                 )
             else:
-                state = "anchored"
+                state = "open"
+            proof_unanchored = bool(getattr(move, "unanchored", False))
+            if state == "open" and not anchor_ids and not unresolved_ids:
+                proof_unanchored = True
+            if move.move == "limitations_or_mismatch" and state in {
+                "open", "external_pending",
+            }:
+                proof_unanchored = True
+            proof_unresolved = (
+                ()
+                if state in {"anchored", "bridge"}
+                else unresolved_ids
+            )
             proofs.append(MoveAuthorityProofV1(
                 section_id=section.section_id,
                 argument_unit_ids=move_unit_ids,
                 move=move.move,
                 required=bool(move.required),
                 anchor_ids=anchor_ids,
-                unresolved_obligation_ids=unresolved_ids,
+                unresolved_obligation_ids=proof_unresolved,
                 required_authority_lane=lane,
                 owner_route=_proof_owner_route(lane),
                 state=state,
+                unanchored=proof_unanchored,
+                unanchored_owner=str(getattr(move, "unanchored_owner", "") or ""),
             ))
     return tuple(proofs)
 

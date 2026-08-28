@@ -272,7 +272,7 @@ class PythonBehaviorAdapter:
         except SyntaxError:
             return []
         visitor = _BehaviorNodeVisitor(symbol=symbol)
-        visitor.visit(tree)
+        _visit_exact_symbol_scope(visitor, tree, symbol)
         return visitor.nodes
 
     # ------------------------------------------------------------------
@@ -304,7 +304,7 @@ class PythonBehaviorAdapter:
         except SyntaxError:
             return []
         visitor = _BehaviorRelationVisitor(symbol=symbol, nodes=nodes)
-        visitor.visit(tree)
+        _visit_exact_symbol_scope(visitor, tree, symbol)
         visitor.add_configuration_relations()
         return visitor.relations
 
@@ -688,8 +688,39 @@ class _BehaviorNodeVisitor(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign) -> None:
         # RHS first (the value is computed before the assignment happens).
+        first_rhs_node = len(self.nodes)
         self.visit(node.value)
         rhs_expr = _expr_to_str(node.value)
+        assignment_targets = tuple(
+            target
+            for target in (_target_to_str(item) for item in node.targets)
+            if target
+        )
+        if assignment_targets:
+            produced = assignment_targets[0]
+            value_span = self._span_id(node.value)
+            value_predicates = {
+                "CALL", "CONSTRUCT", "TRANSFORM", "CONCAT", "STACK",
+                "NORMALIZE", "REDUCE", "AGGREGATE", "COMPUTE", "TOPK",
+                "SORT", "MASK", "FILTER", "RESHAPE", "PROJECT", "ATTEND",
+                "SAMPLE", "PROPAGATE",
+            }
+            # AST visitors emit child operations before their parent. Attach
+            # the assignment target only to the outermost value-producing
+            # operation, not every nested BinOp on the same source line.
+            # Otherwise ``rgb = C0 * sh + 0.5`` produced both an inner
+            # ``C0 * sh -> rgb`` fact and the actual full expression fact.
+            for index in range(len(self.nodes) - 1, first_rhs_node - 1, -1):
+                operation = self.nodes[index]
+                if (
+                    operation.source_span_id == value_span
+                    and operation.predicate in value_predicates
+                    and not operation.result
+                ):
+                    self.nodes[index] = operation.model_copy(update={
+                        "result": produced,
+                    })
+                    break
         for target in node.targets:
             target_str = _target_to_str(target)
             if (
@@ -1239,6 +1270,52 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _visit_exact_symbol_scope(
+    visitor: ast.NodeVisitor,
+    tree: ast.Module,
+    symbol: SymbolRefV1,
+) -> None:
+    """Visit executable statements owned by exactly ``symbol``.
+
+    A sliced class parses as a module containing the class and all of its
+    methods. Calling ``visitor.visit(tree)`` therefore attributed every
+    method operation to the class symbol. A broad class read could then make
+    an unrelated method's CONCAT or loss appear to answer the active research
+    question. Functions/methods still visit their own complete body; classes
+    and modules visit only statements defined directly in that scope.
+    """
+
+    definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+    if symbol.kind in {"function", "method"}:
+        target = next(
+            (
+                node
+                for node in tree.body
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ),
+            None,
+        )
+        if target is not None:
+            visitor.visit(target)
+        return
+    if symbol.kind == "class":
+        target_class = next(
+            (node for node in tree.body if isinstance(node, ast.ClassDef)),
+            None,
+        )
+        if target_class is None:
+            return
+        for decorator in target_class.decorator_list:
+            visitor.visit(decorator)
+        for statement in target_class.body:
+            if not isinstance(statement, definitions):
+                visitor.visit(statement)
+        return
+    for statement in tree.body:
+        if not isinstance(statement, definitions):
+            visitor.visit(statement)
 
 
 def _dedent(text: str) -> str:

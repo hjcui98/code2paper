@@ -755,3 +755,196 @@ def test_writer_unresolved_points_become_review_items(tmp_path: Path) -> None:
     assert unresolved[0]["confirmation_question"].strip()
     assert unresolved[0]["blocks_verified"] is True
     assert unresolved[0]["blocks_candidate"] is False
+
+
+def test_scaffolding_unit_with_factual_payload_is_excluded_from_verified() -> None:
+    """Fail-closed backstop: a heading/discourse unit that carries factual
+    payload (a fused ``## HeadingBody`` paragraph that escaped normalization)
+    must never ride into the verified document as structural scaffolding."""
+    text = (
+        "## Transformation and outputScale values undergo sorting, and "
+        "volume computation follows product reduction across the scale "
+        "dimensions. This descriptor construction relies on author-intended "
+        "descriptor composition and normalization; repository implementation "
+        "not verified."
+    )
+    units = [
+        _unit(
+            "U1",
+            text,
+            kind="heading",
+            factual=False,
+            start=0,
+            end=len(text),
+        ),
+    ]
+    claims = FinalTextClaims(
+        input_text_digest=_digest(text),
+        units=units,
+        atomic_claims=[],
+    )
+    report = TextEvidenceValidationReport(
+        status="failed",
+        input_text_digest=_digest(text),
+        projection_digest=_digest("projection"),
+        verdicts=[],
+    )
+    verified, split = build_repository_verified_text(
+        final_text=text,
+        final_claims=claims,
+        validation_report=report,
+        projection=_projection(),
+    )
+    assert "author-intended" not in verified
+    assert "not verified" not in verified
+    assert split["excluded_units"]
+    assert split["excluded_units"][0]["reason"] == (
+        "scaffolding_unit_with_factual_payload"
+    )
+
+
+def test_clean_heading_still_kept_as_scaffolding() -> None:
+    """A genuinely claim-free heading stays in the verified document."""
+    text = "## Encoder\n\nThe encoder reads the configured input."
+    units = [
+        _unit("U1", "## Encoder", kind="heading", factual=False, start=0, end=12),
+        _unit("U2", "The encoder reads the configured input.", start=14, end=len(text)),
+    ]
+    claims = FinalTextClaims(
+        input_text_digest=_digest(text),
+        units=units,
+        atomic_claims=[
+            FinalAtomicClaim(
+                atomic_claim_id="FAC1",
+                unit_id="U2",
+                text="The encoder reads the configured input.",
+                normalized_text="encoder reads configured input",
+                line_start=1,
+                line_end=1,
+                char_start=14,
+                char_end=len(text),
+                candidate_projection_claim_ids=["claim:1"],
+                claim_digest=_digest("fac1"),
+            ),
+        ],
+    )
+    report = TextEvidenceValidationReport(
+        status="passed",
+        input_text_digest=_digest(text),
+        projection_digest=_digest("projection"),
+        verdicts=[
+            TextClaimEvidenceVerdict(
+                atomic_claim_id="FAC1",
+                status="supported",
+                matched_projection_claim_ids=["claim:1"],
+                direct_evidence_ids=["span:encoder.py:1:2"],
+            ),
+        ],
+    )
+    verified, _split = build_repository_verified_text(
+        final_text=text,
+        final_claims=claims,
+        validation_report=report,
+        projection=_projection(),
+    )
+    assert verified.startswith("## Encoder")
+    assert "reads the configured input" in verified
+
+
+def test_expected_plan_heading_with_number_kept_as_scaffolding() -> None:
+    """A legitimately long plan heading (e.g. MA-S2's sentence heading with a
+    dimensionality number) stays in verified when it is the Architect's own
+    heading; the factual-payload backstop applies only to non-plan headings."""
+    heading = (
+        "From raw Gaussian attributes, extract a compact 15-dimensional "
+        "per-primitive feature descriptor and normalize it before"
+    )
+    text = (
+        "## " + heading + "\n\n"
+        "Raw Gaussian attributes undergo descriptor extraction."
+    )
+    units = [
+        FinalTextUnit(
+            unit_id="U1",
+            kind="heading",
+            text=heading,
+            line_start=1,
+            line_end=1,
+            char_start=0,
+            char_end=len(heading),
+            factual=False,
+            high_risk_markers=["number"],
+            span_digest=_digest(heading),
+        ),
+        _unit(
+            "U2",
+            "Raw Gaussian attributes undergo descriptor extraction.",
+            start=len(heading) + 3,
+            end=len(text),
+        ),
+    ]
+    claims = FinalTextClaims(
+        input_text_digest=_digest(text),
+        units=units,
+        atomic_claims=[
+            FinalAtomicClaim(
+                atomic_claim_id="FAC1",
+                unit_id="U2",
+                text="Raw Gaussian attributes undergo descriptor extraction.",
+                normalized_text="raw gaussian attributes undergo descriptor extraction",
+                line_start=1,
+                line_end=1,
+                char_start=len(heading) + 3,
+                char_end=len(text),
+                candidate_projection_claim_ids=["claim:1"],
+                claim_digest=_digest("fac1"),
+            ),
+        ],
+    )
+    report = TextEvidenceValidationReport(
+        status="passed",
+        input_text_digest=_digest(text),
+        projection_digest=_digest("projection"),
+        verdicts=[
+            TextClaimEvidenceVerdict(
+                atomic_claim_id="FAC1",
+                status="supported",
+                matched_projection_claim_ids=["claim:1"],
+                direct_evidence_ids=["span:gaussian.py:1:2"],
+            ),
+        ],
+    )
+    verified, split = build_repository_verified_text(
+        final_text=text,
+        final_claims=claims,
+        validation_report=report,
+        projection=_projection(),
+        expected_headings={heading},
+    )
+    assert "From raw Gaussian attributes" in verified
+    assert split["excluded_units"] == []
+
+    # Without the expected heading, the same unit is excluded (backstop).
+    verified2, split2 = build_repository_verified_text(
+        final_text=text,
+        final_claims=claims,
+        validation_report=report,
+        projection=_projection(),
+    )
+    assert "From raw Gaussian attributes" not in verified2
+    assert split2["excluded_units"]
+    assert split2["excluded_units"][0]["reason"] == (
+        "scaffolding_unit_with_factual_payload"
+    )
+
+
+def test_heading_only_verified_sections_are_dropped() -> None:
+    from code2paper.agentic.text_evidence_validator import (
+        _drop_heading_only_verified_sections,
+    )
+
+    text = "## Encoder\n\n\n## Decoder\n\nThe decoder emits tokens."
+    kept = _drop_heading_only_verified_sections(text)
+    assert "## Encoder" not in kept
+    assert kept.startswith("## Decoder")
+    assert "The decoder emits tokens." in kept

@@ -196,7 +196,7 @@ class TestExpressionFromOperations:
         assert len(equations.equations) == 1
         equation = equations.equations[0]
         assert equation.expression == "x + y"
-        assert equation.operation_descriptors == ["add"]
+        assert equation.operation_descriptors == ["add", "computes_formula"]
         assert equation.exact_source_digests == ["sha256:exact"]
 
     def test_no_equation_licensing_predicate_rejected(self) -> None:

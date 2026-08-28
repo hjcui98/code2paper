@@ -509,23 +509,62 @@ def _reconcile_publication_writer_result_with_quality(
     status = result.status
     blocked_reason = result.blocked_reason
     failures = list(result.binding_failures)
+    candidate_generated = bool(result.candidate_available) or result.candidate_generation_status == "generated"
+    # Q0: derive the independent candidate/verified validation states from the
+    # persisted final reverse-gate artifact when the runner knows it.
+    validation_status = ""
+    validation_value = state.artifacts.get("text_evidence_validation", "")
+    if validation_value and Path(validation_value).is_file():
+        try:
+            validation_status = str(json.loads(Path(validation_value).read_text(encoding="utf-8")).get("status") or "")
+        except (OSError, json.JSONDecodeError):
+            validation_status = ""
+    candidate_validation_status = (
+        "not_run" if not validation_status else
+        "passed" if validation_status == "passed" else "warnings"
+    )
+    verified_validation_status = (
+        "not_run" if not validation_status else
+        "passed" if validation_status == "passed" else "incomplete"
+    )
+    publication_ready = bool(
+        quality.status == "publication_ready" and quality.final_integrity_gate_passed
+    )
     if quality.status == "blocked":
-        status = "blocked"
-        blocked_reason = "publication_final_reverse_validation_failed"
-        if "publication_final_reverse_validation_failed" not in failures:
-            failures.append("publication_final_reverse_validation_failed")
+        # Q0: a blocked quality gate is a warning/quality label; it never
+        # flips a generated candidate run to blocked.  Only a true generation
+        # failure (no durable candidate) keeps the run blocked.
+        if not candidate_generated:
+            status = "blocked"
+            if not blocked_reason:
+                blocked_reason = "publication_final_reverse_validation_failed"
+            if "publication_final_reverse_validation_failed" not in failures:
+                failures.append("publication_final_reverse_validation_failed")
+        elif status == "success":
+            # A blocked quality gate with a durable candidate is a warning
+            # run: demote success, never erase the candidate.
+            status = "incomplete"
     elif quality.status == "publication_ready":
-        status = "success"
+        status = "success" if candidate_generated else status
         blocked_reason = ""
     elif status == "success":
         status = "incomplete"
-    if status == result.status and blocked_reason == result.blocked_reason and tuple(failures) == result.binding_failures:
+    if (
+        status == result.status
+        and blocked_reason == result.blocked_reason
+        and tuple(failures) == result.binding_failures
+        and publication_ready == result.publication_ready
+    ):
         return
     result_payload = result.model_dump(mode="json")
     result_payload.update({
         "status": status,
         "blocked_reason": blocked_reason,
         "binding_failures": failures,
+        "publication_ready": publication_ready,
+        "candidate_validation_status": candidate_validation_status,
+        "verified_validation_status": verified_validation_status,
+        "candidate_warnings_by_severity": dict(quality.candidate_warnings_by_severity or {}),
         "content_digest": "",
     })
     updated = PublicationWriterRunResultV1.model_validate(result_payload)

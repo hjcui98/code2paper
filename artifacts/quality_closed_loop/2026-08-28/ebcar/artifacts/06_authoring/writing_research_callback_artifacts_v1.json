@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "req-MA-S4-01",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "What is the exact InfoNCE loss expression used to train EBCAR, including the temperature scaling and the set of negative passage embeddings?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "InfoNCE",
+        "equation",
+        "formula"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section presents the InfoNCE loss as the intended training objective; without a repository equation the reader cannot verify the exact form.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "InfoNCE contrastive loss formula",
+      "missing_parts": [
+        "repository equation for the InfoNCE formula"
+      ],
+      "evidence_refs_used": [
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-STAGE-04-c50e0bef",
+        "brief:story:O-COMPONENT-09-6a8cfd6c"
+      ],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "target_concept_keys": [
+        "InfoNCE contrastive loss formula"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-STAGE-04-c50e0bef",
+        "brief:story:O-COMPONENT-09-6a8cfd6c"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:78c1bd26a1d35283f66dbf54ebb1d845b1857e22f7481390b9bef1a3e71a1843"
+    },
+    {
+      "request_id": "req-MA-S4-02",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "How are per-batch InfoNCE losses averaged over batches to produce the epoch-level train_loss and val_loss, and over which dataset splits is each computed?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "explicit",
+        "averaging",
+        "epoch-level",
+        "formula",
+        "code",
+        "trace",
+        "loss"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section states that per-batch losses are averaged to yield epoch-level metrics; the reader needs the exact averaging procedure and split definitions.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "epoch-level train_loss and val_loss averaging",
+      "missing_parts": [
+        "explicit averaging formula or code trace for epoch-level loss"
+      ],
+      "evidence_refs_used": [
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-COMPONENT-12-370bd5b2"
+      ],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-1dd970df",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-COMPONENT-09-6a8cfd6c",
+        "story:O-COMPONENT-10-dac6250f",
+        "story:O-COMPONENT-12-370bd5b2"
+      ],
+      "target_concept_keys": [
+        "epoch-level train_loss and val_loss averaging"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-COMPONENT-12-370bd5b2"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:307a410748f402b0aac422cfc7e6072fef809b774590160d54bce9be49b40e37"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:520abdfb5a0c98e40f16879f9a3d79d3f6281582e2cac1b371fa91248979af7c"
+}

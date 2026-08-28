@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:899397c52df3585d7a67d73fa30eefb17484b646493e9110df3438edfcab1151",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Embedding‑based reranking formulation and overall framework.",
+    "section_markdown": "## Embedding‑based reranking formulation and overall framework.\n\nThis section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-54911271"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "candidate_symbols_or_terms": [
+          "embedding-based reranking formulation",
+          "overall framework"
+        ],
+        "current_known_facts": [
+          "Section MA-S2 is titled 'Embedding‑based reranking formulation and overall framework.'",
+          "No technical propositions, concepts, formulas, or dataflow relations are currently bound to this section."
+        ],
+        "evidence_refs_used": [],
+        "exact_question": "What are the specific embedding-based reranking formulation components and overall framework elements that this section should describe?",
+        "missing_parts": [
+          "Specific formulation components (e.g., embedding model, similarity function, ranking objective)",
+          "Overall framework architecture or pipeline description",
+          "Any mathematical expressions governing the reranking step"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "request:MA-S2:unit:research",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-54911271"
+        ],
+        "target_clause_ids": [],
+        "why_needed_for_reader": "The reader question 'How does this setup realize Embedding‑based reranking formulation and overall framework?' cannot be answered without the specific formulation components and framework elements that the section is intended to explain."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "This section formulates the embedding‑based reranking objective and situates it within the overall framework, defining how candidate representations are scored and reordered to produce a final ranking.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:f8a93379ba77345d50e525a753b7aedb605f88691a12eed0acd9b07a3fef6c9c",
+  "content_digest": "sha256:2019ad8a7f123056d9d4c706b0a23fa060d495d1469cec4926861c157873bd79"
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:57a317222f22f119d6bb1685c0f3b236b3996606f0235e84913402dd2a9f1ff9",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+    "section_markdown": "## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nThe LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices. Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-1977b399"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "evidence_refs_used": [],
+        "exact_question": "Does the paper text use the term 'Tri-Graph' as a defined label for the three-node-type graph, and if so, in which section or figure does it appear?",
+        "missing_parts": [
+          "repository confirmation that 'Tri-Graph' is a term appearing in the paper text",
+          "explicit statement of the three node types and their interconnecting adjacency structure as a named architectural unit"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "research:MA-S2:unit",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-1977b399"
+        ],
+        "target_clause_ids": [],
+        "why_needed_for_reader": "The reader needs to know whether 'Tri-Graph' is a term the paper itself defines or an author-level shorthand, so the Method can state the label's provenance without overclaiming."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "The LinearRAG system structures retrieval around a Tri‑Graph, a graph whose three node types—entities, sentences, and passages—are linked by sparse adjacency matrices. Retrieval proceeds in two stages: the first stage activates entity nodes to perform local semantic bridging, and the second stage propagates importance across the graph (via personalized PageRank) to select passages for global relevance.",
+        "rendered_from_facet_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:bd34db92dbf87355f383361b9aaad0f0cf5cb0a1164fa27a5bda3375fcc6b3e6",
+  "content_digest": "sha256:f0a47dbb4f6728c7c8fd66a7b2dc553b697acf57a1adac27eb15a5102dcfa78f"
+}

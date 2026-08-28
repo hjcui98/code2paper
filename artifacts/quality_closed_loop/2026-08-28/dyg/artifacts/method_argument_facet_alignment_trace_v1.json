@@ -1,0 +1,1138 @@
+{
+  "schema_version": "1.0",
+  "content_digest": "sha256:90f20f933595f20e9fa045b9772fd55d05096df2f055b9d208bf9058c0248f87",
+  "schema_failures": [
+    "facet-9a1ed70668b9de25:decomposer_quote_was_wider_than_clause",
+    "facet-4e742dc0e3b52bae:decomposer_quote_was_wider_than_clause",
+    "facet-4d1239a88d3c0fce:decomposer_quote_was_wider_than_clause",
+    "facet-9a1ed70668b9de25:field_positive_without_evidence:formula_goal",
+    "facet-e650301f08e6d4b3:field_positive_without_evidence:operation",
+    "facet-e3de4791afd3b462:field_positive_without_evidence:formula_goal",
+    "facet-27117a1993cf169a:field_positive_without_evidence:operation",
+    "facet-4e742dc0e3b52bae:field_positive_without_evidence:operation"
+  ],
+  "traces": [
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:f3e887734b65bd17390bddd244413e317b59014b9bef22b18fce7683f4859273",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:f3e887734b65bd17390bddd244413e317b59014b9bef22b18fce7683f4859273",
+        "parsed_payload_digest": "sha256:8024ca11ea77f362eaeaccbdadc6d4fdbee6ee0f792b41fa5c53367098c7835c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 0,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms the extraction and encoding pipeline (padding, stacking, reshaping, softmax routing, top-k selection, weighted reduction, dual-encoder architecture) but does not contain evidence for the continuous SSM redesign, Δt as a learnable monotonically increasing function of time gap, Ebbinghaus-inspired forgetting curve, diagonal A matrix with negative real-part eigenvalues, input-dependent B/C matrices with spectral norm constraints, or the MLP predictor for link prediction vs. single encoder for node classification. The formula_expectation is 'required' but no equation_atoms are present in the evidence to support the core SSM mechanism described in the goal."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:b5372607aa76d15499bc094827a04254900dde2deb9b7b102f3061fca4187a03",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:b5372607aa76d15499bc094827a04254900dde2deb9b7b102f3061fca4187a03",
+        "parsed_payload_digest": "sha256:3a078ccbe91daa7cb5f61fffa470212e64f5a007b20403192a993eb4c90e3bd2"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 1,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence shows concrete tensor operations (stacking, softmax normalization, top-k selection, weighted reduction, reshape) within compute_src_dst_node_temporal_embeddings, but does not demonstrate the full transformation from raw interaction sequences to a unified aligned feature representation capturing temporal and structural context. The operations are intermediate steps within a method, not the complete encoding pipeline described by the field text. No evidence shows the input being raw interaction sequences or the output being a unified aligned representation with temporal/structural context explicitly captured."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:ffd8d8e9fba4956e441252fab9f98e150124d9db2089188f07afcd2681c07a72",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:ffd8d8e9fba4956e441252fab9f98e150124d9db2089188f07afcd2681c07a72",
+        "parsed_payload_digest": "sha256:55178a32eac6ea8f037a787945c7e6b0383c1e72fab05809a4b2697c59b209bc"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 2,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence supports that Δt is derived from the timespan (dts) via a linear projection (in_proj.weight @ rearrange(dts, ...)), confirming 'making Δt a function of the timespan'. However, no evidence in the supplied set addresses 'initializing A for stable decay' — the matrix A is not mentioned in any of the four evidence items. The formula_goal is a compound claim and only one component is supported by the available evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:d29545d30ff5f789ecf85597903207f8b98bff5489f582910351e3066f2d1551",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d29545d30ff5f789ecf85597903207f8b98bff5489f582910351e3066f2d1551",
+        "parsed_payload_digest": "sha256:0e80c1e5dea6846257ae5e46559c46937d0d968f27ddfdb256d213c0b535465b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 3,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2
+            ],
+            "bound_equation_indices": [
+              1,
+              2
+            ],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "interface",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "bound_equation_indices": [
+                  1,
+                  2
+                ],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:72ad15e88f35eb2d16dae87f63240d71a310289a80db3b7ce5c1051b9f027892",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:72ad15e88f35eb2d16dae87f63240d71a310289a80db3b7ce5c1051b9f027892",
+        "parsed_payload_digest": "sha256:dd3a0e19c91b4e6b012e87b4b8dc875589b941eccf673fa72873401ed9400b5a"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 4,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "negative",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:aea7436552d23c4176bb4feaa78b128093d3eab512c83c7bac5e51b083653c1f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:aea7436552d23c4176bb4feaa78b128093d3eab512c83c7bac5e51b083653c1f",
+        "parsed_payload_digest": "sha256:0658d13b3bc025d5e6c9a7472e5f328ae4e7e3b3666e006f662506289a9acec1"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 5,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "interface",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:8f4f221abd8fb396432c302df3b889b0e8ba702b788f790ac72cbcd6f2200e9c",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:8f4f221abd8fb396432c302df3b889b0e8ba702b788f790ac72cbcd6f2200e9c",
+        "parsed_payload_digest": "sha256:d7c3197d664ca319b1378e0599f8acbaeed359ae8c0380b5e25a193a8ec607a6"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 6,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence shows internal mechanism steps (concatenation, mean reduction, weighted aggregation, addition, output layer, return) of GraphMixer.compute_node_temporal_embeddings, which is a component of a dynamic graph representation learning model. However, the evidence does not demonstrate the full model development, handling of irregular time gaps and noisy historical patterns, or targeting strong performance on dynamic link prediction and node classification. The evidence only covers one method's internal operations, not the overall model architecture or its performance targets."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9c0106617efa26512cee23d7f7f6b49d9fdc782801db52183cba76ee94733505",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9c0106617efa26512cee23d7f7f6b49d9fdc782801db52183cba76ee94733505",
+        "parsed_payload_digest": "sha256:2254499ed17530c228c8ced1e4cc14cc1e54f08522d95eec03310d9b3881a404"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 7,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              6
+            ],
+            "bound_span_indices": [
+              6
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              6
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  6
+                ],
+                "bound_fact_indices": [
+                  6
+                ],
+                "bound_span_indices": [
+                  6
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  6
+                ],
+                "active_path_conditions": [
+                  "case_study"
+                ],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:25207acbb9f6a5cd683c4aa41e5fa2ffeaa96aa8e6f4bbfc61c341edeb26dac2",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:25207acbb9f6a5cd683c4aa41e5fa2ffeaa96aa8e6f4bbfc61c341edeb26dac2",
+        "parsed_payload_digest": "sha256:102049cc9fa0df1e8f60f14c359242cd55b08fb5cdf09863195a77ada7fadee6"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 8,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence supports use of raw node features (self.node_raw_features indexed by node_ids at evidence 4, and nodes_edge_raw_features at evidence 0), but no evidence in the supplied set demonstrates zero vectors when features are unavailable. The 'zero vectors when unavailable' clause has no supporting evidence in any of the five evidence indices."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:ea70d43ede293a0ea0a4fba278c6288823fe09f050dc5a9325d98595d1ea7b26",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:ea70d43ede293a0ea0a4fba278c6288823fe09f050dc5a9325d98595d1ea7b26",
+        "parsed_payload_digest": "sha256:80a90cffb4570f08bc69350e6cfbbb8588aef976fdf79b02c13e807f8d601e89"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 9,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "negative",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:7ab765045845e083f8f69ae739207e043d9606977597034ab560aee35be9c281",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7ab765045845e083f8f69ae739207e043d9606977597034ab560aee35be9c281",
+        "parsed_payload_digest": "sha256:b11cfbdf02478a354c72e46a3d1130da07a092e291087b0bb2fee82ff57ef670"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 10,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [
+              "operation"
+            ],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9426e2ea285240925d66b1dbc2d8692893bfadba352b9c3a8f9e82bf71bd9aec",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9426e2ea285240925d66b1dbc2d8692893bfadba352b9c3a8f9e82bf71bd9aec",
+        "parsed_payload_digest": "sha256:f15e085c3c1a345662cea6591707f92604b805fc97557de0d74b59bea88df36e"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 11,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              1
+            ],
+            "bound_span_indices": [
+              1
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              1
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  1
+                ],
+                "bound_fact_indices": [
+                  1
+                ],
+                "bound_span_indices": [
+                  1
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  1
+                ],
+                "active_path_conditions": [
+                  "i == 0 and case_study"
+                ],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:e43d6f87c3ceaf3770a9c03a68734dd0d6bea85e85f2ddcdf376c4baf634c230",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e43d6f87c3ceaf3770a9c03a68734dd0d6bea85e85f2ddcdf376c4baf634c230",
+        "parsed_payload_digest": "sha256:b3a170674c947cbe66eba6c766136d6681efb43b0d2800e46de7a7dbd359a842"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 12,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to verify the mechanism claim 'Project all encoding types to a common dimension and concatenate them.' The evidence array is empty and no closed-set evidence indices are provided. Without repository evidence, the operational description cannot be confirmed or refuted against the codebase."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:46abbdff1e9c261966cb6748f3a8e9aeb97d96aca6b3b28e9fd634c413bc1cc0",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:46abbdff1e9c261966cb6748f3a8e9aeb97d96aca6b3b28e9fd634c413bc1cc0",
+        "parsed_payload_digest": "sha256:e3fcbccb3ac1459f50689eb94351afa57d8934f4f99e4acd877c7955283aec64"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 13,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied; formula_expectation is 'required' but evidence array is empty, so the SSM core formula (redefined Δt, stable diagonal A) cannot be verified against any repository evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c7f522a84effd11ef3906054d50308cedf7ab87b3b8b875113610afcb10c0580",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c7f522a84effd11ef3906054d50308cedf7ab87b3b8b875113610afcb10c0580",
+        "parsed_payload_digest": "sha256:c9170a3e3d9abc74947f02ae80321163b4674f2def714464e53301eeae569d48"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 14,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to verify the claim about B/C being input-dependent with spectral norm constraints for timespan-aware forgetting and noise-robust reviewing. The evidence array is empty, so no claims, facts, spans, or equations can be bound to this field. The formula expectation is 'required' but no formula evidence is available to confirm or deny the described mechanism."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:284ea42ee3f25bcda687c41a2c31d11d4e30ce5e5c9cb264c0beb8b910a9387f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:284ea42ee3f25bcda687c41a2c31d11d4e30ce5e5c9cb264c0beb8b910a9387f",
+        "parsed_payload_digest": "sha256:54a937d4d9e4ac5a766c5524b38198ea11ce6389bdd716fe8ac464d83e59be2f"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 15,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate this mechanism claim."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:4096e220ad7c227d2fc2c5ad4006bd834d159637bfed89ebf45275c966c12912",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:4096e220ad7c227d2fc2c5ad4006bd834d159637bfed89ebf45275c966c12912",
+        "parsed_payload_digest": "sha256:af048865d1894ebb077101ef7d86e1fc87289feb20c34b23a0d2da3c9fc90b62"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 16,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate dynamic graph encoding of interaction sequences with heterogeneous features and alignment."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:f428515cdb7a2330df02816e5f7d3eee3dcd16988c60cc629946d769f16939b4",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:f428515cdb7a2330df02816e5f7d3eee3dcd16988c60cc629946d769f16939b4",
+        "parsed_payload_digest": "sha256:e23969f9408e6b65a0d7dda53d70ee2f54c57b9c338b9474521f88f3b2d534ea"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 17,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "interface",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:e13349e2965e2c8f46a11c8b562a947e586ace0b791808913006e38651443ebc",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e13349e2965e2c8f46a11c8b562a947e586ace0b791808913006e38651443ebc",
+        "parsed_payload_digest": "sha256:df87bb89cb1b92516f274f42ff758f4fdea9337267373aaa717462b5383393d1"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 18,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:34f62b7b5b9d302704f94fe8417cac3bdc4c76e478124b7b8184753e59448094",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:34f62b7b5b9d302704f94fe8417cac3bdc4c76e478124b7b8184753e59448094",
+        "parsed_payload_digest": "sha256:7bc6518a6f54bfedb26455546f73abd5624bdad31452eec606d99973aad13fff"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 19,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to support the claim about downstream adaptation for link prediction and node classification setups and linear computational complexity."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:e97bf05324ef367b2152e26cfa58763b7b39476e9cdd7a786b21a1bac66c913b",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e97bf05324ef367b2152e26cfa58763b7b39476e9cdd7a786b21a1bac66c913b",
+        "parsed_payload_digest": "sha256:b2b3b3bcd3ef6b1a97b754842bff2fde50b2d07a81f42e6ec5a95a2af1697e79"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 20,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to bind a formula coupling SSM step size Δt to irregular timespans between interactions."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:324e38a7a37d909061d6825c5f40020c9297cd1fee6f9c9935cd0c4ab756f1f2",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:324e38a7a37d909061d6825c5f40020c9297cd1fee6f9c9935cd0c4ab756f1f2",
+        "parsed_payload_digest": "sha256:1cef4dafbf9cd9d8678ebde642eb07515dbd3c6d47afdacb3ae9fe01600651bd"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 21,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied; cannot verify or refute the formula goal 'Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.' without repository evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:68fcb2ed8c76f469ea4f7573c77411cd1864e3435782ab6417bba5d6c71897cd",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:68fcb2ed8c76f469ea4f7573c77411cd1864e3435782ab6417bba5d6c71897cd",
+        "parsed_payload_digest": "sha256:3780d164ff1bf23ecda0ee081a0fe45fc8a2e5b6deb1d13ec8c6b174391a4889"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 22,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to support or refute the formula goal 'Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.'"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:366c6775568a13dc9dfd48a38fd997f3412a4245fbd58948ca286b99eb870587",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:366c6775568a13dc9dfd48a38fd997f3412a4245fbd58948ca286b99eb870587",
+        "parsed_payload_digest": "sha256:ae5b262b7e349e55f7da2092e73da3d52ac3c71ba916c92b9454fe2a15e1ced5"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 23,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate this field."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:ddc9d16b63b982e8c0075e39c976828acf7e7d787e46c22654be0d5c1795f502",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:ddc9d16b63b982e8c0075e39c976828acf7e7d787e46c22654be0d5c1795f502",
+        "parsed_payload_digest": "sha256:8ec60dc28aa22098ec17df9ec3c848e69a4e6a4dd7bb7a3b8302b7cebfed0df3"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 24,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to support or refute the claim that source and destination sequences are processed independently before merging."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    }
+  ]
+}

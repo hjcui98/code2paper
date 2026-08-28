@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "req-MA-S4-01",
+      "lane": "expository_bridge",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "exact_question": "What is the exact InfoNCE loss expression used to train EBCAR, including the temperature scaling and the set of negative passage embeddings?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What is the exact InfoNCE loss expression used to train EBCAR, including the temperature scaling and the set of negative passage embeddings.",
+      "needed_evidence": [
+        "InfoNCE",
+        "equation",
+        "formula"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "req-MA-S4-01"
+      ],
+      "content_digest": "sha256:3a8086938c0c1d3543f0b356ccd04c4e438f7ecaad541caa16a615282077b2e0"
+    },
+    {
+      "request_id": "req-MA-S4-02",
+      "lane": "expository_bridge",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "exact_question": "How are per-batch InfoNCE losses averaged over batches to produce the epoch-level train_loss and val_loss, and over which dataset splits is each computed?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: How are per-batch InfoNCE losses averaged over batches to produce the epoch-level train_loss and val_loss, and over which dataset splits is each computed.",
+      "needed_evidence": [
+        "explicit",
+        "averaging",
+        "epoch-level",
+        "formula",
+        "code",
+        "trace",
+        "loss"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "req-MA-S4-02"
+      ],
+      "content_digest": "sha256:9cf8e7755b0b0335a0d617f1a38b2330fd97bfb9e68f3b916a07ed622bfd4375"
+    }
+  ]
+}
