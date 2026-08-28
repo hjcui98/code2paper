@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "initial_validation_status": "failed",
+  "transitions": [],
+  "results": [],
+  "failures": [
+    "rewrite:unknown_style_section:MA-S3",
+    "rewrite:unknown_style_section:MA-S4",
+    "rewrite:unknown_style_section:MA-S1"
+  ],
+  "content_digest": "sha256:c4dd3185bed4ed7ce8be29ab71e4dbb0f3aa2afeeb8aa46869223f18f13fd19d"
+}

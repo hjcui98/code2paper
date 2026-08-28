@@ -1,0 +1,851 @@
+{
+  "claims": [
+    {
+      "claim_id": "C-V3-cab6a6dac9ef9655",
+      "claim_text": "LinearRAG.index branches on len(new_passage_hash_ids) > 0",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-ecd78b3f372b3774",
+      "claim_text": "LinearRAG.index calls self.extract_nodes_and_edges, existing_passage_hash_id_to_entities, existing_sentence_to_entities, result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8435ad0964009c0e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ef38c576db6f2930",
+      "claim_text": "LinearRAG.calculate_entity_scores branches on entity_score < self.config.iteration_threshold",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1ed531536520ca95"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "entity_score < self.config.iteration_threshold"
+      ]
+    },
+    {
+      "claim_id": "C-V3-2b2246fb8e37a77e",
+      "claim_text": "LinearRAG.run_ppr sorts by np.argsort, doc_scores, result=sorted_indices_in_doc_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-101e5db54bbeff5e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-eb0e29b9b5f96db3",
+      "claim_text": "LinearRAG.run_ppr propagates self.graph.personalized_pagerank, vertices=range(len(self.node_name_to_vertex_idx)), damping=self.config.damping, directed=False, weights='weight', reset=reset_prob, implementation='prpack', result=pagerank_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a141bc5283231d81"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d9c9ca634c0f73ac",
+      "claim_text": "LinearRAG.run_ppr returns (sorted_passage_hash_ids, sorted_passage_scores.tolist())",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1e170c7623cd91e3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0d7ebe8c211e33fc",
+      "claim_text": "LinearRAG.calculate_entity_scores computes formula entity_score, top_sentence_score, result=next_entity_score",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-815f73e7aaf9e42a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-83004d7741f74607",
+      "claim_text": "LinearRAG.calculate_entity_scores propagates breadth first frontier propagation, current_entities, new_entities",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-90c90f0f885a3e12"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ]
+    },
+    {
+      "claim_id": "C-V3-db168885cdabb735",
+      "claim_text": "LinearRAG.calculate_entity_scores sorts by np.argsort, sentence_similarities, result=top_sentence_indices",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d3caa59fa4307beb"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-57b304ffc3fcd4c0",
+      "claim_text": "LinearRAG.calculate_entity_scores loads weights self.config.iteration_threshold",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-96688d9f0d42a458"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ba5447edc3decd23",
+      "claim_text": "LinearRAG.run_ppr calls np.array, [pagerank_scores[idx] for idx in self.passage_node_indices], result=doc_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-7e0e7fc1882f4a95"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-260e3684c05a1766",
+      "claim_text": "LinearRAG.retrieve calls self.graph_search_with_seed_entities, question, question_embedding, seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores, result=(sorted_passage_hash_ids, sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-654c4e5cca950d37"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-c487e36b46067394",
+      "claim_text": "LinearRAG.calculate_entity_scores filters by not sentence_hash_ids",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6314f6bd2637ec80"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "not sentence_hash_ids"
+      ]
+    },
+    {
+      "claim_id": "C-V3-c9bdc40765e63ed9",
+      "claim_text": "LinearRAG.calculate_entity_scores configured by self.config.iteration_threshold",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1ed531536520ca95",
+        "E-V3-96688d9f0d42a458"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-32533f87d46d0c75",
+      "claim_text": "LinearRAG._precompute_sparse_matrices branches on len(sentence_to_entity_indices) > 0",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bf5a3f41a9ab5eb0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(sentence_to_entity_indices) > 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5b0b135236e1e6ce",
+      "claim_text": "LinearRAG._precompute_sparse_matrices calls torch.sparse_coo_tensor, torch.zeros((2, 0), dtype=torch.long), torch.zeros(0, dtype=torch.float32), (num_entities, num_sentences), device=self.device, result=self.entity_to_sentence_sparse",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-7d950e065db58e70"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-fd8deb2f5b565862",
+      "claim_text": "LinearRAG.calculate_passage_scores computes formula self.config.passage_ratio * dpr_passage_score, math.log(1 + total_entity_bonus), result=passage_score",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6d36ebd065efc6b2"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f6a9e004ae3c62e8",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-403209187618fa96",
+      "claim_text": "LinearRAG.calculate_passage_scores loads weights self.config.passage_node_weight",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-242e0081d77e62af"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9dd00c3173191a7e",
+      "claim_text": "LinearRAG.calculate_entity_scores calls set, result=used_sentence_hash_ids",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-0c61bdc0fbaee4e0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ba1250eb403d51ab",
+      "claim_text": "LinearRAG.calculate_passage_scores computes formula passage_score, self.config.passage_node_weight, result=passage_weights[passage_node_idx]",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-242e0081d77e62af"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-a6ee6cc2f3c7039d",
+      "claim_text": "LinearRAG.calculate_passage_scores loads weights self.config.passage_ratio",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6d36ebd065efc6b2"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-da4a6195aa212c1a",
+      "claim_text": "LinearRAG.calculate_passage_scores computes formula entity_score * math.log(1 + entity_occurrences), denom, result=entity_bonus",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-0370d7226462be24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-b7141164ccc6cf1b",
+      "claim_text": "LinearRAG.calculate_passage_scores configured by self.config.passage_node_weight",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-242e0081d77e62af"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-cb0e3b9e9f677b6f",
+      "claim_text": "LinearRAG.calculate_passage_scores configured by self.config.passage_ratio",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6d36ebd065efc6b2"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-fe2543d32776db44",
+      "claim_text": "LinearRAG.run_ppr writes sorted_passage_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8b67c4f7317ce3ff"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-3b9d0881bac3d49e",
+      "claim_text": "LinearRAG.run_ppr writes sorted_passage_hash_ids",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-809086b9a64a4b85"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-bcfbc7366b1db6a9",
+      "claim_text": "LinearRAG.run_ppr writes pagerank_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a6b0ac351b39dbe8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-58ebbaad06536943",
+      "claim_text": "LinearRAG.run_ppr constructs mask np.where, np.isnan(node_weights) | (node_weights < 0), 0, node_weights, result=reset_prob",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-acec8a9d0ddb6e37"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7242f303d9f23c67",
+      "claim_text": "LinearRAG.run_ppr computes formula np.isnan(node_weights), node_weights < 0",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-acec8a9d0ddb6e37"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-c6aea4ee91ea64ac",
+      "claim_text": "LinearRAG.run_ppr calls len, self.node_name_to_vertex_idx",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-b56a539a09c1ca9c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0f77296c9182bf43",
+      "claim_text": "LinearRAG.run_ppr loads weights self.vertex_idx_to_node_name[self.passage_node_indices[i]]",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-2a22b85b977f36e0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-2a6d50f36f7e8060",
+      "claim_text": "LinearRAG.run_ppr calls range, len(self.node_name_to_vertex_idx)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-b56a539a09c1ca9c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-85dd01786731cf8a",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities calls self.run_ppr, node_weights, result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-54481ced51092efe"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1be0fc019d7f5822",
+      "claim_text": "LinearRAG.retrieve calls v.attributes, result=self.vertex_idx_to_node_name",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-85492fa6e5103cf6"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-a5b3fa229025eb6c",
+      "claim_text": "LinearRAG.retrieve calls self.entity_to_sentence_sparse._nnz, result=e2s_nnz",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-40d907cf67244113"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0043e5e33c7d03ff",
+      "claim_text": "LinearRAG.add_edges branches on node_hash_id == neighbor_hash_id",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cb1545b6f7e97a4a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "node_hash_id == neighbor_hash_id"
+      ]
+    },
+    {
+      "claim_id": "C-V3-e8cf376d1718a4fe",
+      "claim_text": "LinearRAG.add_edges calls edges.append, (node_hash_id, neighbor_hash_id)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e5e40609474a3a61"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-37c37b02c2842660",
+      "claim_text": "LinearRAG.add_edges filters by node_hash_id == neighbor_hash_id",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cb1545b6f7e97a4a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "node_hash_id == neighbor_hash_id"
+      ]
+    },
+    {
+      "claim_id": "C-V3-98f06fe3b2f2a582",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized concatenates torch.cat, selected_sentence_indices_list, result=all_selected_sentences",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-300b5d4246185aa7"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-10e9f4ef76d57a8e",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized selects top k torch.topk, sentence_sims, k, result=(top_k_values, top_k_local_indices)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4ef6e93593a87917"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6188b3be57792f47",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized computes formula sentence_activation, sentence_similarities, result=weighted_sentence_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-70ff4594e205e4db"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6a7650e88ae16624",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized loads weights self.config.iteration_threshold",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a3ab6e2db07cd1e9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-c2205b39f54b143d",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized constructs mask np.where, next_entity_scores_np >= self.config.iteration_threshold, result=active_indices",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a3ab6e2db07cd1e9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-be917310d4230531",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized computes formula torch.sparse.mm, self.entity_to_sentence_sparse.t(), current_scores_2d, result=sentence_activation",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-deadf72447631a1a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-68c40deea24b04af",
+      "claim_text": "LinearRAG.calculate_entity_scores_vectorized configured by self.config.iteration_threshold",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a3ab6e2db07cd1e9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-97fffdc746e2b7fe",
+      "claim_text": "LinearRAG.__init__ writes self.device",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-0077999331525629"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-cadf802c4fbb6fb5",
+      "claim_text": "LinearRAG.__init__ loads weights self.config.spacy_model",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f69f3f77c13dfefc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-c39bbb14f24dc8eb",
+      "claim_text": "LinearRAG.__init__ writes self.spacy_ner",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f69f3f77c13dfefc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ad1420c1d8aeb72e",
+      "claim_text": "LinearRAG.__init__ calls SpacyNER, self.config.spacy_model, result=self.spacy_ner",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f69f3f77c13dfefc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-dcef27e912991ef1",
+      "claim_text": "LinearRAG.__init__ writes self.llm_model",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e0619d2f533a06f0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-440957e623d373d8",
+      "claim_text": "LinearRAG.__init__ calls ig.Graph, directed=False, result=self.graph",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-17d86520ec6d52fc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-bb3c6da8a94d22d7",
+      "claim_text": "LinearRAG.__init__ writes retrieval_method",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6908b70393225f2c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ce6f047771983976",
+      "claim_text": "LinearRAG.__init__ writes self.graph",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-17d86520ec6d52fc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-cf528cd09da7508a",
+      "claim_text": "LinearRAG.__init__ calls torch.device, 'cuda' if torch.cuda.is_available() else 'cpu', result=self.device",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-0077999331525629"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-65e521270e04d57b",
+      "claim_text": "LinearRAG.__init__ configured by self.config.spacy_model",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f69f3f77c13dfefc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-71a2677dc2c37cdd",
+      "claim_text": "LinearRAG.retrieve branches on self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-05675598c1c94395"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-3d6b6dd2907b39c8",
+      "claim_text": "LinearRAG.retrieve returns retrieval_results",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f9b43d9bf1b29282"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ddcead04c8e1c88e",
+      "claim_text": "LinearRAG.retrieve computes formula e2s_shape[0], e2s_shape[1]",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a758f536b6218e03"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-24e3b363a29bdc88",
+      "claim_text": "LinearRAG.retrieve loads weights self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-364aa7a1338cb348"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-028df2c05bcdee42",
+      "claim_text": "LinearRAG.retrieve calls logger.info, 'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-5c1ce458bd571719"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-e54b5746dc1dbbf6",
+      "claim_text": "LinearRAG.retrieve configured by self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-05675598c1c94395",
+        "E-V3-364aa7a1338cb348"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6fbf95a5816c2674",
+      "claim_text": "LinearRAG.retrieve calls self.get_seed_entities, question, result=(seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-261d2e91e12cb527"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6253fa1bfff63a80",
+      "claim_text": "LinearRAG.retrieve calls self.dense_passage_retrieval, question_embedding, result=(sorted_passage_indices, sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-15c1e29e6b4d67b6"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d8e99700039f780b",
+      "claim_text": "LinearRAG.retrieve calls self.sentence_to_entity_sparse._nnz, result=s2e_nnz",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8ae46179fd90fa2d"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9d3bb65b573c5da7",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0328aeed8011cf36",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1ed531536520ca95"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-099ff44b73e28670",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bf5a3f41a9ab5eb0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-716b64ac3aef913f",
+      "claim_text": "Operands are multiplied.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-0370d7226462be24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ef7c36d21b7c1eac",
+      "claim_text": "Operands are multiplied.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6d36ebd065efc6b2"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-786aab2f58085fbc",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f7de517c17bbe270",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-acec8a9d0ddb6e37"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-589f58697432a63a",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cb1545b6f7e97a4a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f8f15358cd590441",
+      "claim_text": "A top-k selection keeps the highest scoring items.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4ef6e93593a87917"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-864bac86caf26115",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a3ab6e2db07cd1e9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    }
+  ]
+}

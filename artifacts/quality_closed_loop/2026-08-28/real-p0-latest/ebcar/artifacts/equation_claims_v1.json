@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-equation-compiler-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "code_fact_digest": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "'hybrid_attention_'"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "run_name"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:e570cebd53c158c8b2f9f90d8067fab6067a699858d36e918af9590ae1dc7c87"
+      ],
+      "canonical_identity": "sha256:5c97f00f864de7edc86df09ede16baee8dfcec2f96c93b4feb0795fbebee84d7",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "train_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "len(train_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:cb165e8feb6f2de0ee45d7a9839b7c72f790f88f45287a15e6fd1795a7ec7cfd"
+      ],
+      "canonical_identity": "sha256:6a00d7f2c73d4ea8887d74498c6ac5559550c3a81d0dda8cdb2ef833321fb0d9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "val_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "len(val_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:631b7f9d196fd61ef02886faff14e235fad7855e7517ae50e035b9a237ae802c"
+      ],
+      "canonical_identity": "sha256:5993c68f7af79f2633758ef2ce9972a6bcad43a0d1af2c0f19f3f54cf6d1fa49",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:e9dca969feff0109396de0771fd6208e4a0c90e19b39f74d905c07cc3e50ed5f"
+}

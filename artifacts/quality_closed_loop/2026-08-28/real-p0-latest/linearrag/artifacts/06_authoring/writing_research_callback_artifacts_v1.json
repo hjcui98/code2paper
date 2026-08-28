@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "req:MA-S2:unit:1",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "design_objective",
+      "exact_question": "Does the LinearRAG paper or documentation use the term 'Tri-Graph' as a named architectural concept, and does it articulate a two-stage retrieval philosophy as a stated design principle?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "Tri-Graph",
+        "explicit",
+        "statement",
+        "two-stage",
+        "retrieval",
+        "philosophy",
+        "principle",
+        "term",
+        "named",
+        "concept",
+        "source",
+        "text",
+        "design"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section heading promises the Tri-Graph concept and two-stage retrieval philosophy as named architectural ideas; without source-text confirmation of these terms, the overview paragraph cannot state them as repository facts and must either caveat them or defer.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "the term 'Tri-Graph' as a named concept in the source text",
+        "an explicit statement of the two-stage retrieval philosophy as a design principle"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-02-1977b399"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-1977b399"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "input",
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:8db62337528f3caa2460c3ba891e4717a55ddf93a47238fdca2357fcd7f67e6d"
+    },
+    {
+      "request_id": "req:MA-S4:unit-2:mechanism",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "How does the iterative propagation mechanism of entity activation via semantic bridging identify latent intermediate entities for multi-hop connections without explicit relation extraction?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "mechanism_description",
+        "operational_definition"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The reader needs to understand how the propagation mechanism identifies latent intermediate entities and what role query-sentence similarity plays in bridging multi-hop connections.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "mechanism_description",
+        "operational_definition"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-STAGE-02-93c16851",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:58050a0da1686898b727fb3ff8f7fb691afd397f5233d0405a7068f5c4a3ce0c"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:666680ed7e52891e3c98c5ebb4367771f27708c7ceef410e94c2d716320efc82"
+}

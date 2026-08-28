@@ -1,0 +1,2119 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:fbbdff610828bf5c53103e700acb8defad36eab8db309f61a6dffffb1341b202",
+  "claim_digest": "sha256:a174265f58e104179aa7e794a26724b97dc559b108a07d030ce773a408eb50ba",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "",
+        "section_markdown": "## Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned\n\nThe mechanism overview for how interaction sequences are extracted, represented with heterogeneous feature channels, padded, and assembled into a unified multi-channel tensor prior to routing is pending anchoring against repository-executable evidence. The repository currently does not provide a closed executable-hard trace that demonstrates the full pipeline from raw first-hop interaction extraction through heterogeneous channel assembly to the padded multi-channel tensor consumed by the routing stage.\n\nThe encoding pipeline produces two node embeddings per prediction event. Padded multi-channel data for the source sequence—comprising node identifiers, edge identifiers, and neighbor interaction times—are stacked along a new dimension to form a three-dimensional tensor; the same stacking operation is applied to the destination sequence, producing a corresponding tensor. A learned router computes per-patch logits for each sequence; these scores are normalized before they are compared or aggregated, yielding routing weights that sum to one over the sequence dimension. A top-k selection retains the k highest-scoring patches, and a weighted sum over the selected patches produces a compact node embedding for each sequence. The pipeline returns source and destination node embeddings as its output.\n\nRouting weights are computed by applying softmax normalization to the router logits along the sequence dimension, producing a probability distribution over patches. The normalized weights select and aggregate patch representations, yielding a fixed-size embedding that summarizes the interaction sequence. The encoding operates over a feature space of dimension `num_channels` × `channel_embedding_dim`, where each channel corresponds to a distinct feature type. The formal closed-form expression binding the softmax normalization, top-k selection, and weighted aggregation into a single update rule is pending formalization; no accepted formula package is currently available for this derivation.\n\nEncoding alignment is intended to project all encoding types to a common dimension and concatenate them into a unified representation, so that heterogeneous feature channels—node identity, edge attributes, absolute timestamps, and co-occurrence indicators—are expressed in a shared feature space before entering the sequential model. This projection-and-concatenation mechanism is pending verification against repository evidence; no executable-hard fact currently confirms that all channels are projected to a common dimension prior to concatenation.\n\nCo-occurrence frequency encoding is intended to serve as a lightweight structural feature channel that captures the frequency with which node pairs interact. For link prediction, two independent encoder instances process the source and destination sequences separately; their outputs are pooled, concatenated, and passed through a multilayer perceptron predictor. For node classification, a single encoder is used without the co-occurrence channel. Both the co-occurrence encoding mechanism and the independent source-destination processing strategy are intended design choices pending repository verification.\n\nThe encoding pipeline maps raw heterogeneous interaction data into a fixed-size embedding that preserves temporal ordering and structural context. The routing-based aggregation over selected patches ensures that the downstream sequential model receives a compact, information-rich input that reflects both the identity of interacting entities and the timing of their interactions.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-42774719",
+          "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+          "brief:story:O-STAGE-01-06d7de36",
+          "brief:story:O-COMPONENT-06-e711d58d",
+          "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+          "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-474697a48f990b43",
+          "facet-e650301f08e6d4b3"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S1:1",
+          "paragraph:MA-S1:2",
+          "paragraph:MA-S1:3",
+          "paragraph:MA-S1:4",
+          "paragraph:MA-S1:5",
+          "paragraph:MA-S1:6"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+          "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+          "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+          "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "evidence_refs_used": [],
+            "exact_question": "Which repository-executable facts anchor the mechanism overview for dynamic graph encoding: specifically, which code paths and data structures demonstrate that raw interaction sequences are extracted, represented with heterogeneous feature channels (node identity, edge attributes, absolute timestamps, co-occurrence indicators), padded to a fixed length, and assembled into a unified multi-channel tensor prior to routing?",
+            "missing_parts": [
+              "mechanism_overview"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S1:mechanism_overview:1",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S1",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-01-42774719",
+              "brief:story:O-METHOD-MAINLINE-01-3011c54d"
+            ],
+            "target_clause_ids": []
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:1",
+            "paragraph_markdown": "The mechanism overview for how interaction sequences are extracted, represented with heterogeneous feature channels, padded, and assembled into a unified multi-channel tensor prior to routing is pending anchoring against repository-executable evidence. The repository currently does not provide a closed executable-hard trace that demonstrates the full pipeline from raw first-hop interaction extraction through heterogeneous channel assembly to the padded multi-channel tensor consumed by the routing stage.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:2",
+            "paragraph_markdown": "The encoding pipeline produces two node embeddings per prediction event. Padded multi-channel data for the source sequence—comprising node identifiers, edge identifiers, and neighbor interaction times—are stacked along a new dimension to form a three-dimensional tensor; the same stacking operation is applied to the destination sequence, producing a corresponding tensor. A learned router computes per-patch logits for each sequence; these scores are normalized before they are compared or aggregated, yielding routing weights that sum to one over the sequence dimension. A top-k selection retains the k highest-scoring patches, and a weighted sum over the selected patches produces a compact node embedding for each sequence. The pipeline returns source and destination node embeddings as its output.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:3",
+            "paragraph_markdown": "Routing weights are computed by applying softmax normalization to the router logits along the sequence dimension, producing a probability distribution over patches. The normalized weights select and aggregate patch representations, yielding a fixed-size embedding that summarizes the interaction sequence. The encoding operates over a feature space of dimension `num_channels` × `channel_embedding_dim`, where each channel corresponds to a distinct feature type. The formal closed-form expression binding the softmax normalization, top-k selection, and weighted aggregation into a single update rule is pending formalization; no accepted formula package is currently available for this derivation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:4",
+            "paragraph_markdown": "Encoding alignment is intended to project all encoding types to a common dimension and concatenate them into a unified representation, so that heterogeneous feature channels—node identity, edge attributes, absolute timestamps, and co-occurrence indicators—are expressed in a shared feature space before entering the sequential model. This projection-and-concatenation mechanism is pending verification against repository evidence; no executable-hard fact currently confirms that all channels are projected to a common dimension prior to concatenation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:5",
+            "paragraph_markdown": "Co-occurrence frequency encoding is intended to serve as a lightweight structural feature channel that captures the frequency with which node pairs interact. For link prediction, two independent encoder instances process the source and destination sequences separately; their outputs are pooled, concatenated, and passed through a multilayer perceptron predictor. For node classification, a single encoder is used without the co-occurrence channel. Both the co-occurrence encoding mechanism and the independent source-destination processing strategy are intended design choices pending repository verification.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:6",
+            "paragraph_markdown": "The encoding pipeline maps raw heterogeneous interaction data into a fixed-size embedding that preserves temporal ordering and structural context. The routing-based aggregation over selected patches ensures that the downstream sequential model receives a compact, information-rich input that reflects both the identity of interacting entities and the timing of their interactions.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:transition_to_next_section@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC2 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nTwo limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows. First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-780817ba"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [
+          "MA-S2:unit"
+        ],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "candidate_symbols_or_terms": [
+              "SSMs",
+              "Motivation",
+              "limitations",
+              "irregular",
+              "timespans",
+              "vulnerable",
+              "vanilla",
+              "they",
+              "ignore",
+              "input",
+              "noise"
+            ],
+            "concept_key": "",
+            "evidence_refs_used": [],
+            "exact_question": "What are the two key limitations of vanilla state-space models when applied to dynamic graphs, and how do they motivate the timespan-aware and noise-robust design choices that follow?",
+            "missing_parts": [
+              "interface"
+            ],
+            "missing_rhetorical_move": "transition_to_next_section",
+            "request_id": "req:MA-S2:1:unit:000001",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-780817ba"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The interface facet (facet-e5953e844f56e25a) is deferred with reason field_status_unresolved; the organization_seed provides the two limitations (irregular timespans ignored; vulnerability to input noise) but the repository has not yet resolved the interface field that would license these as Method content. Without a resolved interface or a repository-supported proposition, the section cannot be authored as a Method section and remains a research request."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "Two limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows. First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-1/executable_hard"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "",
+        "section_markdown": "## Redesign: timespan-informed Δt and A for temporally aware forgetting\n\nThis section specifies the timespan-aware forgetting mechanism within the SSM stage, where the step size and state-transition parameters are redesigned so that effective memory decay scales with elapsed interaction time, and the input–output projection pathway is constrained to bound selective-review gain. The forward pass of the `MambaTimeDelta` module and the temporal-encoding pipeline of `GraphMixer` and `DyGFormer` jointly implement the mechanism. The mathematical closed form for the timespan-informed step size and the spectral-norm constraint on the redefined projection matrices are intended design specifications pending formal derivation; no accepted closed-form expression is currently available from the repository evidence.\n\nThe forward pass of the `MambaTimeDelta` module branches on whether time-aware mode is active and a time-delta tensor is provided (`self.time_mamba and dts != None`). Under this condition, the input projection applies the learned weight matrix to the reshaped hidden states, mapping from a per-token layout to a sequence-major layout suitable for the SSM scan. A bias term is broadcast across the sequence dimension and added to the projected output. The module returns the processed output tensor after the scan and gating stages complete.\n\nThe temporal-encoding pipeline of the component begins by retrieving first-hop neighbor identifiers, associated edge identifiers, and interaction timestamps for a set of destination nodes, with a robustness-rate parameter filtering the sampled neighbors (`case_study`). The `GraphMixer` component computes a weighted aggregation in which neighbor raw features are multiplied element-wise by attention scores and summed, producing a time-gap-aware neighbor representation. The pipeline concatenates source and destination neighbor feature tensors along the feature dimension, and the combined embedding is returned as the temporal node representation.\n\nThe `GraphMixer` component concatenates raw edge features and neighbor time-gap features along the feature dimension to form a combined representation. A weighted aggregation multiplies neighbor raw features by attention scores and sums over the neighbor dimension, yielding a time-gap-aware neighbor embedding. The final node embedding is produced by concatenating the raw node feature lookup with the combined temporal features, and the resulting tensor is returned as the node-level representation.\n\nIn the patching stage, raw edge features and neighbor time-gap features are concatenated along the feature dimension to form a combined tensor. The component, under the condition that the patch index is zero and case-study mode is active (`i == 0 and case_study`), mean-reduces the destination patch data over the patch dimension to produce a compact embedding. The source and destination node embeddings are then returned as the output of the temporal-encoding stage.\n\nThe component, under the condition that the patch index is zero and case-study mode is active (`i == 0 and case_study`), computes the number of source and destination patches and stacks the patch data along a new sequence dimension to form a three-dimensional patch tensor. The intended timespan-aware forgetting specification makes the SSM step size a monotonically increasing function of the inter-event time gap, so that larger gaps produce larger effective step sizes and the state decays proportionally to elapsed time; the state-transition matrix is intended to be initialized with strictly negative real-part eigenvalues to guarantee stable decay, and the input and output projection matrices are intended to carry spectral-norm constraints bounding the selective-review gain. These mathematical specifications are intended design goals; no accepted closed-form expression for the timespan-informed step size, the diagonal state-transition initialization, or the spectral-norm constraint is currently available from the repository evidence.\n\nThe timespan-aware forgetting mechanism thus operates by coupling the SSM step size to the inter-event time gap and constraining the projection pathway with spectral-norm bounds, while the temporal-encoding pipeline supplies time-gap-aware neighbor aggregations and patch-level node representations that feed into the SSM scan. The combination of these two stages yields a representation in which older interactions are attenuated proportionally to their elapsed time, supporting selective reviewing of recent structural context.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-03-359984b4",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-COMPONENT-01-88e55e54",
+          "brief:story:O-COMPONENT-01-377afc18",
+          "brief:story:O-COMPONENT-02-c39dd898",
+          "brief:story:O-COMPONENT-04-6d73cce5",
+          "brief:story:O-COMPONENT-05-8cd85daa",
+          "brief:story:O-RATIONALE-CHECK-02-653d713f"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-e3de4791afd3b462",
+          "facet-fbcc6e92c1b73f4e",
+          "facet-4e742dc0e3b52bae",
+          "facet-9f2ea9661004e61a",
+          "facet-8ebd977fd8a0b89d",
+          "facet-0564bcda9bc954d9",
+          "facet-45205815214ce81d"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S3:1",
+          "paragraph:MA-S3:2",
+          "paragraph:MA-S3:3",
+          "paragraph:MA-S3:4",
+          "paragraph:MA-S3:5",
+          "paragraph:MA-S3:6",
+          "paragraph:MA-S3:7"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+          "slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+          "slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+          "slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+          "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+          "slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+          "slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+          "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+          "slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+          "slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+          "slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+          "slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-1",
+            "candidate_symbols_or_terms": [
+              "f(τ)",
+              "softplus",
+              "exponential",
+              "affine",
+              "spectral norm",
+              "diagonal matrix",
+              "negative real-part eigenvalues",
+              "exp(A·Δt)"
+            ],
+            "concept_key": "timespan_informed_deltat_and_A_redesign",
+            "evidence_refs_used": [
+              "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+            ],
+            "exact_question": "Which closed-form expression for the timespan-informed step size Δt(τ) and the diagonal state-transition matrix A (with strictly negative real-part eigenvalues) does the repository evidence support, and which specific code fragment or mathematical derivation binds the spectral-norm constraint on the redefined input/output projection matrices B and C?",
+            "missing_parts": [
+              "mechanism_overview",
+              "formula:section:MA-S3:derivation",
+              "formula:facet:facet-e3de4791afd3b462",
+              "formula:facet:facet-0564bcda9bc954d9",
+              "formula:facet:facet-45205815214ce81d"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S3:retry2:mechanism-overview",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-03-359984b4",
+              "brief:story:O-STAGE-02-e02cd0f2",
+              "brief:story:O-RATIONALE-CHECK-02-653d713f"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The overview paragraph must state the mechanism's mathematical specification (the form of Δt(τ), the A initialization, and the B/C spectral-norm constraint), but no accepted formula package or executable-hard evidence binds these expressions; without this the reader cannot verify how the timespan-aware forgetting is realized."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:1",
+            "paragraph_markdown": "This section specifies the timespan-aware forgetting mechanism within the SSM stage, where the step size and state-transition parameters are redesigned so that effective memory decay scales with elapsed interaction time, and the input–output projection pathway is constrained to bound selective-review gain. The forward pass of the `MambaTimeDelta` module and the temporal-encoding pipeline of `GraphMixer` and `DyGFormer` jointly implement the mechanism. The mathematical closed form for the timespan-informed step size and the spectral-norm constraint on the redefined projection matrices are intended design specifications pending formal derivation; no accepted closed-form expression is currently available from the repository evidence.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:2",
+            "paragraph_markdown": "The forward pass of the `MambaTimeDelta` module branches on whether time-aware mode is active and a time-delta tensor is provided (`self.time_mamba and dts != None`). Under this condition, the input projection applies the learned weight matrix to the reshaped hidden states, mapping from a per-token layout to a sequence-major layout suitable for the SSM scan. A bias term is broadcast across the sequence dimension and added to the projected output. The module returns the processed output tensor after the scan and gating stages complete.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:3",
+            "paragraph_markdown": "The temporal-encoding pipeline of the `DyGFormer` component begins by retrieving first-hop neighbor identifiers, associated edge identifiers, and interaction timestamps for a set of destination nodes, with a robustness-rate parameter filtering the sampled neighbors (`case_study`). The `GraphMixer` component computes a weighted aggregation in which neighbor raw features are multiplied element-wise by attention scores and summed, producing a time-gap-aware neighbor representation. The `DyGFormer` pipeline concatenates source and destination neighbor feature tensors along the feature dimension, and the combined embedding is returned as the temporal node representation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:4",
+            "paragraph_markdown": "The `GraphMixer` component concatenates raw edge features and neighbor time-gap features along the feature dimension to form a combined representation. A weighted aggregation multiplies neighbor raw features by attention scores and sums over the neighbor dimension, yielding a time-gap-aware neighbor embedding. The final node embedding is produced by concatenating the raw node feature lookup with the combined temporal features, and the resulting tensor is returned as the node-level representation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:5",
+            "paragraph_markdown": "In the patching stage, raw edge features and neighbor time-gap features are concatenated along the feature dimension to form a combined tensor. The `DyGFormer` component, under the condition that the patch index is zero and case-study mode is active (`i == 0 and case_study`), mean-reduces the destination patch data over the patch dimension to produce a compact embedding. The source and destination node embeddings are then returned as the output of the temporal-encoding stage.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:6",
+            "paragraph_markdown": "The `DyGFormer` component, under the condition that the patch index is zero and case-study mode is active (`i == 0 and case_study`), computes the number of source and destination patches and stacks the patch data along a new sequence dimension to form a three-dimensional patch tensor. The intended timespan-aware forgetting specification makes the SSM step size a monotonically increasing function of the inter-event time gap, so that larger gaps produce larger effective step sizes and the state decays proportionally to elapsed time; the state-transition matrix is intended to be initialized with strictly negative real-part eigenvalues to guarantee stable decay, and the input and output projection matrices are intended to carry spectral-norm constraints bounding the selective-review gain. These mathematical specifications are intended design goals; no accepted closed-form expression for the timespan-informed step size, the diagonal state-transition initialization, or the spectral-norm constraint is currently available from the repository evidence.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:7",
+            "paragraph_markdown": "The timespan-aware forgetting mechanism thus operates by coupling the SSM step size to the inter-event time gap and constraining the projection pathway with spectral-norm bounds, while the temporal-encoding pipeline supplies time-gap-aware neighbor aggregations and patch-level node representations that feed into the SSM scan. The combination of these two stages yields a representation in which older interactions are attenuated proportionally to their elapsed time, supporting selective reviewing of recent structural context.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+        "section_markdown": "## Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity\n\nThis section describes the downstream adaptation stage, in which fixed-size node embeddings are read out from the sequential SSM output and fed into task-specific prediction heads for link prediction and node classification (intended). The EdgeBank memory-based link-prediction pipeline is the supported mechanism; the specific pooling-and-MLP head architecture and the linear computational complexity note are intended design specifications not directly visible in the supplied repository fragments (unverified).\n\nThe EdgeBank link-prediction pipeline accepts a set of positive edges and a set of negative edges as inputs and writes out corresponding probability arrays. The edge-memory structure is constructed by `edge_bank_unlimited_memory`, which takes the full history of source and destination node identifiers and returns the resulting edge-memory tensor. For the negative edge set, `predict_link_probabilities` is called with the shared edge-memory tensor and the candidate edge pairs, writing out `negative_probabilities` as the pipeline output; the positive edge set is handled symmetrically to produce `positive_probabilities`.\n\nThe `predict_link_probabilities` function accepts source and destination node identifier arrays and branches on the condition `(`(src_node_id, dst_node_id) in edge_memories`)`: when the pair is present in the edge memory the probability is set to 1.0, otherwise it is set to 0.0. Intended for the two-encoder link-prediction head, MEAN pooling over the sequence dimension collapses per-timestep hidden states into a fixed-size vector, and an MLP head is intended to follow this pooled representation to produce a scalar link-prediction score or a class probability distribution for node classification (intended; the MEAN pooling is confirmed in DyGFormer and GraphMixer, but the subsequent MLP head is not visible in the supplied fragments). When an edge feature is unavailable for a given interaction, a zero vector is substituted so that the encoding remains well-defined without introducing spurious signal (intended).",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-04-a52145c2",
+          "brief:story:O-STAGE-04-a3a3e8ab",
+          "brief:story:O-COMPONENT-03-2ae65141",
+          "brief:story:O-COMPONENT-08-48efa86a"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-500349fe9389866d",
+          "facet-4d1239a88d3c0fce",
+          "facet-9d9902649b1ee4a5"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S4:1",
+          "paragraph:MA-S4:2",
+          "paragraph:MA-S4:3"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+          "slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+          "slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+          "slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+          "slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+          "slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+          "slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [
+          "MA-S4:unit-1",
+          "MA-S4:unit-2"
+        ],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "concept_key": "mechanism_overview",
+            "current_known_facts": [
+              "EdgeBank link-prediction pipeline: edge_bank_link_prediction writes positive_probabilities and negative_probabilities via predict_link_probabilities",
+              "edge_bank_unlimited_memory constructs edge_memories from full interaction history (src_node_ids, dst_node_ids)",
+              "predict_link_probabilities branches on membership in edge_memories, returning 1.0 or 0.0 per candidate",
+              "MEAN pooling over sequence dimension confirmed in DyGFormer and GraphMixer",
+              "No evidence shows an MLP head following mean-pooled embeddings for link prediction or node classification",
+              "No evidence confirms the linear computational complexity claim for the downstream adaptation stage"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What repository evidence (code, documentation, or test) demonstrates that the downstream prediction stage reads out fixed-size node embeddings from the sequential SSM output and produces task-specific predictions for link prediction and node classification, including the specific pooling-and-MLP head architecture and any stated linear computational complexity bound?",
+            "missing_parts": [
+              "mechanism_overview"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S4:unit-1:mechanism_overview:1",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-a52145c2",
+              "brief:story:O-STAGE-04-a3a3e8ab"
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The section heading promises an overview of how the downstream adaptation stage realizes both link prediction and node classification with a note on linear computational complexity, but no repository evidence currently anchors the mechanism_overview move that would connect the sequential SSM output to task-specific prediction heads and justify the complexity claim."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:1",
+            "paragraph_markdown": "This section describes the downstream adaptation stage, in which fixed-size node embeddings are read out from the sequential SSM output and fed into task-specific prediction heads for link prediction and node classification (intended). The EdgeBank memory-based link-prediction pipeline is the supported mechanism; the specific pooling-and-MLP head architecture and the linear computational complexity note are intended design specifications not directly visible in the supplied repository fragments (unverified).",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:2",
+            "paragraph_markdown": "The EdgeBank link-prediction pipeline accepts a set of positive edges and a set of negative edges as inputs and writes out corresponding probability arrays. The edge-memory structure is constructed by `edge_bank_unlimited_memory`, which takes the full history of source and destination node identifiers and returns the resulting edge-memory tensor. For the negative edge set, `predict_link_probabilities` is called with the shared edge-memory tensor and the candidate edge pairs, writing out `negative_probabilities` as the pipeline output; the positive edge set is handled symmetrically to produce `positive_probabilities`.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:3",
+            "paragraph_markdown": "The `predict_link_probabilities` function accepts source and destination node identifier arrays and branches on the condition `(`(src_node_id, dst_node_id) in edge_memories`)`: when the pair is present in the edge memory the probability is set to 1.0, otherwise it is set to 0.0. Intended for the two-encoder link-prediction head, MEAN pooling over the sequence dimension collapses per-timestep hidden states into a fixed-size vector, and an MLP head is intended to follow this pooled representation to produce a scalar link-prediction score or a class probability distribution for node classification (intended; the MEAN pooling is confirmed in DyGFormer and GraphMixer, but the subsequent MLP head is not visible in the supplied fragments). When an edge feature is unavailable for a given interaction, a zero vector is substituted so that the encoding remains well-defined without introducing spurious signal (intended).",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Robust selective reviewing",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Robust selective reviewing",
+        "section_markdown": "## Robust selective reviewing\n\nThe FilterLayer operates on the SSM hidden states to perform input-dependent filtering of historical interaction information. Its forward pass computes a weighted sum in which the input tensor is multiplied by a learned weight and the resulting terms are aggregated by a sum, producing a filtered representation that modulates the contribution of each historical state to the current prediction context. This aggregation constitutes the selective reviewing mechanism: the learned weighting reinforces the contribution of informative interactions while attenuating less relevant components of the interaction history. The intended design further specifies that the input-dependent projection matrices $B$ and $C$ are constrained by spectral norm bounds (W_B_2 $, W_C_2 $) to maintain stability, and that the continuous state-space formulation redefines the step size $t$ as a function of the inter-interaction timespan with the state transition matrix $A$ initialized as a stable diagonal; these specifications remain pending formal derivation and repository confirmation.\n\nThe DyG-Mamba SSM core replaces the standard discrete state-space model with a continuous formulation tailored to irregular interaction sequences. The step size is made timespan-dependent so that larger gaps between consecutive interactions induce stronger state decay, implementing a timespan-aware forgetting mechanism. The state transition matrix is initialized as a stable diagonal with eigenvalues having negative real parts, ensuring bounded state evolution. The input and output projection matrices are made input-dependent and intended to be constrained via spectral norm to limit sensitivity to noisy transitions, providing noise-robust reviewing of the interaction history.\n\nThe FilterLayer's weighted-sum aggregation over the SSM hidden states, combined with the timespan-dependent step size and stable diagonal initialization of the state transition matrix, constitutes the robust selective reviewing stage: input-dependent filtering reinforces important interactions and suppresses noise while the continuous formulation handles irregular interaction timing without explicit sequence alignment.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-03-d47a86f4",
+          "brief:story:O-COMPONENT-07-c430eb84",
+          "brief:story:O-RATIONALE-CHECK-03-117025ca"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-9a8892286042413e",
+          "facet-85dd07572b8a77e2",
+          "facet-e343d4bc111c5b77",
+          "facet-3f8317dd772533f4"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-1",
+            "concept_key": "",
+            "current_known_facts": [],
+            "evidence_refs_used": [],
+            "exact_question": "Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A?",
+            "missing_parts": [
+              "spectral norm constraint evidence",
+              "continuous SSM formulation with redefined Δt",
+              "stable diagonal initialization of A",
+              "input-dependent B/C with norm bounds"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "priority": "medium",
+            "request_id": "request:MA-S5:unit-1:mechanism",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S5",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-STAGE-03-d47a86f4",
+              "brief:story:O-COMPONENT-07-c430eb84",
+              "brief:story:O-RATIONALE-CHECK-03-117025ca"
+            ],
+            "target_clause_ids": [
+              "facet-85dd07572b8a77e2",
+              "facet-e343d4bc111c5b77",
+              "facet-3f8317dd772533f4",
+              "facet-e36d367d850a8273"
+            ],
+            "why_needed_for_reader": "The section's reader question asks how the DyG-Mamba SSM core realizes the continuous state-space model with redefined Δt and stable diagonal A. Without repository evidence binding these mathematical specifications, the method section cannot present the core mechanism as verified fact; the author-intent specifications remain unconfirmed."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:1",
+            "paragraph_markdown": "The FilterLayer operates on the SSM hidden states to perform input-dependent filtering of historical interaction information. Its forward pass computes a weighted sum in which the input tensor is multiplied by a learned weight and the resulting terms are aggregated by a sum, producing a filtered representation that modulates the contribution of each historical state to the current prediction context. This aggregation constitutes the selective reviewing mechanism: the learned weighting reinforces the contribution of informative interactions while attenuating less relevant components of the interaction history. The intended design further specifies that the input-dependent projection matrices $B$ and $C$ are constrained by spectral norm bounds ($$W_B$$_2 $, $$W_C$$_2 $) to maintain stability, and that the continuous state-space formulation redefines the step size $t$ as a function of the inter-interaction timespan with the state transition matrix $A$ initialized as a stable diagonal; these specifications remain pending formal derivation and repository confirmation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:2",
+            "paragraph_markdown": "The DyG-Mamba SSM core replaces the standard discrete state-space model with a continuous formulation tailored to irregular interaction sequences. The step size is made timespan-dependent so that larger gaps between consecutive interactions induce stronger state decay, implementing a timespan-aware forgetting mechanism. The state transition matrix is initialized as a stable diagonal with eigenvalues having negative real parts, ensuring bounded state evolution. The input and output projection matrices are made input-dependent and intended to be constrained via spectral norm to limit sensitivity to noisy transitions, providing noise-robust reviewing of the interaction history.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:3",
+            "paragraph_markdown": "The FilterLayer's weighted-sum aggregation over the SSM hidden states, combined with the timespan-dependent step size and stable diagonal initialization of the state transition matrix, constitutes the robust selective reviewing stage: input-dependent filtering reinforces important interactions and suppresses noise while the continuous formulation handles irregular interaction timing without explicit sequence alignment.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S2"
+  ],
+  "incomplete_section_ids": [
+    "MA-S1",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:writer_output_incomplete",
+    "MA-S2:invalid_writing_research_callback:transition_to_next_section@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:missing_writing_research_callback:mechanism_overview",
+    "MA-S3:invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-1/executable_hard",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:missing_writing_research_callback:mechanism_overview",
+    "MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+    "MA-S4:missing_required_briefs:brief:story:O-RATIONALE-CHECK-01-106180a0",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/expository_bridge",
+    "rewrite:unknown_style_section:MA-S3",
+    "rewrite:unknown_style_section:MA-S4",
+    "rewrite:unknown_style_section:MA-S1",
+    "formalization_required_obligation_unresolved:MA-S1:formula:section:MA-S1:derivation,formula:facet:facet-9a1ed70668b9de25",
+    "formalization_required_obligation_unresolved:MA-S3:formula:section:MA-S3:derivation,formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:facet:facet-45205815214ce81d",
+    "formalization_required_obligation_unresolved:MA-S5:formula:section:MA-S5:derivation,formula:facet:facet-85dd07572b8a77e2,formula:facet:facet-e343d4bc111c5b77,formula:facet:facet-3f8317dd772533f4,formula:facet:facet-e36d367d850a8273"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+        "text_length": 3742,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;missing_exact_witness:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;missing_exact_witness:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation"
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "text_length": 525,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+        "text_length": 813,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S3:2;missing_paragraph_transaction:paragraph:MA-S3:3;missing_paragraph_transaction:paragraph:MA-S3:4;missing_paragraph_transaction:paragraph:MA-S3:5;missing_paragraph_transaction:paragraph:MA-S3:6;missing_paragraph_transaction:paragraph:MA-S3:7"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+        "text_length": 1649,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:1;missing_paragraph_transaction:paragraph:MA-S4:4;missing_paragraph_transaction:paragraph:MA-S4:5;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Robust selective reviewing",
+        "text_length": 1831,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3;required_target_contract:paragraph:MA-S5:1:formula:formula:section:MA-S5:derivation"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2182
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2f440b05eb31c4d3f3764fe4ba42f5fed44f4c4b2ae3ba8bf00a39ed289ed4a5",
+        "response_hash": "sha256:7f3e8c0f626ee6454452b9cff133f8191f15e65568b6d4102412f10b2d7a8c1b",
+        "prompt_chars": 3758,
+        "input_payload_chars": 32069,
+        "schema_chars": 9793,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2182
+      },
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1842
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:f34226bf725277289762f303dc4edc4a21b5c3530534861fa76ee6117ec0ac05",
+        "response_hash": "sha256:a462a9ebfd7b8b82b1260792392d0155d6d7a6389162c96d15fbee72f9aae231",
+        "prompt_chars": 3758,
+        "input_payload_chars": 48667,
+        "schema_chars": 9793,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4024
+      },
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1930
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:e70957263f7094e4163610329edefc3b2b33ede922bd2ea585ceea7bd4d98cb6",
+        "response_hash": "sha256:68b55820313b5708c2c1033f358033449b1f82e1e0b4cddb19b83e558a0e462e",
+        "prompt_chars": 3758,
+        "input_payload_chars": 48699,
+        "schema_chars": 9793,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5954
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:c6c2659479228bbc1b66388c1c73c81545f9a86c02498305fd3589ed836d61b6",
+        "response_hash": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+        "prompt_chars": 3758,
+        "input_payload_chars": 4387,
+        "schema_chars": 7160,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6085
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1663
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S3:2;missing_paragraph_transaction:paragraph:MA-S3:3;missing_paragraph_transaction:paragraph:MA-S3:4;missing_paragraph_transaction:paragraph:MA-S3:5;missing_paragraph_transaction:paragraph:MA-S3:6;missing_paragraph_transaction:paragraph:MA-S3:7",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:335294a563a92c77992afa3ab95917e385bc4995431da5acaee65d7e9986c5fd",
+        "response_hash": "sha256:7a27bea0ad0e147be67a71ee5fff99cefde80df48b60b98fc795dbb0a71ffbb1",
+        "prompt_chars": 3758,
+        "input_payload_chars": 47550,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 7748
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2338
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:d1b4629cf4084e17293f76a63bde8d1bcd1b2d5f6e4bb55e86b615d960d802b7",
+        "response_hash": "sha256:40122e53d1d1decfeeccc6c3d333921b77f415d9664481133b956c7de2df0023",
+        "prompt_chars": 3758,
+        "input_payload_chars": 63583,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 10086
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2344
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:5f25e2f5e85b354ec62415b7b58df1640fc2c00ce2fa75ab15ce32e6d185a2d5",
+        "response_hash": "sha256:7718ec9e8f514eea390c25ed55935264e9dd3112d85de9b0338cf6f4c9c7b254",
+        "prompt_chars": 3758,
+        "input_payload_chars": 63615,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 12430
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 753
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:2;missing_paragraph_transaction:paragraph:MA-S4:3;missing_paragraph_transaction:paragraph:MA-S4:4;missing_paragraph_transaction:paragraph:MA-S4:5",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:43b37b3925124e4feac6fbe393190a4628b3b16bcbf8d31ddfb5aebf25c31a59",
+        "response_hash": "sha256:722e23fafde7d4efca14781d97bd24760052bb783a533cedf574e412fea78969",
+        "prompt_chars": 3758,
+        "input_payload_chars": 22046,
+        "schema_chars": 9519,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 13183
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2327
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:227050842324cb12ec48e842d942851ca0de3117a1737886effe900f4f5e4d43",
+        "response_hash": "sha256:d1c8eb252bbf4af3553370fc98bd065eee671b9f2bfa02cb250be2402667fe7d",
+        "prompt_chars": 3758,
+        "input_payload_chars": 30730,
+        "schema_chars": 9519,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 15510
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1616
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:006f1aebb4cb80baa48d0efcdb50e2dcada49bc219124f30a09e3bfafc26f3e8",
+        "response_hash": "sha256:4f4e22e770bda0ab68b83fb0b35b2afa0034c666b8160de1d96b63cb464a2917",
+        "prompt_chars": 3758,
+        "input_payload_chars": 30762,
+        "schema_chars": 9519,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 17126
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 7450,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1580
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272;missing_exact_witness:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3;required_target_contract:paragraph:MA-S5:1:formula:formula:section:MA-S5:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:dcd036e7cf9aa2811cf2fcfba270cfa6355cda9efc281e970cfa50a27c7e63a7",
+        "response_hash": "sha256:e7a886a1cba79de61c251baacef8305b15470b15b809ea061e37c941b4bd4866",
+        "prompt_chars": 3758,
+        "input_payload_chars": 19915,
+        "schema_chars": 8198,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 18706
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 5870,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 909
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S5:1",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:414fcd10dcb4089286cf6e2023e12a8ff0f780022f90f50b7256572ec8773cbf",
+        "response_hash": "sha256:c501ceaf19093f55bd3a6a3c23d777b759fcb617dc568a4c60d329a1091bf325",
+        "prompt_chars": 3758,
+        "input_payload_chars": 29222,
+        "schema_chars": 8198,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 19615
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 4961,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1117
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272;required_target_contract:paragraph:MA-S5:1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3;required_target_contract:paragraph:MA-S5:1:formula:formula:section:MA-S5:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:cbe4c1f5f448903b4f9862948e11e77951a68f4b181249021bc8f4f537ed6ea9",
+        "response_hash": "sha256:138b144667751f5039bda4099931f844bb44e98152e6c0d5564d509fd55d68e5",
+        "prompt_chars": 3758,
+        "input_payload_chars": 29254,
+        "schema_chars": 8198,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 20732
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2087
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;missing_exact_witness:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;missing_exact_witness:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;missing_exact_witness:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2fd4705ea213bf4a21eb9c4af2b0bdb4492444ef75580ccd4ec40f622eceea79",
+        "response_hash": "sha256:9b246b663b9004ee85c60ea1998eaacc4b458ee901c90693839fdb928086d18f",
+        "prompt_chars": 3758,
+        "input_payload_chars": 36016,
+        "schema_chars": 9793,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2087
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S1-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1539
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad;required_target_contract:paragraph:MA-S1:2:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d;required_target_contract:paragraph:MA-S1:3:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69;required_target_contract:paragraph:MA-S1:3:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:83100cd290743b814755c864b61967d25e7a90146ed4a5ad31437a4b8fa0c5e3",
+        "response_hash": "sha256:bb38610901f0a9b4cc668517bc4bbda3c57b358a36e4b1760545b4276b9b0ee7",
+        "prompt_chars": 3758,
+        "input_payload_chars": 51551,
+        "schema_chars": 9793,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3626
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-1-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2099
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:e5885df062a95cc97cf3f08059f37f03f940730c51acdc0d9861e229ec6f0d72",
+        "response_hash": "sha256:7a101b8cfa940cc4e08c00e58a9d3d4f8b86752eb7f171ccc055907a38e44f8f",
+        "prompt_chars": 3758,
+        "input_payload_chars": 52724,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5725
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-1-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 674
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S3:2;missing_paragraph_transaction:paragraph:MA-S3:3;missing_paragraph_transaction:paragraph:MA-S3:4;missing_paragraph_transaction:paragraph:MA-S3:5;missing_paragraph_transaction:paragraph:MA-S3:6;missing_paragraph_transaction:paragraph:MA-S3:7",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2bf67b843572190774801db7ed87936dc1572867abed0cf6eb66441eb9f33683",
+        "response_hash": "sha256:8cf4e1f0e44bf6e977fdde8d202f477302948db0076fe66cdaa58dc638a84d1b",
+        "prompt_chars": 3758,
+        "input_payload_chars": 72012,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6399
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-1-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 2196
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814;required_target_contract:paragraph:MA-S3:6:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216;required_target_contract:paragraph:MA-S3:6:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:d4de9196f9787fe21e07a0f98031b35e185ce2e2421a5c9c21e96267aeae9181",
+        "response_hash": "sha256:64a8e6624a923c7d22b0cc7227546c5fce256105fa74f6cd617885fb807c201c",
+        "prompt_chars": 3758,
+        "input_payload_chars": 68095,
+        "schema_chars": 12173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 8595
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-2-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1137
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:1;missing_paragraph_transaction:paragraph:MA-S4:4;missing_paragraph_transaction:paragraph:MA-S4:5;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;missing_exact_witness:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:552cafd4dbc3457c75b6e271bfa0b3f08a11b275082873ac7b7c88bd537467dd",
+        "response_hash": "sha256:167e358e5d8526dfbd46ad0dbfa37bb0c2a08594a1bd37b650bef6c2a8b1ed0b",
+        "prompt_chars": 3758,
+        "input_payload_chars": 26026,
+        "schema_chars": 9519,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 9732
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-2-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1481
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_paragraph_transaction:paragraph:MA-S4:4;missing_paragraph_transaction:paragraph:MA-S4:5;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:3:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:bd4400522488ff6b8ea4d0a899a72de87bdaee3595bfd5fc83175069c9f8008e",
+        "response_hash": "sha256:fbd7d66331d68a5cda45306272658622ee289abf8975e4206788f275b1d8292d",
+        "prompt_chars": 3758,
+        "input_payload_chars": 35660,
+        "schema_chars": 9519,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 11213
+      }
+    ],
+    "cumulative_budget_consumed": 20732,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 9161,
+    "incomplete_sections": [
+      "MA-S5"
+    ],
+    "research_request_count": 6,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7f3e8c0f626ee6454452b9cff133f8191f15e65568b6d4102412f10b2d7a8c1b",
+        "parsed_payload_digest": "sha256:d70a55f7e12a43f47cfe349668d0834465eda93eefa07b76b75c402e44f1d3cf"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:a462a9ebfd7b8b82b1260792392d0155d6d7a6389162c96d15fbee72f9aae231",
+        "parsed_payload_digest": "sha256:84c452ac2968bdb843987035da2b20e9a89f7c6b6d332fadfdaf1257ac109260"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:68b55820313b5708c2c1033f358033449b1f82e1e0b4cddb19b83e558a0e462e",
+        "parsed_payload_digest": "sha256:fded0f1bc05c900ccb3412fcfb54709b18c15c112f1320ec3ce51c3c519177df"
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+        "parsed_payload_digest": "sha256:d267b8927985588bd83a4631b2b00a05fb05f520ead3c62c671d4d578b15430e"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7a27bea0ad0e147be67a71ee5fff99cefde80df48b60b98fc795dbb0a71ffbb1",
+        "parsed_payload_digest": "sha256:e1cabda3dece65f626076946a047861c4e37a63b5c6b20e20740a4aae2208bc6"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:40122e53d1d1decfeeccc6c3d333921b77f415d9664481133b956c7de2df0023",
+        "parsed_payload_digest": "sha256:8e225777447eb8ee9aaf19f0a58871e0a6c47c5fa6f7feb54db8138cbf403262"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7718ec9e8f514eea390c25ed55935264e9dd3112d85de9b0338cf6f4c9c7b254",
+        "parsed_payload_digest": "sha256:baae9f305ffc4d83329eaa59d36d2bad92e654dd342ac7102812205cc61f51c1"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:722e23fafde7d4efca14781d97bd24760052bb783a533cedf574e412fea78969",
+        "parsed_payload_digest": "sha256:cc32b785ad461c5d8a8b9b979c989896d31f33dca125c81d4a3bc804930f6d1f"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d1c8eb252bbf4af3553370fc98bd065eee671b9f2bfa02cb250be2402667fe7d",
+        "parsed_payload_digest": "sha256:dfe9ab25450028e7869d87e6b0b6e5ae8ec4bc51d2f5d2c075868bb6c5f5e356"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:4f4e22e770bda0ab68b83fb0b35b2afa0034c666b8160de1d96b63cb464a2917",
+        "parsed_payload_digest": "sha256:ed12b3ce7d6c26b0f595791e3404ce22cccbfe583294f2870a330f9f93ab42cb"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e7a886a1cba79de61c251baacef8305b15470b15b809ea061e37c941b4bd4866",
+        "parsed_payload_digest": "sha256:05088607c81da9ed7ba74d3650e85925c86553f5ddf42dd0a3c065e86623474c"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c501ceaf19093f55bd3a6a3c23d777b759fcb617dc568a4c60d329a1091bf325",
+        "parsed_payload_digest": "sha256:886ffac418abdb1a7548acb8d7e21a5e41ec6be05199a401cbd359abc5181891"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:138b144667751f5039bda4099931f844bb44e98152e6c0d5564d509fd55d68e5",
+        "parsed_payload_digest": "sha256:18dcf2cc7efae8e54829089a0a790a5b1c98513507e51efc88890ef46fa7ae1c"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9b246b663b9004ee85c60ea1998eaacc4b458ee901c90693839fdb928086d18f",
+        "parsed_payload_digest": "sha256:a0fc8dbb6862f856929eecc4d3068c8877e62f935f3dfbf51b28f38fec474145"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:bb38610901f0a9b4cc668517bc4bbda3c57b358a36e4b1760545b4276b9b0ee7",
+        "parsed_payload_digest": "sha256:39b0f8de88f904ae6ec787d305eaa90939098cce9fe5a60f8d23cc5b8b479b3d"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7a101b8cfa940cc4e08c00e58a9d3d4f8b86752eb7f171ccc055907a38e44f8f",
+        "parsed_payload_digest": "sha256:da48f772974bd14ba403ca704b78d751db501b1f288c03463a035578e09e5a9e"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:8cf4e1f0e44bf6e977fdde8d202f477302948db0076fe66cdaa58dc638a84d1b",
+        "parsed_payload_digest": "sha256:95aaef08357fa87c71029d8ff0a6fe4c90d83e2bd25e683222f3ec89f42b3304"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:64a8e6624a923c7d22b0cc7227546c5fce256105fa74f6cd617885fb807c201c",
+        "parsed_payload_digest": "sha256:0593b296fec31902c55aeae7cb1ea32e257b226af19c787241f2702a3c135bdb"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:167e358e5d8526dfbd46ad0dbfa37bb0c2a08594a1bd37b650bef6c2a8b1ed0b",
+        "parsed_payload_digest": "sha256:eba7f9f357dd581d547104b9d0b61b27a743856d50a54273a3ca99a57e34ca7e"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:fbd7d66331d68a5cda45306272658622ee289abf8975e4206788f275b1d8292d",
+        "parsed_payload_digest": "sha256:ba2e10cda9d3249bbc839ca812fb174326a107bc774c4ea153fac6ecae51076c"
+      }
+    ],
+    "writer_repair_rounds": 8,
+    "writer_repair_commits": 0,
+    "writer_repair_no_progress_stops": 4,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S1",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "cca8358945a1e5f7dee488cd08a3bfba421239f028a8726034a269c81bf20721",
+        "candidate_digest": "c9fecbced3d2a4367e5f064675583c9edc65bef9626fec6e587d12b265230eac"
+      },
+      {
+        "section_id": "MA-S1",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "cca8358945a1e5f7dee488cd08a3bfba421239f028a8726034a269c81bf20721",
+        "candidate_digest": "aadc27bea57e4700257b32b8a10200f19d14728e4a3b090668ba7f3f1972c18a"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "5368647232105788f287bbb87aa68765ffa0f2757415e85d832e522c11a9bff5",
+        "candidate_digest": "ecd5826e37da3867c421940f74fc4916120d355f2e39fd6fb9cecf7ce0a9b596"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "5368647232105788f287bbb87aa68765ffa0f2757415e85d832e522c11a9bff5",
+        "candidate_digest": "f5a00fba8c59270ef7e7721200e313d8b9677b115a6137d0347ae95320cb9bde"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "5c1bc17b79b107562c48944911a691b6cfd0980679cf7b372a25aa2023b9bc26",
+        "candidate_digest": "891de166e32d1ef9e05cda015d50e41c1d4e3b245f619ea831112e8dc2d25144"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "5c1bc17b79b107562c48944911a691b6cfd0980679cf7b372a25aa2023b9bc26",
+        "candidate_digest": "40b492b3097bbb9400518cc6e090a7c714f69e63bd2600dd38a465beef573332"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "bd9dcf1c0a095109395d049ce9517887c806b9341e591465f8bac39279d7de45",
+        "candidate_digest": "2bdeecce835cc76ec54aff8ae72e0d88d9429d9dc39ba1fe1f0f531f12f77338"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_digest": "bd9dcf1c0a095109395d049ce9517887c806b9341e591465f8bac39279d7de45",
+        "candidate_digest": "08e04fc572f038c0b417d42564a910a260cf94c790bedab720f991f02a2fcafb"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:7f3e8c0f626ee6454452b9cff133f8191f15e65568b6d4102412f10b2d7a8c1b",
+      "parsed_payload_digest": "sha256:d70a55f7e12a43f47cfe349668d0834465eda93eefa07b76b75c402e44f1d3cf"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:a462a9ebfd7b8b82b1260792392d0155d6d7a6389162c96d15fbee72f9aae231",
+      "parsed_payload_digest": "sha256:84c452ac2968bdb843987035da2b20e9a89f7c6b6d332fadfdaf1257ac109260"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:68b55820313b5708c2c1033f358033449b1f82e1e0b4cddb19b83e558a0e462e",
+      "parsed_payload_digest": "sha256:fded0f1bc05c900ccb3412fcfb54709b18c15c112f1320ec3ce51c3c519177df"
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+      "parsed_payload_digest": "sha256:d267b8927985588bd83a4631b2b00a05fb05f520ead3c62c671d4d578b15430e"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:7a27bea0ad0e147be67a71ee5fff99cefde80df48b60b98fc795dbb0a71ffbb1",
+      "parsed_payload_digest": "sha256:e1cabda3dece65f626076946a047861c4e37a63b5c6b20e20740a4aae2208bc6"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:40122e53d1d1decfeeccc6c3d333921b77f415d9664481133b956c7de2df0023",
+      "parsed_payload_digest": "sha256:8e225777447eb8ee9aaf19f0a58871e0a6c47c5fa6f7feb54db8138cbf403262"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:7718ec9e8f514eea390c25ed55935264e9dd3112d85de9b0338cf6f4c9c7b254",
+      "parsed_payload_digest": "sha256:baae9f305ffc4d83329eaa59d36d2bad92e654dd342ac7102812205cc61f51c1"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:722e23fafde7d4efca14781d97bd24760052bb783a533cedf574e412fea78969",
+      "parsed_payload_digest": "sha256:cc32b785ad461c5d8a8b9b979c989896d31f33dca125c81d4a3bc804930f6d1f"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:d1c8eb252bbf4af3553370fc98bd065eee671b9f2bfa02cb250be2402667fe7d",
+      "parsed_payload_digest": "sha256:dfe9ab25450028e7869d87e6b0b6e5ae8ec4bc51d2f5d2c075868bb6c5f5e356"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:4f4e22e770bda0ab68b83fb0b35b2afa0034c666b8160de1d96b63cb464a2917",
+      "parsed_payload_digest": "sha256:ed12b3ce7d6c26b0f595791e3404ce22cccbfe583294f2870a330f9f93ab42cb"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:e7a886a1cba79de61c251baacef8305b15470b15b809ea061e37c941b4bd4866",
+      "parsed_payload_digest": "sha256:05088607c81da9ed7ba74d3650e85925c86553f5ddf42dd0a3c065e86623474c"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:c501ceaf19093f55bd3a6a3c23d777b759fcb617dc568a4c60d329a1091bf325",
+      "parsed_payload_digest": "sha256:886ffac418abdb1a7548acb8d7e21a5e41ec6be05199a401cbd359abc5181891"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:138b144667751f5039bda4099931f844bb44e98152e6c0d5564d509fd55d68e5",
+      "parsed_payload_digest": "sha256:18dcf2cc7efae8e54829089a0a790a5b1c98513507e51efc88890ef46fa7ae1c"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:9b246b663b9004ee85c60ea1998eaacc4b458ee901c90693839fdb928086d18f",
+      "parsed_payload_digest": "sha256:a0fc8dbb6862f856929eecc4d3068c8877e62f935f3dfbf51b28f38fec474145"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:bb38610901f0a9b4cc668517bc4bbda3c57b358a36e4b1760545b4276b9b0ee7",
+      "parsed_payload_digest": "sha256:39b0f8de88f904ae6ec787d305eaa90939098cce9fe5a60f8d23cc5b8b479b3d"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:7a101b8cfa940cc4e08c00e58a9d3d4f8b86752eb7f171ccc055907a38e44f8f",
+      "parsed_payload_digest": "sha256:da48f772974bd14ba403ca704b78d751db501b1f288c03463a035578e09e5a9e"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:8cf4e1f0e44bf6e977fdde8d202f477302948db0076fe66cdaa58dc638a84d1b",
+      "parsed_payload_digest": "sha256:95aaef08357fa87c71029d8ff0a6fe4c90d83e2bd25e683222f3ec89f42b3304"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:64a8e6624a923c7d22b0cc7227546c5fce256105fa74f6cd617885fb807c201c",
+      "parsed_payload_digest": "sha256:0593b296fec31902c55aeae7cb1ea32e257b226af19c787241f2702a3c135bdb"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:167e358e5d8526dfbd46ad0dbfa37bb0c2a08594a1bd37b650bef6c2a8b1ed0b",
+      "parsed_payload_digest": "sha256:eba7f9f357dd581d547104b9d0b61b27a743856d50a54273a3ca99a57e34ca7e"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:fbd7d66331d68a5cda45306272658622ee289abf8975e4206788f275b1d8292d",
+      "parsed_payload_digest": "sha256:ba2e10cda9d3249bbc839ca812fb174326a107bc774c4ea153fac6ecae51076c"
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "req:MA-S1:mechanism_overview:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:cb15cb10946e8b69442d3648c561f812261bfe0fa2beb1e5c5be788a3b5ad23d"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "req:MA-S3:retry2:mechanism-overview"
+      ],
+      "parsed_request_digests": [
+        "sha256:563cde5946240e33711ffec0a5fe175e0df7b8f6f930e468a8bce5198def9951"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "req:MA-S4:unit-1:mechanism_overview:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:2402270297ceae9889b431ccbb60d4cdf9eb90146fb74befce0535ce9cfd2601"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:9b246b663b9004ee85c60ea1998eaacc4b458ee901c90693839fdb928086d18f",
+      "request_ids": [
+        "req:MA-S1:mechanism_overview:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:cb15cb10946e8b69442d3648c561f812261bfe0fa2beb1e5c5be788a3b5ad23d"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:transition_to_next_section"
+      ],
+      "raw_response_hash": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+      "request_ids": [
+        "req:MA-S2:1:unit:000001"
+      ],
+      "parsed_request_digests": [
+        "sha256:793c682a56bb1cc9f407e508bca723f62c2c848eff8bdacf3e9e65bd2ca0b0fd"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:8cf4e1f0e44bf6e977fdde8d202f477302948db0076fe66cdaa58dc638a84d1b",
+      "request_ids": [
+        "req:MA-S3:retry2:mechanism-overview"
+      ],
+      "parsed_request_digests": [
+        "sha256:563cde5946240e33711ffec0a5fe175e0df7b8f6f930e468a8bce5198def9951"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:167e358e5d8526dfbd46ad0dbfa37bb0c2a08594a1bd37b650bef6c2a8b1ed0b",
+      "request_ids": [
+        "req:MA-S4:unit-1:mechanism_overview:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:2402270297ceae9889b431ccbb60d4cdf9eb90146fb74befce0535ce9cfd2601"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:e7a886a1cba79de61c251baacef8305b15470b15b809ea061e37c941b4bd4866",
+      "request_ids": [
+        "request:MA-S5:unit-1:mechanism"
+      ],
+      "parsed_request_digests": [
+        "sha256:56868716d966ecb1a305ae63d68a17301c2d34059246d2a7090f4081beb9dafc"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    }
+  ],
+  "final_text_digest": "sha256:24c1b591033473d14967744df52a074111a2ad5adc49603e58f3249a8e829027",
+  "authorship_ledger_digest": "sha256:fa751c69aa40e5bdad46c99802bd4a9a68ddc3293dce87d7f3eeb6838c18ab47",
+  "publication_quality_digest": "sha256:e868169db2e9645ae1c8614e044ccabb40094b1372ba5f619d79bdaac59be11f",
+  "rewrite_transition_digest": "sha256:c4dd3185bed4ed7ce8be29ab71e4dbb0f3aa2afeeb8aa46869223f18f13fd19d",
+  "callback_bundle_digest": "sha256:14e274b75d57c9f9679b08c49d48d79201d0ca2df7b9709cda140184e2405ecf",
+  "transaction_assessment_digest": "sha256:a74e0d39afb231c36def35d7b55c727de55a25f2bf2e386ffe0be20fc4c36264",
+  "rendered_text_digest": "sha256:04b3a4aa34065df515a0e17ab2b7471c712f2c5a87a3f0c3e13fc8e603e20215",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 3,
+    "major": 69,
+    "minor": 0
+  },
+  "verified_validation_status": "incomplete",
+  "publication_ready": false,
+  "content_digest": "sha256:e5ca7f658f28251fbe7c9df9e4b5a101cb455cc72a63954b55c4c3613c056d28"
+}

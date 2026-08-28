@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "request:MA-S5:unit-1:mechanism",
+      "lane": "expository_bridge",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "exact_question": "Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A.",
+      "needed_evidence": [
+        "SSM",
+        "Δt",
+        "spectral",
+        "constraint",
+        "continuous",
+        "formulation",
+        "redefined",
+        "diagonal",
+        "initialization",
+        "input-dependent",
+        "norm",
+        "stable",
+        "B",
+        "C",
+        "bounds"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "request:MA-S5:unit-1:mechanism"
+      ],
+      "content_digest": "sha256:db58bbf1109c2065846abbcec5443a58da89ebccb2890086642dc87f9be31518"
+    }
+  ]
+}

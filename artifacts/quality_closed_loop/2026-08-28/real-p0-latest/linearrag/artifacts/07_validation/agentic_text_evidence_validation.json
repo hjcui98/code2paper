@@ -1,0 +1,43 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:d94d01653ba85aa94020cdc77f721e07566b5d229276d2141c0bd12dc22175fb",
+  "projection_digest": "sha256:bea0e3803822b2f0d7aee819f09d3f05e5b1cd1895db9226b9483e667fdb2b44",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 1,
+  "supported_claims": 0,
+  "caveated_claims": 0,
+  "unsupported_claims": 1,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing; allowed_wording_boundary_exceeded",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

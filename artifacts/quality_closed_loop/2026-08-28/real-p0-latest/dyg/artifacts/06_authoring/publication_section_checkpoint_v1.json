@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.1",
+  "checkpoint_format": "immutable_section_refs_v1",
+  "sections": {
+    "MA-S2": {
+      "output_ref": "immutable_section_checkpoints/75e410280622aa948893e8e12563ac1dd7f9d75d629c9a6d348442e0381f4ab9.json",
+      "output_digest": "sha256:cfcc6e121e941f5933c598c45a4defa68e0326f72a70745d6a7d15d3810fffc6",
+      "response_ref": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61"
+    }
+  },
+  "proposition_set_digest": "",
+  "content_digest": "sha256:51ae892c59ddef585b20cc62a667d8f27559fec35cbfb1e390f3983ba2b74e4d"
+}

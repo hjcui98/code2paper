@@ -1,0 +1,1365 @@
+{
+  "project_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "author_mode": "none",
+  "author_confirmation_required": true,
+  "method_name": "DyG-Mamba",
+  "method_goal": "Describe only the code-supported claims in the authoring projection.",
+  "implementation_scope": "/data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs",
+  "latex_expression_preference": "balanced",
+  "entrypoints": [
+    "evaluate_link_prediction.py",
+    "evaluate_link_prediction_robustness_test.py",
+    "evaluate_models_utils.py",
+    "evaluate_node_classification.py",
+    "models/CAWN.py",
+    "models/DyGFormer.py",
+    "models/DyGMamba.py",
+    "models/EdgeBank.py"
+  ],
+  "stages": [
+    {
+      "stage_id": "SG-INTENT-01-06d7de36",
+      "name": "Dynamic graph encoding",
+      "purpose": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_1",
+          "description": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-2ac30cfdb4ac55c0",
+            "E-V3-61b3e8598346673f",
+            "E-V3-6403334467ca1ebe",
+            "E-V3-68ad2137082b6c7c",
+            "E-V3-721af3bed64e36eb",
+            "E-V3-7d0ed56d3c2faace",
+            "E-V3-ba114509db996be1",
+            "E-V3-df9846e743913840",
+            "E-V3-e3c852e66f6316aa",
+            "E-V3-f6a4e2c4a727115d",
+            "E-V3-f9a18332614e23b5"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-02-e02cd0f2",
+      "name": "Timespan-aware forgetting in SSM",
+      "purpose": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_2",
+          "description": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-154be4073d0e8b12",
+            "E-V3-3abf043f861a82b1",
+            "E-V3-4fe8b195f81f2702",
+            "E-V3-6310adf1f6bc7a8c"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-03-d47a86f4",
+      "name": "Robust selective reviewing",
+      "purpose": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_3",
+          "description": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-10fa5fb8d962fce8",
+            "E-V3-79adf9fa9ba3d113",
+            "E-V3-d52513a072a30df8"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-04-a3a3e8ab",
+      "name": "Downstream prediction",
+      "purpose": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_4",
+          "description": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-08d0db95e6f9d07a",
+            "E-V3-1115d2d9feca6d4a",
+            "E-V3-1ff5b48fe8916c23",
+            "E-V3-3fbeee89953a9ab8",
+            "E-V3-45cabc4def685d51",
+            "E-V3-5c6f05b6808020d9",
+            "E-V3-6b61d317f0580994",
+            "E-V3-75caa7237a42b9ce",
+            "E-V3-7e37469e71269dd3"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_5",
+          "description": "Executable details supporting the method beyond the named pipeline stages.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-00eb27fa4a004bf9",
+            "E-V3-122831fe45abc2a1",
+            "E-V3-176b1788f8ed81d6",
+            "E-V3-18050cadcc17f30e",
+            "E-V3-28eb300d40d08827",
+            "E-V3-32538fd395ee1906",
+            "E-V3-3613b65af28ba707",
+            "E-V3-6047ec92f6c44ba8",
+            "E-V3-81bc9cc199ff2f0e",
+            "E-V3-84513e1a4669dc80",
+            "E-V3-8bad2f57af46779e",
+            "E-V3-8cf7771f62f5c889",
+            "E-V3-bf2f65f2f72b484d",
+            "E-V3-c82311ea3fd55b72",
+            "E-V3-d796db70e52483f3",
+            "E-V3-ec7801067cd0a7d8"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    }
+  ],
+  "behavior_patterns": [],
+  "equation_candidates": [
+    {
+      "equation_id": "EQ-V3-66a95df33b8de8bb",
+      "name": "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-1412f2f5c172af10",
+      "name": "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-9beab325cd7a2152",
+      "name": "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-018a380a5e6e9939",
+      "name": "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-93c24dea8f8ddade",
+      "name": "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-199f87e99eb4f3a5",
+      "name": "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-bb964b2272944dca",
+      "name": "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-61724ba294703210",
+      "name": "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": []
+    },
+    {
+      "equation_id": "EQ-V3-35074754d3f31df4",
+      "name": "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-f28b138318d1881d",
+      "name": "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-39e3dab5c791772a",
+      "name": "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-fbacad9933bff5de",
+      "name": "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    }
+  ],
+  "architecture_parameters": [],
+  "tensor_roles": [],
+  "innovation_candidates": [],
+  "paper_module_aliases": [],
+  "method_overview": {},
+  "stage_packets": [
+    {
+      "stage_id": "SG-INTENT-01-06d7de36",
+      "name": "Dynamic graph encoding",
+      "purpose": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "stage_claim": "DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, dst_padded_data, dim=2, result=dst_padded_data DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, dst_router_logits, dim=1, dtype=torch.float, result=dst_routing_weights DyGMamba.compute_src_dst_node_temporal_embeddings selects top k torch.topk, dst_routing_weights, min(self.top_k, dst_seq_len), dim=1, result=(dst_routing_weights, dst_selected_embeddings) DyGMamba.compute_src_dst_node_temporal_embeddings reduces (src_padded_data * src_routing_weights_expand).sum, 1, result=src_padded_data DyGMamba.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings) DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, src_router_logits, dim=1, dtype=torch.float, result=src_routing_weights DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, src_padded_data, dim=2, result=src_padded_data DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list, nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times) DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list, nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+      "claim_ids": [
+        "C-V3-1c4b6fd1bf52056d",
+        "C-V3-e63cd0230480a5b3",
+        "C-V3-d979edcb0ffb380f",
+        "C-V3-7f66b29c689f296a",
+        "C-V3-54704b2394fd7578",
+        "C-V3-41df4f28995228f8",
+        "C-V3-ee2ad7da1f7d585c",
+        "C-V3-b9ead715741dd6fe",
+        "C-V3-42e35540fe6ea152",
+        "C-V3-80bd147c7ecdedcb",
+        "C-V3-0dad078f8b426ca1"
+      ],
+      "evidence_ids": [
+        "E-V3-2ac30cfdb4ac55c0",
+        "E-V3-7d0ed56d3c2faace",
+        "E-V3-f9a18332614e23b5",
+        "E-V3-68ad2137082b6c7c",
+        "E-V3-61b3e8598346673f",
+        "E-V3-ba114509db996be1",
+        "E-V3-721af3bed64e36eb",
+        "E-V3-f6a4e2c4a727115d",
+        "E-V3-6403334467ca1ebe",
+        "E-V3-e3c852e66f6316aa",
+        "E-V3-df9846e743913840"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-01-06d7de36"
+      ],
+      "organization_priority": 1
+    },
+    {
+      "stage_id": "SG-INTENT-02-e02cd0f2",
+      "name": "Timespan-aware forgetting in SSM",
+      "purpose": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "stage_claim": "MambaTimeDelta.forward branches on self.time_mamba and dts != None MambaTimeDelta.forward returns out MambaTimeDelta.forward computes formula self.in_proj.weight, rearrange(hidden_states, 'b l d -> d (b l)') MambaTimeDelta.forward computes formula xz, rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1'), result=xz",
+      "claim_ids": [
+        "C-V3-138f5f4450d7fcbc",
+        "C-V3-ba6943049c711d11",
+        "C-V3-eaea74a407624545",
+        "C-V3-31c21deb6b74b3e0"
+      ],
+      "evidence_ids": [
+        "E-V3-6310adf1f6bc7a8c",
+        "E-V3-3abf043f861a82b1",
+        "E-V3-4fe8b195f81f2702",
+        "E-V3-154be4073d0e8b12"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-02-e02cd0f2"
+      ],
+      "organization_priority": 2
+    },
+    {
+      "stage_id": "SG-INTENT-03-d47a86f4",
+      "name": "Robust selective reviewing",
+      "purpose": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "stage_claim": "FilterLayer.forward returns hidden_states FilterLayer.forward computes formula hidden_states, input_tensor, result=hidden_states FilterLayer.forward computes formula x, weight, result=x",
+      "claim_ids": [
+        "C-V3-2628e5ae79a4a775",
+        "C-V3-15d0f68929439dd8",
+        "C-V3-ac6c4f8addcc3b98"
+      ],
+      "evidence_ids": [
+        "E-V3-79adf9fa9ba3d113",
+        "E-V3-d52513a072a30df8",
+        "E-V3-10fa5fb8d962fce8"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-03-d47a86f4"
+      ],
+      "organization_priority": 3
+    },
+    {
+      "stage_id": "SG-INTENT-04-a3a3e8ab",
+      "name": "Downstream prediction",
+      "purpose": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "stage_claim": "predict_link_probabilities branches on (src_node_id, dst_node_id) in edge_memories predict_link_probabilities returns np.array(probabilities) predict_link_probabilities writes (src_node_ids, dst_node_ids) edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories edge_bank_link_prediction writes positive_probabilities edge_bank_link_prediction writes edge_memories edge_bank_link_prediction writes negative_probabilities edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=negative_edges, result=negative_probabilities edge_bank_link_prediction calls edge_bank_repeat_threshold_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=positive_edges, result=positive_probabilities edge_bank_link_prediction calls edge_bank_time_window_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, history_node_interact_times=history_data.node_interact_times, time_window_mode=time_window_mode, time_window_proportion=time_window_proportion, result=edge_memories edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "claim_ids": [
+        "C-V3-7ffe8850e4bf52d0",
+        "C-V3-05bb842abe8b20ee",
+        "C-V3-7afb98c4333a1973",
+        "C-V3-e15f8cab9376b362",
+        "C-V3-b60eb43ed1bdb9bc",
+        "C-V3-4c66a4bb01eef77c",
+        "C-V3-d12e19aeba607036",
+        "C-V3-9ff2645283531bdc",
+        "C-V3-1bef52712fef7a5c",
+        "C-V3-fc2e449a39aea00d",
+        "C-V3-eb618c3a1e804967",
+        "C-V3-36545d70f0ef6fae"
+      ],
+      "evidence_ids": [
+        "E-V3-5c6f05b6808020d9",
+        "E-V3-7e37469e71269dd3",
+        "E-V3-75caa7237a42b9ce",
+        "E-V3-3fbeee89953a9ab8",
+        "E-V3-1115d2d9feca6d4a",
+        "E-V3-1ff5b48fe8916c23",
+        "E-V3-08d0db95e6f9d07a",
+        "E-V3-6b61d317f0580994",
+        "E-V3-45cabc4def685d51"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-04-a3a3e8ab"
+      ],
+      "organization_priority": 4
+    },
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "stage_claim": "DyGFormer.compute_src_dst_node_temporal_embeddings branches on case_study DyGFormer.compute_src_dst_node_temporal_embeddings calls self.neighbor_sampler.get_all_first_hop_neighbors, node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate, result=(dst_nodes_neighbor_ids_list, dst_nodes_edge_ids_list, dst_nodes_neighbor_times_list) DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings) DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1) GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features GraphMixer.compute_node_temporal_embeddings returns node_embeddings GraphMixer.compute_node_temporal_embeddings reduces torch.mean, combined_features, dim=1, result=combined_features GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [combined_features, output_node_features], dim=1 GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1) GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features], dim=1, result=patches_nodes_neighbor_time_features GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1, result=patches_nodes_neighbor_co_occurrence_features DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings) DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data DyGFormer.compute_src_dst_node_temporal_embeddings branches on i == 0 and case_study DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data",
+      "claim_ids": [
+        "C-V3-7e7c72e547dd8c3a",
+        "C-V3-7615c8325b261eff",
+        "C-V3-8e3cec90ebaec7ae",
+        "C-V3-5e2203c22f5d1b4f",
+        "C-V3-6cbbce7c016a1ca9",
+        "C-V3-9933c1ae8697c2ed",
+        "C-V3-2fd0cec18c288aae",
+        "C-V3-32e5d5e72b1f345d",
+        "C-V3-3502ddd415515194",
+        "C-V3-adf1309223a6ca2e",
+        "C-V3-8f7e158d115e28c3",
+        "C-V3-85a866b85f906748",
+        "C-V3-1ad33958de6536c5",
+        "C-V3-98f6f5bc2f5bb57c",
+        "C-V3-afbd522c5a57bc72",
+        "C-V3-70839c2e409e0398",
+        "C-V3-e04fa6a5ed681b73",
+        "C-V3-9f6449fbb76326a0",
+        "C-V3-479086754f96b061",
+        "C-V3-c0e963a5629aa7c0",
+        "C-V3-c1ddfed6ada45fc7",
+        "C-V3-5152e29260b431ee",
+        "C-V3-0f9c0557d18d3f16",
+        "C-V3-9e165336822f6971",
+        "C-V3-305628644dc92b65",
+        "C-V3-48fdc60c32840393"
+      ],
+      "evidence_ids": [
+        "E-V3-28eb300d40d08827",
+        "E-V3-84513e1a4669dc80",
+        "E-V3-32538fd395ee1906",
+        "E-V3-122831fe45abc2a1",
+        "E-V3-6047ec92f6c44ba8",
+        "E-V3-8cf7771f62f5c889",
+        "E-V3-8bad2f57af46779e",
+        "E-V3-d796db70e52483f3",
+        "E-V3-3613b65af28ba707",
+        "E-V3-176b1788f8ed81d6",
+        "E-V3-ec7801067cd0a7d8",
+        "E-V3-bf2f65f2f72b484d",
+        "E-V3-00eb27fa4a004bf9",
+        "E-V3-81bc9cc199ff2f0e",
+        "E-V3-c82311ea3fd55b72",
+        "E-V3-18050cadcc17f30e"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-COMPONENT-01-377afc18",
+        "O-COMPONENT-04-6d73cce5",
+        "O-COMPONENT-01-88e55e54",
+        "O-COMPONENT-02-c39dd898",
+        "O-COMPONENT-05-8cd85daa"
+      ],
+      "organization_priority": 5
+    }
+  ],
+  "writing_constraints": [
+    "The projection is the writer's only positive method-fact input.",
+    "Follow semantic stage groups in organization_priority order.",
+    "Use only each stage group's ordered authorized claims and relation evidence.",
+    "Author-attested fragments remain caveated and never become repository evidence.",
+    "Do not introduce explicit gaps or unsupported author fragments as positive prose.",
+    "Compatibility evidence id E-V3-6047ec92f6c44ba8 maps to span:models/DyGFormer.py:166:166.",
+    "Compatibility evidence id E-V3-81bc9cc199ff2f0e maps to span:models/DyGFormer.py:168:168.",
+    "Compatibility evidence id E-V3-c82311ea3fd55b72 maps to span:models/DyGFormer.py:169:169.",
+    "Compatibility evidence id E-V3-8bad2f57af46779e maps to span:models/DyGFormer.py:174:174.",
+    "Compatibility evidence id E-V3-122831fe45abc2a1 maps to span:models/DyGFormer.py:176:176.",
+    "Compatibility evidence id E-V3-18050cadcc17f30e maps to span:models/DyGFormer.py:181:183.",
+    "Compatibility evidence id E-V3-32538fd395ee1906 maps to span:models/DyGFormer.py:197:197.",
+    "Compatibility evidence id E-V3-28eb300d40d08827 maps to span:models/DyGFormer.py:207:212.",
+    "Compatibility evidence id E-V3-8cf7771f62f5c889 maps to span:models/DyGFormer.py:212:212.",
+    "Compatibility evidence id E-V3-84513e1a4669dc80 maps to span:models/DyGFormer.py:85:85.",
+    "Compatibility evidence id E-V3-e3c852e66f6316aa maps to span:models/DyGMamba.py:130:132.",
+    "Compatibility evidence id E-V3-df9846e743913840 maps to span:models/DyGMamba.py:138:140.",
+    "Compatibility evidence id E-V3-721af3bed64e36eb maps to span:models/DyGMamba.py:211:211.",
+    "Compatibility evidence id E-V3-2ac30cfdb4ac55c0 maps to span:models/DyGMamba.py:212:212.",
+    "Compatibility evidence id E-V3-6403334467ca1ebe maps to span:models/DyGMamba.py:214:214.",
+    "Compatibility evidence id E-V3-f6a4e2c4a727115d maps to span:models/DyGMamba.py:215:215.",
+    "Compatibility evidence id E-V3-ba114509db996be1 maps to span:models/DyGMamba.py:240:240.",
+    "Compatibility evidence id E-V3-7d0ed56d3c2faace maps to span:models/DyGMamba.py:241:241.",
+    "Compatibility evidence id E-V3-f9a18332614e23b5 maps to span:models/DyGMamba.py:244:244.",
+    "Compatibility evidence id E-V3-68ad2137082b6c7c maps to span:models/DyGMamba.py:256:256.",
+    "Compatibility evidence id E-V3-61b3e8598346673f maps to span:models/DyGMamba.py:264:264.",
+    "Compatibility evidence id E-V3-3fbeee89953a9ab8 maps to span:models/EdgeBank.py:108:108.",
+    "Compatibility evidence id E-V3-1ff5b48fe8916c23 maps to span:models/EdgeBank.py:110:110.",
+    "Compatibility evidence id E-V3-45cabc4def685d51 maps to span:models/EdgeBank.py:110:112.",
+    "Compatibility evidence id E-V3-6b61d317f0580994 maps to span:models/EdgeBank.py:114:114.",
+    "Compatibility evidence id E-V3-1115d2d9feca6d4a maps to span:models/EdgeBank.py:118:118.",
+    "Compatibility evidence id E-V3-08d0db95e6f9d07a maps to span:models/EdgeBank.py:119:119.",
+    "Compatibility evidence id E-V3-75caa7237a42b9ce maps to span:models/EdgeBank.py:14:14.",
+    "Compatibility evidence id E-V3-5c6f05b6808020d9 maps to span:models/EdgeBank.py:18:21.",
+    "Compatibility evidence id E-V3-7e37469e71269dd3 maps to span:models/EdgeBank.py:23:23.",
+    "Compatibility evidence id E-V3-10fa5fb8d962fce8 maps to span:models/FreeDyG.py:330:330.",
+    "Compatibility evidence id E-V3-d52513a072a30df8 maps to span:models/FreeDyG.py:335:335.",
+    "Compatibility evidence id E-V3-79adf9fa9ba3d113 maps to span:models/FreeDyG.py:337:337.",
+    "Compatibility evidence id E-V3-3613b65af28ba707 maps to span:models/GraphMixer.py:118:118.",
+    "Compatibility evidence id E-V3-ec7801067cd0a7d8 maps to span:models/GraphMixer.py:127:127.",
+    "Compatibility evidence id E-V3-d796db70e52483f3 maps to span:models/GraphMixer.py:149:149.",
+    "Compatibility evidence id E-V3-00eb27fa4a004bf9 maps to span:models/GraphMixer.py:152:152.",
+    "Compatibility evidence id E-V3-bf2f65f2f72b484d maps to span:models/GraphMixer.py:155:155.",
+    "Compatibility evidence id E-V3-176b1788f8ed81d6 maps to span:models/GraphMixer.py:157:157.",
+    "Compatibility evidence id E-V3-4fe8b195f81f2702 maps to span:models/mamba_simple.py:471:471.",
+    "Compatibility evidence id E-V3-154be4073d0e8b12 maps to span:models/mamba_simple.py:476:476.",
+    "Compatibility evidence id E-V3-6310adf1f6bc7a8c maps to span:models/mamba_simple.py:497:525.",
+    "Compatibility evidence id E-V3-3abf043f861a82b1 maps to span:models/mamba_simple.py:551:551.",
+    "Compatibility claim id C-V3-7e7c72e547dd8c3a maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264.",
+    "Compatibility claim id C-V3-7615c8325b261eff maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce.",
+    "Compatibility claim id C-V3-8e3cec90ebaec7ae maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527.",
+    "Compatibility claim id C-V3-5e2203c22f5d1b4f maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188.",
+    "Compatibility claim id C-V3-6cbbce7c016a1ca9 maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d.",
+    "Compatibility claim id C-V3-9933c1ae8697c2ed maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5.",
+    "Compatibility claim id C-V3-2fd0cec18c288aae maps to claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3.",
+    "Compatibility claim id C-V3-32e5d5e72b1f345d maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac.",
+    "Compatibility claim id C-V3-3502ddd415515194 maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd.",
+    "Compatibility claim id C-V3-adf1309223a6ca2e maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924.",
+    "Compatibility claim id C-V3-8f7e158d115e28c3 maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3.",
+    "Compatibility claim id C-V3-85a866b85f906748 maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a.",
+    "Compatibility claim id C-V3-1ad33958de6536c5 maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777.",
+    "Compatibility claim id C-V3-98f6f5bc2f5bb57c maps to claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a.",
+    "Compatibility claim id C-V3-b60eb43ed1bdb9bc maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72.",
+    "Compatibility claim id C-V3-4c66a4bb01eef77c maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d.",
+    "Compatibility claim id C-V3-d12e19aeba607036 maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97.",
+    "Compatibility claim id C-V3-9ff2645283531bdc maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d.",
+    "Compatibility claim id C-V3-1bef52712fef7a5c maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083.",
+    "Compatibility claim id C-V3-fc2e449a39aea00d maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a.",
+    "Compatibility claim id C-V3-eb618c3a1e804967 maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d.",
+    "Compatibility claim id C-V3-36545d70f0ef6fae maps to claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a.",
+    "Compatibility claim id C-V3-afbd522c5a57bc72 maps to claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7.",
+    "Compatibility claim id C-V3-70839c2e409e0398 maps to claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2.",
+    "Compatibility claim id C-V3-e04fa6a5ed681b73 maps to claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39.",
+    "Compatibility claim id C-V3-9f6449fbb76326a0 maps to claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445.",
+    "Compatibility claim id C-V3-479086754f96b061 maps to claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16.",
+    "Compatibility claim id C-V3-c0e963a5629aa7c0 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba.",
+    "Compatibility claim id C-V3-c1ddfed6ada45fc7 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041.",
+    "Compatibility claim id C-V3-5152e29260b431ee maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34.",
+    "Compatibility claim id C-V3-0f9c0557d18d3f16 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075.",
+    "Compatibility claim id C-V3-9e165336822f6971 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5.",
+    "Compatibility claim id C-V3-305628644dc92b65 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814.",
+    "Compatibility claim id C-V3-48fdc60c32840393 maps to claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216.",
+    "Compatibility claim id C-V3-54704b2394fd7578 maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5.",
+    "Compatibility claim id C-V3-80bd147c7ecdedcb maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117.",
+    "Compatibility claim id C-V3-e63cd0230480a5b3 maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e.",
+    "Compatibility claim id C-V3-7f66b29c689f296a maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0.",
+    "Compatibility claim id C-V3-d979edcb0ffb380f maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad.",
+    "Compatibility claim id C-V3-42e35540fe6ea152 maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69.",
+    "Compatibility claim id C-V3-0dad078f8b426ca1 maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7.",
+    "Compatibility claim id C-V3-1c4b6fd1bf52056d maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c.",
+    "Compatibility claim id C-V3-41df4f28995228f8 maps to claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d.",
+    "Compatibility claim id C-V3-ee2ad7da1f7d585c maps to claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62.",
+    "Compatibility claim id C-V3-b9ead715741dd6fe maps to claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69.",
+    "Compatibility claim id C-V3-eaea74a407624545 maps to claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98.",
+    "Compatibility claim id C-V3-138f5f4450d7fcbc maps to claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd.",
+    "Compatibility claim id C-V3-31c21deb6b74b3e0 maps to claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60.",
+    "Compatibility claim id C-V3-ba6943049c711d11 maps to claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76.",
+    "Compatibility claim id C-V3-15d0f68929439dd8 maps to claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991.",
+    "Compatibility claim id C-V3-ac6c4f8addcc3b98 maps to claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272.",
+    "Compatibility claim id C-V3-2628e5ae79a4a775 maps to claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3.",
+    "Compatibility claim id C-V3-7afb98c4333a1973 maps to claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5.",
+    "Compatibility claim id C-V3-e15f8cab9376b362 maps to claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff.",
+    "Compatibility claim id C-V3-05bb842abe8b20ee maps to claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f.",
+    "Compatibility claim id C-V3-7ffe8850e4bf52d0 maps to claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8.",
+    "Compatibility claim id C-V3-47dd95960ddc47da maps to l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum.",
+    "Compatibility claim id C-V3-5fce8d44ff5db814 maps to l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum.",
+    "Compatibility claim id C-V3-272a94ccaf31de66 maps to l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum.",
+    "Compatibility claim id C-V3-44b9629565910011 maps to l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum.",
+    "Compatibility claim id C-V3-3508fbc6e076e816 maps to l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize.",
+    "Compatibility claim id C-V3-02ae33341bf16753 maps to l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk.",
+    "Compatibility claim id C-V3-8e4f2a37a3fe9b63 maps to l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize.",
+    "Compatibility claim id C-V3-54823698fe52906f maps to l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum.",
+    "Compatibility claim id C-V3-cb276b8fbd5df224 maps to l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum."
+  ],
+  "alignment_notes": [],
+  "excluded_sources": [],
+  "author_logic_priority": true,
+  "frozen_mechanisms": [],
+  "distinguishing_mechanisms": [],
+  "author_logic_mapping": {
+    "author_proposed_flow": [],
+    "author_supported_flow": [],
+    "author_unsupported_parts": []
+  },
+  "unsupported_author_parts": [],
+  "claim_contracts": [
+    {
+      "claim_id": "C-V3-1c4b6fd1bf52056d",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, dst_padded_data, dim=2, result=dst_padded_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-2ac30cfdb4ac55c0"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-e63cd0230480a5b3",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, dst_router_logits, dim=1, dtype=torch.float, result=dst_routing_weights",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-7d0ed56d3c2faace"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-d979edcb0ffb380f",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings selects top k torch.topk, dst_routing_weights, min(self.top_k, dst_seq_len), dim=1, result=(dst_routing_weights, dst_selected_embeddings)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-f9a18332614e23b5"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-7f66b29c689f296a",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings reduces (src_padded_data * src_routing_weights_expand).sum, 1, result=src_padded_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-68ad2137082b6c7c"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-54704b2394fd7578",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-61b3e8598346673f"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-42e35540fe6ea152",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6403334467ca1ebe"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-80bd147c7ecdedcb",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list, nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-e3c852e66f6316aa"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-0dad078f8b426ca1",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list, nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-df9846e743913840"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-41df4f28995228f8",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, src_router_logits, dim=1, dtype=torch.float, result=src_routing_weights",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-ba114509db996be1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-ee2ad7da1f7d585c",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, src_padded_data, dim=2, result=src_padded_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-721af3bed64e36eb"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-b9ead715741dd6fe",
+      "claim_intent": "DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-f6a4e2c4a727115d"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-138f5f4450d7fcbc",
+      "claim_intent": "MambaTimeDelta.forward branches on self.time_mamba and dts != None",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6310adf1f6bc7a8c"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.time_mamba and dts != None"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-ba6943049c711d11",
+      "claim_intent": "MambaTimeDelta.forward returns out",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-3abf043f861a82b1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.time_mamba and dts != None"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-eaea74a407624545",
+      "claim_intent": "MambaTimeDelta.forward computes formula self.in_proj.weight, rearrange(hidden_states, 'b l d -> d (b l)')",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-4fe8b195f81f2702"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.time_mamba and dts != None"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-31c21deb6b74b3e0",
+      "claim_intent": "MambaTimeDelta.forward computes formula xz, rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1'), result=xz",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-154be4073d0e8b12"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.time_mamba and dts != None"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-2628e5ae79a4a775",
+      "claim_intent": "FilterLayer.forward returns hidden_states",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-79adf9fa9ba3d113"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-15d0f68929439dd8",
+      "claim_intent": "FilterLayer.forward computes formula hidden_states, input_tensor, result=hidden_states",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d52513a072a30df8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-ac6c4f8addcc3b98",
+      "claim_intent": "FilterLayer.forward computes formula x, weight, result=x",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-10fa5fb8d962fce8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-7ffe8850e4bf52d0",
+      "claim_intent": "predict_link_probabilities branches on (src_node_id, dst_node_id) in edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-5c6f05b6808020d9"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-05bb842abe8b20ee",
+      "claim_intent": "predict_link_probabilities returns np.array(probabilities)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-7e37469e71269dd3"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-7afb98c4333a1973",
+      "claim_intent": "predict_link_probabilities writes (src_node_ids, dst_node_ids)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-75caa7237a42b9ce"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-e15f8cab9376b362",
+      "claim_intent": "edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-3fbeee89953a9ab8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-3502ddd415515194",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-3613b65af28ba707"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-8f7e158d115e28c3",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, combined_features, dim=1, result=combined_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-ec7801067cd0a7d8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-adf1309223a6ca2e",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings returns node_embeddings",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-176b1788f8ed81d6"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-32e5d5e72b1f345d",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-85a866b85f906748",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-1ad33958de6536c5",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [combined_features, output_node_features], dim=1",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-bf2f65f2f72b484d"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-98f6f5bc2f5bb57c",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-7e7c72e547dd8c3a",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings branches on case_study",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-28eb300d40d08827"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-6cbbce7c016a1ca9",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6047ec92f6c44ba8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-2fd0cec18c288aae",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-8bad2f57af46779e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-8e3cec90ebaec7ae",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-32538fd395ee1906"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9933c1ae8697c2ed",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-8cf7771f62f5c889"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-5e2203c22f5d1b4f",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-7615c8325b261eff",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings calls self.neighbor_sampler.get_all_first_hop_neighbors, node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate, result=(dst_nodes_neighbor_ids_list, dst_nodes_edge_ids_list, dst_nodes_neighbor_times_list)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-84513e1a4669dc80"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-b60eb43ed1bdb9bc",
+      "claim_intent": "edge_bank_link_prediction writes positive_probabilities",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-1115d2d9feca6d4a"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-4c66a4bb01eef77c",
+      "claim_intent": "edge_bank_link_prediction writes edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-1ff5b48fe8916c23"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-d12e19aeba607036",
+      "claim_intent": "edge_bank_link_prediction writes negative_probabilities",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-08d0db95e6f9d07a"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9ff2645283531bdc",
+      "claim_intent": "edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=negative_edges, result=negative_probabilities",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-08d0db95e6f9d07a"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-1bef52712fef7a5c",
+      "claim_intent": "edge_bank_link_prediction calls edge_bank_repeat_threshold_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6b61d317f0580994"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-fc2e449a39aea00d",
+      "claim_intent": "edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=positive_edges, result=positive_probabilities",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-1115d2d9feca6d4a"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-eb618c3a1e804967",
+      "claim_intent": "edge_bank_link_prediction calls edge_bank_time_window_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, history_node_interact_times=history_data.node_interact_times, time_window_mode=time_window_mode, time_window_proportion=time_window_proportion, result=edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-45cabc4def685d51"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-36545d70f0ef6fae",
+      "claim_intent": "edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-3fbeee89953a9ab8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-479086754f96b061",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-afbd522c5a57bc72",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-70839c2e409e0398",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-e04fa6a5ed681b73",
+      "claim_intent": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-3613b65af28ba707"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9f6449fbb76326a0",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features], dim=1, result=patches_nodes_neighbor_time_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-81bc9cc199ff2f0e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9e165336822f6971",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings branches on i == 0 and case_study",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-18050cadcc17f30e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-c0e963a5629aa7c0",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1, result=patches_nodes_neighbor_co_occurrence_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-c82311ea3fd55b72"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-48fdc60c32840393",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-8bad2f57af46779e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-0f9c0557d18d3f16",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-32538fd395ee1906"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-5152e29260b431ee",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-8cf7771f62f5c889"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-305628644dc92b65",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-c1ddfed6ada45fc7",
+      "claim_intent": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-6047ec92f6c44ba8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "i == 0 and case_study"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-8e4f2a37a3fe9b63",
+      "claim_intent": "Scores are normalized before they are compared or aggregated.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-ba114509db996be1"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-3508fbc6e076e816",
+      "claim_intent": "Scores are normalized before they are compared or aggregated.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-7d0ed56d3c2faace"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-02ae33341bf16753",
+      "claim_intent": "A top-k selection keeps the highest scoring items.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-f9a18332614e23b5"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-54823698fe52906f",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-154be4073d0e8b12"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-cb276b8fbd5df224",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d52513a072a30df8"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-5fce8d44ff5db814",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-47dd95960ddc47da",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-272a94ccaf31de66",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-44b9629565910011",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    }
+  ],
+  "negative_scope": []
+}

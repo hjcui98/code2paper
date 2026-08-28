@@ -1,0 +1,1769 @@
+{
+  "mode": "agentic-authoring-input-projection-v1",
+  "project_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "method_name": "EBCAR",
+  "author_goal": "Present a lightweight reranker that operates directly on passage embeddings, enriches them with document‑structural signals, and uses a hybrid attention mechanism to capture both global inter‑document and local intra‑document interactions. Show that this embedding‑based approach is competitive with text‑based LLM rerankers on tasks requiring cross‑passage inference while being much faster. Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+  "implementation_scope": "/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker",
+  "projected_claims": [
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "claim_text": "train_ebcar branches on cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar branches on cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:fed512edaa0e08fd382dbc96e1248c79d774ef8e8f6e2cafb6a8d7598078b6bf"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "claim_text": "train_ebcar returns reranker",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar returns reranker",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:14c25e46a16262b7e1ab0828c252366300faf921132c42f286bb831ef82c50ef"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "claim_text": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "writing_role": "audit_only",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:8c42862765b712c14c01ae13d3c65d1e4a726c0f6e59a538a16b539a2d8703d7"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "claim_text": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:43c7482af117729b6186ce949419d4d7e778d3e86f1da4fb5c6ce3f41a4acd29"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "claim_text": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:2ce1d6c575d2e76d252d0854ce87bd012e9c42fe738b2f2df3ce37b45e8fc4f6"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "claim_text": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:689c719076fddd42a5092f94cd4aeaed15de0653129b6bd66cb5a7ecc8af3c99"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "claim_text": "train_ebcar computes formula train_loss, len(train_loader)",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula train_loss, len(train_loader)",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "writing_role": "audit_only",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:d13691035ad51c6957e0bca7effb30768df16e7be781bdab5aac999285d175bb"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "claim_text": "train_ebcar configured by cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar configured by cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:b8d82bf72235c3eeafd62f647b5eacc938b0f0fca3bb3c679e9be1e34c8c9f21"
+    }
+  ],
+  "author_attested_fragments": [
+    {
+      "fragment_id": "author:method_goal",
+      "supported_fragment": "Describe only the code-supported claims in the authoring projection.",
+      "allowed_wording_boundary": "Describe only the code-supported claims in the authoring projection.",
+      "source_ref": "method_evidence:method_goal",
+      "input_digest": "sha256:226571738f646651876f1dd2dd50719ce849fe311d859f239230b6911cef27bb"
+    }
+  ],
+  "forbidden_claims": [],
+  "stage_packets": [
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "stage_claim": "train_ebcar loads weights cfg.use_dedicated_attention train_ebcar branches on cfg.use_dedicated_attention train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss train_ebcar returns reranker train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name train_ebcar computes formula train_loss, len(train_loader) train_ebcar configured by cfg.use_dedicated_attention",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "evidence_ids": [
+        "span:src/train_ebcar.py:116:116",
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:291:291",
+        "span:src/train_ebcar.py:183:185",
+        "span:src/train_ebcar.py:318:318",
+        "span:src/train_ebcar.py:117:117",
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "organization_priority": 6
+    }
+  ],
+  "safe_equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "'hybrid_attention_'"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "operand_role": "object",
+          "operand_value": "run_name"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:e570cebd53c158c8b2f9f90d8067fab6067a699858d36e918af9590ae1dc7c87"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:5c97f00f864de7edc86df09ede16baee8dfcec2f96c93b4feb0795fbebee84d7",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "train_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "operand_role": "object",
+          "operand_value": "len(train_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:cb165e8feb6f2de0ee45d7a9839b7c72f790f88f45287a15e6fd1795a7ec7cfd"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:6a00d7f2c73d4ea8887d74498c6ac5559550c3a81d0dda8cdb2ef833321fb0d9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "expression": "x / y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "val_loss"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "operand_role": "object",
+          "operand_value": "len(val_loader)"
+        }
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "div"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:631b7f9d196fd61ef02886faff14e235fad7855e7517ae50e035b9a237ae802c"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:5993c68f7af79f2633758ef2ce9972a6bcad43a0d1af2c0f19f3f54cf6d1fa49",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "safe_numeric_facts": [],
+  "safe_aliases": [],
+  "safe_intent_spine": [
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+    "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+  ],
+  "writing_rules": [
+    "The projection is the writer's only positive method-fact input.",
+    "Follow semantic stage groups in organization_priority order.",
+    "Use only each stage group's ordered authorized claims and relation evidence.",
+    "Author-attested fragments remain caveated and never become repository evidence.",
+    "Do not introduce explicit gaps or unsupported author fragments as positive prose."
+  ],
+  "dropped_positive_fields": [
+    "legacy_v2_claim_projection",
+    "author_stage_scaffold"
+  ],
+  "source_digests": {
+    "evidence_packets_v3": "sha256:30009e19729bcfc04139957e029a04104cafdaf7a62c1f5fce26cebeb473b1db",
+    "code_facts_v1": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+    "atomic_claims_v3": "sha256:b5602e9f254a4bd7f1b7db4293311821872b0be54d9d655ca476935fc9702e59",
+    "equation_claims_v1": "sha256:e9dca969feff0109396de0771fd6208e4a0c90e19b39f74d905c07cc3e50ed5f"
+  },
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "projection_digest": "sha256:f5b5ceafc8cbe7b9e33c40dd6c11bfddbd309128daf2d7275d5b5f507bcb3042",
+  "hard_gate_passed": true,
+  "author_story_spine": [
+    {
+      "story_node_id": "story:O-METHOD-MAINLINE-01-c8146479",
+      "title": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding",
+      "author_statement": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-METHOD-MAINLINE-01-c8146479",
+        "author_field:method_mainline"
+      ],
+      "linked_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "linked_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "evidence_lane": "repository_partial",
+      "notes": [
+        "kind=method_mainline; priority=must_cover"
+      ]
+    },
+    {
+      "story_node_id": "story:O-STAGE-01-039a963a",
+      "title": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their",
+      "author_statement": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-STAGE-01-039a963a",
+        "author_field:pipeline_steps"
+      ],
+      "linked_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=stage; priority=must_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-STAGE-02-42e8d68d",
+      "title": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal",
+      "author_statement": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-STAGE-02-42e8d68d",
+        "author_field:pipeline_steps"
+      ],
+      "linked_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=stage; priority=must_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-STAGE-03-2c5bd758",
+      "title": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies",
+      "author_statement": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-STAGE-03-2c5bd758",
+        "author_field:pipeline_steps"
+      ],
+      "linked_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=stage; priority=must_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-STAGE-04-c50e0bef",
+      "title": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed",
+      "author_statement": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-STAGE-04-c50e0bef",
+        "author_field:pipeline_steps"
+      ],
+      "linked_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=stage; priority=must_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-STAGE-05-5b3d398a",
+      "title": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the",
+      "author_statement": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "intended_role": "algorithm_step",
+      "source_refs": [
+        "intent_graph_v2:O-STAGE-05-5b3d398a",
+        "author_field:pipeline_steps"
+      ],
+      "linked_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=stage; priority=must_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-01-c301ecdd",
+      "title": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need",
+      "author_statement": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-01-c301ecdd",
+        "author_field:project_goal"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-01-de6049e3",
+      "title": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "author_statement": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-01-de6049e3",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-01-de6049e3"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-02-2e14379d",
+      "title": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "author_statement": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-02-2e14379d",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-02-2e14379d"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-03-d8aa8c77",
+      "title": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in",
+      "author_statement": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-03-d8aa8c77",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-04-b5b6af99",
+      "title": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing",
+      "author_statement": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-04-b5b6af99",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-05-4c3594d2",
+      "title": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention",
+      "author_statement": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-05-4c3594d2",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-06-34021b88",
+      "title": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other;",
+      "author_statement": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-06-34021b88",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-07-d157b2cc",
+      "title": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and",
+      "author_statement": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-07-d157b2cc",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-08-4aac53dc",
+      "title": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "author_statement": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-08-4aac53dc",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-08-4aac53dc"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-09-6a8cfd6c",
+      "title": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query",
+      "author_statement": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-09-6a8cfd6c",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-10-dac6250f",
+      "title": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable",
+      "author_statement": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-10-dac6250f",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-11-27f310b2",
+      "title": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference",
+      "author_statement": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-11-27f310b2",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-12-370bd5b2",
+      "title": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation",
+      "author_statement": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-COMPONENT-12-370bd5b2",
+        "author_field:key_building_blocks"
+      ],
+      "linked_obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=component; priority=should_cover",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-01-6b45ad90",
+      "title": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "author_statement": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-ORGANIZATION-01-6b45ad90",
+        "author_field:story_order"
+      ],
+      "linked_obligation_ids": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=organization; priority=preference",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-02-54911271",
+      "title": "Embedding‑based reranking formulation and overall framework.",
+      "author_statement": "Embedding‑based reranking formulation and overall framework.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-ORGANIZATION-02-54911271",
+        "author_field:story_order"
+      ],
+      "linked_obligation_ids": [
+        "O-ORGANIZATION-02-54911271"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=organization; priority=preference",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-03-2c92c853",
+      "title": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention",
+      "author_statement": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-ORGANIZATION-03-2c92c853",
+        "author_field:story_order"
+      ],
+      "linked_obligation_ids": [
+        "O-ORGANIZATION-03-2c92c853"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=organization; priority=preference",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-04-1dd970df",
+      "title": "Training objective: InfoNCE loss with fixed query anchor.",
+      "author_statement": "Training objective: InfoNCE loss with fixed query anchor.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-ORGANIZATION-04-1dd970df",
+        "author_field:story_order"
+      ],
+      "linked_obligation_ids": [
+        "O-ORGANIZATION-04-1dd970df"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=organization; priority=preference",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-05-baf0d276",
+      "title": "Inference procedure.",
+      "author_statement": "Inference procedure.",
+      "intended_role": "setup",
+      "source_refs": [
+        "intent_graph_v2:O-ORGANIZATION-05-baf0d276",
+        "author_field:story_order"
+      ],
+      "linked_obligation_ids": [
+        "O-ORGANIZATION-05-baf0d276"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=organization; priority=preference",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-01-bad20132",
+      "title": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "author_statement": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-01-bad20132",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "title": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "author_statement": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-02-30bb7c0f",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-03-b01101f7",
+      "title": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "author_statement": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-03-b01101f7",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-04-c742a4fc",
+      "title": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "author_statement": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-04-c742a4fc",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-05-595ac6ff",
+      "title": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "author_statement": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-05-595ac6ff",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-06-388166d9",
+      "title": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "author_statement": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "intended_role": "motivation",
+      "source_refs": [
+        "intent_graph_v2:O-RATIONALE-CHECK-06-388166d9",
+        "author_field:design_intents"
+      ],
+      "linked_obligation_ids": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "linked_claim_ids": [],
+      "evidence_lane": "author_intent_unverified",
+      "notes": [
+        "kind=rationale_check; priority=verify_only",
+        "no repository-backed claim is linked; author review required"
+      ]
+    }
+  ],
+  "repository_verified_facts": [
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "claim_text": "train_ebcar branches on cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar branches on cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:fed512edaa0e08fd382dbc96e1248c79d774ef8e8f6e2cafb6a8d7598078b6bf"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "claim_text": "train_ebcar returns reranker",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar returns reranker",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:14c25e46a16262b7e1ab0828c252366300faf921132c42f286bb831ef82c50ef"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "claim_text": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "writing_role": "audit_only",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:8c42862765b712c14c01ae13d3c65d1e4a726c0f6e59a538a16b539a2d8703d7"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "claim_text": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:43c7482af117729b6186ce949419d4d7e778d3e86f1da4fb5c6ce3f41a4acd29"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "claim_text": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:2ce1d6c575d2e76d252d0854ce87bd012e9c42fe738b2f2df3ce37b45e8fc4f6"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "claim_text": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:689c719076fddd42a5092f94cd4aeaed15de0653129b6bd66cb5a7ecc8af3c99"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "claim_text": "train_ebcar computes formula train_loss, len(train_loader)",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "train_ebcar computes formula train_loss, len(train_loader)",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "writing_role": "audit_only",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:d13691035ad51c6957e0bca7effb30768df16e7be781bdab5aac999285d175bb"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "claim_text": "train_ebcar configured by cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "supported_fragment": "train_ebcar configured by cfg.use_dedicated_attention",
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "source": "atomic_claim_v3:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "writing_role": "method_conditional",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "input_digest": "sha256:b8d82bf72235c3eeafd62f647b5eacc938b0f0fca3bb3c679e9be1e34c8c9f21"
+    }
+  ],
+  "repository_partial_facts": [],
+  "repository_mismatches": [],
+  "author_intent_unverified_points": [
+    {
+      "point_id": "author_point:O-ORGANIZATION-01-6b45ad90",
+      "statement": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "source_obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "kind": "organization",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-ORGANIZATION-02-54911271",
+      "statement": "Embedding‑based reranking formulation and overall framework.",
+      "source_obligation_id": "O-ORGANIZATION-02-54911271",
+      "kind": "organization",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-ORGANIZATION-03-2c92c853",
+      "statement": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "source_obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "kind": "organization",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-ORGANIZATION-04-1dd970df",
+      "statement": "Training objective: InfoNCE loss with fixed query anchor.",
+      "source_obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "kind": "organization",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-ORGANIZATION-05-baf0d276",
+      "statement": "Inference procedure.",
+      "source_obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "kind": "organization",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-01-bad20132",
+      "statement": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-02-30bb7c0f",
+      "statement": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-03-b01101f7",
+      "statement": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-04-c742a4fc",
+      "statement": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-05-595ac6ff",
+      "statement": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-RATIONALE-CHECK-06-388166d9",
+      "statement": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "kind": "rationale_check",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": []
+    },
+    {
+      "point_id": "author_point:O-STAGE-01-039a963a",
+      "statement": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "source_obligation_id": "O-STAGE-01-039a963a",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-STAGE-02-42e8d68d",
+      "statement": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "source_obligation_id": "O-STAGE-02-42e8d68d",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "point_id": "author_point:O-STAGE-03-2c5bd758",
+      "statement": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "source_obligation_id": "O-STAGE-03-2c5bd758",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-STAGE-04-c50e0bef",
+      "statement": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "source_obligation_id": "O-STAGE-04-c50e0bef",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-STAGE-05-5b3d398a",
+      "statement": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "source_obligation_id": "O-STAGE-05-5b3d398a",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-01-c301ecdd",
+      "statement": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "source_obligation_id": "O-COMPONENT-01-c301ecdd",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-01-de6049e3",
+      "statement": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "source_obligation_id": "O-COMPONENT-01-de6049e3",
+      "kind": "unverified_by_repository",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [],
+      "reason": "No supported code fact covers any typed behavior target."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-02-2e14379d",
+      "statement": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "source_obligation_id": "O-COMPONENT-02-2e14379d",
+      "kind": "unverified_by_repository",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [],
+      "reason": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-03-d8aa8c77",
+      "statement": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "source_obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-04-b5b6af99",
+      "statement": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "source_obligation_id": "O-COMPONENT-04-b5b6af99",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-05-4c3594d2",
+      "statement": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "source_obligation_id": "O-COMPONENT-05-4c3594d2",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-06-34021b88",
+      "statement": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "source_obligation_id": "O-COMPONENT-06-34021b88",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-07-d157b2cc",
+      "statement": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "source_obligation_id": "O-COMPONENT-07-d157b2cc",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-08-4aac53dc",
+      "statement": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "source_obligation_id": "O-COMPONENT-08-4aac53dc",
+      "kind": "unverified_by_repository",
+      "lane": "author_intent_unverified",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [],
+      "reason": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-09-6a8cfd6c",
+      "statement": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "source_obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-10-dac6250f",
+      "statement": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "source_obligation_id": "O-COMPONENT-10-dac6250f",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-11-27f310b2",
+      "statement": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "source_obligation_id": "O-COMPONENT-11-27f310b2",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "point_id": "author_point:O-COMPONENT-12-370bd5b2",
+      "statement": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "source_obligation_id": "O-COMPONENT-12-370bd5b2",
+      "kind": "partially_supported_by_repository",
+      "lane": "repository_partial",
+      "linked_claim_ids": [],
+      "matched_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    }
+  ],
+  "external_pending_points": [],
+  "formalization_needed_points": [],
+  "review_questions": [
+    {
+      "question_id": "review_question:O-ORGANIZATION-01-6b45ad90",
+      "question": "Should the Method claim that motivation: efficiency and cross‑passage inference challenges in existing rerankers?",
+      "point_ref": "author_point:O-ORGANIZATION-01-6b45ad90",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-ORGANIZATION-02-54911271",
+      "question": "Should the Method claim that embedding‑based reranking formulation and overall framework?",
+      "point_ref": "author_point:O-ORGANIZATION-02-54911271",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-ORGANIZATION-03-2c92c853",
+      "question": "Should the Method claim that architecture details: enriching embeddings with document id and position, the transformer encoder with hybrid attention (shared full + dedicated masked)?",
+      "point_ref": "author_point:O-ORGANIZATION-03-2c92c853",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-ORGANIZATION-04-1dd970df",
+      "question": "Should the Method claim that training objective: infonce loss with fixed query anchor?",
+      "point_ref": "author_point:O-ORGANIZATION-04-1dd970df",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-ORGANIZATION-05-baf0d276",
+      "question": "Should the Method claim that inference procedure?",
+      "point_ref": "author_point:O-ORGANIZATION-05-baf0d276",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-01-bad20132",
+      "question": "Should the Method claim that avoid full‑text processing and autoregressive generation to reduce inference latency?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-01-bad20132",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-02-30bb7c0f",
+      "question": "Should the Method claim that inject document‑level structural knowledge into passage embeddings to support cross‑passage inference?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-02-30bb7c0f",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-03-b01101f7",
+      "question": "Should the Method claim that design two complementary attention patterns that co‑exist in each layer: global and document‑local?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-03-b01101f7",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-04-c742a4fc",
+      "question": "Should the Method claim that use relative, dynamic document id assignments rather than global corpus‑level ids?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-04-c742a4fc",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-05-595ac6ff",
+      "question": "Should the Method claim that keep the query embedding fixed during training and inference while updating passage embeddings?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-05-595ac6ff",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-RATIONALE-CHECK-06-388166d9",
+      "question": "Should the Method claim that train on conteb datasets that explicitly require cross‑passage reasoning?",
+      "point_ref": "author_point:O-RATIONALE-CHECK-06-388166d9",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-STAGE-01-039a963a",
+      "question": "Should the Method claim that retrieval and embedding preparation: use a dense retriever (contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model?",
+      "point_ref": "author_point:O-STAGE-01-039a963a",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-STAGE-02-42e8d68d",
+      "question": "Should the Method claim that structural augmentation: for each retrieved passage, add a dynamic document id embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals?",
+      "point_ref": "author_point:O-STAGE-02-42e8d68d",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-STAGE-03-2c5bd758",
+      "question": "Should the Method claim that hybrid‑attention encoding: feed the query and augmented passage embeddings into a transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings?",
+      "point_ref": "author_point:O-STAGE-03-2c5bd758",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-STAGE-04-c50e0bef",
+      "question": "Should the Method claim that contrastive training: using a contrastive infonce loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away?",
+      "point_ref": "author_point:O-STAGE-04-c50e0bef",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-STAGE-05-5b3d398a",
+      "question": "Should the Method claim that inference scoring and ranking: compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score?",
+      "point_ref": "author_point:O-STAGE-05-5b3d398a",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-01-c301ecdd",
+      "question": "Should the Method claim that improve reranking in retrieval-augmented generation (rag) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context?",
+      "point_ref": "author_point:O-COMPONENT-01-c301ecdd",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-01-de6049e3",
+      "question": "Should the Method claim that contriever: dense retriever that provides initial passage embeddings and top‑k retrieval?",
+      "point_ref": "author_point:O-COMPONENT-01-de6049e3",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-02-2e14379d",
+      "question": "Should the Method claim that passage embeddings (pi): fixed dense representations of candidate passages obtained from contriever?",
+      "point_ref": "author_point:O-COMPONENT-02-2e14379d",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-03-d8aa8c77",
+      "question": "Should the Method claim that document id embedding table: learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together?",
+      "point_ref": "author_point:O-COMPONENT-03-d8aa8c77",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-04-b5b6af99",
+      "question": "Should the Method claim that passage position encoding (sinusoidal): encodes the position of a passage within its original document, providing structural order cues?",
+      "point_ref": "author_point:O-COMPONENT-04-b5b6af99",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-05-4c3594d2",
+      "question": "Should the Method claim that hybrid attention mechanism: combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each transformer layer to jointly model inter‑ and intra‑document dependencies?",
+      "point_ref": "author_point:O-COMPONENT-05-4c3594d2",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-06-34021b88",
+      "question": "Should the Method claim that shared full attention module: standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships?",
+      "point_ref": "author_point:O-COMPONENT-06-34021b88",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-07-d157b2cc",
+      "question": "Should the Method claim that dedicated masked attention module: masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence?",
+      "point_ref": "author_point:O-COMPONENT-07-d157b2cc",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-08-4aac53dc",
+      "question": "Should the Method claim that transformer encoder stack: layers that process the combined sequence to produce contextualized passage embeddings?",
+      "point_ref": "author_point:O-COMPONENT-08-4aac53dc",
+      "lane": "author_intent_unverified"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-09-6a8cfd6c",
+      "question": "Should the Method claim that infonce contrastive loss: objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives?",
+      "point_ref": "author_point:O-COMPONENT-09-6a8cfd6c",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-10-dac6250f",
+      "question": "Should the Method claim that fixed query anchor: the original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective?",
+      "point_ref": "author_point:O-COMPONENT-10-dac6250f",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-11-27f310b2",
+      "question": "Should the Method claim that conteb benchmark: evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning?",
+      "point_ref": "author_point:O-COMPONENT-11-27f310b2",
+      "lane": "repository_partial"
+    },
+    {
+      "question_id": "review_question:O-COMPONENT-12-370bd5b2",
+      "question": "Should the Method claim that mldr, squad, narrativeqa (training sets): three conteb datasets used for training ebcar, covering entity disambiguation, span matching, and narrative comprehension?",
+      "point_ref": "author_point:O-COMPONENT-12-370bd5b2",
+      "lane": "repository_partial"
+    }
+  ],
+  "writing_policy": [
+    "Repository-verified facts are the only authority for positive implementation claims in the verified output.",
+    "The author story spine organizes the Method narrative; author intent never authorizes repository facts.",
+    "Author-intent, literature, empirical and formalization points stay in the candidate/review surface with explicit markers.",
+    "Mismatch and forbidden claims never enter verified positive output.",
+    "Missing evidence is a review/callback item, not a reason to silently omit the author's point.",
+    "Author intent may guide scope, organization and review questions; it cannot authorize implementation facts."
+  ],
+  "projection_trace": [
+    {
+      "source": "intent_graph_v2:method_goal",
+      "obligation_id": "",
+      "story_node_id": "",
+      "evidence_status": "author_intent",
+      "payload_field": "author_goal"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "claim:claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "story_node_id": "",
+      "obligation_id": "",
+      "evidence_status": "supported",
+      "payload_field": "repository_verified_facts"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-01-bad20132",
+      "story_node_id": "story:O-RATIONALE-CHECK-01-bad20132",
+      "obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-02-30bb7c0f",
+      "story_node_id": "story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-03-b01101f7",
+      "story_node_id": "story:O-RATIONALE-CHECK-03-b01101f7",
+      "obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-04-c742a4fc",
+      "story_node_id": "story:O-RATIONALE-CHECK-04-c742a4fc",
+      "obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-05-595ac6ff",
+      "story_node_id": "story:O-RATIONALE-CHECK-05-595ac6ff",
+      "obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "intent_graph_v2:O-RATIONALE-CHECK-06-388166d9",
+      "story_node_id": "story:O-RATIONALE-CHECK-06-388166d9",
+      "obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "completeness:O-COMPONENT-01-de6049e3",
+      "story_node_id": "",
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "completeness:O-COMPONENT-02-2e14379d",
+      "story_node_id": "",
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    },
+    {
+      "source": "completeness:O-COMPONENT-08-4aac53dc",
+      "story_node_id": "",
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "evidence_status": "unverified_by_repository",
+      "payload_field": "author_intent_unverified_points"
+    }
+  ]
+}

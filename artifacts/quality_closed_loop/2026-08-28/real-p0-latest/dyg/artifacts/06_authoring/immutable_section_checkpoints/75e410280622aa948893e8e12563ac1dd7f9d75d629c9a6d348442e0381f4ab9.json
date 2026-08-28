@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+    "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nTwo limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows. First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-780817ba"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [
+      "MA-S2:unit"
+    ],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "candidate_symbols_or_terms": [
+          "SSMs",
+          "Motivation",
+          "limitations",
+          "irregular",
+          "timespans",
+          "vulnerable",
+          "vanilla",
+          "they",
+          "ignore",
+          "input",
+          "noise"
+        ],
+        "concept_key": "",
+        "evidence_refs_used": [],
+        "exact_question": "What are the two key limitations of vanilla state-space models when applied to dynamic graphs, and how do they motivate the timespan-aware and noise-robust design choices that follow?",
+        "missing_parts": [
+          "interface"
+        ],
+        "missing_rhetorical_move": "transition_to_next_section",
+        "request_id": "req:MA-S2:1:unit:000001",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-780817ba"
+        ],
+        "target_clause_ids": [],
+        "why_needed_for_reader": "The interface facet (facet-e5953e844f56e25a) is deferred with reason field_status_unresolved; the organization_seed provides the two limitations (irregular timespans ignored; vulnerability to input noise) but the repository has not yet resolved the interface field that would license these as Method content. Without a resolved interface or a repository-supported proposition, the section cannot be authored as a Method section and remains a research request."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "Two limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows. First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:cfcc6e121e941f5933c598c45a4defa68e0326f72a70745d6a7d15d3810fffc6",
+  "content_digest": "sha256:75e410280622aa948893e8e12563ac1dd7f9d75d629c9a6d348442e0381f4ab9"
+}

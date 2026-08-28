@@ -1,0 +1,463 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "author_goal": "Present DyG-Mamba, a timespan-informed continuous state space model that redefines core SSM parameters to incorporate temporal irregularity and improve robustness, demonstrating how it surpasses standard SSMs on dynamic graph tasks.",
+  "obligations": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "role": "feature",
+      "statement": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "append appends attend attention attribute classifier concat concatenate concatenation descriptor",
+        "extract the first hop interaction sequence of a node and encode it using node,",
+        "input",
+        "encode",
+        "encoding",
+        "concatenate",
+        "prediction",
+        "mlp",
+        "predictor",
+        "attend",
+        "temporal",
+        "ssm",
+        "elapsed",
+        "timespan",
+        "mamba",
+        "link prediction",
+        "node classification"
+      ],
+      "importance": "critical",
+      "source_obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b01e63e17c169e1b605c0f9d09b2268dc150b59ae44e59a8ab3124c0eb624200"
+    },
+    {
+      "obligation_id": "O-STAGE-01-06d7de36",
+      "role": "feature",
+      "statement": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor encode encodes encoding feature temporal timespan timestamp",
+        "dynamic graph encoding: transform raw interaction sequences into a unified, aligned feature representation that",
+        "feature",
+        "representation",
+        "encoding",
+        "transform",
+        "temporal"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-01-06d7de36",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:de26af8edb800c55a67531798bd28d72eb690349b0447dbf8b81a31620e56925"
+    },
+    {
+      "obligation_id": "O-STAGE-02-e02cd0f2",
+      "role": "temporal",
+      "statement": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "temporal timespan timestamp",
+        "timespan aware forgetting in ssm: let the ssm forget historical states proportionally to the",
+        "timespan",
+        "ssm",
+        "elapsed time",
+        "elapsed"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-02-e02cd0f2",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:076880ec64535f44be59eb219daa9524f565ccff6bd285c6904985bed837c6f1"
+    },
+    {
+      "obligation_id": "O-STAGE-03-d47a86f4",
+      "role": "feature",
+      "statement": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature mask masking masks",
+        "robust selective reviewing: enable input dependent filtering of historical information so that important interactions",
+        "input",
+        "filtering"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-03-d47a86f4",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:9afb1de56aad7e797548b5d251019a3dd5a3e6ce2428d288573d64b70f40f018"
+    },
+    {
+      "obligation_id": "O-STAGE-04-a3a3e8ab",
+      "role": "predictor",
+      "statement": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "load predict predicting predicts read save",
+        "downstream prediction: read out fixed size node embeddings from the sequential output and produce",
+        "prediction",
+        "read"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-04-a3a3e8ab",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:f668b1d0db5bfa717ec4e7e31a8ba6a86049dfc2104bb2c0db154497d6b00788"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-88e55e54",
+      "role": "feature",
+      "statement": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute classifier descriptor feature head predict predicting predicts regressor train",
+        "develop a dynamic graph representation learning model that effectively handles continuous time interaction sequences",
+        "representation",
+        "prediction",
+        "learning",
+        "link prediction",
+        "node classification"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-88e55e54",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:2959a1a4aa5dbcf8b5795488ac6ca9ae7359aabad3bc8ee6621c7a9e309194db"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-377afc18",
+      "role": "predictor",
+      "statement": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "predict predicting predicts temporal timespan timestamp",
+        "interaction sequence extraction: obtain the ordered first hop neighbor events for a node up",
+        "prediction",
+        "timestamp"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-377afc18",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:9822c23d3aed740230e2a8b48c4c282cc3359318e69651cc2fd135fdb6b27a3e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-c39dd898",
+      "role": "feature",
+      "statement": "Node encoding: Use raw node features; zero vectors when unavailable.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "encode encodes encoding",
+        "node encoding: use raw node features; zero vectors when unavailable.",
+        "encoding"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-02-c39dd898",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a119706e8aa1ff1b6d5d6c331a010807f0ec71c26f24b8a800e3ba0fbae9256f"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-2ae65141",
+      "role": "feature",
+      "statement": "Edge encoding: Use raw edge features; zero vectors when unavailable.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "encode encodes encoding",
+        "edge encoding: use raw edge features; zero vectors when unavailable.",
+        "encoding"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-03-2ae65141",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:3546a523d4e9db462e95edfe3d7cb9869e29fe552958b702a6dccc1c0927a937"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-6d73cce5",
+      "role": "feature",
+      "statement": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "encode encodes encoding predict predicting predicts temporal timespan timestamp",
+        "absolute temporal encoding: encode timespans from each interaction to the prediction time using a",
+        "encoding",
+        "encode",
+        "prediction",
+        "temporal"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-04-6d73cce5",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:d4c8ee5844ebe12c401c8c549f6a65c6cd19b506ee17dadfbdcc3a635d9e125b"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-8cd85daa",
+      "role": "feature",
+      "statement": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "encode encodes encoding",
+        "co occurrence frequency encoding: capture structural similarity by encoding the frequency of shared neighbors",
+        "encoding"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-05-8cd85daa",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:7a17aafd3f369fc2dda9edf1b6b92f407e078410e10ece81273d4318b6dc19fe"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-e711d58d",
+      "role": "feature",
+      "statement": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "append appends concat concatenate concatenation encode encodes encoding",
+        "encoding alignment: project all encoding types to a common dimension and concatenate them.",
+        "encoding",
+        "concatenate"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-06-e711d58d",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:09670d5b6b2819cd9d2aaa6a6cb99c82b601431b5a14e1e212f697428bda9b24"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-c430eb84",
+      "role": "feature",
+      "statement": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature temporal timespan timestamp",
+        "dyg mamba ssm core: continuous state space model with redefined δt (timespan dependent step",
+        "input",
+        "mamba",
+        "ssm",
+        "state space",
+        "timespan"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-07-c430eb84",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:fda5358c1823ec5e5ee9351cd5ba61b074556a558b8e4868daefd866a636a7eb"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-48efa86a",
+      "role": "predictor",
+      "statement": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "classifier head predict predicting predicts regressor temporal timespan timestamp",
+        "readout and predictor: mean pooling over the sequence dimension followed by an mlp for",
+        "predictor",
+        "mlp",
+        "prediction",
+        "readout",
+        "link prediction",
+        "node classification"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-08-48efa86a",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:e0dde09f009eed33257897d6215962d416b768735213df72f847b965deab4177"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-42774719",
+      "role": "feature",
+      "statement": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "encode encodes encoding",
+        "dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+        "encoding"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-01-42774719",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a133476d5de2c4b4bab847a151d83e620063a60fd1046d061d6f58d339c1f50c"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-780817ba",
+      "role": "feature",
+      "statement": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "attribute descriptor feature",
+        "motivation: limitations of vanilla ssms they ignore irregular timespans and are vulnerable to input",
+        "input"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-02-780817ba",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:5e580f89c7441723c340c1dbdfe0cd6f01fc36fd4d03165bbbd16fc04659c44b"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-359984b4",
+      "role": "temporal",
+      "statement": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "temporal timespan timestamp",
+        "redesign: timespan informed δt and a for temporally aware forgetting, and redefined b/c with",
+        "timespan"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-03-359984b4",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:846527d9a735fbff57ace9cde035d6ee9481dd2137afb2c9fb3528489218d854"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "role": "predictor",
+      "statement": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "classifier head predict predicting predicts regressor",
+        "downstream adaptation: link prediction and node classification setups, plus a note on linear computational",
+        "prediction",
+        "link prediction",
+        "node classification"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:c73d00d318cf1410fcf591f3930ea34be482669feafe7cc13e02dc58b7dda00f"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "role": "temporal",
+      "statement": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "temporal timespan timestamp",
+        "directly couple the ssm step size δt to the irregular timespans between interactions.",
+        "ssm"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b8d2445e855def7c7ac21643828394c34f4f4b047f47594c356df056453e4c51"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "role": "rationale_check",
+      "statement": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "initialize a as a diagonal matrix with strictly negative real part eigenvalues."
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b5d476644d21ee2674398036a0eb21486e3b320425b9224ecf041a52b2c02428"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "role": "feature",
+      "statement": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "attribute descriptor feature",
+        "make b and c input dependent and enforce ∥w_b∥₂ ≤ 1, ∥w_c∥₂ ≤ 1.",
+        "input"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b3f13b29031da5590798dc8c402bd7f70cb1ee5e1c8ee7d7d66bd19ff17f26e6"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "role": "feature",
+      "statement": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "attribute descriptor encode encodes encoding feature",
+        "use co occurrence frequency encoding as a lightweight structural feature.",
+        "feature",
+        "encoding"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:89fddf9d158c58c772e523670399c9220ad371442549dd45f7aae9b54356ab97"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "role": "rationale_check",
+      "statement": "Process source and destination sequences independently before merging.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "process source and destination sequences independently before merging."
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:68b28db21466e8688dcfc6253aaab31401c634c58aa14939f53ecc82f2096627"
+    }
+  ],
+  "content_digest": "sha256:d0aca83d21c849d4f82a7974edcc759877aa2907174ca8ebdfb980759426cb9e"
+}

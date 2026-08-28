@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S5",
+  "response_ref": "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279",
+  "output": {
+    "section_id": "MA-S5",
+    "heading_text": "",
+    "section_markdown": "## Inference procedure.\n\nDuring inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer. In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings. The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking. This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-05-baf0d276",
+      "brief:story:O-STAGE-05-5b3d398a"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S5:1",
+      "paragraph:MA-S5:2"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S5:unit-2",
+        "candidate_symbols_or_terms": [
+          "q",
+          "p_i"
+        ],
+        "concept_key": "Inference procedure",
+        "evidence_refs_used": [],
+        "exact_question": "Does the repository contain inference-time code that computes dot-product similarity between the unchanged query embedding and the contextualized passage embeddings and sorts passages by descending score?",
+        "missing_parts": [
+          "mechanism_overview"
+        ],
+        "missing_rhetorical_move": "mechanism_overview",
+        "request_id": "new_research_request:MA-S5:mechanism_overview",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S5",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-STAGE-05-5b3d398a"
+        ],
+        "target_clause_ids": [
+          "facet-cbc0a588831ac015"
+        ],
+        "why_needed_for_reader": "The reader question 'How does this setup realize Inference procedure?' requires an anchored mechanism-overview move that states the scoring and ranking operation; the supplied evidence covers only training-time reranker calls and conditional branching, leaving the inference-time dot-product scoring formula unconfirmed."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S5:1",
+        "paragraph_markdown": "At inference time, the query embedding is held static as the original Contriever representation and is not re-encoded by the Transformer; the contextualized passage embeddings are produced by the hybrid-attention encoder applied to each candidate passage.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:2",
+        "paragraph_markdown": "The intended inference scoring step computes dot-product similarities between the static query embedding and each contextualized passage embedding, then sorts passages in descending order of these scores to produce the final ranking; this operation is not yet confirmed by repository evidence, as the current evidence base covers training-time reranker calls and conditional branching but does not demonstrate the inference-time scoring formula.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:48bb67cbf9589ae6618ff2e5379805a3ae6fc96d84420eb311ef90e4cb54de77",
+  "content_digest": "sha256:3d6f92722137b0251443210bd51c5b92194009ee1a2aa797b85f9a406c1c87bd"
+}

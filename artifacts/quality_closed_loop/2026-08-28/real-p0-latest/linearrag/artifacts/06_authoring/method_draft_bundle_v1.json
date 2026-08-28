@@ -1,0 +1,376 @@
+{
+  "candidate_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nThe intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.\n\n## Offline Tri‑Graph construction\n\nThe offline construction phase instantiates the retrieval system with a dedicated NER component that extracts named entities from each sentence in the corpus. During initialization, the system assigns a compute device and constructs a `SpacyNER` instance from the configured spaCy model, which is stored as the entity-extraction backend. The resulting graph contains three node types—entities, sentences, and passages—linked by sparse adjacency matrices that encode occurrence relationships only; no relation triples are introduced (`not sentence_hash_ids` excludes entities lacking valid sentence associations from the graph structure). At query time, the retrieval method computes the shape of the entity-to-sentence sparse matrix to determine the effective edge counts for downstream propagation.\n\nAt query time, the retrieval pipeline loads the configuration flag `self.config.use_vectorized_retrieval` to determine whether to precompute sparse adjacency matrices for batch propagation. When the vectorized path is selected (`self.config.use_vectorized_retrieval`), the system precomputes the sentence–entity and entity–sentence sparse matrices to enable efficient batch operations. Entity scores are computed by propagating activation through the sentence–entity subgraph: for each candidate entity, the score is derived from the top-scoring sentence that mentions it, and values that fail the comparison `len(entity_to_sentence_indices) > 0` are excluded from further consideration. The retrieval method returns a ranked list of passage indices and their associated scores as the final output.\n\nPassage scores are computed by a hybrid formula that combines a dense-retrieval similarity component with an entity-based bonus. The dense-retrieval passage score is multiplied by a configurable ratio (`self.config.passage_ratio`), and this product is added to the natural logarithm of one plus the total entity bonus, where the entity bonus accumulates per-entity contributions weighted by occurrence count. The resulting composite score is then scaled by a configurable passage-node weight (`self.config.passage_node_weight`) to yield the final passage weight. Entity scores are filtered so that values that fail the comparison `not sentence_hash_ids` are excluded, ensuring that only entities with valid sentence associations contribute to the bonus. The sparse-matrix precomputation step guards against empty adjacency structures by branching on the condition `len(sentence_to_entity_indices) > 0`.\n\nThe passage weight vector is formed by scaling each passage's composite score by the configurable passage-node weight, and the entity weight vector is derived from the propagated entity scores. These two vectors are summed element-wise to produce the initial node-weight vector that seeds the personalized PageRank computation. Dense passage retrieval produces a ranked list of passage indices and their similarity scores against the query embedding, which feeds the dense-retrieval component of the hybrid formula. The passage-node weight parameter (`self.config.passage_ratio`) controls the relative contribution of the dense-retrieval similarity signal versus the entity-based evidence in the final ranking.\n\nThe personalized PageRank routine iterates over all vertices in the graph, indexed by the node-name-to-vertex-index mapping, and produces a sorted list of passage indices together with their PPR scores. The non-zero counts of the entity-to-sentence and sentence-to-entity sparse matrices are queried to determine the effective edge counts for the propagation. The PPR-sorted passage scores are written to the output buffer as the final ranked passage list. The vertex iteration range is determined by the length of the node-name-to-vertex-index mapping, ensuring that all graph nodes participate in the importance aggregation.\n\nThe node-weight vector that initializes the personalized PageRank is the element-wise sum of the entity weight vector and the passage weight vector. The entity weights are derived from the propagated entity scores after threshold-based filtering, where values that fail the iteration threshold comparison are excluded. The passage weights encode the hybrid score described above. The PPR personalization distribution is set from this combined node-weight vector, and the routine propagates influence across the full vertex set to produce a globally ranked passage list. The configuration parameters `passage_node_weight` and `passage_ratio` jointly determine the relative weighting of entity-based and similarity-based evidence in the final ranking. The offline construction and the two-stage retrieval mechanism together form a retrieval-augmented generation pipeline that operates over entity-based graph indexing without requiring relation extraction. The hierarchical graph structure preserves original text at the passage and sentence levels alongside extracted entities, and the two-stage process—local entity activation followed by global importance aggregation—enables multi-hop query resolution over the corpus.\n\nThe offline Tri-Graph construction and the subsequent two-stage retrieval mechanism together constitute the core indexing and ranking pipeline. The hierarchical graph preserves the original text hierarchy—passages containing sentences containing entities—alongside the extracted entity layer, ensuring that textual context is retained at every level of the graph structure.\n\n## First retrieval stage: relevant entity activation via local semantic bridging\n\nThe first retrieval stage activates relevant entities through iterative breadth-first frontier propagation over the sentence–entity subgraph. The propagation state is initialized by loading the iteration threshold `iteration_threshold` from the configuration, which governs both the branching condition and the pruning criterion. At each iteration, the frontier of `current_entities` is expanded: entities whose score satisfies (`entity_score < self.config.iteration_threshold`) are retained in the active frontier, while those at or above the threshold are pruned. The vectorized propagation step computes next-entity scores by constructing a mask over scores that meet or exceed the threshold (`next_entity_scores_np >= self.config.iteration_threshold`), yielding the set of active indices for the next frontier. Propagation continues while (`len(current_entities) > 0 and iteration < self.config.max_iterations`), ensuring that the frontier terminates when no qualifying entities remain or the maximum iteration budget is exhausted. The iterative propagation step is formalized as follows. Given the current entity score $s_{e}^{(t)}$ at iteration $t$, the next score is updated by taking the maximum over all sentences $s$ in the neighborhood $N(e)$ of entity $e$ of the product of the current score and the query–sentence similarity $sim(q, s)$: s_{e}^{(t+1)} = max_{s in N(e)} ( s_{e}^{(t)} cdot sim(q, s) ) Here $s_{e}^{(t)}$ denotes the relevance score assigned to entity $e$ at iteration $t$, $N(e)$ is the set of sentence nodes adjacent to $e$ in the subgraph, and $sim(q, s)$ is the similarity between query $q$ and sentence $s$. The reset-probability vector is derived from node weights by zeroing entries that are NaN or negative, and the sentence-activation vector is computed as the sparse matrix product of the transposed entity-to-sentence incidence matrix and the current score vector. A top-$k$ selection over the resulting sentence similarities yields the locally active sentences that seed the next propagation round.\n\nThe first retrieval stage couples initialization of the entity frontier, iterative score propagation through the structural sentence–entity topology, and dynamic pruning of low-scoring entities into a single deterministic pipeline. The propagation mechanism identifies latent intermediate entities that support multi-hop connections by iteratively expanding the frontier based on query–sentence similarity, without requiring a dedicated relation-extraction module. This design trades relational expressiveness for deterministic construction and robustness, recovering retrieval quality through score propagation through the structural topology rather than through edge typing.\n\nEntity activation via semantic bridging propagates relevance through the sentence–entity subgraph based on query–sentence similarity, identifying latent intermediate entities that support multi-hop connections. This mechanism is intended to avoid explicit relation extraction entirely; the graph topology is derived from structural co-occurrence rather than from learned or rule-based relation labels, trading relational expressiveness for deterministic construction and robustness.\n\n## Second retrieval stage: passage retrieval via global importance aggregation\n\nThe retrieval pipeline is organized into two decoupled stages: a local entity-activation stage that propagates scores through the entity–sentence subgraph, and a global passage-ranking stage that aggregates those scores to the passage level. The second stage operates on a passage–entity graph constructed as an undirected graph (`directed=False`) during initialization, where the retrieval method is selected and stored as a configuration field. Edges between passage and entity nodes are appended as `(node_hash_id, neighbor_hash_id)` pairs, and self-loops are excluded by the filter condition `node_hash_id == neighbor_hash_id`. The indexing procedure branches on the condition `len(new_passage_hash_ids) > 0` to determine whether new passages require graph updates before retrieval proceeds.\n\nPersonalized PageRank propagates importance scores across the undirected passage–entity graph using the `prpack` implementation, with a damping factor and reset probability read from the configuration. Node weights that are NaN or negative are masked out before the ranking computation. The resulting document scores are sorted in descending order via `np.argsort`, and the method returns the sorted passage hash identifiers together with their corresponding passage scores as a list.\n\nThe decoupling of local activation from global ranking permits independent tuning: the local stage controls how far score propagation reaches through the entity–sentence subgraph, while the global stage governs how sentence-level evidence is combined into passage-level evidence.\n\nThe exact PPR parameters—damping factor, number of iterations, and convergence criterion—are implementation details pending author confirmation; the boundary between the local and global stages (i.e., whether the walk traverses the full graph or a pruned subgraph) likewise requires author confirmation.",
+  "verified_markdown": "",
+  "review_items": [
+    {
+      "candidate_id": "review:O-COMPONENT-01-4e554ef0",
+      "source_obligation_id": "O-COMPONENT-01-4e554ef0",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "confirmation_question": "Should the Method confirm that develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-4e554ef0"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-02-8058a7bc",
+      "source_obligation_id": "O-COMPONENT-02-8058a7bc",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "confirmation_question": "Should the Method confirm that spacy ner: lightweight named entity extraction used both offline (graph building) and online (query entity extraction)?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-02-8058a7bc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-03-0c4d02ed",
+      "source_obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "confirmation_question": "Should the Method confirm that entity activation via semantic bridging: iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-03-0c4d02ed"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-4ee8e0bf",
+      "source_obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit",
+      "lane": "out_of_scope",
+      "status": "out_of_scope",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: revisit GraphRAG shortcomings from relation extraction errors.",
+      "confirmation_question": "Should the Method confirm that motivation: revisit graphrag shortcomings from relation extraction errors?",
+      "needed_evidence": [
+        "retain the unit in the review sidecar with its declared scope reason",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "retain the unit in the review sidecar with its declared scope reason",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-4ee8e0bf"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-1977b399",
+      "source_obligation_id": "O-ORGANIZATION-02-1977b399",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "out_of_scope",
+      "status": "out_of_scope",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy.",
+      "confirmation_question": "Should the Method confirm that linearrag overview: tri‑graph concept and two‑stage retrieval philosophy?",
+      "needed_evidence": [
+        "retain the unit in the review sidecar with its declared scope reason",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "retain the unit in the review sidecar with its declared scope reason",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-1977b399"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-c0bb1e93",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Avoid explicit relation extraction entirely.",
+      "confirmation_question": "Should the Method confirm that avoid explicit relation extraction entirely?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-c0bb1e93"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-1a90a997",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "confirmation_question": "Should the Method confirm that use a hierarchical graph that preserves original text (passages, sentences) alongside entities?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-1a90a997"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-09c84504",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "confirmation_question": "Should the Method confirm that decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-09c84504"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-9ca078fe",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "confirmation_question": "Should the Method confirm that apply dynamic pruning with a fixed relevance threshold during propagation?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-9ca078fe"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-ffcf3556",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "confirmation_question": "Should the Method confirm that employ personalized pagerank on the passage‑entity graph for passage retrieval?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-ffcf3556"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-06-0f48dc22",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "confirmation_question": "Should the Method confirm that initialize passage ppr scores with a hybrid of direct similarity and entity‑based evidence?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-06-0f48dc22"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU2",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU2)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU2"
+      ]
+    },
+    {
+      "candidate_id": "review-formalization:MA-S1",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S2",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S3",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S3:derivation, formula:facet:facet-36188cb856f44d0d, formula:facet:facet-8ce6e8dabb55bf84",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S5:move-unanchored:MA-S5:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S5:move-unanchored:MA-S5:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    }
+  ],
+  "plan_readiness": "candidate_ready_with_review",
+  "blocked_reasons": [],
+  "validation_split_report": {
+    "split_mode": "sentence_reverse_validation",
+    "verified_unit_ids": [
+      "FTU1"
+    ],
+    "excluded_units": [
+      {
+        "unit_id": "FTU2",
+        "text": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+        "char_start": 78,
+        "char_end": 469,
+        "reason": "unsupported"
+      }
+    ],
+    "verified_positive_unit_count": 0,
+    "unsupported_positive_units": 1
+  }
+}

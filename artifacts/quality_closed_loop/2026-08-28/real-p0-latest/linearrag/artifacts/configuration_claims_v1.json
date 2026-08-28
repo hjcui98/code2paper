@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "claims": [
+    {
+      "configuration_id": "config:sha256:438d82b0259ec",
+      "key": "self.config.iteration_threshold",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:b820d3f5770ead16"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:9dc3cae7d2a4b8b74ee14aa9d67726aab97ac1a84cadd1a1056ea22ccad415d0",
+      "content_digest": "sha256:5baee33be8844bb24f4c1eabe84b04d8540881b8550464f5cd8a413eef20547b"
+    },
+    {
+      "configuration_id": "config:sha256:b0bfdcd89bf3f",
+      "key": "self.config.passage_ratio",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:af30b2aa90ee91aa"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:77bf1f9cbce3a94f11dd288201fab11285f2573617e036607b1be06e23db8374",
+      "content_digest": "sha256:81115267b4d5987d09c19e7977f3e2c69bf563705c9b466767d15862ad708d4f"
+    },
+    {
+      "configuration_id": "config:sha256:1277a9f9204b9",
+      "key": "self.config.passage_node_weight",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:607e7d9f2246f485"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:06177f1488930788"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:dfa434aa5202dbdef2e721390ee45a8593e5407c5e1f51f7d96ad110e7a0efc4",
+      "content_digest": "sha256:a90c484ba3a61d92ac53949f058de4b3b951568036cafe84cf0dde49ed2d60d7"
+    },
+    {
+      "configuration_id": "config:sha256:4c7cbc5dfda84",
+      "key": "self.config.spacy_model",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:926b510de1417922"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:0a417719bc167a3da2e19e44b9a694e949b3bc107da2c02eccb0e8fbb7a928e7",
+      "content_digest": "sha256:07cbf6c2d90a26d7a58476812faf1aa4ee0af8ec9d2cb7d074a949139952f3c5"
+    },
+    {
+      "configuration_id": "config:sha256:d0a09499ddbb2",
+      "key": "self.config.use_vectorized_retrieval",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:406492bde7696947"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:d616fd57816a7ea322a74a2e24ef51ac6d24e18dabfcf1b451986832db8ae78c",
+      "content_digest": "sha256:9bab66effd58c1e03f991073a303b7440079363afd1f07b98263b1ceae110994"
+    }
+  ],
+  "content_digest": "sha256:152aad7a0129c7832eba478abb075dd4a80ba10cd7992de07fb845c96693b3c0"
+}

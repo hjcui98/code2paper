@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:e145ab14cd227f6ab19a",
+      "request_id": "req:MA-S1:mechanism_overview:1",
+      "owner": "repository_tools",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "scope": [
+        "mechanism_overview"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S1 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:f176ca36fc84d13f73bdc3f6ce404797e6dd93c4a00bda3d74d5754b586ef5e7"
+    },
+    {
+      "route_id": "route:ca18a39b3acf0a9af500",
+      "request_id": "req:MA-S4:unit-1:mechanism_overview:1",
+      "owner": "repository_tools",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "scope": [
+        "mechanism_overview"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:b0ee8eb1f557a261bea12fece6128bb394c1a7fc17c13ac4699985b88ab6c8f3"
+    },
+    {
+      "route_id": "route:2f9897a4eb1b70d554cf",
+      "request_id": "request:MA-S5:unit-1:mechanism",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "scope": [
+        "SSM",
+        "Δt",
+        "spectral",
+        "constraint",
+        "continuous",
+        "formulation",
+        "redefined",
+        "diagonal",
+        "initialization",
+        "input-dependent",
+        "norm",
+        "stable",
+        "B",
+        "C",
+        "bounds"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:42f3404e0f95ce66262271e2d15620fc92563652ddc0186878c6fd9c0b520a62"
+    }
+  ],
+  "rejections": []
+}

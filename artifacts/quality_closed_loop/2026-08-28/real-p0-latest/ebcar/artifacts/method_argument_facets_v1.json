@@ -1,0 +1,828 @@
+{
+  "schema_version": "1.0",
+  "facets": [
+    {
+      "facet_id": "facet-d57e6b007d62768e",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+      "exact_source_quote": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-c8146479",
+      "semantic_fields": {
+        "formula_goal": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "ID",
+        "InfoNCE",
+        "computed",
+        "embeddings",
+        "standard",
+        "retriever",
+        "Contriever",
+        "embedding",
+        "document",
+        "relative",
+        "retrieved",
+        "sinusoidal",
+        "position",
+        "encoding",
+        "structural",
+        "enriched"
+      ],
+      "required": false,
+      "content_digest": "sha256:d79efffa9e810a6320dfe5902d2d0cc8b6316f05abc77ebc3fdc32a62300cbad"
+    },
+    {
+      "facet_id": "facet-bd2114e7ad9b1773",
+      "clause_id": "clause:O-STAGE-01-039a963a:0",
+      "exact_source_quote": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-01-039a963a",
+      "semantic_fields": {
+        "operation": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Retrieval",
+        "embedding",
+        "preparation",
+        "retriever",
+        "Contriever",
+        "candidate",
+        "passages",
+        "computed",
+        "embeddings",
+        "dense",
+        "fetch",
+        "top",
+        "pre",
+        "encode",
+        "query",
+        "same"
+      ],
+      "required": true,
+      "content_digest": "sha256:fcf153b1b519810b145f5ade5a67c1f5246e28ff895d9b6d7782d786aca4052a"
+    },
+    {
+      "facet_id": "facet-308602a0138b57ea",
+      "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+      "exact_source_quote": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-02-42e8d68d",
+      "semantic_fields": {
+        "operation": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ID",
+        "Structural",
+        "augmentation",
+        "retrieved",
+        "document",
+        "embedding",
+        "sinusoidal",
+        "position",
+        "encoding",
+        "original",
+        "identity",
+        "ordering",
+        "passage",
+        "add",
+        "dynamic",
+        "inject"
+      ],
+      "required": true,
+      "content_digest": "sha256:d75f6edbaf664583d23196bbcad6b98b47050c1b41a11ccbbf0109329ac77c24"
+    },
+    {
+      "facet_id": "facet-df672e4efc3751e2",
+      "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+      "exact_source_quote": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-03-2c5bd758",
+      "semantic_fields": {
+        "operation": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "attention",
+        "encoding",
+        "augmented",
+        "embeddings",
+        "Transformer",
+        "interactions",
+        "dedicated",
+        "document",
+        "producing",
+        "contextualized",
+        "Hybrid",
+        "Feed",
+        "query",
+        "passage",
+        "encoder",
+        "applies"
+      ],
+      "required": true,
+      "content_digest": "sha256:aa5f6070c1fb8510070e5fe1f520b35b2750b5b3bc5e33f40c887cf2096ab600"
+    },
+    {
+      "facet_id": "facet-6bc5ee440fdc8329",
+      "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+      "exact_source_quote": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-STAGE-04-c50e0bef",
+      "semantic_fields": {
+        "formula_goal": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "InfoNCE",
+        "Contrastive",
+        "training",
+        "positive",
+        "embedding",
+        "negative",
+        "embeddings",
+        "loss",
+        "pull",
+        "updated",
+        "passage",
+        "toward",
+        "fixed",
+        "query",
+        "push",
+        "away"
+      ],
+      "required": true,
+      "content_digest": "sha256:33b8a136ebb804c6c7444ad49dfe568f63a4550739933e785cab47c4c520181d"
+    },
+    {
+      "facet_id": "facet-cbc0a588831ac015",
+      "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+      "exact_source_quote": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-05-5b3d398a",
+      "semantic_fields": {
+        "operation": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Inference",
+        "similarities",
+        "unchanged",
+        "embedding",
+        "contextualized",
+        "embeddings",
+        "passages",
+        "descending",
+        "scoring",
+        "ranking",
+        "Compute",
+        "dot",
+        "product",
+        "between",
+        "query",
+        "passage"
+      ],
+      "required": true,
+      "content_digest": "sha256:c8d6ed0f857f8d11bda71f883cd5bbfd9f5947f1f842f781d4f302d89f7859ad"
+    },
+    {
+      "facet_id": "facet-14d4dbe911667c07",
+      "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+      "exact_source_quote": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-c301ecdd",
+      "semantic_fields": {
+        "operation": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "RAG",
+        "reranking",
+        "retrieval-augmented",
+        "generation",
+        "addressing",
+        "inference",
+        "efficiency",
+        "cross-passage",
+        "reasoning",
+        "especially",
+        "scattered",
+        "passages",
+        "requires",
+        "resolving",
+        "coreference",
+        "structural"
+      ],
+      "required": false,
+      "content_digest": "sha256:941494179bc485426ff2c1179365c21d3aceec9b139e65ee42f710a371a5f369"
+    },
+    {
+      "facet_id": "facet-c70f411cffdc0a8f",
+      "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+      "exact_source_quote": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-de6049e3",
+      "semantic_fields": {
+        "operation": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Contriever",
+        "retriever",
+        "provides",
+        "embeddings",
+        "retrieval",
+        "Dense",
+        "initial",
+        "passage",
+        "top"
+      ],
+      "required": true,
+      "content_digest": "sha256:cc72651d86b24ef4125125e945ecddd0864e98a7c53c0357b7424264dbc7d998"
+    },
+    {
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+      "exact_source_quote": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-02-2e14379d",
+      "semantic_fields": {
+        "operation": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "embeddings",
+        "representations",
+        "candidate",
+        "passages",
+        "obtained",
+        "Contriever",
+        "passage",
+        "Fixed",
+        "dense"
+      ],
+      "required": true,
+      "content_digest": "sha256:553a873ff831a6ccd0c176d766ce1103f04e0dff976b836c1563a0295d62db61"
+    },
+    {
+      "facet_id": "facet-d87af6e7082cc916",
+      "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+      "exact_source_quote": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-03-d8aa8c77",
+      "semantic_fields": {
+        "operation": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ID",
+        "document",
+        "embedding",
+        "relative",
+        "identity",
+        "embeddings",
+        "assigned",
+        "dynamically",
+        "documents",
+        "candidate",
+        "enabling",
+        "recognize",
+        "passages",
+        "together",
+        "table",
+        "Learned"
+      ],
+      "required": true,
+      "content_digest": "sha256:12009ce2e37186e68c268a88dd77c4a5c98edf72052857038eab3fe4fcb9f658"
+    },
+    {
+      "facet_id": "facet-ba08ce41d6e1d9b9",
+      "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+      "exact_source_quote": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-04-b5b6af99",
+      "semantic_fields": {
+        "operation": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "position",
+        "encoding",
+        "sinusoidal",
+        "original",
+        "document",
+        "providing",
+        "structural",
+        "passage",
+        "Encodes",
+        "within",
+        "order",
+        "cues"
+      ],
+      "required": true,
+      "content_digest": "sha256:590ecd5f0e35b5163db8f721503d88b1aed7673a6ff5159e34c888bd695fc115"
+    },
+    {
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+      "exact_source_quote": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-05-4c3594d2",
+      "semantic_fields": {
+        "operation": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "attention",
+        "Combines",
+        "dedicated",
+        "document",
+        "Transformer",
+        "dependencies",
+        "hybrid",
+        "shared",
+        "full",
+        "global",
+        "cross",
+        "passage",
+        "masked",
+        "intra",
+        "layer",
+        "jointly"
+      ],
+      "required": true,
+      "content_digest": "sha256:deb1c2c2833f70ef8ede98031f2929c47f35dda677ff3822a18d2b6bc048d01e"
+    },
+    {
+      "facet_id": "facet-00e27dd88a70848f",
+      "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+      "exact_source_quote": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-06-34021b88",
+      "semantic_fields": {
+        "operation": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "attention",
+        "Standard",
+        "allowing",
+        "passages",
+        "captures",
+        "relevance",
+        "document",
+        "relationships",
+        "shared",
+        "full",
+        "module",
+        "multi",
+        "head",
+        "query",
+        "attend",
+        "other"
+      ],
+      "required": true,
+      "content_digest": "sha256:9edcf7aea83d0d45c50ac755f0d31d8a9891d73bd0541c7cd7ef9111eb73daac"
+    },
+    {
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+      "exact_source_quote": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-07-d157b2cc",
+      "semantic_fields": {
+        "operation": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "dedicated",
+        "attention",
+        "restricts",
+        "passages",
+        "document",
+        "enabling",
+        "coreference",
+        "resolution",
+        "coherence",
+        "masked",
+        "module",
+        "multi",
+        "head",
+        "passage",
+        "attend",
+        "only"
+      ],
+      "required": true,
+      "content_digest": "sha256:963c56bfafaca91e08f95864c52782dd893ed2ee7ed12bd92e49c7fbbc13694e"
+    },
+    {
+      "facet_id": "facet-0bce6b6595a44f58",
+      "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+      "exact_source_quote": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-08-4aac53dc",
+      "semantic_fields": {
+        "operation": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Transformer",
+        "combined",
+        "sequence",
+        "contextualized",
+        "embeddings",
+        "encoder",
+        "stack",
+        "Layers",
+        "process",
+        "produce",
+        "passage"
+      ],
+      "required": true,
+      "content_digest": "sha256:ed28334bb1ae340c09fd7228366b561a12439656fe1722edff056a0b12a40fcc"
+    },
+    {
+      "facet_id": "facet-833638c7783e3952",
+      "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+      "exact_source_quote": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-COMPONENT-09-6a8cfd6c",
+      "semantic_fields": {
+        "formula_goal": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "InfoNCE",
+        "contrastive",
+        "Objective",
+        "encourages",
+        "positive",
+        "embedding",
+        "separating",
+        "negatives",
+        "loss",
+        "updated",
+        "passage",
+        "align",
+        "fixed",
+        "query"
+      ],
+      "required": true,
+      "content_digest": "sha256:df6d9c236625ee6edbf2163d93a277e021f58c9c38f3c1190fc6ce681ad094f9"
+    },
+    {
+      "facet_id": "facet-3c6a3824f6a9641a",
+      "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+      "exact_source_quote": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "facet_kind": "guarantee",
+      "brief_id": "brief:story:O-COMPONENT-10-dac6250f",
+      "semantic_fields": {
+        "guarantee": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "original",
+        "embedding",
+        "unchanged",
+        "training",
+        "inference",
+        "reference",
+        "contrastive",
+        "objective",
+        "fixed",
+        "query",
+        "anchor",
+        "remains",
+        "during",
+        "serve",
+        "stable"
+      ],
+      "required": false,
+      "content_digest": "sha256:863fb86026575e4c9c08dba7d5c03fc4f27632587acd014e06da1f6d2de3b0ea"
+    },
+    {
+      "facet_id": "facet-c5e7c214b56a659f",
+      "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+      "exact_source_quote": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-11-27f310b2",
+      "semantic_fields": {
+        "operation": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ConTEB",
+        "benchmark",
+        "Evaluation",
+        "rerankers",
+        "challenging",
+        "requiring",
+        "inference",
+        "document",
+        "structural",
+        "reasoning",
+        "suite",
+        "tests",
+        "tasks",
+        "cross",
+        "passage",
+        "wide"
+      ],
+      "required": true,
+      "content_digest": "sha256:035173e728a6910423fd6c15412943354e334adad8113ff6bf0dcc469449ea19"
+    },
+    {
+      "facet_id": "facet-f6e629096087c520",
+      "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+      "exact_source_quote": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-12-370bd5b2",
+      "semantic_fields": {
+        "operation": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "MLDR",
+        "EBCAR",
+        "SQuAD",
+        "NarrativeQA",
+        "ConTEB",
+        "training",
+        "datasets",
+        "covering",
+        "disambiguation",
+        "matching",
+        "narrative",
+        "comprehension",
+        "sets",
+        "Three",
+        "entity",
+        "span"
+      ],
+      "required": true,
+      "content_digest": "sha256:4d83af2ae8eca04b0a047529eede047f4ce92bb5a2301f364a46bce889955884"
+    },
+    {
+      "facet_id": "facet-9e754ab14c6fde20",
+      "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+      "exact_source_quote": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-01-6b45ad90",
+      "semantic_fields": {
+        "operation": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Motivation",
+        "efficiency",
+        "inference",
+        "challenges",
+        "existing",
+        "rerankers",
+        "cross",
+        "passage"
+      ],
+      "required": false,
+      "content_digest": "sha256:0f3274431bec95b887cf379f3b325434ea76954e53b3876f36fc952e9c908513"
+    },
+    {
+      "facet_id": "facet-b9735878c5548c4a",
+      "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+      "exact_source_quote": "Embedding‑based reranking formulation and overall framework.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-02-54911271",
+      "semantic_fields": {
+        "operation": "Embedding‑based reranking formulation and overall framework."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Embedding",
+        "reranking",
+        "formulation",
+        "framework",
+        "based",
+        "overall"
+      ],
+      "required": false,
+      "content_digest": "sha256:397fe7ace568089d44029e17934132440e6c994e8ce5f4e8d853b8eaba6ed5d0"
+    },
+    {
+      "facet_id": "facet-68ed73e7a64fbbfd",
+      "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+      "exact_source_quote": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-03-2c92c853",
+      "semantic_fields": {
+        "operation": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked)."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ID",
+        "Architecture",
+        "enriching",
+        "embeddings",
+        "document",
+        "position",
+        "Transformer",
+        "attention",
+        "dedicated",
+        "details",
+        "encoder",
+        "hybrid",
+        "shared",
+        "full",
+        "masked"
+      ],
+      "required": false,
+      "content_digest": "sha256:fd88d6f73d8cb45378e7dc1e5a5fac5b651a33358bb58afb79a93dd7678afdbf"
+    },
+    {
+      "facet_id": "facet-71df0ec224b91883",
+      "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+      "exact_source_quote": "Training objective: InfoNCE loss with fixed query anchor.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-ORGANIZATION-04-1dd970df",
+      "semantic_fields": {
+        "formula_goal": "Training objective: InfoNCE loss with fixed query anchor."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "InfoNCE",
+        "Training",
+        "objective",
+        "loss",
+        "fixed",
+        "query",
+        "anchor"
+      ],
+      "required": false,
+      "content_digest": "sha256:e612cf20f2d819d3bfbaa609fef00e23b490ebc613ead049e10ede845ff09f61"
+    },
+    {
+      "facet_id": "facet-f55b63fbde1d45df",
+      "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+      "exact_source_quote": "Inference procedure.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-05-baf0d276",
+      "semantic_fields": {
+        "operation": "Inference procedure."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Inference",
+        "procedure"
+      ],
+      "required": false,
+      "content_digest": "sha256:c08f34442ac45d4f68d1310552a78776c46d3f68524c7944ff04c04034577279"
+    },
+    {
+      "facet_id": "facet-c8bf8030283400b2",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+      "exact_source_quote": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-bad20132",
+      "semantic_fields": {
+        "operation": "Avoid full‑text processing and autoregressive generation to reduce inference latency."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "processing",
+        "autoregressive",
+        "generation",
+        "inference",
+        "Avoid",
+        "full",
+        "text",
+        "reduce",
+        "latency"
+      ],
+      "required": false,
+      "content_digest": "sha256:5d486e5ae98c664f01b8630098ebf469f4d6b0b96ca121a1040f31a2e590ceb4"
+    },
+    {
+      "facet_id": "facet-e517f869034a38aa",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+      "exact_source_quote": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "semantic_fields": {
+        "operation": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "document",
+        "structural",
+        "knowledge",
+        "embeddings",
+        "inference",
+        "Inject",
+        "level",
+        "passage",
+        "support",
+        "cross"
+      ],
+      "required": false,
+      "content_digest": "sha256:e0c8117175109b0da5753186a292b431655c2c5b5f1cc7a4040476b3f68b99f3"
+    },
+    {
+      "facet_id": "facet-d27285ebc144a3fa",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+      "exact_source_quote": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+      "semantic_fields": {
+        "operation": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "complementary",
+        "attention",
+        "patterns",
+        "document",
+        "Design",
+        "two",
+        "exist",
+        "layer",
+        "global",
+        "local"
+      ],
+      "required": false,
+      "content_digest": "sha256:f29739380685335d254cc69d4e3e7d0d9d36245701927657e042a4ea394dd015"
+    },
+    {
+      "facet_id": "facet-f49282e62c6e52fe",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+      "exact_source_quote": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+      "semantic_fields": {
+        "operation": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ID",
+        "IDs",
+        "relative",
+        "document",
+        "assignments",
+        "dynamic",
+        "rather",
+        "global",
+        "corpus",
+        "level"
+      ],
+      "required": false,
+      "content_digest": "sha256:707d5404fbf13b3beadeb6a0691b25f60ed76a3fbca6ac7fe5df53af14403853"
+    },
+    {
+      "facet_id": "facet-c0d9a5e725c77367",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+      "exact_source_quote": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+      "semantic_fields": {
+        "operation": "Keep the query embedding fixed during training and inference while updating passage embeddings."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "embedding",
+        "training",
+        "inference",
+        "updating",
+        "embeddings",
+        "Keep",
+        "query",
+        "fixed",
+        "during",
+        "passage"
+      ],
+      "required": false,
+      "content_digest": "sha256:ec9f594590615c67d1058496e6e2c492b25a1c3255cfa8656592cc47f3bbfe14"
+    },
+    {
+      "facet_id": "facet-ecd069d8ab3be38f",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+      "exact_source_quote": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-388166d9",
+      "semantic_fields": {
+        "operation": "Train on ConTEB datasets that explicitly require cross‑passage reasoning."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "ConTEB",
+        "datasets",
+        "explicitly",
+        "reasoning",
+        "Train",
+        "require",
+        "cross",
+        "passage"
+      ],
+      "required": false,
+      "content_digest": "sha256:c7b6cf0f476637394e7dd910c6f24c223838b6cae5a632beeb55b7bab0b94006"
+    }
+  ]
+}

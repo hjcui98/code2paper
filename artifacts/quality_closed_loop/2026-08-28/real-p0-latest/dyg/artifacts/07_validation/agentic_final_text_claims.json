@@ -1,0 +1,80 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:04b3a4aa34065df515a0e17ab2b7471c712f2c5a87a3f0c3e13fc8e603e20215",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 110,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1fece039c5f0fff7a294c3acbe8aa5682acade9cc34f3a4bc1b4bd3e86bc5172"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "Two limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 222,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:074cc94d18189357ca4c409b2a40e5e7872e2855a73cc3d601e1fcd03c3add58"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 223,
+      "char_end": 525,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:b37cabcfd2f3e03cbb315b4bc80f9a34ac8b2babfcf46deeb963d307d8078922"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "Two limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows.",
+      "normalized_text": "two limitations of vanilla state space models when applied to dynamic graphs motivate the design that follows",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 222,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:074cc94d18189357ca4c409b2a40e5e7872e2855a73cc3d601e1fcd03c3add58"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+      "normalized_text": "first standard ssms assume uniform timesteps and therefore ignore the irregular timespans that characterize real world interaction sequences second the state update in a vanilla ssm lacks an explicit mechanism to suppress unreliable or noisy transitions leaving the model vulnerable to input noise",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 223,
+      "char_end": 525,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:b37cabcfd2f3e03cbb315b4bc80f9a34ac8b2babfcf46deeb963d307d8078922"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

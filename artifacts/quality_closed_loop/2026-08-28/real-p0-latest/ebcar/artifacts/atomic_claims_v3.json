@@ -1,0 +1,243 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_packet_digest": "sha256:30009e19729bcfc04139957e029a04104cafdaf7a62c1f5fce26cebeb473b1db",
+  "code_fact_digest": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+  "claims": [
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "canonical_text": "train_ebcar branches on cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:a379c54c9113d85469e0c16fe17ccc7e67b30ea19d7156c6ebeba8dd9f6e401b",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "canonical_text": "train_ebcar returns reranker",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:7c99f19ba4af5da5ec2c5b43bbe965fc283304e10e84b7928c9be606e5e957e6",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "canonical_text": "train_ebcar computes formula val_loss, len(val_loader), result=best_val_loss",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:12d8268ce79bf23287bd6ea0e6ed92ac0f8e267c256ec7ba45ab431d0dc8fcf8",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "canonical_text": "train_ebcar loads weights cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:707f513a7d79ba5b0e286bd50c8a58464f816907ce2db7d780e4a52f4df9d6aa",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "canonical_text": "train_ebcar calls reranker, query, passage, label, document_id, passage_id, passage_text, result=loss",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:209fcfd3e2c05018d2e4a0df96d278756722441588bdd841d0d84049c70553f2",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "canonical_text": "train_ebcar computes formula 'hybrid_attention_', run_name, result=run_name",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:61582c7d24978fa14e4040ea0091b16f9b905f812a08cf1f71f4ab06ec7d8742",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "canonical_text": "train_ebcar computes formula train_loss, len(train_loader)",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:992639b1bb3030dbc1f3c83a6e43caee300599796b1192e3e9d5416ef9447468",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "canonical_text": "train_ebcar configured by cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "required_qualifiers": [
+        "cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:56a518be47c2a25917140b3cdf4db136954e8fb24e11fc9f441d3f0915387acb",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    }
+  ],
+  "explicit_code_gaps": [],
+  "semantic_stage_groups": [
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "ordered_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "organization_priority": 6
+    }
+  ],
+  "content_digest": "sha256:b5602e9f254a4bd7f1b7db4293311821872b0be54d9d655ca476935fc9702e59"
+}

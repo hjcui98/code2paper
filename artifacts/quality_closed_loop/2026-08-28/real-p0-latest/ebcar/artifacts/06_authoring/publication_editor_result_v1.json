@@ -1,0 +1,48 @@
+{
+  "sections": {
+    "MA-S2": "## Embedding‑based reranking formulation and overall framework.\n\nThe embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline. This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+    "MA-S5": "## Inference procedure.\n\nDuring inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer. In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings. The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking. This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula."
+  },
+  "patches": [
+    {
+      "patch_id": "editor-v2-MA-S2",
+      "section_id": "MA-S2",
+      "before_digest": "sha256:4aa041f542ce68b6c585b721c64c44037538fcacf9037e59bad508dd13f55616",
+      "before_text": "",
+      "replacement_text": "## Embedding‑based reranking formulation and overall framework.\n\nThe embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline. This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+      "generation_source": "editor",
+      "generation_trace_ids": [
+        "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279"
+      ],
+      "reason": "academic_method_revision",
+      "scoped": true,
+      "rendered_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "deferred_proposition_ids": []
+    },
+    {
+      "patch_id": "editor-v2-MA-S5",
+      "section_id": "MA-S5",
+      "before_digest": "sha256:70606ae80501cbb16e9e7caf76d056a6dc7e5c7842f7a4cc0b75b328fc3a6a5c",
+      "before_text": "",
+      "replacement_text": "## Inference procedure.\n\nDuring inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer. In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings. The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking. This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+      "generation_source": "editor",
+      "generation_trace_ids": [
+        "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279"
+      ],
+      "reason": "academic_method_revision",
+      "scoped": true,
+      "rendered_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "deferred_proposition_ids": []
+    }
+  ],
+  "duplicate_signatures": [],
+  "blocked_reason": "editor_candidate_rejected:document_level_no_gain_without_reason",
+  "response_ref": "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279",
+  "response_refs": [
+    "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279"
+  ],
+  "call_failures": [],
+  "content_digest": "sha256:10b305dbd1fe1f6e47f906b43a04097df0a8672d6d38159f9f5ab014e627f2ad"
+}

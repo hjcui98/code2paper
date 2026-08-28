@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S1",
+  "response_ref": "sha256:2ef8eaa7d9400efb49ca6db959eef43a2fd70e29838593ce2956e28564a11239",
+  "output": {
+    "section_id": "MA-S1",
+    "heading_text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+    "section_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nThe intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S1:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [
+      "MA-S1:unit"
+    ],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S1:unit",
+        "candidate_symbols_or_terms": [
+          "GraphRAG",
+          "relation extraction",
+          "knowledge graph",
+          "retrieval pipeline"
+        ],
+        "current_known_facts": [],
+        "evidence_refs_used": [],
+        "exact_question": "What specific error modes in relation extraction have been observed or measured in GraphRAG-style systems, and how do they propagate to downstream retrieval quality?",
+        "missing_parts": [
+          "repository evidence for specific GraphRAG failure modes",
+          "quantified error propagation data",
+          "named prior work documenting relation extraction shortcomings"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "req:MA-S1:1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S1",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-4ee8e0bf"
+        ],
+        "target_clause_ids": [
+          "clause:MA-S1:operation"
+        ],
+        "why_needed_for_reader": "The motivational paragraph currently rests on author intent alone; grounding it in observed or cited failure modes would let the reader trust the problem framing before the method is introduced."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S1:1",
+        "paragraph_markdown": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:243c8832355c7b2e3fd1a91c35824f33233d24f3a0cece47f06f613621fc1ec5",
+  "content_digest": "sha256:34db2f8b02d791351848775b765af07bb9335906434afd75a9f00051ddc018cd"
+}

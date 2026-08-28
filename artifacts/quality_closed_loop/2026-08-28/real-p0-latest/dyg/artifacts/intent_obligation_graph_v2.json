@@ -1,0 +1,1776 @@
+{
+  "schema_version": "2.0",
+  "mode": "intent-obligation-graph-v2",
+  "project_goal": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+  "method_goal": "Present DyG-Mamba, a timespan-informed continuous state space model that redefines core SSM parameters to incorporate temporal irregularity and improve robustness, demonstrating how it surpasses standard SSMs on dynamic graph tasks.",
+  "implementation_scope": "",
+  "obligations": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "kind": "method_mainline",
+      "priority": "must_cover",
+      "source_field": "method_mainline",
+      "source_index": 0,
+      "author_text": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ff4dec019ade",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "input"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-9bb9d9fc7748",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encode",
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-5bef3e37a64f",
+          "role": "feature",
+          "desired_predicates": [
+            "CONCAT"
+          ],
+          "predicate_groups": [
+            [
+              "CONCAT"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "concatenate"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-6c5ece060db4",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction",
+            "mlp",
+            "predictor"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-a728afbe1166",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attend"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b04c167c9b60",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "mamba"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "temporal",
+            "ssm",
+            "elapsed",
+            "timespan",
+            "mamba"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-d221d17754f0",
+          "role": "composition",
+          "desired_predicates": [
+            "CONCAT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CONCAT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "concatenate"
+          ],
+          "aliases": [
+            "composition"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b8d309da85e5",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "link prediction",
+            "node classification"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "append appends attend attention attribute classifier concat concatenate concatenation descriptor",
+        "extract the first hop interaction sequence of a node and encode it using node,"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-01-06d7de36",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 0,
+      "author_text": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-94414aed9df5",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "feature",
+            "representation"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-ea0b2e1489fa",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding",
+            "transform"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-0353cd160aff",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "temporal"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "temporal"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor encode encodes encoding feature temporal timespan timestamp",
+        "dynamic graph encoding: transform raw interaction sequences into a unified, aligned feature representation that"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-02-e02cd0f2",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 1,
+      "author_text": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-99fa4a913e5e",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "ssm"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "timespan",
+            "ssm",
+            "elapsed time",
+            "elapsed"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "temporal timespan timestamp",
+        "timespan aware forgetting in ssm: let the ssm forget historical states proportionally to the"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-03-d47a86f4",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 2,
+      "author_text": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-0e73a0aac76e",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "input"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-01b71ec5e0d1",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "filtering"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "filtering"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor feature mask masking masks",
+        "robust selective reviewing: enable input dependent filtering of historical information so that important interactions"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-STAGE-04-a3a3e8ab",
+      "kind": "stage",
+      "priority": "must_cover",
+      "source_field": "pipeline_steps",
+      "source_index": 3,
+      "author_text": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-7a41a15e0142",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-4395257a8d63",
+          "role": "io",
+          "desired_predicates": [
+            "LOAD",
+            "READ",
+            "SERIALIZE",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "LOAD",
+              "READ",
+              "SERIALIZE",
+              "WRITE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "read"
+          ],
+          "aliases": [
+            "io"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "load predict predicting predicts read save",
+        "downstream prediction: read out fixed size node embeddings from the sequential output and produce"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-88e55e54",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "project_goal",
+      "source_index": 0,
+      "author_text": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-910d6aa1dd06",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "representation"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-80fbaf76b9b7",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-9d69071673a6",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "learning"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        },
+        {
+          "target_id": "target-625e672bc992",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "link prediction",
+            "node classification"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute classifier descriptor feature head predict predicting predicts regressor train",
+        "develop a dynamic graph representation learning model that effectively handles continuous time interaction sequences"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-377afc18",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 0,
+      "author_text": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-6f2b409d7f03",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-5898414fb959",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "timestamp"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "timestamp"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "predict predicting predicts temporal timespan timestamp",
+        "interaction sequence extraction: obtain the ordered first hop neighbor events for a node up"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-c39dd898",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 1,
+      "author_text": "Node encoding: Use raw node features; zero vectors when unavailable.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-b8e313f4fce3",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "encode encodes encoding",
+        "node encoding: use raw node features; zero vectors when unavailable."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-2ae65141",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 2,
+      "author_text": "Edge encoding: Use raw edge features; zero vectors when unavailable.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-381900bc4a19",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "encode encodes encoding",
+        "edge encoding: use raw edge features; zero vectors when unavailable."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-6d73cce5",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 3,
+      "author_text": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-a78660842409",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding",
+            "encode"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-c518dd927a23",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-fe7cf0bbd877",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "temporal"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "temporal"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "encode encodes encoding predict predicting predicts temporal timespan timestamp",
+        "absolute temporal encoding: encode timespans from each interaction to the prediction time using a"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-8cd85daa",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 4,
+      "author_text": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-233aaf9ac096",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "encode encodes encoding",
+        "co occurrence frequency encoding: capture structural similarity by encoding the frequency of shared neighbors"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-e711d58d",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 5,
+      "author_text": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-d72d51ef5d35",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-58a8c9c2b120",
+          "role": "feature",
+          "desired_predicates": [
+            "CONCAT"
+          ],
+          "predicate_groups": [
+            [
+              "CONCAT"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "concatenate"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-22575183ddfd",
+          "role": "composition",
+          "desired_predicates": [
+            "CONCAT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CONCAT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "concatenate"
+          ],
+          "aliases": [
+            "composition"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "append appends concat concatenate concatenation encode encodes encoding",
+        "encoding alignment: project all encoding types to a common dimension and concatenate them."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-c430eb84",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 6,
+      "author_text": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-3d21eb574827",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "input"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-6b26e5713052",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "state space"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "mamba",
+            "ssm",
+            "state space",
+            "timespan"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor feature temporal timespan timestamp",
+        "dyg mamba ssm core: continuous state space model with redefined δt (timespan dependent step"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-48efa86a",
+      "kind": "component",
+      "priority": "should_cover",
+      "source_field": "key_building_blocks",
+      "source_index": 7,
+      "author_text": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-73c7d6457b5e",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "predictor",
+            "mlp",
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-a78b22c0066f",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "readout"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-9baf151faa4f",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "link prediction",
+            "node classification"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "classifier head predict predicting predicts regressor temporal timespan timestamp",
+        "readout and predictor: mean pooling over the sequence dimension followed by an mlp for"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-42774719",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 0,
+      "author_text": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-d513471997a4",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "encode encodes encoding",
+        "dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-780817ba",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 1,
+      "author_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-4774b2dadb2a",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "input"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor feature",
+        "motivation: limitations of vanilla ssms they ignore irregular timespans and are vulnerable to input"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-359984b4",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 2,
+      "author_text": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-0a86e05eaafe",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "timespan"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "timespan"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "temporal timespan timestamp",
+        "redesign: timespan informed δt and a for temporally aware forgetting, and redefined b/c with"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "kind": "organization",
+      "priority": "preference",
+      "source_field": "story_order",
+      "source_index": 3,
+      "author_text": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-4d0d30c7bf17",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "prediction"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-1edf33ab5f75",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "link prediction",
+            "node classification"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "classifier head predict predicting predicts regressor",
+        "downstream adaptation: link prediction and node classification setups, plus a note on linear computational"
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 0,
+      "author_text": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-dac5f6371c58",
+          "role": "temporal",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "CONCAT",
+            "SAMPLE",
+            "STACK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "CONCAT",
+              "SAMPLE",
+              "STACK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "ssm"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ssm"
+          ],
+          "aliases": [
+            "temporal"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "temporal timespan timestamp",
+        "directly couple the ssm step size δt to the irregular timespans between interactions."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 1,
+      "author_text": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "initialize a as a diagonal matrix with strictly negative real part eigenvalues."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 2,
+      "author_text": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-401e91d248fc",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "input"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor feature",
+        "make b and c input dependent and enforce ∥w_b∥₂ ≤ 1, ∥w_c∥₂ ≤ 1."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 3,
+      "author_text": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-0cf9b2b1a6d5",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "feature"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-577780626e5c",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "retrieval_queries": [
+        "attribute descriptor encode encodes encoding feature",
+        "use co occurrence frequency encoding as a lightweight structural feature."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "kind": "rationale_check",
+      "priority": "verify_only",
+      "source_field": "design_intents",
+      "source_index": 4,
+      "author_text": "Process source and destination sequences independently before merging.",
+      "typed_behavior_targets": [],
+      "retrieval_queries": [
+        "process source and destination sequences independently before merging."
+      ],
+      "candidate_paths": [],
+      "status": "unresolved"
+    }
+  ],
+  "relations": [
+    {
+      "source_obligation_id": "O-STAGE-01-06d7de36",
+      "target_obligation_id": "O-STAGE-02-e02cd0f2",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-STAGE-02-e02cd0f2",
+      "target_obligation_id": "O-STAGE-03-d47a86f4",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-STAGE-03-d47a86f4",
+      "target_obligation_id": "O-STAGE-04-a3a3e8ab",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-01-42774719",
+      "target_obligation_id": "O-ORGANIZATION-02-780817ba",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-02-780817ba",
+      "target_obligation_id": "O-ORGANIZATION-03-359984b4",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-ORGANIZATION-03-359984b4",
+      "target_obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "relation": "precedes"
+    },
+    {
+      "source_obligation_id": "O-STAGE-01-06d7de36",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "relation": "supports"
+    },
+    {
+      "source_obligation_id": "O-STAGE-02-e02cd0f2",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "relation": "supports"
+    },
+    {
+      "source_obligation_id": "O-STAGE-03-d47a86f4",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "relation": "supports"
+    },
+    {
+      "source_obligation_id": "O-STAGE-04-a3a3e8ab",
+      "target_obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "relation": "supports"
+    }
+  ],
+  "content_digest": "sha256:9acc2aa2ad6026fe48bf1cdac4abef4f413dc2b7d466642f18680409a5bca64e"
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "req:MA-S2:unit:1",
+      "lane": "expository_bridge",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "exact_question": "Does the LinearRAG paper or documentation use the term 'Tri-Graph' as a named architectural concept, and does it articulate a two-stage retrieval philosophy as a stated design principle?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: Does the LinearRAG paper or documentation use the term 'Tri-Graph' as a named architectural concept, and does it articulate a two-stage retrieval philosophy as a stated design principle.",
+      "needed_evidence": [
+        "Tri-Graph",
+        "explicit",
+        "statement",
+        "two-stage",
+        "retrieval",
+        "philosophy",
+        "principle",
+        "term",
+        "named",
+        "concept",
+        "source",
+        "text",
+        "design"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "req:MA-S2:unit:1"
+      ],
+      "content_digest": "sha256:5ee941ba3a71f52fef3ae3e396b5fc338f23aeafbceed791fea56a80add12885"
+    }
+  ]
+}

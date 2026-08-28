@@ -1,0 +1,428 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "author_goal": "Demonstrate that a relation-free hierarchical graph (Tri-Graph) with lightweight construction and a two-stage retrieval approach (entity activation via semantic bridging + global importance aggregation via PageRank) can outperform graph-based RAG methods while achieving linear scalability and zero LLM token cost during indexing.",
+  "obligations": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "role": "feature",
+      "statement": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute config configure default descriptor feature mask masking masks predict",
+        "build tri graph: extract entities from corpus passages, create entity, sentence, and passage nodes,",
+        "build",
+        "score",
+        "threshold",
+        "pruning",
+        "propagate",
+        "personalized pagerank",
+        "pagerank"
+      ],
+      "importance": "critical",
+      "source_obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:ed1d9e079e3d4188ccc7bdb88f6422d2abc17976b63f7334f1794d11d9eb14a8"
+    },
+    {
+      "obligation_id": "O-STAGE-01-9c8dfe22",
+      "role": "feature",
+      "statement": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature graph construction graph index indexing",
+        "offline graph construction: build a tri graph from the corpus by splitting passages into",
+        "build",
+        "graph construction",
+        "adjacency matrices",
+        "adjacency"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-01-9c8dfe22",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:110a9c787c151aed2c963971f1165ae04f9c2f8ab4e06c803bd3476c65dcf5f6"
+    },
+    {
+      "obligation_id": "O-STAGE-02-93c16851",
+      "role": "predictor",
+      "statement": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "mask masking masks predict predicting predicts propagate propagates propagating",
+        "entity activation via local semantic bridging: for a query, activate relevant entities by initializing",
+        "scores",
+        "pruning",
+        "propagating"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-02-93c16851",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b8440ddf6978f671ab1fed950135fdbfed2bb142e9e214b92964f4970b26c051"
+    },
+    {
+      "obligation_id": "O-STAGE-03-8dda66b9",
+      "role": "predictor",
+      "statement": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "predict predicting predicts propagate propagates propagating rank ranked ranks",
+        "passage retrieval via global importance aggregation: use the activated entities as seeds for personalized",
+        "importance",
+        "score",
+        "ranked",
+        "personalized pagerank",
+        "pagerank"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-03-8dda66b9",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:38209fad3631443f8665ab48fc8b815a0fc618c5085a1958fe1d006ba402c0ce"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-4e554ef0",
+      "role": "graph_builder",
+      "statement": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "generation graph construction graph index indexing invoke invokes",
+        "develop a retrieval augmented generation system that efficiently handles complex, multi hop queries over",
+        "indexing",
+        "generation"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-4e554ef0",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:9d1cb7e313b21d4d5b2be378af73681db6423e45d05fb0d57fe84244289378ac"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-bd3b9454",
+      "role": "graph_builder",
+      "statement": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "graph construction graph index indexing",
+        "tri graph: hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency;",
+        "adjacency"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-bd3b9454",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:26f7c6a673505add187c2f89e9bd678b4a75e5c09f218083cc4b750a44db4633"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-8058a7bc",
+      "role": "component",
+      "statement": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "spacy ner: lightweight named entity extraction used both offline (graph building) and online (query"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-02-8058a7bc",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:69845b314f3042b716c37360901be6c28908c323f7be4f5d60ff14bd79eb779c"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "role": "propagation",
+      "statement": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "propagate propagates propagating",
+        "entity activation via semantic bridging: iterative propagation of entity relevance through the sentence entity",
+        "propagation"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:8ce2071920d29b4e61705ee1703d369743c03740f3c1aa7ba29f112c0454db04"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "role": "filter",
+      "statement": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "config configure default mask masking masks propagate propagates propagating",
+        "dynamic pruning: threshold based filtering that retains only strongly relevant entities during propagation, preventing",
+        "pruning",
+        "threshold",
+        "filtering",
+        "propagation"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:7eb5495f9376980dc51021169d0d35b9cf641e7620fdc32b667c31fc427580e6"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-29ba03a1",
+      "role": "predictor",
+      "statement": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "predict predicting predicts propagate propagates propagating rank ranked ranks",
+        "personalized pagerank: global importance aggregation on the passage entity subgraph; ranks passages by propagating",
+        "importance",
+        "ranks",
+        "personalized pagerank",
+        "pagerank",
+        "propagating"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-05-29ba03a1",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a9d25f367d183d6cac622d6e5b4ae83a24efdc8665c31f685efd1614bc760718"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "role": "predictor",
+      "statement": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "hybrid passage initialization: combines direct query passage similarity with entity based statistics (occurrence, level)",
+        "scores",
+        "ppr"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:f0434d3c45cfd1c528ebc0a14e7692b808b682c267d916d87b4a9a50dcc2b84d"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "role": "organization",
+      "statement": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "motivation: revisit graphrag shortcomings from relation extraction errors"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:7543a545199a36b99020fee2a01bfd912e86d35c9f4cce032b02a39051a39ce8"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-1977b399",
+      "role": "organization",
+      "statement": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "linearrag overview: tri graph concept and two stage retrieval philosophy"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-02-1977b399",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:f63b9b908b435d5a7236829ef7491b3b81b86db676a2e6bf32032f32e7da8c80"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-157f229e",
+      "role": "graph_builder",
+      "statement": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "graph construction graph index indexing",
+        "offline tri graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+        "graph construction",
+        "adjacency matrices",
+        "adjacency"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-03-157f229e",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:aba930454cc44ee39cdd476267b6fc7320141cd3fe6add575e75c67f77bbe14b"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "role": "filter",
+      "statement": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "mask masking masks propagate propagates propagating",
+        "first retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic",
+        "pruning",
+        "propagation"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:22ba8e01bf1f1c7a695ffa358b56825684e93515e8665dd790ca05a6947aeaf9"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "role": "predictor",
+      "statement": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized pagerank)",
+        "importance",
+        "personalized pagerank",
+        "pagerank"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:38af7cb4a38a42cfae5772e6f428647803b8b5e6af17657ec039d9e2ca216c2b"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "role": "rationale_check",
+      "statement": "Avoid explicit relation extraction entirely.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "avoid explicit relation extraction entirely."
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:176a81854a68d237868d49a8a4d077ff0ab43b763229b18e2635db9466482b8c"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "role": "rationale_check",
+      "statement": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "use a hierarchical graph that preserves original text (passages, sentences) alongside entities."
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:e0dc316370da95c90c3a7ba9b17b931e6fd9c732ea5e775411933e687b0b5710"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "role": "ranking",
+      "statement": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "rank ranked ranks",
+        "decouple retrieval into a local entity activation stage and a global passage ranking stage.",
+        "ranking"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a6e451596edd0823b82700c46690932c671784062d83049afb5de2ae7d916b2c"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "role": "filter",
+      "statement": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "config configure default mask masking masks propagate propagates propagating",
+        "apply dynamic pruning with a fixed relevance threshold during propagation.",
+        "pruning",
+        "threshold",
+        "propagation"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:5b1ae3783cb6e553151c6c4d480cec6e6200e5a064f39956d54824951189b714"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "role": "propagation",
+      "statement": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "propagate propagates propagating",
+        "employ personalized pagerank on the passage entity graph for passage retrieval.",
+        "personalized pagerank",
+        "pagerank"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:279b1c1deba410d7cb8004f3897b9c19ce1d35211db9e552da28d97a56341bea"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "role": "predictor",
+      "statement": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "predict predicting predicts propagate propagates propagating",
+        "initialize passage ppr scores with a hybrid of direct similarity and entity based evidence.",
+        "scores",
+        "ppr"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a06fe414655283ba356e689209afafb36e23665a0a7a0eb7e14a964134bda000"
+    }
+  ],
+  "content_digest": "sha256:d312253ef0dc9dec3db2685f4bff58a3ec0cf8a28dacabb7e6fc88845056912f"
+}

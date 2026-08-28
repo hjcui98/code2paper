@@ -1,0 +1,722 @@
+{
+  "schema_version": "1.1",
+  "publication_status": "incomplete",
+  "items": [
+    {
+      "candidate_id": "review:O-STAGE-03-d47a86f4",
+      "source_obligation_id": "O-STAGE-03-d47a86f4",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "confirmation_question": "Should the Method confirm that robust selective reviewing: enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-03-d47a86f4"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-377afc18",
+      "source_obligation_id": "O-COMPONENT-01-377afc18",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "confirmation_question": "Should the Method confirm that interaction sequence extraction: obtain the ordered first-hop neighbor events for a node up to a prediction timestamp?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-377afc18"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-06-e711d58d",
+      "source_obligation_id": "O-COMPONENT-06-e711d58d",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "confirmation_question": "Should the Method confirm that encoding alignment: project all encoding types to a common dimension and concatenate them?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-06-e711d58d"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-07-c430eb84",
+      "source_obligation_id": "O-COMPONENT-07-c430eb84",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "confirmation_question": "Should the Method confirm that dyg-mamba ssm core: continuous state space model with redefined δt (timespan-dependent step size), a (stable diagonal initialization), and b/c (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-07-c430eb84"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-08-48efa86a",
+      "source_obligation_id": "O-COMPONENT-08-48efa86a",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "confirmation_question": "Should the Method confirm that readout and predictor: mean pooling over the sequence dimension followed by an mlp for link prediction or node classification?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-08-48efa86a"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-42774719",
+      "source_obligation_id": "O-ORGANIZATION-01-42774719",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "confirmation_question": "Should the Method confirm that dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-42774719"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-780817ba",
+      "source_obligation_id": "O-ORGANIZATION-02-780817ba",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "confirmation_question": "Should the Method confirm that motivation: limitations of vanilla ssms – they ignore irregular timespans and are vulnerable to input noise?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-780817ba"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-03-359984b4",
+      "source_obligation_id": "O-ORGANIZATION-03-359984b4",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "confirmation_question": "Should the Method confirm that redesign: timespan-informed δt and a for temporally aware forgetting, and redefined b/c with spectral norm for robust selective reviewing?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-03-359984b4"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-04-a52145c2",
+      "source_obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "confirmation_question": "Should the Method confirm that downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-04-a52145c2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-106180a0",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "confirmation_question": "Should the Method confirm that directly couple the ssm step size δt to the irregular timespans between interactions?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-106180a0"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-653d713f",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "confirmation_question": "Should the Method confirm that initialize a as a diagonal matrix with strictly negative real-part eigenvalues?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-653d713f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-117025ca",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "confirmation_question": "Should the Method confirm that make b and c input-dependent and enforce ∥w_b∥₂ ≤ 1, ∥w_c∥₂ ≤ 1?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-117025ca"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-b41841c3",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "confirmation_question": "Should the Method confirm that use co-occurrence frequency encoding as a lightweight structural feature?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-b41841c3"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-e1bbed89",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-5",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Process source and destination sequences independently before merging.",
+      "confirmation_question": "Should the Method confirm that process source and destination sequences independently before merging?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-e1bbed89"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU2",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "Two limitations of vanilla state-space models when applied to dynamic graphs motivate the design that follows.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU2)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU2"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU3",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "First, standard SSMs assume uniform timesteps and therefore ignore the irregular timespans that characterize real-world interaction sequences; second, the state update in a vanilla SSM lacks an explicit mechanism to suppress unreliable or noisy transitions, leaving the model vulnerable to input noise.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU3)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU3"
+      ]
+    },
+    {
+      "candidate_id": "review-formalization:MA-S1",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S1:derivation, formula:facet:facet-9a1ed70668b9de25",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S2",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S3",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S3:derivation, formula:facet:facet-e3de4791afd3b462, formula:facet:facet-0564bcda9bc954d9, formula:facet:facet-45205815214ce81d",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S4",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S5:derivation, formula:facet:facet-85dd07572b8a77e2, formula:facet:facet-e343d4bc111c5b77, formula:facet:facet-3f8317dd772533f4, formula:facet:facet-e36d367d850a8273",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S1:move-unanchored:MA-S1:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    }
+  ],
+  "writer_research_requests": [
+    {
+      "request_id": "req:MA-S1:mechanism_overview:1",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "Which repository-executable facts anchor the mechanism overview for dynamic graph encoding: specifically, which code paths and data structures demonstrate that raw interaction sequences are extracted, represented with heterogeneous feature channels (node identity, edge attributes, absolute timestamps, co-occurrence indicators), padded to a fixed length, and assembled into a unified multi-channel tensor prior to routing?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "mechanism_overview"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "mechanism_overview"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:138:140",
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:214:214",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-42774719",
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:cb15cb10946e8b69442d3648c561f812261bfe0fa2beb1e5c5be788a3b5ad23d"
+    },
+    {
+      "request_id": "req:MA-S4:unit-1:mechanism_overview:1",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "What repository evidence (code, documentation, or test) demonstrates that the downstream prediction stage reads out fixed-size node embeddings from the sequential SSM output and produces task-specific predictions for link prediction and node classification, including the specific pooling-and-MLP head architecture and any stated linear computational complexity bound?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "mechanism_overview"
+      ],
+      "current_known_facts": [
+        "EdgeBank link-prediction pipeline: edge_bank_link_prediction writes positive_probabilities and negative_probabilities via predict_link_probabilities",
+        "edge_bank_unlimited_memory constructs edge_memories from full interaction history (src_node_ids, dst_node_ids)",
+        "predict_link_probabilities branches on membership in edge_memories, returning 1.0 or 0.0 per candidate",
+        "MEAN pooling over sequence dimension confirmed in DyGFormer and GraphMixer",
+        "No evidence shows an MLP head following mean-pooled embeddings for link prediction or node classification",
+        "No evidence confirms the linear computational complexity claim for the downstream adaptation stage"
+      ],
+      "why_needed_for_reader": "The section heading promises an overview of how the downstream adaptation stage realizes both link prediction and node classification with a note on linear computational complexity, but no repository evidence currently anchors the mechanism_overview move that would connect the sequential SSM output to task-specific prediction heads and justify the complexity claim.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "mechanism_overview",
+      "missing_parts": [
+        "mechanism_overview"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:14:14",
+        "span:models/EdgeBank.py:18:21",
+        "span:models/EdgeBank.py:23:23"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "target_concept_keys": [
+        "mechanism_overview"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-a52145c2",
+        "brief:story:O-STAGE-04-a3a3e8ab"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [
+        "EdgeBank link-prediction pipeline: edge_bank_link_prediction writes positive_probabilities and negative_probabilities via predict_link_probabilities",
+        "edge_bank_unlimited_memory constructs edge_memories from full interaction history (src_node_ids, dst_node_ids)",
+        "predict_link_probabilities branches on membership in edge_memories, returning 1.0 or 0.0 per candidate",
+        "MEAN pooling over sequence dimension confirmed in DyGFormer and GraphMixer",
+        "No evidence shows an MLP head following mean-pooled embeddings for link prediction or node classification",
+        "No evidence confirms the linear computational complexity claim for the downstream adaptation stage"
+      ],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:2402270297ceae9889b431ccbb60d4cdf9eb90146fb74befce0535ce9cfd2601"
+    },
+    {
+      "request_id": "request:MA-S5:unit-1:mechanism",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "SSM",
+        "Δt",
+        "spectral",
+        "constraint",
+        "continuous",
+        "formulation",
+        "redefined",
+        "diagonal",
+        "initialization",
+        "input-dependent",
+        "norm",
+        "stable",
+        "B",
+        "C",
+        "bounds"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section's reader question asks how the DyG-Mamba SSM core realizes the continuous state-space model with redefined Δt and stable diagonal A. Without repository evidence binding these mathematical specifications, the method section cannot present the core mechanism as verified fact; the author-intent specifications remain unconfirmed.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "spectral norm constraint evidence",
+        "continuous SSM formulation with redefined Δt",
+        "stable diagonal initialization of A",
+        "input-dependent B/C with norm bounds"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:models/FreeDyG.py:330:330",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/FreeDyG.py:337:337"
+      ],
+      "target_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-STAGE-03-d47a86f4",
+        "brief:story:O-COMPONENT-07-c430eb84",
+        "brief:story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "target_clause_ids": [
+        "facet-85dd07572b8a77e2",
+        "facet-e343d4bc111c5b77",
+        "facet-3f8317dd772533f4",
+        "facet-e36d367d850a8273"
+      ],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation",
+        "formula",
+        "input"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:56868716d966ecb1a305ae63d68a17301c2d34059246d2a7090f4081beb9dafc"
+    }
+  ],
+  "external_research_queue": [
+    {
+      "request_id": "request:MA-S5:unit-1:mechanism",
+      "lane": "expository_bridge",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "exact_question": "Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: Which repository evidence supports the spectral norm constraint on W_B and W_C, the continuous SSM state-space formulation with timespan-dependent step size, and the stable diagonal initialization of A.",
+      "needed_evidence": [
+        "SSM",
+        "Δt",
+        "spectral",
+        "constraint",
+        "continuous",
+        "formulation",
+        "redefined",
+        "diagonal",
+        "initialization",
+        "input-dependent",
+        "norm",
+        "stable",
+        "B",
+        "C",
+        "bounds"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "request:MA-S5:unit-1:mechanism"
+      ],
+      "content_digest": "sha256:db58bbf1109c2065846abbcec5443a58da89ebccb2890086642dc87f9be31518"
+    }
+  ],
+  "incomplete_sections": [
+    "MA-S5",
+    "MA-S1",
+    "MA-S3",
+    "MA-S4"
+  ]
+}

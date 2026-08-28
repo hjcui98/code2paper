@@ -1,0 +1,326 @@
+{
+  "schema_version": "1.0",
+  "decision": "reject",
+  "reasons": [
+    "document_level_no_gain_without_reason"
+  ],
+  "response_ref": "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279",
+  "incumbent_text_digest": "sha256:d423f64f99590f02ad883c62847b566a485137be9fa9730c4f033615d24c4a1c",
+  "candidate_text_digest": "sha256:02b0be01ca4969ce824d5952a7f69e8d7eec96909e79deb57e281c4069750bb7",
+  "incumbent": {
+    "duplicate_rate": 0.0,
+    "editable_rate": 1.0,
+    "required_moves": [
+      [
+        "MA-S1",
+        "design_objective"
+      ],
+      [
+        "MA-S1",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S1",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S2",
+        "design_objective"
+      ],
+      [
+        "MA-S2",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S2",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S3",
+        "algorithm_or_data_flow"
+      ],
+      [
+        "MA-S3",
+        "configuration_and_branches"
+      ],
+      [
+        "MA-S3",
+        "design_objective"
+      ],
+      [
+        "MA-S3",
+        "equation_or_derivation"
+      ],
+      [
+        "MA-S3",
+        "formal_objects_and_notation"
+      ],
+      [
+        "MA-S3",
+        "implementation_realization"
+      ],
+      [
+        "MA-S3",
+        "inference_and_output"
+      ],
+      [
+        "MA-S3",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S3",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S3",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S4",
+        "design_objective"
+      ],
+      [
+        "MA-S4",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S4",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S4",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S5",
+        "design_objective"
+      ],
+      [
+        "MA-S5",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S5",
+        "problem_or_local_context"
+      ]
+    ],
+    "rendered_claims": [],
+    "rendered_equations": [],
+    "rendered_configurations": [],
+    "rendered_propositions": [],
+    "rendered_by_section": {
+      "MA-S2": {
+        "claims": [],
+        "equations": [],
+        "configs": [],
+        "propositions": []
+      },
+      "MA-S5": {
+        "claims": [],
+        "equations": [],
+        "configs": [],
+        "propositions": []
+      }
+    },
+    "generic_style_issue_count": 0,
+    "candidate_authority_violations": 0,
+    "formula_environment_count": 0,
+    "coherent": false
+  },
+  "candidate": {
+    "duplicate_rate": 0.0,
+    "editable_rate": 1.0,
+    "required_moves": [
+      [
+        "MA-S1",
+        "design_objective"
+      ],
+      [
+        "MA-S1",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S1",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S2",
+        "design_objective"
+      ],
+      [
+        "MA-S2",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S2",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S3",
+        "algorithm_or_data_flow"
+      ],
+      [
+        "MA-S3",
+        "configuration_and_branches"
+      ],
+      [
+        "MA-S3",
+        "design_objective"
+      ],
+      [
+        "MA-S3",
+        "equation_or_derivation"
+      ],
+      [
+        "MA-S3",
+        "formal_objects_and_notation"
+      ],
+      [
+        "MA-S3",
+        "implementation_realization"
+      ],
+      [
+        "MA-S3",
+        "inference_and_output"
+      ],
+      [
+        "MA-S3",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S3",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S3",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S4",
+        "design_objective"
+      ],
+      [
+        "MA-S4",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S4",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S4",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S5",
+        "design_objective"
+      ],
+      [
+        "MA-S5",
+        "mechanism_overview"
+      ],
+      [
+        "MA-S5",
+        "problem_or_local_context"
+      ]
+    ],
+    "rendered_claims": [],
+    "rendered_equations": [],
+    "rendered_configurations": [],
+    "rendered_propositions": [],
+    "rendered_by_section": {
+      "MA-S2": {
+        "claims": [],
+        "equations": [],
+        "configs": [],
+        "propositions": []
+      },
+      "MA-S5": {
+        "claims": [],
+        "equations": [],
+        "configs": [],
+        "propositions": []
+      }
+    },
+    "generic_style_issue_count": 0,
+    "candidate_authority_violations": 0,
+    "formula_environment_count": 0,
+    "coherent": false
+  },
+  "bound_moves": {
+    "incumbent": [
+      [
+        "MA-S2",
+        "design_objective"
+      ],
+      [
+        "MA-S2",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S2",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S5",
+        "design_objective"
+      ],
+      [
+        "MA-S5",
+        "problem_or_local_context"
+      ]
+    ],
+    "candidate": [
+      [
+        "MA-S2",
+        "design_objective"
+      ],
+      [
+        "MA-S2",
+        "problem_or_local_context"
+      ],
+      [
+        "MA-S2",
+        "transition_to_next_section"
+      ],
+      [
+        "MA-S5",
+        "design_objective"
+      ],
+      [
+        "MA-S5",
+        "problem_or_local_context"
+      ]
+    ]
+  },
+  "regressed_dimensions": {
+    "claims": {
+      "before": 0,
+      "after": 0
+    },
+    "equations": {
+      "before": 0,
+      "after": 0
+    },
+    "configurations": {
+      "before": 0,
+      "after": 0
+    },
+    "moves": {
+      "before": 5,
+      "after": 5
+    },
+    "duplicate": {
+      "before": 0.0,
+      "after": 0.0
+    },
+    "editable": {
+      "before": 1.0,
+      "after": 1.0
+    },
+    "coherent": {
+      "before": false,
+      "after": false
+    }
+  }
+}

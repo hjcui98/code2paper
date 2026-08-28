@@ -1,0 +1,395 @@
+{
+  "schema_version": "1.0",
+  "execution_digest": "sha256:90e4d0e3767829f2302da3ba0aaa5318287d73b5753f860c79fe869e0d40a624",
+  "refused_reason": "",
+  "artifacts": [
+    {
+      "artifact_name": "intent_obligation_graph_v2",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/intent_obligation_graph_v2.json",
+      "digest": "sha256:dc23ec07f16b16991a54e0cb8d51721e636d17f9e0e4e55c290de250f88cbca3",
+      "schema": "intent_obligation_graph_v2",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "research_agenda_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/research_agenda_v1.json",
+      "digest": "sha256:10f603127cbe2a4c0c4a11efdee9180be4880ffaa85c1fe85ae9fd8b3f773a02",
+      "schema": "research_agenda_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_evidence",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_evidence.json",
+      "digest": "sha256:691dfcf10b4dbc8b4167fb7de6b0b8d42f2d300a23738ad0ee807e7a9f9c9e23",
+      "schema": "method_evidence",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "claim_evidence_map",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/claim_evidence_map.json",
+      "digest": "sha256:a2f29185294ed4208862e3e6b01af51fab4811887695e3e62886da62ed91cf43",
+      "schema": "claim_evidence_map",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "obligation_coverage_v2",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/obligation_coverage_v2.json",
+      "digest": "sha256:01c1e18e2fbad12df546c3f2864242e0f0ddcea93a3f088dc5ade1db0b48e038",
+      "schema": "obligation_coverage_v2",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "reference_method_agenda_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/reference_method_agenda_v1.json",
+      "digest": "sha256:eda262360a73b664e985940e52e88f89f7d0b7be82eaef69d47c18861e34d908",
+      "schema": "reference_method_agenda_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_completeness_matrix_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_completeness_matrix_v1.json",
+      "digest": "sha256:a2ea470ba781091836b1b20514408bbe2b356e2094cf95c591798d5ea130372b",
+      "schema": "method_completeness_matrix_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "equation_claims_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/equation_claims_v1.json",
+      "digest": "sha256:5a2da09fc7b28873ff284aeca5e32aca1ddae5a86325e6bb31989c10c4d8796e",
+      "schema": "equation_claims_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "configuration_claims_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/configuration_claims_v1.json",
+      "digest": "sha256:d9a288eb653502d55dd02f1c74d39acfb5df0282948188043e3c234d272e79b3",
+      "schema": "configuration_claims_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "evidence_packets_v3",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/evidence_packets_v3.json",
+      "digest": "sha256:f81960d999598f0fe84e8adfb53ef0ad197a707f98e4381df6e7052ec580f427",
+      "schema": "evidence_packets_v3",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "code_facts_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/code_facts_v1.json",
+      "digest": "sha256:c92dc139c54481b203bdf378bf5630cb7e0fc1d86ab3f5557b570eefe8df48c3",
+      "schema": "code_facts_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "atomic_claims_v3",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/atomic_claims_v3.json",
+      "digest": "sha256:da3fcd3b552d57fd1086c88cc88fced6fb94fa632728e3283e45537cec960321",
+      "schema": "atomic_claims_v3",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "behavior_graph_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/behavior_graph_v1.json",
+      "digest": "sha256:b09d1f6f733d4abc5cc65314bc20d83e31a272a04809cfe1f2450241d1166866",
+      "schema": "behavior_graph_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "authoring_projection_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/authoring_projection_v1.json",
+      "digest": "",
+      "schema": "authoring_projection_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_section_plan_v2",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_section_plan_v2.json",
+      "digest": "",
+      "schema": "method_section_plan_v2",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_briefs_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_briefs_v1.json",
+      "digest": "",
+      "schema": "method_argument_briefs_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_concept_cards_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_concept_cards_v1.json",
+      "digest": "",
+      "schema": "method_concept_cards_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_propositions_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_propositions_v1.json",
+      "digest": "",
+      "schema": "method_propositions_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_proposition_bindings_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_proposition_bindings_v1.json",
+      "digest": "",
+      "schema": "method_proposition_bindings_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_proposition_clusters_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_proposition_clusters_v1.json",
+      "digest": "",
+      "schema": "method_proposition_clusters_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "writing_research_callback_artifacts_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/writing_research_callback_artifacts_v1.json",
+      "digest": "",
+      "schema": "writing_research_callback_artifacts_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_facets_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_facets_v1.json",
+      "digest": "",
+      "schema": "method_argument_facets_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "facet_evidence_alignments_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/facet_evidence_alignments_v1.json",
+      "digest": "",
+      "schema": "facet_evidence_alignments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "candidate_facet_policies_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/candidate_facet_policies_v1.json",
+      "digest": "",
+      "schema": "candidate_facet_policies_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_facet_alignment_trace_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_facet_alignment_trace_v1.json",
+      "digest": "",
+      "schema": "method_argument_facet_alignment_trace_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "publication_paragraph_transaction_assessments_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/publication_paragraph_transaction_assessments_v1.json",
+      "digest": "",
+      "schema": "publication_paragraph_transaction_assessments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "authoring_structural_exit_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/authoring_structural_exit_v1.json",
+      "digest": "",
+      "schema": "authoring_structural_exit_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_briefs_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_briefs_v1.json",
+      "digest": "sha256:a86f7d0672e2113d776544e7223395630d1c56853de1d408d5422f8c898000c4",
+      "schema": "method_argument_briefs_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_argument_facets_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_facets_v1.json",
+      "digest": "sha256:53616fa634e6339bd702b01c630a4f9c84107741f7476ad97b70f0eb55e64517",
+      "schema": "method_argument_facets_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "facet_evidence_alignments_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/facet_evidence_alignments_v1.json",
+      "digest": "sha256:03e495b7915f39e4f8022608c9424cb09df98fc98b1a9b6c137d42351e6f05c9",
+      "schema": "facet_evidence_alignments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "candidate_facet_policies_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/candidate_facet_policies_v1.json",
+      "digest": "sha256:0e49dbfd8131c03292b61e229d38f3ae9ed7524f640eb80665c15a9685aee39c",
+      "schema": "candidate_facet_policies_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_argument_facet_alignment_trace_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_argument_facet_alignment_trace_v1.json",
+      "digest": "sha256:83d39fe6967e6b09d74fcd5cc7cb8e742f0e4b9ebec44b48f47dba502a901280",
+      "schema": "method_argument_facet_alignment_trace_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_section_plan_v2",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_section_plan_v2.json",
+      "digest": "sha256:f16b06cee4a2bced975eb55cd0fd8232b05daf59f8b9b429946208d117e7c1e2",
+      "schema": "method_section_plan_v2",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "authoring_projection_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/authoring_projection_v1.json",
+      "digest": "sha256:a3d22a4e7f13d6ef4bcbd06272eba228dca85c681ca651be99cfe70ebe3d5375",
+      "schema": "authoring_projection_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_evidence",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_evidence.json",
+      "digest": "sha256:d6094d5eb3ed8eb9100ea32a1b327ab96d735ee4ca722bda6508031f59311a7a",
+      "schema": "method_evidence",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "claim_evidence_map",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/claim_evidence_map.json",
+      "digest": "sha256:a2f29185294ed4208862e3e6b01af51fab4811887695e3e62886da62ed91cf43",
+      "schema": "claim_evidence_map",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_concept_cards_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_concept_cards_v1.json",
+      "digest": "",
+      "schema": "method_concept_cards_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_propositions_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_propositions_v1.json",
+      "digest": "",
+      "schema": "method_propositions_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_proposition_bindings_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_proposition_bindings_v1.json",
+      "digest": "",
+      "schema": "method_proposition_bindings_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_proposition_clusters_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/method_proposition_clusters_v1.json",
+      "digest": "",
+      "schema": "method_proposition_clusters_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "writing_research_callback_artifacts_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/writing_research_callback_artifacts_v1.json",
+      "digest": "",
+      "schema": "writing_research_callback_artifacts_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "publication_paragraph_transaction_assessments_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/publication_paragraph_transaction_assessments_v1.json",
+      "digest": "",
+      "schema": "publication_paragraph_transaction_assessments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "authoring_structural_exit_v1",
+      "path": "/tmp/c2p-real-p0-20260828-linearrag/artifacts/authoring_structural_exit_v1.json",
+      "digest": "",
+      "schema": "authoring_structural_exit_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    }
+  ],
+  "content_digest": "sha256:6712690a315f56ac731a559860ca5a4d6b460864e5d89576fa9172e768b816e2"
+}

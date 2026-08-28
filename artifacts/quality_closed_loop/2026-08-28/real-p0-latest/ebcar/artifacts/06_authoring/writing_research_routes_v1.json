@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:296a85993c577fdb43d5",
+      "request_id": "MA-S1:reque-1",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "scope": [],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S1 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:1410dc48702cc48f3352cd555d2b6c950c8a149bc21cb8ceec439bbcc06f99e9"
+    },
+    {
+      "route_id": "route:19307ddb6b3e0913c980",
+      "request_id": "request:MA-S2:unit:0",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "operation"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:21d35a0237c3e5e06d9d588a6731e79ff2289dceb5fb41aa8e4957e312ff0b2b"
+    },
+    {
+      "route_id": "route:093cb40290cc3a0e6144",
+      "request_id": "req:MA-S3:mechanism_overview:retry",
+      "owner": "repository_tools",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "scope": [
+        "MA-S3",
+        "facet-d57e6b007d62768e",
+        "accepted",
+        "derivation",
+        "formula",
+        "package",
+        "section",
+        "facet"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S3 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:c12f89d08b36f69c51daa6ca18cc2fad9d7f1131ae2acb2019c2c85581ee2f46"
+    }
+  ],
+  "rejections": []
+}

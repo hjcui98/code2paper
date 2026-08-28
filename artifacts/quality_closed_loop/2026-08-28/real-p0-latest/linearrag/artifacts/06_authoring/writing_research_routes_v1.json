@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:3fc86cd7785c4c22c029",
+      "request_id": "req:MA-S2:unit:1",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "Tri-Graph",
+        "explicit",
+        "statement",
+        "two-stage",
+        "retrieval",
+        "philosophy",
+        "principle",
+        "term",
+        "named",
+        "concept",
+        "source",
+        "text",
+        "design"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:5f2ad4ab5ddf6348b336df737c811fbff282c711d535334f186b70ba84d58d87"
+    },
+    {
+      "route_id": "route:dd55b11899e39916f0c7",
+      "request_id": "req:MA-S4:unit-2:mechanism",
+      "owner": "repository_tools",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "scope": [
+        "mechanism_description",
+        "operational_definition"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:7612c73205bfb8dad4f506e8c2fbf0f90cc010c0732cbd5fa995be069e2e7ac9"
+    }
+  ],
+  "rejections": []
+}

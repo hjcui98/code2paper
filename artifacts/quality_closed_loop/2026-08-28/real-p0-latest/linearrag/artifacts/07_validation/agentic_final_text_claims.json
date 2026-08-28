@@ -1,0 +1,53 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:d94d01653ba85aa94020cdc77f721e07566b5d229276d2141c0bd12dc22175fb",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 76,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:f23e9f5366718fb92c90c4d2b2c8be522be1306614e52174fec2f4c26c974f3d"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 78,
+      "char_end": 469,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:7f029cd5132b61b29ad1e198df65def37d340e38f915cbdc3ad0113b6ef87737"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "The intended motivation for this work is to revisit the shortcomings of GraphRAG that arise from errors in relation extraction: inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality, motivating a design that replaces explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations.",
+      "normalized_text": "the intended motivation for this work is to revisit the shortcomings of graphrag that arise from errors in relation extraction inaccuracies in the extracted relations propagate through the knowledge graph and degrade downstream retrieval quality motivating a design that replaces explicit relation extraction with a graph structured retrieval that does not require pre extracted relations",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 78,
+      "char_end": 469,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:7f029cd5132b61b29ad1e198df65def37d340e38f915cbdc3ad0113b6ef87737"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

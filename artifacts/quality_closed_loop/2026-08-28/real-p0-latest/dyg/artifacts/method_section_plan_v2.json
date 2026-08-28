@@ -1,0 +1,2953 @@
+{
+  "plan_id": "method-plan:5f68b67b3586b0d21b1b8358",
+  "method_name": "Present DyG-Mamba, a timespan-informed continuous state space model that redefines core SSM parameters to incorporate temporal irregularity and improve robustness, demonstrating how it surpasses standard SSMs on dynamic graph tasks.",
+  "sections": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+      "reader_question": "How does this setup realize Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned?",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2",
+        "MA-S1:unit-3",
+        "MA-S1:unit-4",
+        "MA-S1:unit-5"
+      ],
+      "moves": [
+        {
+          "move": "problem_or_local_context",
+          "argument_unit_ids": [
+            "MA-S1:unit-1",
+            "MA-S1:unit-2",
+            "MA-S1:unit-3",
+            "MA-S1:unit-4",
+            "MA-S1:unit-5"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.95,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "external_literature",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "design_objective",
+          "argument_unit_ids": [
+            "MA-S1:unit-1",
+            "MA-S1:unit-2",
+            "MA-S1:unit-3",
+            "MA-S1:unit-4",
+            "MA-S1:unit-5"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.95,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "implementation_realization",
+          "argument_unit_ids": [
+            "MA-S1:unit-1",
+            "MA-S1:unit-2",
+            "MA-S1:unit-3",
+            "MA-S1:unit-4"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.85,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "limitations_or_mismatch",
+          "argument_unit_ids": [
+            "MA-S1:unit-1",
+            "MA-S1:unit-3",
+            "MA-S1:unit-4",
+            "MA-S1:unit-5"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.4,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "transition_to_next_section",
+          "argument_unit_ids": [
+            "MA-S1:unit-1",
+            "MA-S1:unit-2",
+            "MA-S1:unit-3",
+            "MA-S1:unit-4",
+            "MA-S1:unit-5"
+          ],
+          "paragraph_budget": 0,
+          "information_budget": 1.95,
+          "allowed_authority_lanes": [
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "mechanism_overview",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "formal_objects_and_notation",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "equation_or_derivation",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "algorithm_or_data_flow",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "inference_and_output",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        }
+      ],
+      "paragraphs": [
+        {
+          "paragraph_id": "paragraph:MA-S1:1",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S1:unit-1"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:f04cc3f27dca7cd3095bb48c4c62bb6f199c0864fa042bbb58248cfad1873a99"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S1:2",
+          "paragraph_role": "formula",
+          "argument_unit_ids": [
+            "MA-S1:unit-2"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [
+            "formula:section:MA-S1:derivation"
+          ],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S1:1",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "paragraph:MA-S1:2",
+            "rhetorical_goal": "formula",
+            "targets": [
+              {
+                "target_id": "formula:section:MA-S1:derivation",
+                "target_kind": "formula",
+                "semantic_atom": "formal expression",
+                "paper_role": "formula",
+                "required_polarity": "unknown",
+                "required_conditions": [],
+                "allowed_anchor_ids": [
+                  "formula:section:MA-S1:derivation"
+                ],
+                "allowed_exact_excerpts": [],
+                "authority_lane": "formal_derivation"
+              }
+            ],
+            "content_digest": "sha256:83633adb0a35abf62f34bdd09a2001955a0de00050c320f112a93354663b0807"
+          },
+          "content_digest": "sha256:67e3f2a4cfec9080e8c14ea197de2dd76852af97db79ff769a4b0a9366e1127e"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S1:3",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S1:unit-3"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S1:2",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:fb101905503c2b350301c606c9aaaeb0abd1550998b6171b9ee5b6d82de009fd"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S1:4",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S1:unit-4"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S1:3",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:7e371eeb797af08c56a76d091dc93aa0180c1c808226699f3f78c09eb8059842"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S1:5",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S1:unit-5"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S1:4",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:de3cb09f3b7c463fe7675ef65c552ff69d6837902bffcc792988f95480c4e6e5"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-01-42774719:partially_supported_by_repository",
+        "O-COMPONENT-06-e711d58d:partially_supported_by_repository",
+        "O-RATIONALE-CHECK-04-b41841c3:partially_supported_by_repository",
+        "O-RATIONALE-CHECK-05-e1bbed89:author_confirmation_required"
+      ],
+      "depth_budget": 12,
+      "page_budget": 3.54,
+      "incomplete": true,
+      "story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "heading_constraints": [
+        "writer_must_produce_heading_text",
+        "max_length:120",
+        "must_not_use_truncated_author_statement",
+        "author_statement:Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned. Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned. Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned. Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned. Dynamic graph encoding Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context. Encoding alignment: Project all encoding types to a common dimension and concatenate them. Encoding alignment: Project all encoding types to a common dimension and concatenate them. Encoding alignment: Project all encoding types to a common dimension and concatenate them. Use co-occurrence frequency encoding as a lightweight structural feature. Use co-occurrence frequency encoding as a lightweight structural feature. Use co-occurrence frequency encoding as a lightweight structural feature. Process source and destination sequences independently before merging. Process source and destination sequences independently before merging. Process source and destination sequences independently before merging.",
+        "author_statement:Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+        "author_statement:Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+        "author_statement:Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+        "author_statement:Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+        "author_statement:Use co-occurrence frequency encoding as a lightweight structural feature.",
+        "author_statement:Process source and destination sequences independently before merging."
+      ],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-42774719",
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "brief:story:O-STAGE-01-06d7de36",
+        "brief:story:O-COMPONENT-06-e711d58d",
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:c26df20108ffbd11e98cbcf925147e142ecb5e58894b63a119c315377932add2"
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "reader_question": "How does this setup realize Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise?",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "moves": [
+        {
+          "move": "problem_or_local_context",
+          "argument_unit_ids": [
+            "MA-S2:unit"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "external_literature",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "design_objective",
+          "argument_unit_ids": [
+            "MA-S2:unit"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "limitations_or_mismatch",
+          "argument_unit_ids": [
+            "MA-S2:unit"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "executable_hard"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "transition_to_next_section",
+          "argument_unit_ids": [
+            "MA-S2:unit"
+          ],
+          "paragraph_budget": 0,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "expository_bridge"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        }
+      ],
+      "paragraphs": [
+        {
+          "paragraph_id": "paragraph:MA-S2:1",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S2:unit"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:7f32518702bd0e852c9874279964b3fe1f7f2e41e7fd17202590ada91ce49187"
+        }
+      ],
+      "dependencies": [
+        "MA-S1"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-02-780817ba:partially_supported_by_repository"
+      ],
+      "depth_budget": 4,
+      "page_budget": 0.6,
+      "incomplete": true,
+      "story_node_ids": [
+        "story:O-ORGANIZATION-02-780817ba"
+      ],
+      "heading_constraints": [
+        "writer_must_produce_heading_text",
+        "max_length:120",
+        "must_not_use_truncated_author_statement",
+        "author_statement:Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise. Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise. Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise. Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+        "author_statement:Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+      ],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": true,
+      "formula_not_applicable_reason": "no primary formula role and no bound equations for this section",
+      "open_slots": [],
+      "content_digest": "sha256:e79218e467b8163470834538033b3eb80ca2971f71a1ffd09c72eea553895453"
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+      "reader_question": "How does this setup realize Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing?",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4"
+      ],
+      "moves": [
+        {
+          "move": "problem_or_local_context",
+          "argument_unit_ids": [
+            "MA-S3:unit-1",
+            "MA-S3:unit-2",
+            "MA-S3:unit-3",
+            "MA-S3:unit-4"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.909,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "external_literature",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "design_objective",
+          "argument_unit_ids": [
+            "MA-S3:unit-1",
+            "MA-S3:unit-2",
+            "MA-S3:unit-3",
+            "MA-S3:unit-4"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.909,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "implementation_realization",
+          "argument_unit_ids": [
+            "MA-S3:unit-1",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.227,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "limitations_or_mismatch",
+          "argument_unit_ids": [
+            "MA-S3:unit-1",
+            "MA-S3:unit-4"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "transition_to_next_section",
+          "argument_unit_ids": [
+            "MA-S3:unit-1",
+            "MA-S3:unit-2",
+            "MA-S3:unit-3",
+            "MA-S3:unit-4"
+          ],
+          "paragraph_budget": 0,
+          "information_budget": 3.909,
+          "allowed_authority_lanes": [
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "mechanism_overview",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "formal_objects_and_notation",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "equation_or_derivation",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "algorithm_or_data_flow",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "configuration_and_branches",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested",
+            "configuration_resolved"
+          ],
+          "required": false,
+          "unanchored": true,
+          "unanchored_owner": "Research",
+          "notes": []
+        },
+        {
+          "move": "inference_and_output",
+          "argument_unit_ids": [
+            "MA-S3:unit-2",
+            "MA-S3:unit-3"
+          ],
+          "paragraph_budget": 3,
+          "information_budget": 3.727,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation",
+            "author_attested"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        }
+      ],
+      "paragraphs": [
+        {
+          "paragraph_id": "paragraph:MA-S3:1",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S3:unit-1"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:25e8dbaf981fd1855e8e5d0d2459bbf6aa3061bab712c5653ab22f11e7b76ae5"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S3:2",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S3:unit-2"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S3:1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:1e7b70bc6fb3131905af3a0cd84cd4ab9aec2d6998e86970cbac137908e5a018"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S3:3",
+          "paragraph_role": "formula",
+          "argument_unit_ids": [
+            "MA-S3:unit-3"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [
+            "formula:section:MA-S3:derivation"
+          ],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S3:2",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "paragraph:MA-S3:3",
+            "rhetorical_goal": "formula",
+            "targets": [
+              {
+                "target_id": "formula:section:MA-S3:derivation",
+                "target_kind": "formula",
+                "semantic_atom": "formal expression",
+                "paper_role": "formula",
+                "required_polarity": "unknown",
+                "required_conditions": [],
+                "allowed_anchor_ids": [
+                  "formula:section:MA-S3:derivation"
+                ],
+                "allowed_exact_excerpts": [],
+                "authority_lane": "formal_derivation"
+              }
+            ],
+            "content_digest": "sha256:ef7e2e8bd6a9bff28db197bf85830da44db29001aa7f6c05b80b6161bbe69308"
+          },
+          "content_digest": "sha256:8a685ed673898e9f16e31c40ad1d7c02ae96a51dcd19ef476f82ffbc9659b802"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S3:4",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S3:unit-4"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S3:3",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:45b38e02a608e7ac907d1610f5ec0b072e9e0e21c6700e17dc0231e8801f80df"
+        }
+      ],
+      "dependencies": [
+        "MA-S2"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-03-359984b4:partially_supported_by_repository",
+        "O-COMPONENT-01-377afc18:partially_supported_by_repository",
+        "O-RATIONALE-CHECK-02-653d713f:author_confirmation_required"
+      ],
+      "depth_budget": 12,
+      "page_budget": 6.48,
+      "incomplete": true,
+      "story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "heading_constraints": [
+        "writer_must_produce_heading_text",
+        "max_length:120",
+        "must_not_use_truncated_author_statement",
+        "author_statement:Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing. Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing. Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust Timespan-aware forgetting in SSM Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay. Additional repository-verified mechanisms Executable details supporting the method beyond the named pipeline stages. Initialize A as a diagonal matrix with strictly negative real-part eigenvalues. Initialize A as a diagonal matrix with strictly negative real-part eigenvalues. Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+        "author_statement:Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+        "author_statement:Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+        "author_statement:Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+        "author_statement:Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+        "author_statement:Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+        "author_statement:Node encoding: Use raw node features; zero vectors when unavailable.",
+        "author_statement:Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+        "author_statement:Initialize A as a diagonal matrix with strictly negative real-part eigenvalues."
+      ],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4",
+        "brief:story:O-STAGE-02-e02cd0f2",
+        "brief:story:O-COMPONENT-01-88e55e54",
+        "brief:story:O-COMPONENT-01-377afc18",
+        "brief:story:O-COMPONENT-02-c39dd898",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa",
+        "brief:story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:0fb93821643e23121c781cd3ba23f8a9ffff78fa68ee0a9921fbd5fe1357073b"
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+      "reader_question": "How does this setup realize Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity?",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4"
+      ],
+      "moves": [
+        {
+          "move": "problem_or_local_context",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.875,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "external_literature",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "design_objective",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.875,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "implementation_realization",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.875,
+          "allowed_authority_lanes": [
+            "executable_hard"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "inference_and_output",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.75,
+          "allowed_authority_lanes": [
+            "executable_hard"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "limitations_or_mismatch",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.375,
+          "allowed_authority_lanes": [
+            "executable_hard"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "transition_to_next_section",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 0,
+          "information_budget": 1.875,
+          "allowed_authority_lanes": [
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "mechanism_overview",
+          "argument_unit_ids": [
+            "MA-S4:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.5,
+          "allowed_authority_lanes": [
+            "executable_hard"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "configuration_and_branches",
+          "argument_unit_ids": [
+            "MA-S4:unit-2"
+          ],
+          "paragraph_budget": 2,
+          "information_budget": 1.5,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "configuration_resolved"
+          ],
+          "required": false,
+          "unanchored": true,
+          "unanchored_owner": "Research",
+          "notes": []
+        },
+        {
+          "move": "equation_or_derivation",
+          "argument_unit_ids": [
+            "MA-S4:unit-1",
+            "MA-S4:unit-2",
+            "MA-S4:unit-3",
+            "MA-S4:unit-4"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "formal_derivation"
+          ],
+          "required": false,
+          "unanchored": true,
+          "unanchored_owner": "Formalizer",
+          "notes": []
+        }
+      ],
+      "paragraphs": [
+        {
+          "paragraph_id": "paragraph:MA-S4:1",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S4:unit-1"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:93e98c98efd3bd02dee51fd341867c83d8523408e2bea602155771c2c5039db2"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S4:2",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S4:unit-2"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S4:1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:9c3fd2d52b3b67c52f1b3f9bd25a609b58fdf7db5730325e0cfb422a75f03fb9"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S4:3",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S4:unit-3"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S4:2",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:2abf672245ed2935bdee00b072e599a8a2bfdfb725e3a1aee525ea4ea494f649"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S4:4",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S4:unit-4"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S4:3",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:83e272d5b074604bb6bd01ebe39a7c243a438646fb6a871d61198f8dd8617c10"
+        }
+      ],
+      "dependencies": [
+        "MA-S3"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-04-a52145c2:partially_supported_by_repository",
+        "O-RATIONALE-CHECK-01-106180a0:partially_supported_by_repository",
+        "O-COMPONENT-08-48efa86a:partially_supported_by_repository"
+      ],
+      "depth_budget": 10,
+      "page_budget": 2.88,
+      "incomplete": true,
+      "story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "heading_constraints": [
+        "writer_must_produce_heading_text",
+        "max_length:120",
+        "must_not_use_truncated_author_statement",
+        "author_statement:Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity. Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity. Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity. Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity. Downstream prediction Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions. Directly couple the SSM step size Δt to the irregular timespans between interactions. Directly couple the SSM step size Δt to the irregular timespans between interactions. Directly couple the SSM step size Δt to the irregular timespans between interactions. Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification. Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification. Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node",
+        "author_statement:Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+        "author_statement:Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+        "author_statement:Edge encoding: Use raw edge features; zero vectors when unavailable.",
+        "author_statement:Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+        "author_statement:Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification."
+      ],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-a52145c2",
+        "brief:story:O-STAGE-04-a3a3e8ab",
+        "brief:story:O-COMPONENT-03-2ae65141",
+        "brief:story:O-RATIONALE-CHECK-01-106180a0",
+        "brief:story:O-COMPONENT-08-48efa86a"
+      ],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": true,
+      "formula_not_applicable_reason": "no primary formula role and no bound equations for this section",
+      "open_slots": [],
+      "content_digest": "sha256:e3372568f56bff8ae592c312c6e53489f5102508dd499fd333f53b02d343695b"
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Robust selective reviewing",
+      "reader_question": "How does this setup realize DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)?",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3"
+      ],
+      "moves": [
+        {
+          "move": "problem_or_local_context",
+          "argument_unit_ids": [
+            "MA-S5:unit-1",
+            "MA-S5:unit-2",
+            "MA-S5:unit-3"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.75,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "external_literature",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "design_objective",
+          "argument_unit_ids": [
+            "MA-S5:unit-1",
+            "MA-S5:unit-2",
+            "MA-S5:unit-3"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.75,
+          "allowed_authority_lanes": [
+            "author_attested",
+            "expository_bridge"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "mechanism_overview",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "formal_objects_and_notation",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "equation_or_derivation",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "algorithm_or_data_flow",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "inference_and_output",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.55,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": true,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "transition_to_next_section",
+          "argument_unit_ids": [
+            "MA-S5:unit-1",
+            "MA-S5:unit-2",
+            "MA-S5:unit-3"
+          ],
+          "paragraph_budget": 0,
+          "information_budget": 0.75,
+          "allowed_authority_lanes": [
+            "expository_bridge"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "implementation_realization",
+          "argument_unit_ids": [
+            "MA-S5:unit-2",
+            "MA-S5:unit-3"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        },
+        {
+          "move": "limitations_or_mismatch",
+          "argument_unit_ids": [
+            "MA-S5:unit-2",
+            "MA-S5:unit-3"
+          ],
+          "paragraph_budget": 1,
+          "information_budget": 0.25,
+          "allowed_authority_lanes": [
+            "executable_hard",
+            "formal_derivation"
+          ],
+          "required": false,
+          "unanchored": false,
+          "unanchored_owner": "",
+          "notes": []
+        }
+      ],
+      "paragraphs": [
+        {
+          "paragraph_id": "paragraph:MA-S5:1",
+          "paragraph_role": "formula",
+          "argument_unit_ids": [
+            "MA-S5:unit-1"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [
+            "formula:section:MA-S5:derivation"
+          ],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "paragraph:MA-S5:1",
+            "rhetorical_goal": "formula",
+            "targets": [
+              {
+                "target_id": "formula:section:MA-S5:derivation",
+                "target_kind": "formula",
+                "semantic_atom": "formal expression",
+                "paper_role": "formula",
+                "required_polarity": "unknown",
+                "required_conditions": [],
+                "allowed_anchor_ids": [
+                  "formula:section:MA-S5:derivation"
+                ],
+                "allowed_exact_excerpts": [],
+                "authority_lane": "formal_derivation"
+              }
+            ],
+            "content_digest": "sha256:bf1db2f00a8728ac01bbfce368294e1d93285d93812fe8efab0570156a464d2f"
+          },
+          "content_digest": "sha256:e2bc6d80360655bee3d4bc21770c0879a8e89482ccea245455d98ce0636a58de"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S5:2",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S5:unit-2"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S5:1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:cd01082f998bb81ae5c6dcb5170f32f515213ce675f7d9e43dd5f3d73c7eb724"
+        },
+        {
+          "paragraph_id": "paragraph:MA-S5:3",
+          "paragraph_role": "overview",
+          "argument_unit_ids": [
+            "MA-S5:unit-3"
+          ],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            2
+          ],
+          "transition_from": "paragraph:MA-S5:2",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:2d8696af5f16247ef733398732ab75876bdf65f26a2ebbb77e88e8ce28152ec4"
+        }
+      ],
+      "dependencies": [
+        "MA-S4"
+      ],
+      "unresolved_inputs": [
+        "O-STAGE-03-d47a86f4:partially_supported_by_repository",
+        "O-COMPONENT-07-c430eb84:partially_supported_by_repository",
+        "O-RATIONALE-CHECK-03-117025ca:partially_supported_by_repository"
+      ],
+      "depth_budget": 11,
+      "page_budget": 2.1,
+      "incomplete": true,
+      "story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "heading_constraints": [
+        "writer_must_produce_heading_text",
+        "max_length:120",
+        "must_not_use_truncated_author_statement",
+        "author_statement:Robust selective reviewing Robust selective reviewing Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints. DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing. DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing. DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1. Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1. Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+        "author_statement:Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+        "author_statement:DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+        "author_statement:Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1."
+      ],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [
+        "brief:story:O-STAGE-03-d47a86f4",
+        "brief:story:O-COMPONENT-07-c430eb84",
+        "brief:story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:77f73c105da5a1f2c4dfc639243cdff4e53b4a8c9323907c8ffb6d1f8ae81164"
+    }
+  ],
+  "argument_units": [
+    {
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_role": "feature",
+      "research_question": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "design_objective": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-01-42774719"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-42774719"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-01-42774719"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-01-42774719:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-01-42774719"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:cc046398d0846040eab513007cc5236cd99602bb35faef1d9b18d74875331af4"
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_role": "stage",
+      "research_question": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "design_objective": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "brief:story:O-STAGE-01-06d7de36"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "brief:story:O-STAGE-01-06d7de36"
+      ],
+      "brief_order": [
+        "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+        "brief:story:O-STAGE-01-06d7de36"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "equation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:211:211",
+        "span:models/DyGMamba.py:215:215",
+        "span:models/DyGMamba.py:214:214",
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:138:140",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:244:244"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-01-06d7de36",
+        "O-METHOD-MAINLINE-01-3011c54d"
+      ],
+      "supported": true,
+      "information_weight": 15.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:78611f0d9d88e58c65db59febc208800a35822e07b50116dcbb18c55e716cf6d"
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-3",
+      "section_role": "feature",
+      "research_question": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "design_objective": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-06-e711d58d"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-06-e711d58d"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-06-e711d58d"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-06-e711d58d:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-06-e711d58d"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:4199d4b4ff95853af884b541fd56009cda462d45d6ad6c0e570c5bff8a68f04c"
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-4",
+      "section_role": "feature",
+      "research_question": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "design_objective": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-04-b41841c3"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-04-b41841c3:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-04-b41841c3"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:5420d08668b80be0159d04a1b8a2832b045fd5da23443d8c095185282cf1cdd6"
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-5",
+      "section_role": "rationale_check",
+      "research_question": "Process source and destination sequences independently before merging.",
+      "design_objective": "Process source and destination sequences independently before merging.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-05-e1bbed89:author_confirmation_required"
+      ],
+      "authority_lanes": [
+        "author_attested"
+      ],
+      "source_artifact_ids": [],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:d9cb7a22dc6a787aa61211f6aec839b5256e2982d3f4dded42496d8327fd2022"
+    },
+    {
+      "argument_unit_id": "MA-S2:unit",
+      "section_role": "feature",
+      "research_question": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "design_objective": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-02-780817ba:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-02-780817ba"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:2a196e8b09ec82da1eabda43c087d94294ce6f8bd0d638bd1fa4128e9d75e5c2"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_role": "temporal",
+      "research_question": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust",
+      "design_objective": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-03-359984b4"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-03-359984b4"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-03-359984b4:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-03-359984b4"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:2b130a0372ef7a19da047b7c4709308ce7e9cbfa6eab59ee016f6b982c352ea1"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_role": "stage",
+      "research_question": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "design_objective": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-02-e02cd0f2"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-STAGE-02-e02cd0f2"
+      ],
+      "brief_order": [
+        "brief:story:O-STAGE-02-e02cd0f2"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:models/mamba_simple.py:497:525",
+        "span:models/mamba_simple.py:551:551",
+        "span:models/mamba_simple.py:471:471",
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:476:476"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-02-e02cd0f2"
+      ],
+      "supported": true,
+      "information_weight": 6.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:2e741da896b3bf9518ca53a588c282521bb86d93eb9be013cc91acea59e948e4"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_role": "stage",
+      "research_question": "Executable details supporting the method beyond the named pipeline stages.",
+      "design_objective": "Executable details supporting the method beyond the named pipeline stages.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-01-88e55e54",
+        "brief:story:O-COMPONENT-01-377afc18",
+        "brief:story:O-COMPONENT-02-c39dd898",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-01-88e55e54",
+        "brief:story:O-COMPONENT-01-377afc18",
+        "brief:story:O-COMPONENT-02-c39dd898",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-01-88e55e54",
+        "brief:story:O-COMPONENT-01-377afc18",
+        "brief:story:O-COMPONENT-02-c39dd898",
+        "brief:story:O-COMPONENT-04-6d73cce5",
+        "brief:story:O-COMPONENT-05-8cd85daa"
+      ],
+      "claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "equation:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "equation:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "equation:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "equation:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "equation:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-01-377afc18:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:models/DyGFormer.py:207:212",
+        "span:models/DyGFormer.py:85:85",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:212:212",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:157:157",
+        "span:models/GraphMixer.py:127:127",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:155:155",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:118:118",
+        "span:models/DyGFormer.py:168:168",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/DyGFormer.py:169:169",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:212:212",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:181:183",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-01-377afc18",
+        "O-COMPONENT-04-6d73cce5",
+        "O-COMPONENT-01-88e55e54",
+        "O-COMPONENT-02-c39dd898",
+        "O-COMPONENT-05-8cd85daa"
+      ],
+      "supported": false,
+      "information_weight": 34.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:f600bb5d23156cf7e9f7ea64b46ad3618a2aff9891ff6b640c923cb81e01589e"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_role": "rationale_check",
+      "research_question": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "design_objective": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-02-653d713f:author_confirmation_required"
+      ],
+      "authority_lanes": [
+        "author_attested"
+      ],
+      "source_artifact_ids": [],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:7ddcd9f5431737baab6c0c41cc47e43734fea33217429c299b002597c702a315"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_role": "predictor",
+      "research_question": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "design_objective": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-04-a52145c2"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-a52145c2"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-04-a52145c2"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-04-a52145c2:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-04-a52145c2"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:6140e0f59108f7e85caee2f50905507eadefad6b8a8cd1d9fded779b38c23054"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_role": "stage",
+      "research_question": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "design_objective": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-04-a3a3e8ab",
+        "brief:story:O-COMPONENT-03-2ae65141"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-STAGE-04-a3a3e8ab",
+        "brief:story:O-COMPONENT-03-2ae65141"
+      ],
+      "brief_order": [
+        "brief:story:O-STAGE-04-a3a3e8ab",
+        "brief:story:O-COMPONENT-03-2ae65141"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "implementation_realization",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "span:models/EdgeBank.py:18:21",
+        "span:models/EdgeBank.py:23:23",
+        "span:models/EdgeBank.py:14:14",
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:118:118",
+        "span:models/EdgeBank.py:110:110",
+        "span:models/EdgeBank.py:119:119",
+        "span:models/EdgeBank.py:119:119",
+        "span:models/EdgeBank.py:114:114",
+        "span:models/EdgeBank.py:118:118",
+        "span:models/EdgeBank.py:110:112",
+        "span:models/EdgeBank.py:108:108"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-04-a3a3e8ab",
+        "O-COMPONENT-03-2ae65141"
+      ],
+      "supported": true,
+      "information_weight": 12.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:9f83dbd50d071d6a842a0945601034c1e57177c8c0761ba7303610c4ec275630"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_role": "temporal",
+      "research_question": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "design_objective": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-01-106180a0:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:06a4ca57e693ce5b0975aefad90ab96e06b37fd34afd4eb10148b11fdbca8c75"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_role": "predictor",
+      "research_question": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node",
+      "design_objective": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-08-48efa86a"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-08-48efa86a"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-08-48efa86a"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-08-48efa86a:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-08-48efa86a"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:bff6846c3ecfac9a0fbe3642ec8ef7d7366cc1c142f03b498f84732fe3266a8f"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_role": "stage",
+      "research_question": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "design_objective": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-03-d47a86f4"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-STAGE-03-d47a86f4"
+      ],
+      "brief_order": [
+        "brief:story:O-STAGE-03-d47a86f4"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-STAGE-03-d47a86f4:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:models/FreeDyG.py:337:337",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/FreeDyG.py:330:330",
+        "span:models/FreeDyG.py:335:335"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-03-d47a86f4"
+      ],
+      "supported": false,
+      "information_weight": 5.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:18923a5e9dfc33cc7b75a3b5e1228522d983aeb727062ccc492a0ec18dde735c"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_role": "feature",
+      "research_question": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal",
+      "design_objective": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-07-c430eb84"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-07-c430eb84"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-07-c430eb84"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-07-c430eb84:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-07-c430eb84"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:231e292e54cd723e10a9356fdc50a49d3b4bd0122ae8c5cf128437eb409eab6d"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_role": "feature",
+      "research_question": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "design_objective": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-03-117025ca:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:8306cc542fc3f048190e0f9c67998865fabc239a5e761fc8f8b2cd5ab744aa63"
+    }
+  ],
+  "venue": "",
+  "audience": "method readers",
+  "total_page_budget": 15.6,
+  "incomplete_sections": [
+    "MA-S1",
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "obligation_assignments": [],
+  "move_authority_proofs": [],
+  "critical_high_obligation_ids": [],
+  "completeness_digest": "",
+  "content_digest": "sha256:33a10828aacb21f553ce84045d2d5087f703e0ee944d23530f5a6c30bb804807"
+}

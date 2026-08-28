@@ -1,0 +1,1715 @@
+{
+  "schema_version": "1.0",
+  "content_digest": "sha256:ab21394023e94b934e54b8d04d5ca10ab8fbce53d3b707a2b604ea56152ae42a",
+  "schema_failures": [
+    "facet-1f936373429e5100:decomposer_quote_was_wider_than_clause",
+    "facet-37ac47cd0b3c324b:decomposer_quote_was_wider_than_clause",
+    "facet-49c35a32b3156393:decomposer_quote_was_wider_than_clause",
+    "facet-11f57730a8077780:decomposer_quote_was_wider_than_clause",
+    "facet-1f936373429e5100:field_positive_without_evidence:operation",
+    "facet-dfd9e7cedfe705e0:field_positive_without_evidence:operation",
+    "facet-751466939a6d86e8:field_positive_without_evidence:operation",
+    "facet-37ac47cd0b3c324b:field_positive_without_evidence:operation",
+    "facet-397617ae0c814f4c:field_positive_without_evidence:operation",
+    "facet-11f57730a8077780:field_positive_without_evidence:operation",
+    "facet-6c02c195374453b1:field_positive_without_evidence:operation",
+    "facet-44d3952a34b9c61b:field_positive_without_evidence:operation",
+    "facet-c94a090684d57a33:deterministic_local_evidence_fallback",
+    "facet-77eff1974af1d1d5:deterministic_local_evidence_fallback",
+    "facet-14e6716402039fea:field_positive_without_evidence:operation"
+  ],
+  "traces": [
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9007520f48fd6a8415f67fd151838526ef38bbc58b8583fb57ab0f7e8d73b050",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9007520f48fd6a8415f67fd151838526ef38bbc58b8583fb57ab0f7e8d73b050",
+        "parsed_payload_digest": "sha256:36543c7e047115321f6b214edcb17ce75fa304edf2931b678bdb64d0b5c9caba"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 0,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The facet describes a complete pipeline including: (1) building a tri-graph with entity/sentence/passage nodes linked by occurrence relationships (contain and mention edges) with no relation triples, (2) extracting initial entities and computing query-sentence similarity, (3) iterative entity activation propagation through sentence-entity subgraph with dynamic threshold pruning, (4) using activated entities as seeds for personalized PageRank on passage-entity subgraph, (5) initializing passage nodes with hybrid score (direct query-passage similarity + entity-based evidence), and (6) retrieving top-k passages by final PageRank score. Evidence supports: entity extraction and node creation (evidence 27), iterative BFS propagation with threshold pruning (evidence 0, 3, 9, 10, 15), personalized"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:955cd30f3b9756645a79937338f111e3e9c988d97cec0b7113c0c12bb021a9d7",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:955cd30f3b9756645a79937338f111e3e9c988d97cec0b7113c0c12bb021a9d7",
+        "parsed_payload_digest": "sha256:c1ea8fc41e27455f367fb5149b983aa888c746702dfc09382fa6301a2ddf1eae"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 1,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9eb5eef67b60d6ab8f308778497b7fb2a87b616405c596ee207654633511b6f8",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9eb5eef67b60d6ab8f308778497b7fb2a87b616405c596ee207654633511b6f8",
+        "parsed_payload_digest": "sha256:3dc2bbf79f7732135acf59d709aa9335285a1f54414287e0f59b3abeb7f96e50"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 2,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence supports iterative propagation through the sentence-entity subgraph (evidence 0, 29), computing query-sentence similarities (evidence 0, 1), and dynamic pruning via iteration_threshold (evidence 11, 12, 14). However, the claim of 'initializing from matched entities' as a distinct step is not directly evidenced as a separate initialization phase; seed entities are obtained via get_seed_entities (evidence 7) but the facet's phrasing implies a specific initialization mechanism not explicitly shown. The 'hidden bridging entities' language is interpretive and not directly stated in the code evidence. The core propagation mechanism is well-supported but the full operational description exceeds what the evidence directly confirms."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:073afcbbae4f35d6aa36fc880588b1534ec4ab2d590e1b6e40d84080b470f395",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:073afcbbae4f35d6aa36fc880588b1534ec4ab2d590e1b6e40d84080b470f395",
+        "parsed_payload_digest": "sha256:c313523efc3e4d5a3ab802436157f5bda340d0396bd1e1536e1357d610bdc884"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 3,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              3,
+              5,
+              10,
+              15,
+              16,
+              25,
+              26,
+              37,
+              38,
+              40
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42
+            ],
+            "bound_equation_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              42
+            ],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  15,
+                  16,
+                  25,
+                  26,
+                  37,
+                  38,
+                  40
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41,
+                  42
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41,
+                  42
+                ],
+                "bound_equation_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41,
+                  42
+                ],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  39,
+                  40,
+                  41,
+                  42
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c3fdc1bcc493f88f8f16e7f79018929613b13fdac76b7aa1c779aea142e234bf",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c3fdc1bcc493f88f8f16e7f79018929613b13fdac76b7aa1c779aea142e234bf",
+        "parsed_payload_digest": "sha256:f33bed19e82e49854cd15ef9aa5082f9437070fdd0cc795fb0964a14c6d88eea"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 4,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence supports entity-based graph indexing (evidence 10, 29, 33) and a two-stage retrieval mechanism (evidence 20, 23, 33, 35), but does not explicitly demonstrate 'eliminating reliance on error-prone relation extraction' as a design principle, nor does it confirm 'large-scale unstructured corpora' as a stated capability. The system is a RAG system with graph-based retrieval, but the specific claim about eliminating relation extraction is an architectural choice not directly evidenced in the code excerpts provided."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:fabd8c9eeb381fd356a819b0bcbe8037fc08d41ff1ac1957647caf8a31ab24e1",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:fabd8c9eeb381fd356a819b0bcbe8037fc08d41ff1ac1957647caf8a31ab24e1",
+        "parsed_payload_digest": "sha256:4543a0418c9060d3a642a17a86119c990ba62ecbeab49c8b165c799f4b30ce3b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 5,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms a graph structure (ig.Graph) is created and that entity, sentence, and passage nodes are extracted via extract_nodes_and_edges, and that sparse adjacency matrices (entity_to_sentence_sparse, sentence_to_entity_sparse) are precomputed. However, the specific term 'Tri-Graph' and the characterization as a 'hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency' that 'anchors the entire retrieval pipeline' is not directly stated in the evidence. The evidence shows the components (graph, entity/sentence/passage nodes, sparse matrices) but does not explicitly name the structure 'Tri-Graph' or use the phrase 'sparse contain/message adjacency'. The graph is undirected (directed=False) and the sparse matrices represent entity-to-sent<|"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:54c1add75bc1711ed3479da4cfbcfba1f1171af596a48dc3197d9fe95e781aa0",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:54c1add75bc1711ed3479da4cfbcfba1f1171af596a48dc3197d9fe95e781aa0",
+        "parsed_payload_digest": "sha256:e26b1aad479c3e9fb0d0910442a1b697bffc326fe993b5cd745983fc2510e9e4"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 6,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              4,
+              5,
+              9
+            ],
+            "bound_span_indices": [
+              4,
+              5,
+              9
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              4,
+              5,
+              9
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  4,
+                  5,
+                  9
+                ],
+                "bound_fact_indices": [
+                  4,
+                  5,
+                  9
+                ],
+                "bound_span_indices": [
+                  4,
+                  5,
+                  9
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  4,
+                  5,
+                  9
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c6754aec9bf2f817a8c46db014bb71bc17f8c845671f5252c38e9a77654bfa31",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c6754aec9bf2f817a8c46db014bb71bc17f8c845671f5252c38e9a77654bfa31",
+        "parsed_payload_digest": "sha256:cfe9c31cb2faff7d6d0bf11ea4b5279106a8f43cce183ec85d3b76c7499d0e3e"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 7,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              14,
+              15,
+              16,
+              17
+            ],
+            "bound_span_indices": [
+              0,
+              14,
+              15,
+              16,
+              17
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              14,
+              15,
+              16,
+              17
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  14,
+                  15,
+                  16,
+                  17
+                ],
+                "bound_fact_indices": [
+                  0,
+                  14,
+                  15,
+                  16,
+                  17
+                ],
+                "bound_span_indices": [
+                  0,
+                  14,
+                  15,
+                  16,
+                  17
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  14,
+                  15,
+                  16,
+                  17
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:aef2e9d918d34c4d5905a2560ae8608cb6f055a32bd76f0678939f0ef3091860",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:aef2e9d918d34c4d5905a2560ae8608cb6f055a32bd76f0678939f0ef3091860",
+        "parsed_payload_digest": "sha256:9e79870ea42507e613945e0cba2057ec3f2e769330024f2ac1742c798ae08bd1"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 8,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms threshold-based filtering during entity propagation (entity_score < iteration_threshold → skip, next_entity_score < iteration_threshold → skip) in both BFS and vectorized paths, but does not explicitly demonstrate the stated purpose of 'preventing combinatorial expansion and noise' as a design guarantee or effect. The mechanism is present; the stated purpose is interpretive and not directly evidenced in the supplied excerpts."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:13329d1ff0529a0f46a3dc229c91485e551074e117472f524854ba612789521d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:13329d1ff0529a0f46a3dc229c91485e551074e117472f524854ba612789521d",
+        "parsed_payload_digest": "sha256:f4d101a6ac744ab09ce75a1d86925cc27d409824fb0bd37c7652b61ec7ab04fa"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 9,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The claim that PPR 'ranks passages by propagating influence from activated entities' is not directly supported. The evidence shows PPR is called with reset=reset_prob (a vector) and vertices=range(len(self.node_name_to_vertex_idx)), but the specific mechanism of how activated entities influence the reset distribution is not captured in the supplied evidence. The graph structure (passage-entity subgraph) is implied by the graph object but not explicitly described as such in the evidence spans provided. The core PPR call is confirmed (evidence 20), but the 'activated entities' propagation mechanism and 'passage-entity subgraph' characterization lack direct textual support in the closed set."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:589221f8a4c8791e0e4e0a742aa2bcc193ceb01da984c5a6f67f1709f32d28d7",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:589221f8a4c8791e0e4e0a742aa2bcc193ceb01da984c5a6f67f1709f32d28d7",
+        "parsed_payload_digest": "sha256:dd926bacd71471b098f9f837cf51ff2999eca916eeb0466a225cc215d52e91df"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 10,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence supports combining entity-based and passage-based scores into node_weights (evidence 1) and using them as PPR reset probabilities (evidence 16, 37), but no evidence shows 'entity-based statistics (occurrence, level)' as a distinct component. The entity-based component is derived from BFS propagation scores, not from occurrence/level statistics. The term 'Hybrid Passage Initialization' is not found in the codebase. The mechanism is partially supported: entity_weights + passage_weights form node_weights used as PPR reset, but the specific characterization of 'entity-based statistics (occurrence, level)' is not evidenced."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:3033d4b40cf267385be5428daf9de7ac2fa5b43905db9e95c5012d9ec5ae6722",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:3033d4b40cf267385be5428daf9de7ac2fa5b43905db9e95c5012d9ec5ae6722",
+        "parsed_payload_digest": "sha256:cc0dd50f4765ad0cb5348a850ac94454f7a72403f01c318f0f32232d5e482b5b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 11,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate the claim about revisiting GraphRAG shortcomings from relation extraction errors."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:d0e7890696c964207d1f9db669e7eb8b1a97c9375aafa5ae8e29bcf07599f2f2",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d0e7890696c964207d1f9db669e7eb8b1a97c9375aafa5ae8e29bcf07599f2f2",
+        "parsed_payload_digest": "sha256:44e1649423f5834ecad5e7c6a7a1db69abbd6c2afe687c1c291e905e0a4df515"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 12,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms a two-stage retrieval mechanism (dense passage retrieval at evidence 1 and graph-based PPR retrieval at evidence 0/4/6) and a tri-partite graph structure (entity, sentence, and passage nodes at evidence 10), but no evidence explicitly names or describes the 'Tri-Graph concept' as a named architectural concept or articulates a 'two-stage retrieval philosophy' as a stated design principle. The mechanism is observable in the code but the conceptual framing is not directly evidenced in the supplied excerpts."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:ca0fbca5d8dc3362d3b83833da6b50667bc304f485edcd883d35ae7f47a83c53",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:ca0fbca5d8dc3362d3b83833da6b50667bc304f485edcd883d35ae7f47a83c53",
+        "parsed_payload_digest": "sha256:1093ba74c4589f1552ea460eb2c33b710dc9649b9989f9bfae69a0979e3a45e9"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 13,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              19
+            ],
+            "bound_span_indices": [
+              19
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              19
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [
+                  19
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  19
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  19
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:64f7ea45a63199b73147c168560808b3652d7e19d8a23c67562f25378399c841",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:64f7ea45a63199b73147c168560808b3652d7e19d8a23c67562f25378399c841",
+        "parsed_payload_digest": "sha256:969084db14070123d8afc7ef27bb9fa5bb9bafdba6c5167e47751345d417fbdf"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 14,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  1,
+                  8,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21
+                ],
+                "bound_fact_indices": [
+                  1,
+                  8,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21
+                ],
+                "bound_span_indices": [
+                  1,
+                  8,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  1,
+                  8,
+                  17,
+                  18,
+                  19,
+                  20,
+                  21
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:0309a62ca9520784a12880937248cbbc1fc4dbe6cfc9c1c4b553586e45c87d8d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:0309a62ca9520784a12880937248cbbc1fc4dbe6cfc9c1c4b553586e45c87d8d",
+        "parsed_payload_digest": "sha256:59e97c2f603f0eb3c677ce3cb93d73ded1aa092d0ca304872f1a40322ad3c921"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 15,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              1,
+              2,
+              13,
+              15
+            ],
+            "bound_span_indices": [
+              1,
+              2,
+              13,
+              15
+            ],
+            "bound_equation_indices": [
+              1
+            ],
+            "exact_excerpt_indices": [
+              1,
+              2,
+              13,
+              15
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  1,
+                  2,
+                  13,
+                  15
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  1,
+                  2,
+                  13,
+                  15
+                ],
+                "bound_equation_indices": [
+                  1
+                ],
+                "exact_excerpt_indices": [
+                  1,
+                  2,
+                  13,
+                  15
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:7d26a7bd9368c24e1253e62ef527a8bee78b27df6763bc555016c118cae9d17f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7d26a7bd9368c24e1253e62ef527a8bee78b27df6763bc555016c118cae9d17f",
+        "parsed_payload_digest": "sha256:08115c0bc1c76eb471a42695c932f2a6fbcd6f07362652bd4cf4297238c9e2a0"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 16,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate the claim 'Avoid explicit relation extraction entirely.' against repository evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:3554e293a9db169f0d137bba5a354f522b6c4f95dfe46ddafcda936c64df86a7",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:3554e293a9db169f0d137bba5a354f522b6c4f95dfe46ddafcda936c64df86a7",
+        "parsed_payload_digest": "sha256:dc083fb793732114a3059a7603be805cfce20e62ac3177d8b3a300fd7d018192"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 17,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              3,
+              4,
+              7,
+              10
+            ],
+            "bound_span_indices": [
+              3,
+              4,
+              7,
+              10
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              3,
+              4,
+              7,
+              10
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  3,
+                  4,
+                  7,
+                  10
+                ],
+                "bound_fact_indices": [
+                  3,
+                  4,
+                  7,
+                  10
+                ],
+                "bound_span_indices": [
+                  3,
+                  4,
+                  7,
+                  10
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  3,
+                  4,
+                  7,
+                  10
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "parsed_payload_digest": "sha256:566f05a61dc99528ee26ff8fe04c1b4d92cf900915c33f7a5c1d1787dfa3d4b4"
+      },
+      "result": {
+        "alignments": []
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c030a81fbef318a623df73c0aad8ca51a3e65c980c9dc7f6bf7c7efc26c5103d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c030a81fbef318a623df73c0aad8ca51a3e65c980c9dc7f6bf7c7efc26c5103d",
+        "parsed_payload_digest": "sha256:854cc266e7e97b69bbfd31d7c046079b0fb36025bd24ad1d5fd59c46264fa231"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 19,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              3,
+              7,
+              8
+            ],
+            "bound_span_indices": [
+              3,
+              7,
+              8
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              3,
+              7,
+              8
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  3,
+                  7,
+                  8
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  3,
+                  7,
+                  8
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  3,
+                  7,
+                  8
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c75b45986d3ae92c0daab0a118139b07a7c6ce80daffc7b4e6769d2e22b3ec65",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:c75b45986d3ae92c0daab0a118139b07a7c6ce80daffc7b4e6769d2e22b3ec65",
+        "parsed_payload_digest": ""
+      },
+      "error": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:7781a71312810828fad1f60af649a57ba55be2fa8c756ca01c0077b99a3fa00a",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7781a71312810828fad1f60af649a57ba55be2fa8c756ca01c0077b99a3fa00a",
+        "parsed_payload_digest": "sha256:053412a541c3852075703787502c2e5fcfc45ecfaedf2d02537f4866b87c8344"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 21,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms that node_weights (used as PPR reset probabilities) are computed as a sum of entity_weights and passage_weights (evidence 1), and that these are passed to run_ppr (evidence 0). However, the specific claim that passage_weights represent 'direct similarity' is not explicitly evidenced. Evidence 3 shows passage_score is computed from dpr_passage_score (a dense retrieval score) and entity_bonus, but the term 'direct similarity' is not used in the code. The hybrid nature (sum of two components) is supported, but the characterization of one component as 'direct similarity' is an interpretation not directly stated in the code excerpts. The PPR initialization aspect is supported by evidence 0 and 19 showing node_weights being used as reset probabilities in personalized_pagera"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    }
+  ]
+}

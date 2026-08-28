@@ -1,0 +1,13 @@
+{
+  "key": "end",
+  "recorded_at": "2026-08-28T16:59:48+0800",
+  "endpoint_origin": "http://127.0.0.1:8006",
+  "health": 200,
+  "models": [
+    "qwen38-27b-nvfp4"
+  ],
+  "running": 0,
+  "waiting": 0,
+  "gpu_cache_usage_perc": 0.0,
+  "max_model_len": 131072
+}

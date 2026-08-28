@@ -1,0 +1,1155 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "packets": [
+    {
+      "packet_id": "pkt-O-METHOD-MAINLINE-01-3011c54d-91e2ec0a55f4",
+      "obligation_tags": [
+        "O-METHOD-MAINLINE-01-3011c54d"
+      ],
+      "scope": "sym:6978572280d27264",
+      "anchor_span_ids": [
+        "span:models/DyGMamba.py:138:140",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:215:215",
+        "span:models/DyGMamba.py:264:264",
+        "span:models/DyGMamba.py:214:214",
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/DyGMamba.py:138:140",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 138,
+          "line_end": 140,
+          "exact_excerpt": "            self.pad_sequences(node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+          "excerpt_digest": "sha256:b973040df6203e2fcb747768af6aeb3d3ac1fbe2f5058ff2e9c38f06ad3813d8",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:241:241",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 241,
+          "line_end": 241,
+          "exact_excerpt": "        dst_routing_weights = F.softmax(dst_router_logits, dim=1, dtype=torch.float)\n",
+          "excerpt_digest": "sha256:00d3781d253ec29647f5ff03348fcf08e888cedf9c6d3340380053dcc53b3245",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:130:132",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 130,
+          "line_end": 132,
+          "exact_excerpt": "            self.pad_sequences(node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+          "excerpt_digest": "sha256:08a64c5a84ab901c3a68325d7b078dfe1f13915278c1159167ee8efe8a4a0b85",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:215:215",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 215,
+          "line_end": 215,
+          "exact_excerpt": "        dst_padded_data = dst_padded_data.reshape(batch_size, dst_seq_len, self.num_channels * self.channel_embedding_dim)\n",
+          "excerpt_digest": "sha256:8c75197e20abd47b48ff7fd7433b92ed8c487374e51544be0044212b87abc6b3",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:264:264",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 264,
+          "line_end": 264,
+          "exact_excerpt": "        return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:4a7d6e814ba4351b2526728f2ef602c29e018856ed98d0a1eb17be2aa82e1ad4",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:214:214",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 214,
+          "line_end": 214,
+          "exact_excerpt": "        src_padded_data = src_padded_data.reshape(batch_size, src_seq_len, self.num_channels * self.channel_embedding_dim)\n",
+          "excerpt_digest": "sha256:162e54e04559d575c9f657ee7fc1aec3129d2e86acaf80937b02c0623304f2c1",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:212:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "        dst_padded_data = torch.stack(dst_padded_data, dim=2)\n",
+          "excerpt_digest": "sha256:f2997028a1380e49aec697f3eba5f20ef777b231e37943981543a5069bdeee5f",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:240:240",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "        src_routing_weights = F.softmax(src_router_logits, dim=1, dtype=torch.float)\n",
+          "excerpt_digest": "sha256:f03c96ff699e3feaa0bed8022610f544e0e0ba3f3fcb4f91aab38506905a99fd",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:244:244",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 244,
+          "line_end": 244,
+          "exact_excerpt": "        dst_routing_weights, dst_selected_embeddings = torch.topk(dst_routing_weights, min(self.top_k, dst_seq_len), dim=1)\n",
+          "excerpt_digest": "sha256:bad30c05908ff3798e3201202e104dc2338aadc842fd01c0c307fa32e45bb468",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:256:256",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 256,
+          "line_end": 256,
+          "exact_excerpt": "        src_padded_data = (src_padded_data * src_routing_weights_expand).sum(1)\n",
+          "excerpt_digest": "sha256:9d86ba9f18a53a95a6799c6298d2eeb8265c97fcad9a0cc2a5a2ad2998344da8",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 10 anchor spans and 0 relation spans across 10 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:46bed3efdd1b9d6e04c54b5e234e4d3451682221538482b521f6c21a7c50dcfc"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-01-06d7de36-6da968496517",
+      "obligation_tags": [
+        "O-STAGE-01-06d7de36"
+      ],
+      "scope": "sym:6978572280d27264",
+      "anchor_span_ids": [
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:211:211",
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:215:215",
+        "span:models/DyGMamba.py:244:244",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:264:264"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/DyGMamba.py:212:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "        dst_padded_data = torch.stack(dst_padded_data, dim=2)\n",
+          "excerpt_digest": "sha256:f2997028a1380e49aec697f3eba5f20ef777b231e37943981543a5069bdeee5f",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:241:241",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 241,
+          "line_end": 241,
+          "exact_excerpt": "        dst_routing_weights = F.softmax(dst_router_logits, dim=1, dtype=torch.float)\n",
+          "excerpt_digest": "sha256:00d3781d253ec29647f5ff03348fcf08e888cedf9c6d3340380053dcc53b3245",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:211:211",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 211,
+          "line_end": 211,
+          "exact_excerpt": "        src_padded_data = torch.stack(src_padded_data, dim=2)\n",
+          "excerpt_digest": "sha256:0c2b1fb98646c6ac411b8ea4eb804994ef8b5ca0bcc7bb84ee6b9509afd2c6cc",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:240:240",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 240,
+          "line_end": 240,
+          "exact_excerpt": "        src_routing_weights = F.softmax(src_router_logits, dim=1, dtype=torch.float)\n",
+          "excerpt_digest": "sha256:f03c96ff699e3feaa0bed8022610f544e0e0ba3f3fcb4f91aab38506905a99fd",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:215:215",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 215,
+          "line_end": 215,
+          "exact_excerpt": "        dst_padded_data = dst_padded_data.reshape(batch_size, dst_seq_len, self.num_channels * self.channel_embedding_dim)\n",
+          "excerpt_digest": "sha256:8c75197e20abd47b48ff7fd7433b92ed8c487374e51544be0044212b87abc6b3",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:244:244",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 244,
+          "line_end": 244,
+          "exact_excerpt": "        dst_routing_weights, dst_selected_embeddings = torch.topk(dst_routing_weights, min(self.top_k, dst_seq_len), dim=1)\n",
+          "excerpt_digest": "sha256:bad30c05908ff3798e3201202e104dc2338aadc842fd01c0c307fa32e45bb468",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:256:256",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 256,
+          "line_end": 256,
+          "exact_excerpt": "        src_padded_data = (src_padded_data * src_routing_weights_expand).sum(1)\n",
+          "excerpt_digest": "sha256:9d86ba9f18a53a95a6799c6298d2eeb8265c97fcad9a0cc2a5a2ad2998344da8",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGMamba.py:264:264",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGMamba.py",
+          "symbol": "sym:6978572280d27264",
+          "line_start": 264,
+          "line_end": 264,
+          "exact_excerpt": "        return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:4a7d6e814ba4351b2526728f2ef602c29e018856ed98d0a1eb17be2aa82e1ad4",
+          "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 8 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:315df4994bd741f7fd6851c14261107e7e00b4479744651e049fe7012ac41d65"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-02-e02cd0f2-95ab24705187",
+      "obligation_tags": [
+        "O-STAGE-02-e02cd0f2"
+      ],
+      "scope": "sym:c70e75db715f01dc",
+      "anchor_span_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:497:525",
+        "span:models/mamba_simple.py:471:471",
+        "span:models/mamba_simple.py:551:551"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/mamba_simple.py:476:476",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/mamba_simple.py",
+          "symbol": "sym:c70e75db715f01dc",
+          "line_start": 476,
+          "line_end": 476,
+          "exact_excerpt": "            xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")\n",
+          "excerpt_digest": "sha256:d15d6158c2c3471c6455d414b2a0cc86f704ca26f28e7a70b9d2f52cdf234db4",
+          "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/mamba_simple.py:497:525",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/mamba_simple.py",
+          "symbol": "sym:c70e75db715f01dc",
+          "line_start": 497,
+          "line_end": 525,
+          "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+          "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+          "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/mamba_simple.py:471:471",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/mamba_simple.py",
+          "symbol": "sym:c70e75db715f01dc",
+          "line_start": 471,
+          "line_end": 471,
+          "exact_excerpt": "            self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),\n",
+          "excerpt_digest": "sha256:d177f60e8b1e896b0c44cbaa338d02fa0db4ad6c5fbfc362e99b8b9cd56eadb4",
+          "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/mamba_simple.py:551:551",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/mamba_simple.py",
+          "symbol": "sym:c70e75db715f01dc",
+          "line_start": 551,
+          "line_end": 551,
+          "exact_excerpt": "        return out\n",
+          "excerpt_digest": "sha256:2bb542a9070caa4c9989fd17e44a96b02eb50fcbced67ea0e47ac883e89680de",
+          "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "self.time_mamba and dts != None"
+      ],
+      "composition_rationale": "Deterministic selection covers 4 anchor spans and 0 relation spans across 4 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:e71a055521007db6a416753476f8c4cc1a215ad626da1d0c3592f066d9d69136"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-03-d47a86f4-1bd674ec8d46",
+      "obligation_tags": [
+        "O-STAGE-03-d47a86f4"
+      ],
+      "scope": "sym:d07c0ab78c286647",
+      "anchor_span_ids": [
+        "span:models/FreeDyG.py:335:335",
+        "span:models/FreeDyG.py:330:330",
+        "span:models/FreeDyG.py:337:337"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/FreeDyG.py:335:335",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 335,
+          "line_end": 335,
+          "exact_excerpt": "        hidden_states = hidden_states + input_tensor\n",
+          "excerpt_digest": "sha256:d8b438b0fefb6e9b016191eb33309f739302d017f6a546ac90031a72dde653d2",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/FreeDyG.py:330:330",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 330,
+          "line_end": 330,
+          "exact_excerpt": "        x=x*weight\n",
+          "excerpt_digest": "sha256:2c6d40f0436c223b2c518e5bf353aec1080170ee6d0210e57de83759f75363ff",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/FreeDyG.py:337:337",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/FreeDyG.py",
+          "symbol": "sym:d07c0ab78c286647",
+          "line_start": 337,
+          "line_end": 337,
+          "exact_excerpt": "        return hidden_states\n",
+          "excerpt_digest": "sha256:76194e99c5d939305fa5982eaca837232ce620ad9297df1ea1bad04bf8412b1c",
+          "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "",
+      "rejected_candidates": [],
+      "source_digest": "sha256:5b38e78e0709b486c5a61763b78587bb593fa22d6f17ea74308c261c58420823"
+    },
+    {
+      "packet_id": "pkt-O-STAGE-04-a3a3e8ab-96844a620c61",
+      "obligation_tags": [
+        "O-STAGE-04-a3a3e8ab"
+      ],
+      "scope": "sym:1f166196e506e141",
+      "anchor_span_ids": [
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:14:14",
+        "span:models/EdgeBank.py:18:21",
+        "span:models/EdgeBank.py:23:23"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/EdgeBank.py:108:108",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 108,
+          "line_end": 108,
+          "exact_excerpt": "        edge_memories = edge_bank_unlimited_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids)\n",
+          "excerpt_digest": "sha256:152dce6d7bb2a9214c285ef78fb2ff191723ae8a6b63a9ec8295d924918141d4",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:14:14",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:9b2e716c388c639c",
+          "line_start": 14,
+          "line_end": 14,
+          "exact_excerpt": "    src_node_ids, dst_node_ids = edges_tuple\n",
+          "excerpt_digest": "sha256:451ae666ff0f2a14084dfb4d458e1ff02384daf36b99f79729774feba08af220",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:18:21",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:9b2e716c388c639c",
+          "line_start": 18,
+          "line_end": 21,
+          "exact_excerpt": "        if (src_node_id, dst_node_id) in edge_memories:\n            probabilities.append(1.0)\n        else:\n            probabilities.append(0.0)\n",
+          "excerpt_digest": "sha256:fcdca6d6ddcdbb16a7d6a27afa221f3f45ba2def567d281ef064ccea7cc5defa",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:23:23",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:9b2e716c388c639c",
+          "line_start": 23,
+          "line_end": 23,
+          "exact_excerpt": "    return np.array(probabilities)\n",
+          "excerpt_digest": "sha256:e593701da16809a2ce35ae7f38da20728344d8e5ac5215de0396217a27cbb440",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "composition_rationale": "Deterministic selection covers 4 anchor spans and 0 relation spans across 4 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:5f196c4a8322622dff6d9aed37b5d19add49c08e1f891f84446a1be0d5f2c7b1"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-88e55e54-ac03e5f720a5",
+      "obligation_tags": [
+        "O-COMPONENT-01-88e55e54"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "anchor_span_ids": [
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:155:155",
+        "span:models/GraphMixer.py:127:127",
+        "span:models/GraphMixer.py:157:157"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/GraphMixer.py:118:118",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "        combined_features = torch.cat([nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1)\n",
+          "excerpt_digest": "sha256:7e73a7d66d7ca95125e0fd1ecfde3cb1a30182fa5919e07e314fd00cef744b86",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:152:152",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 152,
+          "line_end": 152,
+          "exact_excerpt": "        output_node_features = nodes_time_gap_neighbor_node_agg_features + self.node_raw_features[torch.from_numpy(node_ids)]\n",
+          "excerpt_digest": "sha256:e65d4574a15cd9641bf13b9320c73d69310df553dd1741d977d36c3134babada",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:149:149",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 149,
+          "line_end": 149,
+          "exact_excerpt": "        nodes_time_gap_neighbor_node_agg_features = torch.mean(nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1)\n",
+          "excerpt_digest": "sha256:ced6e0f982ee312aae50b310bae97ef15bbe7ce0f75a94a5aa94a20770c2d04b",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:155:155",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 155,
+          "line_end": 155,
+          "exact_excerpt": "        node_embeddings = self.output_layer(torch.cat([combined_features, output_node_features], dim=1))\n",
+          "excerpt_digest": "sha256:baf0fe5e127699cfa71a2ec83bb9877c99f76c5b6efd114cc6d54df849df9464",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:127:127",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 127,
+          "line_end": 127,
+          "exact_excerpt": "        combined_features = torch.mean(combined_features, dim=1)\n",
+          "excerpt_digest": "sha256:c62c740875e8b21e95d3a07fd094358c0ebe6ff75b6b1d835962e0fc04f19528",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:157:157",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 157,
+          "line_end": 157,
+          "exact_excerpt": "        return node_embeddings\n",
+          "excerpt_digest": "sha256:e902ff8369b9b81af4269c52e401483d609d1a725a59c0063942ead7a27081a2",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 6 anchor spans and 0 relation spans across 7 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:04674292ae2258b248758a796a7c3afbe3992e62fa82dfe065eb62fe3d5a74cd"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-01-377afc18-39b819aaf312",
+      "obligation_tags": [
+        "O-COMPONENT-01-377afc18"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "anchor_span_ids": [
+        "span:models/DyGFormer.py:85:85",
+        "span:models/DyGFormer.py:207:212",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/DyGFormer.py:85:85",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 85,
+          "line_end": 85,
+          "exact_excerpt": "            self.neighbor_sampler.get_all_first_hop_neighbors(node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate)\n",
+          "excerpt_digest": "sha256:5a9229e1861974581e8e98ff6f7840785ae587b79b4b37e3d17ddfdaa7f00dba",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:207:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 207,
+          "line_end": 212,
+          "exact_excerpt": "        if case_study:\n            return src_node_embeddings, dst_node_embeddings, (pooled_src_embedding, pooled_dst_embedding), \\\n                (last_src_hidden_states, last_dst_hidden_states), \\\n                    (second_last_src_hidden_states, second_last_dst_hidden_states)\n        else:\n            return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:54794d7642104fe4f1e531274bf9558cc184b5f2d54bc5fd658ecb32a0154449",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:166:166",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 166,
+          "line_end": 166,
+          "exact_excerpt": "        patches_nodes_neighbor_node_raw_features = torch.cat([src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1)\n",
+          "excerpt_digest": "sha256:5cfc1de5896ce97fbbe5e818b5e08036d6109927ecca8dfa9ba1b1aa01d73730",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:174:174",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 174,
+          "line_end": 174,
+          "exact_excerpt": "        patches_data = torch.stack(patches_data, dim=2)\n",
+          "excerpt_digest": "sha256:caecfee86aa0ab1821c596fb6976c5076316fb95ca3f8b7001570d98f74f04b0",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:176:176",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 176,
+          "line_end": 176,
+          "exact_excerpt": "        patches_data = patches_data.reshape(batch_size, src_num_patches + dst_num_patches, self.num_channels * self.channel_embedding_dim)\n",
+          "excerpt_digest": "sha256:71bebc17fe6e347002710e6d5a18fb777f97f20bfe3dfc92e12341b59ced7bbd",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:197:197",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        dst_patches_data = torch.mean(dst_patches_data, dim=1)\n",
+          "excerpt_digest": "sha256:75a28f7eb1460264fb7d5b712f58f928453cb7f9d87211e11eeeaaae7206ecab",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:212:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "            return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:cd63c11a6d78d5ed4469e626d80a942cd84b95e1650e8d4e7e30ac45a0c71776",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "case_study"
+      ],
+      "composition_rationale": "Deterministic selection covers 7 anchor spans and 0 relation spans across 7 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:e45d5cc9592b94e075e0d1d0409598e5af01e13d7f2d75583837fa987038b868"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-02-c39dd898-b94679c9a18e",
+      "obligation_tags": [
+        "O-COMPONENT-02-c39dd898"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "anchor_span_ids": [
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:155:155",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/GraphMixer.py:149:149",
+        "span:models/GraphMixer.py:157:157"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/GraphMixer.py:118:118",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "        combined_features = torch.cat([nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1)\n",
+          "excerpt_digest": "sha256:7e73a7d66d7ca95125e0fd1ecfde3cb1a30182fa5919e07e314fd00cef744b86",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:155:155",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 155,
+          "line_end": 155,
+          "exact_excerpt": "        node_embeddings = self.output_layer(torch.cat([combined_features, output_node_features], dim=1))\n",
+          "excerpt_digest": "sha256:baf0fe5e127699cfa71a2ec83bb9877c99f76c5b6efd114cc6d54df849df9464",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:152:152",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 152,
+          "line_end": 152,
+          "exact_excerpt": "        output_node_features = nodes_time_gap_neighbor_node_agg_features + self.node_raw_features[torch.from_numpy(node_ids)]\n",
+          "excerpt_digest": "sha256:e65d4574a15cd9641bf13b9320c73d69310df553dd1741d977d36c3134babada",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:149:149",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 149,
+          "line_end": 149,
+          "exact_excerpt": "        nodes_time_gap_neighbor_node_agg_features = torch.mean(nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1)\n",
+          "excerpt_digest": "sha256:ced6e0f982ee312aae50b310bae97ef15bbe7ce0f75a94a5aa94a20770c2d04b",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:157:157",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 157,
+          "line_end": 157,
+          "exact_excerpt": "        return node_embeddings\n",
+          "excerpt_digest": "sha256:e902ff8369b9b81af4269c52e401483d609d1a725a59c0063942ead7a27081a2",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 5 anchor spans and 0 relation spans across 5 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:ef89761d251983a4d9facd517f958102b23f120638fb6bf6aa1ec501166b15b3"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-03-2ae65141-4be86356bcbf",
+      "obligation_tags": [
+        "O-COMPONENT-03-2ae65141"
+      ],
+      "scope": "sym:1f166196e506e141",
+      "anchor_span_ids": [
+        "span:models/EdgeBank.py:119:119",
+        "span:models/EdgeBank.py:118:118",
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:114:114",
+        "span:models/EdgeBank.py:110:112",
+        "span:models/EdgeBank.py:110:110"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/EdgeBank.py:119:119",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 119,
+          "line_end": 119,
+          "exact_excerpt": "    negative_probabilities = predict_link_probabilities(edge_memories=edge_memories, edges_tuple=negative_edges)\n",
+          "excerpt_digest": "sha256:0b4f7c6376e163f6da7f46f6051f2ff7a42e25e4da76ba35656932fc1481944c",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:118:118",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "    positive_probabilities = predict_link_probabilities(edge_memories=edge_memories, edges_tuple=positive_edges)\n",
+          "excerpt_digest": "sha256:0fcc626056502cf298baf6fe7a0cfb854875a29a56524627c9ff882f5985fd32",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:108:108",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 108,
+          "line_end": 108,
+          "exact_excerpt": "        edge_memories = edge_bank_unlimited_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids)\n",
+          "excerpt_digest": "sha256:152dce6d7bb2a9214c285ef78fb2ff191723ae8a6b63a9ec8295d924918141d4",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:114:114",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 114,
+          "line_end": 114,
+          "exact_excerpt": "        edge_memories = edge_bank_repeat_threshold_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids)\n",
+          "excerpt_digest": "sha256:12ef2d5b62d14f2ba511628169752aff1f9b20bebdb2c1b9e2e12f76f80326a4",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:110:112",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 110,
+          "line_end": 112,
+          "exact_excerpt": "        edge_memories = edge_bank_time_window_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids,\n                                                     history_node_interact_times=history_data.node_interact_times, time_window_mode=time_window_mode,\n                                                     time_window_proportion=time_window_proportion)\n",
+          "excerpt_digest": "sha256:735ded77717c08840ff6861e545a762b26267065242e15318eebefd554adac3c",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/EdgeBank.py:110:110",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/EdgeBank.py",
+          "symbol": "sym:1f166196e506e141",
+          "line_start": 110,
+          "line_end": 110,
+          "exact_excerpt": "        edge_memories = edge_bank_time_window_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids,\n",
+          "excerpt_digest": "sha256:bd9fba90d47cf0986ee8d3601bcbc2b6599be38bb6dedacd086653789740cb52",
+          "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [],
+      "composition_rationale": "Deterministic selection covers 6 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:cb6a2815f6e28df1b4ed9303aff4d6984ad6a188d87d5d155f1a07feb8f7b0a3"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-04-6d73cce5-d5f32e89a62a",
+      "obligation_tags": [
+        "O-COMPONENT-04-6d73cce5"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "anchor_span_ids": [
+        "span:models/GraphMixer.py:118:118",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:168:168",
+        "span:models/DyGFormer.py:207:212",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/GraphMixer.py:149:149"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/GraphMixer.py:118:118",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 118,
+          "line_end": 118,
+          "exact_excerpt": "        combined_features = torch.cat([nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1)\n",
+          "excerpt_digest": "sha256:7e73a7d66d7ca95125e0fd1ecfde3cb1a30182fa5919e07e314fd00cef744b86",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:152:152",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 152,
+          "line_end": 152,
+          "exact_excerpt": "        output_node_features = nodes_time_gap_neighbor_node_agg_features + self.node_raw_features[torch.from_numpy(node_ids)]\n",
+          "excerpt_digest": "sha256:e65d4574a15cd9641bf13b9320c73d69310df553dd1741d977d36c3134babada",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:168:168",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 168,
+          "line_end": 168,
+          "exact_excerpt": "        patches_nodes_neighbor_time_features = torch.cat([src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features], dim=1)\n",
+          "excerpt_digest": "sha256:eaed1e0b2b8dd144b707cbacdfd56c84a82f9a31fa7f0630fab9da8fbcd9f776",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:207:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 207,
+          "line_end": 212,
+          "exact_excerpt": "        if case_study:\n            return src_node_embeddings, dst_node_embeddings, (pooled_src_embedding, pooled_dst_embedding), \\\n                (last_src_hidden_states, last_dst_hidden_states), \\\n                    (second_last_src_hidden_states, second_last_dst_hidden_states)\n        else:\n            return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:54794d7642104fe4f1e531274bf9558cc184b5f2d54bc5fd658ecb32a0154449",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:166:166",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 166,
+          "line_end": 166,
+          "exact_excerpt": "        patches_nodes_neighbor_node_raw_features = torch.cat([src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1)\n",
+          "excerpt_digest": "sha256:5cfc1de5896ce97fbbe5e818b5e08036d6109927ecca8dfa9ba1b1aa01d73730",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:174:174",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 174,
+          "line_end": 174,
+          "exact_excerpt": "        patches_data = torch.stack(patches_data, dim=2)\n",
+          "excerpt_digest": "sha256:caecfee86aa0ab1821c596fb6976c5076316fb95ca3f8b7001570d98f74f04b0",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/GraphMixer.py:149:149",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/GraphMixer.py",
+          "symbol": "sym:f18e4ec00adf7e59",
+          "line_start": 149,
+          "line_end": 149,
+          "exact_excerpt": "        nodes_time_gap_neighbor_node_agg_features = torch.mean(nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1)\n",
+          "excerpt_digest": "sha256:ced6e0f982ee312aae50b310bae97ef15bbe7ce0f75a94a5aa94a20770c2d04b",
+          "file_digest": "sha256:3c3a6bb465364f015eb6b1faf21bf37321d2577dbbee69bf3686137daa44e34b",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "case_study"
+      ],
+      "composition_rationale": "Deterministic selection covers 7 anchor spans and 0 relation spans across 8 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:2f324d9f220b180d0f4ffb5fce2a7d097d4163967553cb7ef1c7c777f114a627"
+    },
+    {
+      "packet_id": "pkt-O-COMPONENT-05-8cd85daa-819fdeb52a54",
+      "obligation_tags": [
+        "O-COMPONENT-05-8cd85daa"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "anchor_span_ids": [
+        "span:models/DyGFormer.py:169:169",
+        "span:models/DyGFormer.py:181:183",
+        "span:models/DyGFormer.py:166:166",
+        "span:models/DyGFormer.py:174:174",
+        "span:models/DyGFormer.py:176:176",
+        "span:models/DyGFormer.py:197:197",
+        "span:models/DyGFormer.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "semantic_span_ids": [],
+      "spans": [
+        {
+          "span_id": "span:models/DyGFormer.py:169:169",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 169,
+          "line_end": 169,
+          "exact_excerpt": "        patches_nodes_neighbor_co_occurrence_features = torch.cat([src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1)\n",
+          "excerpt_digest": "sha256:9ef523b6fcdf7242fe2f72cfcade98b72a15cf1f6408ab2cabd6dd8d294c0d6b",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:181:183",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 181,
+          "line_end": 183,
+          "exact_excerpt": "            if i == 0 and case_study:\n                second_last_src_hidden_states = patches_data[:, : src_num_patches, :]\n                second_last_dst_hidden_states = patches_data[:, src_num_patches: src_num_patches + dst_num_patches, :]\n",
+          "excerpt_digest": "sha256:48fb0386e9ef7972d26c7d36a20333867b47cc267f9478d841bc248cfd13b0b9",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:166:166",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 166,
+          "line_end": 166,
+          "exact_excerpt": "        patches_nodes_neighbor_node_raw_features = torch.cat([src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1)\n",
+          "excerpt_digest": "sha256:5cfc1de5896ce97fbbe5e818b5e08036d6109927ecca8dfa9ba1b1aa01d73730",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:174:174",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 174,
+          "line_end": 174,
+          "exact_excerpt": "        patches_data = torch.stack(patches_data, dim=2)\n",
+          "excerpt_digest": "sha256:caecfee86aa0ab1821c596fb6976c5076316fb95ca3f8b7001570d98f74f04b0",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:176:176",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 176,
+          "line_end": 176,
+          "exact_excerpt": "        patches_data = patches_data.reshape(batch_size, src_num_patches + dst_num_patches, self.num_channels * self.channel_embedding_dim)\n",
+          "excerpt_digest": "sha256:71bebc17fe6e347002710e6d5a18fb777f97f20bfe3dfc92e12341b59ced7bbd",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:197:197",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 197,
+          "line_end": 197,
+          "exact_excerpt": "        dst_patches_data = torch.mean(dst_patches_data, dim=1)\n",
+          "excerpt_digest": "sha256:75a28f7eb1460264fb7d5b712f58f928453cb7f9d87211e11eeeaaae7206ecab",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        },
+        {
+          "span_id": "span:models/DyGFormer.py:212:212",
+          "snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+          "path": "models/DyGFormer.py",
+          "symbol": "sym:dc51f7924aadbf79",
+          "line_start": 212,
+          "line_end": 212,
+          "exact_excerpt": "            return src_node_embeddings, dst_node_embeddings\n",
+          "excerpt_digest": "sha256:cd63c11a6d78d5ed4469e626d80a942cd84b95e1650e8d4e7e30ac45a0c71776",
+          "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+          "role": "anchor"
+        }
+      ],
+      "relations": [],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "composition_rationale": "Deterministic selection covers 7 anchor spans and 0 relation spans across 7 behavior nodes.",
+      "rejected_candidates": [],
+      "source_digest": "sha256:3b530618ccc232b69303a22032d260a03873c1f2343c919798f1c045f56475a5"
+    }
+  ],
+  "content_digest": "sha256:97076d1b708d2a8bb60673ca8bbcbe5e3f4a18b943ba8ff4d57e067ec6281d27"
+}

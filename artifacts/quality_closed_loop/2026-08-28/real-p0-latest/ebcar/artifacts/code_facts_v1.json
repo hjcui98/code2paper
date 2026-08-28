@@ -1,0 +1,290 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_packet_digest": "sha256:30009e19729bcfc04139957e029a04104cafdaf7a62c1f5fce26cebeb473b1db",
+  "facts": [
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+      "subject": "train_ebcar",
+      "predicate": "loads_weights",
+      "object": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_span_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "LOAD",
+        "cfg.use_dedicated_attention",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:443422bb272d618783b4cfa71c77fde042e5c560f849c5db43f68219878a0577",
+      "canonical_identity": "sha256:889eaaa779cabda014f6099e3e3ef487f4b0bdbce265ab23cd112aeabffc779a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+      "subject": "train_ebcar",
+      "predicate": "branches_on",
+      "object": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:116:117"
+      ],
+      "relation_span_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "BRANCH",
+        "cfg.use_dedicated_attention",
+        "cfg.use_dedicated_attention",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:bf9fcc70fb4bce2183d54e4da56e2933e960cb164ff486f93d8c3eaf7914d4a9",
+      "canonical_identity": "sha256:354cb5533e6506fd726b832d2822db328e34b6d01a682e05ae8038a659afcfe5",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+      "subject": "train_ebcar",
+      "predicate": "computes_formula",
+      "object": [
+        "'hybrid_attention_'",
+        "run_name",
+        "result=run_name"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:117:117"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "COMPUTE",
+        "run_name",
+        "'hybrid_attention_'",
+        "run_name",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e570cebd53c158c8b2f9f90d8067fab6067a699858d36e918af9590ae1dc7c87",
+      "canonical_identity": "sha256:8240a508ad553fa6393959e56bd3da429bd728870ba86d4767a86385aa52bdfa",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+      "subject": "train_ebcar",
+      "predicate": "calls",
+      "object": [
+        "reranker",
+        "query",
+        "passage",
+        "label",
+        "document_id",
+        "passage_id",
+        "passage_text",
+        "result=loss"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "CALL",
+        "loss",
+        "reranker",
+        "query",
+        "passage",
+        "label",
+        "document_id",
+        "passage_id",
+        "passage_text",
+        "name:reranker"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:6a1d675d5a495f3086ac650512800f7885e8e6e3a3a0b9a94009784cc0ae77e2",
+      "canonical_identity": "sha256:5ddd1cd50571284bffabe62c10099733895d31ff7f3b7b781a0d9896f822aede",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+      "subject": "train_ebcar",
+      "predicate": "computes_formula",
+      "object": [
+        "train_loss",
+        "len(train_loader)"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "COMPUTE",
+        "train_loss",
+        "len(train_loader)",
+        "div"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:cb165e8feb6f2de0ee45d7a9839b7c72f790f88f45287a15e6fd1795a7ec7cfd",
+      "canonical_identity": "sha256:dae760690eabfdc9f14e242de83021cb01d3ba9cfb161c2f4927852198dcd0b6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+      "subject": "train_ebcar",
+      "predicate": "computes_formula",
+      "object": [
+        "val_loss",
+        "len(val_loader)",
+        "result=best_val_loss"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:291:291"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "COMPUTE",
+        "best_val_loss",
+        "val_loss",
+        "len(val_loader)",
+        "div"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:631b7f9d196fd61ef02886faff14e235fad7855e7517ae50e035b9a237ae802c",
+      "canonical_identity": "sha256:8e3c7f3ca49b3df600b339ddce7e02b92a45d8cb08a7d312d7c38dfaa8c9a4cf",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+      "subject": "train_ebcar",
+      "predicate": "returns",
+      "object": [
+        "reranker"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "RETURN",
+        "reranker"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:391d44b0ad3aa03b1932b85527618c368d420e311618d3eed0d3fa302f118464",
+      "canonical_identity": "sha256:6969d6255a2a062c1c30d05234008c68eb394b1e06525976bbcdc6d02aad1049",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+      "subject": "train_ebcar",
+      "predicate": "configured_by",
+      "object": [
+        "cfg.use_dedicated_attention"
+      ],
+      "conditions": [
+        "cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:84125bba4b81722f",
+      "direct_span_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:116:116"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:7a74e9e69f2aa0ab"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:84125bba4b81722f",
+        "sym:84125bba4b81722f",
+        "node:f72b2672c46173ed",
+        "sym:84125bba4b81722f",
+        "LOAD",
+        "cfg.use_dedicated_attention",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:6c03478cc538034167b7b790560dd1b8064b6342f64a0420d5e6a0da28537833",
+      "canonical_identity": "sha256:e3823df7bb2a0f079763f16b9f3cc0d628fd40921ad18f2c159b67b33498b37c",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12"
+}

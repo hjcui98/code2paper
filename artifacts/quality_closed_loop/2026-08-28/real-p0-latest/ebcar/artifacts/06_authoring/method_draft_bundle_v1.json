@@ -1,0 +1,933 @@
+{
+  "candidate_markdown": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nEfficiency and cross‑passage inference represent two interrelated limitations in existing reranker architectures: reranking a large candidate pool within tight latency budgets while simultaneously generalizing beyond single‑passage evidence to document‑wide context. The ConTEB benchmark addresses this compound challenge as an evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning. By separating the demands of cross‑passage reasoning from pure retrieval‑based matching, ConTEB enables researchers to determine whether a reranker's performance derives from genuine multi‑passage integration or from single‑passage heuristics that merely approximate the task. These challenges motivate the need for evaluation protocols that isolate cross‑passage reasoning demands from pure retrieval‑based matching, a gap that the ConTEB suite is designed to fill.\n\n## Embedding‑based reranking formulation and overall framework.\n\nThe embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline. This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.\n\n## Architecture details: enriching embeddings with document ID and position\n\nThe EB-CAR reranker targets the reranking stage of a retrieval-augmented generation pipeline, addressing cross-passage reasoning when evidence is scattered across multiple passages and requires resolving coreference or structural context (`intended`). The method operates on pre-computed embeddings rather than full text, avoiding autoregressive generation to reduce inference latency . The architecture enriches passage embeddings with document-level structural signals and processes them through a Transformer encoder with a hybrid attention mechanism that jointly models inter- and intra-document dependencies .\n\nThe training pipeline in `train_ebcar` branches on `cfg.use_dedicated_attention` to select the dedicated-attention configuration, loads the corresponding weights, and computes validation loss as the mean over the number of validation batches . The reranker is configured by this flag and returned after the training loop completes . A formal expression of the contrastive loss and embedding enrichment mechanism is pending formal derivation.\n\nThe pipeline proceeds in two principal phases: input preparation, in which pre-computed dense passage embeddings from a standard retriever are augmented with structural signals, and hybrid-attention encoding, in which the augmented embeddings are processed through a stack of Transformer encoder layers . The output is a set of contextualized passage embeddings used for ranking .\n\nA sinusoidal passage-position encoding is added to each passage embedding to encode the position of that passage within its original document, providing structural order cues . This positional signal complements the document-identity signal by conveying the sequential arrangement of passages within a document .\n\nThe shared full attention module implements standard multi-head attention, allowing the query and all passages to attend to each other, thereby capturing global relevance and cross-document relationships . This module operates without document-level masking and models interactions across the entire candidate set .\n\nDocument-level structural knowledge is injected into passage embeddings to support cross-passage inference . The enrichment strategy ensures that each passage representation carries both its intrinsic semantic content and its structural position within the source document .\n\nDocument IDs are assigned using a relative, dynamic scheme rather than global corpus-level identifiers . Each unique document in the current candidate set receives a distinct ID, so the same document maps to the same ID within a single retrieval context but the ID space is not fixed across different queries .\n\nThe query embedding is kept fixed during both training and inference, while passage embeddings are updated through the Transformer encoder . This asymmetry allows the model to refine passage representations without altering the query anchor, simplifying the inference-time scoring computation .\n\nTraining is conducted on ConTEB datasets that explicitly require cross-passage reasoning . These datasets provide supervision signals where the correct answer depends on integrating information distributed across multiple passages from the same or different documents .\n\nThe training loop computes per-batch loss and averages over the number of batches to obtain epoch-level train and validation loss . The reranker is returned after training completes, with the run identified by a name incorporating the `hybrid_attention` tag and the configuration state .\n\nA dense retriever (Contriever) fetches top-k candidate passages for a given query, and their pre-computed embeddings are retrieved alongside the passages . The query is encoded with the same Contriever model to produce a query embedding in the same vector space, establishing the input vectors for subsequent structural augmentation and encoding stages .\n\nFor each retrieved passage, a dynamic document ID embedding and a sinusoidal passage-position encoding are added to its original embedding to inject document-identity and ordering signals . This structural augmentation transforms raw semantic embeddings into enriched representations that carry both content and structural context .\n\nThe query embedding and augmented passage embeddings are fed jointly into a Transformer encoder that applies shared full attention for global interactions and dedicated masked attention for intra-document interactions in every layer, producing contextualized passage embeddings . The dedicated module is conditionally active, controlled by ; when disabled, only the shared full-attention path is used .\n\nA learned relative document-identity embedding table assigns embeddings dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together . The table is indexed by the relative document ID computed for the current retrieval context rather than by a global corpus-level identifier .\n\nThe hybrid attention mechanism combines shared full attention (global cross-passage) and dedicated masked attention (intra-document) in each Transformer layer to jointly model inter- and intra-document dependencies . Two complementary attention patterns co-exist in each layer: a global pattern that spans all passages and a document-local pattern restricted to passages sharing the same document ID .\n\nThe dedicated masked attention module implements masked multi-head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine-grained coreference resolution and local coherence . This masking pattern is applied in addition to the shared full-attention path, so each layer produces a combined representation that reflects both global and document-local context .\n\nAt inference, dot-product similarity is computed between the static query embedding and the updated contextualized passage embeddings, and passages are ranked in descending order of these scores . The fixed query embedding serves as the anchor throughout, ensuring that ranking reflects the model's learned contextual refinement of passage representations without altering the query representation itself .\n\n## Training objective:\n\nInfoNCE loss with fixed query anchor.\n\n## Inference procedure.\n\nDuring inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer. In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings. The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking. This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+  "verified_markdown": "",
+  "review_items": [
+    {
+      "candidate_id": "review:O-METHOD-MAINLINE-01-c8146479",
+      "source_obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "confirmation_question": "Should the Method confirm that start with pre‑computed dense passage embeddings from a standard retriever (e.g., contriever) and the query embedding from the same encoder. augment each passage embedding with a document id embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. process the query and enriched passage embeddings jointly through a stack of transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. optimize the model with a contrastive loss (infonce) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. at inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-01-039a963a",
+      "source_obligation_id": "O-STAGE-01-039a963a",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "confirmation_question": "Should the Method confirm that retrieval and embedding preparation: use a dense retriever (contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-01-039a963a"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-02-42e8d68d",
+      "source_obligation_id": "O-STAGE-02-42e8d68d",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "confirmation_question": "Should the Method confirm that structural augmentation: for each retrieved passage, add a dynamic document id embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-02-42e8d68d"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-03-2c5bd758",
+      "source_obligation_id": "O-STAGE-03-2c5bd758",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "confirmation_question": "Should the Method confirm that hybrid‑attention encoding: feed the query and augmented passage embeddings into a transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-03-2c5bd758"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-04-c50e0bef",
+      "source_obligation_id": "O-STAGE-04-c50e0bef",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "confirmation_question": "Should the Method confirm that contrastive training: using a contrastive infonce loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-04-c50e0bef"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-05-5b3d398a",
+      "source_obligation_id": "O-STAGE-05-5b3d398a",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "confirmation_question": "Should the Method confirm that inference scoring and ranking: compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-05-5b3d398a"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-c301ecdd",
+      "source_obligation_id": "O-COMPONENT-01-c301ecdd",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "confirmation_question": "Should the Method confirm that improve reranking in retrieval-augmented generation (rag) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-c301ecdd"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-de6049e3",
+      "source_obligation_id": "O-COMPONENT-01-de6049e3",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "confirmation_question": "Should the Method confirm that contriever: dense retriever that provides initial passage embeddings and top‑k retrieval?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "No supported code fact covers any typed behavior target."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-de6049e3"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-02-2e14379d",
+      "source_obligation_id": "O-COMPONENT-02-2e14379d",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "confirmation_question": "Should the Method confirm that passage embeddings (pi): fixed dense representations of candidate passages obtained from contriever?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-02-2e14379d"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-03-d8aa8c77",
+      "source_obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-14",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "confirmation_question": "Should the Method confirm that document id embedding table: learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-03-d8aa8c77"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-04-b5b6af99",
+      "source_obligation_id": "O-COMPONENT-04-b5b6af99",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "confirmation_question": "Should the Method confirm that passage position encoding (sinusoidal): encodes the position of a passage within its original document, providing structural order cues?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-04-b5b6af99"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-05-4c3594d2",
+      "source_obligation_id": "O-COMPONENT-05-4c3594d2",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-15",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "confirmation_question": "Should the Method confirm that hybrid attention mechanism: combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each transformer layer to jointly model inter‑ and intra‑document dependencies?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-05-4c3594d2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-06-34021b88",
+      "source_obligation_id": "O-COMPONENT-06-34021b88",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "confirmation_question": "Should the Method confirm that shared full attention module: standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-06-34021b88"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-07-d157b2cc",
+      "source_obligation_id": "O-COMPONENT-07-d157b2cc",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-16",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "confirmation_question": "Should the Method confirm that dedicated masked attention module: masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-07-d157b2cc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-08-4aac53dc",
+      "source_obligation_id": "O-COMPONENT-08-4aac53dc",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "confirmation_question": "Should the Method confirm that transformer encoder stack: layers that process the combined sequence to produce contextualized passage embeddings?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-08-4aac53dc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-09-6a8cfd6c",
+      "source_obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "confirmation_question": "Should the Method confirm that infonce contrastive loss: objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-10-dac6250f",
+      "source_obligation_id": "O-COMPONENT-10-dac6250f",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "confirmation_question": "Should the Method confirm that fixed query anchor: the original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-10-dac6250f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-11-27f310b2",
+      "source_obligation_id": "O-COMPONENT-11-27f310b2",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "confirmation_question": "Should the Method confirm that conteb benchmark: evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-11-27f310b2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-12-370bd5b2",
+      "source_obligation_id": "O-COMPONENT-12-370bd5b2",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "confirmation_question": "Should the Method confirm that mldr, squad, narrativeqa (training sets): three conteb datasets used for training ebcar, covering entity disambiguation, span matching, and narrative comprehension?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-12-370bd5b2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-6b45ad90",
+      "source_obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "confirmation_question": "Should the Method confirm that motivation: efficiency and cross‑passage inference challenges in existing rerankers?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-54911271",
+      "source_obligation_id": "O-ORGANIZATION-02-54911271",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Embedding‑based reranking formulation and overall framework.",
+      "confirmation_question": "Should the Method confirm that embedding‑based reranking formulation and overall framework?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-54911271"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-03-2c92c853",
+      "source_obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "confirmation_question": "Should the Method confirm that architecture details: enriching embeddings with document id and position, the transformer encoder with hybrid attention (shared full + dedicated masked)?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-03-2c92c853"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-04-1dd970df",
+      "source_obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Training objective: InfoNCE loss with fixed query anchor.",
+      "confirmation_question": "Should the Method confirm that training objective: infonce loss with fixed query anchor?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-04-1dd970df"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-05-baf0d276",
+      "source_obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inference procedure.",
+      "confirmation_question": "Should the Method confirm that inference procedure?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-05-baf0d276"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-bad20132",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-6",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "confirmation_question": "Should the Method confirm that avoid full‑text processing and autoregressive generation to reduce inference latency?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-30bb7c0f",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-7",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "confirmation_question": "Should the Method confirm that inject document‑level structural knowledge into passage embeddings to support cross‑passage inference?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-b01101f7",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-17",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "confirmation_question": "Should the Method confirm that design two complementary attention patterns that co‑exist in each layer: global and document‑local?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-c742a4fc",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-8",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "confirmation_question": "Should the Method confirm that use relative, dynamic document id assignments rather than global corpus‑level ids?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-595ac6ff",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-9",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "confirmation_question": "Should the Method confirm that keep the query embedding fixed during training and inference while updating passage embeddings?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-06-388166d9",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-10",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "confirmation_question": "Should the Method confirm that train on conteb datasets that explicitly require cross‑passage reasoning?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU2",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "The embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU2)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU2"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU3",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU3)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU3"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU5",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "During inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU5)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU5"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU6",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU6)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU6"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU7",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU7)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU7"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU8",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU8)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU8"
+      ]
+    },
+    {
+      "candidate_id": "review-formalization:MA-S1",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S2",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S3",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S3:derivation, formula:facet:facet-d57e6b007d62768e",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S4",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-writer-missing-facets:MA-S4",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "writer_missing_required_facets",
+      "proposed_body": "The Writer did not substantively cover the required mechanism facets after its bounded Writer Repair opportunity: facet-f6e629096087c520",
+      "confirmation_question": "Which Writer-owned Method paragraph should cover the missing required facets?",
+      "needed_evidence": [
+        "facet-f6e629096087c520"
+      ],
+      "suggested_action": "repair_writer_required_facet_coverage",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S5:move-unanchored:MA-S5:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    }
+  ],
+  "plan_readiness": "candidate_ready_with_review",
+  "blocked_reasons": [],
+  "validation_split_report": {
+    "split_mode": "sentence_reverse_validation",
+    "verified_unit_ids": [
+      "FTU1",
+      "FTU4"
+    ],
+    "excluded_units": [
+      {
+        "unit_id": "FTU2",
+        "text": "The embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline.",
+        "char_start": 65,
+        "char_end": 273,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU3",
+        "text": "This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+        "char_start": 274,
+        "char_end": 481,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU5",
+        "text": "During inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer.",
+        "char_start": 508,
+        "char_end": 661,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU6",
+        "text": "In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings.",
+        "char_start": 662,
+        "char_end": 785,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU7",
+        "text": "The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking.",
+        "char_start": 786,
+        "char_end": 1028,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU8",
+        "text": "This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+        "char_start": 1029,
+        "char_end": 1316,
+        "reason": "unsupported"
+      }
+    ],
+    "verified_positive_unit_count": 0,
+    "unsupported_positive_units": 6
+  }
+}

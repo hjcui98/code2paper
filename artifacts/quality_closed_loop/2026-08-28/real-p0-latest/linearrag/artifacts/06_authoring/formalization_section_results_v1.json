@@ -1,0 +1,417 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S1:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:3d122ba94528be740b13797d4b6fa8b781a97a0b90bbb18c41df30389edc092a"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:5c00669d2f1c43a75c6c8dea38fa8204c5695ba6f50dc90579a3b3a8224b703f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-36188cb856f44d0d",
+          "formula:facet:facet-8ce6e8dabb55bf84",
+          "formula:section:MA-S3:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-36188cb856f44d0d",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-8ce6e8dabb55bf84",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-36188cb856f44d0d",
+          "facet_ids": [
+            "facet-36188cb856f44d0d"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices."
+          ],
+          "content_digest": "sha256:52a2da71cc0f8a714f1bdf72f0e563c4358c4993fc34f7df088b0421dea4e846"
+        },
+        {
+          "obligation_id": "formula:facet:facet-8ce6e8dabb55bf84",
+          "facet_ids": [
+            "facet-8ce6e8dabb55bf84"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)"
+          ],
+          "content_digest": "sha256:7c76841315292698700c089926bb402219da946a48a350bcae9cc9508d3fc32f"
+        },
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S3",
+          "consumer_paragraph_id": "paragraph:MA-S3:6",
+          "paragraph_ids": [
+            "paragraph:MA-S3:6"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "slot:fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "slot:fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:7a39d781463835a40f41dfc230ca7661a5666718ff8e7e8de46807a23d3f8de9"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S3:derivation",
+        "formula:facet:facet-36188cb856f44d0d",
+        "formula:facet:facet-8ce6e8dabb55bf84"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:048da8c9109ca78194aacc9ad0908a74dc2ccca2cc8b987cf376ac0e8789ad48"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [
+        {
+          "package_id": "pkg:MA-S4:author_intent:0",
+          "section_id": "MA-S4",
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "consumer_paragraph_id": "paragraph:MA-S4:2",
+          "purpose": "author_intent_academic",
+          "latex": "s_{e}^{(t+1)} = \\max_{s \\in \\mathcal{N}(e)} \\left( s_{e}^{(t)} \\cdot \\text{sim}(q, s) \\right)",
+          "prose_explanation": "The formula captures the core mechanism of iterative propagation where entity relevance is updated based on the similarity of connected sentences to the query, effectively bypassing the need for explicit relation extraction.",
+          "markdown_block": "$$\ns_{e}^{(t+1)} = \\max_{s \\in \\mathcal{N}(e)} \\left( s_{e}^{(t)} \\cdot \\text{sim}(q, s) \\right)\n$$",
+          "symbol_definitions": [],
+          "symbol_table": [],
+          "material_conditions": [],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [],
+          "review_question": "Does the provided code snippet accurately reflect the mathematical formulation of the iterative propagation step, specifically the multiplication of entity score and sentence similarity?",
+          "bound_fact_ids": [],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:7ccbd63f51519c025c69868a313a1580f470d60b05504290a05a769d5d89217a"
+        }
+      ],
+      "disposition": null,
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "outcome": "rendered",
+          "package_id": "pkg:MA-S4:author_intent:0",
+          "review_question": "",
+          "reason": "",
+          "expectation": "required",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S4",
+          "consumer_paragraph_id": "paragraph:MA-S4:2",
+          "paragraph_ids": [
+            "paragraph:MA-S4:2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "slot:fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+            "slot:fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+            "slot:fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+            "slot:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:33edf5b0ac97ce121bbe138ded4455383007fe1ff8bc74e709148cd03e754008"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:7ae92a716cb46a50c32740a3338d1bf2e112b0065e3971eb76f2c66412a2f07a"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S5",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S5:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:e40efff9db0091c767546fa8d8713c7154ea48bf5f637ffedfc6611930f637e5"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:35fb5f8fb189dceab89ac4686a0fb8fbc15ea9fd9d88eceb634b13813d206b72",
+          "guard_failures": [
+            "pkg-ma-s3-trigraph:formula_package_obligation_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathcal{G} = (\\\\mathcal{V}, \\\\mathcal{E}), \\\\quad \\\\mathcal{V} = \\\\mathcal{V}_P \\\\cup \\\\mathcal{V}_S \\\\cup \\\\mathcal{V}_E, \\\\quad \\\\mathcal{E} = \\\\mathcal{E}_{contain} \\\\cup \\\\mathcal{E}_{mention}\",\n      \"markdown_block\": \"### Hierarchical T"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:8b9b5c92e17b79e3149b9bbfb00dad50136b832602eb3650d0479f3fa070dd8b",
+          "guard_failures": [
+            "pkg-ma-s3-trigraph:formula_package_obligation_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"Let \\\\mathcal{C} = \\\\{p_1, \\\\dots, p_N\\\\} be a corpus of passages. The Tri-Graph \\\\mathcal{G} = (\\\\mathcal{V}, \\\\mathcal{E}) is a hierarchical graph where the node set \\\\mathcal{V} is the disjoint union of three sets: \\\\mathcal{V} = \\\\mathcal{P"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-36188cb856f44d0d",
+        "formula:facet:facet-8ce6e8dabb55bf84",
+        "formula:section:MA-S3:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:8b96ec6b85df183ada43734885256aea7b1a1fb9d9e02746c34c30d2db0c282b",
+          "guard_failures": [
+            "pkg:MA-S4:author_intent:0:markdown_block_missing_exact_latex"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"Let \\\\mathcal{G} = (\\\\mathcal{E}, \\\\mathcal{S}, \\\\mathcal{L}) be a bipartite sentence-entity graph where \\\\mathcal{E} is the set of entities, \\\\mathcal{S} is the set of sentences, and \\\\mathcal{L} \\\\subseteq \\\\mathcal{E} \\\\times \\\\mathcal{S} is"
+        },
+        {
+          "attempt": 2,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 1,
+          "response_ref": "sha256:6c232cd35e5f87ac1bf888e5a051d60119632021f05a549009b41f42befa9cd0",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"s_{e}^{(t+1)} = \\\\max_{s \\\\in \\\\mathcal{N}(e)} \\\\left( s_{e}^{(t)} \\\\cdot \\\\text{sim}(q, s) \\\\right)\",\n      \"markdown_block\": \"### Entity Activation via Semantic Bridging\\n\\nThe mechanism realizes the avoidance of explicit relation extraction "
+        }
+      ],
+      "author_intent_lane": true,
+      "formula_consumer": true,
+      "deterministic_fallback": false,
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "claims": [
+    {
+      "claim_id": "l2:math:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+      ],
+      "parent_fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7:elementwise_product",
+      "canonical_text": "Operands are multiplied.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "parent_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "math_op_kind": "elementwise_product",
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22",
+        "O-STAGE-02-93c16851",
+        "O-STAGE-03-8dda66b9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c:elementwise_product",
+      "canonical_text": "Operands are multiplied.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "parent_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "math_op_kind": "elementwise_product",
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22",
+        "O-STAGE-02-93c16851",
+        "O-STAGE-03-8dda66b9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "parent_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22",
+        "O-STAGE-02-93c16851",
+        "O-STAGE-03-8dda66b9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "parent_fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-02-93c16851-node:f32782d99169744f:topk",
+      "canonical_text": "A top-k selection keeps the highest scoring items.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "math_op_kind": "topk",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    }
+  ],
+  "content_digest": "sha256:467d7433d9a87bd17e2dd187352558305f6b31d4b36203e04d277489d8662de2"
+}

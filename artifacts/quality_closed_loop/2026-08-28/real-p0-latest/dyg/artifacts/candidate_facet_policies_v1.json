@@ -1,0 +1,1732 @@
+{
+  "schema_version": "1.0",
+  "policies": [
+    {
+      "facet_id": "facet-9a1ed70668b9de25",
+      "policy_id": "policy:facet-9a1ed70668b9de25",
+      "alignment_id": "alignment:facet-9a1ed70668b9de25",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "formula_goal"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-9a1ed70668b9de25",
+              "span_id": "span:models/mamba_simple.py:497:525",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 497,
+              "line_end": 525,
+              "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+              "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:c9ee3c3f552f4251766297c81dadd955ef50847001686bb7e9e676a47db52943",
+      "rationale": "Deterministic local evidence fallback after owner unavailability. Fail-closed alignment: deterministic_local_evidence_fallback",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:ebf74db7e1394a350ddf4e5f2d64babd9633437a96a5447fb4f113a6a75257ef"
+    },
+    {
+      "facet_id": "facet-e650301f08e6d4b3",
+      "policy_id": "policy:facet-e650301f08e6d4b3",
+      "alignment_id": "alignment:facet-e650301f08e6d4b3",
+      "clause_id": "clause:O-STAGE-01-06d7de36:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+            "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+            "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk",
+            "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGMamba.py:130:132",
+            "span:models/DyGMamba.py:138:140",
+            "span:models/DyGMamba.py:211:211",
+            "span:models/DyGMamba.py:212:212",
+            "span:models/DyGMamba.py:214:214",
+            "span:models/DyGMamba.py:215:215",
+            "span:models/DyGMamba.py:240:240",
+            "span:models/DyGMamba.py:241:241",
+            "span:models/DyGMamba.py:244:244",
+            "span:models/DyGMamba.py:256:256",
+            "span:models/DyGMamba.py:264:264"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:211:211",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 211,
+              "line_end": 211,
+              "exact_excerpt": "        src_padded_data = torch.stack(src_padded_data, dim=2)\n",
+              "excerpt_digest": "sha256:0c2b1fb98646c6ac411b8ea4eb804994ef8b5ca0bcc7bb84ee6b9509afd2c6cc",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:212:212",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 212,
+              "line_end": 212,
+              "exact_excerpt": "        dst_padded_data = torch.stack(dst_padded_data, dim=2)\n",
+              "excerpt_digest": "sha256:f2997028a1380e49aec697f3eba5f20ef777b231e37943981543a5069bdeee5f",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:215:215",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 215,
+              "line_end": 215,
+              "exact_excerpt": "        dst_padded_data = dst_padded_data.reshape(batch_size, dst_seq_len, self.num_channels * self.channel_embedding_dim)\n",
+              "excerpt_digest": "sha256:8c75197e20abd47b48ff7fd7433b92ed8c487374e51544be0044212b87abc6b3",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:240:240",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 240,
+              "line_end": 240,
+              "exact_excerpt": "        src_routing_weights = F.softmax(src_router_logits, dim=1, dtype=torch.float)\n",
+              "excerpt_digest": "sha256:f03c96ff699e3feaa0bed8022610f544e0e0ba3f3fcb4f91aab38506905a99fd",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:241:241",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 241,
+              "line_end": 241,
+              "exact_excerpt": "        dst_routing_weights = F.softmax(dst_router_logits, dim=1, dtype=torch.float)\n",
+              "excerpt_digest": "sha256:00d3781d253ec29647f5ff03348fcf08e888cedf9c6d3340380053dcc53b3245",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:244:244",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 244,
+              "line_end": 244,
+              "exact_excerpt": "        dst_routing_weights, dst_selected_embeddings = torch.topk(dst_routing_weights, min(self.top_k, dst_seq_len), dim=1)\n",
+              "excerpt_digest": "sha256:bad30c05908ff3798e3201202e104dc2338aadc842fd01c0c307fa32e45bb468",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:256:256",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 256,
+              "line_end": 256,
+              "exact_excerpt": "        src_padded_data = (src_padded_data * src_routing_weights_expand).sum(1)\n",
+              "excerpt_digest": "sha256:9d86ba9f18a53a95a6799c6298d2eeb8265c97fcad9a0cc2a5a2ad2998344da8",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:264:264",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 264,
+              "line_end": 264,
+              "exact_excerpt": "        return src_node_embeddings, dst_node_embeddings\n",
+              "excerpt_digest": "sha256:4a7d6e814ba4351b2526728f2ef602c29e018856ed98d0a1eb17be2aa82e1ad4",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:130:132",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 130,
+              "line_end": 132,
+              "exact_excerpt": "            self.pad_sequences(node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+              "excerpt_digest": "sha256:08a64c5a84ab901c3a68325d7b078dfe1f13915278c1159167ee8efe8a4a0b85",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:138:140",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 138,
+              "line_end": 140,
+              "exact_excerpt": "            self.pad_sequences(node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+              "excerpt_digest": "sha256:b973040df6203e2fcb747768af6aeb3d3ac1fbe2f5058ff2e9c38f06ad3813d8",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e650301f08e6d4b3",
+              "span_id": "span:models/DyGMamba.py:214:214",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 214,
+              "line_end": 214,
+              "exact_excerpt": "        src_padded_data = src_padded_data.reshape(batch_size, src_seq_len, self.num_channels * self.channel_embedding_dim)\n",
+              "excerpt_digest": "sha256:162e54e04559d575c9f657ee7fc1aec3129d2e86acaf80937b02c0623304f2c1",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69"
+              ],
+              "equation_ids": [
+                "equation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "bound_span_ids": [
+        "span:models/DyGMamba.py:240:240",
+        "span:models/DyGMamba.py:214:214",
+        "span:models/DyGMamba.py:212:212",
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:211:211",
+        "span:models/DyGMamba.py:241:241",
+        "span:models/DyGMamba.py:256:256",
+        "span:models/DyGMamba.py:138:140",
+        "span:models/DyGMamba.py:264:264",
+        "span:models/DyGMamba.py:215:215",
+        "span:models/DyGMamba.py:244:244"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:538b8ce69b6f2459ed0740e66bd6cd89a175d0d93230bb62d0ff694d9506fcdc",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:4a628726add42d32cd88eb873d5cba1a1f9956476d93bf14056780d2f9364956"
+    },
+    {
+      "facet_id": "facet-e3de4791afd3b462",
+      "policy_id": "policy:facet-e3de4791afd3b462",
+      "alignment_id": "alignment:facet-e3de4791afd3b462",
+      "clause_id": "clause:O-STAGE-02-e02cd0f2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-e3de4791afd3b462",
+              "span_id": "span:models/mamba_simple.py:497:525",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 497,
+              "line_end": 525,
+              "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+              "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+      ],
+      "bound_span_ids": [
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:11d95c9218f0d341f2d2c3d455a30d47715d031bb2511ce2e27630accd54ee1e",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:d81d3e82855d6a5a77995c3c96fcb1584d9414ede5edad3e0a2e120e7b3c448f"
+    },
+    {
+      "facet_id": "facet-9a8892286042413e",
+      "policy_id": "policy:facet-9a8892286042413e",
+      "alignment_id": "alignment:facet-9a8892286042413e",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "interface"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+            "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "bound_span_ids": [
+            "span:models/FreeDyG.py:330:330",
+            "span:models/FreeDyG.py:335:335",
+            "span:models/FreeDyG.py:337:337"
+          ],
+          "bound_equation_ids": [
+            "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+          ],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:335:335",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 335,
+              "line_end": 335,
+              "exact_excerpt": "        hidden_states = hidden_states + input_tensor\n",
+              "excerpt_digest": "sha256:d8b438b0fefb6e9b016191eb33309f739302d017f6a546ac90031a72dde653d2",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:330:330",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 330,
+              "line_end": 330,
+              "exact_excerpt": "        x=x*weight\n",
+              "excerpt_digest": "sha256:2c6d40f0436c223b2c518e5bf353aec1080170ee6d0210e57de83759f75363ff",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-9a8892286042413e",
+              "span_id": "span:models/FreeDyG.py:337:337",
+              "path": "models/FreeDyG.py",
+              "symbol": "sym:d07c0ab78c286647",
+              "line_start": 337,
+              "line_end": 337,
+              "exact_excerpt": "        return hidden_states\n",
+              "excerpt_digest": "sha256:76194e99c5d939305fa5982eaca837232ce620ad9297df1ea1bad04bf8412b1c",
+              "file_digest": "sha256:0866f663b47326f9c1b0d81c80db0ce498657d191341b9dfdbccad79acd66980",
+              "fact_ids": [
+                "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+      ],
+      "bound_span_ids": [
+        "span:models/FreeDyG.py:335:335",
+        "span:models/FreeDyG.py:330:330",
+        "span:models/FreeDyG.py:337:337"
+      ],
+      "bound_equation_ids": [
+        "equation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "equation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991"
+      ],
+      "evidence_digest": "sha256:a2f626200949e3b583391ffb838fd85db7223ec7e34f5af7d662dd9464a3cb7a",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:a00cf97689df921dc2db76b05388b2e5132c788e8fe4192d905296b38e80215c"
+    },
+    {
+      "facet_id": "facet-85dd07572b8a77e2",
+      "policy_id": "policy:facet-85dd07572b8a77e2",
+      "alignment_id": "alignment:facet-85dd07572b8a77e2",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set references spectral norm constraints or stability guarantees. The evidence covers FilterLayer.forward arithmetic (addition, multiplication, return), MambaTimeDelta.forward branching, DyGFormer neighbor sampling, and DyGMamba padding calls. None of these contain a formula goal related to spectral norm constraints or stability maintenance."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:8026f4fb2d26291189d8c72a9eb31e6e1a2243ebae37e671321d619e17658cd1"
+    },
+    {
+      "facet_id": "facet-500349fe9389866d",
+      "policy_id": "policy:facet-500349fe9389866d",
+      "alignment_id": "alignment:facet-500349fe9389866d",
+      "clause_id": "clause:O-STAGE-04-a3a3e8ab:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "interface"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:67b4b6368f25151e7e2669a3d6732ea1b729ba06d876ea5c72a4770fa4bc1086"
+    },
+    {
+      "facet_id": "facet-27117a1993cf169a",
+      "policy_id": "policy:facet-27117a1993cf169a",
+      "alignment_id": "alignment:facet-27117a1993cf169a",
+      "clause_id": "clause:O-COMPONENT-01-88e55e54:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms the existence of dynamic graph representation learning models (GraphMixer, DyGFormer, DyGMamba) that process continuous-time interaction sequences with time gaps and neighbor features, and that EdgeBank performs link prediction. However, no evidence in the closed set demonstrates node classification, and no evidence demonstrates handling of 'noisy historical patterns' as a distinct mechanism. The models handle temporal sequences and link prediction but the full scope of the operation claim is not fully supported by the supplied evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:a6899f5cb0de8328b99be8699a875e77962c05798d74dedb715f8a814fc5a763"
+    },
+    {
+      "facet_id": "facet-fbcc6e92c1b73f4e",
+      "policy_id": "policy:facet-fbcc6e92c1b73f4e",
+      "alignment_id": "alignment:facet-fbcc6e92c1b73f4e",
+      "clause_id": "clause:O-COMPONENT-01-377afc18:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence supports obtaining first-hop neighbor events (evidence 0: get_all_first_hop_neighbors with node_interact_times), but no evidence demonstrates the 'up to a prediction timestamp' filtering or the 'ordered' aspect of the sequence extraction. The neighbor sampler call retrieves neighbors with interaction times but does not show explicit temporal cutoff at a prediction timestamp or ordering guarantee in the supplied evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:146c6d452ad64d127d555b013bc33f2eed06abbd0e023695717796d010388aae"
+    },
+    {
+      "facet_id": "facet-4e742dc0e3b52bae",
+      "policy_id": "policy:facet-4e742dc0e3b52bae",
+      "alignment_id": "alignment:facet-4e742dc0e3b52bae",
+      "clause_id": "clause:O-COMPONENT-02-c39dd898:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The claim 'Node encoding: Use raw node features; zero vectors when unavailable' is only partially supported. Evidence index 2 confirms that raw node features (self.node_raw_features) are used in node encoding via addition with aggregated temporal features. However, no evidence in the supplied set demonstrates the use of zero vectors when node features are unavailable. The 'zero vectors when unavailable' component of the claim has no supporting evidence in the closed set."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:c036e6b6c385f15951358871e34d3c7cac991d08eb8c8c154291ff04bf614945"
+    },
+    {
+      "facet_id": "facet-4d1239a88d3c0fce",
+      "policy_id": "policy:facet-4d1239a88d3c0fce",
+      "alignment_id": "alignment:facet-4d1239a88d3c0fce",
+      "clause_id": "clause:O-COMPONENT-03-2ae65141:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:486e33c2789f2a1ee551cc6f9c629573868413e34434ffbaa262929c8aca4f13"
+    },
+    {
+      "facet_id": "facet-9f2ea9661004e61a",
+      "policy_id": "policy:facet-9f2ea9661004e61a",
+      "alignment_id": "alignment:facet-9f2ea9661004e61a",
+      "clause_id": "clause:O-COMPONENT-04-6d73cce5:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:9ef2b5d634f7500d0b59f9015a95d07269158e418e9dba7e085c635ce1e8ec9d"
+    },
+    {
+      "facet_id": "facet-8ebd977fd8a0b89d",
+      "policy_id": "policy:facet-8ebd977fd8a0b89d",
+      "alignment_id": "alignment:facet-8ebd977fd8a0b89d",
+      "clause_id": "clause:O-COMPONENT-05-8cd85daa:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c8c6bb01deab8dec8affa7718b04cfb9079761442b00dc267e97f9f96c31d193"
+    },
+    {
+      "facet_id": "facet-474697a48f990b43",
+      "policy_id": "policy:facet-474697a48f990b43",
+      "alignment_id": "alignment:facet-474697a48f990b43",
+      "clause_id": "clause:O-COMPONENT-06-e711d58d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supports projecting all encoding types to a common dimension and concatenating them. Evidence covers MambaTimeDelta.forward branching and bias addition, DyGFormer branching on i==0 and case_study, and a neighbor_sampler call. None of these describe encoding alignment via projection to a common dimension and concatenation."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:cfd3843cc07f6aae6ca3fccd57e38a2aedc57413ef4a864edd20484ca221557d"
+    },
+    {
+      "facet_id": "facet-e343d4bc111c5b77",
+      "policy_id": "policy:facet-e343d4bc111c5b77",
+      "alignment_id": "alignment:facet-e343d4bc111c5b77",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "formula_goal"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+            "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+            "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+            "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+          ],
+          "bound_span_ids": [
+            "span:models/mamba_simple.py:471:471",
+            "span:models/mamba_simple.py:476:476",
+            "span:models/mamba_simple.py:497:525",
+            "span:models/mamba_simple.py:551:551"
+          ],
+          "bound_equation_ids": [
+            "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+            "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+          ],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-e343d4bc111c5b77",
+              "span_id": "span:models/mamba_simple.py:497:525",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 497,
+              "line_end": 525,
+              "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+              "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e343d4bc111c5b77",
+              "span_id": "span:models/mamba_simple.py:471:471",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 471,
+              "line_end": 471,
+              "exact_excerpt": "            self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),\n",
+              "excerpt_digest": "sha256:d177f60e8b1e896b0c44cbaa338d02fa0db4ad6c5fbfc362e99b8b9cd56eadb4",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e343d4bc111c5b77",
+              "span_id": "span:models/mamba_simple.py:476:476",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 476,
+              "line_end": 476,
+              "exact_excerpt": "            xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")\n",
+              "excerpt_digest": "sha256:d15d6158c2c3471c6455d414b2a0cc86f704ca26f28e7a70b9d2f52cdf234db4",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+              ],
+              "equation_ids": [
+                "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+              ],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-e343d4bc111c5b77",
+              "span_id": "span:models/mamba_simple.py:551:551",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 551,
+              "line_end": 551,
+              "exact_excerpt": "        return out\n",
+              "excerpt_digest": "sha256:2bb542a9070caa4c9989fd17e44a96b02eb50fcbced67ea0e47ac883e89680de",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "self.time_mamba and dts != None"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum"
+      ],
+      "bound_span_ids": [
+        "span:models/mamba_simple.py:551:551",
+        "span:models/mamba_simple.py:471:471",
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "bound_equation_ids": [
+        "equation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "equation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+      ],
+      "evidence_digest": "sha256:0086b16f9fa32b2286f746e4bdfe2d379be63718a4a27b5db070c7928396d264",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:749aac5efe12c9c68f9c86e029161b79d58aa83dec8b87ea0206c53cb4b9569f"
+    },
+    {
+      "facet_id": "facet-3f8317dd772533f4",
+      "policy_id": "policy:facet-3f8317dd772533f4",
+      "alignment_id": "alignment:facet-3f8317dd772533f4",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-3f8317dd772533f4",
+              "span_id": "span:models/mamba_simple.py:497:525",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 497,
+              "line_end": 525,
+              "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+              "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+      ],
+      "bound_span_ids": [
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:600c949ad047ae45f9a47df787798de653a8517aea65e17b7a67a7c4d38e3b18",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:058657603722eea1475e897bf491e68609d6a6bb0c11a20bee0ce3250361a498"
+    },
+    {
+      "facet_id": "facet-9d9902649b1ee4a5",
+      "policy_id": "policy:facet-9d9902649b1ee4a5",
+      "alignment_id": "alignment:facet-9d9902649b1ee4a5",
+      "clause_id": "clause:O-COMPONENT-08-48efa86a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms MEAN pooling over the sequence dimension (dim=1) in DyGFormer (evidence 6) and GraphMixer (evidence 13), but no evidence in the supplied set shows an MLP applied after the mean pooling for link prediction or node classification. The EdgeBank evidence (indices 0, 9, 10, 12, 32) shows a lookup-based predict_link_probabilities that returns 0.0 or 1.0 based on edge membership, not an MLP. No evidence shows an MLP head following the mean-pooled embeddings for link prediction or node classification tasks. The 'followed by an MLP' portion of the claim is unsupported by the supplied evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:f293245520fdb2088fa7ba0727b03ebd141727345c5bacbbf9253d09825100fa"
+    },
+    {
+      "facet_id": "facet-70bd392beebe42a0",
+      "policy_id": "policy:facet-70bd392beebe42a0",
+      "alignment_id": "alignment:facet-70bd392beebe42a0",
+      "clause_id": "clause:O-ORGANIZATION-01-42774719:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence shows heterogeneous feature concatenation (node raw features, time features, co-occurrence features) and alignment via dim=1 concatenation in DyGFormer, and feature combination in GraphMixer, but does not fully demonstrate the complete mechanism of how interaction sequences are represented and aligned across all components (e.g., no evidence of sequence-level alignment or the full encoding pipeline from raw interactions to final embeddings). The evidence covers feature-level concatenation and some reduction operations but not the full 'representation and alignment' mechanism described in the facet quote."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:45a5677e5a4081f496347e324f531e9f829bad422ae8a6b8ec7b02ebb3418f92"
+    },
+    {
+      "facet_id": "facet-e5953e844f56e25a",
+      "policy_id": "policy:facet-e5953e844f56e25a",
+      "alignment_id": "alignment:facet-e5953e844f56e25a",
+      "clause_id": "clause:O-ORGANIZATION-02-780817ba:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "interface"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "interface",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:de9f323ebeb5d72afcab640919a0ffc8d1ab1e75652ac0a39cb271848af5c9aa"
+    },
+    {
+      "facet_id": "facet-0564bcda9bc954d9",
+      "policy_id": "policy:facet-0564bcda9bc954d9",
+      "alignment_id": "alignment:facet-0564bcda9bc954d9",
+      "clause_id": "clause:O-ORGANIZATION-03-359984b4:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence demonstrates a redesign of Δt and A for temporally aware forgetting, nor redefined B/C with spectral norm for robust selective reviewing. Evidence 0 shows MambaTimeDelta.forward branching logic and computing in_proj.weight @ rearrange(dts,...) with dt, B, C split, but does not show timespan-informed Δt, A redesign, or spectral norm on B/C. Evidence 3 shows a matmul operation but does not establish the claimed formula goal. The remaining evidence (1, 2) concerns DyGFormer and is unrelated to the formula goal."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:d3eec05f98c88d9a9045646f3ea10c50b48aa48f062d1eda61d57d1565a738c3"
+    },
+    {
+      "facet_id": "facet-42d2e9c04022ff46",
+      "policy_id": "policy:facet-42d2e9c04022ff46",
+      "alignment_id": "alignment:facet-42d2e9c04022ff46",
+      "clause_id": "clause:O-ORGANIZATION-04-a52145c2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+            "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+            "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+          ],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+            "fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+            "fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+            "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+            "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+            "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+            "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+            "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+            "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+          ],
+          "bound_span_ids": [
+            "span:models/EdgeBank.py:108:108",
+            "span:models/EdgeBank.py:110:110",
+            "span:models/EdgeBank.py:110:112",
+            "span:models/EdgeBank.py:114:114",
+            "span:models/EdgeBank.py:118:118",
+            "span:models/EdgeBank.py:119:119"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:108:108",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 108,
+              "line_end": 108,
+              "exact_excerpt": "        edge_memories = edge_bank_unlimited_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids)\n",
+              "excerpt_digest": "sha256:152dce6d7bb2a9214c285ef78fb2ff191723ae8a6b63a9ec8295d924918141d4",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+                "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:110:110",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 110,
+              "line_end": 110,
+              "exact_excerpt": "        edge_memories = edge_bank_time_window_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids,\n",
+              "excerpt_digest": "sha256:bd9fba90d47cf0986ee8d3601bcbc2b6599be38bb6dedacd086653789740cb52",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:110:112",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 110,
+              "line_end": 112,
+              "exact_excerpt": "        edge_memories = edge_bank_time_window_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids,\n                                                     history_node_interact_times=history_data.node_interact_times, time_window_mode=time_window_mode,\n                                                     time_window_proportion=time_window_proportion)\n",
+              "excerpt_digest": "sha256:735ded77717c08840ff6861e545a762b26267065242e15318eebefd554adac3c",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:114:114",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 114,
+              "line_end": 114,
+              "exact_excerpt": "        edge_memories = edge_bank_repeat_threshold_memory(history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids)\n",
+              "excerpt_digest": "sha256:12ef2d5b62d14f2ba511628169752aff1f9b20bebdb2c1b9e2e12f76f80326a4",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:118:118",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 118,
+              "line_end": 118,
+              "exact_excerpt": "    positive_probabilities = predict_link_probabilities(edge_memories=edge_memories, edges_tuple=positive_edges)\n",
+              "excerpt_digest": "sha256:0fcc626056502cf298baf6fe7a0cfb854875a29a56524627c9ff882f5985fd32",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+                "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-42d2e9c04022ff46",
+              "span_id": "span:models/EdgeBank.py:119:119",
+              "path": "models/EdgeBank.py",
+              "symbol": "sym:1f166196e506e141",
+              "line_start": 119,
+              "line_end": 119,
+              "exact_excerpt": "    negative_probabilities = predict_link_probabilities(edge_memories=edge_memories, edges_tuple=negative_edges)\n",
+              "excerpt_digest": "sha256:0b4f7c6376e163f6da7f46f6051f2ff7a42e25e4da76ba35656932fc1481944c",
+              "file_digest": "sha256:4531df39f4ca8a60b3bf9dcffb4f673d4234d3b32d19e5428df3f1bb8e60cbe9",
+              "fact_ids": [
+                "fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+                "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97"
+      ],
+      "bound_span_ids": [
+        "span:models/EdgeBank.py:110:112",
+        "span:models/EdgeBank.py:114:114",
+        "span:models/EdgeBank.py:119:119",
+        "span:models/EdgeBank.py:108:108",
+        "span:models/EdgeBank.py:110:110",
+        "span:models/EdgeBank.py:118:118"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:d01ac83d7488b985c30ab4411e987dea83dfd1067571acc6eac24fec7942076c",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:133f57011e55fbdede48b6ecfe1c3c2547b63c861945b8569222929c453bb87e"
+    },
+    {
+      "facet_id": "facet-98231f06597ce972",
+      "policy_id": "policy:facet-98231f06597ce972",
+      "alignment_id": "alignment:facet-98231f06597ce972",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-106180a0:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "formula_goal"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-98231f06597ce972",
+              "span_id": "span:models/mamba_simple.py:497:525",
+              "path": "models/mamba_simple.py",
+              "symbol": "sym:c70e75db715f01dc",
+              "line_start": 497,
+              "line_end": 525,
+              "exact_excerpt": "        if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]\n",
+              "excerpt_digest": "sha256:a271e244c92d5e6e6bae43c3a445cdd04ec7be7c5e9de92840c3dcded27bdaae",
+              "file_digest": "sha256:4b67938977b999339f1a4e3129a8db15c5ce17425b43a0e6889f2d187e8553df",
+              "fact_ids": [
+                "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+      ],
+      "bound_span_ids": [
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:7e108f2b4b374e281e8135b3332231e9244161aa4f4fa8b5086e636d006b42e3",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:524ca59fcfd09a75625cfe5477c934f9897d0d282525c496939af4f22b7007f6"
+    },
+    {
+      "facet_id": "facet-45205815214ce81d",
+      "policy_id": "policy:facet-45205815214ce81d",
+      "alignment_id": "alignment:facet-45205815214ce81d",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-653d713f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Neither evidence index 0 (EdgeBank link prediction) nor evidence index 1 (MambaTimeDelta.forward branching) contains any reference to initializing a diagonal matrix A with strictly negative real-part eigenvalues. The evidence covers link probability computation and SSM time-delta branching logic, which are unrelated to the stated formula goal."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:46a639c94edbb417d76b5d7679475b029bfd891bccf10d41135e425b552434a3"
+    },
+    {
+      "facet_id": "facet-e36d367d850a8273",
+      "policy_id": "policy:facet-e36d367d850a8273",
+      "alignment_id": "alignment:facet-e36d367d850a8273",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-117025ca:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:55443b17cdb5cc5a3a2125aeda2201e2c923926c2a979fa1626b0ac2430b175c"
+    },
+    {
+      "facet_id": "facet-d45cd6959f91253e",
+      "policy_id": "policy:facet-d45cd6959f91253e",
+      "alignment_id": "alignment:facet-d45cd6959f91253e",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-b41841c3:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGFormer.py:169:169"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-d45cd6959f91253e",
+              "span_id": "span:models/DyGFormer.py:169:169",
+              "path": "models/DyGFormer.py",
+              "symbol": "sym:dc51f7924aadbf79",
+              "line_start": 169,
+              "line_end": 169,
+              "exact_excerpt": "        patches_nodes_neighbor_co_occurrence_features = torch.cat([src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1)\n",
+              "excerpt_digest": "sha256:9ef523b6fcdf7242fe2f72cfcade98b72a15cf1f6408ab2cabd6dd8d294c0d6b",
+              "file_digest": "sha256:a6de9e8a1770c00da30f27a2f578f156596e6a926441f2ad4ccd30e07778f5fa",
+              "fact_ids": [
+                "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:models/DyGFormer.py:169:169"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:d32daa3fa6f866b40f170f021208fc43fe3c417cfd56197d50d4ac699a92b816",
+      "rationale": "Deterministic local evidence fallback after owner unavailability. Fail-closed alignment: deterministic_local_evidence_fallback",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:9c2eb29f9379ca01b1b999c46bbd351f3abad10c8c5e7ba3650d98b61b67ef4f"
+    },
+    {
+      "facet_id": "facet-997629f642278c49",
+      "policy_id": "policy:facet-997629f642278c49",
+      "alignment_id": "alignment:facet-997629f642278c49",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-e1bbed89:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7"
+          ],
+          "bound_span_ids": [
+            "span:models/DyGMamba.py:130:132",
+            "span:models/DyGMamba.py:138:140"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-997629f642278c49",
+              "span_id": "span:models/DyGMamba.py:130:132",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 130,
+              "line_end": 132,
+              "exact_excerpt": "            self.pad_sequences(node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+              "excerpt_digest": "sha256:08a64c5a84ab901c3a68325d7b078dfe1f13915278c1159167ee8efe8a4a0b85",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            },
+            {
+              "facet_id": "facet-997629f642278c49",
+              "span_id": "span:models/DyGMamba.py:138:140",
+              "path": "models/DyGMamba.py",
+              "symbol": "sym:6978572280d27264",
+              "line_start": 138,
+              "line_end": 140,
+              "exact_excerpt": "            self.pad_sequences(node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)\n",
+              "excerpt_digest": "sha256:b973040df6203e2fcb747768af6aeb3d3ac1fbe2f5058ff2e9c38f06ad3813d8",
+              "file_digest": "sha256:4140c5456df1ef8fcd34bb26f5f240048524bc7ada1367d2ec4657e63ecd8975",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7"
+      ],
+      "bound_span_ids": [
+        "span:models/DyGMamba.py:130:132",
+        "span:models/DyGMamba.py:138:140"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:3669680f35196ad51e85cec7127893b00c56a683bfa5a5e0fe5f134e75970110",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:164c04723b190372327be3527f30c63ff1e2a79e0784b8d9a01d7699270eca93"
+    }
+  ]
+}

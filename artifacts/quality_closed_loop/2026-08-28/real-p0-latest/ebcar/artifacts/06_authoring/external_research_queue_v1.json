@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "MA-S1:reque-1",
+      "lane": "expository_bridge",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "exact_question": "How does the ConTEB benchmark address the compound challenge of efficiency and cross‑passage inference in existing reranker architectures?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: How does the ConTEB benchmark address the compound challenge of efficiency and cross‑passage inference in existing reranker architectures.",
+      "needed_evidence": [],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S1:reque-1"
+      ],
+      "content_digest": "sha256:168e7eb60d768b6165968edd30407f765126083a7f18b8fb2a48a5b44815dd4e"
+    },
+    {
+      "request_id": "request:MA-S2:unit:0",
+      "lane": "expository_bridge",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "exact_question": "What specific embedding-based reranking operations, scoring functions, and pipeline stages constitute the overall framework described in this section?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What specific embedding-based reranking operations, scoring functions, and pipeline stages constitute the overall framework described in this section.",
+      "needed_evidence": [
+        "operation"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "request:MA-S2:unit:0"
+      ],
+      "content_digest": "sha256:26c58f89f4d06ae1d3b27dae1b712fc748418e819f44dc09a75f54ecde484f3c"
+    }
+  ]
+}

@@ -1,0 +1,2204 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "claims_digest": "sha256:1098633fc3dd6ad230d22f4586e9758091c30f357a239e429639de16e169ffae",
+  "completeness_digest": "sha256:0ee5556cb4625b6e8cf32155cb2344958d1afd75860ab49472abfda2e4547c1e",
+  "coverage_digest": "sha256:81b552b34f8e6cb5bd79b94abbf637f82ab0e40d23bf99ad0a38d17fda6d03f5",
+  "intent_digest": "sha256:7bff90c4e8ade0e1fe69a804c64e998d9a06cb944f4dc18ac40e4963e96507e5",
+  "briefs": [
+    {
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+      "story_node_id": "story:O-METHOD-MAINLINE-01-79899e6c",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "author_statement": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:0",
+          "text": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:198:205",
+            "span:src/LinearRAG.py:629:629"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:1",
+          "text": "For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:2",
+          "text": "Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities;",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:198:205"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:3",
+          "text": "apply dynamic threshold pruning to avoid explosion.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:4",
+          "text": "Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence).",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:198:205"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:5",
+          "text": "Retrieve the top‑k passages by final PageRank score.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+            "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:113:113",
+            "span:src/LinearRAG.py:92:92",
+            "span:src/LinearRAG.py:100:100",
+            "span:src/LinearRAG.py:111:111",
+            "span:src/LinearRAG.py:118:118",
+            "span:src/LinearRAG.py:101:101"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896:threshold_mask"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [
+        "config:sha256:438d82b0259ec",
+        "config:sha256:b0bfdcd89bf3f",
+        "config:sha256:1277a9f9204b9"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:216:216",
+        "span:src/LinearRAG.py:247:247",
+        "span:src/LinearRAG.py:228:255",
+        "span:src/LinearRAG.py:240:240",
+        "span:src/LinearRAG.py:231:231",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:113:113",
+        "span:src/LinearRAG.py:234:235",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:212:212",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:627:628",
+        "span:src/LinearRAG.py:629:629",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-89077bc932cdaa25",
+        "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-1f936373429e5100"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-1f936373429e5100"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-1f936373429e5100"
+      ],
+      "facet_digest": "sha256:fafeb8f2a8e4d75b2a3119c48095712b9f578029e4e0162f6cc4d820741933a4",
+      "content_digest": "sha256:f221794a6e0bea90d0be86554a2aed0b0be1b8fd2f1ae96c58b073b54c693d6d"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+      "story_node_id": "story:O-STAGE-01-9c8dfe22",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "author_statement": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-01-9c8dfe22:0",
+          "text": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "l2:math:fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d:threshold_mask",
+        "l2:math:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [
+        "config:sha256:b0bfdcd89bf3f",
+        "config:sha256:1277a9f9204b9"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:174:184",
+        "span:src/LinearRAG.py:169:172",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:198:198",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:212:212",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-ec9e3dae86c42579",
+        "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-36188cb856f44d0d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-36188cb856f44d0d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-36188cb856f44d0d"
+      ],
+      "facet_digest": "sha256:5f49f8e66ecea7f7b880394d20b05eaf35fd94cc4d0b5b12fa8d83c6369cf68b",
+      "content_digest": "sha256:da1082ce1241f160a860395d3df247d71d62feb83b66bc612e4bd800e359ca2e"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-02-93c16851",
+      "story_node_id": "story:O-STAGE-02-93c16851",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "author_statement": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-02-93c16851:0",
+          "text": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea:threshold_mask",
+        "l2:math:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d:weighted_sum",
+        "l2:math:fact-callback:req:MA-S2:u2-node:f045f7e1cffab536:threshold_mask",
+        "l2:math:fact-O-STAGE-02-93c16851-node:f32782d99169744f:topk",
+        "l2:math:fact-O-STAGE-02-93c16851-node:9c8688436df4ec17:threshold_mask"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "equation:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "configuration_ids": [
+        "config:sha256:438d82b0259ec"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:228:255",
+        "span:src/LinearRAG.py:240:240",
+        "span:src/LinearRAG.py:231:231",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:393:393",
+        "span:src/LinearRAG.py:387:387",
+        "span:src/LinearRAG.py:401:401",
+        "span:src/LinearRAG.py:449:449",
+        "span:src/LinearRAG.py:340:343",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-316a08fefdf05f5a",
+        "brief_id": "brief:story:O-STAGE-02-93c16851",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-dfd9e7cedfe705e0"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-dfd9e7cedfe705e0"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-dfd9e7cedfe705e0"
+      ],
+      "facet_digest": "sha256:b2207273e920fa28f66a1605d3e1b8dacc12870ad96545afd217f161eb7eb2df",
+      "content_digest": "sha256:2478126a3c01852ba957f7eb15183c70744398b2440f411b52228ad076f1dc1d"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-03-8dda66b9",
+      "story_node_id": "story:O-STAGE-03-8dda66b9",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "author_statement": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-03-8dda66b9:0",
+          "text": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:198:205"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "l2:math:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c:elementwise_product",
+        "l2:math:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205",
+        "span:src/LinearRAG.py:216:216",
+        "span:src/LinearRAG.py:207:207",
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:197:197",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-38640a55ca8e73c8",
+        "brief_id": "brief:story:O-STAGE-03-8dda66b9",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-aee51cb1cb5c563f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-aee51cb1cb5c563f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-aee51cb1cb5c563f"
+      ],
+      "facet_digest": "sha256:99cbdfe851693b8cd031df977c0c5e4a48959011b6cdc3612423849e53ab3bb9",
+      "content_digest": "sha256:7cb56d71f5b2088e68e30cafa709a0eb7591749250c6402982c06a6aa752c0e8"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+      "story_node_id": "story:O-COMPONENT-01-4e554ef0",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "author_statement": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-4e554ef0:0",
+          "text": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+            "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+            "l2:math:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee:threshold_mask"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:561:564",
+            "span:src/LinearRAG.py:566:566",
+            "span:src/LinearRAG.py:34:34"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+        "l2:math:fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee:threshold_mask"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [
+        "config:sha256:4c7cbc5dfda84"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:198:198",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:26:26",
+        "span:src/LinearRAG.py:33:33",
+        "span:src/LinearRAG.py:32:32",
+        "span:src/LinearRAG.py:34:34",
+        "span:src/LinearRAG.py:22:22",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-dc2d7f2764570dd0",
+        "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-751466939a6d86e8"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-751466939a6d86e8"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-751466939a6d86e8"
+      ],
+      "facet_digest": "sha256:19940b5aa613ba55cc1459a4c84bb02506e90e6b99777b78d0a4970187414263",
+      "content_digest": "sha256:27cfc55a14b5cae94cfb6fe9f5ab4150bf88d001b66f974ba94cfe2d25e2d24d"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-bd3b9454",
+      "story_node_id": "story:O-COMPONENT-01-bd3b9454",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-bd3b9454"
+      ],
+      "author_statement": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-bd3b9454:0",
+          "text": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency;",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-01-bd3b9454:1",
+          "text": "anchors the entire retrieval pipeline.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "configuration_ids": [
+        "config:sha256:d0a09499ddbb2"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:198:198",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:129:129",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-46350371d11dee4c",
+        "brief_id": "brief:story:O-COMPONENT-01-bd3b9454",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-37ac47cd0b3c324b"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-37ac47cd0b3c324b"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-37ac47cd0b3c324b"
+      ],
+      "facet_digest": "sha256:18cf6e171344fdccff84f2f4b32540d00eee5d2f6f5e5ba9c86857e12322c373",
+      "content_digest": "sha256:9722e4be42ccd8ea9e7b4589ef66a5a19bbfbd6ef3fc21cb13c49ac3f8ded127"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+      "story_node_id": "story:O-COMPONENT-02-8058a7bc",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-02-8058a7bc"
+      ],
+      "author_statement": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "completeness_statuses": [
+        "unverified_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-02-8058a7bc:0",
+          "text": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-0857301b0a32c275",
+        "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2463c74d9fdec304"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2463c74d9fdec304"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2463c74d9fdec304"
+      ],
+      "facet_digest": "sha256:caceccfab49ebb060186a8a87728efd80ce78f8a57358d6c373468d933753cd6",
+      "content_digest": "sha256:ae7ea50e3a7f88f289a5770331b5be5f8b7a6c2596c15dd18b895af32c14b526"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+      "story_node_id": "story:O-COMPONENT-03-0c4d02ed",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-03-0c4d02ed"
+      ],
+      "author_statement": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-03-0c4d02ed:0",
+          "text": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-03-0c4d02ed:1",
+          "text": "identifies latent intermediate entities for multi‑hop connections.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-33f94e449572e9dd",
+        "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-49c35a32b3156393"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-49c35a32b3156393"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-49c35a32b3156393"
+      ],
+      "facet_digest": "sha256:bab61b4a31dc198e437f3ac9fb917a641eb5bd4333d8bf8ae396a2a9b1737231",
+      "content_digest": "sha256:ee7c8dc4387b0803885f6073711b5ec2543450c552842df0d52a4979c848571b"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+      "story_node_id": "story:O-COMPONENT-04-4f4f1da6",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-04-4f4f1da6"
+      ],
+      "author_statement": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-04-4f4f1da6:0",
+          "text": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "configuration_ids": [
+        "config:sha256:b0bfdcd89bf3f",
+        "config:sha256:1277a9f9204b9"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-870852212c509970",
+        "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-397617ae0c814f4c"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-397617ae0c814f4c"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-397617ae0c814f4c"
+      ],
+      "facet_digest": "sha256:e047f1fdf1cefe122f7230dc01178f61659cf934d21202412f93b57eaed44f40",
+      "content_digest": "sha256:5b3c3b307a16183a0794c9d77e5440d147c52e20299cf7d0b2e658d7e2164804"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+      "story_node_id": "story:O-COMPONENT-05-29ba03a1",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-05-29ba03a1"
+      ],
+      "author_statement": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-05-29ba03a1:0",
+          "text": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-05-29ba03a1:1",
+          "text": "ranks passages by propagating influence from activated entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-1356a1265d4fc1a7",
+        "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+        "text": "Mechanism sketch for the PPR ranking stage. The pipeline proceeds as follows: (1) Seed entities are extracted from the query via a dedicated retrieval call that returns entity indices, entity names, entity hash IDs, and entity scores. (2) Dense passage retrieval produces a ranked list of passage indices and their similarity scores against the query embedding. (3) Passage scores are computed by a hybrid formula: a configurable ratio multiplies the dense-retrieval passage score, and this is added to the log of one plus the total entity bonus; the entity bonus itself is derived per-entity as the entity score times the log of one plus the entity's occurrence count, divided by a denominator. (4) Each passage's computed score is then scaled by a configurable passage-node weight to yield the passage weight vector. (5) The entity weight vector and the passage weight vector are summed element-wise to form the initial node-weight vector for the graph. (6) A personalized PageRank routine is invoked over the graph using this node-weight vector as the personalization input; the routine iterates over all vertices (indexed by a node-name-to-vertex-index mapping) and produces a sorted list of passage indices together with their PPR scores. (7) The PPR-sorted passage indices and scores are returned as the final ranked passage list. Supported facets: the full data flow from seed entities through hybrid scoring to PPR execution and output is evidenced. The 'global importance aggregation' label is an author-level characterization of PPR's role; the repository confirms PPR is run over the full vertex set (range over len of the vertex index mapping) but does not itself contrast this with a local variant. The 'propagating influence from activated entities' framing is consistent with the mechanism (seed entity scores seed the PPR personalization vector) but is an interpretive gloss rather than a repository-stated property.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The 'global importance aggregation' and 'propagating influence' phrasing is the author's interpretive framing; the repository evidence supports the PPR execution and its input/output contract but does not itself assert the 'global' vs 'local' distinction or the 'influence propagation' narrative.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-11f57730a8077780"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-11f57730a8077780"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-11f57730a8077780"
+      ],
+      "facet_digest": "sha256:31d16b100bfdfbe22cc6082e897356572997206084ad5d17e5e8b0e564335ffd",
+      "content_digest": "sha256:df55d4c3790d759db3a49756aa5eb243757cc5c1d193cd8c5edd64bb61999e9a"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+      "story_node_id": "story:O-COMPONENT-06-bf20ec9b",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-06-bf20ec9b"
+      ],
+      "author_statement": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-06-bf20ec9b:0",
+          "text": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-d31fae9a51107367",
+        "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+        "text": "Mechanism sketch for hybrid passage initialization. The initial PPR scores for passage nodes are set by a two-part combination. First, a direct query-to-passage similarity score (the dense retrieval score) is scaled by a configurable passage ratio. Second, an entity-based bonus is accumulated: for each entity associated with a passage, the entity's score is multiplied by the log of one plus the entity's occurrence count, then divided by a denominator; these per-entity bonuses are summed to form a total entity bonus, which is then log-transformed (log of one plus the total). The two components (scaled direct similarity and log-transformed entity bonus) are added to produce a composite passage score. This composite score is then multiplied by a configurable passage-node weight to yield the final passage weight that enters the PPR initialization. The entity weights (derived from seed entity scores) are added to the passage weights to form the combined node-weight vector that seeds the PPR. Supported facets: the direct-similarity-plus-entity-bonus combination, the occurrence-based bonus formula, and the weighting by passage-node weight are all evidenced. Partial facet: the unlicensed clause mentions 'level' as an entity-based statistic, but no fragment or equation in the provided set references a level attribute; the only entity statistic appearing in the formula is occurrence count. The 'level' component remains unresolved and should be flagged to the author for verification or removal.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The 'level' statistic mentioned in the unlicensed clause has no corresponding fragment or formula in the provided evidence; only 'occurrence' (entity_occurrences) is evidenced in the entity-bonus formula. The 'level' component is unresolved.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-6c02c195374453b1"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-6c02c195374453b1"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-6c02c195374453b1"
+      ],
+      "facet_digest": "sha256:0f58e133eb6dd6108aa34ad46ee06eb1c235027c7111024734e24007124c8e0c",
+      "content_digest": "sha256:7738b54eaade28394bda6c44743b9d0aabb4b885b1b342a668f5c93d04cff81d"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+      "story_node_id": "story:O-ORGANIZATION-01-4ee8e0bf",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-01-4ee8e0bf"
+      ],
+      "author_statement": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "completeness_statuses": [
+        "out_of_scope"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-01-4ee8e0bf:0",
+          "text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-17639deba01bd591",
+        "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "text": "This brief concerns the motivational framing: revisiting GraphRAG's shortcomings arising from relation extraction errors. No repository fragments are provided for this brief, and the completeness status is out-of-scope. The clause is an author-intent statement about why the system was designed, not a mechanism or algorithm claim. For the Writer, this should be treated as a motivation paragraph that sets up the problem context (GraphRAG's dependency on accurate relation extraction, and the error propagation that results). The mechanism story here is purely rhetorical: it motivates the subsequent design choices (replacing explicit relation extraction with a graph-structured retrieval that does not require pre-extracted relations). No formula, no algorithm step, and no repository equation is involved. The Writer should keep this brief to a short motivational paragraph and avoid asserting specific failure modes of GraphRAG that are not grounded in the provided evidence.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "No repository fragments are available for this brief; the clause is entirely unlicensed and out of scope. No mechanism sketch can be grounded in repository evidence.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9218cef3b4752e6d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9218cef3b4752e6d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9218cef3b4752e6d"
+      ],
+      "facet_digest": "sha256:fdb3218daeebac65e016a7c660e9f045d5da051a9a1d13ddd2f97a9fac17f50d",
+      "content_digest": "sha256:6ed067395a49163ec0fe3169d0c80d2e9ff382d6d043239568ff079b5d794e14"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+      "story_node_id": "story:O-ORGANIZATION-02-1977b399",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-02-1977b399"
+      ],
+      "author_statement": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "completeness_statuses": [
+        "out_of_scope"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-02-1977b399:0",
+          "text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-d5565e3c05624b07",
+        "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+        "text": "This brief introduces the high-level system concept: a Tri-Graph (a graph over three node types) and a two-stage retrieval philosophy. No repository fragments are provided for this brief, and the completeness status is out-of-scope. The 'Tri-Graph' label is an author-level conceptual name; the repository evidence in other briefs shows a graph with entity nodes, sentence nodes, and passage nodes connected by sparse adjacency matrices, which is consistent with a three-node-type graph, but the specific naming 'Tri-Graph' is not a repository term. The 'two-stage retrieval philosophy' corresponds to the two-stage pipeline visible in other briefs: stage one activates entities (local semantic bridging), stage two retrieves passages (global importance aggregation via PPR). For the Writer, this brief should serve as a conceptual overview paragraph that names the architecture and previews the two stages, without asserting details that are not grounded. The Writer should be careful to present 'Tri-Graph' as the system's own terminology (if it appears in the paper's text) rather than as a repository-verified label.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "No repository fragments are available for this brief; the clause is entirely unlicensed and out of scope. The 'Tri-Graph' naming and 'two-stage retrieval philosophy' are author-level conceptual labels not evidenced in the provided fragment set.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-44d3952a34b9c61b"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-44d3952a34b9c61b"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-44d3952a34b9c61b"
+      ],
+      "facet_digest": "sha256:ca008504da3d9a0b3d16fd08fd5be0a332a815502797843d0f34fb4c2d851492",
+      "content_digest": "sha256:1ea13dbdf7389f100535a183476d3c105acf6587c9d2675654d8f48a5e003d57"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+      "story_node_id": "story:O-ORGANIZATION-03-157f229e",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-03-157f229e"
+      ],
+      "author_statement": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-03-157f229e:0",
+          "text": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:209:209",
+        "span:src/LinearRAG.py:211:211",
+        "span:src/LinearRAG.py:198:198",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-f8d9abe0e5f429d6",
+        "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+        "text": "Mechanism sketch for the offline graph construction. The system maintains a graph with three node types (entities, sentences, passages) connected by sparse adjacency matrices. At query time, the system accesses two key sparse matrices: an entity-to-sentence matrix (whose non-zero count is checked to determine the entity-to-sentence edge count) and a sentence-to-entity matrix (whose non-zero count is checked for the reverse direction). A vertex-index-to-node-name mapping is maintained to translate between numeric vertex indices and named nodes. The PPR routine operates over the full vertex set (iterating via range over the length of the node-name-to-vertex-index mapping) and writes out sorted passage scores, sorted passage hash IDs, and the full PageRank score vector. Supported facets: the existence of entity-to-sentence and sentence-to-entity sparse adjacency structures, the vertex indexing scheme, and the PPR execution over the full graph are all evidenced. Partial facets: the 'offline construction' framing implies that these matrices are built in a preprocessing step, but the fragments only show them being consumed at query time; the construction process itself is not in the fragment set. The 'message adjacency' matrix (if it refers to a passage-to-sentence containment or a separate message-type edge) is not explicitly visible in these fragments; the passage-level structure is implied by the pipeline (passages are retrieved and scored) but the specific adjacency matrix connecting passages to sentences is not directly shown. The Writer should describe the graph structure as having entity-sentence and sentence-entity edges (evidenced) and note that passage-level edges are part of the pipeline (implied) without asserting a specific 'message' matrix unless the author confirms it.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The 'offline construction' aspect and the 'message adjacency' matrix are not directly evidenced in the provided fragments; the fragments show the adjacency matrices in use at query time but not their construction. The 'passage' node type and its adjacency to sentences are implied by the pipeline but not explicitly shown as a constructed matrix in these fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-8ce6e8dabb55bf84"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-8ce6e8dabb55bf84"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-8ce6e8dabb55bf84"
+      ],
+      "facet_digest": "sha256:4fbfccb2e41d85205310c9769bdbb6705c3025d16e87f907283973b59acdd467",
+      "content_digest": "sha256:60e20c618d1563ff165a6216def29e766b130611fbdc534ee88490368e0bf877"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+      "story_node_id": "story:O-ORGANIZATION-04-8fc65790",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-04-8fc65790"
+      ],
+      "author_statement": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-04-8fc65790:0",
+          "text": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-2685885e200bf8ff",
+        "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-0110bf36238d22ed"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-0110bf36238d22ed"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-0110bf36238d22ed"
+      ],
+      "facet_digest": "sha256:44ec6e83e882da587693ce8156572131c6b9e5de4ad6fa6f4a00e2356b896e43",
+      "content_digest": "sha256:c9e1bd521d624c60b5d5e2bec4571c2e5d9e8c67a00983b07047c01d036b2799"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+      "story_node_id": "story:O-ORGANIZATION-05-e0c123aa",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-05-e0c123aa"
+      ],
+      "author_statement": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-05-e0c123aa:0",
+          "text": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-98babe38759d8070",
+        "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2962ffa6059952a7"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2962ffa6059952a7"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2962ffa6059952a7"
+      ],
+      "facet_digest": "sha256:58f4e3b629856db08a49e9642c6cb266e7f26b6bfb5678d4823fe28c6f015909",
+      "content_digest": "sha256:a29aa1c4b6663b181b5d61c6e0a7c84b97b518b409308f651872b22e8cef4e80"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "story_node_id": "story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-01-c0bb1e93"
+      ],
+      "author_statement": "Avoid explicit relation extraction entirely.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-01-c0bb1e93:0",
+          "text": "Avoid explicit relation extraction entirely.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-e56b2bf1e7867ace",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "text": "Design choice: the system deliberately omits a dedicated relation-extraction module. Instead of predicting typed edges between entities (e.g., CAUSES, PART_OF), the graph topology is derived entirely from structural co-occurrence: an entity node is connected to the sentence node in which it appears, and the sentence node is connected to its parent passage node. This means the graph is a bipartite entity-sentence-passage hierarchy with no learned or rule-based relation labels on edges. Rationale: (a) avoids the error propagation that a separate RE pipeline would introduce into downstream retrieval; (b) keeps the graph construction deterministic and document-structure-driven, so no external NER/RE model is required at indexing time; (c) the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. The Writer should frame this as a scoping decision: the system trades relational expressiveness for robustness and simplicity, and the retrieval quality is recovered through the PPR propagation mechanism rather than through edge typing. Unresolved facet: whether the absence of typed edges limits the system on queries that require multi-hop relational reasoning (e.g., 'what caused X' where X and the cause are in different passages). This limitation is acknowledged but not addressed in the current mechanism; it is a known boundary of the design. The Writer should present this as a deliberate trade-off, not a gap, unless the author confirms otherwise.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2d7d68d7654183c5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2d7d68d7654183c5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2d7d68d7654183c5"
+      ],
+      "facet_digest": "sha256:c91ae39e4ed8530fa92fdc49d4bfa1b11e21d8ee7464352faddbdf8676c4447c",
+      "content_digest": "sha256:459491104ce1d16cd63b5f0a5c32ee16beae88c65ee6df10cf21c90df8c98556"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+      "story_node_id": "story:O-RATIONALE-CHECK-02-1a90a997",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "author_statement": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-02-1a90a997:0",
+          "text": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-90978946f43904d6",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+        "text": "Graph structure: a three-level hierarchical graph. Level 1 (top): passage nodes, each representing a full passage of the source document. Level 2 (middle): sentence nodes, each representing a single sentence within a passage. Level 3 (bottom): entity nodes, each representing a named entity or concept extracted from the text. Edges: entity-to-sentence edges (an entity is linked to every sentence in which it occurs, with multiplicity or weight reflecting occurrence count); sentence-to-passage edges (each sentence is linked to its containing passage). The original text is preserved at each level: passage nodes carry the full passage string, sentence nodes carry the sentence string, and entity nodes carry the entity surface form. This preservation enables (a) multi-granularity retrieval (the system can return a passage, a sentence, or an entity as the answer unit); (b) explainability (the user can trace a retrieved passage back to the specific sentences and entities that contributed to its score); and (c) a natural aggregation path for score propagation (entity scores roll up to sentences, then to passages). The Writer should emphasize that the hierarchy is not a flat entity graph with passage annotations; it is a true tree-of-sets where the text is the primary object and entities are indexed views into it. Unresolved facet: the exact edge-weighting scheme for entity-sentence edges (whether it is binary, occurrence-count, or TF-IDF weighted) is not confirmed in the repository evidence available to the planner; the Writer should flag this as a detail the author must confirm.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-f53ce53973fd2859"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-f53ce53973fd2859"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-f53ce53973fd2859"
+      ],
+      "facet_digest": "sha256:f0cac8391fc3b323b293ed7a8f82cfee98daa5de7fa834969a31c9e078b104df",
+      "content_digest": "sha256:c4e4070e93926d144abd437af43f9db1c668592233294a5ac16068f21429b0a4"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+      "story_node_id": "story:O-RATIONALE-CHECK-03-09c84504",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-03-09c84504"
+      ],
+      "author_statement": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-03-09c84504:0",
+          "text": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-bc5662596df6c49a",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+        "text": "Two-stage retrieval decoupling. Stage 1 — Local Entity Activation: given a query, seed entities are identified (via embedding similarity or exact match against the entity index). These seed entities receive initial scores. Scores are then propagated locally through the entity-sentence subgraph: each seed entity distributes its score to the sentences in which it appears, weighted by the entity-sentence edge weight. This stage operates on a local neighborhood (the sentences connected to the seed entities and their co-occurring entities) and produces a set of activated sentence scores. Stage 2 — Global Passage Ranking: the activated sentence scores are aggregated up to the passage level (sum or max over the sentences in each passage). A global ranking is then performed over all passages in the corpus using the aggregated scores. The decoupling rationale: (a) the local stage can be computed efficiently on a sparse subgraph without touching the full passage corpus; (b) the global stage is a simple aggregation and sort, decoupled from the propagation dynamics; (c) the two stages can be tuned independently (local stage controls how far propagation reaches; global stage controls how sentence evidence is combined into passage evidence). The Writer should present this as a pipeline: query → seed entities → local PPR on entity-sentence subgraph → sentence scores → aggregate to passages → global rank → return top-k passages. Unresolved facet: the exact boundary between 'local' and 'global' (i.e., whether the PPR is run on the full graph or a pruned subgraph) is partially supported but not fully confirmed; the Writer should note this as a detail requiring author confirmation.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c94a090684d57a33"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c94a090684d57a33"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c94a090684d57a33"
+      ],
+      "facet_digest": "sha256:8328ebef94434de522b8e60289c51a72434cf8e2b02aa98bd7a91c3630636a1a",
+      "content_digest": "sha256:458fca27fe483309ed3681cfe64d7691e6f0dfe7c34d7415722cfec80836cbb7"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+      "story_node_id": "story:O-RATIONALE-CHECK-04-9ca078fe",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-04-9ca078fe"
+      ],
+      "author_statement": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+          "text": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "configuration_ids": [
+        "config:sha256:b0bfdcd89bf3f",
+        "config:sha256:1277a9f9204b9"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-80a100bd8b5eaa74",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "text": "Dynamic pruning via fixed relevance threshold during PPR propagation. Mechanism: at each iteration of the PPR power iteration, node weights are inspected. Any node whose weight is NaN or strictly below zero is reset to zero (i.e., removed from the active set for subsequent iterations). This is implemented as a mask: reset_prob = where(isnan(node_weights) OR (node_weights < 0), 0, node_weights). The effect is that low-relevance or numerically unstable nodes are pruned dynamically as the walk progresses, preventing score mass from diffusing into irrelevant graph regions. The threshold is fixed (zero, in the current implementation) and not adaptive to the query or the graph. Scoring context: the final passage score is computed as a weighted combination of two terms: (i) a direct dense-retrieval similarity term scaled by a configurable ratio (passage_ratio), and (ii) a log-scaled entity bonus that aggregates evidence from seed entities appearing in the passage. The passage-level PPR weight is further scaled by a configurable passage_node_weight. The Writer should present the pruning as a stability and efficiency mechanism: it bounds the effective support of the PPR distribution, ensuring that the walk does not spread uniformly across the entire graph. The fixed-threshold choice is a design simplification; an adaptive threshold (e.g., percentile-based) is a natural extension but is not part of the current mechanism. Unresolved facet: whether the threshold of zero is the only value used in practice or whether a positive threshold is also supported by the configuration is not confirmed; the Writer should flag this.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-707cc9a20282c836"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-707cc9a20282c836"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-707cc9a20282c836"
+      ],
+      "facet_digest": "sha256:ed716c8875819870b174f7f5fe2702960e477a2cbee199698fab5208e7d4942f",
+      "content_digest": "sha256:78938058e3225009f11d76d510e792f09905ab5a93e1ab1f98dfea2133271bcc"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+      "story_node_id": "story:O-RATIONALE-CHECK-05-ffcf3556",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "author_statement": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-05-ffcf3556:0",
+          "text": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-cf9b3692d9d112c5",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+        "text": "Personalized PageRank on the passage-entity graph. The retrieval algorithm is PPR, where the personalization vector is derived from the seed entities identified from the query. The PPR is run on the full passage-entity graph (not a subgraph), so the walk can traverse multi-hop paths: entity → sentence → passage → (other sentences in the same passage) → (other entities in those sentences) → … The personalization vector assigns initial mass to the seed entity nodes; the PPR then redistributes this mass according to the graph topology. The final passage ranking is read off the PPR scores at passage-level nodes. Rationale for PPR over alternatives: (a) PPR naturally handles multi-hop evidence aggregation (a passage that shares entities with a seed entity's neighborhood gets credit even if it does not contain the seed entity directly); (b) the personalization vector provides a query-specific bias without retraining; (c) the algorithm is linear in the number of edges per iteration, making it scalable to large sparse graphs. The Writer should frame PPR as the core retrieval primitive and contrast it briefly with flat vector-similarity retrieval (which only captures direct entity-passage overlap) to motivate why the graph walk adds value. Unresolved facet: the exact PPR parameters (damping factor, number of iterations, convergence criterion) are not confirmed in the available evidence; the Writer should note these as implementation details the author should confirm.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+          "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-77eff1974af1d1d5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-77eff1974af1d1d5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-77eff1974af1d1d5"
+      ],
+      "facet_digest": "sha256:ee472de4770ba1eeab1007ffe4be1669ffb4881b177c1a56f988d1739a92b3ea",
+      "content_digest": "sha256:5d75dce9e61aa80d3f3ef988673226d97ec03295ecb87a9760a4b5e1d0db90a8"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+      "story_node_id": "story:O-RATIONALE-CHECK-06-0f48dc22",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "author_statement": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-06-0f48dc22:0",
+          "text": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "equation_ids": [
+        "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:225:225",
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:501:501",
+        "span:src/LinearRAG.py:199:199",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:92:92",
+        "span:src/LinearRAG.py:100:100",
+        "span:src/LinearRAG.py:111:111",
+        "span:src/LinearRAG.py:118:118",
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-0a862420da503272",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+        "text": "Hybrid PPR initialization: direct similarity + entity-based evidence. The PPR seed score for each passage node is not a single scalar but a composite of two independent evidence channels. Channel 1 (direct similarity): a dense-retrieval score (dpr_passage_score) computed by embedding the query and comparing to the passage embedding. This is scaled by a configurable ratio (passage_ratio) to control its relative weight. Channel 2 (entity-based evidence): a log-scaled bonus that aggregates evidence from seed entities appearing in the passage. The entity bonus is computed as the sum over relevant seed entities of (entity_score × log(1 + entity_occurrences)) divided by a normalizing denominator. The two channels are combined additively: passage_seed_score = passage_ratio × dpr_passage_score + log(1 + total_entity_bonus). The resulting seed scores are then used as the personalization vector for PPR. Rationale for the hybrid: (a) direct similarity captures semantic alignment between the query and the passage as a whole, which is robust to entity extraction errors; (b) entity-based evidence captures fine-grained topical overlap that may be missed by a single embedding comparison (e.g., a passage that mentions many of the query's entities but is phrased differently); (c) the log scaling on entity occurrences prevents a single entity with high occurrence count from dominating the bonus. The Writer should present the formula clearly and explain the role of each term. The dense retrieval channel (Channel 1) is computed by a separate dense_passage_retrieval call that returns sorted passage indices and scores; the entity channel (Channel 2) is computed by the entity scoring pipeline that identifies seed entities and their occurrence counts. Unresolved facet: the exact value of the normalizing denominator in the entity bonus formula and whether passage_ratio is tuned per-domain or fixed is not confirmed; the Writer should flag these as configuration details requiring author confirmation.",
+        "cited_claim_ids": [
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+          "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+          "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+          "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-14e6716402039fea"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-14e6716402039fea"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-14e6716402039fea"
+      ],
+      "facet_digest": "sha256:219def57cc605a19294a1b12df7246c99ec23c2bc984ab542e036ba066fbbe58",
+      "content_digest": "sha256:b5d49f33f2bbb225056cb666e3ab4e99d39a8116ba8415ff85ad25f408da3e21"
+    }
+  ],
+  "planner_used": true,
+  "gaps": [
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-STAGE-02-93c16851",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+      "obligation_id": "",
+      "message": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts"
+    }
+  ],
+  "planner_call_traces": [
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "brief:story:O-STAGE-01-9c8dfe22",
+        "brief:story:O-STAGE-02-93c16851",
+        "brief:story:O-COMPONENT-01-4e554ef0",
+        "brief:story:O-COMPONENT-02-8058a7bc",
+        "brief:story:O-COMPONENT-03-0c4d02ed",
+        "brief:story:O-COMPONENT-04-4f4f1da6"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-METHOD-MAINLINE-01-79899e6c\",\n      \"cited_frag_ids\": [\n        \"frag-1\",\n        \"frag-2\",\n        \"frag-3\",\n        \"frag-4\",\n        \"frag-5\",\n        \"frag-8\",\n        \"frag-17\",\n        \"frag-18\",\n        \"frag-19\",\n        \"frag-20\",\n        \"frag-21\",\n        \"frag-22\"\n      ],\n      \"text\": \"Mainline retrieval algorithm (five-step pipeline): (1) Tri-Graph construction: extract entities from corpus passages, instantiate entity/sentence/passage node sets, and link them exclusively via occurrence edges (contain: passage→entity; mention: sentence→entity). No relation triples are introduced. (2) Query-side initialization: for a given query, extract seed entities and compute a query-to-sentence similarity vector that captures contextual relevance of each sentence to the query. (3) Iterative entity activation: propagate activation scores through the sentence–entity subgraph in a breadth-first frontier fashion. At each iteration, aggregate similarity signals from the current frontier of active entities to score candidate bridging entities; apply a configurable iteration threshold so that entities whose score falls below the threshold are pruned, preventing combinatorial explosion. (4) Personalized PageRank: use the activated entity set as seeds for a personalized PageRank run over the passage–entity subgraph. Passage nodes are initialized with a hybrid score combining direct query–passage similarity and an entity-based evidence term (log-scaled entity bonus weighted by a passage ratio parameter). (5) Top-k retrieval: return the top-k passages ranked by final PageRank score. The threshold pruning step and the query-sentence similarity computation are implemented in the repository but were not explicitly stated in the author's own prose; they are supported by the code's branching on iteration_threshold and the argsort over sentence_similarities respectively. The PageRank initialization formula multiplies the direc",
+      "estimated_prompt_tokens": 8126,
+      "parse_error": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts",
+      "recovery_applied": true,
+      "recovery_operations": [
+        "extract_or_repair_json_container"
+      ]
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "brief:story:O-STAGE-01-9c8dfe22",
+        "brief:story:O-STAGE-02-93c16851",
+        "brief:story:O-COMPONENT-01-4e554ef0",
+        "brief:story:O-COMPONENT-02-8058a7bc",
+        "brief:story:O-COMPONENT-03-0c4d02ed",
+        "brief:story:O-COMPONENT-04-4f4f1da6"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-METHOD-MAINLINE-01-79899e6c\",\"cited_frag_ids\":[\"frag-1\",\"frag-2\",\"frag-3\",\"frag-4\",\"frag-5\",\"frag-8\",\"frag-9\",\"frag-15\",\"frag-17\",\"frag-18\",\"frag-19\",\"frag-20\",\"frag-21\",\"frag-22\",\"frag-23\",\"frag-24\",\"frag-25\",\"frag-26\",\"frag-27\",\"frag-28\",\"frag-29\",\"frag-30\",\"frag-31\",\"frag-32\",\"frag-33\",\"frag-34\",\"frag-35\",\"frag-36\",\"frag-37\",\"frag-38\",\"frag-39\",\"frag-40\",\"frag-41\",\"frag-42\",\"frag-43\",\"frag-44\",\"frag-45\",\"frag-46\",\"frag-47\",\"frag-48\",\"frag-49\"],\"text\":\"Two-stage retrieval pipeline over a tri-graph. Stage 1 (entity activation): Given a query, seed entities are extracted and a query-to-sentence similarity vector is computed. The sentence-entity subgraph is traversed breadth-first: at each iteration, the current frontier of active entity scores is multiplied against the transposed entity-to-sentence sparse adjacency to yield sentence activations; a top-k selection retains the most relevant sentences; the sentence-to-entity matrix is then applied to discover new entities. A fixed iteration threshold prunes entities whose scores fall below the cutoff, bounding the frontier. Stage 2 (passage ranking): The activated entity set seeds a personalized PageRank over the passage-entity subgraph. Passage node initial weights combine a direct query-passage similarity term with an entity-based evidence term (log-scaled entity bonus weighted by a passage ratio parameter). The final top-k passages are returned by PageRank score. The tri-graph itself is built offline from occurrence relationships only (contain and mention edges), with no relation triples. The entity score formula multiplies the entity score by the top sentence score to produce the next entity score; the passage score formula combines a weighted direct similarity with a log-scaled entity bonus. The PageRank initialization uses a weighted sum of entity weights and passage weights to produce node weights for the random walk. The threshold mask excludes values that fail the comparis",
+      "estimated_prompt_tokens": 8159,
+      "parse_error": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts",
+      "recovery_applied": true,
+      "recovery_operations": [
+        "extract_or_repair_json_container"
+      ]
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-05-29ba03a1",
+        "brief:story:O-COMPONENT-06-bf20ec9b",
+        "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "brief:story:O-ORGANIZATION-02-1977b399",
+        "brief:story:O-ORGANIZATION-03-157f229e",
+        "brief:story:O-ORGANIZATION-04-8fc65790",
+        "brief:story:O-ORGANIZATION-05-e0c123aa"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\": [{\"brief_id\": \"brief:story:O-COMPONENT-05-29ba03a1\", \"caveat\": \"The 'global importance aggregation' and 'propagating influence' phrasing is the author's interpretive framing; the repository evidence supports the PPR execution and its input/output contract but does not itself assert the 'global' vs 'local' distinction or the 'influence propagation' narrative.\", \"cited_frag_ids\": [\"frag-204\", \"frag-205\", \"frag-206\", \"frag-207\", \"frag-208\", \"frag-209\", \"frag-210\", \"frag-211\", \"frag-212\", \"frag-213\", \"frag-214\", \"frag-215\", \"frag-216\", \"frag-217\", \"frag-218\", \"frag-219\", \"frag-220\"], \"text\": \"Mechanism sketch for the PPR ranking stage. The pipeline proceeds as follows: (1) Seed entities are extracted from the query via a dedicated retrieval call that returns entity indices, entity names, entity hash IDs, and entity scores. (2) Dense passage retrieval produces a ranked list of passage indices and their similarity scores against the query embedding. (3) Passage scores are computed by a hybrid formula: a configurable ratio multiplies the dense-retrieval passage score, and this is added to the log of one plus the total entity bonus; the entity bonus itself is derived per-entity as the entity score times the log of one plus the entity's occurrence count, divided by a denominator. (4) Each passage's computed score is then scaled by a configurable passage-node weight to yield the passage weight vector. (5) The entity weight vector and the passage weight vector are summed element-wise to form the initial node-weight vector for the graph. (6) A personalized PageRank routine is invoked over the graph using this node-weight vector as the personalization input; the routine iterates over all vertices (indexed by a node-name-to-vertex-index mapping) and produces a sorted list of passage indices together with their PPR scores. (7) The PPR-sorted passage indices and scores are returned as the final ranked passage list. Supported facets: the full data flow from seed entities ",
+      "estimated_prompt_tokens": 4958,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:f3f54b7cf8331c817a0084ba5d014c6e92db6cec9413418363e28a67ac9cb9a5",
+      "response_digest": "sha256:f3f54b7cf8331c817a0084ba5d014c6e92db6cec9413418363e28a67ac9cb9a5",
+      "parse_error": "draft must cite at least one claim or equation frag"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-05-29ba03a1",
+        "brief:story:O-COMPONENT-06-bf20ec9b",
+        "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "brief:story:O-ORGANIZATION-02-1977b399",
+        "brief:story:O-ORGANIZATION-03-157f229e",
+        "brief:story:O-ORGANIZATION-04-8fc65790",
+        "brief:story:O-ORGANIZATION-05-e0c123aa"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "\n\n{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-COMPONENT-05-29ba03a1\",\n      \"cited_frag_ids\": [\"frag-205\", \"frag-209\", \"frag-210\", \"frag-211\", \"frag-218\", \"frag-220\"],\n      \"text\": \"The personalized PageRank (PPR) mechanism operates on the passage–entity subgraph of the Tri-Graph. Given a set of seed entities activated in the first retrieval stage, the system computes initial node weights by combining entity-level weights with passage-level weights (summed into a single node-weight vector). These combined weights serve as the teleportation vector for PPR. The PPR algorithm iterates over all vertices in the subgraph, indexed by the node-name-to-vertex-index mapping, propagating importance scores along the sparse adjacency structure. After convergence, passage nodes are ranked by their PPR scores, yielding a globally importance-ordered list of passages. The key mathematical role is that PPR acts as a global importance aggregator: influence flows from activated entity nodes through entity–sentence and sentence–passage edges, so that passages connected to multiple high-scoring entities receive amplified scores. The node-weight vector is the sum of the entity-weight component and the passage-weight component, and the PPR iteration range spans the full vertex index space defined by the mapping length. The graph search routine invokes PPR with the computed node weights and returns sorted passage indices and their corresponding PPR scores. The intended mathematical role for the author_intent_academic lane: PPR on a bipartite passage–entity subgraph with a personalized teleportation vector derived from seed entity scores; the stationary distribution over passage nodes encodes global importance conditioned on the activated entity set. No closed-form equation is available in the repository for the PPR iteration itself; the repository provides the additive composition of node weights and the invocation structure of the PPR call. The Writer should describe the PPR as",
+      "estimated_prompt_tokens": 4981,
+      "parse_error": "schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts",
+      "recovery_applied": true,
+      "recovery_operations": [
+        "extract_or_repair_json_container"
+      ]
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+        "brief:story:O-RATIONALE-CHECK-03-09c84504",
+        "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+        "brief:story:O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-01-c0bb1e93\",\n      \"cited_frag_ids\": [\n        \"frag-315\",\n        \"frag-316\",\n        \"frag-317\",\n        \"frag-318\",\n        \"frag-319\",\n        \"frag-320\",\n        \"frag-321\",\n        \"frag-322\",\n        \"frag-323\",\n        \"frag-324\",\n        \"frag-325\",\n        \"frag-326\",\n        \"frag-327\",\n        \"frag-328\",\n        \"frag-329\",\n        \"frag-330\",\n        \"frag-331\",\n        \"frag-332\",\n        \"frag-333\",\n        \"frag-334\",\n        \"frag-335\",\n        \"frag-336\",\n        \"frag-337\",\n        \"frag-338\",\n        \"frag-339\",\n        \"frag-340\",\n        \"frag-341\",\n        \"frag-342\",\n        \"frag-343\",\n        \"frag-344\",\n        \"frag-345\",\n        \"frag-346\",\n        \"frag-347\",\n        \"frag-348\",\n        \"frag-349\",\n        \"frag-350\",\n        \"frag-351\",\n        \"frag-352\",\n        \"frag-353\",\n        \"frag-354\",\n        \"frag-355\"\n      ],\n      \"text\": \"Design choice: the system deliberately omits a dedicated relation-extraction module. Instead of predicting typed edges between entities (e.g., CAUSES, PART_OF), the graph topology is derived entirely from structural co-occurrence: an entity node is connected to the sentence node in which it appears, and the sentence node is connected to its parent passage node. This means the graph is a bipartite entity-sentence-passage hierarchy with no learned or rule-based relation labels on edges. Rationale: (a) avoids the error propagation that a separate RE pipeline would introduce into downstream retrieval; (b) keeps the graph construction deterministic and document-structure-driven, so no external NER/RE model is required at indexing time; (c) the retrieval signal is carried by score propagation through the structural topology rather than by edge semantics. The Writer should frame this as a scoping decision: the system trades relational expressiveness for robustness and simplicity, and the retrieval quality is recovered through the PPR pro",
+      "estimated_prompt_tokens": 2432,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:61287e6c5b7464a063c715dd5f1ad25676f04b6fd788d94681a4afca3363f773",
+      "response_digest": "sha256:61287e6c5b7464a063c715dd5f1ad25676f04b6fd788d94681a4afca3363f773"
+    }
+  ],
+  "content_digest": "sha256:238481b88891881396cb507ced85caf87bbeb298d61d39abe2049266faed6179"
+}

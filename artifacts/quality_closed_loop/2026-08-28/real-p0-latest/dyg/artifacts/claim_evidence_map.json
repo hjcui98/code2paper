@@ -1,0 +1,773 @@
+{
+  "claims": [
+    {
+      "claim_id": "C-V3-1c4b6fd1bf52056d",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, dst_padded_data, dim=2, result=dst_padded_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-2ac30cfdb4ac55c0"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-e63cd0230480a5b3",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, dst_router_logits, dim=1, dtype=torch.float, result=dst_routing_weights",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-7d0ed56d3c2faace"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d979edcb0ffb380f",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings selects top k torch.topk, dst_routing_weights, min(self.top_k, dst_seq_len), dim=1, result=(dst_routing_weights, dst_selected_embeddings)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f9a18332614e23b5"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7f66b29c689f296a",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings reduces (src_padded_data * src_routing_weights_expand).sum, 1, result=src_padded_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-68ad2137082b6c7c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-54704b2394fd7578",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-61b3e8598346673f"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-42e35540fe6ea152",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6403334467ca1ebe"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-80bd147c7ecdedcb",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list, nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e3c852e66f6316aa"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0dad078f8b426ca1",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings calls self.pad_sequences, node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list, nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list, patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length, result=(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-df9846e743913840"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-41df4f28995228f8",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings normalizes F.softmax, src_router_logits, dim=1, dtype=torch.float, result=src_routing_weights",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ba114509db996be1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ee2ad7da1f7d585c",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings stacks torch.stack, src_padded_data, dim=2, result=src_padded_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-721af3bed64e36eb"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-b9ead715741dd6fe",
+      "claim_text": "DyGMamba.compute_src_dst_node_temporal_embeddings computes formula self.num_channels, self.channel_embedding_dim",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f6a4e2c4a727115d"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-138f5f4450d7fcbc",
+      "claim_text": "MambaTimeDelta.forward branches on self.time_mamba and dts != None",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6310adf1f6bc7a8c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "claim_id": "C-V3-ba6943049c711d11",
+      "claim_text": "MambaTimeDelta.forward returns out",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-3abf043f861a82b1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "claim_id": "C-V3-eaea74a407624545",
+      "claim_text": "MambaTimeDelta.forward computes formula self.in_proj.weight, rearrange(hidden_states, 'b l d -> d (b l)')",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4fe8b195f81f2702"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "claim_id": "C-V3-31c21deb6b74b3e0",
+      "claim_text": "MambaTimeDelta.forward computes formula xz, rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1'), result=xz",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-154be4073d0e8b12"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.time_mamba and dts != None"
+      ]
+    },
+    {
+      "claim_id": "C-V3-2628e5ae79a4a775",
+      "claim_text": "FilterLayer.forward returns hidden_states",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-79adf9fa9ba3d113"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-15d0f68929439dd8",
+      "claim_text": "FilterLayer.forward computes formula hidden_states, input_tensor, result=hidden_states",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d52513a072a30df8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ac6c4f8addcc3b98",
+      "claim_text": "FilterLayer.forward computes formula x, weight, result=x",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-10fa5fb8d962fce8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7ffe8850e4bf52d0",
+      "claim_text": "predict_link_probabilities branches on (src_node_id, dst_node_id) in edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-5c6f05b6808020d9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ]
+    },
+    {
+      "claim_id": "C-V3-05bb842abe8b20ee",
+      "claim_text": "predict_link_probabilities returns np.array(probabilities)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-7e37469e71269dd3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ]
+    },
+    {
+      "claim_id": "C-V3-7afb98c4333a1973",
+      "claim_text": "predict_link_probabilities writes (src_node_ids, dst_node_ids)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-75caa7237a42b9ce"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ]
+    },
+    {
+      "claim_id": "C-V3-e15f8cab9376b362",
+      "claim_text": "edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-3fbeee89953a9ab8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ]
+    },
+    {
+      "claim_id": "C-V3-3502ddd415515194",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-3613b65af28ba707"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-8f7e158d115e28c3",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, combined_features, dim=1, result=combined_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ec7801067cd0a7d8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-adf1309223a6ca2e",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings returns node_embeddings",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-176b1788f8ed81d6"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-32e5d5e72b1f345d",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-85a866b85f906748",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1ad33958de6536c5",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [combined_features, output_node_features], dim=1",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bf2f65f2f72b484d"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-98f6f5bc2f5bb57c",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7e7c72e547dd8c3a",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings branches on case_study",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-28eb300d40d08827"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-6cbbce7c016a1ca9",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6047ec92f6c44ba8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-2fd0cec18c288aae",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8bad2f57af46779e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-8e3cec90ebaec7ae",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-32538fd395ee1906"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9933c1ae8697c2ed",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8cf7771f62f5c889"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5e2203c22f5d1b4f",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-7615c8325b261eff",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings calls self.neighbor_sampler.get_all_first_hop_neighbors, node_ids=dst_node_ids, node_interact_times=node_interact_times, robust_rate=robust_rate, result=(dst_nodes_neighbor_ids_list, dst_nodes_edge_ids_list, dst_nodes_neighbor_times_list)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-84513e1a4669dc80"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-b60eb43ed1bdb9bc",
+      "claim_text": "edge_bank_link_prediction writes positive_probabilities",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1115d2d9feca6d4a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-4c66a4bb01eef77c",
+      "claim_text": "edge_bank_link_prediction writes edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1ff5b48fe8916c23"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d12e19aeba607036",
+      "claim_text": "edge_bank_link_prediction writes negative_probabilities",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-08d0db95e6f9d07a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9ff2645283531bdc",
+      "claim_text": "edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=negative_edges, result=negative_probabilities",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-08d0db95e6f9d07a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1bef52712fef7a5c",
+      "claim_text": "edge_bank_link_prediction calls edge_bank_repeat_threshold_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6b61d317f0580994"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-fc2e449a39aea00d",
+      "claim_text": "edge_bank_link_prediction calls predict_link_probabilities, edge_memories=edge_memories, edges_tuple=positive_edges, result=positive_probabilities",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1115d2d9feca6d4a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-eb618c3a1e804967",
+      "claim_text": "edge_bank_link_prediction calls edge_bank_time_window_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, history_node_interact_times=history_data.node_interact_times, time_window_mode=time_window_mode, time_window_proportion=time_window_proportion, result=edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-45cabc4def685d51"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-36545d70f0ef6fae",
+      "claim_text": "edge_bank_link_prediction calls edge_bank_unlimited_memory, history_src_node_ids=history_data.src_node_ids, history_dst_node_ids=history_data.dst_node_ids, result=edge_memories",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-3fbeee89953a9ab8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-479086754f96b061",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings reduces torch.mean, nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1), dim=1, result=nodes_time_gap_neighbor_node_agg_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-afbd522c5a57bc72",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_agg_features, self.node_raw_features[torch.from_numpy(node_ids)], result=output_node_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-70839c2e409e0398",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings computes formula nodes_time_gap_neighbor_node_raw_features, scores.unsqueeze(dim=-1)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d796db70e52483f3"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-e04fa6a5ed681b73",
+      "claim_text": "GraphMixer.compute_node_temporal_embeddings concatenates torch.cat, [nodes_edge_raw_features, nodes_neighbor_time_features], dim=-1, result=combined_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-3613b65af28ba707"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9f6449fbb76326a0",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features], dim=1, result=patches_nodes_neighbor_time_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-81bc9cc199ff2f0e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9e165336822f6971",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings branches on i == 0 and case_study",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-18050cadcc17f30e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-c0e963a5629aa7c0",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features], dim=1, result=patches_nodes_neighbor_co_occurrence_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c82311ea3fd55b72"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-48fdc60c32840393",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings stacks torch.stack, patches_data, dim=2, result=patches_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8bad2f57af46779e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-0f9c0557d18d3f16",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings reduces torch.mean, dst_patches_data, dim=1, result=dst_patches_data",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-32538fd395ee1906"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5152e29260b431ee",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings returns (src_node_embeddings, dst_node_embeddings)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8cf7771f62f5c889"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-305628644dc92b65",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings computes formula src_num_patches, dst_num_patches",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-c1ddfed6ada45fc7",
+      "claim_text": "DyGFormer.compute_src_dst_node_temporal_embeddings concatenates torch.cat, [src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features], dim=1, result=patches_nodes_neighbor_node_raw_features",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6047ec92f6c44ba8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "i == 0 and case_study"
+      ]
+    },
+    {
+      "claim_id": "C-V3-8e4f2a37a3fe9b63",
+      "claim_text": "Scores are normalized before they are compared or aggregated.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ba114509db996be1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-3508fbc6e076e816",
+      "claim_text": "Scores are normalized before they are compared or aggregated.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-7d0ed56d3c2faace"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-02ae33341bf16753",
+      "claim_text": "A top-k selection keeps the highest scoring items.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f9a18332614e23b5"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-54823698fe52906f",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-154be4073d0e8b12"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-cb276b8fbd5df224",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d52513a072a30df8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-5fce8d44ff5db814",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-47dd95960ddc47da",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-272a94ccaf31de66",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-00eb27fa4a004bf9"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-44b9629565910011",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-122831fe45abc2a1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    }
+  ]
+}

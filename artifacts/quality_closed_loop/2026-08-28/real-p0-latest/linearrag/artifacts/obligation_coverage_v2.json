@@ -1,0 +1,2239 @@
+{
+  "schema_version": "2.0",
+  "mode": "obligation-coverage-v2",
+  "intent_graph_digest": "sha256:7bff90c4e8ade0e1fe69a804c64e998d9a06cb944f4dc18ac40e4963e96507e5",
+  "fact_set_digest": "sha256:55dd2fc387af295879ddad0d5bb7112a8b65dee03f45c3819f8f6fdf78317741",
+  "claim_set_digest": "sha256:82db620b1f79023fd4a54ea4c1874a893542aa83dd148519b3cfa7053f76aeda",
+  "items": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-79899e6c",
+      "obligation_kind": "method_mainline",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-fd8df1fe8a5b",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "CONCAT",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-e676b4a370ad",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-b9c6d4f9cb46",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+          ],
+          "matched_predicates": [
+            "SORT",
+            "TOPK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-33e1a023c32d",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+          ],
+          "matched_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-dc893c2c43f3",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-d41a10419f52",
+          "target_scope": "any",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+            "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+            "fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+            "fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+            "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+            "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+            "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+            "fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc"
+          ],
+          "matched_predicates": [
+            "BRANCH",
+            "CALL",
+            "COMPUTE",
+            "CONFIGURED_BY",
+            "LOAD",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "matched_relations": [
+            "CONFIGURED_BY"
+          ],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-STAGE-01-9c8dfe22",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-feddf5ad3ac7",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE",
+            "CONCAT",
+            "LOAD"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-0193d139c839",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+            "fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+            "fact-callback:req:MA-S2:u2-node:22058d49423db008",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+            "fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-STAGE-02-93c16851",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-9a041fc3da09",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-20ae4c78bebf",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+          ],
+          "matched_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-9feeb1137223",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:f32782d99169744f",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-STAGE-03-8dda66b9",
+      "obligation_kind": "stage",
+      "obligation_priority": "must_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-ce28d980e221",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-3bc59daebac5",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+          ],
+          "matched_predicates": [
+            "SORT",
+            "TOPK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-91de51535eb6",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-4e554ef0",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-d392ec908666",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+            "fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+            "fact-callback:req:MA-S2:u2-node:22058d49423db008",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+            "fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-6dfdd1c36fa0",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "outputs",
+            "transformations"
+          ],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [
+            "outputs",
+            "transformations"
+          ],
+          "scope_blocked_fact_ids": [],
+          "status": "partial"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+        "claim-O-COMPONENT-01-4e554ef0-fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-bd3b9454",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-bbd96fcd460b",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+            "fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+            "fact-callback:req:MA-S2:u2-node:22058d49423db008",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+            "fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-8058a7bc",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-ae23d8974aa9",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-cee28a828872",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+          ],
+          "matched_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-61123cce2089",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-928b24d9edf6",
+          "target_scope": "any",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+            "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+            "fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+            "fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+            "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+            "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+            "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+            "fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc"
+          ],
+          "matched_predicates": [
+            "BRANCH",
+            "CALL",
+            "COMPUTE",
+            "CONFIGURED_BY",
+            "LOAD",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "matched_relations": [
+            "CONFIGURED_BY"
+          ],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-29ba03a1",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-b97891c24a00",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-82b07b6935d7",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+          ],
+          "matched_predicates": [
+            "SORT",
+            "TOPK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-b890f26ec1c0",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "obligation_kind": "component",
+      "obligation_priority": "should_cover",
+      "target_alignments": [
+        {
+          "target_id": "target-32797aefd7db",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-d1573e8f9dca",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-1977b399",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Obligation has no typed behavior targets to align against facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-157f229e",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-e4aa00896ec5",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "WRITE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+            "fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+            "fact-callback:req:MA-S2:u2-node:22058d49423db008",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44",
+            "fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "WRITE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:22058d49423db008",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-1fc4810b96ea",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+          ],
+          "matched_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-f322fa696c33",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "obligation_kind": "organization",
+      "obligation_priority": "preference",
+      "target_alignments": [
+        {
+          "target_id": "target-5d5e51ab5c03",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-6d8e4239dd7c",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "supported",
+      "rationale": "Every typed behavior target is covered by supported code facts."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "unresolved",
+      "rationale": "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-195bb83ef79c",
+          "target_scope": "any",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4",
+            "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+          ],
+          "matched_predicates": [
+            "SORT",
+            "TOPK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-cc0b14180bbe",
+          "target_scope": "any",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712",
+            "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:6cb5169c56547896",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+          ],
+          "matched_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-4b288cd2f4c8",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-84fb4ec7e4fc",
+          "target_scope": "any",
+          "desired_predicates": [],
+          "predicate_groups": [],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-rel:161d4e05c0160597",
+            "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:06177f1488930788",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+            "fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+            "fact-O-STAGE-02-93c16851-node:2329f1384378b9e8",
+            "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17",
+            "fact-O-STAGE-02-93c16851-rel:9b93096f5696915c",
+            "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-rel:18bcfda46e356558",
+            "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323",
+            "fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+            "fact-O-COMPONENT-01-bd3b9454-rel:701286997cb0bcbc"
+          ],
+          "matched_predicates": [
+            "BRANCH",
+            "CALL",
+            "COMPUTE",
+            "CONFIGURED_BY",
+            "LOAD",
+            "MASK"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [
+            "CONFIGURED_BY"
+          ],
+          "matched_relations": [
+            "CONFIGURED_BY"
+          ],
+          "unmatched_relations": [],
+          "required_semantic_fields": [],
+          "matched_semantic_fields": [],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:06177f1488930788",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:4a2944ce91ad869e",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-rel:ce43b6296f65ae31",
+        "claim-callback:req:MA-S2:u2-fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-2ddd668b4f26",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "obligation_kind": "rationale_check",
+      "obligation_priority": "verify_only",
+      "target_alignments": [
+        {
+          "target_id": "target-402c0e2aa390",
+          "target_scope": "any",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+            "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6",
+            "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+            "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+            "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+            "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+            "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+            "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+            "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+            "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d",
+            "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4",
+            "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+            "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308",
+            "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977",
+            "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4",
+            "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+            "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+            "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1",
+            "fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+            "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+          ],
+          "matched_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        },
+        {
+          "target_id": "target-49a55a57edac",
+          "target_scope": "any",
+          "desired_predicates": [
+            "AGGREGATE",
+            "PROPAGATE",
+            "SAMPLE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "PROPAGATE",
+              "SAMPLE"
+            ]
+          ],
+          "matched_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88",
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318",
+            "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+          ],
+          "matched_predicates": [
+            "CONCAT",
+            "PROPAGATE"
+          ],
+          "unmatched_predicates": [],
+          "required_relations": [],
+          "matched_relations": [],
+          "unmatched_relations": [],
+          "required_semantic_fields": [
+            "transformations"
+          ],
+          "matched_semantic_fields": [
+            "transformations"
+          ],
+          "unmatched_semantic_fields": [],
+          "scope_blocked_fact_ids": [],
+          "status": "resolved"
+        }
+      ],
+      "matched_claim_ids": [
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:09d0f3daf900de68",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+        "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2",
+        "claim-callback:request:MA-S5:configuration_and_branches-fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe",
+        "claim-callback:request:MA-S5:mechanism_overview-fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:63404e1903696c87",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394",
+        "claim-callback:MA-S3:rq-2-fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "matched_gap_ids": [],
+      "coverage_status": "partial",
+      "rationale": "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+    }
+  ],
+  "must_cover_count": 4,
+  "terminal_must_cover_count": 4,
+  "supported_must_cover_count": 4,
+  "unresolved_must_cover_ids": [],
+  "explicit_gap_count": 0,
+  "content_digest": "sha256:865d1fd87e3cbfc89ba1eda18c411d767cb85f58abcc32d0a3bd8da6cdb3f198"
+}

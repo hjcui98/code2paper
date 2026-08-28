@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "final_text_digest": "sha256:04b3a4aa34065df515a0e17ab2b7471c712f2c5a87a3f0c3e13fc8e603e20215",
+  "spans": [
+    {
+      "final_span_id": "final:1",
+      "final_start": 0,
+      "final_end": 525,
+      "text_digest": "sha256:04b3a4aa34065df515a0e17ab2b7471c712f2c5a87a3f0c3e13fc8e603e20215",
+      "owner": "writer",
+      "source_span_id": "writer:MA-S2",
+      "response_ref": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61",
+      "section_id": "MA-S2",
+      "generation_trace_id": "sha256:d7574f2d4a9d7b0bb74e8abfb9bbb56387ce4c7042112a3801a30f9ad1c22e61"
+    }
+  ],
+  "unowned_token_ranges": [],
+  "failures": [],
+  "hard_gate_passed": true,
+  "content_digest": "sha256:fa751c69aa40e5bdad46c99802bd4a9a68ddc3293dce87d7f3eeb6838c18ab47"
+}

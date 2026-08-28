@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:f2ef75b8292793936b8207c22ac5dc866032777c652e769ebbccacd84044a279",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Embedding‑based reranking formulation and overall framework.",
+    "section_markdown": "## Embedding‑based reranking formulation and overall framework.\n\nThe embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline. This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-54911271"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "evidence_refs_used": [],
+        "exact_question": "What specific embedding-based reranking operations, scoring functions, and pipeline stages constitute the overall framework described in this section?",
+        "missing_parts": [
+          "operation"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "request:MA-S2:unit:0",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-54911271"
+        ],
+        "target_clause_ids": [],
+        "why_needed_for_reader": "The section heading promises an explanation of the embedding-based reranking formulation and overall framework, but no repository evidence was supplied to support any specific operation, scoring mechanism, or pipeline stage. Without this evidence, the section cannot state what the formulation computes or how the framework is organized."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "This section formulates the embedding-based reranking stage and situates it within the overall retrieval framework. The formulation defines how candidate documents are scored against a query representation in embedding space, and the framework specifies the pipeline stages that precede and follow this scoring step.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": []
+      }
+    ]
+  },
+  "output_digest": "sha256:c9d5825d34370443cc35fef19d613a51a0bf8a20916b0e391f82d24fe11fe726",
+  "content_digest": "sha256:c5c2f10dea3c37f52693d6b33e4d9793deaa7e946c27d77a53801d1d6cda639a"
+}

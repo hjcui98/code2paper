@@ -1,0 +1,235 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:02b0be01ca4969ce824d5952a7f69e8d7eec96909e79deb57e281c4069750bb7",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Embedding‑based reranking formulation and overall framework.",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 63,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:6aae68510fc2391da7609321460b417f6d4189d27b005a9d86c3c3bec671188e"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "The embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 65,
+      "char_end": 273,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:55a19e03566ad040d75c367cbc702557eec1239528612fd1a451836dc2169458"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 274,
+      "char_end": 481,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:9924d27d46ef0132a58349b1057c20800ef47252d56073081f3f17177b87857b"
+    },
+    {
+      "unit_id": "FTU4",
+      "kind": "heading",
+      "text": "Inference procedure.",
+      "line_start": 5,
+      "line_end": 5,
+      "char_start": 486,
+      "char_end": 506,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:28871d6cc597b273b6d8acf71a18baf49dd8094c961bfb4a02e778ab8af27ab2"
+    },
+    {
+      "unit_id": "FTU5",
+      "kind": "sentence",
+      "text": "During inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 508,
+      "char_end": 661,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:f8a2f77d32fcc3a33ec6fab96764b089ba3472de6ca3e341509e693a92725614"
+    },
+    {
+      "unit_id": "FTU6",
+      "kind": "sentence",
+      "text": "In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 662,
+      "char_end": 785,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:dd1d752d0320c103ed3cbef40df1c61f5b573988dafca32fb5141cc0b083f60f"
+    },
+    {
+      "unit_id": "FTU7",
+      "kind": "sentence",
+      "text": "The intended scoring mechanism computes the dot-product similarity between the static query embedding and each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 786,
+      "char_end": 1028,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:57b6d402dac9f1595c910b7f3b5231b35f7b2f6214187840e9da264c69006938"
+    },
+    {
+      "unit_id": "FTU8",
+      "kind": "sentence",
+      "text": "This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1029,
+      "char_end": 1316,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:9ea143e4b7c2088a26e168dc8f15c68aef8cf9391f424557ab69edb9f094d2b2"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "The embedding-based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space, operating as a distinct stage within the broader retrieval pipeline.",
+      "normalized_text": "the embedding based reranking stage scores candidate documents by evaluating their similarity to a query representation in embedding space operating as a distinct stage within the broader retrieval pipeline",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 65,
+      "char_end": 273,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:55a19e03566ad040d75c367cbc702557eec1239528612fd1a451836dc2169458"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "This formulation positions the reranker between the initial retrieval step and the final ranking output, focusing on how document representations are compared against the query vector to determine relevance.",
+      "normalized_text": "this formulation positions the reranker between the initial retrieval step and the final ranking output focusing on how document representations are compared against the query vector to determine relevance",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 274,
+      "char_end": 481,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:9924d27d46ef0132a58349b1057c20800ef47252d56073081f3f17177b87857b"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "unit_id": "FTU5",
+      "text": "During inference, the query embedding remains static, retaining its original Contriever representation without undergoing re-encoding by the Transformer.",
+      "normalized_text": "during inference the query embedding remains static retaining its original contriever representation without undergoing re encoding by the transformer",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 508,
+      "char_end": 661,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:f8a2f77d32fcc3a33ec6fab96764b089ba3472de6ca3e341509e693a92725614"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "unit_id": "FTU6",
+      "text": "In contrast, candidate passages are processed by the hybrid-attention encoder to produce contextualized passage embeddings.",
+      "normalized_text": "in contrast candidate passages are processed by the hybrid attention encoder to produce contextualized passage embeddings",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 662,
+      "char_end": 785,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:dd1d752d0320c103ed3cbef40df1c61f5b573988dafca32fb5141cc0b083f60f"
+    },
+    {
+      "atomic_claim_id": "FAC5",
+      "unit_id": "FTU7",
+      "text": "The intended scoring mechanism computes the dot-product similarity between the static query embedding",
+      "normalized_text": "the intended scoring mechanism computes the dot product similarity between the static query embedding",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 786,
+      "char_end": 887,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:a079839a1d2df8dd110c970289f2f67dad520401a7cf4c145d85ce69b00afa97"
+    },
+    {
+      "atomic_claim_id": "FAC6",
+      "unit_id": "FTU7",
+      "text": "each contextualized passage embedding, subsequently sorting passages in descending order of these scores to establish the final ranking.",
+      "normalized_text": "each contextualized passage embedding subsequently sorting passages in descending order of these scores to establish the final ranking",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 892,
+      "char_end": 1028,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:d394fb7294bd6e2328d1128590d5513290d1a302ae8dd5b6ab280530ec83b184"
+    },
+    {
+      "atomic_claim_id": "FAC7",
+      "unit_id": "FTU8",
+      "text": "This specific inference-time scoring and ranking procedure is currently an author-specified design intent; available repository evidence confirms the training-time reranker invocation and conditional branching logic but does not yet verify the inference-time dot-product scoring formula.",
+      "normalized_text": "this specific inference time scoring and ranking procedure is currently an author specified design intent available repository evidence confirms the training time reranker invocation and conditional branching logic but does not yet verify the inference time dot product scoring formula",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1029,
+      "char_end": 1316,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:9ea143e4b7c2088a26e168dc8f15c68aef8cf9391f424557ab69edb9f094d2b2"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

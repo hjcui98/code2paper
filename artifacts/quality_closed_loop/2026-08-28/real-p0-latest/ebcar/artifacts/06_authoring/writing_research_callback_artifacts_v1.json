@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "MA-S1:reque-1",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "missing_rhetorical_move": "transition_to_next_section",
+      "exact_question": "How does the ConTEB benchmark address the compound challenge of efficiency and cross‑passage inference in existing reranker architectures?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The reader needs to understand both the specific architectural limitations that motivate the benchmark and the design principles by which ConTEB isolates cross‑passage reasoning demands from single‑passage heuristics.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "ConTEB_benchmark",
+      "missing_parts": [],
+      "evidence_refs_used": [
+        "ConTEB_benchmark",
+        "Efficiency_and_cross-passage_inference_challenges_in_existing_rerankers"
+      ],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-01-6b45ad90",
+        "story:O-COMPONENT-11-27f310b2"
+      ],
+      "target_concept_keys": [
+        "ConTEB_benchmark"
+      ],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-6b45ad90",
+        "brief:story:O-COMPONENT-11-27f3-10b2"
+      ],
+      "target_clause_ids": [
+        "Efficiency_and_cross-passage_inference_challenges_in_existing_rerankers",
+        "ConTEB_benchmark"
+      ],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:d5e8ae8cda6aeb5d5ad6d5089b844caaa387b6abf0d0fa89ccec0dd41a3e04a1"
+    },
+    {
+      "request_id": "request:MA-S2:unit:0",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "What specific embedding-based reranking operations, scoring functions, and pipeline stages constitute the overall framework described in this section?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "operation"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The section heading promises an explanation of the embedding-based reranking formulation and overall framework, but no repository evidence was supplied to support any specific operation, scoring mechanism, or pipeline stage. Without this evidence, the section cannot state what the formulation computes or how the framework is organized.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "operation"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-02-54911271"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-54911271"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:babe313222c2bb8839b597db64aeb6c0347ec7d0540c1962f3c160af42888d05"
+    },
+    {
+      "request_id": "req:MA-S3:mechanism_overview:retry",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "Which core mechanism formula (InfoNCE contrastive loss and/or the embedding enrichment composition) should this section present, and which specific repository evidence (file, line range, or function) binds it so that a Formalizer can produce an accepted package?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "MA-S3",
+        "facet-d57e6b007d62768e",
+        "accepted",
+        "derivation",
+        "formula",
+        "package",
+        "section",
+        "facet"
+      ],
+      "current_known_facts": [
+        "The training pipeline in `train_ebcar` branches on `cfg.use_dedicated_attention` to select the dedicated-attention configuration and loads corresponding weights.",
+        "The reranker is configured by this flag and returned after the training loop completes.",
+        "Validation loss is computed as the mean over the number of validation batches.",
+        "No accepted formula package exists for the contrastive loss or embedding enrichment mechanism."
+      ],
+      "why_needed_for_reader": "The reader question asks how the setup realizes the architecture; a formal expression of the loss and enrichment mechanism is required to ground the formula paragraph but no accepted package exists.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "accepted formula package for formula:section:MA-S3:derivation",
+        "accepted formula package for formula:facet:facet-d57e6b007d62768e"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [
+        "span:src/train_ebcar.py:116:116",
+        "span:src/train_ebcar.py:116:117",
+        "span:src/train_ebcar.py:117:117",
+        "span:src/train_ebcar.py:183:185",
+        "span:src/train_ebcar.py:240:240",
+        "span:src/train_ebcar.py:291:291",
+        "span:src/train_ebcar.py:318:318"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-01-bad20132",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-RATIONALE-CHECK-05-595ac6ff",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [
+        "The training pipeline in `train_ebcar` branches on `cfg.use_dedicated_attention` to select the dedicated-attention configuration and loads corresponding weights.",
+        "The reranker is configured by this flag and returned after the training loop completes.",
+        "Validation loss is computed as the mean over the number of validation batches.",
+        "No accepted formula package exists for the contrastive loss or embedding enrichment mechanism."
+      ],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:5cf72274fd41ef779b3519032655bfd59d26c20f871899be83273f7dd6d4dd67"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:bde4e8d8bd3f0a36283092d88576065bdf63d24e62045979de70c2b2e2d7f94c"
+}

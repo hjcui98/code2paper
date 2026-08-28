@@ -1,0 +1,2863 @@
+{
+  "schema_version": "2.0",
+  "plan_id": "method-plan:170e96726f27de6a5b953779",
+  "method_name": "Present a lightweight reranker that operates directly on passage embeddings, enriches them with document‑structural signals, and uses a hybrid attention mechanism to capture both global inter‑document and local intra‑document interactions. Show that this embedding‑based approach is competitive with text‑based LLM rerankers on tasks requiring cross‑passage inference while being much faster.",
+  "mode": "replan_typed_semantic_graph_on_frozen_structure",
+  "input_digests": {
+    "claims": "sha256:b5602e9f254a4bd7f1b7db4293311821872b0be54d9d655ca476935fc9702e59",
+    "equations": "sha256:e9dca969feff0109396de0771fd6208e4a0c90e19b39f74d905c07cc3e50ed5f",
+    "configurations": "sha256:2e6710ef4d2ec4b4c783b7ebc0451bfa46bdb23a32e354cd32690a249b80e231",
+    "completeness": "sha256:ec9fecbe51b75a0e8f65ec89eeafaaafdac572e723b6f769e8f6adc5f29c3c06",
+    "facts": "sha256:696178cb84cc9ea21063ec4381f059a4a9b371ebcb748c9369abadc238e21b12",
+    "agenda": "sha256:89a0ee8b32d4edb0831f56f85f837b71725b67a6442a7929ab769088ddf1603e",
+    "relations": "sha256:faff005ad8b0a2294a92d62b90e33da9c97df6dc0070324340f73e35ed261c22"
+  },
+  "section_dependencies": {
+    "MA-S1": [],
+    "MA-S2": [],
+    "MA-S3": [],
+    "MA-S4": [],
+    "MA-S5": []
+  },
+  "obligation_assignments": [
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "required_move": "inference_and_output",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:ea7924689902fc9dd5dd5b6d984738feacf5b0183d0f903fcdb9887aed63cd8f"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "run scoped repository research",
+      "unresolved_reason": "No supported code fact covers any typed behavior target.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "supporting_anchor_ids": [],
+      "placement_state": "external_pending",
+      "content_digest": "sha256:c35c036fd17187dd044a16c2792d75dec3bba7ba6d722455fa329669a7462f98"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "run scoped repository research",
+      "unresolved_reason": "Obligation has no typed behavior targets to align against facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "supporting_anchor_ids": [],
+      "placement_state": "external_pending",
+      "content_digest": "sha256:95eb8b41678f2fe1377b01e66fb3ee67d4d40c5fa798f9e8d1842f1dd5b15584"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-14",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:dc5fc339583ee4a7c3c824ae89e4c708b36c1f25bbce7778386e7cdd865600e7"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:256127eadaffb859bfdb98b8581a75fdbb070b46c6450adde59d6095c5fea3c2"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-15",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:7e5f9a3a730080d3b094b6b406dacdf3bdb800ba939155ef61764fac465f362b"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-5",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:7066c5e3d0bd4a6cad173bd67d491b7be7d745861d92a15fcc2c6c34062ed99f"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-16",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:c85c8196cd010a889110cb08090d956f284fa323213fc8538056b29925216595"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "run scoped repository research",
+      "unresolved_reason": "Obligation has no typed behavior targets to align against facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "supporting_anchor_ids": [],
+      "placement_state": "external_pending",
+      "content_digest": "sha256:d8661c730869f307784a5b6b408876e280a42e1d3d37c4174e796d122247859e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:25861129de2cbb32f202b93370ecf7b9a6b81aefaff48550765f38e70aa8ff52"
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:93ad1811b7cc097478c591fd7e210bad6cc8a7021f88b94e780bb99fe32c9795"
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "required_move": "inference_and_output",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:eafa1626624fd74f2e9a6a0bb4537edac8a44348edede66cef2f3ef8b9465420"
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "required_move": "training_objective",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:958d731784cff6df9eb24da2e3acd6d9b1e5236191da837dc22491891cef8849"
+    },
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "importance": "critical",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/train_ebcar.py:116:117",
+        "rel:7a74e9e69f2aa0ab",
+        "span:src/train_ebcar.py:318:318",
+        "span:src/train_ebcar.py:291:291",
+        "span:src/train_ebcar.py:116:116",
+        "span:src/train_ebcar.py:183:185",
+        "span:src/train_ebcar.py:117:117",
+        "span:src/train_ebcar.py:240:240"
+      ],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "config:sha256:9461b6288dfd2",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:baa9c5dbce80d8cdd274bfcdf58be4b452f1427570c8aea515dc61fcedf1a8c2"
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:810a6dec1b460073ca87e6f7ca6665d456fdb1553d994a7bf0fd5b14e8319f29"
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:4ed36a4ae872bdb308fd943d1c6d524c1746f3489aa3416e891248bea02c7b0c"
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:df9b539c0b5d46c41ace306c86c57ffc036b6f179786f00a0581a7c2141a1a52"
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:bc9d507d6fbf60a0630a6a2a7135d21048c6a03c3345e6ef9c1c2efb37e418d0"
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:7307d49e6cdc3415b18f17762d178827ff4968f9c466c95df59b5c27757b69e3"
+    }
+  ],
+  "move_authority_proofs": [
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:3b1408ca3dda71c25e76729f7724896f79792e8f614354a98360dc51143522f6"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:ba3791c1aa3ac1b35bf332cb106cb0b929f69c30380bf2853fc5042fbd1e7f9d"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:8374acf2698159b31b35f8f7f5cfb9671e784c501ff87b8e168567ff867c9b94"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "inference_and_output",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:5be5b3740c35ab95efe4fff89d0c520ae0ab9cffef4c2159c1df1b7bcc4cd9ed"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:2e8158e5806883a7f9c1f539032b8b75b40cd823ab34eb7e4317b434f3aeddc6"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e49d96620f554e7b97e3583eda549aaf38cc9e808852bb0b0f19ee91170c5c5e"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:9a23fcbd0641fbe196119d35d1d5ed88c858be899a04322234bd29c23730f11f"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15",
+        "MA-S3:unit-16",
+        "MA-S3:unit-17"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:17353f3f17676411f28c2390b2033823e5c8f9cc1fc135a1737ddbabb19dc22b"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15",
+        "MA-S3:unit-16",
+        "MA-S3:unit-17"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:4df65bb9ef83a6b6e232604a1cbfdb0ea3a0fc67ee38be23491e8a116563a94f"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15",
+        "MA-S3:unit-16",
+        "MA-S3:unit-17"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:4d2b06a27fb38d7ef7a7dce5f8e4407d74dfdb5337706955dc5f2a6391740ea4"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15",
+        "MA-S3:unit-16",
+        "MA-S3:unit-17"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:3df9b8c6a7f8d7dbd64676f5b59d6f52d5d2d4599737695eb06f0d9bbcebfae5"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:de09ae095a43a00334712cbefbcce3203326ba25269661ad2ce353a07623849d"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "implementation_realization",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:01faebd6956065eb6c2cb91d32b5c903cb0c5d396624d98965f996fd14d31cb5"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "formal_objects_and_notation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e8b5ef5f297f37e095793833f930cc290ad29882067c76f9daf4122a4a1e83df"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "equation_or_derivation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:30f0e253433815481508cc891fe89551890031ff195f28b679433612c064af1d"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "configuration_and_branches",
+      "required": true,
+      "anchor_ids": [
+        "config:sha256:9461b6288dfd2",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:22ff5b862bd11eedd3db2579ec0ccf1b18aa2586aa21aac63343bf74998a2a38"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "move": "inference_and_output",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:67e4813fd230445c60d94a5df5cad91bca918b67de7c74b625d294ac86c96ecf"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:75573381aefd6b1011da4a191b36f8ff760937f476a30d29f33f002823bbcffb"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:8ea2775935cf0dbb1cb572dfad56fce4ffc5463ff4a0b67bb1ff4f02330f09ef"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e11c14419fde46bf01009402aff86cd3922128bff19be2ee36507fb455bd1619"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:cfa997b5d169867be2b77c4da2963a59f6c10469373319f7a6d68d0180f352b3"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c",
+        "O-COMPONENT-10-dac6250f",
+        "O-STAGE-04-c50e0bef"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:9dce901dc77dd82628ff5e37b5d54f587db45e3e4cf2192d65c83cb653f47c13"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "training_objective",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:d0a7453f0d76f5658552c24a08c704489bb6711d856be0aab9eb732860f4bfe4"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5"
+      ],
+      "move": "equation_or_derivation",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "formal_derivation",
+      "owner_route": "formalization_agent",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "Formalizer",
+      "content_digest": "sha256:78e168ceb7bb688c31a42c80ad82bec0e4f8bf20362ab8b421b43c22ae7916e1"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:7eeac954c0679cf161dc7b7889cdb5a5cd0434c874ad533c674ee18d354dd21b"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:bc35849c4bbfd1aaa3f5557f26ef4bc7829a8de1f9466cffd28f336e37d09a61"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:6ca52cf30d55cd38db8ab8373739d8d4b5dd372bbf08402beb0e9092d5dd3999"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "transition_to_next_section",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:85f144d5a9f4bd74c904eeed8bed08f1d602451521aca3012bde34795a011bc0"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:778798fe8938a30f26cc1f3dce6fce471836e28013c86c3dc8df9f4dd594845b"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2"
+      ],
+      "move": "equation_or_derivation",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "formal_derivation",
+      "owner_route": "formalization_agent",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "Formalizer",
+      "content_digest": "sha256:08a9f3386ae5fbdeb8223d7d9fecf424752474dd681583ea7c9ac6fc830b2270"
+    }
+  ],
+  "placement": [
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-3"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "required_move": "inference_and_output",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "target_reason": "",
+      "candidate_targets": [],
+      "placement_state": "external_pending",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "target_reason": "",
+      "candidate_targets": [],
+      "placement_state": "external_pending",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-14"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-14",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-4"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-15"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-15",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-5"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-5",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-16"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-16",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "target_reason": "",
+      "candidate_targets": [],
+      "placement_state": "external_pending",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-3"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-4"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S1:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "required_move": "inference_and_output",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-5"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "required_move": "training_objective",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "target_reason": "exact_claim_ids",
+      "candidate_targets": [
+        "MA-S3:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-11"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-12"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-13"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    }
+  ],
+  "sections": [
+    {
+      "section_id": "MA-S1",
+      "unit_id": "MA-S1:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S1:unit-1",
+        "argument_unit_id": "MA-S1:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:cf42bc7375e33eb5afb2ec96934a927269d4eaa13838dc656bd1859f966efa1d"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S1",
+      "unit_id": "MA-S1:unit-2",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S1:unit-2",
+        "argument_unit_id": "MA-S1:unit-2",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:22b9c3a50046061caa9d19e8b5d9a74c07b1893bdfe5015527785bbe8d20b959"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section",
+        "inference_and_output"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-11-27f310b2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S2",
+      "unit_id": "MA-S2:unit",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S2:unit",
+        "argument_unit_id": "MA-S2:unit",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:7fea56270b4f47c0f2888f72348df4b739e66a3fb2e977af0fffd2c510e1d8d3"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-1",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-1",
+        "argument_unit_id": "MA-S3:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:471c61d7612e3d453f5766ab379361d4a16e2a607170dd7ee46126c4919fd2e3"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-2",
+      "heading": "Transformation and output",
+      "reader_question": "This section explains how the train_ebcar are loaded and prepared; which branches and guards select the executed path; how the loaded inputs are transformed into the method representation; how the train_ebcar are produced from the processed representation.",
+      "method_point": "load the authorized inputs and apply the authorized branch and guard conditions and run the authorized transformations in their flow order and produce the authorized output.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-2",
+        "argument_unit_id": "MA-S3:unit-2",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+            "role": "input",
+            "subject": "train_ebcar",
+            "predicate": "loads_weights",
+            "operands": [
+              "cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83"
+            ],
+            "exact_relation_ids": [
+              "rel:7a74e9e69f2aa0ab"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:4f46299c6f334b61d3e35cc25adedf127857d6c039448a7ab0bd88e26508f50a"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+            "role": "condition",
+            "subject": "train_ebcar",
+            "predicate": "branches_on",
+            "operands": [
+              "cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b"
+            ],
+            "exact_relation_ids": [
+              "rel:7a74e9e69f2aa0ab"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:853cdf0c18d558943dfa913628ff57d13e17b88debdb5f9157cf19a6e815483e"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+            "role": "transformation",
+            "subject": "train_ebcar",
+            "predicate": "computes_formula",
+            "operands": [
+              "val_loss",
+              "len(val_loader)",
+              "result=best_val_loss"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:76ed9b8223bb0a4a98a9b98ff8811435b2b7460105a1c56f6d138f6a6324bb2d"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+            "role": "transformation",
+            "subject": "train_ebcar",
+            "predicate": "calls",
+            "operands": [
+              "reranker",
+              "query",
+              "passage",
+              "label",
+              "document_id",
+              "passage_id",
+              "passage_text",
+              "result=loss"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:e6a03b14c9ab030d42d20893d150b780fe897c9574b048dd490bacc3a51ec1b4"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+            "role": "output",
+            "subject": "train_ebcar",
+            "predicate": "returns",
+            "operands": [
+              "reranker"
+            ],
+            "produced_entities": [
+              "reranker"
+            ],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:3776bfd71ad0ccc4ba1a1c27ee20f488e422ff91ffa0b566622ee886ec11b0fc"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+            "role": "transformation",
+            "subject": "train_ebcar",
+            "predicate": "computes_formula",
+            "operands": [
+              "'hybrid_attention_'",
+              "run_name",
+              "result=run_name"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:aaf7c474f86636e3b61b4a52cd13347a80166b202e6e471338cc20a3f9a42745"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+            "role": "transformation",
+            "subject": "train_ebcar",
+            "predicate": "computes_formula",
+            "operands": [
+              "train_loss",
+              "len(train_loader)"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:2f501c4f574ab5e93c4de9db103a7db6f2176cd9561330bd3d99de46e9d5cc52"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+            "role": "transformation",
+            "subject": "train_ebcar",
+            "predicate": "configured_by",
+            "operands": [
+              "cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+            ],
+            "exact_relation_ids": [
+              "rel:7a74e9e69f2aa0ab"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:7ad0b1db5a7a02bca9f1e1107123f3d088ee25acf91f845601d9d02e2cc82280"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "fact_ids": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+        ],
+        "configuration_ids": [
+          "config:sha256:9461b6288dfd2"
+        ],
+        "configuration_binding_relation_ids": [
+          "rel:7a74e9e69f2aa0ab"
+        ],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation",
+          "configuration_resolved"
+        ],
+        "content_digest": "sha256:69048a0706edc26c3221c3a6fd6809e6cea0348764756c50db18e679b9081e3b"
+      },
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+      ],
+      "configuration_ids": [
+        "config:sha256:9461b6288dfd2"
+      ],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+        ],
+        "implementation_realization": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:0c46c939484dbd83",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:6e8f0a16fd0804f7"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:513bc2f445163ca3",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:b2f2014ce4ed760c",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d6713a0250a4a16e"
+        ],
+        "configuration_and_branches": [
+          "config:sha256:9461b6288dfd2",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:1f431ba952c9814b"
+        ],
+        "inference_and_output": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:a46c02d81b1b6a18"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "unresolved": [
+        "O-METHOD-MAINLINE-01-c8146479:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-3",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-3",
+        "argument_unit_id": "MA-S3:unit-3",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:e6f15a1fb6427dc54ea3da0ceb975fece4f717da117a0fc60ef364353c616f1b"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "inference_and_output"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ],
+      "unresolved": [
+        "O-COMPONENT-01-c301ecdd:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-4",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-4",
+        "argument_unit_id": "MA-S3:unit-4",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:3da5c80b2888802f86b0e0b12b195f9b4a6ba5361cb3b2815923d5c4c6c3745d"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ],
+      "unresolved": [
+        "O-COMPONENT-04-b5b6af99:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-5",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-5",
+        "argument_unit_id": "MA-S3:unit-5",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:6b5452d7f60def2833878ca937ef7a8f412899f192f65657bdc29093e4426af6"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ],
+      "unresolved": [
+        "O-COMPONENT-06-34021b88:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-6",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-6",
+        "argument_unit_id": "MA-S3:unit-6",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:9ba92018077eaebc17702c6b7c4676d51a121453e90f9fa698ac13faee1d9c2f"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-7",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-7",
+        "argument_unit_id": "MA-S3:unit-7",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:fa564d7f17c0c6e23cacf1ea976ce28d9ce1e85fe2749b390e65dc8064d5afec"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-8",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-8",
+        "argument_unit_id": "MA-S3:unit-8",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "author_attested"
+        ],
+        "content_digest": "sha256:c38e256a4b61369b960a867e5909223f5aa4b2b44fede75363a7857cd1f68ab8"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-9",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-9",
+        "argument_unit_id": "MA-S3:unit-9",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:4169d808f102201fd6d8205a7ad8a4fd67a74e6749b131ce46528158dcc27c81"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-10",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-10",
+        "argument_unit_id": "MA-S3:unit-10",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:fc746aecbaf79e762ee53dd076a9368b45517b3d906e229a2a83b1965cba17cc"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-11",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-11",
+        "argument_unit_id": "MA-S3:unit-11",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:c103b9cc9fb81a3916c4500d4ee2d996130dbeed992768735a8bcbacb6da4a9c"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "unresolved": [
+        "O-STAGE-01-039a963a:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-12",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-12",
+        "argument_unit_id": "MA-S3:unit-12",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:0d03fd4b2e5374b0382f32e0684b8960ef5172adc91beec21ea2c6ce5ad07d9c"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "unresolved": [
+        "O-STAGE-02-42e8d68d:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-13",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-13",
+        "argument_unit_id": "MA-S3:unit-13",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:d9a1e077b8ae83a29509d9add58f996198bd9dfc29c96a2d59524d93749680d9"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "unresolved": [
+        "O-STAGE-03-2c5bd758:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-14",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-14",
+        "argument_unit_id": "MA-S3:unit-14",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:b2064df2529dd5cd5026593c8686e4cf13c5d6ef1f5a41a8088ae2202ddcde35"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ],
+      "unresolved": [
+        "O-COMPONENT-03-d8aa8c77:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-15",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-15",
+        "argument_unit_id": "MA-S3:unit-15",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:8894563b1860147dc0b3ca79a2e7a5cceccfa984b8340e12aa9402e978e6eab4"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-05-4c3594d2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-16",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-16",
+        "argument_unit_id": "MA-S3:unit-16",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:66061db046d3db9fc0de704d332dabb0f2e635ad282e27412041dca13195078b"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ],
+      "unresolved": [
+        "O-COMPONENT-07-d157b2cc:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-17",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-17",
+        "argument_unit_id": "MA-S3:unit-17",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:2c35b8c1df39c24ea89328909a425d6eeef1e87d1a162fa06703cf76e6d25ceb"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-1",
+        "argument_unit_id": "MA-S4:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:abcf2bd94bc48c7285920e9843c27ab6a14ea3a5ec3be7abd8b0360ccd9a5cb5"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-2",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-2",
+        "argument_unit_id": "MA-S4:unit-2",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5b8d7ba3bccdb56c458e9b2455578338984f73a8ccefd5431a063af856cb4577"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "unresolved": [
+        "O-STAGE-04-c50e0bef:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-3",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-3",
+        "argument_unit_id": "MA-S4:unit-3",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5f29392ae391b1607304f9a688928d8bdd97a38dd8658836890eb75a0b8715aa"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ],
+      "unresolved": [
+        "O-COMPONENT-09-6a8cfd6c:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-4",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-4",
+        "argument_unit_id": "MA-S4:unit-4",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5483fe6c08ec940381ea5c878e721fc77c97b2667bd91854137922a3ce1f4a25"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ],
+      "unresolved": [
+        "O-COMPONENT-10-dac6250f:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-5",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-5",
+        "argument_unit_id": "MA-S4:unit-5",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:02e7ebabd5941822db735ebb081fb4f7f61afe1e276eae53779391b34e2ea6e5"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "training_objective"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-12-370bd5b2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "unit_id": "MA-S5:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S5:unit-1",
+        "argument_unit_id": "MA-S5:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:34bf1d22bd30b45f8b7a3862b5e1c60f668c0a1d201bc1de78a7a80bd39d2285"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S5",
+      "unit_id": "MA-S5:unit-2",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S5:unit-2",
+        "argument_unit_id": "MA-S5:unit-2",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:2516177ac5e3114e17424c342661ebad34519261da0dc38026b8826957d4f12c"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "unresolved": [
+        "O-STAGE-05-5b3d398a:partially_supported_by_repository"
+      ]
+    }
+  ]
+}

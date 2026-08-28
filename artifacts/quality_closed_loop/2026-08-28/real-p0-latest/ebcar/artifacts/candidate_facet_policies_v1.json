@@ -1,0 +1,1207 @@
+{
+  "schema_version": "1.0",
+  "policies": [
+    {
+      "facet_id": "facet-d57e6b007d62768e",
+      "policy_id": "policy:facet-d57e6b007d62768e",
+      "alignment_id": "alignment:facet-d57e6b007d62768e",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c1757badadfc864bf507eb647a8bf52214898860f98ad09d85f79d79dcc4c6a6"
+    },
+    {
+      "facet_id": "facet-bd2114e7ad9b1773",
+      "policy_id": "policy:facet-bd2114e7ad9b1773",
+      "alignment_id": "alignment:facet-bd2114e7ad9b1773",
+      "clause_id": "clause:O-STAGE-01-039a963a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (indices 0, 1, 2) covers a conditional branch on cfg.use_dedicated_attention and a reranker call within train_ebcar.py. None of the evidence mentions a dense retriever, Contriever, top-k candidate passage retrieval, pre-computed embeddings, or query encoding with the same model. The facet's operation field describes a retrieval and embedding preparation mechanism that is entirely absent from the closed-set evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:55446288c771b18aab901b2029f484193b41782036738d23c5a40c7a553281dd"
+    },
+    {
+      "facet_id": "facet-308602a0138b57ea",
+      "policy_id": "policy:facet-308602a0138b57ea",
+      "alignment_id": "alignment:facet-308602a0138b57ea",
+      "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_span_ids": [
+            "span:src/train_ebcar.py:183:185"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-308602a0138b57ea",
+              "span_id": "span:src/train_ebcar.py:183:185",
+              "path": "src/train_ebcar.py",
+              "symbol": "sym:84125bba4b81722f",
+              "line_start": 183,
+              "line_end": 185,
+              "exact_excerpt": "            loss = reranker(\n                query, passage, label, document_id, passage_id, passage_text\n            )\n",
+              "excerpt_digest": "sha256:7ee7c0f6903140b363f237b74ae6de5c3344b38ed1bde853598ab572573a7ad0",
+              "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "bound_span_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:7116b393bdb489432ad85b6d0107ea42a7f9da9af3bb7de45be77bfa58dbd02b",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:9ac0f916f64b17eacbff7eb6b60e2cfd3103dbe3f9214881afac83dbfd8f0ae0"
+    },
+    {
+      "facet_id": "facet-df672e4efc3751e2",
+      "policy_id": "policy:facet-df672e4efc3751e2",
+      "alignment_id": "alignment:facet-df672e4efc3751e2",
+      "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet describes a specific mechanism: feeding query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra-document interactions) in every layer, producing contextualized passage embeddings. The supplied evidence only shows a config branch on cfg.use_dedicated_attention, a run_name string prefix, a reranker call, and a weight-loading branch. None of the evidence demonstrates the Transformer encoder architecture, the dual attention mechanism (shared full + dedicated masked), the layer-wise application, or the production of contextualized passage embeddings. The evidence is about training-loop plumbing, not the encoding mechanism itself."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:006c50846b95216a7f293b4ccf7dd0c276a8a132736cdd1341453e419dd71a91"
+    },
+    {
+      "facet_id": "facet-6bc5ee440fdc8329",
+      "policy_id": "policy:facet-6bc5ee440fdc8329",
+      "alignment_id": "alignment:facet-6bc5ee440fdc8329",
+      "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet claims a contrastive InfoNCE loss that pulls positive passage embeddings toward fixed query embeddings and pushes negative passage embeddings away. The supplied evidence shows: (0) a reranker call returning a loss, (1) train_loss divided by len(train_loader), and (2) val_loss divided by len(val_loader). None of these evidence items describe or implement an InfoNCE contrastive loss with positive/negative embedding pull/push semantics. The reranker call is a generic loss computation, not a contrastive embedding alignment mechanism. The division operations are simple averaging, not contrastive loss formulas. No evidence supports the specific formula_goal described in the facet."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:f3b6eceacd6f689cc9686b837f395f53b523a3e726e5a6c4e53cb62fd562b17a"
+    },
+    {
+      "facet_id": "facet-cbc0a588831ac015",
+      "policy_id": "policy:facet-cbc0a588831ac015",
+      "alignment_id": "alignment:facet-cbc0a588831ac015",
+      "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (indices 0, 1, 2) covers training-time reranker calls and conditional branching on cfg.use_dedicated_attention. None of the evidence demonstrates dot-product similarity computation between query and passage embeddings or passage sorting by descending score at inference time. The facet's operation claim is not supported by any supplied evidence index."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:3bc7219f28e83975f7eb32e15754946b2a80dee2798a0177b13d3c80c8d4a71d"
+    },
+    {
+      "facet_id": "facet-14d4dbe911667c07",
+      "policy_id": "policy:facet-14d4dbe911667c07",
+      "alignment_id": "alignment:facet-14d4dbe911667c07",
+      "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:227f4689198d340303d2d1a0239acf4d19c3075693a3014599cc0c4bbc67e7ab"
+    },
+    {
+      "facet_id": "facet-c70f411cffdc0a8f",
+      "policy_id": "policy:facet-c70f411cffdc0a8f",
+      "alignment_id": "alignment:facet-c70f411cffdc0a8f",
+      "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (evidence_index 0) shows a reranker call in train_ebcar.py with arguments query, passage, label, document_id, passage_id, passage_text. It does not mention 'Contriever', 'dense retriever', 'initial passage embeddings', or 'top-k retrieval'. The evidence describes a reranker invocation in a training loop, not a dense retrieval mechanism providing initial embeddings and top-k results. No supplied evidence supports the specific mechanism described in the facet's exact_source_quote."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:ccc898a273653d151ac581473466f5f77f6bb5101d2cf7b379781057aca692c7"
+    },
+    {
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "policy_id": "policy:facet-676fcfceb7eddd8a",
+      "alignment_id": "alignment:facet-676fcfceb7eddd8a",
+      "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_span_ids": [
+            "span:src/train_ebcar.py:183:185"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-676fcfceb7eddd8a",
+              "span_id": "span:src/train_ebcar.py:183:185",
+              "path": "src/train_ebcar.py",
+              "symbol": "sym:84125bba4b81722f",
+              "line_start": 183,
+              "line_end": 185,
+              "exact_excerpt": "            loss = reranker(\n                query, passage, label, document_id, passage_id, passage_text\n            )\n",
+              "excerpt_digest": "sha256:7ee7c0f6903140b363f237b74ae6de5c3344b38ed1bde853598ab572573a7ad0",
+              "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [
+            "cfg.use_dedicated_attention"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "bound_span_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:983ea8adf0f8d93d90358530bf2a036d2aa8e8228ebbb3502b7d137bd5b79efe",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:1160dcff9aa45382d9820ba657e3f76b617f6521ca5aa54ae302e3e4b5ad3c8b"
+    },
+    {
+      "facet_id": "facet-d87af6e7082cc916",
+      "policy_id": "policy:facet-d87af6e7082cc916",
+      "alignment_id": "alignment:facet-d87af6e7082cc916",
+      "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence shows document_id is passed as an argument to the reranker call, but does not demonstrate a learned embedding table mechanism, dynamic assignment to unique documents, or relative document-identity embeddings enabling passage grouping recognition. The evidence only confirms document_id is an input parameter, not the described embedding mechanism."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c514efb6a4b91edf7b5d93241bfdaa6d6b323686560d375c68aa4cf526e9d956"
+    },
+    {
+      "facet_id": "facet-ba08ce41d6e1d9b9",
+      "policy_id": "policy:facet-ba08ce41d6e1d9b9",
+      "alignment_id": "alignment:facet-ba08ce41d6e1d9b9",
+      "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (index 0) shows a call to reranker with arguments including document_id, passage_id, and passage_text, but does not contain any reference to sinusoidal position encoding or structural order cues for passage position within a document. The evidence is about a training loss computation call, not about a positional encoding mechanism. No evidence supports the specific claim of sinusoidal passage position encoding providing structural order cues."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:6ddf265d4c74f7832e5959c30212c7a793f1554c3ef7028504a534eb5fdc9e76"
+    },
+    {
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "policy_id": "policy:facet-47997bc7d81ecdf5",
+      "alignment_id": "alignment:facet-47997bc7d81ecdf5",
+      "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet claims a hybrid attention mechanism that combines shared full attention (global cross-passage) and dedicated masked attention (intra-document) in each Transformer layer. The supplied evidence only shows a boolean branch on cfg.use_dedicated_attention, a run-name string concatenation, and a reranker call. No evidence demonstrates the actual combination of shared full attention and dedicated masked attention within Transformer layers, nor any mechanism for jointly modeling inter- and intra-document dependencies. The string 'hybrid_attention_' in a run name is a label, not a demonstration of the mechanism itself."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:8d880e0398b3e83fd2b2a0b0b1d95b4458546f7a045176cc44f9768cdfd213e7"
+    },
+    {
+      "facet_id": "facet-00e27dd88a70848f",
+      "policy_id": "policy:facet-00e27dd88a70848f",
+      "alignment_id": "alignment:facet-00e27dd88a70848f",
+      "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:bc194ef4b76fe81b9e5a971d8ee3d187c2d4a6ae3ff821bdb6bdd7d5ce2be90d"
+    },
+    {
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "policy_id": "policy:facet-85ba5afaa2fbe7ac",
+      "alignment_id": "alignment:facet-85ba5afaa2fbe7ac",
+      "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:dade0ae11462cb2f2007aaa1e722ea58f3eec204d9a3c0a9d745a12724d20361"
+    },
+    {
+      "facet_id": "facet-0bce6b6595a44f58",
+      "policy_id": "policy:facet-0bce6b6595a44f58",
+      "alignment_id": "alignment:facet-0bce6b6595a44f58",
+      "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (index 0) shows train_ebcar calling a reranker function with query, passage, label, document_id, passage_id, passage_text arguments. It does not evidence a Transformer encoder stack, layers processing a combined sequence, or production of contextualized passage embeddings. The reranker call is a high-level function invocation, not a description of internal Transformer encoder layers or their mechanism for producing contextualized embeddings."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:b3b53c934e965ab066992a95ddb6703b89801160eea65a6e973ae196811b3349"
+    },
+    {
+      "facet_id": "facet-833638c7783e3952",
+      "policy_id": "policy:facet-833638c7783e3952",
+      "alignment_id": "alignment:facet-833638c7783e3952",
+      "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet requires an InfoNCE contrastive loss formula (encouraging positive passage embedding alignment with fixed query embedding while separating negatives). Evidence 0 shows a generic reranker call returning a loss value but does not expose the InfoNCE formula structure. Evidence 1 and 2 show simple division of accumulated loss by loader length (averaging), not a contrastive loss objective. No evidence contains the InfoNCE formula (e.g., -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,p_i)/τ))) or its semantic components (positive alignment, negative separation, temperature scaling). The formula_goal is not supported by any supplied evidence index."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:a09d705ca595577828a1be9bd7d43202dae849603ae317c332342a70b4c4ba1e"
+    },
+    {
+      "facet_id": "facet-3c6a3824f6a9641a",
+      "policy_id": "policy:facet-3c6a3824f6a9641a",
+      "alignment_id": "alignment:facet-3c6a3824f6a9641a",
+      "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "guarantee"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "guarantee",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence shows train_ebcar calls reranker with query and computes train_loss/len(train_loader), but does not demonstrate that the query embedding remains unchanged during training/inference or that it serves as a stable reference in a contrastive objective. No evidence of a contrastive objective or a fixed anchor property exists in the supplied evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:39610b6e174b64cfa6b7a0c3bd7be7b5ace66b0471c1311b8e5d4b713f874c6b"
+    },
+    {
+      "facet_id": "facet-c5e7c214b56a659f",
+      "policy_id": "policy:facet-c5e7c214b56a659f",
+      "alignment_id": "alignment:facet-c5e7c214b56a659f",
+      "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:9fa70803e02a6ba6d8631af0a673adc093b0360e86aa59ea45317370f4f721c6"
+    },
+    {
+      "facet_id": "facet-f6e629096087c520",
+      "policy_id": "policy:facet-f6e629096087c520",
+      "alignment_id": "alignment:facet-f6e629096087c520",
+      "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The semantic field describes three ConTEB datasets (MLDR, SQuAD, NarrativeQA) used for training EBCAR covering entity disambiguation, span matching, and narrative comprehension. None of the supplied evidence (indices 0-6) references MLDR, SQuAD, NarrativeQA, ConTEB, entity disambiguation, span matching, or narrative comprehension. All evidence pertains to internal mechanics of train_ebcar (loss computation, weight loading, branching, reranker calls, return value) with no mention of dataset names or their task categories."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:b35c133c88c79db002f7b15ab1894e78f294bc93c634f1ea3d77d5a46482d7bc"
+    },
+    {
+      "facet_id": "facet-9e754ab14c6fde20",
+      "policy_id": "policy:facet-9e754ab14c6fde20",
+      "alignment_id": "alignment:facet-9e754ab14c6fde20",
+      "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_span_ids": [
+            "span:src/train_ebcar.py:183:185"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-9e754ab14c6fde20",
+              "span_id": "span:src/train_ebcar.py:183:185",
+              "path": "src/train_ebcar.py",
+              "symbol": "sym:84125bba4b81722f",
+              "line_start": 183,
+              "line_end": 185,
+              "exact_excerpt": "            loss = reranker(\n                query, passage, label, document_id, passage_id, passage_text\n            )\n",
+              "excerpt_digest": "sha256:7ee7c0f6903140b363f237b74ae6de5c3344b38ed1bde853598ab572573a7ad0",
+              "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "bound_span_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:d549e0e2369d9d20d1254cf751200d8e882245b5e9af63c153202fc56f32923f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:b732cf2c776f2b2591249a801c12adf78d03e68cb60f747a06e5df13b668cb88"
+    },
+    {
+      "facet_id": "facet-b9735878c5548c4a",
+      "policy_id": "policy:facet-b9735878c5548c4a",
+      "alignment_id": "alignment:facet-b9735878c5548c4a",
+      "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to evaluate the embedding-based reranking formulation and overall framework."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:0f1162cf1764d2d558e61a4c0d627ba4da4b40a4555634c517943e16cc127c06"
+    },
+    {
+      "facet_id": "facet-68ed73e7a64fbbfd",
+      "policy_id": "policy:facet-68ed73e7a64fbbfd",
+      "alignment_id": "alignment:facet-68ed73e7a64fbbfd",
+      "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms a conditional branch on cfg.use_dedicated_attention and a run_name prefix 'hybrid_attention_', but does not show the actual architecture mechanism: embedding enrichment with document ID and position, or the Transformer encoder with shared full + dedicated masked hybrid attention. The evidence only shows a config flag check and a string concatenation for naming, not the architectural components described in the facet quote. The reranker call (evidence 3) shows a loss computation but does not reveal the internal architecture of the hybrid attention mechanism or embedding enrichment strategy. No evidence demonstrates the specific mechanism of 'shared full + dedicated masked' attention layers or document ID/position embedding enrichment within the Transformer encoder. The 'hy"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:d9f99ed6fa8feec4fcdb12bcd6ddc09ac20e99769dc78e3d5118eb2f7cc07ec9"
+    },
+    {
+      "facet_id": "facet-71df0ec224b91883",
+      "policy_id": "policy:facet-71df0ec224b91883",
+      "alignment_id": "alignment:facet-71df0ec224b91883",
+      "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:153ad5e2e5f669ada8cda874c758cdaed28506aa171c888d54be7e5e2c1e1179"
+    },
+    {
+      "facet_id": "facet-f55b63fbde1d45df",
+      "policy_id": "policy:facet-f55b63fbde1d45df",
+      "alignment_id": "alignment:facet-f55b63fbde1d45df",
+      "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied to verify the mechanism 'Inference procedure.' against repository content."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:58b06bf702f9742e239b01c408e7c9c8795d4013af81280f477555849a65162a"
+    },
+    {
+      "facet_id": "facet-c8bf8030283400b2",
+      "policy_id": "policy:facet-c8bf8030283400b2",
+      "alignment_id": "alignment:facet-c8bf8030283400b2",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence (evidence_index 0) shows train_ebcar calling a reranker with query, passage, label, document_id, passage_id, passage_text producing loss. This does not demonstrate avoidance of full-text processing or autoregressive generation, nor does it establish a latency reduction mechanism. The evidence is about a training-time reranker call, not about inference-time architectural choices to avoid full-text processing or autoregressive generation."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:2b17130cda6bcc1e5157ff0f1d8fedaa8d0644215d5fc9da3b41d4d4dc332d47"
+    },
+    {
+      "facet_id": "facet-e517f869034a38aa",
+      "policy_id": "policy:facet-e517f869034a38aa",
+      "alignment_id": "alignment:facet-e517f869034a38aa",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+          ],
+          "bound_span_ids": [
+            "span:src/train_ebcar.py:183:185"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-e517f869034a38aa",
+              "span_id": "span:src/train_ebcar.py:183:185",
+              "path": "src/train_ebcar.py",
+              "symbol": "sym:84125bba4b81722f",
+              "line_start": 183,
+              "line_end": 185,
+              "exact_excerpt": "            loss = reranker(\n                query, passage, label, document_id, passage_id, passage_text\n            )\n",
+              "excerpt_digest": "sha256:7ee7c0f6903140b363f237b74ae6de5c3344b38ed1bde853598ab572573a7ad0",
+              "file_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:9b42186820274aee"
+      ],
+      "bound_span_ids": [
+        "span:src/train_ebcar.py:183:185"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:763ec277f54dee57c74bfc60ff8f189c04ede3c21a0b2d5ba2f11d6ddf9f3977",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:f9862f39ac290345fef29a4298982f16d370d3d791e9dfd45eda1535fbfaf78b"
+    },
+    {
+      "facet_id": "facet-d27285ebc144a3fa",
+      "policy_id": "policy:facet-d27285ebc144a3fa",
+      "alignment_id": "alignment:facet-d27285ebc144a3fa",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The facet claims 'Design two complementary attention patterns that co-exist in each layer: global and document-local.' The supplied evidence only shows a boolean flag `cfg.use_dedicated_attention` used as a conditional branch in `train_ebcar.py` (lines 116-117) and a reranker call (lines 183-185). No evidence demonstrates the design of two complementary attention patterns (global and document-local) co-existing in each layer. The flag name 'dedicated_attention' and the run_name prefix 'hybrid_attention_' are suggestive but do not constitute evidence of the specific mechanism described in the facet. The evidence shows configuration branching, not the architectural design of dual attention patterns within a layer."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:dec7a9b9a1c3006ac89d3d17567d4361618aaefdc18a8f81c4c00bb3de13028e"
+    },
+    {
+      "facet_id": "facet-f49282e62c6e52fe",
+      "policy_id": "policy:facet-f49282e62c6e52fe",
+      "alignment_id": "alignment:facet-f49282e62c6e52fe",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The supplied evidence shows that document_id is passed as an argument to the reranker call in train_ebcar, but it does not demonstrate that document IDs are assigned using a relative, dynamic scheme rather than global corpus-level IDs. No evidence of the ID assignment strategy is present in the closed set."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:eda0a1ee9f609a95e44a82508017e7313c64171b077dd7aba472abb852a459dd"
+    },
+    {
+      "facet_id": "facet-c0d9a5e725c77367",
+      "policy_id": "policy:facet-c0d9a5e725c77367",
+      "alignment_id": "alignment:facet-c0d9a5e725c77367",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [
+            "cfg.use_dedicated_attention"
+          ],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:01dd95ade3520e25204b2ed0754d8e6baf83387efd518ac6619bd4c5167fe322"
+    },
+    {
+      "facet_id": "facet-ecd069d8ab3be38f",
+      "policy_id": "policy:facet-ecd069d8ab3be38f",
+      "alignment_id": "alignment:facet-ecd069d8ab3be38f",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The claim 'Train on ConTEB datasets that explicitly require cross-passage reasoning' is not supported by any supplied evidence. The evidence shows a reranker training loop with query/passage/label/document_id/passage_id/passage_text arguments and a cfg.use_dedicated_attention branch, but no mention of ConTEB datasets or cross-passage reasoning. The reranker call signature (query, passage, label, document_id, passage_id, passage_text) is consistent with a standard single-passage reranking task, not cross-passage reasoning over ConTEB datasets. No evidence index references ConTEB or cross-passage reasoning explicitly."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:d7aa4c393a70c774e73c4a85202530b2434e5f9c19f56981f446786646bc68cc"
+    }
+  ]
+}

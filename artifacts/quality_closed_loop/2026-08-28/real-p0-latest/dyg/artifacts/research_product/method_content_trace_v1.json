@@ -1,0 +1,889 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-1",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:c50979682f91b15efae35e94b29eca88ef830bec543599a6e21ce7f49646c9b6"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:25d50f18b0b235b08c1eb8964beeee02237ea643e7651d3c4f07eaa1c7a04fea"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:3",
+      "formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:7de44500b3c5c5169294409d0ba22dbb5afb8df1bbc12bbac99eee725d338a02"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-3",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-3",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:01e3c9512c21324539de6f605e7755a3b5aeb6a11304ffdfc6d1520fd74e9f1a"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-4",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-4",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:04ab69ed8a6f584d16e56bb7b5577bf9e7ca1b99112113d8ccc47e3551c3a708"
+    },
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:6",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-01-42774719",
+        "story:O-STAGE-01-06d7de36",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-COMPONENT-06-e711d58d",
+        "story:O-RATIONALE-CHECK-04-b41841c3",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-5",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S1:unit-5",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:6",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:ed73cc70db2d79fa3e7dd6ffcfa473cdc5b43d9697c39577cb272b9e1449e683"
+    },
+    {
+      "content_unit_id": "MA-S2:paragraph:MA-S2:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-02-780817ba"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S2:unit",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "paragraph_id": "paragraph:MA-S2:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered",
+      "owner": "writer",
+      "stop_reason": "",
+      "content_digest": "sha256:959e686b2b06755814b2cdb615118b47bd4983245ca646b5161135358ef65168"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:e714265c4ec84ddd68a3dfb27dbf800e3c8f05515b2633e65b820927a0eef033"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:74bd1f55b9be912830118200ad57ad661608a43f0be410f40905b9da44c9f0a7"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "slot:fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+        "slot:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "slot:fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "slot:fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:1c3bb19ff8224564dcbaaafc4faf740c5aac82cf73a5d99ce62fea4357637abd"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:2c3bf398a3d3f0f2f603147aada77cd8c230bf5628c2b8799a562e3413f787bc"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:75800259dfd2f99d440dd77a9d3c8045d36641e7ab6a3fecfe16d022cf65c7d6"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:6",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-3",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:6",
+      "formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:c3910e23c8f47320f89354a40bb5209d9933912163ef2b591129fc34daea8182"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:7",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-4",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:7",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:7e9020ae1a7db129a51e64ae2a4025089e8cb1b949f6138a34bc966b322bdcb3"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-1",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:3bcf83715921f6042029f660b43db1f85ad34586b9bd7105ff63ac08eda3741c"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:2",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "slot:fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:e7b87256dbfa84c956f044f0b1e25c88d6663b34b13a5127c5301a3ee49b9b7f"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:3",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+        "slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:2e76e00f819740ac8976b5e3ddbe3b7f444c6016838f67d6684c5b04f7843042"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:4",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-3",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:4",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:fce4ba3b923b5ec7e0d12d4e3799a014c319d8466c633a408eb9d415209ddbb7"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:5",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-STAGE-04-a3a3e8ab",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-RATIONALE-CHECK-01-106180a0",
+        "story:O-COMPONENT-08-48efa86a"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-4",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:5",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:1fe2be0bfe89c6add54d03111ef221c1f2daed0c56949e110553e7b43423ff2a"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:1",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S5:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+        "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:1",
+      "formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:ba607c1bca4d3aa1ff0bc8111ae5005d271731a1dc4f40ae237ce2506c291675"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:2",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S5:unit-2",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:2",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:0c6a1ee6e976ef9bb3d288f179c4fc3e313927ac63265b2a378d4facdf3abf6e"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:3",
+      "source_story_node_ids": [
+        "story:O-STAGE-03-d47a86f4",
+        "story:O-COMPONENT-07-c430eb84",
+        "story:O-RATIONALE-CHECK-03-117025ca"
+      ],
+      "source_facet_ids": [],
+      "source_authority_lane": "",
+      "field_bindings": [],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S5:unit-3",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:3",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-real-p0-20260828-dyg/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "blocked_representation",
+      "owner": "architect",
+      "stop_reason": "section_not_accepted",
+      "content_digest": "sha256:2ea176de14565d26b7fc0a2a13d2c28d4713bf0b23e03640c89c0f8e3b4eb69d"
+    }
+  ],
+  "summary": {
+    "rows": 22,
+    "sections": 5,
+    "planned_paragraphs": 22,
+    "rendered_paragraphs": 1,
+    "rendered_slots": 0,
+    "rendered_field_candidates": 0,
+    "planned_edges": 0,
+    "rendered_edges": 0,
+    "formula_obligations": 3,
+    "consumed_formula_packages": 0,
+    "duplicate_formula_consumers": 0,
+    "field_bound_rows": 0,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 1,
+    "rendered_invalid": 10,
+    "blocked_representation": 11,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0
+  },
+  "transaction_assessment_digest": "sha256:a74e0d39afb231c36def35d7b55c727de55a25f2bf2e386ffe0be20fc4c36264",
+  "content_digest": "sha256:b1a10c76a259c44f8ec6340f49de2cb4e1eb3557d4880546a731c610346dcf49"
+}

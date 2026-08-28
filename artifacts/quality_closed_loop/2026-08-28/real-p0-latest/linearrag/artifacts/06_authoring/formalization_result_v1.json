@@ -1,0 +1,1968 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "fact_digest": "sha256:55dd2fc387af295879ddad0d5bb7112a8b65dee03f45c3819f8f6fdf78317741",
+  "equation_digest": "sha256:63fa2af911cb2f27a3a1b37abb9a64cbc86388bf104bbe7f12160a9be8e2e195",
+  "symbols": [
+    {
+      "symbol": "LinearRAG.index",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "len(new_passage_hash_ids) > 0",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:0fd688d75587fdee"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "self.extract_nodes_and_edges",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "existing_passage_hash_id_to_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "existing_sentence_to_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:c7f177b9b6faf174"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.retrieve",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.graph_search_with_seed_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "question",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "question_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "seed_entity_indices",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "seed_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "seed_entity_hash_ids",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "seed_entity_scores",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(sorted_passage_hash_ids, sorted_passage_scores)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a4ce4bb9a18340e0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:113:113"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.run_ppr",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.graph.personalized_pagerank",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "vertices=range(len(self.node_name_to_vertex_idx))",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "damping=self.config.damping",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "directed=False",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "weights='weight'",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "reset=reset_prob",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "implementation='prpack'",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=pagerank_scores",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:03fc75d71d8ddf88"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "np.array",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:207:207"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "[pagerank_scores[idx] for idx in self.passage_node_indices]",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:207:207"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=doc_scores",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a17a75a82cd66c33"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:207:207"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "np.argsort",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "doc_scores",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=sorted_indices_in_doc_scores",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:7108e4b6e7b7cd17"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "(sorted_passage_hash_ids, sorted_passage_scores.tolist())",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:51ef3c86508be805"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:216:216"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.calculate_entity_scores",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:228:255"
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ]
+    },
+    {
+      "symbol": "breadth first frontier propagation",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:228:255"
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ]
+    },
+    {
+      "symbol": "current_entities",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:228:255"
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ]
+    },
+    {
+      "symbol": "new_entities",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:f9875bc367c55318"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:228:255"
+      ],
+      "conditions": [
+        "len(current_entities) > 0 and iteration < self.config.max_iterations"
+      ]
+    },
+    {
+      "symbol": "self.config.iteration_threshold",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:5fd9fa265cf0c895"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:231:231",
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:231:231"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "entity_score < self.config.iteration_threshold",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:4c456610e02e14ea"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:231:232",
+        "span:src/LinearRAG.py:231:231"
+      ],
+      "conditions": [
+        "entity_score < self.config.iteration_threshold"
+      ]
+    },
+    {
+      "symbol": "not sentence_hash_ids",
+      "meaning": "operand of filters_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:badb75cdf96b2712"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:234:235"
+      ],
+      "conditions": [
+        "not sentence_hash_ids"
+      ]
+    },
+    {
+      "symbol": "sentence_similarities",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:240:240"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=top_sentence_indices",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:77d22d104c8b72b4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:240:240"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "entity_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:247:247"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "top_sentence_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:247:247"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=next_entity_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:247:247"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG._precompute_sparse_matrices",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "torch.sparse_coo_tensor",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "torch.zeros((2, 0), dtype=torch.long)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "torch.zeros(0, dtype=torch.float32)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "(num_entities, num_sentences)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "device=self.device",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "result=self.entity_to_sentence_sparse",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f02ae40aac76caf6"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:169:172"
+      ],
+      "conditions": [
+        "len(entity_to_sentence_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "len(sentence_to_entity_indices) > 0",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:76f35264c213421d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:174:184"
+      ],
+      "conditions": [
+        "len(sentence_to_entity_indices) > 0"
+      ]
+    },
+    {
+      "symbol": "set",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:225:225"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=used_sentence_hash_ids",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:09d0f3daf900de68"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:225:225"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.calculate_passage_scores",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:501:501"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "entity_score * math.log(1 + entity_occurrences)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:501:501"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "denom",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:501:501"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=entity_bonus",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:501:501"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.config.passage_ratio",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:9619b0bcea45eb25"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:504:504"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.config.passage_ratio * dpr_passage_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:504:504"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "math.log(1 + total_entity_bonus)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:504:504"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=passage_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:504:504",
+        "span:src/LinearRAG.py:504:504"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.config.passage_node_weight",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:06177f1488930788"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:512:512"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passage_score",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:512:512"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=passage_weights[passage_node_idx]",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:512:512",
+        "span:src/LinearRAG.py:512:512"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.graph_search_with_seed_entities",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "entity_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passage_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=node_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "np.where",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "np.isnan(node_weights) | (node_weights < 0)",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "0",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "node_weights",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=reset_prob",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:f045f7e1cffab536"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "pagerank_scores",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:dd0a9ddfc6a9be92"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:198"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "sorted_passage_scores",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:05f1d9563a789f9b"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:209:209"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "sorted_passage_hash_ids",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-callback:req:MA-S2:u2-node:22058d49423db008"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:211:211"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "np.isnan(node_weights)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "node_weights < 0",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:e070b00a3b440e63"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:197:197"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "len",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:199:199"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.node_name_to_vertex_idx",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:01c6ad064f5eced1"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:199:199"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "range",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:199:199"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "len(self.node_name_to_vertex_idx)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:49bac78cd9a1bca2"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:199:199"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.vertex_idx_to_node_name[self.passage_node_indices[i]]",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:0f9d7f64b7df5ca8"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:212:212"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.run_ppr",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:configuration_and_branches-node:614d995720dc44df"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "v.attributes",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:92:92"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=self.vertex_idx_to_node_name",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:mechanism_overview-node:3205010b8ee0c3fe"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:92:92"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.entity_to_sentence_sparse._nnz",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:100:100"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=e2s_nnz",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:request:MA-S5:mechanism_overview-node:7cac307ad4fc54fb"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:100:100"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.add_edges",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:627:628"
+      ],
+      "conditions": [
+        "node_hash_id == neighbor_hash_id"
+      ]
+    },
+    {
+      "symbol": "node_hash_id == neighbor_hash_id",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:33bb33e3094a4e1a"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:627:628"
+      ],
+      "conditions": [
+        "node_hash_id == neighbor_hash_id"
+      ]
+    },
+    {
+      "symbol": "edges.append",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:629:629"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "(node_hash_id, neighbor_hash_id)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:263ba742b0ab7e8d"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:629:629"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.calculate_entity_scores_vectorized",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:340:343"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.sparse.mm",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:340:343"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.entity_to_sentence_sparse.t()",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:340:343"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "current_scores_2d",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:340:343"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=sentence_activation",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d5a4fe5c116989c4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:340:343"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.topk",
+      "meaning": "operand of selects_top_k",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:387:387"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "sentence_sims",
+      "meaning": "operand of selects_top_k",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:387:387"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "k",
+      "meaning": "operand of selects_top_k",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:387:387"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(top_k_values, top_k_local_indices)",
+      "meaning": "operand of selects_top_k",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f32782d99169744f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:387:387"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.cat",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:393:393"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "selected_sentence_indices_list",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:393:393"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=all_selected_sentences",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:f6f7a9ceff9d6601"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:393:393"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "sentence_activation",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:401:401"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=weighted_sentence_scores",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:401:401"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "next_entity_scores_np >= self.config.iteration_threshold",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:449:449",
+        "span:src/LinearRAG.py:449:449"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=active_indices",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:9c8688436df4ec17"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:449:449",
+        "span:src/LinearRAG.py:449:449"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "LinearRAG.__init__",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:22:22"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "retrieval_method",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:ba62837f68bc3498"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:22:22"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.device",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:26:26"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "'cuda' if torch.cuda.is_available() else 'cpu'",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:26:26"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=self.device",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:f9e8cfabb5781308"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:26:26"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.device",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:284d9efcbb766e44"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:26:26"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.llm_model",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:b387e01f00566b50"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:32:32"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.config.spacy_model",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:446323ab6d187e25"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:33:33",
+        "span:src/LinearRAG.py:33:33"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "SpacyNER",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:33:33",
+        "span:src/LinearRAG.py:33:33"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=self.spacy_ner",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:8c4df397341fe977"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:33:33",
+        "span:src/LinearRAG.py:33:33"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.spacy_ner",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:4e049410e097a74f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:33:33"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "ig.Graph",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:34:34"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=self.graph",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:b3cd83d0960a3ec4"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:34:34"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.graph",
+      "meaning": "operand of writes",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-4e554ef0-node:deb04e3f14c118e2"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:34:34"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.config.use_vectorized_retrieval",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:d108d8c9e2123323"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "logger.info",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "e2s_shape[0]",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:103:103"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "e2s_shape[1]",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:103:103"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "retrieval_results",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:be355e84d91d744a"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:129:129"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.sentence_to_entity_sparse._nnz",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=s2e_nnz",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:f75af726c03b6ee1"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:101:101"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.get_seed_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:63404e1903696c87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:111:111"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:63404e1903696c87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:111:111"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.dense_passage_retrieval",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:118:118"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(sorted_passage_indices, sorted_passage_scores)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-2-node:a2b2b7a23a7e3394"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:118:118"
+      ],
+      "conditions": []
+    }
+  ],
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+          "operand_role": "object",
+          "operand_value": "entity_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+          "operand_role": "object",
+          "operand_value": "top_sentence_score"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "next_entity_score",
+        "entity_score",
+        "top_sentence_score",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:202e72f9eb2b79c6600a1121f4beb24408d57584c43cd9690911f12f8bb3949e"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:51cf51d9aa4fe3951ccf83973a79e3bfebd38a8aa7d69d6cf6c72ab953818775",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+      "expression": "x / y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "operand_role": "object",
+          "operand_value": "entity_score * math.log(1 + entity_occurrences)"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+          "operand_role": "object",
+          "operand_value": "denom"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "entity_score * math.log(1 + entity_occurrences)",
+        "div",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:e72e4058d3d88cc9da7e5abac7544b8b83606b2ff6f71081e3ee84247720cb7e"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:d24407fe811d31d1b046a8407de28496c6ad53548c50c23e04f827085379b06c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+      "expression": "x + y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "operand_role": "object",
+          "operand_value": "self.config.passage_ratio * dpr_passage_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+          "operand_role": "object",
+          "operand_value": "math.log(1 + total_entity_bonus)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "passage_score",
+        "self.config.passage_ratio * dpr_passage_score",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:af30b2aa90ee91aa"
+      ],
+      "exact_source_digests": [
+        "sha256:5fc1673be0579c797137ab3e6f9d29149d1a1daff73a8446a6ff2c0aed9d397a"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:11dedba2bec7b346f669038f489e4c5eba082c79138e1309d0a1e5d0a548561b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+      "expression": "x * y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "operand_role": "object",
+          "operand_value": "passage_score"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+          "operand_role": "object",
+          "operand_value": "self.config.passage_node_weight"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "passage_score",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:607e7d9f2246f485"
+      ],
+      "exact_source_digests": [
+        "sha256:41fb5012cbbcbb34e51ea585ed0dc0eeb299e5f2fa1826b6f532856f58d14e1a"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:ca105005060fc5b0b089ac3f73bd48d0ba66bff4a61d513ccd1dda89f00ed461",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+      "expression": "x + y",
+      "prose_claim_id": "claim-callback:MA-S3:rq-1-fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+      "fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:1cbc39784dc04783b0c3bfc73dc35f0f5604866be6a4984d9c18293ee3b1af98",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+          "operand_role": "object",
+          "operand_value": "sentence_activation"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+          "operand_role": "object",
+          "operand_value": "sentence_similarities"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "weighted_sentence_scores",
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:69a7bf35454a9f0a93a4d017fef6c3bd4608c289a92f73334512d0ca90368391"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:a341ab6196426e023b7e825c2f07c738dcdb45bf9cd028803f121bfdaf6628f4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[0]"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[1]"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mult",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:67a843dc2a355f9a9c270c936bf962daa007a2719b7558593913a6126ea171ed"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:b7188c882934896ba2497a8f84970fca0e2d6feb46bb72f9d753354832779b6e",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "proof_obligations": [
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143.",
+      "assumptions": [],
+      "conclusion": "x * y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143"
+      ],
+      "derivation_steps": [
+        "Bind x to entity_score from fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143.",
+        "Bind y to top_sentence_score from fact-O-METHOD-MAINLINE-01-79899e6c-node:a58232a7f5b83143."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:76d55844143c634f2e1869ea473e7312000147fd64bbc24607d3620a14482640"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7.",
+      "assumptions": [],
+      "conclusion": "x / y",
+      "supporting_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7"
+      ],
+      "derivation_steps": [
+        "Bind x to entity_score * math.log(1 + entity_occurrences) from fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7.",
+        "Bind y to denom from fact-callback:MA-S3:rq-1-node:c7e65a2f458c97d7."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:c44d89e42a23ac0fd07f29a1514b4c4967a4069c64f48ab5e609dfef0fbf6bec"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c"
+      ],
+      "derivation_steps": [
+        "Bind x to self.config.passage_ratio * dpr_passage_score from fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c.",
+        "Bind y to math.log(1 + total_entity_bonus) from fact-callback:MA-S3:rq-1-node:1bb1479dce3ced3c."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:22a99a433ae87b79206acfa8fcbff4a8004c905e39679625888fd70f92e5d249"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a.",
+      "assumptions": [],
+      "conclusion": "x * y",
+      "supporting_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a"
+      ],
+      "derivation_steps": [
+        "Bind x to passage_score from fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a.",
+        "Bind y to self.config.passage_node_weight from fact-callback:MA-S3:rq-1-node:4e6d73fc89668e5a."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:acc8c704f496bed118c610e918efc8fecad6c7e48d0e2d5c4a93bf9f17e5f388"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-callback:MA-S3:rq-1-node:6280d74e5611f15d.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-callback:MA-S3:rq-1-node:6280d74e5611f15d"
+      ],
+      "derivation_steps": [
+        "Bind x to entity_weights from fact-callback:MA-S3:rq-1-node:6280d74e5611f15d.",
+        "Bind y to passage_weights from fact-callback:MA-S3:rq-1-node:6280d74e5611f15d."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:c2c10a599f82e0f08036b7370bf82fb6a177a0e204448c3811c695ac7e882020"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0.",
+      "assumptions": [],
+      "conclusion": "x * y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0"
+      ],
+      "derivation_steps": [
+        "Bind x to sentence_activation from fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0.",
+        "Bind y to sentence_similarities from fact-O-STAGE-02-93c16851-node:0cddae22acc84ac0."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:5d963d62ad56010eb8639e75acc560d00ba41ecc2392af3252720b721ce690bd"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e.",
+      "assumptions": [],
+      "conclusion": "x * y",
+      "supporting_fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e"
+      ],
+      "derivation_steps": [
+        "Bind x to e2s_shape[0] from fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e.",
+        "Bind y to e2s_shape[1] from fact-O-COMPONENT-01-bd3b9454-node:adcbcf702705908e."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:b929e328c8a85f68aee515032d4896d08fc8bb9327022f178bba31fb9f18fc6d"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "risk:missing_assumptions",
+      "kind": "missing_assumptions",
+      "message": "A formal expression is available, but no independent assumptions were supplied.",
+      "fact_ids": [],
+      "blocking": false
+    }
+  ],
+  "proposal_items": [],
+  "content_digest": "sha256:2da82ee951911ea6e2244334d1a2435b50378678a586dbf005ac697c1320c90a"
+}
