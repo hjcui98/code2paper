@@ -249,6 +249,11 @@ def _check_publication_quality_contract(state: AgenticRunState) -> ReadinessChec
     if writer_result:
         for key in (
             "candidate_available",
+            "candidate_completion_status",
+            "candidate_complete",
+            "candidate_blocking_reasons",
+            "verified_complete",
+            "verified_blocking_reasons",
             "candidate_validation_status",
             "verified_validation_status",
             "publication_ready",

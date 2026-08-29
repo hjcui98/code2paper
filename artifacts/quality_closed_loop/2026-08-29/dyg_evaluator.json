@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "run_root": "/tmp/c2p-s5-qwen38-8006-20260829-dyg-rerun",
+  "coverage": {
+    "story": {
+      "planned": 23,
+      "rendered": 1,
+      "recall": 0.043478
+    },
+    "paragraph": {
+      "planned": 22,
+      "rendered": 1,
+      "recall": 0.045455
+    },
+    "slot": {
+      "planned": 33,
+      "rendered": 0,
+      "recall": 0.0
+    },
+    "edge": {
+      "planned": 0,
+      "rendered": 0,
+      "recall": 1.0
+    },
+    "formula": {
+      "planned": 3,
+      "rendered": 0,
+      "accepted_packages": 0,
+      "consumed_packages": 0,
+      "recall": 0.0
+    }
+  },
+  "formula_renderability": {
+    "accepted_packages": 0,
+    "consumed_packages": 0,
+    "renderable_packages": 0,
+    "unrenderable_packages": 0,
+    "route_ambiguous_packages": 0
+  },
+  "candidate_surface_cleanliness": {
+    "sentence_count": 60,
+    "internal_audit_term_count": 0,
+    "sentences_by_surface_mode": {},
+    "authority_status": "passed",
+    "violations": []
+  },
+  "candidate_authority_validation": {
+    "status": "passed",
+    "violations": [],
+    "warnings": []
+  },
+  "verified_leakage": {
+    "count": 0,
+    "passed": true
+  },
+  "observations": {
+    "required_formula_consumer_sections": 3,
+    "formalizer_invoked_sections": 3,
+    "formalizer_zero_call_required_sections": 0,
+    "formula_route_ambiguous_packages": 0,
+    "accepted_formula_packages": 0,
+    "consumed_formula_packages": 0,
+    "paragraph_declared_target_count": 58,
+    "paragraph_exact_witness_count": 0,
+    "empty_witness_transaction_count": 0,
+    "candidate_internal_audit_term_count": 0,
+    "candidate_sentences_by_surface_mode": {},
+    "derivation_records_by_kind": {},
+    "formula_renderable_packages": 0,
+    "formula_unrenderable_packages": 0,
+    "verified_leakage_count": 0
+  },
+  "manifest": {
+    "provided": false,
+    "passed": true,
+    "failures": []
+  },
+  "passed": true
+}

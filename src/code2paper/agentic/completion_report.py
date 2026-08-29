@@ -126,6 +126,11 @@ def _check_method_usability(state: AgenticRunState) -> CompletionCheck:
                 f"{key}={writer_result.get(key)}"
                 for key in (
                     "candidate_generation_status",
+                    "candidate_completion_status",
+                    "candidate_complete",
+                    "candidate_blocking_reasons",
+                    "verified_complete",
+                    "verified_blocking_reasons",
                     "candidate_validation_status",
                     "verified_validation_status",
                     "publication_ready",
@@ -137,7 +142,7 @@ def _check_method_usability(state: AgenticRunState) -> CompletionCheck:
                 passed=passed,
                 deliverable="method_usability",
                 message=(
-                    "Editable Method candidate is durable and published."
+                    "Editable Method candidate is durable; Candidate and Verified completion are reported independently."
                     if passed
                     else "No durable Method candidate was generated: "
                     + ", ".join(detail or ["candidate_available=false"])

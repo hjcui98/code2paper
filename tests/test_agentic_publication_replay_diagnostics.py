@@ -43,6 +43,17 @@ def test_diagnostics_extracts_comparable_replay_record(tmp_path: Path) -> None:
     _write_json(method_output(tmp_path, "publication_rewrite_transitions_v1"), {
         "transitions": [{"status": "applied"}, {"status": "rejected"}],
     })
+    _write_json(method_output(tmp_path, "candidate_authority_validation_v1"), {
+        "schema_version": "1.0",
+        "candidate_text_digest": "sha256:candidate",
+        "validation": {
+            "status": "passed",
+            "violations": [],
+            "warnings": [],
+            "internal_audit_term_count": 0,
+        },
+        "content_digest": "sha256:wrapper",
+    })
 
     result = diagnose_publication_replay(tmp_path)
 
@@ -54,3 +65,4 @@ def test_diagnostics_extracts_comparable_replay_record(tmp_path: Path) -> None:
     }
     assert result["transactions"]["rewrite_applied"] == 1
     assert result["sections"][0]["writer_text"].endswith("Candidate.")
+    assert result["candidate_surface"]["authority_status"] == "passed"

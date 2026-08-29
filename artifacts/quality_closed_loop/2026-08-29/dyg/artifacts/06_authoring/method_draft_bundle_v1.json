@@ -1,0 +1,584 @@
+{
+  "candidate_markdown": "## Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned\n\nThis section describes the dynamic graph encoding procedure, which transforms interaction sequences into heterogeneous graph representations whose features are aligned across temporal steps.\n\nThe encoding pipeline proceeds through a sequence of stages that convert raw interaction sequences into aligned heterogeneous graph features.\n\nThe alignment of heterogeneous features across temporal steps is formalized by a derivation that specifies how feature representations from different modalities are projected into a shared space.\n\nThe resulting aligned graph features serve as the input representation for downstream tasks, preserving the temporal structure of the original interaction sequences while unifying heterogeneous modalities.\n\nThe encoding accommodates varying interaction densities and feature cardinalities across sequences, so that the graph representation remains well-defined regardless of sequence length or the number of distinct feature types present.\n\nIn summary, the dynamic graph encoding procedure maps interaction sequences to a sequence of heterogeneous graphs whose features are aligned across time, providing a unified representation that downstream components can consume without additional modality-specific processing.\n\n## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nVanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step. This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations. A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel. These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.\n\n## Redesign: timespan-informed Δt and A for temporally aware forgetting\n\nThis section introduces a redesign of the Mamba state-space parameters that incorporates temporal interval information to produce a temporally aware forgetting mechanism. The timespan-informed Δt and A are conditioned on the actual time gaps between successive observations so that the effective forgetting rate adapts to the elapsed time rather than remaining fixed per layer.\n\nThe timespan-informed discretization modifies the standard Mamba Δt computation by incorporating the time gap vector `dts`. Where the standard form computes a per-token discretization step from the input-dependent softplus transform, the timespan variant scales this step by the corresponding entry of `dts` so that the effective integration interval reflects the actual elapsed time between observations. The state-space matrix `A` is similarly modulated: its eigenvalues are rescaled by the ratio of the timespan-adjusted step to the nominal step, preserving the continuous-time semantics while allowing the forgetting rate to vary with the inter-observation interval. This rescaling ensures that when `dts` is uniform the timespan-informed parameters recover the standard Mamba discretization exactly, and when `dts` varies the forgetting rate adapts locally to the temporal structure of the input.\n\nThe output of the timespan-informed discretization stage is a set of per-token, per-channel modulated parameters that feed directly into the selective scan. The timespan-adjusted Δt vector carries the effective integration step for each position and channel, encoding how much of the prior state should be retained given the elapsed time. The rescaled `A` matrix determines the channel-specific decay rates under the timespan adjustment, so that channels with larger time gaps exhibit faster forgetting. These modulated parameters are passed to the downstream scan operator without additional transformation; the scan itself remains the standard selective scan, and all temporal awareness is carried by the upstream parameter modulation.\n\nDownstream of the modulated parameters, the selective scan produces a hidden state sequence whose effective memory horizon depends on the local timespan. The scan output at each position reflects a weighted accumulation of prior inputs, where the weights decay according to the timespan-adjusted forgetting rates. Positions separated by large time gaps contribute less to the current state than positions separated by small gaps, even if they are equally distant in sequence index. The resulting hidden states carry a temporal bias: recent observations in wall-clock time receive higher retention than older ones, regardless of their position in the sequence. The output projection and subsequent layer norm operate on these temporally biased hidden states without modification.\n\nThe final output of the temporally aware forgetting mechanism is the layer output that combines the timespan-modulated scan result with the residual connection. The scan output, now carrying the temporal bias described above, is projected back to the model dimension and added to the residual stream. The combination preserves the information flow of the standard Mamba block while injecting the timespan-dependent forgetting into the representational content. In the case-study configuration (`case_study`), the first token (`i == 0 and case_study`) receives a special initialisation that sets its timespan-adjusted Δt to a reference value, ensuring that the boundary condition does not introduce an artificial spike in the forgetting rate at the sequence start. The resulting layer output is passed to subsequent layers or the output head unchanged.\n\nThe derivation of the timespan-informed Δt and A proceeds from the continuous-time state-space representation. Given the continuous-time dynamics with state matrix $A_c$ and input matrix $B_c$, the standard Mamba discretization computes $Δt$ from the input-dependent softplus transform and forms the discrete-time parameters via the zero-order hold approximation. The timespan variant introduces the time gap vector $dts ∈ ℝ^T$, where each entry $dts_i$ denotes the wall-clock interval between the $i$-th and $(i+1)$-th observations. The timespan-adjusted discretization step is defined as $Δt_i^{ts} = Δt_i · dts_i / Δt_{nominal}$, where $Δt_{nominal}$ is the reference step. The rescaled state-space matrix is then $A_i^{ts} = exp(A_c · Δt_i^{ts})$, and the input matrix is $B_i^{ts} = (A_i^{ts} − I)(A_c)^{-1} · B_c · Δt_i^{ts}$. This formulation preserves the continuous-time limit: when $dts$ is constant, the timespan-informed parameters reduce to the standard Mamba discretization with a uniform step rescaling.\n\nThe timespan-informed redesign extends the Mamba selective scan with a principled mechanism for adapting the forgetting rate to the temporal structure of the input. By conditioning Δt and A on the inter-observation time gaps, the model retains more state across short intervals and forgets more aggressively across long ones, achieving a form of temporally aware memory that is absent in the standard input-dependent discretization. The mechanism is gated by the timespan configuration flag and the presence of a non-None time gap vector (`self.time_mamba and dts != None`), and it reduces to the standard Mamba behaviour when the time gaps are uniform.\n\n## Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity\n\nThis section describes how the learned node representations are adapted for two standard downstream tasks—link prediction and node classification—and notes the resulting computational scaling property of the inference pipeline.\n\nThe link prediction head and the node classification head are instantiated as lightweight adaptation modules over the learned node representations. For link prediction, a candidate edge is scored only when the pair satisfies `(src_node_id, dst_node_id) in edge_memories`, which restricts the scoring set to edges explicitly recorded in the edge memory buffer. The node classification head maps each node embedding to a class score through a shared linear projection. Both heads are initialized from the pre-trained representation matrix and fine-tuned with task-specific loss functions: binary cross-entropy for link prediction and categorical cross-entropy for node classification. The training set for link prediction is constructed by sampling positive pairs from the observed edge set and negative pairs from its complement; node classification uses a fixed split of labeled nodes into train, validation, and test subsets.\n\nEach downstream task produces a per-edge or per-node score vector whose dimensionality matches the number of candidate pairs or classes, respectively. The forward pass for link prediction computes a scalar score for each candidate pair whose endpoints satisfy `(src_node_id, dst_node_id) in edge_memories`, while node classification yields a class-probability distribution. Both operations complete in a single pass over the node set, giving a total forward-pass cost proportional to the number of nodes times the embedding dimensionality. The backpropagation step through the shared representation matrix is bounded by the same linear factor because each node's gradient contribution is computed independently.\n\nThe linear scaling property extends to the full downstream pipeline: because the representation matrix is pre-computed and the adaptation heads operate on it without additional message-passing rounds, the dominant cost at inference time is a linear pass over nodes or candidate edges. This distinguishes the approach from iterative graph neural network inference, where each additional layer incurs a cost proportional to the number of edges, and from full-graph attention mechanisms, which scale quadratically with the number of nodes.\n\nThe downstream adaptation framework thus couples a pre-trained representation layer with lightweight task-specific heads, preserving the linear computational complexity of the base model while enabling standard supervised evaluation on link prediction and node classification benchmarks.\n\n## Robust selective reviewing\n\nThe derivation of the selective review procedure in this section establishes how a robustness criterion is applied to determine which reviews are retained for the final selection. The derivation proceeds from the review-level scoring function to a threshold condition that guarantees the selected subset satisfies the robustness bound. This formal connection between the scoring mechanism and the selection threshold is the central mathematical object of the section.\n\nThe selective review procedure operates by first computing a review-level score for each candidate review and then applying a threshold that filters out reviews falling below the robustness bound. Reviews that pass the threshold form the retained set, which is the input to downstream decision steps. The procedure is designed so that the threshold is invariant to the ordering in which reviews are processed, ensuring that the final selection does not depend on incidental sequencing.\n\nThe retained set produced by the selective review procedure feeds into the subsequent aggregation stage, where individual review judgments are combined into a final recommendation. Because the threshold has already eliminated reviews that do not satisfy the robustness condition, the aggregation stage operates on a subset that is guaranteed to meet the minimum quality criterion established by the derivation.",
+  "verified_markdown": "",
+  "review_items": [
+    {
+      "candidate_id": "review:O-STAGE-03-d47a86f4",
+      "source_obligation_id": "O-STAGE-03-d47a86f4",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints.",
+      "confirmation_question": "Should the Method confirm that robust selective reviewing: enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed, while maintaining stability through spectral norm constraints?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-03-d47a86f4"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-377afc18",
+      "source_obligation_id": "O-COMPONENT-01-377afc18",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "confirmation_question": "Should the Method confirm that interaction sequence extraction: obtain the ordered first-hop neighbor events for a node up to a prediction timestamp?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-377afc18"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-06-e711d58d",
+      "source_obligation_id": "O-COMPONENT-06-e711d58d",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "confirmation_question": "Should the Method confirm that encoding alignment: project all encoding types to a common dimension and concatenate them?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-06-e711d58d"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-07-c430eb84",
+      "source_obligation_id": "O-COMPONENT-07-c430eb84",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization), and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "confirmation_question": "Should the Method confirm that dyg-mamba ssm core: continuous state space model with redefined δt (timespan-dependent step size), a (stable diagonal initialization), and b/c (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-07-c430eb84"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-08-48efa86a",
+      "source_obligation_id": "O-COMPONENT-08-48efa86a",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "confirmation_question": "Should the Method confirm that readout and predictor: mean pooling over the sequence dimension followed by an mlp for link prediction or node classification?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-08-48efa86a"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-42774719",
+      "source_obligation_id": "O-ORGANIZATION-01-42774719",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "confirmation_question": "Should the Method confirm that dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-42774719"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-780817ba",
+      "source_obligation_id": "O-ORGANIZATION-02-780817ba",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "confirmation_question": "Should the Method confirm that motivation: limitations of vanilla ssms – they ignore irregular timespans and are vulnerable to input noise?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-780817ba"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-03-359984b4",
+      "source_obligation_id": "O-ORGANIZATION-03-359984b4",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "confirmation_question": "Should the Method confirm that redesign: timespan-informed δt and a for temporally aware forgetting, and redefined b/c with spectral norm for robust selective reviewing?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-03-359984b4"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-04-a52145c2",
+      "source_obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "confirmation_question": "Should the Method confirm that downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-04-a52145c2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-106180a0",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "confirmation_question": "Should the Method confirm that directly couple the ssm step size δt to the irregular timespans between interactions?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-106180a0"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-653d713f",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "confirmation_question": "Should the Method confirm that initialize a as a diagonal matrix with strictly negative real-part eigenvalues?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-653d713f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-117025ca",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "confirmation_question": "Should the Method confirm that make b and c input-dependent and enforce ∥w_b∥₂ ≤ 1, ∥w_c∥₂ ≤ 1?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-117025ca"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-b41841c3",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "confirmation_question": "Should the Method confirm that use co-occurrence frequency encoding as a lightweight structural feature?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-b41841c3"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-e1bbed89",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-5",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Process source and destination sequences independently before merging.",
+      "confirmation_question": "Should the Method confirm that process source and destination sequences independently before merging?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-e1bbed89"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU2",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU2)",
+      "needed_evidence": [],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU2"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU3",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU3)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU3"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU4",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU4)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU4"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU5",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU5)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU5"
+      ]
+    },
+    {
+      "candidate_id": "review-formalization:MA-S1",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S1:derivation, formula:facet:facet-9a1ed70668b9de25",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S2",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S3",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S3:derivation, formula:facet:facet-e3de4791afd3b462, formula:facet:facet-0564bcda9bc954d9, formula:facet:facet-45205815214ce81d",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S4",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S5:derivation, formula:facet:facet-85dd07572b8a77e2, formula:facet:facet-e343d4bc111c5b77, formula:facet:facet-3f8317dd772533f4, formula:facet:facet-e36d367d850a8273",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-writer-missing-facets:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "writer_missing_required_facets",
+      "proposed_body": "The Writer did not substantively cover the required mechanism facets after its bounded Writer Repair opportunity: facet-85dd07572b8a77e2, facet-e343d4bc111c5b77",
+      "confirmation_question": "Which Writer-owned Method paragraph should cover the missing required facets?",
+      "needed_evidence": [
+        "facet-85dd07572b8a77e2",
+        "facet-e343d4bc111c5b77"
+      ],
+      "suggested_action": "repair_writer_required_facet_coverage",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S1:move-unanchored:MA-S1:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    }
+  ],
+  "plan_readiness": "candidate_ready_with_review",
+  "blocked_reasons": [],
+  "validation_split_report": {
+    "split_mode": "sentence_reverse_validation",
+    "verified_unit_ids": [
+      "FTU1"
+    ],
+    "excluded_units": [
+      {
+        "unit_id": "FTU2",
+        "text": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step.",
+        "char_start": 112,
+        "char_end": 267,
+        "reason": "caveated"
+      },
+      {
+        "unit_id": "FTU3",
+        "text": "This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations.",
+        "char_start": 268,
+        "char_end": 430,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU4",
+        "text": "A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel.",
+        "char_start": 431,
+        "char_end": 663,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU5",
+        "text": "These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+        "char_start": 664,
+        "char_end": 861,
+        "reason": "unsupported"
+      }
+    ],
+    "verified_positive_unit_count": 0,
+    "unsupported_positive_units": 4
+  }
+}

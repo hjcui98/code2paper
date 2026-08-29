@@ -45,6 +45,9 @@ from code2paper.llm.response_schemas import (
     PublicationMethodSectionOutputV1,
     json_schema_for,
 )
+from code2paper.agentic.publication_transaction_contract import (
+    validate_paragraph_binding_response,
+)
 from code2paper.schemas import LLMConfig, LLMProvider
 
 
@@ -2104,6 +2107,188 @@ class CustomCallIdPrefixTests(unittest.TestCase):
 
 
 class ParagraphTransactionTests(unittest.TestCase):
+    def _anchored_field_section(self) -> tuple[WriterSectionInput, dict[str, Any]]:
+        plan_row = {
+            "paragraph_id": "MA-S1:p1",
+            "required_field_candidate_ids": ["field:op"],
+            "witness_contract": {
+                "targets": [{
+                    "target_kind": "field",
+                    "target_id": "field:op",
+                    "semantic_atom": "normalize inputs",
+                    "required_conditions": ["when score exceeds threshold"],
+                    "allowed_exact_excerpts": ["normalize inputs"],
+                }]
+            },
+        }
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            publication_mode=True,
+            argument_graph={"paragraphs": [plan_row]},
+            prompt_payload={
+                "writer_view": {
+                    "mechanism_authoring_packet": {"facets": []}
+                }
+            },
+        )
+        return section, plan_row
+
+    def test_metadata_binder_closes_frozen_paraphrase(self) -> None:
+        section, _plan_row = self._anchored_field_section()
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown=(
+                    "The method performs normalize inputs when score exceeds "
+                    "threshold."
+                ),
+                rendered_field_candidate_ids=["field:op"],
+            )],
+        )
+        binder_json = json.dumps({
+            "paragraph_id": "MA-S1:p1",
+            "witnesses": [{
+                "witness_kind": "field",
+                "target_id": "field:op",
+                "exact_text": (
+                    "The method performs normalize inputs when score exceeds "
+                    "threshold."
+                ),
+            }],
+            "unbound_target_ids": [],
+        })
+        caller = _RecordingCaller([_response(text=binder_json, completion_tokens=3)])
+
+        normalized, failures = _normalize_publication_paragraph_transaction(
+            output,
+            section=section,
+            require_transactions=True,
+            binder_caller=caller,
+            binder_base_config=_base_config(),
+        )
+
+        self.assertEqual(failures, [])
+        self.assertEqual(len(caller.calls), 1)
+        self.assertEqual(caller.calls[0][0].role, "semantic_verifier")
+        self.assertEqual(caller.calls[0][0].temperature, 0.0)
+        self.assertEqual(
+            normalized.paragraphs[0].witnesses[0].exact_text,
+            "The method performs normalize inputs when score exceeds threshold.",
+        )
+
+    def test_metadata_binder_representation_retry_is_bounded(self) -> None:
+        section, _plan_row = self._anchored_field_section()
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown=(
+                    "The method performs normalize inputs when score exceeds "
+                    "threshold."
+                ),
+                rendered_field_candidate_ids=["field:op"],
+            )],
+        )
+        invalid_json = json.dumps({
+            "paragraph_id": "MA-S1:p1",
+            "witnesses": [{
+                "witness_kind": "field",
+                "target_id": "field:op",
+                "exact_text": "not present",
+            }],
+            "unbound_target_ids": [],
+        })
+        valid_json = json.dumps({
+            "paragraph_id": "MA-S1:p1",
+            "witnesses": [{
+                "witness_kind": "field",
+                "target_id": "field:op",
+                "exact_text": (
+                    "The method performs normalize inputs when score exceeds "
+                    "threshold."
+                ),
+            }],
+            "unbound_target_ids": [],
+        })
+        caller = _RecordingCaller([
+            _response(text=invalid_json, completion_tokens=3),
+            _response(text=valid_json, completion_tokens=3),
+        ])
+
+        normalized, failures = _normalize_publication_paragraph_transaction(
+            output,
+            section=section,
+            require_transactions=True,
+            binder_caller=caller,
+            binder_base_config=_base_config(),
+        )
+
+        self.assertEqual(failures, [])
+        self.assertEqual(len(caller.calls), 2)
+        self.assertEqual(len(normalized.paragraphs[0].witnesses), 1)
+
+    def test_binder_accepts_single_prefix_unbound_wire_form(self) -> None:
+        transaction = PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown="The method uses the declared operation.",
+            rendered_slot_ids=["slot:fact:operation"],
+        )
+        plan_row = {
+            "paragraph_id": "MA-S1:p1",
+            "witness_contract": {
+                "targets": [{
+                    "target_kind": "slot",
+                    "target_id": "slot:fact:operation",
+                    "semantic_atom": "declared operation",
+                }],
+            },
+        }
+        valid, errors, unbound = validate_paragraph_binding_response(
+            {
+                "paragraph_id": "MA-S1:p1",
+                "witnesses": [],
+                "unbound_target_ids": ["slot:fact:operation"],
+            },
+            transaction,
+            plan_row=plan_row,
+        )
+
+        self.assertEqual(valid, ())
+        self.assertEqual(errors, ())
+        self.assertEqual(unbound, ("slot:fact:operation",))
+
+    def test_binder_accepts_relation_id_for_edge_unbound_wire_form(self) -> None:
+        transaction = PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown="The method follows the declared relation.",
+            rendered_edge_ids=["rel:relation"],
+        )
+        plan_row = {
+            "paragraph_id": "MA-S1:p1",
+            "witness_contract": {
+                "targets": [{
+                    "target_kind": "edge",
+                    "target_id": "rel:relation",
+                    "semantic_atom": "declared relation",
+                }],
+            },
+        }
+        valid, errors, unbound = validate_paragraph_binding_response(
+            {
+                "paragraph_id": "MA-S1:p1",
+                "witnesses": [],
+                "unbound_target_ids": ["rel:relation"],
+            },
+            transaction,
+            plan_row=plan_row,
+        )
+
+        self.assertEqual(valid, ())
+        self.assertEqual(errors, ())
+        self.assertEqual(unbound, ("rel:relation",))
+
     def test_transaction_assembles_one_heading_in_plan_order(self) -> None:
         section = WriterSectionInput(
             section_id="MA-S1",

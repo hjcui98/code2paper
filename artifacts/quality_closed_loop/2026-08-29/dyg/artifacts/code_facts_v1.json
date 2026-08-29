@@ -1,0 +1,1804 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "evidence_packet_digest": "sha256:97076d1b708d2a8bb60673ca8bbcbe5e3f4a18b943ba8ff4d57e067ec6281d27",
+  "facts": [
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "calls",
+      "object": [
+        "self.pad_sequences",
+        "node_ids=src_node_ids",
+        "node_interact_times=node_interact_times",
+        "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+        "nodes_edge_ids_list=src_nodes_edge_ids_list",
+        "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+        "patch_size=self.patch_size",
+        "max_input_sequence_length=self.max_input_sequence_length",
+        "result=(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:130:132"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "CALL",
+        "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+        "self.pad_sequences",
+        "node_ids=src_node_ids",
+        "node_interact_times=node_interact_times",
+        "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+        "nodes_edge_ids_list=src_nodes_edge_ids_list",
+        "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+        "patch_size=self.patch_size",
+        "max_input_sequence_length=self.max_input_sequence_length",
+        "attr:pad_sequences"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c8c70dc09e9ec918c0849a43be151221f2227cf6ff27c58bc864dab94435b6bb",
+      "canonical_identity": "sha256:e68ec215ad332aebb39329e66e3f39b3a618797e2315da36f934e4b57ef9afd0",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "calls",
+      "object": [
+        "self.pad_sequences",
+        "node_ids=dst_node_ids",
+        "node_interact_times=node_interact_times",
+        "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+        "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+        "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+        "patch_size=self.patch_size",
+        "max_input_sequence_length=self.max_input_sequence_length",
+        "result=(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:138:140"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "CALL",
+        "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+        "self.pad_sequences",
+        "node_ids=dst_node_ids",
+        "node_interact_times=node_interact_times",
+        "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+        "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+        "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+        "patch_size=self.patch_size",
+        "max_input_sequence_length=self.max_input_sequence_length",
+        "attr:pad_sequences"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:add7d800c0c86271885fdd457fbc3e75f77740bf8886cfaee9dbcd9dbff116fa",
+      "canonical_identity": "sha256:e0c61de159f46f60ebdeed37752a3b33d8135637eb93ee703f0e331373abb88a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "stacks",
+      "object": [
+        "torch.stack",
+        "dst_padded_data",
+        "dim=2",
+        "result=dst_padded_data"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "STACK",
+        "dst_padded_data",
+        "torch.stack",
+        "dim=2",
+        "qualified:torch.stack"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:b54699af8f8933fa0fccc6cbeeaba6fe6c06d4e60cf242a005adf57412416316",
+      "canonical_identity": "sha256:ebd6c42efc98c91f424e2bb42ffb75073ca20092daf03ef59975d7c7c0b4aae0",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "self.num_channels",
+        "self.channel_embedding_dim"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:214:214"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "COMPUTE",
+        "self.num_channels",
+        "self.channel_embedding_dim",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:0fce64a2d1f2038bffb42af2d9afe0ee0d37be85e5fc25048a9a38fd987912af",
+      "canonical_identity": "sha256:89e4b71fb31120e6d932b554931311b42bdaedeec66c56a38933a916e58d9012",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "normalizes",
+      "object": [
+        "F.softmax",
+        "src_router_logits",
+        "dim=1",
+        "dtype=torch.float",
+        "result=src_routing_weights"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:240:240"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "NORMALIZE",
+        "src_routing_weights",
+        "F.softmax",
+        "src_router_logits",
+        "dim=1",
+        "dtype=torch.float",
+        "method:softmax"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:da395512a5359a49989075bcdaadb8ffa635d24bb465ef5b7a820d7372b4feaa",
+      "canonical_identity": "sha256:f92472fb511fb31e44413e0a3297f0f38eb6074763e95a7816840eb16373271d",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "normalizes",
+      "object": [
+        "F.softmax",
+        "dst_router_logits",
+        "dim=1",
+        "dtype=torch.float",
+        "result=dst_routing_weights"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:241:241"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "NORMALIZE",
+        "dst_routing_weights",
+        "F.softmax",
+        "dst_router_logits",
+        "dim=1",
+        "dtype=torch.float",
+        "method:softmax"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:ff3dcaaceb630bc5232acf17ceb3601066944b5ac7871580ba3859c1e33f954e",
+      "canonical_identity": "sha256:e41721e155ccbe5610e5403eeb30b2f806d7ac08a6912e72c784a76eb808095b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "selects_top_k",
+      "object": [
+        "torch.topk",
+        "dst_routing_weights",
+        "min(self.top_k, dst_seq_len)",
+        "dim=1",
+        "result=(dst_routing_weights, dst_selected_embeddings)"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:244:244"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "TOPK",
+        "(dst_routing_weights, dst_selected_embeddings)",
+        "torch.topk",
+        "dst_routing_weights",
+        "min(self.top_k, dst_seq_len)",
+        "dim=1",
+        "qualified:torch.topk"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:071c00629435e452cf3d87240212b69f22d2208344dfa293bd1c238d3bd279af",
+      "canonical_identity": "sha256:d769ea9031aedbfa5f5b2e5f008065217d5e4934bb03d335340e5c4752b32a52",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "(src_padded_data * src_routing_weights_expand).sum",
+        "1",
+        "result=src_padded_data"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:256:256"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "REDUCE",
+        "src_padded_data",
+        "(src_padded_data * src_routing_weights_expand).sum",
+        "1",
+        "method:sum"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:bd51f5ae561e2e6fb0d9058aafba1d1ec2444afdaae484b37bebee6f9b47c7ae",
+      "canonical_identity": "sha256:33018c5702854ae3e281f6e795f101ac82f54a820cec56f2426931e38d8cfb82",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "returns",
+      "object": [
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:264:264"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "RETURN",
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c4d68995288b304bcbd327f978c834550e1c731ce6c2648c4a7123609a3c375d",
+      "canonical_identity": "sha256:637ed1d0dd004520e85f7064e35ec59a97e28edf73182fd8c2a86dbe201849e6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "stacks",
+      "object": [
+        "torch.stack",
+        "src_padded_data",
+        "dim=2",
+        "result=src_padded_data"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:211:211"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "STACK",
+        "src_padded_data",
+        "torch.stack",
+        "src_padded_data",
+        "dim=2",
+        "qualified:torch.stack"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:7bb6b9bf7bc5c5eae102d3256db615128c515cdeab29505c14686d2693472050",
+      "canonical_identity": "sha256:ff81133c52dd82047f665d7fc584fb73fa87cbad9e74ec9192ef8021e753a150",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+      "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "self.num_channels",
+        "self.channel_embedding_dim"
+      ],
+      "conditions": [],
+      "scope": "sym:6978572280d27264",
+      "direct_span_ids": [
+        "span:models/DyGMamba.py:215:215"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:6978572280d27264",
+        "COMPUTE",
+        "self.num_channels",
+        "self.channel_embedding_dim",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e474274db262f044fd065bb6e083865dbd4007dcff26715068f6b387cccd9713",
+      "canonical_identity": "sha256:89e4b71fb31120e6d932b554931311b42bdaedeec66c56a38933a916e58d9012",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+      "subject": "MambaTimeDelta.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "self.in_proj.weight",
+        "rearrange(hidden_states, 'b l d -> d (b l)')"
+      ],
+      "conditions": [
+        "self.time_mamba and dts != None"
+      ],
+      "scope": "sym:c70e75db715f01dc",
+      "direct_span_ids": [
+        "span:models/mamba_simple.py:471:471"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:c70e75db715f01dc",
+        "COMPUTE",
+        "self.in_proj.weight",
+        "rearrange(hidden_states, 'b l d -> d (b l)')",
+        "matmul"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:54aa0e3c1d84ea368338731e1181d98b2db18ba493b46ed3b5fe2689d2ffc32d",
+      "canonical_identity": "sha256:e7ecd0dec47fe13d4face374c62b75a0ef5282d22cea12940a5cf87d86345723",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+      "subject": "MambaTimeDelta.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "xz",
+        "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')",
+        "result=xz"
+      ],
+      "conditions": [
+        "self.time_mamba and dts != None"
+      ],
+      "scope": "sym:c70e75db715f01dc",
+      "direct_span_ids": [
+        "span:models/mamba_simple.py:476:476"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:c70e75db715f01dc",
+        "COMPUTE",
+        "xz",
+        "xz",
+        "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:ad9db0d9143746f7b4dec13a6f6ccb74059be23c34cd06e882b66187b2681105",
+      "canonical_identity": "sha256:fb16d9d96aac48b36de91f38c13d68bc6de9589958eb3d8c98716443690fc2f8",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+      "subject": "MambaTimeDelta.forward",
+      "predicate": "branches_on",
+      "object": [
+        "self.time_mamba and dts != None"
+      ],
+      "conditions": [
+        "self.time_mamba and dts != None"
+      ],
+      "scope": "sym:c70e75db715f01dc",
+      "direct_span_ids": [
+        "span:models/mamba_simple.py:497:525"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:c70e75db715f01dc",
+        "BRANCH",
+        "self.time_mamba and dts != None",
+        "self.time_mamba and dts != None",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:cc9a087b7c674b9353676a87a77b0fda626df101241ea57f36852db41e382028",
+      "canonical_identity": "sha256:1551f692a4daff208eaee071ef6a70d61efcccef127446bd6c921d6573b5892d",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+      "subject": "MambaTimeDelta.forward",
+      "predicate": "returns",
+      "object": [
+        "out"
+      ],
+      "conditions": [
+        "self.time_mamba and dts != None"
+      ],
+      "scope": "sym:c70e75db715f01dc",
+      "direct_span_ids": [
+        "span:models/mamba_simple.py:551:551"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:c70e75db715f01dc",
+        "RETURN",
+        "out"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:11528c0b25a5072b2194d36cf7d57902a7a881f82cad1b9b3e7fb53c3a768c7f",
+      "canonical_identity": "sha256:ce5b2f765cfe600f489da50cf31500dac9182fd03460bbb09b87368fabba3645",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+      "subject": "FilterLayer.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "x",
+        "weight",
+        "result=x"
+      ],
+      "conditions": [],
+      "scope": "sym:d07c0ab78c286647",
+      "direct_span_ids": [
+        "span:models/FreeDyG.py:330:330"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:d07c0ab78c286647",
+        "COMPUTE",
+        "x",
+        "x",
+        "weight",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:fdcd0dffbb6698729e07066618782ad867c1681c8f82f3572d37202d6f1cb091",
+      "canonical_identity": "sha256:0786d6bd201f23c442b3bc1a875e1e2e6fcfda2aabadbe09f99af622727f47f6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+      "subject": "FilterLayer.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "hidden_states",
+        "input_tensor",
+        "result=hidden_states"
+      ],
+      "conditions": [],
+      "scope": "sym:d07c0ab78c286647",
+      "direct_span_ids": [
+        "span:models/FreeDyG.py:335:335"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:d07c0ab78c286647",
+        "COMPUTE",
+        "hidden_states",
+        "hidden_states",
+        "input_tensor",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:3c4cf980f890db97c456e0ffb2d11937506f67e58ec1a86b2e8a19a77fbf0d43",
+      "canonical_identity": "sha256:b6ebf46dcf6ac9ce9ccb0a7696309726d8d5e3ee88a0702b1a131ee48f2cba59",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+      "subject": "FilterLayer.forward",
+      "predicate": "returns",
+      "object": [
+        "hidden_states"
+      ],
+      "conditions": [],
+      "scope": "sym:d07c0ab78c286647",
+      "direct_span_ids": [
+        "span:models/FreeDyG.py:337:337"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:d07c0ab78c286647",
+        "RETURN",
+        "hidden_states"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:5ed96fe289068db8bfd317797a0b17b12dead414daf1375bbcee173f67db5a24",
+      "canonical_identity": "sha256:4767423dc015d70ca02b7657a42bdbc0343bf0c19078f3bbaf08ecd084b3cd22",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+      "subject": "predict_link_probabilities",
+      "predicate": "writes",
+      "object": "(src_node_ids, dst_node_ids)",
+      "conditions": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "scope": "sym:9b2e716c388c639c",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:14:14"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9b2e716c388c639c",
+        "WRITE",
+        "(src_node_ids, dst_node_ids)",
+        "(src_node_ids, dst_node_ids)",
+        "assign"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:7998a15dcb8313ff963f47fd18521c066a1d3f50fdf33c3d03b9a4d22d926870",
+      "canonical_identity": "sha256:2f86156925313194eafe884f999fd8e5e2d4309de0918ec00656a4b76143d7dd",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+      "subject": "predict_link_probabilities",
+      "predicate": "branches_on",
+      "object": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "conditions": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "scope": "sym:9b2e716c388c639c",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:18:21"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9b2e716c388c639c",
+        "BRANCH",
+        "(src_node_id, dst_node_id) in edge_memories",
+        "(src_node_id, dst_node_id) in edge_memories",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:aa67601c01a1dc80b8dbbc552f804c1fba36702ef52bcea318f8d7f8c6556d3e",
+      "canonical_identity": "sha256:7be1f6a7bc34945a3d69ac2d923cc6c6c9a7c076737b95308cfcc4b1aa358821",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+      "subject": "predict_link_probabilities",
+      "predicate": "returns",
+      "object": [
+        "np.array(probabilities)"
+      ],
+      "conditions": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "scope": "sym:9b2e716c388c639c",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:23:23"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9b2e716c388c639c",
+        "RETURN",
+        "np.array(probabilities)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:da34d62a82f99541c7dfcec5d97dae7621f37ae1b78aa686c7136daba28d6ce8",
+      "canonical_identity": "sha256:209ab1c48303bd9c6ad6db76c7e56417b8254ec7b1dcfdf2fd56170a80d41e67",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "edge_bank_unlimited_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "result=edge_memories"
+      ],
+      "conditions": [
+        "(src_node_id, dst_node_id) in edge_memories"
+      ],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:108:108"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "edge_memories",
+        "edge_bank_unlimited_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "name:edge_bank_unlimited_memory"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:769ba59c1e333549b35256defd7fc0f8bdb2844746df4ea7d5e51572edbba92f",
+      "canonical_identity": "sha256:b3f2fbb40cb73f219fb5ae172992e50ba58c45759c9e6bfb85aba410cb0c0f5a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[nodes_edge_raw_features, nodes_neighbor_time_features]",
+        "dim=-1",
+        "result=combined_features"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:118:118"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "CONCAT",
+        "combined_features",
+        "torch.cat",
+        "[nodes_edge_raw_features, nodes_neighbor_time_features]",
+        "dim=-1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:d4068b80a299c89adb6249baf2e77b7fb5dfd27dcf53bc914389c241a3eba43d",
+      "canonical_identity": "sha256:f9d604fc62f2d6abe3d040a972fa965150517b4a74426c8a640f4df3e391191a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "torch.mean",
+        "combined_features",
+        "dim=1",
+        "result=combined_features"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:127:127"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "REDUCE",
+        "combined_features",
+        "torch.mean",
+        "combined_features",
+        "dim=1",
+        "qualified:torch.mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:048cc4a1afb7a27009d543f0f969d36c2969f6e26b102ed04414b975ccf99860",
+      "canonical_identity": "sha256:c9b720db252cb168f72aa32655394dc12388387f60f6b57bcef6540b825d3049",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "nodes_time_gap_neighbor_node_raw_features",
+        "scores.unsqueeze(dim=-1)"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:149:149"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "COMPUTE",
+        "nodes_time_gap_neighbor_node_raw_features",
+        "scores.unsqueeze(dim=-1)",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c07cd9e03c4f800adcde365c4cc601d89116102f1be33dd89b5d5ed19a7b72c5",
+      "canonical_identity": "sha256:ce9ab53b79062b46c429fff42ec0f07b75391259060354ee1db3257fa7ee8e30",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "torch.mean",
+        "nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1)",
+        "dim=1",
+        "result=nodes_time_gap_neighbor_node_agg_features"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:149:149"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "REDUCE",
+        "nodes_time_gap_neighbor_node_agg_features",
+        "torch.mean",
+        "nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1)",
+        "dim=1",
+        "qualified:torch.mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c07cd9e03c4f800adcde365c4cc601d89116102f1be33dd89b5d5ed19a7b72c5",
+      "canonical_identity": "sha256:5ed2b14b5f57be696680735aaf079ef534ca8fbe1b91c7a3faca55f2331101eb",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "nodes_time_gap_neighbor_node_agg_features",
+        "self.node_raw_features[torch.from_numpy(node_ids)]",
+        "result=output_node_features"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:152:152"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "COMPUTE",
+        "output_node_features",
+        "nodes_time_gap_neighbor_node_agg_features",
+        "self.node_raw_features[torch.from_numpy(node_ids)]",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:399f60bdaeac77e1a652d6f35d77874178bda610ea8313c896736ff8b45e32b9",
+      "canonical_identity": "sha256:edf631d73eb4ffff55b89c28196ebf6d9416a070ede9e76ed909ab9841f2904c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[combined_features, output_node_features]",
+        "dim=1"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:155:155"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "CONCAT",
+        "torch.cat",
+        "[combined_features, output_node_features]",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:5b632d34e11030a401ba272a27a9a82e629ab314e801775783d45d769a336b5a",
+      "canonical_identity": "sha256:c5adcd1a5123d566ec87acb55f1eacc171ce6801a0ae190b0e4db3744bbe6eff",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "returns",
+      "object": [
+        "node_embeddings"
+      ],
+      "conditions": [],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:157:157"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "RETURN",
+        "node_embeddings"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:149fe20b9954492811d6a9786bcbb0fda69dcadf9c37b3513946e91b7a692d03",
+      "canonical_identity": "sha256:cdad77eb43544e23b6f6d1b7fd076b599a4b79d0559c61e62bbae074d86f0f05",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "calls",
+      "object": [
+        "self.neighbor_sampler.get_all_first_hop_neighbors",
+        "node_ids=dst_node_ids",
+        "node_interact_times=node_interact_times",
+        "robust_rate=robust_rate",
+        "result=(dst_nodes_neighbor_ids_list, dst_nodes_edge_ids_list, dst_nodes_neighbor_times_list)"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:85:85"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "CALL",
+        "(dst_nodes_neighbor_ids_list, dst_nodes_edge_ids_list, dst_nodes_neighbor_times_list)",
+        "self.neighbor_sampler.get_all_first_hop_neighbors",
+        "node_ids=dst_node_ids",
+        "node_interact_times=node_interact_times",
+        "robust_rate=robust_rate",
+        "attr:get_all_first_hop_neighbors"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:f4056262c67ba3c43dff0d3dcb34c88724ae9ab6769595c0f5ec08398e37bcd2",
+      "canonical_identity": "sha256:b4354020a2e6d74a6ba9ef448ea9bf4acc1b69bfd86f9d47593197e3aa281d6e",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features]",
+        "dim=1",
+        "result=patches_nodes_neighbor_node_raw_features"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:166:166"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "CONCAT",
+        "patches_nodes_neighbor_node_raw_features",
+        "torch.cat",
+        "[src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features]",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:71951ff9f53a03201312da0474f127952b335c9b0e80bedc9e6f10a403b992a4",
+      "canonical_identity": "sha256:d6951f74164eb5d5213aa4175e05b06caea223ba3574a7846f6b40d47970aa29",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "stacks",
+      "object": [
+        "torch.stack",
+        "patches_data",
+        "dim=2",
+        "result=patches_data"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:174:174"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "STACK",
+        "patches_data",
+        "torch.stack",
+        "dim=2",
+        "qualified:torch.stack"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:768cdd95a42c26b48ce5d61452faabcc031e1b2605b45bcbea35dc40dafda510",
+      "canonical_identity": "sha256:089542a4023512daea20aba753c0e21ee79deef115a5eac067e8c6a1018cd6b7",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "src_num_patches",
+        "dst_num_patches"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "COMPUTE",
+        "src_num_patches",
+        "dst_num_patches",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:894587a208542d74c78ceb4449645035b7feb37a1e4740e47cd1fe3f25efbcd4",
+      "canonical_identity": "sha256:cd2bc80c130e3262ef82efa9befd8f9d986f85f410d2b51a7d115a48238fcd25",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "torch.mean",
+        "dst_patches_data",
+        "dim=1",
+        "result=dst_patches_data"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:197:197"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "REDUCE",
+        "dst_patches_data",
+        "torch.mean",
+        "dst_patches_data",
+        "dim=1",
+        "qualified:torch.mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:13fd61052fbf3e028a232d195bad38e010cc86d56bf8b4ebcf0c73e485e18823",
+      "canonical_identity": "sha256:ba92d747626bebb1e17d982e463bd3b040e4fb6c013144b70da25ef6b7852c15",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "branches_on",
+      "object": [
+        "case_study"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:207:212"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "BRANCH",
+        "case_study",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c271282ab5d338769bd4f71e206d8c8fe127971f70e44d2f8a48fd4c14ce228c",
+      "canonical_identity": "sha256:41bf2e326b834bc664c639601ec6459eba92e3ab5a5d221b2acfae3345e5c307",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "returns",
+      "object": [
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "RETURN",
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:9656111a1905e16c7c3d14571a30804a77cc974715d8506887fce5f3aede74c8",
+      "canonical_identity": "sha256:283a6fc36eddcea8ad99a0ab500a8fa096e906f1316f011bb02af9cfe6111b9c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "edge_bank_unlimited_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "result=edge_memories"
+      ],
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:108:108"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "edge_memories",
+        "edge_bank_unlimited_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "name:edge_bank_unlimited_memory"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:769ba59c1e333549b35256defd7fc0f8bdb2844746df4ea7d5e51572edbba92f",
+      "canonical_identity": "sha256:629285e8adb9d102c8af10c2763c5745de37773a958a3369cf4e3160f5b4c200",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "edge_bank_time_window_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "history_node_interact_times=history_data.node_interact_times",
+        "time_window_mode=time_window_mode",
+        "time_window_proportion=time_window_proportion",
+        "result=edge_memories"
+      ],
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:110:112"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "edge_memories",
+        "edge_bank_time_window_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "history_node_interact_times=history_data.node_interact_times",
+        "time_window_mode=time_window_mode",
+        "time_window_proportion=time_window_proportion",
+        "name:edge_bank_time_window_memory"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:33bf5f21112377725355bc7ad32a1d021b43b0bd97bdcb03759dab351512099f",
+      "canonical_identity": "sha256:9d49d267a0811a0be7fa1b2dc7a1356cc6777170ba5ace5ca7ed22490a12cb8b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "writes",
+      "object": "edge_memories",
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:110:110"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "WRITE",
+        "edge_memories",
+        "edge_memories",
+        "assign"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:ab30c22c360fb6393ba933c9cae28449d1dde9996477c7fd5742ae89c326680a",
+      "canonical_identity": "sha256:939a608d89590a570f17da54dee367a90c4508df48dbc5e756b19a5d5d3f1a70",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "edge_bank_repeat_threshold_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "result=edge_memories"
+      ],
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:114:114"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "edge_memories",
+        "edge_bank_repeat_threshold_memory",
+        "history_src_node_ids=history_data.src_node_ids",
+        "history_dst_node_ids=history_data.dst_node_ids",
+        "name:edge_bank_repeat_threshold_memory"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:b488c7b47cc4352425a6869d6cea2552505004f998b24cb662264d17046d1d86",
+      "canonical_identity": "sha256:d89139c6b2dadaab02d6d0620a5a4e2693a207748205eedb57f5757d2d97a496",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "predict_link_probabilities",
+        "edge_memories=edge_memories",
+        "edges_tuple=positive_edges",
+        "result=positive_probabilities"
+      ],
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:118:118"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "positive_probabilities",
+        "predict_link_probabilities",
+        "edge_memories=edge_memories",
+        "edges_tuple=positive_edges",
+        "name:predict_link_probabilities"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e3634158ad960d96768676eba4f88764bdcb1c8473deeb6a9f4c94e57191a94c",
+      "canonical_identity": "sha256:f85e5d559530824bb088ac829426e8f7416470517415cbd6873c4d70572d3289",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "writes",
+      "object": "positive_probabilities",
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:118:118"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "WRITE",
+        "positive_probabilities",
+        "positive_probabilities",
+        "assign"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e3634158ad960d96768676eba4f88764bdcb1c8473deeb6a9f4c94e57191a94c",
+      "canonical_identity": "sha256:c7a58c443c2700954fe7a51b521b13e53f4c21e32c99962d4277a4f16404a7f3",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "calls",
+      "object": [
+        "predict_link_probabilities",
+        "edge_memories=edge_memories",
+        "edges_tuple=negative_edges",
+        "result=negative_probabilities"
+      ],
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:119:119"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "CALL",
+        "negative_probabilities",
+        "predict_link_probabilities",
+        "edge_memories=edge_memories",
+        "edges_tuple=negative_edges",
+        "name:predict_link_probabilities"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:95352651a4b9de145cfaa29bb478ac3444c79f718a4532ac921d87f965ecedf4",
+      "canonical_identity": "sha256:5aac80072d6ac60539cd8127a53ded4d60a28bf3876a26d6f4b5e33324a78551",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+      "subject": "edge_bank_link_prediction",
+      "predicate": "writes",
+      "object": "negative_probabilities",
+      "conditions": [],
+      "scope": "sym:1f166196e506e141",
+      "direct_span_ids": [
+        "span:models/EdgeBank.py:119:119"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:1f166196e506e141",
+        "WRITE",
+        "negative_probabilities",
+        "negative_probabilities",
+        "assign"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:95352651a4b9de145cfaa29bb478ac3444c79f718a4532ac921d87f965ecedf4",
+      "canonical_identity": "sha256:82175cc71bde08a8d466149c9bda69bb1f8743cab6f51ade251968916eb0e250",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[nodes_edge_raw_features, nodes_neighbor_time_features]",
+        "dim=-1",
+        "result=combined_features"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:118:118"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "CONCAT",
+        "combined_features",
+        "torch.cat",
+        "[nodes_edge_raw_features, nodes_neighbor_time_features]",
+        "dim=-1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:d4068b80a299c89adb6249baf2e77b7fb5dfd27dcf53bc914389c241a3eba43d",
+      "canonical_identity": "sha256:a08f9bd24f45b49aad20e820db4fbbaa23fad57461f0ecce0b987b7dffe18aeb",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "nodes_time_gap_neighbor_node_raw_features",
+        "scores.unsqueeze(dim=-1)"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:149:149"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "COMPUTE",
+        "nodes_time_gap_neighbor_node_raw_features",
+        "scores.unsqueeze(dim=-1)",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c07cd9e03c4f800adcde365c4cc601d89116102f1be33dd89b5d5ed19a7b72c5",
+      "canonical_identity": "sha256:aea2c756e8b6ac69a96a5b6c97832868971444fad78df0143570b60b149800a0",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "torch.mean",
+        "nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1)",
+        "dim=1",
+        "result=nodes_time_gap_neighbor_node_agg_features"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:149:149"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "REDUCE",
+        "nodes_time_gap_neighbor_node_agg_features",
+        "torch.mean",
+        "nodes_time_gap_neighbor_node_raw_features * scores.unsqueeze(dim=-1)",
+        "dim=1",
+        "qualified:torch.mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c07cd9e03c4f800adcde365c4cc601d89116102f1be33dd89b5d5ed19a7b72c5",
+      "canonical_identity": "sha256:fd9e65c1b6186af1bc2b1047795aa34fc011cd1915601b9afa425aedd06c50a5",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+      "subject": "GraphMixer.compute_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "nodes_time_gap_neighbor_node_agg_features",
+        "self.node_raw_features[torch.from_numpy(node_ids)]",
+        "result=output_node_features"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:f18e4ec00adf7e59",
+      "direct_span_ids": [
+        "span:models/GraphMixer.py:152:152"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f18e4ec00adf7e59",
+        "COMPUTE",
+        "output_node_features",
+        "nodes_time_gap_neighbor_node_agg_features",
+        "self.node_raw_features[torch.from_numpy(node_ids)]",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:399f60bdaeac77e1a652d6f35d77874178bda610ea8313c896736ff8b45e32b9",
+      "canonical_identity": "sha256:514b0011840aa1ef5356a712aedd060ccc9a350c64e57a24a20a52f1ca20c7d4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features]",
+        "dim=1",
+        "result=patches_nodes_neighbor_time_features"
+      ],
+      "conditions": [
+        "case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:168:168"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "CONCAT",
+        "patches_nodes_neighbor_time_features",
+        "torch.cat",
+        "[src_patches_nodes_neighbor_time_features, dst_patches_nodes_neighbor_time_features]",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:1dba2c88523bb362141900e442da66039e601e340c61de06cdbca87c095ff07f",
+      "canonical_identity": "sha256:20ba1ed28a12fbcba3aeeecf378463d423c34234cd54a1d811745fa039dfcca5",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features]",
+        "dim=1",
+        "result=patches_nodes_neighbor_node_raw_features"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:166:166"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "CONCAT",
+        "patches_nodes_neighbor_node_raw_features",
+        "torch.cat",
+        "[src_patches_nodes_neighbor_node_raw_features, dst_patches_nodes_neighbor_node_raw_features]",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:71951ff9f53a03201312da0474f127952b335c9b0e80bedc9e6f10a403b992a4",
+      "canonical_identity": "sha256:52cfb8f17629fdae11b6420e0975b69cbdcdb30d243f95930e424bca3ef9d4ee",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features]",
+        "dim=1",
+        "result=patches_nodes_neighbor_co_occurrence_features"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:169:169"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "CONCAT",
+        "patches_nodes_neighbor_co_occurrence_features",
+        "torch.cat",
+        "[src_patches_nodes_neighbor_co_occurrence_features, dst_patches_nodes_neighbor_co_occurrence_features]",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c846f3c99a2300f5b630baaabeae2f4db1c81e11a03a65fdef8c68c8ea6b9970",
+      "canonical_identity": "sha256:d5eb197a8c630a8d11e114dbb1607c08a1592ed7f6fd2cdc9a8407c7ec2b3535",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "stacks",
+      "object": [
+        "torch.stack",
+        "patches_data",
+        "dim=2",
+        "result=patches_data"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:174:174"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "STACK",
+        "patches_data",
+        "torch.stack",
+        "patches_data",
+        "dim=2",
+        "qualified:torch.stack"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:768cdd95a42c26b48ce5d61452faabcc031e1b2605b45bcbea35dc40dafda510",
+      "canonical_identity": "sha256:b17e99fbe50cf5394427d77007ab38ba07102eb6e0d78379a9e2fb17669ec0a6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "computes_formula",
+      "object": [
+        "src_num_patches",
+        "dst_num_patches"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "COMPUTE",
+        "src_num_patches",
+        "dst_num_patches",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:894587a208542d74c78ceb4449645035b7feb37a1e4740e47cd1fe3f25efbcd4",
+      "canonical_identity": "sha256:4b46dfbe4218e1e4684d5372bdc0173448468b558d8fd7c2f272140e477ee0b9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "branches_on",
+      "object": [
+        "i == 0 and case_study"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:181:183"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "BRANCH",
+        "i == 0 and case_study",
+        "i == 0 and case_study",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c5a064d991b56a44a695df7d1176e25581fb8437eae0f3bdf580fba8c0a55da7",
+      "canonical_identity": "sha256:d03ed7987cfdd2a9b947980204e77fdc110308c0952300546ba3d3886a39e369",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "reduces",
+      "object": [
+        "torch.mean",
+        "dst_patches_data",
+        "dim=1",
+        "result=dst_patches_data"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:197:197"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "REDUCE",
+        "dst_patches_data",
+        "torch.mean",
+        "dst_patches_data",
+        "dim=1",
+        "qualified:torch.mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:13fd61052fbf3e028a232d195bad38e010cc86d56bf8b4ebcf0c73e485e18823",
+      "canonical_identity": "sha256:d35bcbf17b7c74115dc3085026366968651972897022bc045a53c44892c25422",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+      "subject": "DyGFormer.compute_src_dst_node_temporal_embeddings",
+      "predicate": "returns",
+      "object": [
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "conditions": [
+        "i == 0 and case_study"
+      ],
+      "scope": "sym:dc51f7924aadbf79",
+      "direct_span_ids": [
+        "span:models/DyGFormer.py:212:212"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:dc51f7924aadbf79",
+        "RETURN",
+        "(src_node_embeddings, dst_node_embeddings)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:9656111a1905e16c7c3d14571a30804a77cc974715d8506887fce5f3aede74c8",
+      "canonical_identity": "sha256:e56bcc65234175b5481a3d2f20842c474a5a72f103fdb3399dd2c485c1205bea",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:e61d4368dfb454114b0aca9cfaea9ecd98b9aad8b22726212f4520c7bb58fb40"
+}

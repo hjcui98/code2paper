@@ -1,0 +1,140 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:d2a1f791aa62db810b8650c7c4bac5a93ed52abae56a0e01661af2744bee88a8",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 110,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1fece039c5f0fff7a294c3acbe8aa5682acade9cc34f3a4bc1b4bd3e86bc5172"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 267,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:4876ddabb84e060ad0fbf4d80abcf3ff104bf78e42e87c0238fca9d3dbf77633"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 268,
+      "char_end": 430,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:07b2af0c6d0ba5c64be6a5b83ac2c789adbf3d41fb1c893d27dd6973be775a5b"
+    },
+    {
+      "unit_id": "FTU4",
+      "kind": "sentence",
+      "text": "A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 431,
+      "char_end": 663,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:299f6e6bdf3595ac54f8aec8020e4496ee9b344cc80a27f02eab2119c85d400b"
+    },
+    {
+      "unit_id": "FTU5",
+      "kind": "sentence",
+      "text": "These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 664,
+      "char_end": 861,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:ce90e333e72dd3dbfd25fc628bfcb3397c93064b03033e6795be6259631a27e1"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step.",
+      "normalized_text": "vanilla state space models assume a uniform temporal discretization treating each consecutive pair of observations as separated by an identical time step",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 267,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:4876ddabb84e060ad0fbf4d80abcf3ff104bf78e42e87c0238fca9d3dbf77633"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations.",
+      "normalized_text": "this assumption fails when the underlying signal is sampled at irregular intervals because the model cannot represent the varying durations between observations",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 268,
+      "char_end": 430,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:07b2af0c6d0ba5c64be6a5b83ac2c789adbf3d41fb1c893d27dd6973be775a5b"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "unit_id": "FTU4",
+      "text": "A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel.",
+      "normalized_text": "a second limitation is that standard ssms propagate input perturbations through the recurrent state without a mechanism for selective attenuation leaving the hidden dynamics sensitive to stochastic noise in the observation channel",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 431,
+      "char_end": 663,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:299f6e6bdf3595ac54f8aec8020e4496ee9b344cc80a27f02eab2119c85d400b"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "unit_id": "FTU5",
+      "text": "These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+      "normalized_text": "these two shortcomings insensitivity to irregular timespans and vulnerability to input noise motivate the design of ssm variants that incorporate time aware dynamics and noise robust state updates",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 664,
+      "char_end": 861,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:ce90e333e72dd3dbfd25fc628bfcb3397c93064b03033e6795be6259631a27e1"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "REQ-MA-S2-001",
+      "lane": "expository_bridge",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "exact_question": "What are the constituent components, data flow, and objective of the embedding-based reranking framework described in this work?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What are the constituent components, data flow, and objective of the embedding-based reranking framework described in this work.",
+      "needed_evidence": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions",
+        "configuration_state"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "REQ-MA-S2-001"
+      ],
+      "content_digest": "sha256:268f2c514540e505f29bd594fc709988d9de9191f2e6e67bfe7f90cdea58103b"
+    },
+    {
+      "request_id": "MA-S3:unit-1",
+      "lane": "expository_bridge",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "exact_question": "What is the overall mechanism by which the embedding pipeline enriches token representations with document identifiers and positional encodings across all stages, and how does each stage's output feed into the next within the mainline sequence?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What is the overall mechanism by which the embedding pipeline enriches token representations with document identifiers and positional encodings across all stages, and how does each stage's output feed into the next within the mainline sequence.",
+      "needed_evidence": [
+        "mechanism_overview"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S3:unit-1"
+      ],
+      "content_digest": "sha256:16ec41832f4f987bfae57095296b4b3be381a394d442efcd3f6e37c46a47c5f7"
+    }
+  ]
+}

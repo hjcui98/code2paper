@@ -1,0 +1,601 @@
+{
+  "schema_version": "1.0",
+  "facets": [
+    {
+      "facet_id": "facet-1f936373429e5100",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:0",
+      "exact_source_quote": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+      "semantic_fields": {
+        "operation": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Tri-Graph",
+        "PageRank",
+        "entities",
+        "passages",
+        "sentence",
+        "occurrence",
+        "relationships",
+        "relation",
+        "similarity",
+        "contextual",
+        "relevance",
+        "Iteratively",
+        "propagate",
+        "activation",
+        "subgraph",
+        "aggregating"
+      ],
+      "required": false,
+      "content_digest": "sha256:7ed01bffe1e81289b06c6f9c0b2c3baf608c60f1626ac4e2e78294aa183aaf34"
+    },
+    {
+      "facet_id": "facet-36188cb856f44d0d",
+      "clause_id": "clause:O-STAGE-01-9c8dfe22:0",
+      "exact_source_quote": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+      "semantic_fields": {
+        "formula_goal": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "spaCy",
+        "Construction",
+        "splitting",
+        "passages",
+        "sentences",
+        "extracting",
+        "entities",
+        "creating",
+        "sentence",
+        "adjacency",
+        "matrices",
+        "Offline",
+        "Graph",
+        "Build",
+        "Tri",
+        "corpus"
+      ],
+      "required": true,
+      "content_digest": "sha256:3305930e6fd3a660b2e728c7697a1d6d0d495f7f3559a98fdbaf5f056fa9feae"
+    },
+    {
+      "facet_id": "facet-dfd9e7cedfe705e0",
+      "clause_id": "clause:O-STAGE-02-93c16851:0",
+      "exact_source_quote": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-02-93c16851",
+      "semantic_fields": {
+        "operation": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Activation",
+        "Semantic",
+        "Bridging",
+        "activate",
+        "relevant",
+        "entities",
+        "initializing",
+        "computing",
+        "sentence",
+        "similarities",
+        "iteratively",
+        "propagating",
+        "subgraph",
+        "discover",
+        "Entity",
+        "Local"
+      ],
+      "required": true,
+      "content_digest": "sha256:338dd8a69a5ef9edb2f95dddb976e6a9fef97fff944b059e8c4e2e14f8647489"
+    },
+    {
+      "facet_id": "facet-aee51cb1cb5c563f",
+      "clause_id": "clause:O-STAGE-03-8dda66b9:0",
+      "exact_source_quote": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-03-8dda66b9",
+      "semantic_fields": {
+        "operation": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PageRank",
+        "Retrieval",
+        "Importance",
+        "Aggregation",
+        "activated",
+        "entities",
+        "personalized",
+        "subgraph",
+        "initializing",
+        "globally",
+        "passages",
+        "Passage",
+        "Global",
+        "seeds",
+        "entity",
+        "nodes"
+      ],
+      "required": true,
+      "content_digest": "sha256:be75d43b29bd02b30e8010d0bd5bc74758d120c32519fff24db035f13c74d1dc"
+    },
+    {
+      "facet_id": "facet-751466939a6d86e8",
+      "clause_id": "clause:O-COMPONENT-01-4e554ef0:0",
+      "exact_source_quote": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+      "semantic_fields": {
+        "operation": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "retrieval-augmented",
+        "generation",
+        "efficiently",
+        "multi-hop",
+        "large-scale",
+        "unstructured",
+        "eliminating",
+        "reliance",
+        "error-prone",
+        "relation",
+        "extraction",
+        "entity-based",
+        "indexing",
+        "two-stage",
+        "retrieval",
+        "Develop"
+      ],
+      "required": false,
+      "content_digest": "sha256:34f3287c0492e6b98e97e26c908ffadf2015ce99d073831a9b0f64eebd2b1aee"
+    },
+    {
+      "facet_id": "facet-37ac47cd0b3c324b",
+      "clause_id": "clause:O-COMPONENT-01-bd3b9454:0",
+      "exact_source_quote": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-bd3b9454",
+      "semantic_fields": {
+        "operation": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Tri-Graph",
+        "Hierarchical",
+        "sentence",
+        "adjacency",
+        "retrieval",
+        "pipeline",
+        "graph",
+        "entity",
+        "passage",
+        "nodes",
+        "sparse",
+        "contain",
+        "message",
+        "anchors",
+        "entire"
+      ],
+      "required": true,
+      "content_digest": "sha256:0df1200d790e409b8449fde5c70712ac159e03e2b2bc60e2abfb0393a4ce2f2c"
+    },
+    {
+      "facet_id": "facet-2463c74d9fdec304",
+      "clause_id": "clause:O-COMPONENT-02-8058a7bc:0",
+      "exact_source_quote": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+      "semantic_fields": {
+        "operation": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction)."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "NER",
+        "spaCy",
+        "Lightweight",
+        "extraction",
+        "building",
+        "named",
+        "entity",
+        "offline",
+        "graph",
+        "online",
+        "query"
+      ],
+      "required": true,
+      "content_digest": "sha256:a641d2df81c12c4234add51ec43d19df0473e020f0a86466a7610b807c82768c"
+    },
+    {
+      "facet_id": "facet-49c35a32b3156393",
+      "clause_id": "clause:O-COMPONENT-03-0c4d02ed:0",
+      "exact_source_quote": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+      "semantic_fields": {
+        "operation": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Activation",
+        "Semantic",
+        "Bridging",
+        "Iterative",
+        "propagation",
+        "relevance",
+        "sentence",
+        "subgraph",
+        "similarity",
+        "identifies",
+        "intermediate",
+        "entities",
+        "connections",
+        "Entity",
+        "based",
+        "query"
+      ],
+      "required": true,
+      "content_digest": "sha256:6d26ed7e72a531e644f535ac60333df9a9fcb355de88e809e363ba1249b0a73d"
+    },
+    {
+      "facet_id": "facet-397617ae0c814f4c",
+      "clause_id": "clause:O-COMPONENT-04-4f4f1da6:0",
+      "exact_source_quote": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+      "semantic_fields": {
+        "operation": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Threshold",
+        "filtering",
+        "strongly",
+        "relevant",
+        "entities",
+        "propagation",
+        "preventing",
+        "combinatorial",
+        "expansion",
+        "Dynamic",
+        "Pruning",
+        "based",
+        "retains",
+        "only",
+        "during",
+        "noise"
+      ],
+      "required": true,
+      "content_digest": "sha256:e3d9435bdbfbdf274c22222b9ca73ae80d2e10eae7adab63dd6d341b4572ef00"
+    },
+    {
+      "facet_id": "facet-11f57730a8077780",
+      "clause_id": "clause:O-COMPONENT-05-29ba03a1:0",
+      "exact_source_quote": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+      "semantic_fields": {
+        "operation": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PageRank",
+        "Personalized",
+        "importance",
+        "aggregation",
+        "subgraph",
+        "passages",
+        "propagating",
+        "influence",
+        "activated",
+        "entities",
+        "Global",
+        "passage",
+        "entity",
+        "ranks"
+      ],
+      "required": true,
+      "content_digest": "sha256:22787f448f3c7e90a07200a591de858c6821f663900441199f5a5bdd01ffcfe9"
+    },
+    {
+      "facet_id": "facet-6c02c195374453b1",
+      "clause_id": "clause:O-COMPONENT-06-bf20ec9b:0",
+      "exact_source_quote": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+      "semantic_fields": {
+        "operation": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PPR",
+        "Initialization",
+        "Combines",
+        "similarity",
+        "statistics",
+        "occurrence",
+        "Hybrid",
+        "Passage",
+        "direct",
+        "query",
+        "entity",
+        "based",
+        "level",
+        "set",
+        "initial",
+        "scores"
+      ],
+      "required": true,
+      "content_digest": "sha256:ad7c611ed8b4ad53f8f4aace669fa613dcc1b17f9af11702047a6724a8c71687"
+    },
+    {
+      "facet_id": "facet-9218cef3b4752e6d",
+      "clause_id": "clause:O-ORGANIZATION-01-4ee8e0bf:0",
+      "exact_source_quote": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+      "semantic_fields": {
+        "operation": "Motivation: revisit GraphRAG shortcomings from relation extraction errors"
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "GraphRAG",
+        "Motivation",
+        "shortcomings",
+        "relation",
+        "extraction",
+        "revisit",
+        "errors"
+      ],
+      "required": false,
+      "content_digest": "sha256:2dddff9b1e9e3d7a22ca3d8cf9f45673dfd8a44f515ed4896d85c00e262fe294"
+    },
+    {
+      "facet_id": "facet-44d3952a34b9c61b",
+      "clause_id": "clause:O-ORGANIZATION-02-1977b399:0",
+      "exact_source_quote": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+      "semantic_fields": {
+        "operation": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy"
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "LinearRAG",
+        "overview",
+        "retrieval",
+        "philosophy",
+        "Tri",
+        "Graph",
+        "concept",
+        "two",
+        "stage"
+      ],
+      "required": false,
+      "content_digest": "sha256:a3d8e333aa3dcf895a3efbce40ddda041b115a19ef8dfee51e3190d71e1ed409"
+    },
+    {
+      "facet_id": "facet-8ce6e8dabb55bf84",
+      "clause_id": "clause:O-ORGANIZATION-03-157f229e:0",
+      "exact_source_quote": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+      "semantic_fields": {
+        "formula_goal": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)"
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "construction",
+        "entities",
+        "sentences",
+        "passages",
+        "adjacency",
+        "matrices",
+        "Offline",
+        "Tri",
+        "Graph",
+        "contain",
+        "message"
+      ],
+      "required": false,
+      "content_digest": "sha256:4eab2dbb66c1bcc9f15a9c75b812a3c470dd348b8bc2b4a575f0cf732ccd4dc7"
+    },
+    {
+      "facet_id": "facet-0110bf36238d22ed",
+      "clause_id": "clause:O-ORGANIZATION-04-8fc65790:0",
+      "exact_source_quote": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+      "semantic_fields": {
+        "operation": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)"
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "retrieval",
+        "relevant",
+        "activation",
+        "semantic",
+        "bridging",
+        "initialization",
+        "iterative",
+        "propagation",
+        "First",
+        "stage",
+        "entity",
+        "local",
+        "dynamic",
+        "pruning"
+      ],
+      "required": false,
+      "content_digest": "sha256:87f511ab16dae5bb8a53a9a697e7010fe4487d2f1cbd4a9fca9099fd7bab8d2f"
+    },
+    {
+      "facet_id": "facet-2962ffa6059952a7",
+      "clause_id": "clause:O-ORGANIZATION-05-e0c123aa:0",
+      "exact_source_quote": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+      "semantic_fields": {
+        "operation": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)"
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PageRank",
+        "retrieval",
+        "importance",
+        "aggregation",
+        "initialization",
+        "personalized",
+        "Second",
+        "stage",
+        "passage",
+        "global",
+        "hybrid"
+      ],
+      "required": false,
+      "content_digest": "sha256:8b0d0b9e2cf4261f20b050f7ee8bbc31848de81a0064ed89a7992f533d712ee1"
+    },
+    {
+      "facet_id": "facet-2d7d68d7654183c5",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-c0bb1e93:0",
+      "exact_source_quote": "Avoid explicit relation extraction entirely.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "semantic_fields": {
+        "operation": "Avoid explicit relation extraction entirely."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "explicit",
+        "relation",
+        "extraction",
+        "entirely",
+        "Avoid"
+      ],
+      "required": false,
+      "content_digest": "sha256:122b146661135d414182f395678c2745b62e37af6aae80a5b2b592491788ad42"
+    },
+    {
+      "facet_id": "facet-f53ce53973fd2859",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-1a90a997:0",
+      "exact_source_quote": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+      "semantic_fields": {
+        "operation": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "hierarchical",
+        "preserves",
+        "original",
+        "passages",
+        "sentences",
+        "alongside",
+        "entities",
+        "graph",
+        "text"
+      ],
+      "required": false,
+      "content_digest": "sha256:7eb39c1c1ad7e6153b489d803484a12a925cf91cefea6d82d615fb3dfdf7216d"
+    },
+    {
+      "facet_id": "facet-c94a090684d57a33",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-09c84504:0",
+      "exact_source_quote": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+      "semantic_fields": {
+        "operation": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Decouple",
+        "retrieval",
+        "activation",
+        "local",
+        "entity",
+        "stage",
+        "global",
+        "passage",
+        "ranking"
+      ],
+      "required": false,
+      "content_digest": "sha256:9f42ec06b5b1e10757768fd3b985da8728626351e264e03e0268aa98418db2fd"
+    },
+    {
+      "facet_id": "facet-707cc9a20282c836",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+      "exact_source_quote": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+      "semantic_fields": {
+        "operation": "Apply dynamic pruning with a fixed relevance threshold during propagation."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "relevance",
+        "threshold",
+        "propagation",
+        "dynamic",
+        "pruning",
+        "fixed",
+        "during"
+      ],
+      "required": false,
+      "content_digest": "sha256:7f331c4ffecc712039f757501aec552339cfc69717cfe7980a5bab515118de19"
+    },
+    {
+      "facet_id": "facet-77eff1974af1d1d5",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-ffcf3556:0",
+      "exact_source_quote": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+      "semantic_fields": {
+        "operation": "Employ personalized PageRank on the passage‑entity graph for passage retrieval."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PageRank",
+        "personalized",
+        "retrieval",
+        "Employ",
+        "passage",
+        "entity",
+        "graph"
+      ],
+      "required": false,
+      "content_digest": "sha256:6dcd5c3fe1df6b0d7e7973827828d8e2928238d11dc70e41a343a007dd80082e"
+    },
+    {
+      "facet_id": "facet-14e6716402039fea",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-0f48dc22:0",
+      "exact_source_quote": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+      "semantic_fields": {
+        "operation": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "PPR",
+        "Initialize",
+        "similarity",
+        "passage",
+        "scores",
+        "hybrid",
+        "direct",
+        "entity",
+        "based"
+      ],
+      "required": false,
+      "content_digest": "sha256:89784e36920f17aa377a0fbf68993f17e086550c03bf38abaead1fe992a9da24"
+    }
+  ]
+}

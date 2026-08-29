@@ -222,6 +222,11 @@ class MethodContentTraceV1(BaseModel):
             if row.terminal_state == "rendered"
             for slot_id in row.required_publication_slot_ids
         }
+        planned_slot_ids = {
+            slot_id
+            for row in self.rows
+            for slot_id in row.required_publication_slot_ids
+        }
         rendered_field_ids = {
             field_id
             for row in self.rows
@@ -239,9 +244,26 @@ class MethodContentTraceV1(BaseModel):
             if row.terminal_state == "rendered"
             for edge_id in row.writer_rendered_edge_refs
         }
+        story_node_ids = {
+            node_id
+            for row in self.rows
+            for node_id in row.source_story_node_ids
+        }
+        rendered_story_node_ids = {
+            node_id
+            for row in self.rows
+            if row.terminal_state == "rendered"
+            for node_id in row.source_story_node_ids
+        }
         formula_obligation_ids = {
             obligation_id
             for row in self.rows
+            for obligation_id in row.formula_obligation_ids
+        }
+        rendered_formula_obligation_ids = {
+            obligation_id
+            for row in self.rows
+            if row.terminal_state == "rendered"
             for obligation_id in row.formula_obligation_ids
         }
         consumed_formula_package_ids = {
@@ -273,11 +295,15 @@ class MethodContentTraceV1(BaseModel):
             "sections": len({row.section_id for row in self.rows if row.section_id}),
             "planned_paragraphs": len(paragraph_ids),
             "rendered_paragraphs": len(rendered_paragraph_ids),
+            "planned_story_nodes": len(story_node_ids),
+            "rendered_story_nodes": len(rendered_story_node_ids),
+            "planned_slots": len(planned_slot_ids),
             "rendered_slots": len(rendered_slot_ids),
             "rendered_field_candidates": len(rendered_field_ids),
             "planned_edges": len(planned_edge_ids),
             "rendered_edges": len(planned_edge_ids & rendered_edge_ids),
             "formula_obligations": len(formula_obligation_ids),
+            "rendered_formula_obligations": len(rendered_formula_obligation_ids),
             "consumed_formula_packages": len(consumed_formula_package_ids),
             "duplicate_formula_consumers": sum(
                 count - 1 for count in formula_consumer_counts.values() if count > 1
@@ -412,7 +438,10 @@ def build_method_content_trace_from_artifact_paths(
         formula_routes: dict[str, dict[str, Any]] = {}
         has_explicit_package_routes = any(
             isinstance(package, Mapping)
-            and str(package.get("obligation_id") or "").strip()
+            and (
+                str(package.get("obligation_id") or "").strip()
+                or bool(package.get("satisfied_obligation_ids"))
+            )
             for package in packages
         )
         for obligation in (section_formalization.get("formula_obligations") or ()):
@@ -424,7 +453,18 @@ def build_method_content_trace_from_artifact_paths(
             matches = [
                 package for package in packages
                 if isinstance(package, Mapping)
-                and str(package.get("obligation_id") or "").strip() == obligation_id
+                and obligation_id in {
+                    *(
+                        str(item).strip()
+                        for item in (package.get("satisfied_obligation_ids") or ())
+                        if str(item).strip()
+                    ),
+                    *(
+                        [str(package.get("obligation_id") or "").strip()]
+                        if str(package.get("obligation_id") or "").strip()
+                        else []
+                    ),
+                }
             ]
             if not matches and not has_explicit_package_routes:
                 matches = [
@@ -585,7 +625,22 @@ def build_method_content_trace_from_artifact_paths(
                         for package in packages
                         if isinstance(package, Mapping)
                         and str(package.get("package_id") or "") in used_packages
-                        and str(package.get("obligation_id") or "").strip() in set(obligation_ids)
+                        and bool(
+                            set(obligation_ids).intersection(
+                                {
+                                    *(
+                                        str(item).strip()
+                                        for item in (package.get("satisfied_obligation_ids") or ())
+                                        if str(item).strip()
+                                    ),
+                                    *(
+                                        [str(package.get("obligation_id") or "").strip()]
+                                        if str(package.get("obligation_id") or "").strip()
+                                        else []
+                                    ),
+                                }
+                            )
+                        )
                         and str(package.get("consumer_paragraph_id") or "").strip() == paragraph_id
                     )
                 else:

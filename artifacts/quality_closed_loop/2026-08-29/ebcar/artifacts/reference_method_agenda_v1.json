@@ -1,0 +1,592 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "author_goal": "Present a lightweight reranker that operates directly on passage embeddings, enriches them with document‑structural signals, and uses a hybrid attention mechanism to capture both global inter‑document and local intra‑document interactions. Show that this embedding‑based approach is competitive with text‑based LLM rerankers on tasks requiring cross‑passage inference while being much faster.",
+  "obligations": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "role": "feature",
+      "statement": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attend attention attribute deploy descriptor encode encodes encoding feature infer",
+        "start with pre computed dense passage embeddings from a standard retriever (e.g., contriever) and",
+        "embedding",
+        "augment",
+        "encoding",
+        "scores",
+        "rank",
+        "descending",
+        "masked",
+        "contrastive",
+        "loss",
+        "infoNCE",
+        "inference",
+        "attention"
+      ],
+      "importance": "critical",
+      "source_obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:09dfbbe6c8d38f68a45f1ab6f767e84f15114e6cdd841da2f5339562a903ac05"
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "role": "feature",
+      "statement": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor encode encodes encoding feature rank ranked ranks",
+        "retrieval and embedding preparation: use a dense retriever (contriever) to fetch top k candidate",
+        "embedding",
+        "encode"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-01-039a963a",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:93e04918e9dc412564ed932badb0aa36b43af99b3996b15c5d713b6490015ead"
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "role": "feature",
+      "statement": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor encode encodes encoding feature",
+        "structural augmentation: for each retrieved passage, add a dynamic document id embedding and a",
+        "embedding",
+        "encoding"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-02-42e8d68d",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:4be69ffd2a8526a03102fb010ec0d69d5d5c97f7d9b903887ea2ccb72b33ad6b"
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "role": "feature",
+      "statement": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attend attention encode encodes encoding mask masking masks self-attention",
+        "hybrid attention encoding: feed the query and augmented passage embeddings into a transformer encoder",
+        "encoding",
+        "masked",
+        "attention"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-03-2c5bd758",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:9b3538144a10344154d358338bd74cdc30132de0ab97a1f718ac5f3430f93cef"
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "role": "feature",
+      "statement": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature train training trains",
+        "contrastive training: using a contrastive infonce loss, pull the updated positive passage embedding toward",
+        "embedding",
+        "contrastive",
+        "training",
+        "infoNCE",
+        "loss"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-04-c50e0bef",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b563d6f94f984541dce0c90a0a28470dc7834b85f72006782fc532181b7dd97b"
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "role": "feature",
+      "statement": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute deploy descriptor feature infer inference predict predicting predicts rank",
+        "inference scoring and ranking: compute dot product similarities between the unchanged query embedding and",
+        "embedding",
+        "scoring",
+        "score",
+        "ranking",
+        "sort",
+        "descending",
+        "inference"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-STAGE-05-5b3d398a",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:f476df13230fa0d47ecb96ccaacdb9d5fd0859d9ec36e3c14d0327f9cbe165c4"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "role": "inference",
+      "statement": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "deploy generation infer inference invoke invokes",
+        "improve reranking in retrieval augmented generation (rag) systems by addressing both inference efficiency and",
+        "inference",
+        "generation"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-c301ecdd",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:492497338a23a62c83296a7bc60f4bc444f03f12224ddbcd68612b1156dfb675"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "role": "ranking",
+      "statement": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "rank ranked ranks",
+        "contriever: dense retriever that provides initial passage embeddings and top k retrieval."
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-01-de6049e3",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:987a43749cb2af66d33fd4092e7af8cfb2e1f6889bdd0419b675932c4c51883f"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "role": "component",
+      "statement": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "passage embeddings (pi): fixed dense representations of candidate passages obtained from contriever."
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-02-2e14379d",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:5a1021a0547bfddd6bc330720d04fa2b569fce736e85bab51bacf36b28755813"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "role": "feature",
+      "statement": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature train training trains",
+        "document id embedding table: learned relative document identity embeddings assigned dynamically to unique documents",
+        "embedding",
+        "learned"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:6402b37038d808eaa92e871e17ac26976ed296feea66d7d283efdc72c2e077db"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "role": "feature",
+      "statement": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "encode encodes encoding",
+        "passage position encoding (sinusoidal): encodes the position of a passage within its original document,",
+        "encoding",
+        "encodes"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-04-b5b6af99",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b5b43c361b2dfb103dddc014b7851e38d22569d8d26f50006f668c0fa473c0d7"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "role": "filter",
+      "statement": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attend attention mask masking masks self-attention",
+        "hybrid attention mechanism: combines shared full attention (global cross passage) and dedicated masked attention",
+        "masked",
+        "attention"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-05-4c3594d2",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:a8df7fddb54d859620b7133a5962c2fb3b8f5ed55fcf57033e3b70279c9ff48e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "role": "attention",
+      "statement": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attend attention classifier head regressor self-attention",
+        "shared full attention module: standard multi head attention allowing query and all passages to",
+        "attention",
+        "attend",
+        "head"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-06-34021b88",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:2151ab6a99f7bce17538231ddb021546461d772009d1953166ebc0ae60df3056"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "role": "filter",
+      "statement": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attend attention classifier head mask masking masks regressor self-attention",
+        "dedicated masked attention module: masked multi head attention that restricts a passage to attend",
+        "masked",
+        "attention",
+        "attend",
+        "head"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-07-d157b2cc",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:0e607d07167f423929093a4a163f36d749109f9c6d4d629051f31d68c8f14b0a"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "role": "component",
+      "statement": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "transformer encoder stack: layers that process the combined sequence to produce contextualized passage embeddings."
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-08-4aac53dc",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:0792bb2b39e3cba64ec27da56160c1e706b8d9690382cc9f8c446765dabf0fdf"
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "role": "feature",
+      "statement": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute descriptor feature train training trains",
+        "infonce contrastive loss: objective that encourages the updated positive passage embedding to align with",
+        "embedding",
+        "infoNCE",
+        "contrastive",
+        "loss",
+        "objective"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:d2aa188eb198099c769cd8f81f1ee62641af59b3f05ae16814ca4150eb0f4bce"
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "role": "feature",
+      "statement": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "attribute deploy descriptor feature infer inference train training trains",
+        "fixed query anchor: the original query embedding remains unchanged during training/inference to serve as",
+        "embedding",
+        "training",
+        "contrastive",
+        "objective",
+        "inference"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-10-dac6250f",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:f31d1a5c879eeabe490aae975833a2e9e618f3660f7bc13c9d54e84964938f6e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "role": "inference",
+      "statement": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "deploy infer inference",
+        "conteb benchmark: evaluation suite that tests rerankers on challenging tasks requiring cross passage inference,",
+        "inference"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-11-27f310b2",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:6469d8adba43d169afd6662833cc1dc47890cde23d48155b29add220135fa716"
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "role": "training",
+      "statement": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "obligation_class": "implementation",
+      "authority_lane": "executable_hard",
+      "research_queries": [
+        "train training trains",
+        "mldr, squad, narrativeqa (training sets): three conteb datasets used for training ebcar, covering entity",
+        "training"
+      ],
+      "importance": "high",
+      "source_obligation_id": "O-COMPONENT-12-370bd5b2",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:1d0319ae4a229acfe4057e1c9324e86e077ca4014323a25b9b6fff7a102e27c0"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "role": "inference",
+      "statement": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "deploy infer inference",
+        "motivation: efficiency and cross passage inference challenges in existing rerankers.",
+        "inference"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:ecc5f4ae0d5a5a8894ec5a7fa8829aac86a765dc33c67548d0c49ad2a3428ab8"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-54911271",
+      "role": "feature",
+      "statement": "Embedding‑based reranking formulation and overall framework.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "attribute descriptor feature",
+        "embedding based reranking formulation and overall framework.",
+        "embedding"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-02-54911271",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:43ebe33fb61fc7e376fe6f8522223b9c78790f6f8201877f703a7597157cda3d"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "role": "filter",
+      "statement": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "attend attention mask masking masks self-attention",
+        "architecture details: enriching embeddings with document id and position, the transformer encoder with hybrid",
+        "masked",
+        "attention"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:d27caa35d986d937a02f555544977acb0328b3de2da321883cf0fb885e80bf54"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "role": "training",
+      "statement": "Training objective: InfoNCE loss with fixed query anchor.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "train training trains",
+        "training objective: infonce loss with fixed query anchor.",
+        "training",
+        "objective",
+        "infoNCE",
+        "loss"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:1cd45c8ad7e92f345bf1ae40d622ab1ba7e01389649d49a48a22fc21f3186506"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "role": "inference",
+      "statement": "Inference procedure.",
+      "obligation_class": "capability",
+      "authority_lane": "expository_bridge",
+      "research_queries": [
+        "deploy infer inference",
+        "inference procedure.",
+        "inference"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:ce341270ebc8e6ac9d894cfec4c95afd0095707135ca25a83add3d3034a6b3c5"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "role": "inference",
+      "statement": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "deploy generation infer inference invoke invokes",
+        "avoid full text processing and autoregressive generation to reduce inference latency.",
+        "inference",
+        "generation"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:8632a4e9586d187738e1dd67253ce9099cc09b325b3e43739f56fca7dd46f618"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "role": "inference",
+      "statement": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "deploy infer inference",
+        "inject document level structural knowledge into passage embeddings to support cross passage inference.",
+        "inference"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:068ab01d60397feae96a30d33e64f4b0d3e04fe1c92caded1a2ea286672496cd"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "role": "attention",
+      "statement": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "attend attention self-attention",
+        "design two complementary attention patterns that co exist in each layer: global and document",
+        "attention"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:b499747be856fa2e61b9140acbbb9ac0c6fd8a21a2ba68c9531bdeb5a13f6c42"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "role": "rationale_check",
+      "statement": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "use relative, dynamic document id assignments rather than global corpus level ids."
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:8ba56ba17df802a4b7e023facc5c58f0b514730830866bcb6ea3060b30e92177"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "role": "feature",
+      "statement": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "attribute deploy descriptor feature infer inference mask masking masks train",
+        "keep the query embedding fixed during training and inference while updating passage embeddings.",
+        "embedding",
+        "keep",
+        "training",
+        "inference"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:bbe9a575b94734c9c2e3456bd8b69421fedb3f08726f50f00b9cc8d72ae154ae"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "role": "training",
+      "statement": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "obligation_class": "rationale",
+      "authority_lane": "author_attested",
+      "research_queries": [
+        "train training trains",
+        "train on conteb datasets that explicitly require cross passage reasoning.",
+        "train"
+      ],
+      "importance": "medium",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "candidate_symbols": [],
+      "status": "unverified_by_repository",
+      "notes": [],
+      "content_digest": "sha256:fb996752d7a66c31725c01a2882441d3a0089e4a767b7483368532ab78e61ca8"
+    }
+  ],
+  "content_digest": "sha256:89a0ee8b32d4edb0831f56f85f837b71725b67a6442a7929ab769088ddf1603e"
+}

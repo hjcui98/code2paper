@@ -1,0 +1,4622 @@
+{
+  "schema_version": "2.0",
+  "plan_id": "method-plan:d6cd55a33bce6025c2286b14",
+  "method_name": "Present a lightweight reranker that operates directly on passage embeddings, enriches them with document‑structural signals, and uses a hybrid attention mechanism to capture both global inter‑document and local intra‑document interactions. Show that this embedding‑based approach is competitive with text‑based LLM rerankers on tasks requiring cross‑passage inference while being much faster.",
+  "mode": "replan_typed_semantic_graph_on_frozen_structure",
+  "input_digests": {
+    "claims": "sha256:883fd21d8996caa74959a990a6912c32ba14010a2cd33dff349acdbeaa12838b",
+    "equations": "sha256:a865d637cf2db20661f9f615d24a064d4dc440b60a21c6cfdbdd90d559c507e8",
+    "configurations": "sha256:938b28d6f4b21088ba2f77cc3126e0712f5185f91e6a50ee68742db5f615727b",
+    "completeness": "sha256:0834949ef4bbf2b8cb1fc3980cf579c02a78e6ba14fb1ad403de46ee5540aa55",
+    "facts": "sha256:1a7676c3bd2f6e0632ddf2041cf52b205fc0050438dd422fb4d7d93ddfbec118",
+    "agenda": "sha256:89a0ee8b32d4edb0831f56f85f837b71725b67a6442a7929ab769088ddf1603e",
+    "relations": "sha256:6eec47929d633d7183c174dbaee18f68c3ff72496b92cff3e4b50174e16ee964"
+  },
+  "section_dependencies": {
+    "MA-S1": [],
+    "MA-S2": [],
+    "MA-S3": [],
+    "MA-S4": [],
+    "MA-S5": []
+  },
+  "obligation_assignments": [
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/evaluate.py:84:85",
+        "span:src/evaluate.py:133:135",
+        "span:src/evaluate.py:141:141",
+        "span:src/evaluate.py:99:105"
+      ],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-10",
+      "required_move": "inference_and_output",
+      "supporting_anchor_ids": [
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:245f35b577e44c903138de90ab37f225ce25923e42903db12b366cffa22964c8"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:91:93",
+        "span:src/evaluate.py:99:105",
+        "span:src/model/ebcar_dedicated_attention_model.py:84:84",
+        "span:src/evaluate.py:48:48",
+        "span:src/model/ebcar_dedicated_attention_model.py:67:70",
+        "span:src/model/ebcar_dedicated_attention_model.py:74:76",
+        "span:src/model/ebcar_dedicated_attention_model.py:63:63",
+        "span:src/evaluate.py:127:129"
+      ],
+      "next_action": "",
+      "unresolved_reason": "Every typed behavior target is covered by supported code facts.",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:4a92afe6625d027ca783af7e8aee4f48c970b563f11e43105bbde70f6b5bbc57"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "run scoped repository research",
+      "unresolved_reason": "Obligation has no typed behavior targets to align against facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "supporting_anchor_ids": [],
+      "placement_state": "external_pending",
+      "content_digest": "sha256:95eb8b41678f2fe1377b01e66fb3ee67d4d40c5fa798f9e8d1842f1dd5b15584"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:23ea1369284c8881f7776dc06b916d6a8a5804d6166fd995c746b8e652b9b8e9"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:c39bdf78a9f26b3c92e36eee7386ad1745e8b465c9620437bf4027f44d7a05ef"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:c1111129e7cbfd948a20d817cf10b2705628c82e8f2a3bede7f6821edbe2f2fb"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-8",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:08233fbaee7534439a74fe70564effe380b6531b0111bd89654be5f9304fd2af"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:01c20958d8ccdbd025ad267b983aa22b5982c32f5fc13eead6faa6f6eea497af"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "importance": "high",
+      "status": "unverified_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "run scoped repository research",
+      "unresolved_reason": "Obligation has no typed behavior targets to align against facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "supporting_anchor_ids": [],
+      "placement_state": "external_pending",
+      "content_digest": "sha256:d8661c730869f307784a5b6b408876e280a42e1d3d37c4174e796d122247859e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:0b4e94189cbf97a6fb5f19b3cd39333110532c6438da415e3cb1acee43dad87a"
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:19a990bbf966ebfc7db72f3d1701f2334eb30f6c9f5872e5ddf47022ab2a420e"
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "required_move": "inference_and_output",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:a5f82e85ccaad8037362c66aed6b21c2c8d4868a168a304696aed77a87386248"
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [],
+      "next_action": "",
+      "unresolved_reason": "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation.",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-6",
+      "required_move": "training_objective",
+      "supporting_anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:080a74d836deac5aee457c4c107c0af0639a30976851c7060b58306cdc555000"
+    },
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "importance": "critical",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "rel:83ef85703286c813",
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "supporting_anchor_ids": [],
+      "placement_state": "unplaced",
+      "content_digest": "sha256:9bddf5570a57c7b3301a38e7b8853728ff5bb2ca2ac4b8157527948fa692c35d"
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "rel:83ef85703286c813",
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231",
+        "span:src/model/ebcar_dedicated_attention_model.py:223:223"
+      ],
+      "next_action": "",
+      "unresolved_reason": "Every typed behavior target is covered by supported code facts.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "config:sha256:f52b35d64b191",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:746ae4425b18b4e6e0bd14abc829a4df080eca5631de7a7d9ce3b341efd20e04"
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132",
+        "span:src/model/ebcar_dedicated_attention_model.py:223:223",
+        "span:src/model/ebcar_dedicated_attention_model.py:121:133",
+        "rel:3ab40312ca7ee86a",
+        "span:src/model/ebcar_dedicated_attention_model.py:91:93",
+        "span:src/model/ebcar_dedicated_attention_model.py:95:95",
+        "span:src/model/ebcar_dedicated_attention_model.py:121:121"
+      ],
+      "next_action": "",
+      "unresolved_reason": "Every typed behavior target is covered by supported code facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "supporting_anchor_ids": [],
+      "placement_state": "unplaced",
+      "content_digest": "sha256:314f216d8c753e4aaf4c9240b240f552afa3a8d2051a998b35fc567568cf5217"
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "importance": "high",
+      "status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126"
+      ],
+      "next_action": "",
+      "unresolved_reason": "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap.",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-7",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:d7bdc170e2d87fc362ef0ad3b049a0d71223c97250f86f2f543b66819e8856b1"
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232",
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231",
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240"
+      ],
+      "next_action": "",
+      "unresolved_reason": "Every typed behavior target is covered by supported code facts.",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "supporting_anchor_ids": [],
+      "placement_state": "unplaced",
+      "content_digest": "sha256:0f104bd5cc827fa3c38a35c44fbd9662b267815ee247b519fd4051a8ffbce83b"
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "importance": "high",
+      "status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "rel:75d4bb1bf855ff42",
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "next_action": "",
+      "unresolved_reason": "Every typed behavior target is covered by supported code facts.",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "supporting_anchor_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+      ],
+      "placement_state": "assigned",
+      "content_digest": "sha256:9629a4b5e7232f22d772b4887aa203b1a8996148df564ff8d1ccb34433d8f15c"
+    }
+  ],
+  "move_authority_proofs": [
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:3b1408ca3dda71c25e76729f7724896f79792e8f614354a98360dc51143522f6"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:ba3791c1aa3ac1b35bf332cb106cb0b929f69c30380bf2853fc5042fbd1e7f9d"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:8374acf2698159b31b35f8f7f5cfb9671e784c501ff87b8e168567ff867c9b94"
+    },
+    {
+      "section_id": "MA-S1",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "move": "inference_and_output",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:5be5b3740c35ab95efe4fff89d0c520ae0ab9cffef4c2159c1df1b7bcc4cd9ed"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:2e8158e5806883a7f9c1f539032b8b75b40cd823ab34eb7e4317b434f3aeddc6"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e49d96620f554e7b97e3583eda549aaf38cc9e808852bb0b0f19ee91170c5c5e"
+    },
+    {
+      "section_id": "MA-S2",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:9a23fcbd0641fbe196119d35d1d5ed88c858be899a04322234bd29c23730f11f"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:574cd3ef2602953ae8f76bb680174814365c765ec17d35c6447808a7bf94f772"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:6df4fa7afeee0b87a7fcfd4c2690c9e702f4aad7e9017622f7639650936f6fb8"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:af07b0278f8683e16fa655cf5157b71bbe4484fe6fa8cc7b64ff60cb6f8cea50"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:d1dd74957b024d040c0fea8f8a0061db593131aa693c612826c79042b043708a"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7",
+        "MA-S3:unit-10"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:c34b256faf93753793d3951bf989f98cbbfaf85e3467289541ef9dddaea7784a"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7",
+        "MA-S3:unit-10"
+      ],
+      "move": "implementation_realization",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:99a077435d92c474252527dbb83ca47cb52c64567d3d476e911c934a98e0f568"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7",
+        "MA-S3:unit-10"
+      ],
+      "move": "formal_objects_and_notation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:a4b04d4221a39c412f0c77620738e3910b4e61087f44f8591ce4c864734a4461"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7",
+        "MA-S3:unit-10"
+      ],
+      "move": "equation_or_derivation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e7973e32d71b85b623931de9d3b6250bdd8624ec19890ceaf4954be33f982277"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7",
+        "MA-S3:unit-10"
+      ],
+      "move": "configuration_and_branches",
+      "required": true,
+      "anchor_ids": [
+        "config:sha256:f52b35d64b191",
+        "config:sha256:c46381fce5c29",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:788ab618770b4a5cee152df7fc486cba0126cf83a0a252375131e1f0c6984a20"
+    },
+    {
+      "section_id": "MA-S3",
+      "argument_unit_ids": [
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-7"
+      ],
+      "move": "inference_and_output",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e88621c7350f897ad31fb62acfa6213acee294f9efd6641b01047d2e7fc4a970"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:7e0f0b3649726929fcec1f7b17523e2140902ac209036f4b5e33acba64bb22b5"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:02c0fc0e292b912c1f5d579f96d9272fc4ce95e6862d65af5db4b8a86635193a"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:a08cc152d83c3a787c8195853a97d4aaf3ec4ef878899f6e0bc81f6372e2c77a"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "move": "transition_to_next_section",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:ae73db2d39953f18ea258a087c2573c6a9b174adb1eefd6fa348912a6a18571a"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:1ef9faf16dcf0525ed47d47b0e6f36fa3f01dfd4c28359579e1af5006c604fbc"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "move": "implementation_realization",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:0aa796325ebda500d0f53ecbc9af53fbe501466453036be85fcc6f6879754beb"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "move": "formal_objects_and_notation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:27439ea4eee08a3643c9c87e71de5e67d54c57d8b694f5c83b2a9849d87ec41d"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "move": "equation_or_derivation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:1792e3d1d3baeac9e0b49509ef4687f5b5563e6d7acdc0c77cb26c774f545edb"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "move": "configuration_and_branches",
+      "required": false,
+      "anchor_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "Research",
+      "content_digest": "sha256:fcc48c1ad510717899ddad6e34b796a7f9602022b1dcd494b20797015bfe0f9b"
+    },
+    {
+      "section_id": "MA-S4",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "move": "training_objective",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:83a9073cab9c4830fe8283ff5a74bb67492fc5a56c918a048babd79cd83b564d"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3"
+      ],
+      "move": "problem_or_local_context",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:1a9ad63215e61db519a36cbdc3dc23b205c8932195b7184a8b785300301e01f1"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3"
+      ],
+      "move": "design_objective",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:fbb00ee5d13954921ee00e8c5631798ddda90dc4f2ee4eb201f896494cf8869c"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3"
+      ],
+      "move": "mechanism_overview",
+      "required": true,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "",
+      "content_digest": "sha256:ef1b8da05e10bc33a62704b0ecdb8c9a9cb43a8da51b7f9447b4fd4b9be546a9"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3"
+      ],
+      "move": "transition_to_next_section",
+      "required": false,
+      "anchor_ids": [],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "expository_bridge",
+      "owner_route": "author_confirmation_queue",
+      "state": "bridge",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:1943fc4fe7bd8082626fe0a693ef8645ee302897f5ad488a0e6445055ebed9a3"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "algorithm_or_data_flow",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:744e852cd021ef6e723553bb49d2a617c39ac6ffeb5779fb2561ce5cc9563455"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "implementation_realization",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:5dd94aa6d5fb1ec7a7bdab1398d1f7f18a6d5c846639b77ca4563ac89e679560"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "formal_objects_and_notation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:976571b471f6f65a64beb6deeea77372745d4740568b4085ceb0632327927ed9"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "equation_or_derivation",
+      "required": true,
+      "anchor_ids": [
+        "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:e508918918f9a3e27b9f3f23623136da10dd300419d30d28e9d7f885c165176e"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "configuration_and_branches",
+      "required": false,
+      "anchor_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "open",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": true,
+      "unanchored_owner": "Research",
+      "content_digest": "sha256:520c9a388c617563ac4f12516f41b0893f83845673595013b079673c393191b5"
+    },
+    {
+      "section_id": "MA-S5",
+      "argument_unit_ids": [
+        "MA-S5:unit-2"
+      ],
+      "move": "inference_and_output",
+      "required": true,
+      "anchor_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+      ],
+      "unresolved_obligation_ids": [],
+      "required_authority_lane": "executable_hard",
+      "owner_route": "repository_tools",
+      "state": "anchored",
+      "request_ids": [],
+      "fulfillment_artifact_ids": [],
+      "fulfillment_artifact_digest": "",
+      "unanchored": false,
+      "unanchored_owner": "",
+      "content_digest": "sha256:91a77e5a0feaaf5019f0b7ca53052dc39a80634a50cde4920bb28129be5ede0e"
+    }
+  ],
+  "placement": [
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "target_reason": "exact_claim_ids",
+      "candidate_targets": [
+        "MA-S3:unit-10"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-10",
+      "required_move": "inference_and_output",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "target_reason": "coverage_fact_ids",
+      "candidate_targets": [
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "target_reason": "",
+      "candidate_targets": [],
+      "placement_state": "external_pending",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-11"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-4"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-12"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-8"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-8",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S3:unit-13"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "target_reason": "",
+      "candidate_targets": [],
+      "placement_state": "external_pending",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "limitations_or_mismatch",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-4"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-5"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S1:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "required_move": "inference_and_output",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "target_reason": "agenda_source_obligation_id",
+      "candidate_targets": [
+        "MA-S4:unit-6"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-6",
+      "required_move": "training_objective",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "target_reason": "agenda_role_ambiguous",
+      "candidate_targets": [
+        "MA-S2:unit",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-7",
+        "MA-S3:unit-11",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "unplaced",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "target_reason": "exact_claim_ids",
+      "candidate_targets": [
+        "MA-S3:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "target_reason": "agenda_role_ambiguous",
+      "candidate_targets": [
+        "MA-S2:unit",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-7",
+        "MA-S3:unit-11",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "unplaced",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "target_reason": "exact_claim_ids",
+      "candidate_targets": [
+        "MA-S3:unit-7"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-7",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "target_reason": "agenda_role_ambiguous",
+      "candidate_targets": [
+        "MA-S2:unit",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-7",
+        "MA-S3:unit-11",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "unplaced",
+      "section_id": "",
+      "argument_unit_id": "",
+      "required_move": "",
+      "authority_lane": "executable_hard"
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "target_reason": "exact_claim_ids",
+      "candidate_targets": [
+        "MA-S5:unit-2"
+      ],
+      "placement_state": "assigned",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "required_move": "algorithm_or_data_flow",
+      "authority_lane": "executable_hard"
+    }
+  ],
+  "sections": [
+    {
+      "section_id": "MA-S1",
+      "unit_id": "MA-S1:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S1:unit-1",
+        "argument_unit_id": "MA-S1:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:cf42bc7375e33eb5afb2ec96934a927269d4eaa13838dc656bd1859f966efa1d"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S1",
+      "unit_id": "MA-S1:unit-2",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S1:unit-2",
+        "argument_unit_id": "MA-S1:unit-2",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:22b9c3a50046061caa9d19e8b5d9a74c07b1893bdfe5015527785bbe8d20b959"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section",
+        "inference_and_output"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-11-27f310b2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S2",
+      "unit_id": "MA-S2:unit",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S2:unit",
+        "argument_unit_id": "MA-S2:unit",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:7fea56270b4f47c0f2888f72348df4b739e66a3fb2e977af0fffd2c510e1d8d3"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-1",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-1",
+        "argument_unit_id": "MA-S3:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:471c61d7612e3d453f5766ab379361d4a16e2a607170dd7ee46126c4919fd2e3"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-2",
+      "heading": "Transformation and output",
+      "reader_question": "This section explains how the forward are loaded and prepared; which branches and guards select the executed path; how the loaded inputs are transformed into the method representation; how the forward are produced from the processed representation.",
+      "method_point": "load the authorized inputs and apply the authorized branch and guard conditions and run the authorized transformations in their flow order and produce the authorized output.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-2",
+        "argument_unit_id": "MA-S3:unit-2",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+            "role": "output",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "returns",
+            "operands": [
+              "loss"
+            ],
+            "produced_entities": [
+              "loss"
+            ],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:c36cb6f6102b463905b3f5a1bcb5809949e610535bda6e4e91a8dff5c847580a"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "passages",
+              "document_id_embeddings"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+              "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:39f53bbe9faaed7fe1271492adad87587650ca6d38b25fbf3161fa979ce93ba9"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+            "role": "input",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "loads_weights",
+            "operands": [
+              "self.cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+            ],
+            "exact_relation_ids": [
+              "rel:83ef85703286c813"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:c62e0ec2a22dac1acb4dd034152c5a6a510b5bdca3d633174f4f1c59babed512"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "-pos_sim",
+              "torch.logsumexp(all_sims, dim=0)",
+              "result=loss_i"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+            ],
+            "claim_ids": [
+              "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:1338e9a0810fe056ff915c785b8a371936be983e2027d6fc54838d700aa463d7"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "concatenates",
+            "operands": [
+              "torch.cat",
+              "(query, passages)",
+              "dim=1",
+              "result=concat_embeddings"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:6189685150fe30fc9e8875803c5b1579e1704c11907508c8bb99f88441783298"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "role": "condition",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "branches_on",
+            "operands": [
+              "self.cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "self.cfg.use_dedicated_attention"
+            ],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+            ],
+            "exact_relation_ids": [
+              "rel:83ef85703286c813"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:dc4a655ed4cb1f0fbc07e0b60eccaf9097b69d7e7ba73d08a8bf9241e346d2c5"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "configured_by",
+            "operands": [
+              "self.cfg.use_dedicated_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+            ],
+            "exact_relation_ids": [
+              "rel:83ef85703286c813"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:20ee97f288355107988f60251f39a375add998764984dac44dbf1d224b990b3d"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "concatenates",
+            "operands": [
+              "torch.cat",
+              "[pos_sim, neg_sims]",
+              "result=all_sims"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-01-039a963a-node:a2dae47572460254"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:1a206bd0915318fe3b4ceeb2a95dca80f141f0828679b7a7f9cb054c3b99ad12"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "passages + document_id_embeddings",
+              "passage_id_embeddings",
+              "result=passages"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+              "l2:math:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:21a97f0ccf7dd39fdfe0d71d7fb815c9ef532dff6603057c6feef99c81d124ff"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "reduces",
+            "operands": [
+              "torch.sum",
+              "pos_mask"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:d018a4debe2cc8b020ffcdc12e878adb05a41721ced7fc9b5d461b4e520cc7c4"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "normalizes",
+            "operands": [
+              "torch.nn.functional.normalize",
+              "positional_encoding",
+              "p=2",
+              "dim=2",
+              "result=positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+            ],
+            "claim_ids": [
+              "l2:math:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3:normalize"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:0d6a2fdb5f817c42bcfc1dbffdb094755459e4c4f5c5ede7589b8289053d6be8"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+        ],
+        "claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec:weighted_sum",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+          "l2:math:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b:weighted_sum",
+          "l2:math:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3:normalize"
+        ],
+        "fact_ids": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+        ],
+        "equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+        ],
+        "configuration_ids": [
+          "config:sha256:f52b35d64b191"
+        ],
+        "configuration_binding_relation_ids": [
+          "rel:83ef85703286c813"
+        ],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation",
+          "configuration_resolved"
+        ],
+        "content_digest": "sha256:cfb27a7ca6df001321a0add0d6f8d25fa99b69c5610b84b2c5555b9bbb6c4f6c"
+      },
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+        "l2:math:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b:weighted_sum",
+        "l2:math:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3:normalize"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+      ],
+      "configuration_ids": [
+        "config:sha256:f52b35d64b191"
+      ],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "l2:math:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b:weighted_sum",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "l2:math:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3:normalize"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+        ],
+        "implementation_realization": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "equation:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+        ],
+        "configuration_and_branches": [
+          "config:sha256:f52b35d64b191",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+        ],
+        "inference_and_output": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-3",
+      "heading": "Transformation and output",
+      "reader_question": "This section explains how the forward are loaded and prepared; which branches and guards select the executed path; how the loaded inputs are transformed into the method representation; how the get_passage_positional_encoding are produced from the processed representation.",
+      "method_point": "load the authorized inputs and apply the authorized branch and guard conditions and run the authorized transformations in their flow order and produce the authorized output.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-3",
+        "argument_unit_id": "MA-S3:unit-3",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "computes_formula",
+            "operands": [
+              "positions",
+              "div_term"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:1df727cbae9514612b6c0524c6bc825af5b297ae073d474c08d6bd7b141c502a"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "computes_formula",
+            "operands": [
+              "torch.arange(0, self.cfg.d_model, 2, dtype=torch.float32, device=input_ids.device)",
+              "-(math.log(10000.0) / self.cfg.d_model)"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:2e4e0e20ea2d8be9e3b7745bc3966e9f28ef96828aec0732272c39837dac59b4"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "calls",
+            "operands": [
+              "torch.zeros",
+              "batch_size",
+              "seq_len",
+              "self.cfg.d_model",
+              "device=input_ids.device",
+              "result=positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:1f1d3cc89b30b56b958a7fabfaf4f07766619a699278b84955ace2801e7c3a58"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "calls",
+            "operands": [
+              "torch.arange",
+              "seq_len",
+              "device=input_ids.device",
+              "dtype=torch.float32",
+              "result=positions"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:4fddc361d6491df8d368906099a2f325d039876037c8c59fb3d256cd02b46bff"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+            "role": "condition",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "branches_on",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe"
+            ],
+            "exact_relation_ids": [
+              "rel:3ab40312ca7ee86a"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:467ee2256eb232ec57e66ca49795e7b9835c65e1b0a882a2aeaccb7fd1260086"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+            "role": "output",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "returns",
+            "operands": [
+              "positional_encoding"
+            ],
+            "produced_entities": [
+              "positional_encoding"
+            ],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4916185860793ec5"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:2097f0c270acc1e42d2739b496c5a3720e95d87186e37c3ca28114a73dc1af4c"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+            "role": "input",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "loads_weights",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53"
+            ],
+            "exact_relation_ids": [
+              "rel:3ab40312ca7ee86a"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:1ba3f19ba47fa166696084234e816e07fca76db457b88611fcb0e936697b917b"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+            "predicate": "normalizes",
+            "operands": [
+              "torch.nn.functional.normalize",
+              "positional_encoding",
+              "p=2",
+              "dim=2",
+              "result=positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:167a13bdb37101b9214a98312317246c9c1ed242e71bd886febceca7d17502ce"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "configured_by",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+            ],
+            "exact_relation_ids": [
+              "rel:3ab40312ca7ee86a"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation",
+              "configuration_resolved"
+            ],
+            "content_digest": "sha256:7ff9787dbef152c0f06724e54b4819dc1d1bf154753a6b8d4c179143156bb214"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+          "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+          "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+        ],
+        "claim_ids": [
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f"
+        ],
+        "fact_ids": [
+          "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+          "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+          "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+        ],
+        "equation_ids": [
+          "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+        ],
+        "configuration_ids": [
+          "config:sha256:c46381fce5c29"
+        ],
+        "configuration_binding_relation_ids": [
+          "rel:3ab40312ca7ee86a"
+        ],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation",
+          "configuration_resolved"
+        ],
+        "content_digest": "sha256:2d549613f23af8f2638ebf092e44d54de958bd103fea4a6c432e0defa5da8ab0"
+      },
+      "claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+      ],
+      "configuration_ids": [
+        "config:sha256:c46381fce5c29"
+      ],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+          "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+        ],
+        "implementation_realization": [
+          "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "equation:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681"
+        ],
+        "configuration_and_branches": [
+          "config:sha256:c46381fce5c29",
+          "fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe"
+        ],
+        "inference_and_output": [
+          "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-4",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-4",
+        "argument_unit_id": "MA-S3:unit-4",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:3da5c80b2888802f86b0e0b12b195f9b4a6ba5361cb3b2815923d5c4c6c3745d"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ],
+      "unresolved": [
+        "O-COMPONENT-04-b5b6af99:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-5",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-5",
+        "argument_unit_id": "MA-S3:unit-5",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:6b5452d7f60def2833878ca937ef7a8f412899f192f65657bdc29093e4426af6"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-6",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-6",
+        "argument_unit_id": "MA-S3:unit-6",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "author_attested"
+        ],
+        "content_digest": "sha256:021117823c82bf2959aded6b160b86e4c2a96911fd78acdcc5a72ac96d6a69d7"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-7",
+      "heading": "Transformation and output",
+      "reader_question": "This section explains which branches and guards select the executed path; how the loaded inputs are transformed into the method representation; how the forward are produced from the processed representation.",
+      "method_point": "apply the authorized branch and guard conditions and run the authorized transformations in their flow order and produce the authorized output.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-7",
+        "argument_unit_id": "MA-S3:unit-7",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+            "role": "transformation",
+            "subject": "TransformerEncoderLayerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "src",
+              "self.dropout2(src2)",
+              "result=src"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+              "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:aadbc1cd8498149c35bd654c9351646254020c8b12163e6ce2a9a6257a60d07f"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+            "role": "transformation",
+            "subject": "TransformerEncoderLayerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "shared_out",
+              "dedicated_out"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+              "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:a4aa71b6fe837252bd6c282aa9a0f4966b0edcf547395768dacd79753e003e5f"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+            "role": "transformation",
+            "subject": "TransformerEncoderLayerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "src",
+              "self.dropout1(shared_out + dedicated_out)",
+              "result=src"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+              "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:ac5299703cbb15824af0b4be8108aec7b64ae5ec27f8bc68b83dec2faa60feb6"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+            "role": "output",
+            "subject": "TransformerEncoderLayerHybridAttention.forward",
+            "predicate": "returns",
+            "operands": [
+              "(src, (shared_attn_weights, dedicated_attn_weights))"
+            ],
+            "produced_entities": [
+              "(src, (shared_attn_weights, dedicated_attn_weights))"
+            ],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:d504dadcb53dc860bffb3e31bfdd3771a7f694fd239edd44ac54d101dc31d7ac"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+            "role": "condition",
+            "subject": "TransformerEncoderLayerHybridAttention.forward",
+            "predicate": "branches_on",
+            "operands": [
+              "return_attention"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "return_attention"
+            ],
+            "fact_ids": [
+              "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:442b24b62fb0edd3aef84a3663a66a71e013269f1c6fde40c444b49e4fe9db85"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+        ],
+        "claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369:weighted_sum"
+        ],
+        "fact_ids": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+        ],
+        "equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+        ],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation"
+        ],
+        "content_digest": "sha256:ff870be4a21bba9776565bcdb10a3d28645fdca28625dbd2c01ea41cac6f1b37"
+      },
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+        ],
+        "implementation_realization": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+        ],
+        "configuration_and_branches": [
+          "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+        ],
+        "inference_and_output": [
+          "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "unresolved": [
+        "O-STAGE-03-2c5bd758:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-8",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-8",
+        "argument_unit_id": "MA-S3:unit-8",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:80df1c1aa71bf154124f7aa32e329b65fe0a1ad75caa7a33bd7f7589ee9fb05e"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ],
+      "unresolved": [
+        "O-COMPONENT-06-34021b88:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-9",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-9",
+        "argument_unit_id": "MA-S3:unit-9",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:4169d808f102201fd6d8205a7ad8a4fd67a74e6749b131ce46528158dcc27c81"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-10",
+      "heading": "Transformation",
+      "reader_question": "This section explains which branches and guards select the executed path; how the loaded inputs are transformed into the method representation.",
+      "method_point": "apply the authorized branch and guard conditions and run the authorized transformations in their flow order.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-10",
+        "argument_unit_id": "MA-S3:unit-10",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+            "role": "condition",
+            "subject": "evaluate_EBCAR",
+            "predicate": "branches_on",
+            "operands": [
+              "document_id not in unique_document_ids"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "document_id not in unique_document_ids"
+            ],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:1fd63c01b553ab5f7e327e8b7e9bd8ed446cdbced8c6160e6294ad38b06d1853"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+            "role": "transformation",
+            "subject": "evaluate_EBCAR",
+            "predicate": "calls",
+            "operands": [
+              "reranker.rerank",
+              "query_embedding",
+              "document_embeddings",
+              "document_ids",
+              "passage_ids",
+              "documents",
+              "result=(reranked_passages, predicted_relevance_scores)"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:a495316d4cb7778d8a1a253861faa2af2802c13803a0c3058a8bbb3751466923"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+            "role": "transformation",
+            "subject": "evaluate_EBCAR",
+            "predicate": "computes_formula",
+            "operands": [
+              "'-'",
+              "100"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:9cbd00a43926e4040dc42dc2f6feea665e8f032d748b9abc8cb1bec84a1b7dbe"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+            "role": "transformation",
+            "subject": "evaluate_EBCAR",
+            "predicate": "concatenates",
+            "operands": [
+              "torch.cat",
+              "ground_truth_relevance_scores_all",
+              "dim=0",
+              "result=ground_truth_relevance_scores_all"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:d721e043356a393330202c3789497cf3bb139a4daec43b5f1eb2f50520d3c6e6"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+            "role": "transformation",
+            "subject": "evaluate_EBCAR",
+            "predicate": "calls",
+            "operands": [
+              "vectorstore.as_retriever",
+              "search_kwargs={'k': cfg.retrieval.top_k}",
+              "result=retriever"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:386ed6f39d3da8f05823fdc87533ceeb45f78bdfe002a5a2b9c54fac8b8b39ae"
+          },
+          {
+            "slot_id": "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+            "role": "transformation",
+            "subject": "evaluate_EBCAR",
+            "predicate": "calls",
+            "operands": [
+              "calculate_MRR",
+              "reranked_all_passages",
+              "ground_truth_all_passages",
+              "top_k=cfg.MRR_at",
+              "result=test_mrr"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+            ],
+            "claim_ids": [
+              "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:5eac2eaff5b69ac53780810bc1f01c6bbca3c92ca0fc82618ae560a116caa7ad"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+        ],
+        "claim_ids": [
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+        ],
+        "fact_ids": [
+          "fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+          "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+        ],
+        "equation_ids": [
+          "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+        ],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation"
+        ],
+        "content_digest": "sha256:6a8585835113b73f357147c5a5d8d39278f2bcdfd3aa97fa339c777e412f689e"
+      },
+      "claim_ids": [
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+      ],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "transition_to_next_section",
+        "inference_and_output"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+          "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+        ],
+        "implementation_realization": [
+          "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+          "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7"
+        ],
+        "configuration_and_branches": [
+          "fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ],
+      "unresolved": [
+        "O-COMPONENT-01-c301ecdd:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-11",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-11",
+        "argument_unit_id": "MA-S3:unit-11",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:c103b9cc9fb81a3916c4500d4ee2d996130dbeed992768735a8bcbacb6da4a9c"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ],
+      "unresolved": [
+        "O-COMPONENT-03-d8aa8c77:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-12",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-12",
+        "argument_unit_id": "MA-S3:unit-12",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:0d03fd4b2e5374b0382f32e0684b8960ef5172adc91beec21ea2c6ce5ad07d9c"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-05-4c3594d2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-13",
+      "heading": "Filtering and selection",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-13",
+        "argument_unit_id": "MA-S3:unit-13",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:d9a1e077b8ae83a29509d9add58f996198bd9dfc29c96a2d59524d93749680d9"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ],
+      "unresolved": [
+        "O-COMPONENT-07-d157b2cc:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "unit_id": "MA-S3:unit-14",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S3:unit-14",
+        "argument_unit_id": "MA-S3:unit-14",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:b2064df2529dd5cd5026593c8686e4cf13c5d6ef1f5a41a8088ae2202ddcde35"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-1",
+        "argument_unit_id": "MA-S4:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:abcf2bd94bc48c7285920e9843c27ab6a14ea3a5ec3be7abd8b0360ccd9a5cb5"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-2",
+      "heading": "Transformation",
+      "reader_question": "This section explains which branches and guards select the executed path; how the loaded inputs are transformed into the method representation.",
+      "method_point": "apply the authorized branch and guard conditions and run the authorized transformations in their flow order.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-2",
+        "argument_unit_id": "MA-S4:unit-2",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "computes_formula",
+            "operands": [
+              "-pos_sim",
+              "torch.logsumexp(all_sims, dim=0)",
+              "result=loss_i"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:dd398ddd157a65e1a7f08a2d9ca3c668dafaa1240cc363ef500252c821c48978"
+          },
+          {
+            "slot_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "reduces",
+            "operands": [
+              "torch.stack(losses).mean",
+              "result=loss"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+            ],
+            "claim_ids": [
+              "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:caa510e16b8a335b846e1d90634742c79ff50375563f1f0ed84cab8b3df8a9ac"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+            "role": "condition",
+            "subject": "EBCarRerankerHybridAttention.forward",
+            "predicate": "branches_on",
+            "operands": [
+              "loss_i.shape[0] == 0"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "loss_i.shape[0] == 0"
+            ],
+            "fact_ids": [
+              "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:6d7561cc6939b0fdc9b3858f38cb4c541a75d955bd8add3b57bb56b10f09456a"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "fact_ids": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+        ],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation"
+        ],
+        "content_digest": "sha256:b22640c71d0cb0e4b2fd4bb78a1ca343802e3eb58f8aa57b17fcb79d1ba83fb0"
+      },
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+        ],
+        "implementation_realization": [
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+        ],
+        "configuration_and_branches": [
+          "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-3",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-3",
+        "argument_unit_id": "MA-S4:unit-3",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5f29392ae391b1607304f9a688928d8bdd97a38dd8658836890eb75a0b8715aa"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-4",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-4",
+        "argument_unit_id": "MA-S4:unit-4",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5483fe6c08ec940381ea5c878e721fc77c97b2667bd91854137922a3ce1f4a25"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ],
+      "unresolved": [
+        "O-COMPONENT-09-6a8cfd6c:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-5",
+      "heading": "Feature preparation",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-5",
+        "argument_unit_id": "MA-S4:unit-5",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:02e7ebabd5941822db735ebb081fb4f7f61afe1e276eae53779391b34e2ea6e5"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "algorithm_or_data_flow"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ],
+      "unresolved": [
+        "O-COMPONENT-10-dac6250f:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "unit_id": "MA-S4:unit-6",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S4:unit-6",
+        "argument_unit_id": "MA-S4:unit-6",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:dad7097a64e8025d0418fa6b250f55cd727c406eeced09578c5b0696022328ca"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section",
+        "training_objective"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "unresolved": [
+        "O-COMPONENT-12-370bd5b2:partially_supported_by_repository"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "unit_id": "MA-S5:unit-1",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S5:unit-1",
+        "argument_unit_id": "MA-S5:unit-1",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:34bf1d22bd30b45f8b7a3862b5e1c60f668c0a1d201bc1de78a7a80bd39d2285"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S5",
+      "unit_id": "MA-S5:unit-2",
+      "heading": "Transformation and output",
+      "reader_question": "This section explains how the rerank are loaded and prepared; which branches and guards select the executed path; how the loaded inputs are transformed into the method representation; how the rerank are produced from the processed representation.",
+      "method_point": "load the authorized inputs and apply the authorized branch and guard conditions and run the authorized transformations in their flow order and produce the authorized output.",
+      "frame": {
+        "frame_id": "frame:MA-S5:unit-2",
+        "argument_unit_id": "MA-S5:unit-2",
+        "slots": [
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "role": "condition",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "branches_on",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6"
+            ],
+            "exact_relation_ids": [
+              "rel:75d4bb1bf855ff42"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:fd4b68e2d642e77600def467dfdf97d30ee01efd832c518856b9f1d5fd4041cc"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+            "role": "input",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "loads_weights",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404"
+            ],
+            "exact_relation_ids": [
+              "rel:75d4bb1bf855ff42"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:b55b66e6d76914093c9163c3a715aa942d7bea53c890c6c552cc87cdf80699a1"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "calls",
+            "operands": [
+              "self.passage_id_embedding",
+              "passage_id.long()",
+              "result=passage_id_embeddings"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:94b489f5160e99094dbbf399d56a9fff59d88bccdf0741898031627626423c15"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "computes_formula",
+            "operands": [
+              "passages + document_id_embeddings",
+              "passage_id_embeddings",
+              "result=passages"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+              "l2:math:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:28c5763e534c039683c889bf83c3bb2c64c678a7bc2ea08bd648bf539a56665f"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "computes_formula",
+            "operands": [
+              "passages",
+              "document_id_embeddings"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:73d075c95aef8dd5a52d96d26b3c428212dd967bdd47fe3df1ca64f3b0aa45d3"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+            "role": "condition",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "sorts_by",
+            "operands": [
+              "torch.sort",
+              "similarities",
+              "dim=1",
+              "descending=True",
+              "result=(relevance_scores, indices)"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:8151d54ecbe434399e0fb9c4836e537f0cde970461eaf2952ea179578545279f"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "concatenates",
+            "operands": [
+              "torch.cat",
+              "(query, passages)",
+              "dim=1"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:5c40420e8eb9cc9e880fc67daaf78d6234089a03655af64c08c3c741b7a0b1dd"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+            "role": "output",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "returns",
+            "operands": [
+              "(reranked_passages, relevance_scores)"
+            ],
+            "produced_entities": [
+              "(reranked_passages, relevance_scores)"
+            ],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+            ],
+            "exact_relation_ids": [],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:9220db28f7b638b35cac1f9bdf5a7fe87df96f1508a26660ad9195aa8787859b"
+          },
+          {
+            "slot_id": "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+            "role": "transformation",
+            "subject": "EBCarRerankerHybridAttention.rerank",
+            "predicate": "configured_by",
+            "operands": [
+              "self.cfg.add_positional_encoding"
+            ],
+            "produced_entities": [],
+            "conditions": [],
+            "fact_ids": [
+              "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+            ],
+            "claim_ids": [
+              "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+            ],
+            "exact_relation_ids": [
+              "rel:75d4bb1bf855ff42"
+            ],
+            "authority_lanes": [
+              "executable_hard",
+              "formal_derivation"
+            ],
+            "content_digest": "sha256:460734ace3026433e6304abc5b16b5cc98abfd808a79a41cca9014ae47e13dd5"
+          }
+        ],
+        "edges": [],
+        "ordered_slot_ids": [
+          "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+          "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+          "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+        ],
+        "claim_ids": [
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+          "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum",
+          "l2:math:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8:weighted_sum"
+        ],
+        "fact_ids": [
+          "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+          "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+          "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+        ],
+        "equation_ids": [
+          "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [
+          "rel:75d4bb1bf855ff42"
+        ],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard",
+          "formal_derivation"
+        ],
+        "content_digest": "sha256:41b8b4958efa90b4c8eb2be2a4992cc6d3c9a047529286d1fab51a5e25174546"
+      },
+      "claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum",
+        "l2:math:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "l2:math:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8:weighted_sum",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+        ],
+        "algorithm_or_data_flow": [
+          "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+          "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "implementation_realization": [
+          "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+        ],
+        "formal_objects_and_notation": [
+          "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "equation_or_derivation": [
+          "equation:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "configuration_and_branches": [
+          "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+        ],
+        "inference_and_output": [
+          "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc"
+        ],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    },
+    {
+      "section_id": "MA-S5",
+      "unit_id": "MA-S5:unit-3",
+      "heading": "Method operations",
+      "reader_question": "This section explains the authorized method operations.",
+      "method_point": "explain the authorized method operations.",
+      "frame": {
+        "frame_id": "frame:MA-S5:unit-3",
+        "argument_unit_id": "MA-S5:unit-3",
+        "slots": [],
+        "edges": [],
+        "ordered_slot_ids": [],
+        "claim_ids": [],
+        "fact_ids": [],
+        "equation_ids": [],
+        "configuration_ids": [],
+        "configuration_binding_relation_ids": [],
+        "unresolved_relation_ids": [],
+        "authority_lanes": [
+          "executable_hard"
+        ],
+        "content_digest": "sha256:5fd279da812652d03521ca77c475bd28d347f3a4a3f49346ec716acd3b80d326"
+      },
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "transition_to_next_section"
+      ],
+      "move_anchor_ids": {
+        "problem_or_local_context": [],
+        "design_objective": [],
+        "mechanism_overview": [],
+        "transition_to_next_section": []
+      },
+      "obligation_ids": [],
+      "unresolved": []
+    }
+  ]
+}

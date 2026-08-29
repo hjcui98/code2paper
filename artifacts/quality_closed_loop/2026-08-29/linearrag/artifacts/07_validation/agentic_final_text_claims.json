@@ -1,0 +1,80 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:0062ac023b494275a5922e5066d6e2fb10c88b0b71bd15d489c1f5a45c1d5b58",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 75,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:6d8e55b41ed5731f2f34c194edb16cf763d4e57145ca9e79b82dca8cbb0ab3b5"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 77,
+      "char_end": 170,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:3c976f52b0fabe7931c8f4e65e3fe58f4ee4c4e08df94a2005418beba283ff4d"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 171,
+      "char_end": 404,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:dc78196115ac61ba3807d8f22bddd01bc3323d494e44748ae38cbb91c861a3f9"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy.",
+      "normalized_text": "this section presents the linearrag tri graph concept and its two stage retrieval philosophy",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 77,
+      "char_end": 170,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:3c976f52b0fabe7931c8f4e65e3fe58f4ee4c4e08df94a2005418beba283ff4d"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+      "normalized_text": "no repository supported propositions formula packages or material conditions were supplied for this paragraph the overview awaits the resolution of the scoped research request above before substantive method prose can be rendered",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 171,
+      "char_end": 404,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:dc78196115ac61ba3807d8f22bddd01bc3323d494e44748ae38cbb91c861a3f9"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

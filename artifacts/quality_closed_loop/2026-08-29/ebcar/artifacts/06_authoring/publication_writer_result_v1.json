@@ -1,0 +1,2641 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:e3d09aab83bf4c21739df01e9d65cc379b79d7d8c8d5b906f448cf09b49dbd16",
+  "claim_digest": "sha256:883fd21d8996caa74959a990a6912c32ba14010a2cd33dff349acdbeaa12838b",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit-1/expository_bridge",
+        "missing_required_briefs:brief:story:O-COMPONENT-11-27f310b2",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC2 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC3 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+        "section_markdown": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nThe efficiency and cross-passage inference characteristics of existing rerankers motivate the design choices described in subsequent sections. The specific computational and representational challenges that drive these choices are detailed in the method and evaluation sections.\n\nAddressing these challenges requires balancing inference cost against the quality of cross-passage interactions, a trade-off that shapes the architectural and training decisions presented in this work.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-6b45ad90"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S1:1",
+          "paragraph:MA-S1:2"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "candidate_symbols_or_terms": [
+              "cross-passage inference",
+              "reranker efficiency",
+              "inference cost"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What are the specific efficiency bottlenecks and cross-passage inference challenges in existing rerankers that motivate the proposed method?",
+            "missing_parts": [
+              "repository-supported propositions on reranker inference cost",
+              "evidence for cross-passage interaction limitations",
+              "formal characterization of the efficiency gap"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "req:MA-S1:1",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S1",
+            "status": "open",
+            "target_brief_ids": [
+              "MA-S1:brief-1"
+            ],
+            "target_clause_ids": [
+              "MA-S1:clause-1"
+            ],
+            "why_needed_for_reader": "Without repository-supported propositions, the motivation section cannot state concrete efficiency or cross-passage challenges as factual claims."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:1",
+            "paragraph_markdown": "The efficiency and cross-passage inference characteristics of existing rerankers motivate the design choices described in subsequent sections. The specific computational and representational challenges that drive these choices are detailed in the method and evaluation sections.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S1:2",
+            "paragraph_markdown": "Addressing these challenges requires balancing inference cost against the quality of cross-passage interactions, a trade-off that shapes the architectural and training decisions presented in this work.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Embedding‑based reranking formulation and overall framework.",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC4 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC5 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC6 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "Embedding‑based reranking formulation and overall framework.",
+        "section_markdown": "## Embedding‑based reranking formulation and overall framework.\n\nNo repository-supported content was supplied for this paragraph. The authoring packet contains no ordered targets, formula packages, material conditions, or configuration state, and the dossier summary reports zero operation atoms and zero data-flow or control-flow length. An overview of the embedding-based reranking formulation and overall framework requires at least one ordered target identifying the specific components, transformations, or objectives to be described.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-54911271"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "evidence_refs_used": [],
+            "exact_question": "What are the constituent components, data flow, and objective of the embedding-based reranking framework described in this work?",
+            "missing_parts": [
+              "ordered_targets",
+              "formula_packages",
+              "material_conditions",
+              "configuration_state"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "REQ-MA-S2-001",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "MA-S2:brief-001"
+            ],
+            "target_clause_ids": []
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "No repository-supported content was supplied for this paragraph. The authoring packet contains no ordered targets, formula packages, material conditions, or configuration state, and the dossier summary reports zero operation atoms and zero data-flow or control-flow length. An overview of the embedding-based reranking formulation and overall framework requires at least one ordered target identifying the specific components, transformations, or objectives to be described.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Architecture details: enriching embeddings with document ID and position",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-1/expository_bridge",
+        "missing_required_briefs:brief:story:O-COMPONENT-03-d8aa8c77,brief:story:O-COMPONENT-04-b5b6af99,brief:story:O-COMPONENT-05-4c3594d2,brief:story:O-COMPONENT-06-34021b88,brief:story:O-COMPONENT-07-d157b2cc,brief:story:O-ORGANIZATION-03-2c92c853,brief:story:O-RATIONALE-CHECK-02-30bb7c0f,brief:story:O-RATIONALE-CHECK-03-b01101f7,brief:story:O-RATIONALE-CHECK-04-c742a4fc,brief:story:O-RATIONALE-CHECK-06-388166d9,brief:story:O-STAGE-04-c50e0bef"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "",
+        "section_markdown": "## Architecture details: enriching embeddings with document ID and position\n\n## Architecture details: enriching embeddings with document ID and position\n\nThe mainline sequence defines the ordered stages through which a token embedding is progressively enriched. The mainline begins with an initial embedding computation and proceeds through subsequent transformation stages in a fixed order. The first stage in the mainline operates on the input representation to produce an enriched embedding. A relational link within the mainline specifies how the output of one stage is passed as the input to the next, ensuring that the enriched representation propagates sequentially through the pipeline.\n\nThe first stage computes an enriched embedding by combining the base token embedding with a document identifier embedding and a positional encoding. The second stage receives this enriched representation and applies a dedicated attention mechanism to it. The first stage additionally produces an auxiliary output that is carried forward to the second stage.\n\nThe second stage is instantiated as a component that processes the enriched input representation and produces a transformed output. The stage is configured through a component that governs the attention computation. The attention module supports an option to return the attention weights alongside the transformed representation. The resulting output is passed to the next stage in the pipeline.\n\nThe second stage is connected to the mainline through a relational link that specifies how the stage output feeds into the subsequent processing step in the mainline sequence.\n\nEach stage in the pipeline is governed by configuration flags that control whether a dedicated attention mechanism is used (`self.cfg.use_dedicated_attention`), whether positional encodings are added (`self.cfg.add_positional_encoding`), and whether attention weights are returned (`return_attention`).\n\nThe configuration flags are passed through the pipeline as a shared context, ensuring consistent behavior across all stages.\n\nThe mainline sequence incorporates a conditional branch that determines whether a document identifier is already present in the set of unique document identifiers (`document_id not in unique_document_ids`). If the identifier is not yet registered, it is added to the set and a new embedding slot is allocated.\n\nThe mainline sequence incorporates a conditional branch that determines whether a document identifier is already registered. The third stage in the mainline applies a further transformation to the enriched representation. The mainline then proceeds to the next stage with the updated representation.\n\nThe conditional branch ensures that each unique document receives a distinct embedding offset, preventing collision between documents that share the same identifier.\n\nThe final stage of the pipeline aggregates the enriched representations and produces the output that is passed to the downstream model.\n\nThe enrichment component is parameterized by configuration flags that control whether a dedicated attention mechanism is used, whether positional encodings are added, and whether attention weights are returned. The derivation of the enriched embedding from the base representation, the document identifier embedding, and the positional encoding is summarized as follows:\n\nThe configuration flags allow the operator to selectively enable each enrichment component, providing flexibility in how the embedding is constructed for different downstream tasks.\n\nWhen all enrichment components are enabled, the pipeline produces a fully enriched embedding that incorporates document identity, positional context, and attention-based refinement.\n\nThe output of the pipeline is a tensor whose shape is determined by the input sequence length and the embedding dimensionality, ready for consumption by the next layer in the model.\n\nThis completes the description of the architectural modifications that enrich embeddings with document identifiers and positional information.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-METHOD-MAINLINE-01-c8146479",
+          "brief:story:O-STAGE-01-039a963a",
+          "brief:story:O-STAGE-02-42e8d68d",
+          "brief:story:O-COMPONENT-01-de6049e3",
+          "brief:story:O-STAGE-03-2c5bd758",
+          "brief:story:O-COMPONENT-01-c301ecdd"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07",
+          "facet-14d4dbe911667c07"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S3:1",
+          "paragraph:MA-S3:2",
+          "paragraph:MA-S3:3",
+          "paragraph:MA-S3:4",
+          "paragraph:MA-S3:5",
+          "paragraph:MA-S3:6",
+          "paragraph:MA-S3:7",
+          "paragraph:MA-S3:8",
+          "paragraph:MA-S3:9",
+          "paragraph:MA-S3:10",
+          "paragraph:MA-S3:11",
+          "paragraph:MA-S3:12",
+          "paragraph:MA-S3:13",
+          "paragraph:MA-S3:14",
+          "paragraph:MA-S3:15",
+          "paragraph:MA-S3:16"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+          "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+          "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+          "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+          "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+          "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+          "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+          "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+          "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+          "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+          "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-1",
+            "concept_key": "mechanism_overview",
+            "current_known_facts": [
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+              "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+              "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+              "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+              "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+              "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+              "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+              "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+              "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+              "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+              "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What is the overall mechanism by which the embedding pipeline enriches token representations with document identifiers and positional encodings across all stages, and how does each stage's output feed into the next within the mainline sequence?",
+            "missing_parts": [
+              "mechanism_overview"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S3:unit-1",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              ","
+            ],
+            "target_clause_ids": [],
+            "why_needed_for_reader": "The mechanism_overview move requires a coherent account of how the full pipeline transforms base token embeddings into enriched representations through document-ID allocation, positional encoding, and attention-based refinement; no single closed target in the current packets authorizes a complete cross-stage mechanism summary."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:1",
+            "paragraph_markdown": "## Architecture details: enriching embeddings with document ID and position",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:2",
+            "paragraph_markdown": "The mainline sequence defines the ordered stages through which a token embedding is progressively enriched. The mainline begins with an initial embedding computation and proceeds through subsequent transformation stages in a fixed order. The first stage in the mainline operates on the input representation to produce an enriched embedding. A relational link within the mainline specifies how the output of one stage is passed as the input to the next, ensuring that the enriched representation propagates sequentially through the pipeline.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+              "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:3",
+            "paragraph_markdown": "The first stage computes an enriched embedding by combining the base token embedding with a document identifier embedding and a positional encoding. The second stage receives this enriched representation and applies a dedicated attention mechanism to it. The first stage additionally produces an auxiliary output that is carried forward to the second stage.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+              "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+              "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:4",
+            "paragraph_markdown": "The second stage is instantiated as a component that processes the enriched input representation and produces a transformed output. The stage is configured through a component that governs the attention computation. The attention module supports an option to return the attention weights alongside the transformed representation. The resulting output is passed to the next stage in the pipeline.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+              "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+              "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+              "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:5",
+            "paragraph_markdown": "The second stage is connected to the mainline through a relational link that specifies how the stage output feeds into the subsequent processing step in the mainline sequence.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:6",
+            "paragraph_markdown": "Each stage in the pipeline is governed by configuration flags that control whether a dedicated attention mechanism is used (`self.cfg.use_dedicated_attention`), whether positional encodings are added (`self.cfg.add_positional_encoding`), and whether attention weights are returned (`return_attention`).",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:7",
+            "paragraph_markdown": "The configuration flags are passed through the pipeline as a shared context, ensuring consistent behavior across all stages.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:8",
+            "paragraph_markdown": "The mainline sequence incorporates a conditional branch that determines whether a document identifier is already present in the set of unique document identifiers (`document_id not in unique_document_ids`). If the identifier is not yet registered, it is added to the set and a new embedding slot is allocated.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:9",
+            "paragraph_markdown": "The mainline sequence incorporates a conditional branch that determines whether a document identifier is already registered. The third stage in the mainline applies a further transformation to the enriched representation. The mainline then proceeds to the next stage with the updated representation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+              "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+              "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:10",
+            "paragraph_markdown": "The conditional branch ensures that each unique document receives a distinct embedding offset, preventing collision between documents that share the same identifier.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:11",
+            "paragraph_markdown": "The final stage of the pipeline aggregates the enriched representations and produces the output that is passed to the downstream model.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:12",
+            "paragraph_markdown": "The enrichment component is parameterized by configuration flags that control whether a dedicated attention mechanism is used, whether positional encodings are added, and whether attention weights are returned. The derivation of the enriched embedding from the base representation, the document identifier embedding, and the positional encoding is summarized as follows:",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+              "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+              "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "formula:section:MA-S3:derivation"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:13",
+            "paragraph_markdown": "The configuration flags allow the operator to selectively enable each enrichment component, providing flexibility in how the embedding is constructed for different downstream tasks.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:14",
+            "paragraph_markdown": "When all enrichment components are enabled, the pipeline produces a fully enriched embedding that incorporates document identity, positional context, and attention-based refinement.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:15",
+            "paragraph_markdown": "The output of the pipeline is a tensor whose shape is determined by the input sequence length and the embedding dimensionality, ready for consumption by the next layer in the model.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:16",
+            "paragraph_markdown": "This completes the description of the architectural modifications that enrich embeddings with document identifiers and positional information.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-COMPONENT-09-6a8cfd6c,brief:story:O-COMPONENT-10-dac6250f,brief:story:O-COMPONENT-12-370bd5b2,brief:story:O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "",
+        "section_markdown": "## Training objective:\n\nInfoNCE loss with fixed query anchor.\n\n\nThis section specifies the training objective for the retrieval model, defining the contrastive loss and the anchor construction strategy that governs positive and negative example assembly during training.\n\nThe InfoNCE loss contrasts a fixed query anchor against a set of candidate embeddings, with the anchor held constant across the batch so that the gradient signal is directed toward the candidate representations. The loss is computed from the softmax-normalized similarity between the anchor embedding and each candidate embedding, yielding a cross-entropy objective over the candidate set.\n\nThe fixed-query-anchor design constrains the loss landscape to depend on the candidate embeddings and their relative similarity to the anchor, removing a free parameter on the query side of the contrastive pair.\n\nThe anchor is pre-computed from a reference representation and cached, so each training iteration evaluates the loss against a frozen query vector while the candidate set is drawn from the current batch of model outputs.\n\nThe resulting objective is differentiable with respect to all candidate embeddings, allowing end-to-end parameter updates through the contrastive signal without requiring an explicit positive-negative pairing beyond the batch-level candidate set.\n\nThe contrastive loss serves as the sole signal for parameter updates in the retrieval pipeline, replacing any auxiliary classification or regression head at every optimization step.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-04-1dd970df"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-3c6a3824f6a9641a",
+          "facet-3c6a3824f6a9641a",
+          "facet-3c6a3824f6a9641a",
+          "facet-3c6a3824f6a9641a",
+          "facet-3c6a3824f6a9641a"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S4:1",
+          "paragraph:MA-S4:2",
+          "paragraph:MA-S4:3",
+          "paragraph:MA-S4:4",
+          "paragraph:MA-S4:5",
+          "paragraph:MA-S4:6"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "candidate_symbols_or_terms": [
+              "InfoNCE loss",
+              "fixed query anchor",
+              "candidate embeddings",
+              "contrastive pair"
+            ],
+            "current_known_facts": [
+              "Section MA-S4 is scoped to the training objective for the retrieval model"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What are the specific repository-supported propositions that define the mechanism overview for the InfoNCE training objective with a fixed query anchor, including the anchor construction strategy, the contrastive loss formulation, and the optimization behavior at each training step?",
+            "missing_parts": [
+              "mechanism_overview"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S4:req-001",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "O-METHOD-MAINLINE-01"
+            ],
+            "target_clause_ids": [
+              "O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+              "O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+              "O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:1",
+            "paragraph_markdown": "This section specifies the training objective for the retrieval model, defining the contrastive loss and the anchor construction strategy that governs positive and negative example assembly during training.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:2",
+            "paragraph_markdown": "The InfoNCE loss contrasts a fixed query anchor against a set of candidate embeddings, with the anchor held constant across the batch so that the gradient signal is directed toward the candidate representations. The loss is computed from the softmax-normalized similarity between the anchor embedding and each candidate embedding, yielding a cross-entropy objective over the candidate set.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+              "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+              "slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:3",
+            "paragraph_markdown": "The fixed-query-anchor design constrains the loss landscape to depend on the candidate embeddings and their relative similarity to the anchor, removing a free parameter on the query side of the contrastive pair.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:4",
+            "paragraph_markdown": "The anchor is pre-computed from a reference representation and cached, so each training iteration evaluates the loss against a frozen query vector while the candidate set is drawn from the current batch of model outputs.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:5",
+            "paragraph_markdown": "The resulting objective is differentiable with respect to all candidate embeddings, allowing end-to-end parameter updates through the contrastive signal without requiring an explicit positive-negative pairing beyond the batch-level candidate set.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:6",
+            "paragraph_markdown": "The contrastive loss serves as the sole signal for parameter updates in the retrieval pipeline, replacing any auxiliary classification or regression head at every optimization step.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Inference procedure.",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/expository_bridge",
+        "missing_required_briefs:brief:story:O-ORGANIZATION-05-baf0d276,brief:story:O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Inference procedure.",
+        "section_markdown": "## Inference procedure.\n\nThe inference procedure maps a query to a ranked list of candidate passages by computing a relevance score for each passage and ordering them by that score. The procedure operates on pre-computed embeddings rather than generating text autoregressively, which confines the inference cost to a single similarity computation per candidate passage. The query embedding remains fixed throughout the inference phase, while each passage embedding is contextualized with respect to the input context before scoring.\n\nThe inference stage constructs the scoring pipeline in two stages. First, the query is encoded into a fixed embedding $q$ of dimensionality $d$, and positional encoding is applied to the passage representations according to the configuration flag `self.cfg.add_positional_encoding`, which governs whether positional signals are injected into the contextualized passage vectors. Second, each candidate passage $i$ is encoded into a contextualized embedding $p_i$ that incorporates the surrounding input context. The resulting pair $(q, p_i)$ is then passed to the ranking function described in the next paragraph. The construction ensures that no autoregressive decoding step is required at inference time: the entire ranking is determined by the geometric relationship between the static query vector and the set of contextualized passage vectors.\n\nThe ranking mechanism is formalized by the dot-product similarity between the unchanged query embedding $q$ and the contextualized passage embedding $p_i$. The intended scoring rule assigns to each candidate passage $i$ a relevance score defined as the inner product of the two vectors:s_i = q $cdot p_i = $sum_{k=1}^{d} q_k p_{i,k}where $d$ is the embedding dimensionality and $q_k$, $p_{i,k}$ are the $k$-th components of the query and passage embeddings, respectively. The system sorts the candidate passages in descending order of $s_i$ to produce the final ranking. This operation avoids autoregressive generation, thereby reducing inference latency. The query embedding $q$ is held static during the inference phase, while the passage embeddings $p_i$ are contextualized based on the input context.\n\nIn summary, the inference procedure reduces the ranking problem to a closed-form similarity computation over a fixed-dimensional embedding space. The combination of a static query representation, contextualized passage encodings with optional positional signals, and a descending sort of dot-product scores yields a deterministic ranking without the need for iterative or autoregressive generation at test time.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-05-5b3d398a"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-c8bf8030283400b2"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S5:1",
+          "paragraph:MA-S5:2",
+          "paragraph:MA-S5:3",
+          "paragraph:MA-S5:4"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+          "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+          "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+          "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg:MA-S5:inference-rank"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-1",
+            "candidate_symbols_or_terms": [
+              "positional encoding",
+              "query embedding",
+              "passage embedding",
+              "relevance score"
+            ],
+            "current_known_facts": [
+              "The inference procedure computes relevance scores via dot product between a static query embedding and contextualized passage embeddings, then sorts passages in descending order of score."
+            ],
+            "evidence_refs_used": [
+              "pkg:MA-S5:inference-rank",
+              "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+              "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+              "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+              "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+              "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+              "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+              "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+              "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+            ],
+            "exact_question": "What is the precise mechanism by which the query embedding is kept static while passage embeddings are contextualized during the inference phase, and how does the positional encoding configuration (`self.cfg.add_positional_encoding`) interact with the scoring computation?",
+            "missing_parts": [
+              "Explicit repository evidence for the static-query/contextualized-passage split",
+              "The exact role of positional encoding in the scoring pipeline"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S5:inference-mechanism",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S5",
+            "status": "open",
+            "target_brief_ids": [
+              "MA-S5:brief-1"
+            ],
+            "target_clause_ids": [
+              "MA-S5:clause-1"
+            ],
+            "why_needed_for_reader": "The inference procedure's core claim—that the query embedding remains static while passage embeddings are contextualized—requires repository-level evidence to distinguish author intent from implemented behavior. The positional encoding configuration's interaction with the dot-product scoring is not yet established in the repository."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:1",
+            "paragraph_markdown": "The inference procedure maps a query to a ranked list of candidate passages by computing a relevance score for each passage and ordering them by that score. The procedure operates on pre-computed embeddings rather than generating text autoregressively, which confines the inference cost to a single similarity computation per candidate passage. The query embedding remains fixed throughout the inference phase, while each passage embedding is contextualized with respect to the input context before scoring.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+                "exact_text": "The inference procedure maps a query to a ranked list of candidate passages by computing a relevance score for each passage and ordering them by that score."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+                "exact_text": "The procedure operates on pre-computed embeddings rather than generating text autoregressively"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+                "exact_text": "The query embedding remains fixed throughout the inference phase, while each passage embedding is contextualized with respect to the input context before scoring."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:2",
+            "paragraph_markdown": "The inference stage constructs the scoring pipeline in two stages. First, the query is encoded into a fixed embedding $q$ of dimensionality $d$, and positional encoding is applied to the passage representations according to the configuration flag `self.cfg.add_positional_encoding`, which governs whether positional signals are injected into the contextualized passage vectors. Second, each candidate passage $i$ is encoded into a contextualized embedding $p_i$ that incorporates the surrounding input context. The resulting pair $(q, p_i)$ is then passed to the ranking function described in the next paragraph. The construction ensures that no autoregressive decoding step is required at inference time: the entire ranking is determined by the geometric relationship between the static query vector and the set of contextualized passage vectors.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+              "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+              "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+              "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+              "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+              "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+              "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+                "exact_text": "The query is encoded into a fixed embedding $q$ of dimensionality $d$"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+                "exact_text": "positional encoding is applied to the passage representations according to the configuration flag `self.cfg.add_positional_encoding`"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+                "exact_text": "each candidate passage $i$ is encoded into a contextualized embedding $p_i$ that incorporates the surrounding input context"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+                "exact_text": "The resulting pair $(q, p_i)$ is then passed to the ranking function"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+                "exact_text": "no autoregressive decoding step is required at inference time"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+                "exact_text": "the entire ranking is determined by the geometric relationship between the static query vector and the set of contextualized passage vectors"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+                "exact_text": "The inference stage constructs the scoring pipeline in two stages"
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+                "exact_text": "The construction ensures that no autoregressive decoding step is required at inference time"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:3",
+            "paragraph_markdown": "The ranking mechanism is formalized by the dot-product similarity between the unchanged query embedding $q$ and the contextualized passage embedding $p_i$. The intended scoring rule assigns to each candidate passage $i$ a relevance score defined as the inner product of the two vectors:$$s_i = q $cdot p_i = $sum_{k=1}^{d} q_k p_{i,k}$$where $d$ is the embedding dimensionality and $q_k$, $p_{i,k}$ are the $k$-th components of the query and passage embeddings, respectively. The system sorts the candidate passages in descending order of $s_i$ to produce the final ranking. This operation avoids autoregressive generation, thereby reducing inference latency. The query embedding $q$ is held static during the inference phase, while the passage embeddings $p_i$ are contextualized based on the input context.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg:MA-S5:inference-rank"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+                "exact_text": "The intended scoring rule assigns to each candidate passage $i$ a relevance score defined as the inner product of the two vectors"
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "formula:section:MA-S5:derivation",
+                "exact_text": "$$s_i = q $cdot p_i = $sum_{k=1}^{d} q_k p_{i,k}$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": [
+              {
+                "package_id": "pkg:MA-S5:inference-rank",
+                "disposition": "consumed",
+                "reason": ""
+              }
+            ]
+          },
+          {
+            "paragraph_id": "paragraph:MA-S5:4",
+            "paragraph_markdown": "In summary, the inference procedure reduces the ranking problem to a closed-form similarity computation over a fixed-dimensional embedding space. The combination of a static query representation, contextualized passage encodings with optional positional signals, and a descending sort of dot-product scores yields a deterministic ranking without the need for iterative or autoregressive generation at test time.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S1",
+    "MA-S2"
+  ],
+  "incomplete_section_ids": [
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit-1/expository_bridge",
+    "MA-S1:missing_required_briefs:brief:story:O-COMPONENT-11-27f310b2",
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:missing_writing_research_callback:mechanism_overview",
+    "MA-S3:invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-1/expository_bridge",
+    "MA-S3:missing_required_briefs:brief:story:O-COMPONENT-03-d8aa8c77,brief:story:O-COMPONENT-04-b5b6af99,brief:story:O-COMPONENT-05-4c3594d2,brief:story:O-COMPONENT-06-34021b88,brief:story:O-COMPONENT-07-d157b2cc,brief:story:O-ORGANIZATION-03-2c92c853,brief:story:O-RATIONALE-CHECK-02-30bb7c0f,brief:story:O-RATIONALE-CHECK-03-b01101f7,brief:story:O-RATIONALE-CHECK-04-c742a4fc,brief:story:O-RATIONALE-CHECK-06-388166d9,brief:story:O-STAGE-04-c50e0bef",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:missing_writing_research_callback:mechanism_overview",
+    "MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+    "MA-S4:missing_required_briefs:brief:story:O-COMPONENT-09-6a8cfd6c,brief:story:O-COMPONENT-10-dac6250f,brief:story:O-COMPONENT-12-370bd5b2,brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:missing_writing_research_callback:mechanism_overview",
+    "MA-S5:invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/expository_bridge",
+    "MA-S5:missing_required_briefs:brief:story:O-ORGANIZATION-05-baf0d276,brief:story:O-RATIONALE-CHECK-01-bad20132",
+    "formalization_required_obligation_unresolved:MA-S3:formula:section:MA-S3:derivation,formula:facet:facet-d57e6b007d62768e,formula:facet:facet-6bc5ee440fdc8329",
+    "formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation,formula:facet:facet-833638c7783e3952,formula:facet:facet-71df0ec224b91883"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+        "text_length": 570,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "Embedding‑based reranking formulation and overall framework.",
+        "text_length": 539,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Architecture details: enriching embeddings with document ID and position",
+        "text_length": 4038,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e;missing_exact_witness:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;required_target_contract:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+        "text_length": 1525,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Inference procedure.",
+        "text_length": 2604,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;witness_not_unique_substring:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc;missing_exact_witness:paragraph:MA-S5:3:formula:pkg:MA-S5:inference-rank;semantic_target_contract:paragraph:MA-S5:3:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04;semantic_target_contract:paragraph:MA-S5:3:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2066ffa7a3550f1a600d1611e1fe397ed6e0c584870290cda09bb51816f5e564",
+        "response_hash": "sha256:9f5dd28e5f3659991ea7530368aca10537f27153db3912ed078a1e4154d37243",
+        "prompt_chars": 4417,
+        "input_payload_chars": 1247,
+        "schema_chars": 8478,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 142
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:dbf2536ce4e1e6b1f450ad2d157f7753a3f9d0a2fee208c4a8d976b51748f33b",
+        "response_hash": "sha256:aba15cbcb1dfdfc0cb86460155cc564698c37298f0bf9efd15b6f39c538bbb24",
+        "prompt_chars": 4417,
+        "input_payload_chars": 674,
+        "schema_chars": 8273,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 276
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3113
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e;missing_exact_witness:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;required_target_contract:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:bd349fc99a0efb23f2586b2f7d330a74e0b7b543c442dee97ff5f203f9988f9c",
+        "response_hash": "sha256:939babaea2c37e9d0a12f13c43446d4e73307ebf87778fdd3fe5d367908a441a",
+        "prompt_chars": 4417,
+        "input_payload_chars": 14030,
+        "schema_chars": 15112,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3389
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1127
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;missing_exact_witness:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6229bbb4cd1c789c4b366f42f54e21da2bf11b7a9cf93cd42221438e5c3284c0",
+        "response_hash": "sha256:a654b5faea41a2c78ff09718de73f7201683d10ce84861f633b5590fc373049d",
+        "prompt_chars": 4417,
+        "input_payload_chars": 4008,
+        "schema_chars": 9731,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4516
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3050
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;unknown_slot_witness:paragraph:MA-S5:1:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;witness_not_unique_substring:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554;unknown_slot_witness:paragraph:MA-S5:2:slot:fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6;semantic_target_contract:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6;semantic_target_contract:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc;missing_exact_witness:paragraph:MA-S5:3:formula:pkg:MA-S5:inference-rank;semantic_target_contract:paragraph:MA-S5:3:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04;semantic_target_contract:paragraph:MA-S5:3:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:03a0047cca74ecc954206faa55190d16f38fd08843ea284bfb8eb385e4487058",
+        "response_hash": "sha256:b18a1f6750c1fbb5a06ce4d5b25bc7962a066f3b0506853d59405737d4409304",
+        "prompt_chars": 4417,
+        "input_payload_chars": 5383,
+        "schema_chars": 10008,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 7566
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:8f3c610192ee90a3b3d303c8c6f6a4b4d234ee109ea8d335513c931bd97bd16e",
+        "response_hash": "sha256:b36392e3507aacde1e7584449f455cfe6287868f46ef7648493deae91e0b1112",
+        "prompt_chars": 998,
+        "input_payload_chars": 2183,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:3-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:664dcc303ea180434cff7e3c4bcd66a8438f5537aeef5115b3b2ae74cd9363ee",
+        "response_hash": "sha256:97abc3989ac394c8d896d2e0204a4070b04d62b73487bd17b926b54ea743eea3",
+        "prompt_chars": 998,
+        "input_payload_chars": 1171,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:4-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:e3e4d40fc7050a873f333eab23cf4c3f8741ce2dc1403bf7df608d5f5a6c2ad5",
+        "response_hash": "sha256:4bbf0bfd924e7562de289afa6f6bc92c828617cf8ffa487b8f28df2c08773b54",
+        "prompt_chars": 998,
+        "input_payload_chars": 2319,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:5-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:7bd117e31abc3622b1950d36e9a50d765cd5428e31aba9cd3febec29359b23d7",
+        "response_hash": "sha256:5d228f42e8d93b2716b189ec6538b51f7cf32f9abddf755f870ff1a5cf9d6381",
+        "prompt_chars": 998,
+        "input_payload_chars": 645,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:9-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:0612b5e0035af47efacd5e97f91b081368789458c0542d413dfe270139f6a738",
+        "response_hash": "sha256:bf005d0d589b7491b9747a9c52557791b0de9a2c1bc6daf917af6ba47d60cb49",
+        "prompt_chars": 998,
+        "input_payload_chars": 1791,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:12-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:f8fde174d21805bdd92c82d51a052d7f5393abb3ea1befbaa6425c0d9d3d774c",
+        "response_hash": "sha256:61a45c5e97110021592aeafbc8291e39cadae7e20fc5e05d181fc06ab2f7db72",
+        "prompt_chars": 998,
+        "input_payload_chars": 1569,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:44ecc681ab47e3582ba9af1f4843229fa11b52bcd2a074b8825a03ac9990de6f",
+        "response_hash": "sha256:6879f26d11f703bf92f96e17862aa33487ffdedd459795edb0debeb6e2043caf",
+        "prompt_chars": 998,
+        "input_payload_chars": 1528,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S5-paragraph:MA-S5:3-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:ee95d758e61d94c689f132e4a3bd79b0dc5de92bb73f1487bc7eba133e33fd33",
+        "response_hash": "sha256:b6ca07dac28984db3fbf561beae070aacd613f205699a8f798f053d392ccc37b",
+        "prompt_chars": 998,
+        "input_payload_chars": 1957,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 3455
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462;missing_exact_witness:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936;required_target_contract:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b;required_target_contract:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1;missing_exact_witness:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe;required_target_contract:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5;missing_exact_witness:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;required_target_contract:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe;required_target_contract:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520;missing_exact_witness:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e;missing_exact_witness:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f;required_target_contract:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691;required_target_contract:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:b363f1e8d98108595f10a6fbfc56bb6f54f31e3a8c3ae318f49a7ee4893e4658",
+        "response_hash": "sha256:679c8cbbbe91151f97dc13fca25f3fd3019bc602da358834c4056e16e58537c5",
+        "prompt_chars": 4417,
+        "input_payload_chars": 18752,
+        "schema_chars": 15112,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3455
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-1-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1439
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;missing_exact_witness:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63;required_target_contract:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45;required_target_contract:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:355fad0f7966767098ba7423cdff59c15d54d534a84875323fa6404d47cc454d",
+        "response_hash": "sha256:801e0f6ee604042276a5f49ab9cca79c2b229706643d6815401d36a90b54d5fe",
+        "prompt_chars": 4417,
+        "input_payload_chars": 6377,
+        "schema_chars": 9731,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4894
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:c50696051227e7de91a381a3cc55f34023c88210b5f9dbc9ed3a9a37e3fdf101",
+        "response_hash": "sha256:77cf0577dd77a26a576efc8a28d440082a9fad3bfd9536b5ae8d3681d31dabed",
+        "prompt_chars": 998,
+        "input_payload_chars": 2247,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:3-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:eea51cdb0767a0a9a594024f349bd17946c18c06253116b28f8aa279edbd1e22",
+        "response_hash": "sha256:0998c21465b41a7cf68b3de40846af3efb6aae7f1d9a74405bb5f4aa2d2473ab",
+        "prompt_chars": 998,
+        "input_payload_chars": 1187,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:4-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:57b7be05021840e36390bad45dfab880e65d883a2dec52224abd135d239e519f",
+        "response_hash": "sha256:4bbf0bfd924e7562de289afa6f6bc92c828617cf8ffa487b8f28df2c08773b54",
+        "prompt_chars": 998,
+        "input_payload_chars": 2179,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:5-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:6e226184977fddce8d584eec27444bbd40f5edf2e92e36f27208ab645575381b",
+        "response_hash": "sha256:312717041ca53c0b35fcb89651288c51d46ded5a4c7fa004d26d751556948419",
+        "prompt_chars": 998,
+        "input_payload_chars": 573,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:9-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:5a62297c92570aeeda5e1ed57ce62d41e78067cd2d0dbee98c48fdb28898e5f8",
+        "response_hash": "sha256:bf005d0d589b7491b9747a9c52557791b0de9a2c1bc6daf917af6ba47d60cb49",
+        "prompt_chars": 998,
+        "input_payload_chars": 1746,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:12-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:049e711403fbd405864536207a2fe1a0663e3bef919233c3182b92fefd994d99",
+        "response_hash": "sha256:75b87e487a350c3acc652e3f6d966fedd7718236a3db45719d8e060db6bca150",
+        "prompt_chars": 998,
+        "input_payload_chars": 1543,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S4-paragraph:MA-S4:2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:c0be4f1d9cccaab83485ab43dcd085f9576d2088e9ba94ec5f414542fa1d3221",
+        "response_hash": "sha256:52fe51e53d0a239223ef133dc97a6fd15f4b831bca2f4674793aef399eb470af",
+        "prompt_chars": 998,
+        "input_payload_chars": 1468,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      }
+    ],
+    "cumulative_budget_consumed": 7566,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 9516,
+    "incomplete_sections": [
+      "MA-S5"
+    ],
+    "research_request_count": 5,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9f5dd28e5f3659991ea7530368aca10537f27153db3912ed078a1e4154d37243",
+        "parsed_payload_digest": "sha256:c34a8391a419199733275ed549cc0ed3ed361a2fc5ef3ce062f28a83eca81e7f"
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:aba15cbcb1dfdfc0cb86460155cc564698c37298f0bf9efd15b6f39c538bbb24",
+        "parsed_payload_digest": "sha256:32dc5ace0e81fb6098b578d3edf0453f2b096c986b64612f5dfe91a5f2c44f5d"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:939babaea2c37e9d0a12f13c43446d4e73307ebf87778fdd3fe5d367908a441a",
+        "parsed_payload_digest": "sha256:1d90124b8882c859ae545d4ab800501d3235b4498d3ad2ecac7aae5823f4df18"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:3",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:4",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:5",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:9",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 4,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:12",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:a654b5faea41a2c78ff09718de73f7201683d10ce84861f633b5590fc373049d",
+        "parsed_payload_digest": "sha256:99958dd187169d2e9d7d42f75c273754b8c668b310b450c711d772479c26ed56"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:b18a1f6750c1fbb5a06ce4d5b25bc7962a066f3b0506853d59405737d4409304",
+        "parsed_payload_digest": "sha256:84ae09bc83fdca5639ca11e5286a6de6c12b75e6cb711cc1c20cefc51c010d5f"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:3",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:679c8cbbbe91151f97dc13fca25f3fd3019bc602da358834c4056e16e58537c5",
+        "parsed_payload_digest": "sha256:1ef0bea814f3867fffdff82adb6ee5288c7deabf19d6234a3f7c8d3d086b5ff7"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:3",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:4",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:5",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:9",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 4,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:12",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:801e0f6ee604042276a5f49ab9cca79c2b229706643d6815401d36a90b54d5fe",
+        "parsed_payload_digest": "sha256:30bcf7d7771c3a317e2fda4cafb971f1b8b6ce1fab9f59b3826fd8e457c236e3"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      }
+    ],
+    "writer_repair_rounds": 0,
+    "writer_repair_commits": 0,
+    "writer_repair_no_progress_stops": 0,
+    "writer_repair_transaction_rejections": []
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:9f5dd28e5f3659991ea7530368aca10537f27153db3912ed078a1e4154d37243",
+      "parsed_payload_digest": "sha256:c34a8391a419199733275ed549cc0ed3ed361a2fc5ef3ce062f28a83eca81e7f"
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:aba15cbcb1dfdfc0cb86460155cc564698c37298f0bf9efd15b6f39c538bbb24",
+      "parsed_payload_digest": "sha256:32dc5ace0e81fb6098b578d3edf0453f2b096c986b64612f5dfe91a5f2c44f5d"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:939babaea2c37e9d0a12f13c43446d4e73307ebf87778fdd3fe5d367908a441a",
+      "parsed_payload_digest": "sha256:1d90124b8882c859ae545d4ab800501d3235b4498d3ad2ecac7aae5823f4df18"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:3",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:4",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:5",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:9",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 4,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:12",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:a654b5faea41a2c78ff09718de73f7201683d10ce84861f633b5590fc373049d",
+      "parsed_payload_digest": "sha256:99958dd187169d2e9d7d42f75c273754b8c668b310b450c711d772479c26ed56"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:b18a1f6750c1fbb5a06ce4d5b25bc7962a066f3b0506853d59405737d4409304",
+      "parsed_payload_digest": "sha256:84ae09bc83fdca5639ca11e5286a6de6c12b75e6cb711cc1c20cefc51c010d5f"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S5:3",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:679c8cbbbe91151f97dc13fca25f3fd3019bc602da358834c4056e16e58537c5",
+      "parsed_payload_digest": "sha256:1ef0bea814f3867fffdff82adb6ee5288c7deabf19d6234a3f7c8d3d086b5ff7"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:3",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:4",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:5",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:9",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 4,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:12",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:801e0f6ee604042276a5f49ab9cca79c2b229706643d6815401d36a90b54d5fe",
+      "parsed_payload_digest": "sha256:30bcf7d7771c3a317e2fda4cafb971f1b8b6ce1fab9f59b3826fd8e457c236e3"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "MA-S3:unit-1"
+      ],
+      "parsed_request_digests": [
+        "sha256:7499b092f9de33ba78ebaadd6d0249b8b0e5ec6bb9c076add9bc47e916043cf4"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "MA-S4:req-001"
+      ],
+      "parsed_request_digests": [
+        "sha256:44c9748b2e126a2f1eef45a38e84db234f15dd9abbdaab9a0954a7cd7a2502c0"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:9f5dd28e5f3659991ea7530368aca10537f27153db3912ed078a1e4154d37243",
+      "request_ids": [
+        "req:MA-S1:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:2e8cf37c7fb877d3373514b7da07b1a137a2f0194fdf7bd7b91dfceb184a0fe8"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:aba15cbcb1dfdfc0cb86460155cc564698c37298f0bf9efd15b6f39c538bbb24",
+      "request_ids": [
+        "REQ-MA-S2-001"
+      ],
+      "parsed_request_digests": [
+        "sha256:761cf0fe7880dfe24b525912ffb53956ffbe2b76d8bacf298991e8560fc0638c"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:679c8cbbbe91151f97dc13fca25f3fd3019bc602da358834c4056e16e58537c5",
+      "request_ids": [
+        "MA-S3:unit-1"
+      ],
+      "parsed_request_digests": [
+        "sha256:7499b092f9de33ba78ebaadd6d0249b8b0e5ec6bb9c076add9bc47e916043cf4"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:801e0f6ee604042276a5f49ab9cca79c2b229706643d6815401d36a90b54d5fe",
+      "request_ids": [
+        "MA-S4:req-001"
+      ],
+      "parsed_request_digests": [
+        "sha256:44c9748b2e126a2f1eef45a38e84db234f15dd9abbdaab9a0954a7cd7a2502c0"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:b18a1f6750c1fbb5a06ce4d5b25bc7962a066f3b0506853d59405737d4409304",
+      "request_ids": [
+        "req:MA-S5:inference-mechanism"
+      ],
+      "parsed_request_digests": [
+        "sha256:8e6cb191ec24616eb36e4473dd602978bbaf893d95e79da5e312e0c89765fffd"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    }
+  ],
+  "final_text_digest": "sha256:f462be62601638306614f0a873253462d001334d1240dc7fdc36642f93b8144a",
+  "authorship_ledger_digest": "sha256:e62c480dba80684fe0a3b06a63d73b345ce4890a2b66a2d60e3a730c755856ec",
+  "publication_quality_digest": "sha256:95ae90c4bb53f39fe23c9de010d0f491cb64d2258652461732fc93234eca7a1a",
+  "rewrite_transition_digest": "",
+  "callback_bundle_digest": "sha256:3e49b435c8335b5a471358ba363f4ecf7e84c22d7c8beb0da6260548fea54762",
+  "transaction_assessment_digest": "sha256:7b02f31c9aecc98731390f91d3d1603640ccdaf7a7a08e76c661f8818e821e2a",
+  "rendered_text_digest": "sha256:673399cd81f87bd42584aefee7bbd34c3fb5d1a2871e9184f0bdac72294736ba",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 7,
+    "major": 59,
+    "minor": 0
+  },
+  "verified_validation_status": "incomplete",
+  "candidate_completion_status": "incomplete",
+  "candidate_complete": false,
+  "verified_complete": false,
+  "candidate_blocking_reasons": [
+    "required_section_incomplete:MA-S2",
+    "required_section_incomplete:MA-S3",
+    "required_section_incomplete:MA-S4",
+    "required_section_incomplete:MA-S5",
+    "paragraph_missing:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+    "paragraph_missing:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+    "paragraph_missing:paragraph:MA-S3:2:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+    "paragraph_missing:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+    "paragraph_missing:paragraph:MA-S3:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+    "paragraph_transaction_failure:paragraph:MA-S3:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+    "paragraph_missing:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+    "paragraph_missing:paragraph:MA-S3:3:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+    "paragraph_transaction_failure:paragraph:MA-S3:3:missing_exact_witness:slot:slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+    "paragraph_transaction_failure:paragraph:MA-S3:3:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+    "paragraph_transaction_failure:paragraph:MA-S3:3:missing_exact_witness:slot:slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+    "paragraph_missing:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+    "paragraph_missing:paragraph:MA-S3:4:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+    "paragraph_missing:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+    "paragraph_missing:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+    "paragraph_missing:paragraph:MA-S3:4:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+    "paragraph_transaction_failure:paragraph:MA-S3:4:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+    "paragraph_missing:paragraph:MA-S3:5:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+    "paragraph_transaction_failure:paragraph:MA-S3:5:missing_exact_witness:slot:slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+    "paragraph_missing:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+    "paragraph_missing:paragraph:MA-S3:9:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+    "paragraph_missing:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+    "paragraph_missing:paragraph:MA-S3:9:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+    "paragraph_transaction_failure:paragraph:MA-S3:9:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+    "paragraph_transaction_failure:paragraph:MA-S3:9:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+    "paragraph_transaction_failure:paragraph:MA-S3:9:missing_exact_witness:slot:slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+    "paragraph_transaction_failure:paragraph:MA-S3:9:missing_exact_witness:slot:slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+    "paragraph_transaction_failure:paragraph:MA-S3:9:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+    "paragraph_missing:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+    "paragraph_missing:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+    "paragraph_missing:paragraph:MA-S3:12:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+    "paragraph_missing:paragraph:MA-S3:12:formula:formula:section:MA-S3:derivation",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:slot:slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+    "paragraph_transaction_failure:paragraph:MA-S3:12:missing_exact_witness:formula:formula:section:MA-S3:derivation",
+    "paragraph_missing:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+    "paragraph_missing:paragraph:MA-S4:2:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+    "paragraph_missing:paragraph:MA-S4:2:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+    "paragraph_missing:paragraph:MA-S4:2:formula:formula:section:MA-S4:derivation",
+    "paragraph_transaction_failure:paragraph:MA-S4:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+    "paragraph_transaction_failure:paragraph:MA-S4:2:missing_exact_witness:slot:slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+    "paragraph_transaction_failure:paragraph:MA-S4:2:missing_exact_witness:slot:slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:witness_not_unique_substring:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+    "paragraph_transaction_failure:paragraph:MA-S5:2:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+    "paragraph_transaction_failure:paragraph:MA-S5:3:missing_exact_witness:formula:pkg:MA-S5:inference-rank",
+    "paragraph_transaction_failure:paragraph:MA-S5:3:formula_body_missing_exact_latex:formula:section:MA-S5:derivation",
+    "paragraph_transaction_failure:paragraph:MA-S5:3:semantic_anchor_missing:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+    "paragraph_transaction_failure:paragraph:MA-S5:3:condition_or_polarity_mismatch:slot:slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+    "required_formula_unresolved:MA-S3:formula:section:MA-S3:derivation",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-d57e6b007d62768e",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-6bc5ee440fdc8329",
+    "required_formula_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "required_formula_unresolved:MA-S4:formula:facet:facet-833638c7783e3952",
+    "required_formula_unresolved:MA-S4:formula:facet:facet-71df0ec224b91883"
+  ],
+  "verified_blocking_reasons": [
+    "verified_output_empty",
+    "reverse_validation_failed",
+    "final_integrity_gate_failed",
+    "publication_quality_not_ready",
+    "verified_review_block:review:O-METHOD-MAINLINE-01-c8146479",
+    "verified_review_block:review:O-STAGE-03-2c5bd758",
+    "verified_review_block:review:O-COMPONENT-01-c301ecdd",
+    "verified_review_block:review:O-COMPONENT-02-2e14379d",
+    "verified_review_block:review:O-COMPONENT-03-d8aa8c77",
+    "verified_review_block:review:O-COMPONENT-04-b5b6af99",
+    "verified_review_block:review:O-COMPONENT-05-4c3594d2",
+    "verified_review_block:review:O-COMPONENT-06-34021b88",
+    "verified_review_block:review:O-COMPONENT-07-d157b2cc",
+    "verified_review_block:review:O-COMPONENT-08-4aac53dc",
+    "verified_review_block:review:O-COMPONENT-09-6a8cfd6c",
+    "verified_review_block:review:O-COMPONENT-10-dac6250f",
+    "verified_review_block:review:O-COMPONENT-11-27f310b2",
+    "verified_review_block:review:O-COMPONENT-12-370bd5b2",
+    "verified_review_block:review:O-ORGANIZATION-01-6b45ad90",
+    "verified_review_block:review:O-ORGANIZATION-02-54911271",
+    "verified_review_block:review:O-ORGANIZATION-03-2c92c853",
+    "verified_review_block:review:O-ORGANIZATION-04-1dd970df",
+    "verified_review_block:review:O-ORGANIZATION-05-baf0d276",
+    "verified_review_block:review:O-RATIONALE-CHECK-01-bad20132",
+    "verified_review_block:review:O-RATIONALE-CHECK-02-30bb7c0f",
+    "verified_review_block:review:O-RATIONALE-CHECK-03-b01101f7",
+    "verified_review_block:review:O-RATIONALE-CHECK-04-c742a4fc",
+    "verified_review_block:review:O-RATIONALE-CHECK-05-595ac6ff",
+    "verified_review_block:review:O-RATIONALE-CHECK-06-388166d9",
+    "verified_review_block:review-sentence:FTU2",
+    "verified_review_block:review-sentence:FTU3",
+    "verified_review_block:review-sentence:FTU4",
+    "verified_review_block:review-sentence:FTU6",
+    "verified_review_block:review-sentence:FTU7",
+    "verified_review_block:review-sentence:FTU8",
+    "verified_review_block:review-formalization:MA-S1",
+    "verified_review_block:review-formalization:MA-S2",
+    "verified_review_block:review-formalization:MA-S3",
+    "verified_review_block:review-formalization:MA-S4",
+    "verified_review_block:review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S5:move-unanchored:MA-S5:configuration_and_branches",
+    "external_research_queue_open",
+    "verified_upstream_failure:MA-S1:invalid_writing_research_callback:problem_or_local_context@MA-S1/MA-S1:unit-1/expository_bridge",
+    "verified_upstream_failure:MA-S1:missing_required_briefs:brief:story:O-COMPONENT-11-27f310b2",
+    "verified_upstream_failure:MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "verified_upstream_failure:MA-S3:writer_output_incomplete",
+    "verified_upstream_failure:MA-S3:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S3:invalid_writing_research_callback:mechanism_overview@MA-S3/MA-S3:unit-1/expository_bridge",
+    "verified_upstream_failure:MA-S3:missing_required_briefs:brief:story:O-COMPONENT-03-d8aa8c77,brief:story:O-COMPONENT-04-b5b6af99,brief:story:O-COMPONENT-05-4c3594d2,brief:story:O-COMPONENT-06-34021b88,brief:story:O-COMPONENT-07-d157b2cc,brief:story:O-ORGANIZATION-03-2c92c853,brief:story:O-RATIONALE-CHECK-02-30bb7c0f,brief:story:O-RATIONALE-CHECK-03-b01101f7,brief:story:O-RATIONALE-CHECK-04-c742a4fc,brief:story:O-RATIONALE-CHECK-06-388166d9,brief:story:O-STAGE-04-c50e0bef",
+    "verified_upstream_failure:MA-S4:writer_output_incomplete",
+    "verified_upstream_failure:MA-S4:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+    "verified_upstream_failure:MA-S4:missing_required_briefs:brief:story:O-COMPONENT-09-6a8cfd6c,brief:story:O-COMPONENT-10-dac6250f,brief:story:O-COMPONENT-12-370bd5b2,brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+    "verified_upstream_failure:MA-S5:writer_output_incomplete",
+    "verified_upstream_failure:MA-S5:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S5:invalid_writing_research_callback:mechanism_overview@MA-S5/MA-S5:unit-1/expository_bridge",
+    "verified_upstream_failure:MA-S5:missing_required_briefs:brief:story:O-ORGANIZATION-05-baf0d276,brief:story:O-RATIONALE-CHECK-01-bad20132",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S3:formula:section:MA-S3:derivation,formula:facet:facet-d57e6b007d62768e,formula:facet:facet-6bc5ee440fdc8329",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation,formula:facet:facet-833638c7783e3952,formula:facet:facet-71df0ec224b91883"
+  ],
+  "publication_ready": false,
+  "content_digest": "sha256:f40c693edcb5cc5d1af421171a145909d678d70c43be0986ca04206520c620c8"
+}

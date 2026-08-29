@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "claims": [
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask",
+      "canonical_text": "Values that fail the comparison are excluded.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567"
+      ],
+      "math_op_kind": "threshold_mask",
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    }
+  ],
+  "content_digest": "sha256:41446c6533e86fa4814d7e666cb3e2e58d5febcaead4fb26d848f538173881db"
+}

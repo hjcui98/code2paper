@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:6d8840b5c2e9103933ee4d61f4d01f99cf4ca99e8bc15d8d91a6689ab08d57ba",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+    "section_markdown": "## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nThis section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy. No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-03-157f229e"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "concept_key": "linearRAG_overview",
+        "evidence_refs_used": [],
+        "exact_question": "What repository-supported propositions, concepts, and formula packages constitute the LinearRAG tri-graph concept and two-stage retrieval philosophy as described in the source material?",
+        "missing_parts": [
+          "ordered_targets",
+          "formula_packages",
+          "material_conditions"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "REQ:MA-S2:1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "MA-S2:brief:overview"
+        ],
+        "target_clause_ids": [
+          "MA-S2:clause:tri_graph_concept",
+          "MA-S2:clause:two_stage_retrieval"
+        ]
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy. No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": [],
+        "formula_disposition": null,
+        "formula_disposition_reason": "",
+        "formula_dispositions": []
+      }
+    ]
+  },
+  "output_digest": "sha256:0bf8fd8d485c2293cb1953c7d723163269e14366d90522747bc53a3b17f7a7d9",
+  "content_digest": "sha256:c0e0edb774fe08242ec708315acb298df39cc52b78a9f6f212d6bed09da2b416"
+}

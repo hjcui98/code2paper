@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S1",
+  "response_ref": "sha256:9f5dd28e5f3659991ea7530368aca10537f27153db3912ed078a1e4154d37243",
+  "output": {
+    "section_id": "MA-S1",
+    "heading_text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+    "section_markdown": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nThe efficiency and cross-passage inference characteristics of existing rerankers motivate the design choices described in subsequent sections. The specific computational and representational challenges that drive these choices are detailed in the method and evaluation sections.\n\nAddressing these challenges requires balancing inference cost against the quality of cross-passage interactions, a trade-off that shapes the architectural and training decisions presented in this work.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-01-6b45ad90"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S1:1",
+      "paragraph:MA-S1:2"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S1:unit-1",
+        "candidate_symbols_or_terms": [
+          "cross-passage inference",
+          "reranker efficiency",
+          "inference cost"
+        ],
+        "evidence_refs_used": [],
+        "exact_question": "What are the specific efficiency bottlenecks and cross-passage inference challenges in existing rerankers that motivate the proposed method?",
+        "missing_parts": [
+          "repository-supported propositions on reranker inference cost",
+          "evidence for cross-passage interaction limitations",
+          "formal characterization of the efficiency gap"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "req:MA-S1:1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S1",
+        "status": "open",
+        "target_brief_ids": [
+          "MA-S1:brief-1"
+        ],
+        "target_clause_ids": [
+          "MA-S1:clause-1"
+        ],
+        "why_needed_for_reader": "Without repository-supported propositions, the motivation section cannot state concrete efficiency or cross-passage challenges as factual claims."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S1:1",
+        "paragraph_markdown": "The efficiency and cross-passage inference characteristics of existing rerankers motivate the design choices described in subsequent sections. The specific computational and representational challenges that drive these choices are detailed in the method and evaluation sections.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": [],
+        "formula_disposition": null,
+        "formula_disposition_reason": "",
+        "formula_dispositions": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S1:2",
+        "paragraph_markdown": "Addressing these challenges requires balancing inference cost against the quality of cross-passage interactions, a trade-off that shapes the architectural and training decisions presented in this work.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": [],
+        "formula_disposition": null,
+        "formula_disposition_reason": "",
+        "formula_dispositions": []
+      }
+    ]
+  },
+  "output_digest": "sha256:046cb9f26e3c9734525d9abbd0d83c966691103aa2876c890b75944ff61842ba",
+  "content_digest": "sha256:228388ffc6855169497d2ab48dd3b42d62b2c1a8874cad90f9981a8f95ec8aed"
+}

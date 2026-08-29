@@ -1,0 +1,569 @@
+{
+  "claims": [
+    {
+      "claim_id": "C-V3-7af50c501210f117",
+      "claim_text": "EBCarRerankerHybridAttention.forward branches on self.cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-fb3c260af28c039d"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.cfg.use_dedicated_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5e12fe6a3d2fc330",
+      "claim_text": "EBCarRerankerHybridAttention.forward concatenates torch.cat, (query, passages), dim=1, result=concat_embeddings",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4a6080fa6bb780da"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-76e505fe1f5b60ab",
+      "claim_text": "EBCarRerankerHybridAttention.forward reduces torch.stack(losses).mean, result=loss",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e58848a5aa37644c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1bfb3dcfa5390305",
+      "claim_text": "EBCarRerankerHybridAttention.forward returns loss",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-1d7f265537446b11"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-70388b71051c71d0",
+      "claim_text": "TransformerEncoderLayerHybridAttention.forward computes formula src, self.dropout2(src2), result=src",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-28d9d2eb6ce56712"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9183e82b61417f62",
+      "claim_text": "EBCarRerankerHybridAttention.forward computes formula passages, document_id_embeddings",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6805a6c963141f0c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-4fb2d53c8bf5beb9",
+      "claim_text": "TransformerEncoderLayerHybridAttention.forward computes formula shared_out, dedicated_out",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ff694daf19d73a24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-a1bb9deab909be9a",
+      "claim_text": "EBCarRerankerHybridAttention.forward loads weights self.cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c9b01aa9bb004d2a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-b9eaadcd05c79931",
+      "claim_text": "EBCarRerankerHybridAttention.forward computes formula -pos_sim, torch.logsumexp(all_sims, dim=0), result=loss_i",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e9d822542a69a431"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-3b2603f75092c723",
+      "claim_text": "TransformerEncoderLayerHybridAttention.forward computes formula src, self.dropout1(shared_out + dedicated_out), result=src",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ff694daf19d73a24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-512aad9e0685a5a7",
+      "claim_text": "EBCarRerankerHybridAttention.forward configured by self.cfg.use_dedicated_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-fb3c260af28c039d",
+        "E-V3-c9b01aa9bb004d2a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1971e1717ede0300",
+      "claim_text": "EBCarRerankerHybridAttention.forward concatenates torch.cat, [pos_sim, neg_sims], result=all_sims",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8cb079ec18bfad5a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f158c52993c031cd",
+      "claim_text": "EBCarRerankerHybridAttention.forward reduces torch.sum, pos_mask",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f22cd361b74b89a1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-c40d23fb9ccc377d",
+      "claim_text": "EBCarRerankerHybridAttention.forward computes formula passages + document_id_embeddings, passage_id_embeddings, result=passages",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6805a6c963141f0c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-509ee3113b162d13",
+      "claim_text": "EBCarRerankerHybridAttention.forward branches on self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e84db13834bc689a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.cfg.add_positional_encoding"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9005a9431cea8ba0",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding normalizes torch.nn.functional.normalize, positional_encoding, p=2, dim=2, result=positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cfd3e6d07cf38459"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-a078c5515da98282",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding returns positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d9c846d61f8e8720"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-09e2adbd16dc083d",
+      "claim_text": "EBCarRerankerHybridAttention.forward loads weights self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-29a5d05da6dcde16"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-436636cd4d1a3c60",
+      "claim_text": "EBCarRerankerHybridAttention.forward configured by self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e84db13834bc689a",
+        "E-V3-29a5d05da6dcde16"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-bcd814296b11ed97",
+      "claim_text": "TransformerEncoderLayerHybridAttention.forward branches on return_attention",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8390974eea8be8ab"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "return_attention"
+      ]
+    },
+    {
+      "claim_id": "C-V3-fd6ba3e46dfe7b1b",
+      "claim_text": "TransformerEncoderLayerHybridAttention.forward returns (src, (shared_attn_weights, dedicated_attn_weights))",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4e880c6b184d3e96"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-31b911ac30e9bcdb",
+      "claim_text": "EBCarRerankerHybridAttention.forward branches on loss_i.shape[0] == 0",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-720ed98d0bdab7b1"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "loss_i.shape[0] == 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-b39a6b409124a68a",
+      "claim_text": "EBCarRerankerHybridAttention.rerank branches on self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e050a9a86529be7a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.cfg.add_positional_encoding"
+      ]
+    },
+    {
+      "claim_id": "C-V3-049278186cc2bbaa",
+      "claim_text": "EBCarRerankerHybridAttention.rerank concatenates torch.cat, (query, passages), dim=1",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-460e39e9a4d17b6d"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6f59551020fc5e1b",
+      "claim_text": "EBCarRerankerHybridAttention.rerank sorts by torch.sort, similarities, dim=1, descending=True, result=(relevance_scores, indices)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-43c16d9aa5f98045"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-bcbcf1d52e82e6d0",
+      "claim_text": "EBCarRerankerHybridAttention.rerank returns (reranked_passages, relevance_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-b6b62773db48c757"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-69611f2a819eebbd",
+      "claim_text": "EBCarRerankerHybridAttention.rerank computes formula passages + document_id_embeddings, passage_id_embeddings, result=passages",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bbbc77d0c01b5337"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-2fb661929fc58c51",
+      "claim_text": "EBCarRerankerHybridAttention.rerank loads weights self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-506162d7652702d6"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-ee235b2a58525eb6",
+      "claim_text": "EBCarRerankerHybridAttention.rerank calls self.passage_id_embedding, passage_id.long(), result=passage_id_embeddings",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-aa1cf042c6ef52ae"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-fb940d199ed7c055",
+      "claim_text": "EBCarRerankerHybridAttention.rerank computes formula passages, document_id_embeddings",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bbbc77d0c01b5337"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-837ae0c5101f4565",
+      "claim_text": "EBCarRerankerHybridAttention.rerank configured by self.cfg.add_positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e050a9a86529be7a",
+        "E-V3-506162d7652702d6"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-a5bd7e5c50289a92",
+      "claim_text": "evaluate_EBCAR branches on document_id not in unique_document_ids",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-051d48a9018af81a"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "document_id not in unique_document_ids"
+      ]
+    },
+    {
+      "claim_id": "C-V3-552db8fc9deb02e8",
+      "claim_text": "evaluate_EBCAR concatenates torch.cat, ground_truth_relevance_scores_all, dim=0, result=ground_truth_relevance_scores_all",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-21bd5b54cc0703e4"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-dc4095cdde430390",
+      "claim_text": "evaluate_EBCAR computes formula '-', 100",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ac1790406c3d4060"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-19b2c464b0d57c69",
+      "claim_text": "evaluate_EBCAR calls reranker.rerank, query_embedding, document_embeddings, document_ids, passage_ids, documents, result=(reranked_passages, predicted_relevance_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4057f03434d8f086"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-b90c1874c8f0c1f6",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding computes formula positions, div_term",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f776c785d9c0475c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7968a2700e1ff2c1",
+      "claim_text": "evaluate_EBCAR calls vectorstore.as_retriever, search_kwargs={'k': cfg.retrieval.top_k}, result=retriever",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-75eaaca68e557198"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-1c418b1b86cd741d",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding computes formula torch.arange(0, self.cfg.d_model, 2, dtype=torch.float32, device=input_ids.device), -(math.log(10000.0) / self.cfg.d_model)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-4ba6ba15a9f11814"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-0a7691713e60de21",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding calls torch.zeros, batch_size, seq_len, self.cfg.d_model, device=input_ids.device, result=positional_encoding",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ce6d872be2abfccd"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-4a4eca7bb10c12b5",
+      "claim_text": "EBCarRerankerHybridAttention.get_passage_positional_encoding calls torch.arange, seq_len, device=input_ids.device, dtype=torch.float32, result=positions",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-847562460f156d4b"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f72bb374250046f2",
+      "claim_text": "evaluate_EBCAR calls calculate_MRR, reranked_all_passages, ground_truth_all_passages, top_k=cfg.MRR_at, result=test_mrr",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f05d6ef3f7e86be8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7f6f2331a6125422",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6805a6c963141f0c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-7ffdd36c634ddfd4",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-e9d822542a69a431"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-8b8b66cc98d2b15a",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ff694daf19d73a24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-56cff0d21b6bac40",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-ff694daf19d73a24"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-24f406136b830a59",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-28d9d2eb6ce56712"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-15ec0b8a23429ff9",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-6805a6c963141f0c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d0e25da6d05fd02b",
+      "claim_text": "Scores are normalized before they are compared or aggregated.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cfd3e6d07cf38459"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-f774dd0fbdf01551",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bbbc77d0c01b5337"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9e7847c925335ecc",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-bbbc77d0c01b5337"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    }
+  ]
+}

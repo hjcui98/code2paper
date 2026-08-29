@@ -87,6 +87,37 @@ FacetFieldPolarityV1 = Literal[
 
 PublicationFieldRenderPolicyV1 = Literal["required", "optional", "deferred"]
 
+# Derivation provenance kinds.  ``DerivationKindV1`` and ``ClaimStrengthV1``
+# are shared type aliases consumed by both the field-candidate surface
+# (below) and the derivation records in ``research_derived_authoring``.
+# Keeping the aliases here avoids an import cycle: ``research_derived_authoring``
+# imports the field candidate and these aliases from this module, while this
+# module never imports ``research_derived_authoring``.
+DerivationKindV1 = Literal[
+    "direct",
+    "static_derived",
+    "semantic_derived",
+    "formal_derived",
+    "author_intent_only",
+]
+
+ClaimStrengthV1 = Literal[
+    "descriptive",
+    "structural",
+    "conditional_analysis",
+    "empirical",
+    "guarantee",
+]
+
+# Writer-visible paper surface, decoupled from the audit disposition sidecar.
+SurfaceModeV1 = Literal[
+    "repository_statement",
+    "author_specification",
+    "mismatch_statement",
+    "scoped_limitation",
+    "omit_and_review",
+]
+
 
 def _digest(value: Any) -> str:
     encoded = json.dumps(
@@ -364,6 +395,13 @@ class PublicationFieldCandidateV1(_BriefModel):
     ownership_roles: tuple[str, ...] = Field(default_factory=tuple)
     render_policy: PublicationFieldRenderPolicyV1 = "deferred"
     defer_reason: str = ""
+    # Research-derived provenance (Slice 2 / 6.3).  These are additive and
+    # never override the existing closed evidence checks: a required
+    # ``repository_statement`` still needs its ``bound_*`` binding.
+    derivation_record_ids: tuple[str, ...] = Field(default_factory=tuple)
+    derivation_kind: DerivationKindV1 = "direct"
+    claim_strength: ClaimStrengthV1 = "descriptive"
+    surface_mode: SurfaceModeV1 = "omit_and_review"
     content_digest: str = ""
 
     @field_validator(
@@ -385,6 +423,7 @@ class PublicationFieldCandidateV1(_BriefModel):
     @field_validator(
         "conditions", "bound_claim_ids", "bound_fact_ids", "bound_span_ids",
         "bound_equation_ids", "exact_excerpts", "ownership_roles",
+        "derivation_record_ids",
     )
     @classmethod
     def _dedupe_values(cls, value: tuple[str, ...]) -> tuple[str, ...]:
@@ -392,6 +431,15 @@ class PublicationFieldCandidateV1(_BriefModel):
 
     @model_validator(mode="after")
     def _consistency_and_digest(self) -> "PublicationFieldCandidateV1":
+        # A surface mode that asserts a repository fact still requires the
+        # closed evidence binding; the derivation lane alone never authorizes
+        # it.  ``omit_and_review`` never becomes a hard paragraph target.
+        if self.surface_mode in {"repository_statement", "scoped_limitation"} and not (
+            self.bound_claim_ids or self.bound_fact_ids or self.bound_span_ids or self.bound_equation_ids
+        ):
+            raise ValueError(
+                "repository_statement/scoped_limitation surface modes require evidence binding"
+            )
         if self.render_policy == "required" and (
             not self.exact_excerpts
             or not (self.bound_claim_ids or self.bound_fact_ids or self.bound_span_ids or self.bound_equation_ids)

@@ -1,0 +1,685 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-9a1ed70668b9de25",
+          "formula:section:MA-S1:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S1:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-9a1ed70668b9de25",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-9a1ed70668b9de25",
+          "facet_ids": [
+            "facet-9a1ed70668b9de25"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S1",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals."
+          ],
+          "content_digest": "sha256:e8c5d889599846b323c1a649ff2bf9906ba599614a983251faa46b4b4d1272ee"
+        },
+        {
+          "obligation_id": "formula:section:MA-S1:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S1",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S1:3",
+          "paragraph_ids": [
+            "paragraph:MA-S1:3"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:ca82715320497c3d1b8e3f835e34ebd9ddd7d15109bd29eb6d4738c873c57040"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S1:derivation",
+        "formula:facet:facet-9a1ed70668b9de25"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:e311f9c52edb71ddf49f183c0282a2f7c5cfe9ff36165df3838c1312a01182a6"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:5c00669d2f1c43a75c6c8dea38fa8204c5695ba6f50dc90579a3b3a8224b703f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-e3de4791afd3b462",
+          "formula:facet:facet-0564bcda9bc954d9",
+          "formula:facet:facet-45205815214ce81d",
+          "formula:section:MA-S3:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-e3de4791afd3b462",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-0564bcda9bc954d9",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-45205815214ce81d",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-e3de4791afd3b462",
+          "facet_ids": [
+            "facet-e3de4791afd3b462"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay."
+          ],
+          "content_digest": "sha256:89d11f1876c72304e6f7c918b1f4eae4040573362ea297b32c00d198d2624320"
+        },
+        {
+          "obligation_id": "formula:facet:facet-0564bcda9bc954d9",
+          "facet_ids": [
+            "facet-0564bcda9bc954d9"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing."
+          ],
+          "content_digest": "sha256:20473d2621b5fd4ce51837a8a333d04a85c7280cc04d54035545dbf62bf46f07"
+        },
+        {
+          "obligation_id": "formula:facet:facet-45205815214ce81d",
+          "facet_ids": [
+            "facet-45205815214ce81d"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues."
+          ],
+          "content_digest": "sha256:a48023fa75e1038733ee5099ecc13034b5e1d209898e927704b234f464bb3afe"
+        },
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:6",
+          "paragraph_ids": [
+            "paragraph:MA-S3:6"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:83fdedb39551fdf3c5c6ef2433d8da12850d80892819ceebaf373c8491d55598"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S3:derivation",
+        "formula:facet:facet-e3de4791afd3b462",
+        "formula:facet:facet-0564bcda9bc954d9",
+        "formula:facet:facet-45205815214ce81d"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:b1c4288616a5f803014d1a91f15341f23749e9ee3350462e5ec9e2c9b2b7dbe6"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:d95d016cce22aa93e607949e63f55fac446865cc1107b78a8b333cb3e22036cd"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S5",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-85dd07572b8a77e2",
+          "formula:facet:facet-e343d4bc111c5b77",
+          "formula:facet:facet-3f8317dd772533f4",
+          "formula:facet:facet-e36d367d850a8273",
+          "formula:section:MA-S5:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-85dd07572b8a77e2",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-e343d4bc111c5b77",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-3f8317dd772533f4",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-e36d367d850a8273",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-85dd07572b8a77e2",
+          "facet_ids": [
+            "facet-85dd07572b8a77e2"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "while maintaining stability through spectral norm constraints.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "while maintaining stability through spectral norm constraints."
+          ],
+          "content_digest": "sha256:d8177c5ae42eab3d0a48e66c2d766ff7b199e2c12627d937bb5cef4f9feec5ae"
+        },
+        {
+          "obligation_id": "formula:facet:facet-e343d4bc111c5b77",
+          "facet_ids": [
+            "facet-e343d4bc111c5b77"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)"
+          ],
+          "content_digest": "sha256:a421d50756fcd6b4e6e550b9c19cb8fb264bf2f8856274a36b6953ceb17dad07"
+        },
+        {
+          "obligation_id": "formula:facet:facet-3f8317dd772533f4",
+          "facet_ids": [
+            "facet-3f8317dd772533f4"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing."
+          ],
+          "content_digest": "sha256:1487cab968d64413644df9642b4ab5a6b02300b4e230e6a8ced099e596b66761"
+        },
+        {
+          "obligation_id": "formula:facet:facet-e36d367d850a8273",
+          "facet_ids": [
+            "facet-e36d367d850a8273"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1."
+          ],
+          "content_digest": "sha256:20eaca2a0407810fde7e1e61a8e43f509118f0998e409d942b5b30539532f9d8"
+        },
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:1",
+          "paragraph_ids": [
+            "paragraph:MA-S5:1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:e5640ab5752a73a63b9dc33f9f29405358803d57f788137660984d510a5ee764"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S5:derivation",
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:facet:facet-e343d4bc111c5b77",
+        "formula:facet:facet-3f8317dd772533f4",
+        "formula:facet:facet-e36d367d850a8273"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:13a2ebb5f0db28e1a24483168e3f39621ebf60aadfec2aa2136aa0e1cc8bf7e4"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:83fec08ed8495220cdd52bf693374bb0bcb80265b537993d99f62ef1b1454d04",
+          "guard_failures": [
+            "pkg-ma-s1-author-intent:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S1:3\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n&\\\\mathbf{h}_i = \\\\text{DyG-Mamba}\\\\left( \\\\left[ \\\\mathbf{e}_{\\\\text{node}}(v_i); \\\\mathbf{e}_{\\\\text{edge}}(e_i); \\\\mathbf{e}_{\\\\text{time}}(\\\\Delta t_i); \\\\mathbf{e}_{\\\\te"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:c8c618553f3bb0e02e11c1e28bb2adf3258500d7f89dd0d0e9ec8c73f53c4e5e",
+          "guard_failures": [
+            "pkg-ma-s1-author-intent-v2:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S1:3\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathbf{h}_v = \\\\text{MLP}\\\\left( \\\\text{Pool}\\\\left( \\\\text{DyG-Mamba}(\\\\mathbf{X}_v^{src}, \\\\Delta\\\\mathbf{t}_v^{src}) \\\\right) \\\\oplus \\\\text{Pool}\\\\left( \\\\text{DyG-Mamba}(\\\\mathbf{X}_v^{"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-9a1ed70668b9de25",
+        "formula:section:MA-S1:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:dbef85196f7a0f7ba731510777e65775a8aaaf62a5a00dec170a31d30fed5a77",
+          "guard_failures": [
+            "pkg:MA-S3:author_intent:001:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S3:6\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\Delta t_{i} = \\\\sigma\\\\left(\\\\log \\\\tau_{i} + \\\\log \\\\Delta t_{\\\\text{base}}\\\\right), \\\\quad A = \\\\text{diag}(\\\\lambda_{1}, \\\\dots, \\\\lambda_{N}), \\\\quad \\\\text{Re}(\\\\lambda_{k}) < 0, \\\\quad"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:2014d76de16d7188f31da9825303c368bdef6f50c533d386c1e8b62eb0b35445",
+          "guard_failures": [
+            "pkg:MA-S3:author_intent:002:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\"outcome\": \"rendered\", \"packages\": [{\"authority_status\": \"author_intent\", \"consumer_paragraph_id\": \"paragraph:MA-S3:6\", \"formula_lane\": \"author_intent_academic\", \"latex\": \"\\\\begin{aligned}\\n&\\\\Delta t_{i} = \\\\sigma\\\\left(\\\\mathbf{w}_{\\\\Delta}^{\\\\top} \\\\mathbf{h}_{i} + b_{\\\\Delta}\\\\right) \\\\cdot \\\\tau_{i}, \\\\quad \\\\mathbf{h}_{i} = [\\\\mathbf{x}_{i}; \\\\mathbf{e}_{\\\\tau}(\\\\tau_{i})] \\\\\\\\\\n&\\\\mathbf{A"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-e3de4791afd3b462",
+        "formula:facet:facet-0564bcda9bc954d9",
+        "formula:facet:facet-45205815214ce81d",
+        "formula:section:MA-S3:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:ada7da2eb9745436a39574b29e52de7021412ca13629e1548a7f53006ca2cd88",
+          "guard_failures": [
+            "pkg-ma-s5-ssm-core:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:1\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned} &\\\\dot{h}(t) = A h(t) + B(t) x(t), \\\\quad h(t) = h(0) e^{At} + \\\\int_0^t e^{A(t-\\\\tau)} B(\\\\tau) x(\\\\tau) d\\\\tau \\\\\\\\ &A = \\\\text{diag}(-a_1, \\\\dots, -a_N), \\\\quad a_i > 0 \\\\\\"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:4b820f2d5a1dd53c1a7f22774adfc57fe460e42a14d4e2af5cf0140af60d1f2d",
+          "guard_failures": [
+            "pkg-ma-s5-ssm-core:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:1\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{align}\\n&\\\\dot{h}(t) = A h(t) + B(t) x(t) \\\\\\\\\\n&h(t) = \\\\int_{0}^{t} e^{A(t-\\\\tau)} B(\\\\tau) x(\\\\tau) d\\\\tau \\\\\\\\\\n&y(t) = C(t) h(t) + D x(t)\\n\\\\end{align}\\n\\\\text{where } A = \\\\text{"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:facet:facet-e343d4bc111c5b77",
+        "formula:facet:facet-3f8317dd772533f4",
+        "formula:facet:facet-e36d367d850a8273",
+        "formula:section:MA-S5:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}

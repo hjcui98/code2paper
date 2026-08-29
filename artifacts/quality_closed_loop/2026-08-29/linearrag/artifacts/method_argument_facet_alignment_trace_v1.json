@@ -1,0 +1,1310 @@
+{
+  "schema_version": "1.0",
+  "content_digest": "sha256:ba2cb14c9175422a94266f8ceffac55fe0337f0f42587911881a9287f706ce7f",
+  "schema_failures": [
+    "facet-1f936373429e5100:decomposer_quote_was_wider_than_clause",
+    "facet-37ac47cd0b3c324b:decomposer_quote_was_wider_than_clause",
+    "facet-49c35a32b3156393:decomposer_quote_was_wider_than_clause",
+    "facet-11f57730a8077780:decomposer_quote_was_wider_than_clause",
+    "facet-751466939a6d86e8:field_positive_without_evidence:operation",
+    "facet-37ac47cd0b3c324b:field_positive_without_evidence:operation",
+    "facet-11f57730a8077780:field_positive_without_evidence:operation",
+    "facet-2962ffa6059952a7:field_positive_without_evidence:operation",
+    "facet-c94a090684d57a33:field_positive_without_evidence:operation",
+    "facet-77eff1974af1d1d5:field_positive_without_evidence:operation",
+    "facet-14e6716402039fea:field_positive_without_evidence:operation"
+  ],
+  "traces": [
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:df63a3e9a43509e3dcdd8e84467534bb7f04c0adadeee911d6fd39a5bf67bb87",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:df63a3e9a43509e3dcdd8e84467534bb7f04c0adadeee911d6fd39a5bf67bb87",
+        "parsed_payload_digest": "sha256:7dfd79eab55cd0207d448ff2e3582635419554810d0156311a101ba2199f49cd"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 0,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "negative",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:6063a1cf329e795f3eb9b4329db35f14369a3771871519a8e84584e3a9dfa525",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6063a1cf329e795f3eb9b4329db35f14369a3771871519a8e84584e3a9dfa525",
+        "parsed_payload_digest": "sha256:0dae3c4574d3551a8e4cc5a430c553db48652b8b293af115e83813f98466be34"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 1,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The formula_goal describes building a Tri-Graph with sparse contain (passage-entity) and mention (sentence-entity) adjacency matrices. While evidence 0 shows extract_nodes_and_edges producing entity_nodes, sentence_nodes, passage_hash_id_to_entities, entity_to_sentence, and sentence_to_entity, and evidence 2 shows precomputation of sparse matrices (entity_to_sentence_sparse, sentence_to_entity_sparse), no evidence provides a mathematical formula or equation that defines how the Tri-Graph is constructed. The facet requires a formula (formula_expectation: required), but no equation_atoms or equation_ids are present in any evidence that would constitute a formula for graph construction. The evidence shows procedural calls and branching logic, not a closed-form expression defining the graph's边"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:6926bc68aa664ff11490b8d5fe91c2e8eab4db265e80252343987058da6cf902",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6926bc68aa664ff11490b8d5fe91c2e8eab4db265e80252343987058da6cf902",
+        "parsed_payload_digest": "sha256:496bfdfd8f1e11b1fb7381efbb9d241a665c957f87b368298ea7f75f0dfe0c77"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 2,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              5,
+              9,
+              10,
+              11,
+              12
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              5,
+              9,
+              10,
+              11,
+              12
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              2,
+              5,
+              9,
+              10,
+              11,
+              12
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2,
+                  5,
+                  9,
+                  10,
+                  11,
+                  12
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2,
+                  5,
+                  9,
+                  10,
+                  11,
+                  12
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2,
+                  5,
+                  9,
+                  10,
+                  11,
+                  12
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  2,
+                  5,
+                  9,
+                  10,
+                  11,
+                  12
+                ],
+                "active_path_conditions": [
+                  "self.config.use_vectorized_retrieval"
+                ],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:79c4599196e39236d33b4002530b116888187ce24d4167791836b75a2481f087",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:79c4599196e39236d33b4002530b116888187ce24d4167791836b75a2481f087",
+        "parsed_payload_digest": "sha256:a534b8a00dea1986dc06f5976f2b33dd1e985d94001f24403dbace0321a00a8c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 3,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15
+                ],
+                "active_path_conditions": [
+                  "self.config.use_vectorized_retrieval"
+                ],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:2650a6c8e705c0ea85a6dbd843b1898eb2b6e49f5e53cc39269ad9d58a10b65d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:2650a6c8e705c0ea85a6dbd843b1898eb2b6e49f5e53cc39269ad9d58a10b65d",
+        "parsed_payload_digest": "sha256:363a60452f3c19085e29593a9bb6100fd0a3f353927f73f63ee76b0fa671c4f7"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 4,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms entity-based graph indexing (entity_nodes, sentence_nodes, entity_to_sentence, sentence_to_entity) and a two-stage retrieval mechanism (graph_search_with_seed_entities → run_ppr → personalized_pagerank). However, no evidence demonstrates 'eliminating reliance on error-prone relation extraction' as a design principle, nor does any evidence confirm handling of 'complex, multi-hop queries over large-scale unstructured corpora' as a stated capability. The PPR-based retrieval supports multi-hop traversal, but the claim about eliminating relation extraction is not directly evidenced in the supplied spans."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:cec6215fa71e05a57752670e9b8b4cf4eab4e08bed0d44bc1749f8279d744c8a",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:cec6215fa71e05a57752670e9b8b4cf4eab4e08bed0d44bc1749f8279d744c8a",
+        "parsed_payload_digest": "sha256:8a87e3699d45451ea59976c17feae3aab4a8f96b00b766f798bc53192f6779cf"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 5,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms sparse entity-sentence and sentence-entity adjacency matrices (evidence 0) and a graph with personalized pagerank over nodes (evidence 13), but no evidence shows a three-tier hierarchical structure with entity, sentence, and passage nodes as distinct layers, nor 'message' adjacency as a separate edge type. The 'anchors the entire retrieval pipeline' claim is not directly evidenced as a structural property of the graph itself. The graph is used for PPR-based retrieval, but the specific tri-graph hierarchy with contain/message adjacency is not demonstrated in the supplied evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:915add30166408066f74690da0bfa1a637e1d25a4326570eb4218c017bc631a6",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:915add30166408066f74690da0bfa1a637e1d25a4326570eb4218c017bc631a6",
+        "parsed_payload_digest": "sha256:730f32033d56f2b24cf31edbb9411800a62218106ff3327e0930d5d6cb60f9e6"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 6,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:e4fc21617321f2d19e87bbe606b69e392c5a26b22c0f4d48ffb554aeef5a9b1c",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e4fc21617321f2d19e87bbe606b69e392c5a26b22c0f4d48ffb554aeef5a9b1c",
+        "parsed_payload_digest": "sha256:67d9a6dc29b331f92020ec0cee6c9e1b2b1fb189fe808b54e6eeba5d715d0670"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 7,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The operation field describes iterative propagation of entity relevance through a sentence-entity subgraph based on query-sentence similarity, identifying latent intermediate entities for multi-hop connections. The evidence shows a single-pass Personalized PageRank (run_ppr) over precomputed sparse adjacency matrices, not iterative propagation. No evidence demonstrates query-sentence similarity as the driving mechanism, nor any identification of latent intermediate entities for multi-hop connections. The mechanism is a one-shot PPR computation, not iterative semantic bridging."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:21b2e1d8a1360af847df9a27c0a32beebae8979a932c165f895606cb325a772b",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:21b2e1d8a1360af847df9a27c0a32beebae8979a932c165f895606cb325a772b",
+        "parsed_payload_digest": "sha256:d65252ad77aa8ac4867829d5613a911b4194b78a4bc61370bbf0c828a049f1b1"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 8,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence shows a binary branch on self.config.use_vectorized_retrieval (evidence 1, 2) selecting between vectorized and non-vectorized entity score calculation, and a threshold mask on len(new_passage_hash_ids) > 0 (evidence 7) and ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL' (evidence 8). None of these constitute 'threshold-based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.' The PPR call (evidence 5) operates on node_weights but no threshold-based pruning of entities during propagation is evidenced. The facet describes a mechanism not present in the supplied evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:b8adceffe35f60dad085fd9a8ea621a186c17dbc034a592881d238ffe0f86b33",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:b8adceffe35f60dad085fd9a8ea621a186c17dbc034a592881d238ffe0f86b33",
+        "parsed_payload_digest": "sha256:79d0f534cc94f8ec14d88e70a277bc509e5b2fab8ce5711dce27685878fa138c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 9,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms that LinearRAG.run_ppr calls self.graph.personalized_pagerank with vertices, damping, directed=False, weights='weight', reset=reset_prob, and implementation='prpack' (evidence 9), and that the result is sorted by np.argsort (evidence 12). However, the claim that this constitutes 'global importance aggregation on the passage–entity subgraph' is not directly evidenced. The code shows a call to personalized_pagerank on self.graph with all vertices (range(len(self.node_name_to_vertex_idx))), which is a global PPR over the full graph, not specifically a 'passage–entity subgraph'. The subgraph restriction is not visible in the supplied evidence. The 'ranks passages by propagating influence from activated entities' part is partially supported by the reset_prob parameter (eig"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:8ca0d0e9fda6784dc39186ee810a3c4f1dcc274c8cc829b9db24ba7bb1c60f9e",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:8ca0d0e9fda6784dc39186ee810a3c4f1dcc274c8cc829b9db24ba7bb1c60f9e",
+        "parsed_payload_digest": "sha256:4a46a1e18f4c1ab10b12f97cfac652cd596fe04cb61d8e286dc4f6ce5f080778"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 10,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              3,
+              5,
+              6,
+              9
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              3,
+              5,
+              6,
+              9
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              3,
+              5,
+              6,
+              9
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "negative",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  3,
+                  5,
+                  6,
+                  9
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  3,
+                  5,
+                  6,
+                  9
+                ],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  3,
+                  5,
+                  6,
+                  9
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  3,
+                  5,
+                  6,
+                  9
+                ],
+                "active_path_conditions": [
+                  "self.config.use_vectorized_retrieval"
+                ],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:3033d4b40cf267385be5428daf9de7ac2fa5b43905db9e95c5012d9ec5ae6722",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:3033d4b40cf267385be5428daf9de7ac2fa5b43905db9e95c5012d9ec5ae6722",
+        "parsed_payload_digest": "sha256:cc0dd50f4765ad0cb5348a850ac94454f7a72403f01c318f0f32232d5e482b5b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 11,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate the claim about revisiting GraphRAG shortcomings from relation extraction errors."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9ecd3d7c53a647ddd15f7c45a85ada622ce776daa5a8f354e22f633272545e20",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9ecd3d7c53a647ddd15f7c45a85ada622ce776daa5a8f354e22f633272545e20",
+        "parsed_payload_digest": "sha256:85d2d75380ea379f9204a2b12b28b19ee9d4373e0f04609081f4a8f1f67e7e90"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 12,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:fcd81a866c1789e294be51e620c9fb51168c61d90b559d8b97811b99031b7c94",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:fcd81a866c1789e294be51e620c9fb51168c61d90b559d8b97811b99031b7c94",
+        "parsed_payload_digest": "sha256:c14ae9193b9706bc332668aef87b782ec4802279deeeb123f082c43aef6037ab"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 13,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The facet requires a formula describing offline tri-graph construction (entities, sentences, passages, contain/message adjacency matrices). The supplied evidence covers runtime graph search (evidence 0–5), sparse matrix precomputation in retrieve (evidence 6–7), NER filtering (evidence 8–9), PPR propagation (evidence 10), and index-time node/edge extraction (evidence 11–12). No evidence defines a closed-form or algebraic formula for constructing the tri-graph adjacency matrices (entity-to-sentence, sentence-to-entity, entity-to-passage, passage-to-entity) offline. Evidence 12 shows extract_nodes_and_edges is called but does not expose the formula for building the adjacency structures. No equation_atoms or equation_ids in the evidence set correspond to a tri-graph construction formula."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:5f1a60b3a49359640d418f06696e4a0854c5d0a31c51e0211d038c8630dfdf90",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:5f1a60b3a49359640d418f06696e4a0854c5d0a31c51e0211d038c8630dfdf90",
+        "parsed_payload_digest": "sha256:bd80f00dc312120f92c28fa38b3641e68253ed0e7406894164599353a7917987"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 14,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The operation describes 'First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)'. The supplied evidence shows branching on use_vectorized_retrieval, precomputation of sparse matrices, a weighted sum (entity_weights + passage_weights), and a call to extract_nodes_and_edges. None of the evidence demonstrates iterative propagation, dynamic pruning, or local semantic bridging as a first retrieval stage. The evidence is consistent with a retrieval mechanism but does not confirm the specific three-phase operation described (initialization, iterative propagation, dynamic pruning). No evidence index supports the full operation claim."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:a4e126265a3593aa37b18ec21b8f52e67a3ea99f7cf5a712f59801ae30432e86",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:a4e126265a3593aa37b18ec21b8f52e67a3ea99f7cf5a712f59801ae30432e86",
+        "parsed_payload_digest": "sha256:4290e36ad39fb778cf6c025c3c7c924c04b4f30a91c02916769a817ac7f8fc59"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 15,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence supports personalized PageRank propagation (evidence 0) and the graph_search_with_seed_entities flow (evidence 2-6), but does not explicitly demonstrate a 'second retrieval stage' as a distinct stage, nor does it show 'hybrid passage initialization' as a named mechanism. The 'global importance aggregation' is partially supported by the PPR call and node_weights computation, but the specific framing of 'second retrieval stage' and 'hybrid passage initialization' lacks direct evidence in the supplied excerpts. The retrieve method (evidence 1, 9, 10, 11) shows branching on use_vectorized_retrieval and precomputation of sparse matrices, but does not explicitly label a 'second retrieval stage' or 'hybrid passage initialization'. The PPR mechanism is well-supported, but the compound"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:7d26a7bd9368c24e1253e62ef527a8bee78b27df6763bc555016c118cae9d17f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:7d26a7bd9368c24e1253e62ef527a8bee78b27df6763bc555016c118cae9d17f",
+        "parsed_payload_digest": "sha256:08115c0bc1c76eb471a42695c932f2a6fbcd6f07362652bd4cf4297238c9e2a0"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 16,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to evaluate the claim 'Avoid explicit relation extraction entirely.' against repository evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:86ff2e96a9f5cd04812cbe0a3b1f28677802167ffe96993086420ec37d0c761d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:86ff2e96a9f5cd04812cbe0a3b1f28677802167ffe96993086420ec37d0c761d",
+        "parsed_payload_digest": "sha256:bf6bb394331fdf462e2ea4b462ec91e4f77342877b22e6b3a63acddd2b01d15b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 17,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:353a266db635172298a5094bd878b44a1168a1b80e96b0b785dab4cf44edb326",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:353a266db635172298a5094bd878b44a1168a1b80e96b0b785dab4cf44edb326",
+        "parsed_payload_digest": "sha256:b49454983b7a13c9b4f305cafa25e8b2efdb1fa3abae2768823e65a0bf1328b5"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 18,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence shows entity scoring (calculate_entity_scores_vectorized) and passage ranking (run_ppr) as sequential steps within graph_search_with_seed_entities, but no explicit architectural decoupling into separate stages is demonstrated. The two operations share the same method and are coupled through node_weights = entity_weights + passage_weights before PPR execution, contradicting the 'decouple' claim of independent stages."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:5841775f6f280a923f9f2a9bfd9d87a3814dac5a95ecceffcf2ae40ec6c99e25",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:5841775f6f280a923f9f2a9bfd9d87a3814dac5a95ecceffcf2ae40ec6c99e25",
+        "parsed_payload_digest": "sha256:a3a408cfbc2a43f7447dc895f85dfd6ad9acb8e2d50e5f45318585e079859f7b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 19,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "negative",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:347df9a71cc121b10dccb195813d3f5c8be0f4910933a52551f26caba7fdf984",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:347df9a71cc121b10dccb195813d3f5c8be0f4910933a52551f26caba7fdf984",
+        "parsed_payload_digest": "sha256:3b68ec9e784a23ea428355aaab2049b200b040165b3ce7b626c5dbba30bb8d21"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 20,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms that personalized PageRank is called on self.graph with a reset vector (reset_prob) and damping parameter, which constitutes 'personalized PageRank'. However, the evidence does not explicitly confirm that the graph is a 'passage-entity graph' — it only shows self.graph.personalized_pagerank being called. The graph structure (whether it is specifically a passage-entity bipartite graph) is not directly evidenced in the supplied spans. The mechanism of employing PPR for passage retrieval is supported, but the specific characterization of the graph as a 'passage-entity graph' is not directly confirmed by the supplied evidence alone."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:08a7398b5e5a411616289564833e3621b56dac1e2f56c8fa302b068c499a5ad6",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:08a7398b5e5a411616289564833e3621b56dac1e2f56c8fa302b068c499a5ad6",
+        "parsed_payload_digest": "sha256:808f98bf0e5ea7dd85090c79cb846e1952d3c2d537afd50a044e37451f2800d5"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 21,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms that node_weights is computed as entity_weights + passage_weights (evidence 4) and passed to run_ppr (evidence 0), which produces ppr_sorted_passage_scores. However, the evidence does not show that these scores are used to initialize PPR scores. The run_ppr call (evidence 6) uses reset_prob as the reset parameter, not node_weights as an initialization vector. The claim that passage PPR scores are 'initialized' with a hybrid of direct similarity and entity-based evidence is not directly supported by the supplied evidence; the evidence shows node_weights is passed to run_ppr but does not confirm it serves as an initialization mechanism for PPR scores specifically for passages. The hybrid composition (entity_weights + passage_weights) is supported, but the 'initialize P'"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    }
+  ]
+}

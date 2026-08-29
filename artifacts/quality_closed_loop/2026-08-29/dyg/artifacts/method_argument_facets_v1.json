@@ -1,0 +1,644 @@
+{
+  "schema_version": "1.0",
+  "facets": [
+    {
+      "facet_id": "facet-9a1ed70668b9de25",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-3011c54d:0",
+      "exact_source_quote": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+      "semantic_fields": {
+        "formula_goal": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "MLP",
+        "DyG-Mamba",
+        "first-hop",
+        "interaction",
+        "sequence",
+        "absolute",
+        "temporal",
+        "co-occurrence",
+        "encoding",
+        "continuous",
+        "redesigned",
+        "forgetting",
+        "timespan",
+        "selectively"
+      ],
+      "required": false,
+      "content_digest": "sha256:3a7c5a54f40d858f37393f9eaa8bfc76cc531d02ed1fe4b7e93b05ae302c05dc"
+    },
+    {
+      "facet_id": "facet-e650301f08e6d4b3",
+      "clause_id": "clause:O-STAGE-01-06d7de36:0",
+      "exact_source_quote": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-STAGE-01-06d7de36",
+      "semantic_fields": {
+        "operation": "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "encoding",
+        "Transform",
+        "interaction",
+        "sequences",
+        "representation",
+        "captures",
+        "temporal",
+        "structural",
+        "Dynamic",
+        "graph",
+        "raw",
+        "unified",
+        "aligned",
+        "feature",
+        "context"
+      ],
+      "required": true,
+      "content_digest": "sha256:0173707fec1fa1498d43fc2994e4049ae5c73acfd89ff891ddf6667553feeb52"
+    },
+    {
+      "facet_id": "facet-e3de4791afd3b462",
+      "clause_id": "clause:O-STAGE-02-e02cd0f2:0",
+      "exact_source_quote": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-STAGE-02-e02cd0f2",
+      "semantic_fields": {
+        "formula_goal": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "Timespan-aware",
+        "forgetting",
+        "historical",
+        "proportionally",
+        "function",
+        "timespan",
+        "initializing",
+        "Let",
+        "forget",
+        "states",
+        "elapsed",
+        "time",
+        "making",
+        "stable"
+      ],
+      "required": true,
+      "content_digest": "sha256:ed4f1d88367e424d1d8558a577031a4386fe6d79162ef801a31c2a9b9d9eb329"
+    },
+    {
+      "facet_id": "facet-9a8892286042413e",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "exact_source_quote": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed",
+      "facet_kind": "interface",
+      "brief_id": "brief:story:O-STAGE-03-d47a86f4",
+      "semantic_fields": {
+        "interface": "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed"
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "Robust",
+        "Enable",
+        "noise"
+      ],
+      "required": true,
+      "content_digest": "sha256:bc668c382f6ad0aa7d42ae6f9aac2df05b0df6c79a8f68c1d8e34b2ac8b020d3"
+    },
+    {
+      "facet_id": "facet-85dd07572b8a77e2",
+      "clause_id": "clause:O-STAGE-03-d47a86f4:0",
+      "exact_source_quote": "while maintaining stability through spectral norm constraints.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-STAGE-03-d47a86f4",
+      "semantic_fields": {
+        "formula_goal": "while maintaining stability through spectral norm constraints."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "norm"
+      ],
+      "required": true,
+      "content_digest": "sha256:a399e3bc5f652a41e66909fc6b59b10982477821ffa3914bfc93768f260df644"
+    },
+    {
+      "facet_id": "facet-500349fe9389866d",
+      "clause_id": "clause:O-STAGE-04-a3a3e8ab:0",
+      "exact_source_quote": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+      "facet_kind": "interface",
+      "brief_id": "brief:story:O-STAGE-04-a3a3e8ab",
+      "semantic_fields": {
+        "interface": "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Downstream",
+        "prediction",
+        "fixed-size",
+        "embeddings",
+        "sequential",
+        "task-specific",
+        "predictions",
+        "node",
+        "output",
+        "produce"
+      ],
+      "required": true,
+      "content_digest": "sha256:f10d971e6920334e9ccf93b9172f37f9c9faaccd07ea46b6fec80afaec8a1cfe"
+    },
+    {
+      "facet_id": "facet-27117a1993cf169a",
+      "clause_id": "clause:O-COMPONENT-01-88e55e54:0",
+      "exact_source_quote": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-88e55e54",
+      "semantic_fields": {
+        "operation": "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "representation",
+        "learning",
+        "effectively",
+        "continuous-time",
+        "interaction",
+        "sequences",
+        "irregular",
+        "historical",
+        "patterns",
+        "targeting",
+        "performance",
+        "prediction",
+        "classification",
+        "Develop",
+        "dynamic",
+        "graph"
+      ],
+      "required": false,
+      "content_digest": "sha256:b3e81f0259f1aa2e77bfa6b0324af31988016d9ed9f6b415e5b60d3dff63b362"
+    },
+    {
+      "facet_id": "facet-fbcc6e92c1b73f4e",
+      "clause_id": "clause:O-COMPONENT-01-377afc18:0",
+      "exact_source_quote": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-01-377afc18",
+      "semantic_fields": {
+        "operation": "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Interaction",
+        "sequence",
+        "extraction",
+        "first-hop",
+        "neighbor",
+        "prediction",
+        "timestamp",
+        "Obtain",
+        "ordered",
+        "events",
+        "node"
+      ],
+      "required": true,
+      "content_digest": "sha256:2f0467ab58072689e72623df8cec74a180fbcf79ca6c7ad6120ab0055fa16c56"
+    },
+    {
+      "facet_id": "facet-4e742dc0e3b52bae",
+      "clause_id": "clause:O-COMPONENT-02-c39dd898:0",
+      "exact_source_quote": "Node encoding: Use raw node features;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-02-c39dd898",
+      "semantic_fields": {
+        "operation": "Node encoding: Use raw node features; zero vectors when unavailable."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "encoding",
+        "features",
+        "unavailable",
+        "Node",
+        "raw",
+        "zero",
+        "vectors"
+      ],
+      "required": true,
+      "content_digest": "sha256:b86a7511f00180c6a7f82ccdae06b66e83bb9343f3584a20d91f7f0eb74851ab"
+    },
+    {
+      "facet_id": "facet-4d1239a88d3c0fce",
+      "clause_id": "clause:O-COMPONENT-03-2ae65141:0",
+      "exact_source_quote": "Edge encoding: Use raw edge features;",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-03-2ae65141",
+      "semantic_fields": {
+        "operation": "Edge encoding: Use raw edge features; zero vectors when unavailable."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "encoding",
+        "features",
+        "unavailable",
+        "Edge",
+        "raw",
+        "zero",
+        "vectors"
+      ],
+      "required": true,
+      "content_digest": "sha256:0ea713b1948b1fbe4e214c0c14ebf5a23ecf38b75fe3ebb9a5c8cf086b4c3e25"
+    },
+    {
+      "facet_id": "facet-9f2ea9661004e61a",
+      "clause_id": "clause:O-COMPONENT-04-6d73cce5:0",
+      "exact_source_quote": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-04-6d73cce5",
+      "semantic_fields": {
+        "operation": "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "prediction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Encode",
+        "time"
+      ],
+      "required": true,
+      "content_digest": "sha256:bc8e9ba53f1ae00e04bfcfcd6f323f5c21425225751f16b980df5793f97b02c3"
+    },
+    {
+      "facet_id": "facet-8ebd977fd8a0b89d",
+      "clause_id": "clause:O-COMPONENT-05-8cd85daa:0",
+      "exact_source_quote": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-05-8cd85daa",
+      "semantic_fields": {
+        "operation": "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Co-occurrence",
+        "frequency",
+        "encoding",
+        "structural",
+        "similarity",
+        "neighbors",
+        "historical",
+        "neighbor",
+        "Capture",
+        "shared",
+        "between",
+        "target",
+        "node"
+      ],
+      "required": true,
+      "content_digest": "sha256:d162f75fd74df0f8809a6cfaa07888c492b4020c6b1099eb44858c1281832d50"
+    },
+    {
+      "facet_id": "facet-474697a48f990b43",
+      "clause_id": "clause:O-COMPONENT-06-e711d58d:0",
+      "exact_source_quote": "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-06-e711d58d",
+      "semantic_fields": {
+        "operation": "Encoding alignment: Project all encoding types to a common dimension and concatenate them."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Encoding",
+        "alignment",
+        "dimension",
+        "concatenate",
+        "Project",
+        "types",
+        "common"
+      ],
+      "required": true,
+      "content_digest": "sha256:8ca1bebcc4560e2d75ae89320778d7f9d029a6d0f3638218cbc11809ff6a3174"
+    },
+    {
+      "facet_id": "facet-e343d4bc111c5b77",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "exact_source_quote": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-COMPONENT-07-c430eb84",
+      "semantic_fields": {
+        "formula_goal": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)"
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "DyG-Mamba",
+        "Continuous",
+        "redefined",
+        "timespan-dependent",
+        "diagonal",
+        "initialization",
+        "core",
+        "state",
+        "space",
+        "model",
+        "step",
+        "size",
+        "stable"
+      ],
+      "required": true,
+      "content_digest": "sha256:80771a1fcfd5d8724d518a1a78adb48de15b747c27b0da9c28cfe9b0606a7df9"
+    },
+    {
+      "facet_id": "facet-3f8317dd772533f4",
+      "clause_id": "clause:O-COMPONENT-07-c430eb84:0",
+      "exact_source_quote": "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-COMPONENT-07-c430eb84",
+      "semantic_fields": {
+        "formula_goal": "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "input-dependent",
+        "spectral",
+        "constraints",
+        "timespan-aware",
+        "forgetting",
+        "noise-robust",
+        "reviewing",
+        "B",
+        "C",
+        "norm"
+      ],
+      "required": true,
+      "content_digest": "sha256:a64bdac95f85b933fba5c395bbac3b5f217ccfbc62e0e751f7c9fb039464106e"
+    },
+    {
+      "facet_id": "facet-9d9902649b1ee4a5",
+      "clause_id": "clause:O-COMPONENT-08-48efa86a:0",
+      "exact_source_quote": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-COMPONENT-08-48efa86a",
+      "semantic_fields": {
+        "operation": "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "MEAN",
+        "MLP",
+        "predictor",
+        "sequence",
+        "dimension",
+        "followed",
+        "prediction",
+        "classification",
+        "Readout",
+        "pooling",
+        "over",
+        "link",
+        "node"
+      ],
+      "required": true,
+      "content_digest": "sha256:181676357e878db2fe8e5222b8d574eb81c31feb69c1b4a4fa45a38485e92d99"
+    },
+    {
+      "facet_id": "facet-70bd392beebe42a0",
+      "clause_id": "clause:O-ORGANIZATION-01-42774719:0",
+      "exact_source_quote": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-01-42774719",
+      "semantic_fields": {
+        "operation": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "encoding",
+        "interaction",
+        "sequences",
+        "represented",
+        "heterogeneous",
+        "features",
+        "Dynamic",
+        "graph",
+        "aligned"
+      ],
+      "required": false,
+      "content_digest": "sha256:00faabd67f9fa8d00e53546c1a17d5af3db970f8e10a02c8354023d20916161a"
+    },
+    {
+      "facet_id": "facet-e5953e844f56e25a",
+      "clause_id": "clause:O-ORGANIZATION-02-780817ba:0",
+      "exact_source_quote": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise.",
+      "facet_kind": "interface",
+      "brief_id": "brief:story:O-ORGANIZATION-02-780817ba",
+      "semantic_fields": {
+        "interface": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "SSMs",
+        "Motivation",
+        "limitations",
+        "irregular",
+        "timespans",
+        "vulnerable",
+        "vanilla",
+        "they",
+        "ignore",
+        "input",
+        "noise"
+      ],
+      "required": false,
+      "content_digest": "sha256:24337c49dbad9ef949df110690b9e88d7ece0825e0c3b2c6002c2b1c0fd7dbd6"
+    },
+    {
+      "facet_id": "facet-0564bcda9bc954d9",
+      "clause_id": "clause:O-ORGANIZATION-03-359984b4:0",
+      "exact_source_quote": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-ORGANIZATION-03-359984b4",
+      "semantic_fields": {
+        "formula_goal": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "Δt",
+        "Redesign",
+        "timespan-informed",
+        "temporally",
+        "forgetting",
+        "redefined",
+        "spectral",
+        "selective",
+        "reviewing",
+        "aware",
+        "B",
+        "C",
+        "norm",
+        "robust"
+      ],
+      "required": false,
+      "content_digest": "sha256:abbf84dda4c56bd4ec522be5816d87b2b55ec0a1d61aa27d69618aed237deb4d"
+    },
+    {
+      "facet_id": "facet-42d2e9c04022ff46",
+      "clause_id": "clause:O-ORGANIZATION-04-a52145c2:0",
+      "exact_source_quote": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-ORGANIZATION-04-a52145c2",
+      "semantic_fields": {
+        "operation": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "link",
+        "node",
+        "linear"
+      ],
+      "required": false,
+      "content_digest": "sha256:8a7074311863114454740a34c5ac91a285667dbbaf2beaeac897e6bfee791e5e"
+    },
+    {
+      "facet_id": "facet-98231f06597ce972",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-106180a0:0",
+      "exact_source_quote": "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-106180a0",
+      "semantic_fields": {
+        "formula_goal": "Directly couple the SSM step size Δt to the irregular timespans between interactions."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "SSM",
+        "Δt",
+        "Directly",
+        "irregular",
+        "timespans",
+        "interactions",
+        "couple",
+        "step",
+        "size",
+        "between"
+      ],
+      "required": false,
+      "content_digest": "sha256:d80a68ccbab5239cf7e263f7e6f5c968d15fba49153be189321f768fe5777a61"
+    },
+    {
+      "facet_id": "facet-45205815214ce81d",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-653d713f:0",
+      "exact_source_quote": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-653d713f",
+      "semantic_fields": {
+        "formula_goal": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "Initialize",
+        "diagonal",
+        "strictly",
+        "negative",
+        "real-part",
+        "eigenvalues",
+        "matrix"
+      ],
+      "required": false,
+      "content_digest": "sha256:e605b0b5cec39cd268893090e82696f1db74b17f92158a90739415050db1a4d4"
+    },
+    {
+      "facet_id": "facet-e36d367d850a8273",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-117025ca:0",
+      "exact_source_quote": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+      "facet_kind": "formula",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-117025ca",
+      "semantic_fields": {
+        "formula_goal": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1."
+      },
+      "formula_expectation": "required",
+      "search_terms": [
+        "W_B",
+        "W_C",
+        "input-dependent",
+        "Make",
+        "B",
+        "C",
+        "enforce"
+      ],
+      "required": false,
+      "content_digest": "sha256:11f454318742c3c3d1f337f536b816def474723ab9f5390dfe7a5aa19216a068"
+    },
+    {
+      "facet_id": "facet-d45cd6959f91253e",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-b41841c3:0",
+      "exact_source_quote": "Use co-occurrence frequency encoding as a lightweight structural feature.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+      "semantic_fields": {
+        "operation": "Use co-occurrence frequency encoding as a lightweight structural feature."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "co-occurrence",
+        "frequency",
+        "encoding",
+        "lightweight",
+        "structural",
+        "feature"
+      ],
+      "required": false,
+      "content_digest": "sha256:2e63bdb1e25e16c336698f28cd179d86fb97d5877afe3d496ec7e2da143c11a3"
+    },
+    {
+      "facet_id": "facet-997629f642278c49",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-e1bbed89:0",
+      "exact_source_quote": "Process source and destination sequences independently before merging.",
+      "facet_kind": "mechanism",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+      "semantic_fields": {
+        "operation": "Process source and destination sequences independently before merging."
+      },
+      "formula_expectation": "none",
+      "search_terms": [
+        "destination",
+        "sequences",
+        "independently",
+        "Process",
+        "source",
+        "merging"
+      ],
+      "required": false,
+      "content_digest": "sha256:e01ae46784601f82f848419753b6dd2660eed81c429ec74ffb22efb8dbbddbca"
+    }
+  ]
+}

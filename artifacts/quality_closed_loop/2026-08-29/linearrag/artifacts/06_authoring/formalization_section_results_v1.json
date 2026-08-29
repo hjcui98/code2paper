@@ -1,0 +1,352 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S1:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:3d122ba94528be740b13797d4b6fa8b781a97a0b90bbb18c41df30389edc092a"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:5c00669d2f1c43a75c6c8dea38fa8204c5695ba6f50dc90579a3b3a8224b703f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S3:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:a5951bfb8bc1770b507208d649b9389fe859e7c2366582449f9db9c223b5a061"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:section:MA-S4:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S4",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S4:2",
+          "paragraph_ids": [
+            "paragraph:MA-S4:2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+            "slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+            "slot:fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+            "slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+            "slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:22df740e6a3e9995669adf889b488c31ff24fef9d8c2f4b3330e039aa1f0098e"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:89114980120101ab3670f47f14abf5d8461d1b2723e2b9d3cb3fd6a6632a3a2f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S5",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:section:MA-S5:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:2",
+          "paragraph_ids": [
+            "paragraph:MA-S5:2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+            "slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+            "slot:fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+            "slot:fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:f529ad17f84251d317e4c0588bcb3825c136eae59ecde7f718a433418d9e14bc"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:7d7cbb7fa6809f5e686f4303da0e14e8725bc3eff23170c7aa385a406fd97bbe"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:98b287b840d65faf276ec02defc5fcb471cb0c98ea3e9b7ffb95f1cd2a0fa814",
+          "guard_failures": [
+            "pkg:MA-S4:formula:001:latex_contains_document_command",
+            "pkg:MA-S4:formula:001:markdown_block_missing_exact_latex"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S4:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n&\\\\textbf{Initialization:} \\\\quad \\\\mathbf{r}^{(0)} = \\\\mathbf{r}_{\\\\text{seed}} \\\\oplus \\\\mathbf{r}_{\\\\text{sim}} \\\\quad \\\\text{where} \\\\quad r^{(0)}_e = \\\\begin{cases} \\\\te"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:951f21476148c761d91ff8f75f8cadf3d60a7933b4b6c6efae2ca87bf291875f",
+          "guard_failures": [
+            "pkg:MA-S4:formula:002:markdown_block_missing_exact_latex"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S4:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathbf{w}^{(0)} = \\\\mathbf{1}_{\\\\mathcal{E}_{\\\\text{seed}}} \\\\cdot \\\\mathbf{s}_{\\\\text{seed}} + \\\\sum_{j \\\\in \\\\mathcal{S}} \\\\text{sim}(\\\\mathbf{q}, \\\\mathbf{s}_j) \\\\cdot \\\\mathbf{1}_{\\\\math"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:64bc8cc473cc519ab35a4c979f12f847c15ec4f4ec34a6967b438fcfbdc1c8a3",
+          "guard_failures": [
+            "pkg:MA-S5:author_intent_academic:0:markdown_block_missing_exact_latex",
+            "pkg:MA-S5:author_intent_academic:0:code_shaped_formula:python_qualified_name"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathbf{r}^{(0)} = \\\\alpha \\\\mathbf{s}_{direct} + (1-\\\\alpha) \\\\mathbf{s}_{entity}, \\\\quad \\\\mathbf{r}^{(t+1)} = \\\\frac{1-d}{|\\\\mathcal{V}|} \\\\mathbf{r}^{(0)} + d \\\\mathbf{M} \\\\mathbf{r}^{(t)"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:a3ad72a4ad186333e8842d8bfa09c0ad0d5e43db26e9da36be78678fd88929bb",
+          "guard_failures": [
+            "pkg:MA-S5:author_intent_academic:0:markdown_block_missing_exact_latex"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathbf{r}^{(0)} = \\\\alpha \\\\mathbf{w}_{\\\\text{direct}} + (1-\\\\alpha) \\\\mathbf{w}_{\\\\text{entity}}, \\\\quad \\\\mathbf{r}^{(t+1)} = \\\\frac{1-d}{|\\\\mathcal{V}|} \\\\mathbf{1} + d \\\\left( \\\\mathbf{r"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}

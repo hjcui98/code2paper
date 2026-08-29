@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "MA-S3:rq-001",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "What is the high-level mechanism by which timespan-informed Δt and A are derived from the standard Mamba discretization, including the role of the time gap vector and the gating conditions for activation?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The overview paragraph (paragraph:MA-S3:1) requires a mechanism summary that anchors the section's purpose and scope. No closed target in the authoring packet provides a repository-anchored proposition for this move, so the reader-facing overview cannot be written without fabricating an ungrounded summary.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "mechanism_overview",
+      "missing_parts": [],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-03-359984b4",
+        "story:O-STAGE-02-e02cd0f2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "target_concept_keys": [
+        "mechanism_overview"
+      ],
+      "target_brief_ids": [
+        "brief:MA-S3:0"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:045e650ac80491f79adaedb5d1652182dd29a0b4b15ebc0a8a1bfe388770c067"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:c6b450fee50a89b3ae7b25703c4ee674409cea3d91d17d51ed2bf59e3252943e"
+}

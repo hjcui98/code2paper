@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "MA-S3:rq-001",
+      "lane": "expository_bridge",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "exact_question": "What is the high-level mechanism by which timespan-informed Δt and A are derived from the standard Mamba discretization, including the role of the time gap vector and the gating conditions for activation?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What is the high-level mechanism by which timespan-informed Δt and A are derived from the standard Mamba discretization, including the role of the time gap vector and the gating conditions for activation.",
+      "needed_evidence": [],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S3:rq-001"
+      ],
+      "content_digest": "sha256:c85ea964fbcf26b5443c771639e0a6bd387421f917345bc686cbba7423b7bd52"
+    }
+  ]
+}

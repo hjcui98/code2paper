@@ -1,0 +1,58 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:0062ac023b494275a5922e5066d6e2fb10c88b0b71bd15d489c1f5a45c1d5b58",
+  "projection_digest": "sha256:9b03099b008e11e26a15185ae3c9f2df05259878f99d9cfbc289f7b3f18b8043",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 2,
+  "supported_claims": 0,
+  "caveated_claims": 0,
+  "unsupported_claims": 2,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

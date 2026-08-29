@@ -1,0 +1,1588 @@
+{
+  "schema_version": "1.0",
+  "content_digest": "sha256:f45c4abc6189d77ee7b3a1308e86b5997a1cd1bac500425c9bad80ec3144a4f8",
+  "schema_failures": [
+    "facet-d57e6b007d62768e:decomposer_quote_was_wider_than_clause",
+    "facet-bd2114e7ad9b1773:decomposer_quote_was_wider_than_clause",
+    "facet-00e27dd88a70848f:decomposer_quote_was_wider_than_clause",
+    "facet-bd2114e7ad9b1773:field_positive_without_evidence:operation",
+    "facet-308602a0138b57ea:field_positive_without_evidence:operation",
+    "facet-df672e4efc3751e2:field_positive_without_evidence:operation",
+    "facet-14d4dbe911667c07:field_positive_without_evidence:operation",
+    "facet-d87af6e7082cc916:field_positive_without_evidence:operation",
+    "facet-ba08ce41d6e1d9b9:field_positive_without_evidence:operation",
+    "facet-00e27dd88a70848f:field_positive_without_evidence:operation",
+    "facet-9e754ab14c6fde20:deterministic_local_evidence_fallback",
+    "facet-b9735878c5548c4a:field_positive_without_evidence:operation",
+    "facet-68ed73e7a64fbbfd:field_positive_without_evidence:operation",
+    "facet-e517f869034a38aa:field_positive_without_evidence:operation",
+    "facet-d27285ebc144a3fa:field_positive_without_evidence:operation"
+  ],
+  "traces": [
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:ea48b26310202be26da0bef41b7520aafc59ddfee60d6e37fae7c3bccb706518",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:ea48b26310202be26da0bef41b7520aafc59ddfee60d6e37fae7c3bccb706518",
+        "parsed_payload_digest": "sha256:881810003338538b8e95cfc93e9192112236d45c582d744dff66af79cd887430"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 0,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34
+            ],
+            "bound_span_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34
+            ],
+            "bound_equation_indices": [
+              1,
+              2,
+              5,
+              7,
+              13,
+              22,
+              24
+            ],
+            "exact_excerpt_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  6,
+                  9,
+                  27
+                ],
+                "bound_fact_indices": [
+                  0,
+                  6,
+                  9,
+                  27
+                ],
+                "bound_span_indices": [
+                  0,
+                  6,
+                  9,
+                  27
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  6,
+                  9,
+                  27
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:2fc6de8cd7f02fc29e735d9d94d881349eeb9f851f21e84b07a7cee057952545",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:2fc6de8cd7f02fc29e735d9d94d881349eeb9f851f21e84b07a7cee057952545",
+        "parsed_payload_digest": "sha256:d29aa6f47e26a01971a37de766aa1ad008533a3725ed7240f067b0508c05b2ce"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 1,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms a retriever is called with top_k (evidence 9) and a reranker is called with document_embeddings (evidence 10), but no evidence mentions Contriever specifically, pre-computed embeddings, or encoding the query with the same model as the retriever. The claim about using Contriever and encoding the query with the same model is not supported by any supplied evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:879187c3c08a678e8af240811779c8198ad3b19ce02deff524431af5c2f9dda5",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:879187c3c08a678e8af240811779c8198ad3b19ce02deff524431af5c2f9dda5",
+        "parsed_payload_digest": "sha256:51166b7871c761c8c1aecdbdc69f07089258b2929ef48bdf6683f1909a07b7d9"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 2,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence supports adding a document ID embedding and a passage ID embedding to the passage embedding (evidence 0, 1, 7, 11), but the facet claims a 'sinusoidal passage-position encoding' is added. The sinusoidal positional encoding computed in get_passage_positional_encoding (evidence 3, 4, 14, 15, 16, 17) is a separate method that returns positional_encoding, but there is no evidence showing this sinusoidal encoding is added to the passage embedding in the forward/rerank path. The passage_id_embedding is a learned embedding lookup, not a sinusoidal encoding. The facet conflates two distinct mechanisms: the learned passage_id_embedding (which is added) and the sinusoidal positional encoding (which is computed but not shown to be added to passages in the augmentation step). The document"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9b54cf7f0e986354ca2f24e10decb7622e1fffd81574dec516b39834f5ed2f85",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9b54cf7f0e986354ca2f24e10decb7622e1fffd81574dec516b39834f5ed2f85",
+        "parsed_payload_digest": "sha256:e78de4fadc1220437cb93fac57fdb85bef09ab0c47feec0b91d21179779b50ae"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 3,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms shared attention and dedicated attention are computed and combined via residual connections in TransformerEncoderLayerHybridAttention.forward (evidence 0, 3, 7), and that EBCarRerankerHybridAttention.forward concatenates query and passages before feeding into the encoder (evidence 11). However, no evidence confirms that both shared and dedicated attention are applied 'in every layer' — the evidence only shows a single layer's forward pass. Additionally, no evidence confirms the output is 'contextualized passage embeddings' as a named concept; the code shows src being updated but does not label it as such. The dedicated attention mask construction (evidence 5) confirms intra-document masking, but the 'in every layer' claim is not supported by the supplied evidence."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:70f963ad7c8f4b1d3d667feada7fe426f0f854ac6ca388f460eacd05c9911643",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:70f963ad7c8f4b1d3d667feada7fe426f0f854ac6ca388f460eacd05c9911643",
+        "parsed_payload_digest": "sha256:d3a3ed48e7159976d2d9a314e7dc2fd5c10f23c758dc8fdfe436f61d023040f1"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 4,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              3
+            ],
+            "bound_span_indices": [
+              0,
+              3,
+              6
+            ],
+            "bound_equation_indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "exact_excerpt_indices": [
+              0,
+              3,
+              6
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  3
+                ],
+                "bound_fact_indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19,
+                  20
+                ],
+                "bound_span_indices": [
+                  0,
+                  3,
+                  6
+                ],
+                "bound_equation_indices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ],
+                "exact_excerpt_indices": [
+                  0,
+                  3,
+                  6
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:6ba9facb497e816b0619ad512321c7b33f3fb32ca4a1ea4ce29c670f9acb93d0",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6ba9facb497e816b0619ad512321c7b33f3fb32ca4a1ea4ce29c670f9acb93d0",
+        "parsed_payload_digest": "sha256:9a0777890065572d7b2cc5d0671af608144709c8a9f4f168122580d1df58a113"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 5,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              1
+            ],
+            "bound_span_indices": [
+              1
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              1
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  1
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  1
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  1
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:2e56afb8785f12daea4a08f2ac5bb8e78e6ba155bb05441e61cb0a0c6f6f48e3",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:2e56afb8785f12daea4a08f2ac5bb8e78e6ba155bb05441e61cb0a0c6f6f48e3",
+        "parsed_payload_digest": "sha256:ab8c5102cea6d50c7a8eff0c2ad28f044aabc77aee22fbf1218e4a10965047e6"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 6,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms a reranking mechanism (EBCarRerankerHybridAttention.rerank) that performs cross-passage attention via dedicated attention masks restricting attention to same-document passages, and positional encoding for document/passage identity. However, no evidence supports 'inference efficiency' as a design goal or mechanism, nor does any evidence demonstrate coreference resolution or structural context resolution. The dedicated attention mask (evidence 4) restricts cross-document attention, which is a form of cross-passage reasoning within documents, but the claim of 'inference efficiency' and 'coreference/structural context' resolution is not evidenced in the supplied spans."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:9bab3e9ea06bcdf7eebebb6a6bcb7d42fbd8d7ae32ce28fe31f633f400dc920f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:9bab3e9ea06bcdf7eebebb6a6bcb7d42fbd8d7ae32ce28fe31f633f400dc920f",
+        "parsed_payload_digest": "sha256:9955635b223522bb818d550ed7ffc625627497c4a1af48fbd5f7828b84063d6a"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 7,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:4453485e6f779b5a27c205698391d675640cc3775cb333f8e1d99396b6615c9f",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:4453485e6f779b5a27c205698391d675640cc3775cb333f8e1d99396b6615c9f",
+        "parsed_payload_digest": "sha256:695cd280a94fe62e67fa3d01f0f2bc1c54ae2d8014525759330b6e2932bebb13"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 8,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence in the supplied set confirms that passage embeddings are fixed dense representations obtained from Contriever. The evidence shows passage embeddings being used (concatenated, having positional encoding added) but does not establish their provenance as Contriever outputs or their fixedness as dense representations from that specific model."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:8f4b82132408c02291a980e1436a2ea2d81a44b93831ea332f07cc0b33ef1e46",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:8f4b82132408c02291a980e1436a2ea2d81a44b93831ea332f07cc0b33ef1e46",
+        "parsed_payload_digest": "sha256:f57df2eff7ed397f83f8e558780385df62fc5e50f7545263d8d55b0151d9f4a2"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 9,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms a learned document_id_embedding table that maps document IDs to embeddings (evidence 0, 2), and that these embeddings are added to passage representations (evidence 4, 6). However, the claim of 'relative document-identity embeddings assigned dynamically to unique documents in the candidate set' is not directly supported. The code shows a fixed embedding table indexed by a modulated document_id (document_id % top_k + document_id // top_k), not a dynamic assignment to unique documents in the candidate set. The 'relative' and 'dynamically assigned to unique documents' aspects are not evidenced in the supplied excerpts. The mechanism of recognizing which passages belong together is partially supported by the dedicated attention mask (evidence 1) which groups passages by相同"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:f2bac15fccdbea897f28ca1a20a32fad024ed6e1ff2402f37308c35cb7c3360d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:f2bac15fccdbea897f28ca1a20a32fad024ed6e1ff2402f37308c35cb7c3360d",
+        "parsed_payload_digest": "sha256:4d83dff4fc5db22eb8050fcb6e72b867d5ee6a8f8b600a23e3134d8e5235e4ad"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 10,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms sinusoidal positional encoding (cos/sin of positions * div_term) is computed in get_passage_positional_encoding and added to passages in forward/rerank when add_positional_encoding is enabled. However, the claim that it encodes 'the position of a passage within its original document' is not supported: the positions are computed via torch.arange(seq_len) which encodes position within the sequence of passages, not within the original document. The document_id and passage_id embeddings (evidence 0, 1, 15) are separate mechanisms that encode document/passage identity, not position within a document. The 'structural order cues' aspect is partially supported by the positional encoding mechanism, but the specific claim about 'within its original document' conflates the two: "
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:934c7477e5dd11fd8aa5b135d20cafc1c3764d47bd798fe3328f9054bb26a313",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:934c7477e5dd11fd8aa5b135d20cafc1c3764d47bd798fe3328f9054bb26a313",
+        "parsed_payload_digest": "sha256:9972043c50ec43449930a22e1c00e9fb2ae996a4f46ac5100c425224abaaeaaa"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 11,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  1,
+                  4,
+                  7,
+                  16,
+                  18,
+                  19
+                ],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  0,
+                  1,
+                  4,
+                  7,
+                  16,
+                  18,
+                  19
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  1,
+                  4,
+                  7,
+                  16,
+                  18,
+                  19
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c53b46ae5c2965f5354068c45ed013e6df2264a6f36a458015a1b7ecf05dce5b",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c53b46ae5c2965f5354068c45ed013e6df2264a6f36a458015a1b7ecf05dce5b",
+        "parsed_payload_digest": "sha256:4b3bb86a5a41b6a36846ae11f342e09533704305eb8fa1092143f47362fd5218"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 12,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence confirms a shared attention module exists and is called without a dedicated attention mask (evidence 1: 'Always have no attention mask so that the model can attend to all the passages'), supporting the 'standard multi-head attention allowing query and all passages to attend to each other' portion. However, the claim that it 'captures global relevance and cross-document relationships' is an interpretive characterization not directly stated in the code evidence. The code shows the mechanism (shared attention over all passages) but does not explicitly state the purpose as 'capturing global relevance and cross-document relationships'. The shared attention is combined with dedicated attention (evidence 17: shared_out + dedicated_out), confirming it operates alongside a document-rep"
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:b48b486d502dc9a888b7f31c01a20fc83542025304e3dfef65ac53a6e81cba41",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:b48b486d502dc9a888b7f31c01a20fc83542025304e3dfef65ac53a6e81cba41",
+        "parsed_payload_digest": "sha256:cc9b87e52bd59f43bb44c200a534c0f8c48874e5a4d3e3b0c49948c9821c9b2c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 13,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              0,
+              19,
+              20
+            ],
+            "bound_span_indices": [
+              0,
+              19,
+              20
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              19,
+              20
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  0,
+                  19,
+                  20
+                ],
+                "bound_fact_indices": [
+                  0,
+                  19,
+                  20
+                ],
+                "bound_span_indices": [
+                  0,
+                  19,
+                  20
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  19,
+                  20
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:0767223a33ca27f0d3321925be546833360ff303240e5b21e67a257ecaa3cdc3",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:0767223a33ca27f0d3321925be546833360ff303240e5b21e67a257ecaa3cdc3",
+        "parsed_payload_digest": "sha256:de55a95b3538ced19936dd20688be6a647507b7dc3177a1b3dcda181ed6ab511"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 14,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [
+              0,
+              8,
+              9,
+              10,
+              11
+            ],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              0,
+              8,
+              9,
+              10,
+              11
+            ],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [
+                  0,
+                  8,
+                  9,
+                  10,
+                  11
+                ],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  0,
+                  8,
+                  9,
+                  10,
+                  11
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:df57aa1287e9da9eba761cdca840f0ab5ec2f71bd6a3b1054070cb72d6137785",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:df57aa1287e9da9eba761cdca840f0ab5ec2f71bd6a3b1054070cb72d6137785",
+        "parsed_payload_digest": "sha256:3475dd0742737ba34cd6839b8f90edb98a984f52faadf71bf3d2371236727df0"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 15,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [
+              10
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "unresolved",
+                "polarity": "positive",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [
+                  10
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:cea2438e3e904e6c53faf6e55fe2c02d1753ca0c53a86088900c84b1a0ececaa",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:cea2438e3e904e6c53faf6e55fe2c02d1753ca0c53a86088900c84b1a0ececaa",
+        "parsed_payload_digest": "sha256:6e4223f6db759c385f8cb4e87032e9df86912f640a74fca9317dd4f7fa20c25f"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 16,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "guarantee",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence in the supplied set demonstrates that the original query embedding remains unchanged during training/inference to serve as a stable reference in a contrastive objective. The evidence covers attention mask construction, positional encoding, and concatenation of query with passages, but none of it establishes a guarantee of query-embedding invariance or a contrastive objective with a fixed anchor."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:cd38eb0bd1aa2c64d3482702e54afe9ad25fda42c7540d0ea059b16ffcf8661b",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:cd38eb0bd1aa2c64d3482702e54afe9ad25fda42c7540d0ea059b16ffcf8661b",
+        "parsed_payload_digest": "sha256:bf6bb394331fdf462e2ea4b462ec91e4f77342877b22e6b3a63acddd2b01d15b"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 17,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:27f9546de3d48e8e99c6e3054e1df7024e6500e5905f3637f15c482a211507fa",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:27f9546de3d48e8e99c6e3054e1df7024e6500e5905f3637f15c482a211507fa",
+        "parsed_payload_digest": "sha256:b50e492ec31faff41d921ed2dc2da228b2452c51b4b1d878e94b214d2c3ab8b4"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 18,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence in the supplied repository evidence supports the claim that MLDR, SQuAD, and NarrativeQA are three ConTEB datasets used for training EBCAR covering entity disambiguation, span matching, and narrative comprehension. All 31 evidence items pertain to model architecture (EBCarRerankerHybridAttention forward/rerank methods), evaluation pipeline (evaluate_EBCAR), and positional encoding computation. None reference dataset names, ConTEB, or training data composition."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "parsed_payload_digest": "sha256:566f05a61dc99528ee26ff8fe04c1b4d92cf900915c33f7a5c1d1787dfa3d4b4"
+      },
+      "result": {
+        "alignments": []
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:276c0b38b8a9fe14fb85893e37b979f380cb606edc791d46592070d32f5c5544",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:276c0b38b8a9fe14fb85893e37b979f380cb606edc791d46592070d32f5c5544",
+        "parsed_payload_digest": "sha256:01ba59d74e3a88fe68455d1e38fbc47e07e840deba047073bdeda3a83f34c17c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 20,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms the reranker's internal mechanism (positional encoding branching in forward/rerank) and the evaluation call signature, but does not provide the full embedding-based reranking formulation (e.g., attention scoring, relevance computation) or the overall framework architecture that would fully support the claim 'Embedding-based reranking formulation and overall framework.' The evidence shows a component of the mechanism but not the complete formulation or framework description implied by the field text."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:62ceeaaffa38b1670153b46729c2ebf3a813c11437792199cf76be9a6623b95e",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:62ceeaaffa38b1670153b46729c2ebf3a813c11437792199cf76be9a6623b95e",
+        "parsed_payload_digest": "sha256:ea90b38cfa952c6353fa9fcc8ee212dc2dfe380fe7ff4ad470b0b64e95f0136a"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 21,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The evidence supports enriching embeddings with document ID and position (evidence 0, 1, 6, 8) and the shared full attention component (evidence 2, 3), but no evidence directly demonstrates the dedicated masked attention mechanism as a distinct architectural component with its own mask construction and application in the forward pass. Evidence 7 shows the mask construction branching on use_dedicated_attention, but the actual application of the dedicated mask to the attention computation is not present in the supplied evidence set."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:681ce10f6a28f8d35ab6c892fd29b0541d5158cc4ad9f7ed8cd97cc789a0dc83",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:681ce10f6a28f8d35ab6c892fd29b0541d5158cc4ad9f7ed8cd97cc789a0dc83",
+        "parsed_payload_digest": "sha256:5ab2dc57730ddf658e7f55a725abb5a8e102d844de1b998e1e0c217280d434c0"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 22,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [
+              3
+            ],
+            "bound_span_indices": [
+              3
+            ],
+            "bound_equation_indices": [
+              3
+            ],
+            "exact_excerpt_indices": [
+              3
+            ],
+            "field_bindings": [
+              {
+                "field_name": "formula_goal",
+                "status": "partial",
+                "polarity": "positive",
+                "bound_claim_indices": [
+                  3
+                ],
+                "bound_fact_indices": [
+                  3
+                ],
+                "bound_span_indices": [
+                  3
+                ],
+                "bound_equation_indices": [
+                  3
+                ],
+                "exact_excerpt_indices": [
+                  3
+                ],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:caa5696f1eb16eb6f1d2f2f4575bc236399e09373db21897b4a4dbca5247ef46",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:caa5696f1eb16eb6f1d2f2f4575bc236399e09373db21897b4a4dbca5247ef46",
+        "parsed_payload_digest": "sha256:44d02634795ff0bc23c3eccf5b8aa163c4e2460fdd2208f123beac6ca753036c"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 23,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence supplied to verify the mechanism 'Inference procedure.' against repository content."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:830fccb2a57987ba1b6eed72c50b9c958cd95d2a2bce9455db82186041bdec32",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:830fccb2a57987ba1b6eed72c50b9c958cd95d2a2bce9455db82186041bdec32",
+        "parsed_payload_digest": "sha256:b2b268393135eff56eb2d35f5efb8e7e3c215895e6b4aa8a85f66ee0e5773317"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 24,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "The supplied evidence covers branching on add_positional_encoding (evidence 0, 1), branching on use_dedicated_attention (evidence 2), and a shared_attn call with return_attention=True (evidence 3). None of these evidence items demonstrate or support the claim that the mechanism avoids full-text processing and autoregressive generation to reduce inference latency. The evidence is about positional encoding and dedicated attention mask construction, not about avoiding full-text processing or autoregressive generation."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:2f8171fb4f84a46b639cda54be6c4d213741ea3549d7665a27d8949d8203c0fa",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:2f8171fb4f84a46b639cda54be6c4d213741ea3549d7665a27d8949d8203c0fa",
+        "parsed_payload_digest": "sha256:5b7750fdf699fba73f32ad1cf93627b0e0f96f7f9e449e6f93a8e38cc0c436ec"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 25,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms document-level structural knowledge (document_id_embeddings) is injected into passage embeddings via additive composition (passages + document_id_embeddings + passage_id_embeddings), but no evidence demonstrates the downstream effect of supporting cross-passage inference from this injection. The dedicated attention mask (evidence 4) enables cross-passage inference but is a separate mechanism not shown to be a consequence of the positional encoding injection."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:23afa7a8c3c378de013aca53d21976c38df694914da06cf9b79f70ea605a87ed",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:23afa7a8c3c378de013aca53d21976c38df694914da06cf9b79f70ea605a87ed",
+        "parsed_payload_digest": "sha256:d235a6dc5ab8170478baee95c9388634cc53760194c4e0668759eb7feb48c120"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 26,
+            "status": "partial",
+            "supported_fields": [],
+            "unsupported_fields": [
+              "operation"
+            ],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "partial",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "Evidence confirms a dedicated (document-local) attention mask and a shared attention path co-existing in the same layer, but the shared attention is not explicitly labeled or characterized as 'global' in the code. The complementary pairing is structurally present but the 'global' designation is not directly evidenced by a named global attention mechanism distinct from the shared one."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c1363c49c7a31cf411e92bbfd17171ee49c1252757c02cc5aaa2fffa91e1b8c7",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c1363c49c7a31cf411e92bbfd17171ee49c1252757c02cc5aaa2fffa91e1b8c7",
+        "parsed_payload_digest": "sha256:cbf19a970db758cf42f5b86f27003d65cb579acd8a1b22e50c9b73f50d91b268"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 27,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence in the supplied set demonstrates that document IDs are assigned as relative/dynamic rather than global corpus-level IDs. Evidence 0 shows deduplication of document_ids in evaluation; evidence 1 and 5 show document_id used for attention masking and positional encoding; evidence 3 and 6 show document_id modulated by top_k for embedding lookup. None of these establish the mechanism of relative/dynamic assignment versus global corpus-level assignment. The code uses document_id as an input parameter but does not show how it is generated or assigned relative to a corpus-level scheme."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:c12150320b6fec102cfd382401b3cabdc342a6820348966a1abd4cd33ac18500",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c12150320b6fec102cfd382401b3cabdc342a6820348966a1abd4cd33ac18500",
+        "parsed_payload_digest": "sha256:2f2c93a86cc4ac99c0ac59a2300dd85a008ef208ff2a226a846eda50e2900150"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 28,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": "No evidence in the supplied set addresses whether the query embedding is kept fixed during training and inference while passage embeddings are updated. The evidence covers positional encoding addition, dedicated attention masking, concatenation, and positional encoding computation, but none of these address the training-time behavior of freezing or updating the query embedding relative to passage embeddings."
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    },
+    {
+      "role": "semantic_verifier",
+      "prompt_template_id": "method_argument_facet_alignment_v1",
+      "response_hash": "sha256:eb12e636c94f9c85cabfbc9ac9fefcfeaddf9394889092d2969ef25ed4448b2d",
+      "finish_reason": "structured_complete",
+      "blocked_reason": "",
+      "representation_recovery": {
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:eb12e636c94f9c85cabfbc9ac9fefcfeaddf9394889092d2969ef25ed4448b2d",
+        "parsed_payload_digest": "sha256:9f0a06006990cff0fd2e56c1e2ac117bf21ec73e3ceb629fd59869a8e34a12bf"
+      },
+      "result": {
+        "alignments": [
+          {
+            "facet_index": 29,
+            "status": "unresolved",
+            "supported_fields": [],
+            "unsupported_fields": [],
+            "bound_claim_indices": [],
+            "bound_span_indices": [],
+            "bound_equation_indices": [],
+            "exact_excerpt_indices": [],
+            "field_bindings": [
+              {
+                "field_name": "operation",
+                "status": "unresolved",
+                "polarity": "unknown",
+                "bound_claim_indices": [],
+                "bound_fact_indices": [],
+                "bound_span_indices": [],
+                "bound_equation_indices": [],
+                "exact_excerpt_indices": [],
+                "active_path_conditions": [],
+                "unsupported_reason": ""
+              }
+            ],
+            "search_terms": [],
+            "rationale": ""
+          }
+        ]
+      }
+    }
+  ]
+}

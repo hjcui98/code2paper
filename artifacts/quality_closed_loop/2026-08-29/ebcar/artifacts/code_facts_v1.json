@@ -1,0 +1,1356 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_packet_digest": "sha256:8324ff1c6c379e776cd996342f7e2a87f30cb6c544edfc0b0324d6f5b9926053",
+  "facts": [
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "passages",
+        "document_id_embeddings"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "COMPUTE",
+        "passages",
+        "document_id_embeddings",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:26a5635ec4f2d1dc91895f17742349e9a47c3019353fffcd39ca4679ead9596a",
+      "canonical_identity": "sha256:4f5557ebcbec40e4e636aea07202d64d1fbdedf5e8911c02b3658fba66281262",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "(query, passages)",
+        "dim=1",
+        "result=concat_embeddings"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "CONCAT",
+        "concat_embeddings",
+        "torch.cat",
+        "(query, passages)",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a499744a697cffc7142ae8468ca560e5c45f0cb8704dcf187886dcec3e2235d6",
+      "canonical_identity": "sha256:60531bc0b8146ff97d73dc2330c1b66ba920581c02fe2c207be1a5b674701524",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "loads_weights",
+      "object": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "LOAD",
+        "self.cfg.use_dedicated_attention",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:c52b9ab03460a4c295daf423644668c98fb500dda9fa42186c6efc64a41f5b5f",
+      "canonical_identity": "sha256:8db0345e7a1e44fcbbedba8a3b67e1063c2edb1dce0f658774273289d9b9cd9d",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "branches_on",
+      "object": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "conditions": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "BRANCH",
+        "self.cfg.use_dedicated_attention",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:853bfbb5de88d4408fe019d5de70ee3da60e239503cb9d90568cefd978e0e4bc",
+      "canonical_identity": "sha256:31f4ed86613bf62f87a639e245b52f75c6d6ef63e8c25c56a5c46dbd2cbe4afd",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "-pos_sim",
+        "torch.logsumexp(all_sims, dim=0)",
+        "result=loss_i"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "COMPUTE",
+        "loss_i",
+        "-pos_sim",
+        "torch.logsumexp(all_sims, dim=0)",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:8e6632c27ec31b1ea01afe61e262ab7f7ecd196e7fac48a9e206e9a032bbf2cf",
+      "canonical_identity": "sha256:dc0a1bf417935b4e33129b72ae3084472aa7c3cac5bb514ed4e506b61196adc2",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "reduces",
+      "object": [
+        "torch.stack(losses).mean",
+        "result=loss"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "REDUCE",
+        "loss",
+        "torch.stack(losses).mean",
+        "method:mean"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:ab336d3934244f7de097389677f62e5d6922ebd28faa0d013d317960de24cc16",
+      "canonical_identity": "sha256:33cac23e23d0f06c7717e5a1c3520d4530ebfd8d121d34c3b792c86557f0bbb9",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "returns",
+      "object": [
+        "loss"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "RETURN",
+        "loss"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:2b4f5bce034c0cc70680b0ae1345ec3acb4b684961bcbe11af0fdb33d75493ee",
+      "canonical_identity": "sha256:e02b6ea6d31f644164bd7234bd5c40c78d2896fe661d7ea82ea2302a4d98b808",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "calls",
+      "object": [
+        "self.shared_attn",
+        "src2",
+        "None",
+        "key_padding_mask",
+        "causal_mask",
+        "return_attention=True",
+        "result=(shared_out, shared_attn_weights)"
+      ],
+      "conditions": [
+        "return_attention"
+      ],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "CALL",
+        "(shared_out, shared_attn_weights)",
+        "self.shared_attn",
+        "src2",
+        "None",
+        "key_padding_mask",
+        "causal_mask",
+        "return_attention=True",
+        "attr:shared_attn"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:21fb45500a3eb3cc8a0f119c70640c7d26643519f2e00e70e840b1e68540feeb",
+      "canonical_identity": "sha256:a5458508d375684b85d341d5da9f3affe35b9d0199d15cdcadc4c2c423017288",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "shared_out",
+        "dedicated_out"
+      ],
+      "conditions": [],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "COMPUTE",
+        "shared_out",
+        "dedicated_out",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a3a52dcbfa9bb9789f402bdfe0f12c6ad393b9cb7d2d897d445684cab26566c3",
+      "canonical_identity": "sha256:42aa1415b326d727afa9c35b15c5208084b8abca0ba63ec27107d260033087ad",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "src",
+        "self.dropout1(shared_out + dedicated_out)",
+        "result=src"
+      ],
+      "conditions": [],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "COMPUTE",
+        "src",
+        "self.dropout1(shared_out + dedicated_out)",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a3a52dcbfa9bb9789f402bdfe0f12c6ad393b9cb7d2d897d445684cab26566c3",
+      "canonical_identity": "sha256:b3adf5d5f8c91c0b04d46e840279a66cc6292ce1801723aa5aaa850b85e251bb",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "src",
+        "self.dropout2(src2)",
+        "result=src"
+      ],
+      "conditions": [],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "COMPUTE",
+        "src",
+        "self.dropout2(src2)",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:6ed3f173f06a18cb0e449a71a5452a374394fd8710f439c33958a89e0d0c5672",
+      "canonical_identity": "sha256:d3c17d96fc21145e8aa257b7297ed0d3fe2dd63a18d5a686b7f4ec302c7eb00a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "configured_by",
+      "object": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "node:a4204816e68e37b5",
+        "LOAD",
+        "self.cfg.use_dedicated_attention",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:b27d22e70fedb5ce1421331749c8ae0d1a699d493f15f69d54faf265e5936be4",
+      "canonical_identity": "sha256:cb3f11a14cd0a0707257d386a0b5b114ec5d336a09995e0029da4ea4738b6444",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "computes_formula",
+      "object": [
+        "passages + document_id_embeddings",
+        "passage_id_embeddings",
+        "result=passages"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "COMPUTE",
+        "passages",
+        "passages + document_id_embeddings",
+        "passage_id_embeddings",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:26a5635ec4f2d1dc91895f17742349e9a47c3019353fffcd39ca4679ead9596a",
+      "canonical_identity": "sha256:a8db04f49c109aa9ff29c0771def9c01ad66c046c8e3c1cea962c73d8caf8ac2",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "reduces",
+      "object": [
+        "torch.sum",
+        "pos_mask"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:223:223"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "REDUCE",
+        "torch.sum",
+        "pos_mask",
+        "qualified:torch.sum"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e2e6668c16dbc474d4241dbbd495499f6e22d7f582b35afeb14fa2f88cef36b9",
+      "canonical_identity": "sha256:4d6dd589ccdb32151f2f9222a4a576289cc5e8e99d68ce9b7cba68f982ed75bd",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "[pos_sim, neg_sims]",
+        "result=all_sims"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "CONCAT",
+        "all_sims",
+        "torch.cat",
+        "[pos_sim, neg_sims]",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:606f8788b37aaf02b38c627604538a4f841b7ecb8c1d2a49cb04b4f4c62713ed",
+      "canonical_identity": "sha256:efa148be82c5056c54e9aa0c7332b0f162a84a960bfd15bc6f6505cbb2885f96",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "loads_weights",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:121:121"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:121:133",
+        "span:src/model/ebcar_dedicated_attention_model.py:121:121"
+      ],
+      "relation_evidence_ids": [
+        "rel:3ab40312ca7ee86a"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "LOAD",
+        "self.cfg.add_positional_encoding",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:195f8ec6d213e2dc77b8b24da29ba6650ea0cf6c5609922eaa09be1ec1726369",
+      "canonical_identity": "sha256:f50227dda54ccf576e1bdbd90f48c6a527f30747334169641832e5ef0d56c2ff",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "branches_on",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:121:133"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:121:133",
+        "span:src/model/ebcar_dedicated_attention_model.py:121:121"
+      ],
+      "relation_evidence_ids": [
+        "rel:3ab40312ca7ee86a"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "BRANCH",
+        "self.cfg.add_positional_encoding",
+        "self.cfg.add_positional_encoding",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:bff96144e35bd1f907dfbc1aab46e8dee4ec2c1b76f1a44428431f20c36acf3c",
+      "canonical_identity": "sha256:71c425c3118fdb198990913189289526fb6f4caca129fae1bf7c573ec5dec2b4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "normalizes",
+      "object": [
+        "torch.nn.functional.normalize",
+        "positional_encoding",
+        "p=2",
+        "dim=2",
+        "result=positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:91:93"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "NORMALIZE",
+        "positional_encoding",
+        "torch.nn.functional.normalize",
+        "p=2",
+        "dim=2",
+        "method:normalize"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e8d43817a1cf0ede2686c17a5af4214a55c0f5d448bbb2f00787c8731bafa995",
+      "canonical_identity": "sha256:1558bb520515962fb9aa76ecc822a1d5b048f3cbc80939ce0002f83721f7575f",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "returns",
+      "object": [
+        "positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:95:95"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "RETURN",
+        "positional_encoding"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:8f823b48820daf1ff4be4f178c9bfd01354c5e524c6bddabf0becc1a6f050618",
+      "canonical_identity": "sha256:ad2ddcbdf968e08ef34eb4b29c3394467c58a51706e9f9ab6484c3bc83e5b79f",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "configured_by",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:121:133",
+        "span:src/model/ebcar_dedicated_attention_model.py:121:121"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:3ab40312ca7ee86a"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "sym:f6cf5bdfe2ae16f0",
+        "node:a166e6392c211659",
+        "sym:f6cf5bdfe2ae16f0",
+        "LOAD",
+        "self.cfg.add_positional_encoding",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:3ac3e65777eb7aac7c9963534f01a66b167fa00bd0d13974dc89259749de1aa4",
+      "canonical_identity": "sha256:bea61d71e8864d9e9fad55646cbdbe6c74370c24dcaf0a6cd61ecca628f873b5",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "branches_on",
+      "object": [
+        "return_attention"
+      ],
+      "conditions": [
+        "return_attention"
+      ],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "BRANCH",
+        "return_attention",
+        "return_attention",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:977208d8ef55107709fec040e989b49e518169a18e41054568bc54561e2f0cd9",
+      "canonical_identity": "sha256:8276ab13058c949fc18e43b7aa10b425783bdeb10d14b9b18e9d54b1cfaecdd6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+      "subject": "TransformerEncoderLayerHybridAttention.forward",
+      "predicate": "returns",
+      "object": [
+        "(src, (shared_attn_weights, dedicated_attn_weights))"
+      ],
+      "conditions": [],
+      "scope": "sym:2398741999df2d46",
+      "direct_span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:2398741999df2d46",
+        "RETURN",
+        "(src, (shared_attn_weights, dedicated_attn_weights))"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:cb1fd2e69f72aa08c91340ce93c040e5c3302a399808626bfe5bd35dbb07ac77",
+      "canonical_identity": "sha256:44191bfc2e223b7fbe7e808791c549979e4ba444bb3517fd6cbb3de54f864091",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+      "subject": "EBCarRerankerHybridAttention.forward",
+      "predicate": "branches_on",
+      "object": [
+        "loss_i.shape[0] == 0"
+      ],
+      "conditions": [
+        "loss_i.shape[0] == 0"
+      ],
+      "scope": "sym:f6cf5bdfe2ae16f0",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:f6cf5bdfe2ae16f0",
+        "BRANCH",
+        "loss_i.shape[0] == 0",
+        "loss_i.shape[0] == 0",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a7e88046e66e7eab9629431901f271fccc1f533c3ccf5908d5d9cfe25caf2b28",
+      "canonical_identity": "sha256:bdf57a97ba3ca803035fdf0e669080849de2532bf25f78a9150a645217dcc7d4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "loads_weights",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "LOAD",
+        "self.cfg.add_positional_encoding",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:f36e9ef43206704f060e27e38b7024cb77b42b9a1d31cb62676d3cdd808712e3",
+      "canonical_identity": "sha256:91667cd93cb188508261adbe088aacf1d8e207226aac2a266d9453870776a594",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "branches_on",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "relation_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "BRANCH",
+        "self.cfg.add_positional_encoding",
+        "self.cfg.add_positional_encoding",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a1b3ab5ed3595d1dc5bdf020cd02323f62198410887c5ae1756a1e4efe7fdaa7",
+      "canonical_identity": "sha256:42e9f352352b40e8e3b7a2bf637173dc63d8fb82fed7bdbaff9d1676583272a4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "calls",
+      "object": [
+        "self.passage_id_embedding",
+        "passage_id.long()",
+        "result=passage_id_embeddings"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "CALL",
+        "passage_id_embeddings",
+        "self.passage_id_embedding",
+        "passage_id.long()",
+        "attr:passage_id_embedding"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:3cfbe9b1c2df7c72bae8faeeb541c61f32364cd2d543688c0583096c0af5e809",
+      "canonical_identity": "sha256:cd1c624e08b10f602397a9621088a5424112add05a522c32a35ba3524a4da0e6",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "computes_formula",
+      "object": [
+        "passages",
+        "document_id_embeddings"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "COMPUTE",
+        "passages",
+        "document_id_embeddings",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a474de6ee134c2e47b5234122a786e58c7ca6d46210f744022b14e8609830923",
+      "canonical_identity": "sha256:ac56808f14fde508acc76da66ff24ba959d96e03c4a55567720fddd608588366",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "computes_formula",
+      "object": [
+        "passages + document_id_embeddings",
+        "passage_id_embeddings",
+        "result=passages"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "COMPUTE",
+        "passages",
+        "passages + document_id_embeddings",
+        "passage_id_embeddings",
+        "add"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a474de6ee134c2e47b5234122a786e58c7ca6d46210f744022b14e8609830923",
+      "canonical_identity": "sha256:c03cb72e6c5bde6f66197d204cbda9346735e6420aa6a5c7e497decbaa46ad1a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "(query, passages)",
+        "dim=1"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "CONCAT",
+        "torch.cat",
+        "(query, passages)",
+        "dim=1",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:032b152ebee0afe08a31e457a1cf06e2b2a9a1c2d82791c6efd53ce68ad8d687",
+      "canonical_identity": "sha256:673ebf02d046e2424de4e81a75a82599d562eb24aa37cc9bd2cb01608918a732",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "sorts_by",
+      "object": [
+        "torch.sort",
+        "similarities",
+        "dim=1",
+        "descending=True",
+        "result=(relevance_scores, indices)"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "SORT",
+        "(relevance_scores, indices)",
+        "torch.sort",
+        "similarities",
+        "dim=1",
+        "descending=True",
+        "qualified:torch.sort"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:5ab04b70ebbe1b88d128409e1ce646d80a12f15df8bc0461b5a4e4d352429b55",
+      "canonical_identity": "sha256:9f3cb68787df4292fd0981c92e07faabb6ccfacfb4da7e512d940eed5949d72c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "returns",
+      "object": [
+        "(reranked_passages, relevance_scores)"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "RETURN",
+        "(reranked_passages, relevance_scores)"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:75d23cef8dd80e102b4ac7718e1907a8f8c9a4e506ab975cd0f117e6e270690c",
+      "canonical_identity": "sha256:ac59fc23fcbf53d50c2702102235ed379233bdf4f5d2161bbb8e8efb80d278ef",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+      "subject": "EBCarRerankerHybridAttention.rerank",
+      "predicate": "configured_by",
+      "object": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:9773c5add7af1f92",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "relation_kinds": [
+        "CONFIGURED_BY"
+      ],
+      "semantic_context": [
+        "sym:9773c5add7af1f92",
+        "sym:9773c5add7af1f92",
+        "node:e3e35b1ed6a993de",
+        "sym:9773c5add7af1f92",
+        "LOAD",
+        "self.cfg.add_positional_encoding",
+        "config_access",
+        "attr_read"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:a44335d54c143f38a7a527f6092768ffe7a6b896098c0b1f7c32c90a510133e5",
+      "canonical_identity": "sha256:51ac7c0aa45c7493a79f47b8e462e2dfaaee8b1febf8aaa9e23ea05f88363096",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+      "subject": "evaluate_EBCAR",
+      "predicate": "branches_on",
+      "object": [
+        "document_id not in unique_document_ids"
+      ],
+      "conditions": [
+        "document_id not in unique_document_ids"
+      ],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:84:85"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "BRANCH",
+        "document_id not in unique_document_ids",
+        "document_id not in unique_document_ids",
+        "if"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:29a77fbeb2b884f6ef2daede6f6c438747a02d8a833973f242d9d83b0d94b2cf",
+      "canonical_identity": "sha256:cf0f5e34efd7826a55c4e7573ff9a84a7477712d39886b5d23e3e78379809b77",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+      "subject": "evaluate_EBCAR",
+      "predicate": "calls",
+      "object": [
+        "reranker.rerank",
+        "query_embedding",
+        "document_embeddings",
+        "document_ids",
+        "passage_ids",
+        "documents",
+        "result=(reranked_passages, predicted_relevance_scores)"
+      ],
+      "conditions": [],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:99:105"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "CALL",
+        "(reranked_passages, predicted_relevance_scores)",
+        "reranker.rerank",
+        "query_embedding",
+        "document_embeddings",
+        "document_ids",
+        "passage_ids",
+        "documents",
+        "attr:rerank"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:751709e774cfd5991750d0b2131e3e95f8c5be4c1a5e575830eea6db37a8c462",
+      "canonical_identity": "sha256:86c60459597f9bef2b655d4a6860b6ff0afd17909373727173409bd291be9d2a",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+      "subject": "evaluate_EBCAR",
+      "predicate": "concatenates",
+      "object": [
+        "torch.cat",
+        "ground_truth_relevance_scores_all",
+        "dim=0",
+        "result=ground_truth_relevance_scores_all"
+      ],
+      "conditions": [],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:133:135"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "CONCAT",
+        "ground_truth_relevance_scores_all",
+        "torch.cat",
+        "ground_truth_relevance_scores_all",
+        "dim=0",
+        "qualified:torch.cat"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:e182b3d60346a8e25e7c9823211d723a6bd8fd5e6cf67874ab68ef7631b1d465",
+      "canonical_identity": "sha256:e1ac3a2b48e022a3cc56b9693df034a1ef377fb2e93e4754a77451ba89ab1a83",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+      "subject": "evaluate_EBCAR",
+      "predicate": "computes_formula",
+      "object": [
+        "'-'",
+        "100"
+      ],
+      "conditions": [],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:141:141"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "COMPUTE",
+        "'-'",
+        "100",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:4f1d1507270a37574b7c5466ee487dc517afadf605ac3f5299188b8c297a961c",
+      "canonical_identity": "sha256:841d1b23913c78aba60cf126d0ac94dceb417daf90e95e43c79d36db687c292f",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "calls",
+      "object": [
+        "torch.arange",
+        "seq_len",
+        "device=input_ids.device",
+        "dtype=torch.float32",
+        "result=positions"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:63:63"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "CALL",
+        "positions",
+        "torch.arange",
+        "seq_len",
+        "device=input_ids.device",
+        "dtype=torch.float32",
+        "attr:arange"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:351463247ece4166262da37119a779fd4f6fc1e6bbe1b6229865c1f7dd594b4a",
+      "canonical_identity": "sha256:f0f60366080221a4ae7870a0aa17b3cd6b0e77ff5109364b006396a27ef406ed",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "computes_formula",
+      "object": [
+        "torch.arange(0, self.cfg.d_model, 2, dtype=torch.float32, device=input_ids.device)",
+        "-(math.log(10000.0) / self.cfg.d_model)"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:67:70"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "COMPUTE",
+        "torch.arange(0, self.cfg.d_model, 2, dtype=torch.float32, device=input_ids.device)",
+        "-(math.log(10000.0) / self.cfg.d_model)",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:12203b2d93416d370e3031041e7a8a60c109d219406e10a0bde38baf5e46cb2f",
+      "canonical_identity": "sha256:68af340844aca8012abdd6a8ced163577b257cdcbee36f710cfb66d3ed647e9c",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "calls",
+      "object": [
+        "torch.zeros",
+        "batch_size",
+        "seq_len",
+        "self.cfg.d_model",
+        "device=input_ids.device",
+        "result=positional_encoding"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:74:76"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "CALL",
+        "positional_encoding",
+        "torch.zeros",
+        "batch_size",
+        "seq_len",
+        "self.cfg.d_model",
+        "device=input_ids.device",
+        "attr:zeros"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:07b69c838a1399323c6dac323816183f3a8149b788c999f4271bab1f900ec202",
+      "canonical_identity": "sha256:f2fa1e56cc0719616c08bc1c09fef3ac40bc46d0c7248ac13ef0b9b901968fe2",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+      "subject": "EBCarRerankerHybridAttention.get_passage_positional_encoding",
+      "predicate": "computes_formula",
+      "object": [
+        "positions",
+        "div_term"
+      ],
+      "conditions": [],
+      "scope": "sym:018b1c01cabe7a09",
+      "direct_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:84:84"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:018b1c01cabe7a09",
+        "COMPUTE",
+        "positions",
+        "div_term",
+        "mult"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:86be4eb39d9e344819cde78771b7769c7669359c2cd9fe12e465d0a914b777a4",
+      "canonical_identity": "sha256:7fc98fcb5bee1b115060df7e3d578482a30a70aa59f7faa322d85d4e23093217",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+      "subject": "evaluate_EBCAR",
+      "predicate": "calls",
+      "object": [
+        "vectorstore.as_retriever",
+        "search_kwargs={'k': cfg.retrieval.top_k}",
+        "result=retriever"
+      ],
+      "conditions": [],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:48:48"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "CALL",
+        "retriever",
+        "vectorstore.as_retriever",
+        "search_kwargs={'k': cfg.retrieval.top_k}",
+        "attr:as_retriever"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:3490ce12c488ec5d7d202793ce6650b532fbd9ceab7e9a917569edf3721da0cb",
+      "canonical_identity": "sha256:ae20a256bc5c87aa6a5f2f36de1203e58157677dbc1064777c1fa4dec0dc3912",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "fact_id": "fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+      "subject": "evaluate_EBCAR",
+      "predicate": "calls",
+      "object": [
+        "calculate_MRR",
+        "reranked_all_passages",
+        "ground_truth_all_passages",
+        "top_k=cfg.MRR_at",
+        "result=test_mrr"
+      ],
+      "conditions": [],
+      "scope": "sym:ec35335f84dc2576",
+      "direct_span_ids": [
+        "span:src/evaluate.py:127:129"
+      ],
+      "relation_span_ids": [],
+      "relation_evidence_ids": [],
+      "relation_kinds": [],
+      "semantic_context": [
+        "sym:ec35335f84dc2576",
+        "CALL",
+        "test_mrr",
+        "calculate_MRR",
+        "reranked_all_passages",
+        "ground_truth_all_passages",
+        "top_k=cfg.MRR_at",
+        "name:calculate_MRR"
+      ],
+      "strength": "direct",
+      "exact_source_digest": "sha256:844fa1cdb88f1dde568cd1a290ccc4ece5a58388cdaf1976de4e70002f34c759",
+      "canonical_identity": "sha256:98d3c9cc09d9bbde476e7d33ead08717eb5e91e41ac8a40d5a73a05fc9e8f712",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:1a7676c3bd2f6e0632ddf2041cf52b205fc0050438dd422fb4d7d93ddfbec118"
+}

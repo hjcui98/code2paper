@@ -1,5 +1,69 @@
 # Current task
 
+## Active implementation handoff — attachment root-cause audit (2026-08-28)
+
+The user-requested implementation basis is the attached audit
+`method_agent_architecture_three_project_root_cause_audit_2026-08-28.md`. The attachment is a
+diagnosis and implementation proposal, not a replacement for the repository authority map above.
+Apply its P0-A through P0-J controls in the current dirty worktree, while preserving the accepted
+Candidate durability and Verified fail-closed behavior from the parent design.
+
+The existing uncommitted changes are a partial implementation baseline. Preserve them and repair
+their integration defects; do not reset, clean, checkout, commit, merge, or discard unrelated user
+work. In particular, verify and complete the currently visible gaps: the Architect's field-candidate
+projection and enrichment call path, cumulative observation history for acquisition closure,
+post-behavior implementation-scope propagation, ledger-driven terminal routing, full frozen-ledger
+rebinding of atomic publication fields, paragraph witness contracts with non-empty authorized
+anchors, and one canonical formula obligation/consumer identity.
+
+### Required implementation outcome
+
+Deliver one coherent, generic source-to-render closure across Research → evidence/facts/claims →
+atomic facet fields → semantic frames/argument units → paragraph plans → formula consumers → Writer
+transactions → content trace. It must:
+
+- infer `target_core`, `target_dependency`, `comparand`, `evaluation`, `configuration`, and
+  `unknown` ownership generically from author intent, entry points, imports/call graph, and
+  repository topology; never use the three audited project names, paths, claims, or known answers
+  in production code;
+- retain a `CandidateAcquisitionRecordV1` for every high-priority candidate, including discovered,
+  read, behavior-graph, packet, fact/claim, and terminal status; a candidate may terminate only as
+  `acquired_and_compiled`, `explicitly_rejected_with_reason`, or `superseded`, and may not disappear
+  when the active obligation changes;
+- propagate parent/mainline candidates to semantically overlapping child obligations only when
+  ownership and call-graph evidence support the propagation; avoid sibling baseline contamination;
+- retain proven facet fields when another field is partial/unresolved/mismatched, and rebind each
+  atomic publication field from the complete frozen evidence ledger with exact excerpts, polarity,
+  conditions, authority lane, stable IDs, and `required|optional|deferred` render policy;
+- let Architect promote only consumable, non-conflicting field/slot targets to hard publication
+  obligations. Author intent and low-level support slots remain Candidate/review material unless a
+  reader-worthy publication target is consumable;
+- expose paragraph-local witness targets/contracts to Writer and validation, pass authorized
+  semantic anchors into paragraph transactions/content trace, and reject missing or incompatible
+  condition/polarity/slot/edge witnesses without relying on generic keyword overlap;
+- canonicalize formula-obligation identity so each routed formula has exactly one paragraph
+  consumer; reject or report generated-but-unconsumed packages rather than counting them as gain;
+- preserve the existing bounded callback route, but continue only when a field/slot/paragraph or
+  formula-consumption semantic digest changes. No unchanged compile/rewrite loop, no
+  `resume_section_ids=[]` continuation, and no callback-only fallback to a shell;
+- emit the source-to-render and closure-metrics artifacts needed to distinguish not-discovered,
+  discovered-blocked, rendered-invalid, and rendered-low-quality outcomes. These artifacts are
+  observability only and cannot grant Verified permission.
+
+### Required verification and handoff
+
+Add project-neutral synthetic tests for sibling contamination, acquisition closure and candidate
+non-disappearance, partial-field preservation, condition/polarity mutation, unknown hard-target
+rejection, paragraph anchor/slot/edge coverage, formula-without-consumer, byte-preserving heading
+repair, and callback no-delta stop. Extend the existing three-project evaluation fixtures only in
+fixture/evaluation code; do not hard-code their identities in generic production modules.
+
+Run the focused tests named by the active source-ledger execution plan as implementation proceeds,
+then the required static milestone (`pytest`, `compileall`, and `git diff --check`) when the work
+packages are complete. Record exact commands, exit codes, summaries, worktree state, artifact roots,
+and any live/replay evidence in `.agent/implementation.md`. Do not edit `.agent/task.md`,
+`.agent/plan.md`, `.agent/review.md`, AGENTS.md, or authority documents during implementation.
+
 - Task: improve the author-intent-first Method Agent from a heading-complete Candidate into a
   source-traceable, paragraph-structured, formula-consuming Method writer.
 - State: `QUALITY_REPAIR_REQUIRED` — same task and worktree; do not create a replacement task.

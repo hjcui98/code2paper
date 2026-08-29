@@ -2518,6 +2518,11 @@ def run_autonomous_method_agent(
         for key in (
             "candidate_generation_status",
             "candidate_available",
+            "candidate_completion_status",
+            "candidate_complete",
+            "candidate_blocking_reasons",
+            "verified_complete",
+            "verified_blocking_reasons",
             "candidate_validation_status",
             "candidate_warnings_by_severity",
             "verified_validation_status",
@@ -2599,6 +2604,7 @@ def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
         "publication_field_candidates_v1",
         "typed_field_deferred_v1",
         "implementation_scope_v1",
+        "behavior_graph_v1",
         "candidate_acquisition_ledger_v1",
         "method_authoring_closure_metrics_v1",
     )

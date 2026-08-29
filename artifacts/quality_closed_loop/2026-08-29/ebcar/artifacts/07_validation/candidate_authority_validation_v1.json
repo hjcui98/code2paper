@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "candidate_text_digest": "sha256:f462be62601638306614f0a873253462d001334d1240dc7fdc36642f93b8144a",
+  "validation": {
+    "schema_version": "1.0",
+    "status": "passed",
+    "violations": [],
+    "warnings": [],
+    "candidate_sentence_count": 56,
+    "internal_audit_term_count": 0,
+    "content_digest": "sha256:07473b86313fc91ecb1cd6c519e21fede281ab2755d18b940efffadca4899bd2"
+  },
+  "content_digest": "sha256:800e61601fb305d10848218db2468218c4a1ff9c8eed2385a311279b50e9ee23"
+}

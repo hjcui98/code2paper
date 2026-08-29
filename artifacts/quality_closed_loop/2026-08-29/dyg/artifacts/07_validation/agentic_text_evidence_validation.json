@@ -1,0 +1,107 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:d2a1f791aa62db810b8650c7c4bac5a93ed52abae56a0e01661af2744bee88a8",
+  "projection_digest": "sha256:a0f0e2fab12679e262a008e8529c9b50947e526518a026b02f1c44054f95c3aa",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 4,
+  "supported_claims": 0,
+  "caveated_claims": 1,
+  "unsupported_claims": 3,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step.",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing; allowed_wording_boundary_exceeded",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "allowed_wording_boundary_exceeded"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing; allowed_wording_boundary_exceeded",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

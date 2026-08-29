@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0",
+  "claims": [
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a",
+        "O-STAGE-02-42e8d68d",
+        "O-STAGE-04-c50e0bef"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369"
+      ],
+      "parent_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a",
+        "O-STAGE-02-42e8d68d"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3:normalize",
+      "canonical_text": "Scores are normalized before they are compared or aggregated.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3"
+      ],
+      "math_op_kind": "normalize",
+      "covers_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8"
+      ],
+      "parent_fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8"
+      ],
+      "math_op_kind": "weighted_sum",
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units"
+    }
+  ],
+  "content_digest": "sha256:e7eb07fabdeaa26a23e79d071f6bec40e97fb0beaf2d79063fc307ff3222968f"
+}

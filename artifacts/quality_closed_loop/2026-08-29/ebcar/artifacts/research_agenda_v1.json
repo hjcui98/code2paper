@@ -1,0 +1,2448 @@
+{
+  "schema_version": "1.0",
+  "run_id": "repair-ebcar-research",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "intent_graph_digest": "sha256:32cb33d746c92e1e3adc7d4f30c6c362492c80ac203ad6d7e0f171d62f74f620",
+  "items": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "priority": "must_cover",
+      "author_text": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ea364367e4d9",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-12488d4db899",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "augment",
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-d9c93c39b278",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "scores"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "scores"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-ed708b2e32f0",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "rank",
+            "descending"
+          ],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-28d15b78c376",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "masked"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-166f0db0c840",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "infonce"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "contrastive",
+            "loss",
+            "infoNCE"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        },
+        {
+          "target_id": "target-7b0da5299b1e",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-22340e7ccc67",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "partial",
+      "supported_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "missing_information": [
+        "typed_predicate:FILTER",
+        "typed_predicate:SELECT",
+        "typed_semantic:transformations:scores"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention:67",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention:130",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention.forward:144",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention.__init__:68",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention.forward:88",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention.__init__:131",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention:18"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "priority": "must_cover",
+      "author_text": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-c6e8f7d3966e",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b893dce46655",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encode"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-850961f454f2",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "partial",
+      "supported_claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:b6468fc08c848936",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:0c0995d424e07399",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4b560ac114ae99ec",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:6daefc8982533bad",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:a48f78c0e1931462",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-rel:1b2f2e5db0f09696"
+      ],
+      "missing_information": [
+        "typed_predicate:SELECT"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:conf/config.yaml:defaults[0].retrieval_model:42",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:conf/config.yaml:retrieval:39",
+        "symbol:src/dataset/__init__.py:load_conteb_dataset:143",
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:conf/config.yaml:retrieval.top_k:40"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "priority": "must_cover",
+      "author_text": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-d8a107f2cfbf",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-87c16fd5fd33",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "supported",
+      "supported_claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:a48f78c0e1931462",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:fa6e917ea8058c33",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:4b560ac114ae99ec",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d7c63b2682fd8c2b",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d"
+      ],
+      "missing_information": [],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:src/dataset/ebcar_dataset.py:EBCARDatasetReal.__getitem__:60",
+        "symbol:conf/retrieval_model/e5.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:conf/retrieval_model/contriever.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:conf/config.yaml:add_positional_encoding:18",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "priority": "must_cover",
+      "author_text": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-bf37b467e173",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-c56c2da81fd1",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "masked"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b28bcf95a54c",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "partial",
+      "supported_claim_ids": [
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4c8511d6e8fc4240",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "missing_information": [
+        "typed_predicate:FILTER"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention:67",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention:130",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention.forward:144",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention.__init__:68",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderLayerHybridAttention.forward:88",
+        "symbol:src/model/transformer_encoder_hybrid_attention.py:TransformerEncoderWithHybridAttention.__init__:131"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "priority": "must_cover",
+      "author_text": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-5080a772ca62",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-e667cf8e0ba6",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "infonce"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "contrastive",
+            "training",
+            "infoNCE",
+            "loss"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        }
+      ],
+      "status": "supported",
+      "supported_claim_ids": [
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:7fabddc9286307b4",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a48f78c0e1931462"
+      ],
+      "missing_information": [],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:src/dataset/ebcar_dataset.py:EBCARDatasetReal.__init__:17",
+        "symbol:conf/retrieval_model/contriever.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:conf/config.yaml:training_data_size:34",
+        "symbol:src/dataset/__init__.py:load_conteb_dataset:143",
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/train_ebcar.py:train_ebcar:21"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "priority": "must_cover",
+      "author_text": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-c6f71eef43fc",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-f4fead4e0490",
+          "role": "predictor",
+          "desired_predicates": [
+            "CALL",
+            "COMPUTE"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "COMPUTE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "score"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "scoring",
+            "score"
+          ],
+          "aliases": [
+            "predictor"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b09e43c14e92",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "ranking",
+            "sort",
+            "descending"
+          ],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-473e548225b9",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "supported",
+      "supported_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "missing_information": [],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:data/real/MS_MARCO_v2/preprocess.py:preprocess_trec2022:95",
+        "symbol:data/real/MS_MARCO_v2/preprocess.py:preprocess_trec2021:12",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention:18",
+        "symbol:src/train_ebcar.py:train_ebcar:21",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-c301ecdd",
+      "priority": "should_cover",
+      "author_text": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-5f4b53f1da9c",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-67918d951a54",
+          "role": "generation",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "generation"
+          ],
+          "decisions": [],
+          "outputs": [
+            "answer"
+          ],
+          "conditions": [],
+          "search_terms": [
+            "generation"
+          ],
+          "aliases": [
+            "generation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "partial",
+      "supported_claim_ids": [
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "claim-O-COMPONENT-01-c301ecdd-fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0"
+      ],
+      "missing_information": [
+        "deploy generation infer inference invoke invokes",
+        "typed_semantic:outputs:answer",
+        "typed_semantic:transformations:generation"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:utils.py:set_seed:12",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:src/train_ebcar.py:train_ebcar:21",
+        "symbol:conf/config.yaml:validation_data_ratio:30",
+        "symbol:conf/config.yaml:learning_rate:26"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-de6049e3",
+      "priority": "should_cover",
+      "author_text": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-cda688f649bf",
+          "role": "ranking",
+          "desired_predicates": [
+            "SELECT",
+            "SORT",
+            "TOPK"
+          ],
+          "predicate_groups": [
+            [
+              "SELECT",
+              "SORT",
+              "TOPK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [],
+          "aliases": [
+            "ranking"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "partial",
+      "supported_claim_ids": [
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:8b16fe71a8eae4f3",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:5c18ba6218e543c0",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "claim-O-COMPONENT-01-de6049e3-fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+      ],
+      "missing_information": [
+        "typed_predicate:SELECT"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/build_vector_database.py:build_vector_database_from_corpus:22",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:conf/retrieval_model/contriever.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:conf/config.yaml:retrieval.top_k:40",
+        "symbol:conf/config.yaml:defaults[0].retrieval_model:42",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55",
+        "symbol:src/dataset/__init__.py:load_conteb_dataset:143",
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:conf/config.yaml:retrieval:39"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-2e14379d",
+      "priority": "should_cover",
+      "author_text": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "typed_behavior_targets": [],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "passage embeddings (pi): fixed dense representations of candidate passages obtained from contriever."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank:246",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward:97",
+        "symbol:src/evaluate.py:evaluate_EBCAR:20",
+        "symbol:src/build_vector_database.py:build_vector_database_from_corpus:22",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.__init__:19",
+        "symbol:conf/retrieval_model/e5.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:conf/retrieval_model/contriever.yaml:encode_kwargs.normalize_embeddings:11",
+        "symbol:src/dataset/__init__.py:load_conteb_dataset:143",
+        "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+        "symbol:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.get_passage_positional_encoding:55"
+      ],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "priority": "should_cover",
+      "author_text": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-571a422b2a0e",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-e28d642a7a25",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "learned"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attribute descriptor feature train training trains",
+        "document id embedding table: learned relative document identity embeddings assigned dynamically to unique documents"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-b5b6af99",
+      "priority": "should_cover",
+      "author_text": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-0d31c0bab169",
+          "role": "feature",
+          "desired_predicates": [
+            "TRANSFORM"
+          ],
+          "predicate_groups": [
+            [
+              "TRANSFORM"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "encoding",
+            "encodes"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "encode encodes encoding",
+        "passage position encoding (sinusoidal): encodes the position of a passage within its original document,"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-4c3594d2",
+      "priority": "should_cover",
+      "author_text": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-e7e67605b8cf",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "masked"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-b8e8027b6d0c",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attend attention mask masking masks self-attention",
+        "hybrid attention mechanism: combines shared full attention (global cross passage) and dedicated masked attention"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-34021b88",
+      "priority": "should_cover",
+      "author_text": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-7c410a90ce46",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention",
+            "attend"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-5d2a619b6f7a",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "head"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attend attention classifier head regressor self-attention",
+        "shared full attention module: standard multi head attention allowing query and all passages to"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-d157b2cc",
+      "priority": "should_cover",
+      "author_text": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-139c62ef9a52",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "masked"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-537e7728def0",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention",
+            "attend"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-19c35496e0f9",
+          "role": "task_head",
+          "desired_predicates": [
+            "COMPUTE",
+            "PROJECT",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "COMPUTE",
+              "PROJECT",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "head"
+          ],
+          "aliases": [
+            "task_head"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attend attention classifier head mask masking masks regressor self-attention",
+        "dedicated masked attention module: masked multi head attention that restricts a passage to attend"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-4aac53dc",
+      "priority": "should_cover",
+      "author_text": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "typed_behavior_targets": [],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "transformer encoder stack: layers that process the combined sequence to produce contextualized passage embeddings."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "priority": "should_cover",
+      "author_text": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-33eb8841bbb0",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-309f3c6c5408",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "infonce"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "infoNCE",
+            "contrastive",
+            "loss",
+            "objective"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attribute descriptor feature train training trains",
+        "infonce contrastive loss: objective that encourages the updated positive passage embedding to align with"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-10-dac6250f",
+      "priority": "should_cover",
+      "author_text": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-5d034f2eee9e",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-25fdf28be45a",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "contrastive"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "training",
+            "contrastive",
+            "objective"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        },
+        {
+          "target_id": "target-4c89e926ecf2",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attribute deploy descriptor feature infer inference train training trains",
+        "fixed query anchor: the original query embedding remains unchanged during training/inference to serve as"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-11-27f310b2",
+      "priority": "should_cover",
+      "author_text": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ef8213ef3c01",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "deploy infer inference",
+        "conteb benchmark: evaluation suite that tests rerankers on challenging tasks requiring cross passage inference,"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-COMPONENT-12-370bd5b2",
+      "priority": "should_cover",
+      "author_text": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-642a04a86ca2",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "training"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "train training trains",
+        "mldr, squad, narrativeqa (training sets): three conteb datasets used for training ebcar, covering entity"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "priority": "preference",
+      "author_text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-81fb93a418e6",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "deploy infer inference",
+        "motivation: efficiency and cross passage inference challenges in existing rerankers."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-54911271",
+      "priority": "preference",
+      "author_text": "Embedding‑based reranking formulation and overall framework.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-895e20b74de9",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "Embedding‑based reranking formulation and overall framework.",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attribute descriptor feature",
+        "embedding based reranking formulation and overall framework."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "priority": "preference",
+      "author_text": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-85484bb8b8d8",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "masked"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-cae14d633efb",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attend attention mask masking masks self-attention",
+        "architecture details: enriching embeddings with document id and position, the transformer encoder with hybrid"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "priority": "preference",
+      "author_text": "Training objective: InfoNCE loss with fixed query anchor.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-ebab977b2219",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "infonce"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "training",
+            "objective",
+            "infoNCE",
+            "loss"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "Training objective: InfoNCE loss with fixed query anchor.",
+          "risk_level": "high"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "train training trains",
+        "training objective: infonce loss with fixed query anchor."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "priority": "preference",
+      "author_text": "Inference procedure.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-6719102f5449",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "Inference procedure.",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "deploy infer inference",
+        "inference procedure."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "priority": "verify_only",
+      "author_text": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-c1aa9e25e946",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-f240dc275baa",
+          "role": "generation",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "generation"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "generation"
+          ],
+          "aliases": [
+            "generation"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "deploy generation infer inference invoke invokes",
+        "avoid full text processing and autoregressive generation to reduce inference latency."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "priority": "verify_only",
+      "author_text": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-7d8fea722a15",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "deploy infer inference",
+        "inject document level structural knowledge into passage embeddings to support cross passage inference."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "priority": "verify_only",
+      "author_text": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-f29322605dfb",
+          "role": "attention",
+          "desired_predicates": [
+            "ATTEND",
+            "COMPUTE",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "ATTEND",
+              "COMPUTE",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [
+            "attention"
+          ],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "attention"
+          ],
+          "aliases": [
+            "attention"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attend attention self-attention",
+        "design two complementary attention patterns that co exist in each layer: global and document"
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "priority": "verify_only",
+      "author_text": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "typed_behavior_targets": [],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "use relative, dynamic document id assignments rather than global corpus level ids."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "priority": "verify_only",
+      "author_text": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-9b6ba4dca2b8",
+          "role": "feature",
+          "desired_predicates": [
+            "CONSTRUCT",
+            "READ"
+          ],
+          "predicate_groups": [
+            [
+              "CONSTRUCT",
+              "READ"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "embedding"
+          ],
+          "aliases": [
+            "feature"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-d0b881d04cf9",
+          "role": "filter",
+          "desired_predicates": [
+            "FILTER",
+            "MASK"
+          ],
+          "predicate_groups": [
+            [
+              "FILTER",
+              "MASK"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [],
+          "search_terms": [
+            "keep"
+          ],
+          "aliases": [
+            "filter"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        },
+        {
+          "target_id": "target-18b224e432d1",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "training"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        },
+        {
+          "target_id": "target-ec99c0352d36",
+          "role": "inference",
+          "desired_predicates": [
+            "CALL",
+            "RETURN"
+          ],
+          "predicate_groups": [
+            [
+              "CALL",
+              "RETURN"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "inference"
+          ],
+          "search_terms": [
+            "inference"
+          ],
+          "aliases": [
+            "inference"
+          ],
+          "organization_preference": "",
+          "risk_level": "medium"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "attribute deploy descriptor feature infer inference mask masking masks train",
+        "keep the query embedding fixed during training and inference while updating passage embeddings."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "priority": "verify_only",
+      "author_text": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "typed_behavior_targets": [
+        {
+          "target_id": "target-85bad4b3019f",
+          "role": "training",
+          "desired_predicates": [
+            "AGGREGATE",
+            "COMPUTE",
+            "REDUCE"
+          ],
+          "predicate_groups": [
+            [
+              "AGGREGATE",
+              "COMPUTE",
+              "REDUCE"
+            ]
+          ],
+          "required_relations": [],
+          "inputs": [],
+          "transformations": [],
+          "decisions": [],
+          "outputs": [],
+          "conditions": [
+            "training"
+          ],
+          "search_terms": [
+            "train"
+          ],
+          "aliases": [
+            "training"
+          ],
+          "organization_preference": "",
+          "risk_level": "high"
+        }
+      ],
+      "status": "pending",
+      "supported_claim_ids": [],
+      "missing_information": [
+        "train training trains",
+        "train on conteb datasets that explicitly require cross passage reasoning."
+      ],
+      "attempted_actions": [],
+      "candidate_symbol_ids": [],
+      "candidate_behavior_node_ids": [],
+      "gap_requirements": [],
+      "no_progress_counter": 0,
+      "last_information_gain": ""
+    }
+  ],
+  "content_digest": "sha256:51ef6da461decff8098d196d82426480ccf12905284dced04c99748059dfe8d9"
+}

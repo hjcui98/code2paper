@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "MA-S1": "## Motivation: efficiency and cross‑passage inference challenges in existing rerankers.\n\nThe efficiency and cross-passage inference characteristics of existing rerankers motivate the design choices described in subsequent sections. The specific computational and representational challenges that drive these choices are detailed in the method and evaluation sections.\n\nAddressing these challenges requires balancing inference cost against the quality of cross-passage interactions, a trade-off that shapes the architectural and training decisions presented in this work.",
+    "MA-S2": "## Embedding‑based reranking formulation and overall framework.\n\nNo repository-supported content was supplied for this paragraph. The authoring packet contains no ordered targets, formula packages, material conditions, or configuration state, and the dossier summary reports zero operation atoms and zero data-flow or control-flow length. An overview of the embedding-based reranking formulation and overall framework requires at least one ordered target identifying the specific components, transformations, or objectives to be described."
+  },
+  "patches": [],
+  "duplicate_signatures": [],
+  "blocked_reason": "",
+  "response_ref": "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7",
+  "response_refs": [
+    "sha256:81dfbb3a8508b9fd88425ba9495eae38cb26eef4839dd6d99ce46f6cec10adb7"
+  ],
+  "call_failures": [],
+  "content_digest": "sha256:15cd5f8ed203bddbf9715259ba89c22558b442f4a17236a8b4f316398b393a3b"
+}

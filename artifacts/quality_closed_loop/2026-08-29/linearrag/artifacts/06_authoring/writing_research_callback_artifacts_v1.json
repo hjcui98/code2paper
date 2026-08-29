@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "REQ:MA-S2:1",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "What repository-supported propositions, concepts, and formula packages constitute the LinearRAG tri-graph concept and two-stage retrieval philosophy as described in the source material?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "linearRAG_overview",
+      "missing_parts": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-03-157f229e"
+      ],
+      "target_concept_keys": [
+        "linearRAG_overview"
+      ],
+      "target_brief_ids": [
+        "MA-S2:brief:overview"
+      ],
+      "target_clause_ids": [
+        "MA-S2:clause:tri_graph_concept",
+        "MA-S2:clause:two_stage_retrieval"
+      ],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation",
+        "formula",
+        "condition"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:889016f0dc2900d0a671b2fa492d4db3ba9b14db4821f62aafadb75ba857693e"
+    },
+    {
+      "request_id": "req-MA-S3-01",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "What specific structural elements and update conditions constitute the offline tri-graph at STAGE-01, and how does the passage-hash gate interact with edge derivation?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "fact-O-STAGE-01-9c8dfe22-node",
+        "f21427b316d80682",
+        "fd688d75587fdee",
+        "slot"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The two closed slots in paragraph MA-S3:1 carry no dossier atoms, formula packages, or material conditions in the supplied authoring packet. Without the underlying factual content for these slots, the Method writer cannot render substantive step-sequence prose without fabricating structural claims about the tri-graph. The required qualifier binding `len(new_passage_hash_ids) > 0` confirms a gating predicate exists, but the specific graph topology, edge-derivation rule, and update invariants that the slots encode are not recoverable from the packet alone.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "slot:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-COMPONENT-01-4e554ef0",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "slot:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:4971dc8abbdefa6bc1be0265e5a2134f0bac1887ac971e50706ebb67c436abaa"
+    },
+    {
+      "request_id": "MA-S5:rq-1",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "The semantic content of slots slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f, slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58, slot:fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3, and slot:fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0 is not available in the supplied contract. What repository-supported propositions do these slots carry?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "MA-S5",
+        "semantic",
+        "derivation",
+        "content",
+        "eight",
+        "slot",
+        "targets",
+        "formula",
+        "section"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The second paragraph of this section requires rendering of eight slot facts and one formula package that constitute the core mechanism of passage retrieval via global importance aggregation. Without the semantic content of these targets, the paragraph cannot be authored without fabrication.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "retrieval_aggregation",
+      "missing_parts": [
+        "semantic content of all eight slot targets",
+        "formula content for formula:section:MA-S5:derivation"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-METHOD-MAINLINE-01-79899e6c",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-05-29ba03a1"
+      ],
+      "target_concept_keys": [
+        "retrieval_aggregation"
+      ],
+      "target_brief_ids": [
+        "MA-S5:brief-1"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation",
+        "formula"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:fc4cb4f12ba6898e73a8ef10487d3b00913a4b25a839cc4b13fbc0fad626d8a5"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:5619ecb9c24e1288becff349aec627bf398b6148fdc6f0b70dc5718f45044905"
+}

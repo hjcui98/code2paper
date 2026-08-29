@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "claims": [
+    {
+      "configuration_id": "config:sha256:f52b35d64b191",
+      "key": "self.cfg.use_dedicated_attention",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:83ef85703286c813"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:7ab6beca2c0c65a285bb067e317c6f7ce06b64864d6b46238f06978d6723d7b4",
+      "content_digest": "sha256:c219f5897ffcfd85582ea00acad34529d89c1cd9cdb7d5eb5fb61650d93e00db"
+    },
+    {
+      "configuration_id": "config:sha256:c46381fce5c29",
+      "key": "self.cfg.add_positional_encoding",
+      "value": null,
+      "state": "unresolved",
+      "definition_span_ids": [],
+      "entrypoint_span_ids": [],
+      "override_chain": [
+        "rel:3ab40312ca7ee86a"
+      ],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53"
+      ],
+      "active": true,
+      "unresolved_reason": "config_access_unresolved:no_definition_or_entrypoint_value_evidence",
+      "canonical_identity": "sha256:bd0011d0457eb6565f2cca2b366cdc2195a86caa8104541f64967311cbddcf87",
+      "content_digest": "sha256:70036665dd941a36c24bf03972e74f72c0c7bbad3027c42c12781c8b60c91d9d"
+    }
+  ],
+  "content_digest": "sha256:938b28d6f4b21088ba2f77cc3126e0712f5185f91e6a50ee68742db5f615727b"
+}

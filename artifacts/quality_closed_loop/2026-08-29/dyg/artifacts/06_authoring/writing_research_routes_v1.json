@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:6f9d607efb96388f4bd2",
+      "request_id": "MA-S3:rq-001",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "scope": [],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S3 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:653af695c4d35be468a97392276f1cdc20cb9cd6d5e5276a0be35512a2ff20a0"
+    }
+  ],
+  "rejections": []
+}

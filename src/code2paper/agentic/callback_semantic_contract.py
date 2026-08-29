@@ -281,7 +281,12 @@ def evaluate_authoring_structural_exit(
         if not isinstance(section, dict):
             continue
         for package in section.get("packages") or ():
-            if isinstance(package, dict) and str(package.get("package_id") or "").strip():
+            if (
+                isinstance(package, dict)
+                and str(package.get("package_id") or "").strip()
+                and str(package.get("review_status") or "").strip()
+                in {"", "accepted"}
+            ):
                 accepted_packages.add(str(package["package_id"]).strip())
     consumed_packages = {
         package_id

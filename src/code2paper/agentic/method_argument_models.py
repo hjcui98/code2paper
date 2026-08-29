@@ -784,6 +784,21 @@ class ParagraphWitnessTargetV1(_MethodModel):
     def _dedupe_values(cls, value: tuple[str, ...]) -> tuple[str, ...]:
         return _clean_tuple(value)
 
+    @model_validator(mode="after")
+    def _authorized_anchor_required(self) -> "ParagraphWitnessTargetV1":
+        # A closed target without any semantic/exact anchor would allow a
+        # declared ID to become a witness by assertion alone.  Formula targets
+        # may use their package route as the exact anchor, but still need an
+        # obligation/package anchor id.
+        if not (
+            self.semantic_atom.strip()
+            or self.required_conditions
+            or self.allowed_anchor_ids
+            or self.allowed_exact_excerpts
+        ):
+            raise ValueError("paragraph witness target requires a non-empty authorized anchor")
+        return self
+
 
 class ParagraphWitnessContractV1(_MethodModel):
     """Closed paragraph-local contract shared by Writer and validators."""

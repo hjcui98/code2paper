@@ -154,9 +154,14 @@ _ARTIFACT_SURFACE: dict[str, str] = {
     "method_argument_facets_v1": "facet_policy",
     "facet_evidence_alignments_v1": "facet_policy",
     "candidate_facet_policies_v1": "facet_policy",
+    "research_mechanism_dossiers_v1": "coverage",
+    "derivation_records_v1": "formula",
     "formalization_section_results_v1": "formula",
     "method_section_plan_v2": "placement",
     "publication_candidate_method": "surface",
+    "publication_candidate_annotated": "surface",
+    "publication_candidate_annotations_v1": "surface",
+    "candidate_authority_validation_v1": "surface",
     "repository_verified_method": "surface",
     "method_content_trace_v1": "surface",
     "publication_rewrite_results_v1": "style_rewrite",
@@ -1071,6 +1076,44 @@ def _semantic_delta_for_artifact(artifact_name: str, path_value: str) -> dict[st
                 for item in sections if isinstance(item, Mapping)
             ),
         }
+    if artifact_name == "research_mechanism_dossiers_v1" and isinstance(payload, Mapping):
+        dossiers = payload.get("items") or payload.get("dossiers") or ()
+        return {
+            "mechanism_dossiers": len(dossiers),
+            "connected_operation_nodes": sum(
+                len(item.get("ordered_operation_node_ids") or ())
+                for item in dossiers
+                if isinstance(item, Mapping)
+            ),
+            "unresolved_relations": sum(
+                len(item.get("unresolved_relations") or ())
+                for item in dossiers
+                if isinstance(item, Mapping)
+            ),
+        }
+    if artifact_name == "derivation_records_v1" and isinstance(payload, Mapping):
+        records = payload.get("items") or payload.get("records") or ()
+        return {
+            "derivation_records": len(records),
+            "candidate_allowed_records": sum(
+                bool(item.get("candidate_allowed"))
+                for item in records
+                if isinstance(item, Mapping)
+            ),
+            "verified_eligible_records": sum(
+                bool(item.get("verified_eligible"))
+                for item in records
+                if isinstance(item, Mapping)
+            ),
+        }
+    if artifact_name == "candidate_authority_validation_v1" and isinstance(payload, Mapping):
+        validation = payload.get("validation") or payload
+        if not isinstance(validation, Mapping):
+            return {}
+        return {
+            "candidate_authority_violations": len(validation.get("violations") or ()),
+            "candidate_authority_warnings": len(validation.get("warnings") or ()),
+        }
     if artifact_name == "method_content_trace_v1" and isinstance(payload, Mapping):
         summary = payload.get("summary") or {}
         return {
@@ -1176,11 +1219,16 @@ def persist_product_authoring_state_from_writer(
         ("brief_compile", "brief_compiler", "method_argument_briefs_v1"),
         ("facet_decompose", "facet_decomposer", "method_argument_facets_v1"),
         ("facet_evidence_align", "facet_evidence_aligner", "facet_evidence_alignments_v1"),
+        ("mechanism_planner", "research_compiler", "research_mechanism_dossiers_v1"),
+        ("section_formalizer", "research_compiler", "derivation_records_v1"),
         ("mechanism_planner", "planner", "method_section_plan_v2"),
         ("architect", "architect", "method_section_plan_v2"),
         ("section_formalizer", "formalizer", "formalization_section_results_v1"),
         ("section_writer", "writer", "publication_candidate_method"),
         ("section_writer", "writer", "method_content_trace_v1"),
+        ("reverse_validate", "candidate_authority", "candidate_authority_validation_v1"),
+        ("section_writer", "writer", "publication_candidate_annotations_v1"),
+        ("section_writer", "writer", "publication_candidate_annotated"),
         ("reverse_validate", "validator", "text_evidence_validation"),
         ("editor", "editor", "publication_editor_result_v1"),
         ("rewrite_method_language", "rewrite", "publication_rewrite_results_v1"),

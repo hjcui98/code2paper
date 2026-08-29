@@ -1,0 +1,395 @@
+{
+  "schema_version": "1.0",
+  "execution_digest": "sha256:dcc563470d3ac4810fa9486645f3c1f956601a5d6298c94988c7b34690f86022",
+  "refused_reason": "",
+  "artifacts": [
+    {
+      "artifact_name": "intent_obligation_graph_v2",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/intent_obligation_graph_v2.json",
+      "digest": "sha256:5f8ba0faadbe0c79cd4065d537bc253ffb52648cb449a4bf29159b01bac19faa",
+      "schema": "intent_obligation_graph_v2",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "research_agenda_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/research_agenda_v1.json",
+      "digest": "sha256:e5a8e2d5ee561ed40efd9a626ac9d9e21d387b27f0491aa84146877d8a2bcaea",
+      "schema": "research_agenda_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_evidence",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_evidence.json",
+      "digest": "sha256:ae7d44428e8e64a6673de75bf4e26b5285017286b368e82ea1402c108559b0bb",
+      "schema": "method_evidence",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "claim_evidence_map",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/claim_evidence_map.json",
+      "digest": "sha256:d1e5ce66537310884190f97d64a7cefaa44308ca8ac18b10e5b257711386da6a",
+      "schema": "claim_evidence_map",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "obligation_coverage_v2",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/obligation_coverage_v2.json",
+      "digest": "sha256:69255ce4d7e3fe4f591c93cb83f87277f93d64a63b5e769f77f5fec8513417f1",
+      "schema": "obligation_coverage_v2",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "reference_method_agenda_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/reference_method_agenda_v1.json",
+      "digest": "sha256:ff6a442ea2c9bbcf2b0b93850014987ba8ec4ce6ccfae7c6416cd7bb3c6ddcf6",
+      "schema": "reference_method_agenda_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_completeness_matrix_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_completeness_matrix_v1.json",
+      "digest": "sha256:9f6a64bf9e7ca0a30e6b3666b09fda0e4c63deb0f44b1528f6b838073de59589",
+      "schema": "method_completeness_matrix_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "equation_claims_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/equation_claims_v1.json",
+      "digest": "sha256:c94370449dabdc4e6968d049795b52b8b7ca2d87a91e0ccdb9a22a45a7d1b359",
+      "schema": "equation_claims_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "configuration_claims_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/configuration_claims_v1.json",
+      "digest": "sha256:2acae47cb6fbc1fdfc0665a8e8d2487eeb2d8dda4623507a4ef11c804f7f7153",
+      "schema": "configuration_claims_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "evidence_packets_v3",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/evidence_packets_v3.json",
+      "digest": "sha256:05e95cac8f1dff5e6cd063f45fc4da2d99e68753ecba1ded92c39827d92c1dbe",
+      "schema": "evidence_packets_v3",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "code_facts_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/code_facts_v1.json",
+      "digest": "sha256:cdfdc08a9943707d82c0089152f17b9d6fdbce6704aa2da5863527bbfdbfd413",
+      "schema": "code_facts_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "atomic_claims_v3",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/atomic_claims_v3.json",
+      "digest": "sha256:60ccf5a28dfe83984024c5cfa9dbafa341d31a9fb62af455d9579e34c0c03f15",
+      "schema": "atomic_claims_v3",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "behavior_graph_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/behavior_graph_v1.json",
+      "digest": "sha256:e74d6f798038f5a7df952355130a0f4e0c708876f7b43006fedd556e3f124f33",
+      "schema": "behavior_graph_v1",
+      "authority_class": "research",
+      "decision": "copied",
+      "reason": ""
+    },
+    {
+      "artifact_name": "authoring_projection_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/authoring_projection_v1.json",
+      "digest": "",
+      "schema": "authoring_projection_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_section_plan_v2",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_section_plan_v2.json",
+      "digest": "",
+      "schema": "method_section_plan_v2",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_briefs_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_briefs_v1.json",
+      "digest": "",
+      "schema": "method_argument_briefs_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_concept_cards_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_concept_cards_v1.json",
+      "digest": "",
+      "schema": "method_concept_cards_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_propositions_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_propositions_v1.json",
+      "digest": "",
+      "schema": "method_propositions_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_proposition_bindings_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_proposition_bindings_v1.json",
+      "digest": "",
+      "schema": "method_proposition_bindings_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_proposition_clusters_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_proposition_clusters_v1.json",
+      "digest": "",
+      "schema": "method_proposition_clusters_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "writing_research_callback_artifacts_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/writing_research_callback_artifacts_v1.json",
+      "digest": "",
+      "schema": "writing_research_callback_artifacts_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_facets_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_facets_v1.json",
+      "digest": "",
+      "schema": "method_argument_facets_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "facet_evidence_alignments_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/facet_evidence_alignments_v1.json",
+      "digest": "",
+      "schema": "facet_evidence_alignments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "candidate_facet_policies_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/candidate_facet_policies_v1.json",
+      "digest": "",
+      "schema": "candidate_facet_policies_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_facet_alignment_trace_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_facet_alignment_trace_v1.json",
+      "digest": "",
+      "schema": "method_argument_facet_alignment_trace_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "publication_paragraph_transaction_assessments_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/publication_paragraph_transaction_assessments_v1.json",
+      "digest": "",
+      "schema": "publication_paragraph_transaction_assessments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "authoring_structural_exit_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/authoring_structural_exit_v1.json",
+      "digest": "",
+      "schema": "authoring_structural_exit_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "not_copied_by_default"
+    },
+    {
+      "artifact_name": "method_argument_briefs_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_briefs_v1.json",
+      "digest": "sha256:ea1eee9cf1d4be6dc3dd56fdd610debcf0f880ad6946ba16fbaf033ba98ff7f0",
+      "schema": "method_argument_briefs_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_argument_facets_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_facets_v1.json",
+      "digest": "sha256:b816ae3472f1f6111b606ef6144a28972c9273086e9f53facd705e9b964be5bc",
+      "schema": "method_argument_facets_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "facet_evidence_alignments_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/facet_evidence_alignments_v1.json",
+      "digest": "sha256:26b0372b60bbea24311012809e90c28f3e61b25d570bc48f7016c9e636a59eb8",
+      "schema": "facet_evidence_alignments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "candidate_facet_policies_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/candidate_facet_policies_v1.json",
+      "digest": "sha256:dc8b1131c7a06d76bef162a7b95ad5c6004d8e60923aeb415abe42b45a832a70",
+      "schema": "candidate_facet_policies_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_argument_facet_alignment_trace_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_argument_facet_alignment_trace_v1.json",
+      "digest": "sha256:8a80534afcb16f700837a783aff2813dce5eebeaa572a4e2c29901e8af7824cc",
+      "schema": "method_argument_facet_alignment_trace_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_section_plan_v2",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_section_plan_v2.json",
+      "digest": "sha256:5192ea230ac6460c247f581010970c63e3efc7831b8ee4ec6dd999bacf63a22b",
+      "schema": "method_section_plan_v2",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "authoring_projection_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/authoring_projection_v1.json",
+      "digest": "sha256:f09009880db5365977416ab920aa305d2648a5e032fabc1c1b7351ac43b81942",
+      "schema": "authoring_projection_v1",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_evidence",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_evidence.json",
+      "digest": "sha256:b88def7a05de6aa9eba60f5c0512d6552938d01c2433ae73d9f47f9551805e16",
+      "schema": "method_evidence",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "claim_evidence_map",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/claim_evidence_map.json",
+      "digest": "sha256:f87d2dc3d5ea6a963c9beca06ddb01ae7bdfd60e61de7aef59051052f9f45a08",
+      "schema": "claim_evidence_map",
+      "authority_class": "derived-authoring",
+      "decision": "rebuilt",
+      "reason": ""
+    },
+    {
+      "artifact_name": "method_concept_cards_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_concept_cards_v1.json",
+      "digest": "",
+      "schema": "method_concept_cards_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_propositions_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_propositions_v1.json",
+      "digest": "",
+      "schema": "method_propositions_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_proposition_bindings_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_proposition_bindings_v1.json",
+      "digest": "",
+      "schema": "method_proposition_bindings_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "method_proposition_clusters_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/method_proposition_clusters_v1.json",
+      "digest": "",
+      "schema": "method_proposition_clusters_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "writing_research_callback_artifacts_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/writing_research_callback_artifacts_v1.json",
+      "digest": "",
+      "schema": "writing_research_callback_artifacts_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "publication_paragraph_transaction_assessments_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/publication_paragraph_transaction_assessments_v1.json",
+      "digest": "",
+      "schema": "publication_paragraph_transaction_assessments_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    },
+    {
+      "artifact_name": "authoring_structural_exit_v1",
+      "path": "/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun/artifacts/authoring_structural_exit_v1.json",
+      "digest": "",
+      "schema": "authoring_structural_exit_v1",
+      "authority_class": "derived-authoring",
+      "decision": "refused",
+      "reason": "rebuild_did_not_emit"
+    }
+  ],
+  "content_digest": "sha256:e743fbbcb8343941afe94391c48cfaf979136d680677a2b24e6bfc4a8fcc4b2f"
+}

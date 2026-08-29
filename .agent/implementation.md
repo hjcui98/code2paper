@@ -1,4 +1,86 @@
-# OpenCode implementation and evidence
+# Implementation and evidence
+
+## Active attachment-aligned P0 closure (2026-08-28) — COMPLETE (static-verified; no live claim)
+
+The attached three-project root-cause audit was treated as an implementation
+diagnosis, not as authority to override the repository design documents or to
+insert project-specific rules.  Per the user request, this task's development,
+testing, evidence recording, and acceptance are performed in this same dirty
+worktree while preserving the pre-existing baseline and the dirty
+`paperbanana_single_shot` entry.  No reset, checkout, clean, commit, or merge
+was performed.
+
+### Implemented contract closure
+
+- **Research / ownership / acquisition:** added generic `ImplementationScopeV1`
+  role inference over symbol/index and typed behavior-graph relations;
+  parent-to-child candidate propagation now requires semantic overlap,
+  ownership, and graph connectivity.  Research agenda and acquisition-ledger
+  digests are refreshed after mutable candidate seeding, and candidate records
+  retain the discovered → read → behavior graph → evidence packet → facts →
+  claims closure with explicit rejection/supersession instead of silently
+  dropping EBCAR-like candidates.
+- **Evidence / field binding:** completed field-level
+  `PublicationFieldCandidateV1`/`TypedFieldDeferredV1` compilation and
+  rebinding from the closed evidence ledger.  Aggregate facet excerpts are
+  selected per semantic field, with ownership, authority lane, polarity,
+  conditions, exact excerpts, and bound ids preserved.  Required candidates
+  are consumable only when they have an explicit lane, non-empty semantic
+  evidence, and safe ownership; unresolved intent remains deferred/reviewable.
+- **Architect / paragraph contracts:** passed scope, facets, alignments, unit
+  frames, and field candidates through planning; required publication slots
+  are separated from support slots and require fact/claim binding.  Formula
+  obligations are assigned to their owning paragraph once, and paragraph-local
+  `ParagraphWitnessContractV1` targets now carry semantic atoms, polarity,
+  conditions, and exact anchor evidence.
+- **Writer / validation:** exposed field semantic atoms, conditions, and
+  allowed anchors in the Writer packet and paragraph plan.  A shared
+  `required_anchors_from_plan_row` projection is used by Writer normalization,
+  persisted content traces, and the transaction assessor, so opaque ids cannot
+  satisfy an unrelated paragraph.  Semantic anchor compatibility is checked
+  in addition to exact witness uniqueness; the Candidate bytes remain
+  available when a transaction is invalid.
+- **Formula / callback continuation:** canonical formula obligation ids are
+  matched exactly before any legacy facet fallback; a package without a unique
+  consumer is rejected for real paragraph plans, while old no-paragraph
+  replay fixtures remain compatible.  Formula-only obligations no longer
+  disappear, and callback continuation forwards the implementation scope and
+  behavior graph into rebuilt planning.
+- **Representation / compatibility repairs:** fixed the research-graph
+  continuation indentation failure, kept deterministic formula packages
+  single-consumer, and refreshed mutable research agenda digests.  Existing
+  callback, structural-exit, evidence, qualifier, authorship, and final
+  integrity gates were not weakened, and no project-specific paths, symbols,
+  claims, or known answers were added.
+
+### Verification for this task
+
+```text
+python -m pytest -q
+2951 passed, 3 skipped, 7 warnings, 12 subtests passed in 83.87s (0:01:23)
+
+python -m compileall -q src tests
+exit 0
+
+git diff --check
+exit 0
+```
+
+Final post-correction verification also passed the project-neutral P0 closure
+tests (`6 passed in 0.84s`) and the focused closure suite including them
+(`162 passed in 5.93s`), followed by the full suite above, `python -m
+compileall -q src tests` (`exit 0`), and `git diff --check` (`exit 0`).  The
+transaction anchor correction removes the body-wide exact-text shortcut:
+unrelated witness text cannot satisfy a required anchor merely because that
+anchor occurs elsewhere in the paragraph body; exact witness equality or
+bounded semantic overlap is still accepted.  Unknown ownership is now
+explicitly deferred rather than represented as an optional field candidate.
+
+The focused closure suite also passed (`156 passed in 5.76s`).  No live model
+or real-API run was performed for this patch: the attached audit requires
+source/evidence/transaction closure first, and no fresh live artifact was
+authorized as proof of publication readiness.  The worktree remains dirty by
+design; unrelated and pre-existing changes are preserved.
 
 带日期汇报（六轮产物 / 分析 / 讨论 / 修复，不是执行权威）：
 `docs/method_authoring_six_round_report_2026-08-27.md`。
@@ -7781,3 +7863,197 @@ git diff --check
 ```
 
 结论保持 fail-closed：本轮完成代码级闭环修复、真实 8006 回放、原文 oracle 对照和可追溯日志，但产物仍是 Candidate 诊断态，`publication_ready=false`，不得发布或默认切换。
+
+## 2026-08-29 Research-Derived Method Authoring 直接执行记录
+
+本轮按 `docs/code2paper_research_derived_authoring_optimization_execution_2026-08-28.md`
+直接在当前工作树完成 Slice 0–4 的代码落地和静态验证，未使用协作代理/协作技能，未修改项目专用答案或放宽既有 Verified gate。
+
+### 本轮落地
+
+- 新增 `research_derived_authoring.py`：connected behavior dossier、typed derivation provenance、bounded owner callback、V2 ordered authoring packet、Candidate authority validation，以及 dossier/derivation/annotation 持久化。
+- 扩展 Formalizer 公式生命周期：多义务单消费者 package、显式 route/consumer/digest、required zero-call 断言、accepted→consumed 闭环和 typed Writer disposition。
+- 接通 V2 Writer surface 与两阶段 paragraph transaction：Writer 只生成 clean prose，Binder 只从冻结正文复制 exact substring；Formula/claim/slot/edge/condition/polarity 继续由共享 assessor fail-closed 检查。
+- 增加 Candidate/Verified 独立完成状态、运行汇总/readiness 消费、artifact freshness/source digest、content trace/replay diagnostics、只读 evaluator 和新输出路径。
+- 增加覆盖 connected dossier 未决关系、author-intent/code 分层、V2 sanitizer、多义务公式 package、artifact digest、Candidate cleanliness 与 bounded callback 的回归测试。
+
+### 最终静态验证
+
+```text
+python -m pytest -q tests/test_agentic_formalization_guards.py tests/test_agentic_formula_obligation_truths.py tests/test_agentic_method_authoring_p0_closure.py tests/test_agentic_intent_authoring_live_repair.py
+# 94 passed, exit 0, 0.93s
+
+python -m pytest -q tests/test_agentic_research_derived_authoring.py tests/test_llm_section_writer.py tests/test_agentic_publication_method_writer.py tests/test_agentic_method_content_trace.py tests/test_agentic_callback_semantic_contract.py tests/test_agentic_writer_paper_language_quality.py
+# 248 passed, exit 0, 6 warnings, 9.84s
+
+python -m compileall -q src tests
+# exit 0
+
+python -m pytest -q
+# 2960 passed, 3 skipped, 12 subtests passed, 7 warnings, exit 0, 87.85s
+
+git diff --check
+# exit 0
+```
+
+当前代码状态 digest（与回放脚本相同的 `src/**/*.py` manifest 算法）：
+`sha256:0d274d850db3b253e2190d2748feb2503284384574fa9c292d84c23bb68e6c3f`。
+
+### Slice 5 运行时阻塞
+
+静态门通过后按手册准备授权 runtime `http://127.0.0.1:8003/v1`、
+`qwen36-27b-nvfp4`、`tests/live/profiles/qwen36_vllm_budgeted.example.env`，并核对了三个冻结输入：
+`.tmp/c2p-q5-batch3/run-ebcar-research`、`.tmp/c2p-stage1-canary/run-dyg`、
+`.tmp/c2p-stage1-canary/run-linearrag`，以及对应真实代码仓库路径。预检命令结果：
+
+```text
+curl ... http://127.0.0.1:8003/health  -> connection failed, health_http=000
+curl ... http://127.0.0.1:8003/v1/models -> connection failed, models_http=000
+metrics -> connection failed
+nvidia-smi -> driver could not communicate
+```
+
+未启动替代模型服务、未改用历史 `8006/qwen38`、未用相同输入盲目重跑；因此本轮没有伪造
+EBCAR → DyG-Mamba → LinearRAG 的真实回放产物。Slice 5 需要指定 runtime 与 NVIDIA 驱动恢复后，
+使用三个 fresh output root 串行执行并逐项目运行 `scripts/evaluate_research_derived_authoring.py`。
+当前结论仅为代码级 Slice 0–4 和 full static milestone 完成；不宣称 Candidate complete、Verified
+complete、`publication_ready`、D5、rollout、default cutover 或 release freeze。
+
+### 2026-08-29 runtime 复核更正
+
+按用户要求从沙箱外重新检查授权端点，确认此前 `nvidia-smi` 的失败是沙箱可见性问题；沙箱外
+NVIDIA 驱动正常，8 张 RTX 5090 可见。真正的服务状态如下：
+
+```text
+127.0.0.1:8003/health      -> connection refused
+127.0.0.1:8003/v1/models   -> connection refused
+127.0.0.1:8003/metrics     -> connection refused
+8003 listener              -> absent
+
+127.0.0.1:8005/health      -> HTTP 200
+8005 model                 -> qwen38-27b-fp8
+8005 running/waiting/KV    -> 0 / 0 / 0
+8005 preemptions/abort/error -> 0 / 0 / 0
+
+127.0.0.1:8006/health      -> HTTP 200
+8006 model                 -> qwen38-27b-nvfp4
+8006 running/waiting/KV    -> 0 / 0 / 0
+8006 preemptions/abort/error -> 0 / 0 / 0
+```
+
+`8005` 与 `8006` 都是历史 qwen38 服务，不是本手册授权的 `8003/qwen36-27b-nvfp4` 配置；本轮
+未向历史服务发送生成请求，也未用其替代 Slice 5 回放目标。阻塞已从“沙箱/GPU 不可用”更正为
+“指定 qwen36 服务未监听”，待 `8003` 服务恢复后再按 EBCAR → DyG-Mamba → LinearRAG 执行。
+
+## 2026-08-29 Slice 5 8006 最终真实回归（最终代码）
+
+根据用户明确授权，使用可访问的本地 `8006/qwen38-27b-nvfp4` 代替当前未监听的
+`8003/qwen36-27b-nvfp4` 完成真实回归；没有使用协作代理或协作技能。以下三次回放均按
+EBCAR → DyG-Mamba → LinearRAG 串行执行，使用冻结输入、真实代码仓库、独立 fresh output
+root、`--rebuild-authoring`、`--persist-authoring-rebuild-manifest`、`--callback-rounds 1`
+和 `--callback-tool-turns 8`。
+
+### 回放前的代码修复
+
+首次 8006 LinearRAG 回放证明新增 Binder 已被真实调用，但暴露出两个表示层契约问题：
+一是 rendered `slot:` ID 被 Binder 的 `unbound_target_ids` 单前缀形式误报为
+`unknown/unreported`；二是 rendered relation ID 使用 `rel:` 而 witness kind 使用
+`edge`。在不扩大闭集目标、不改变正文、不放宽 evidence/Verified gate 的前提下，
+`publication_transaction_contract.py` 增加了单步 kind-prefix 解析和已声明 `rel:` edge
+别名解析，Binder prompt 同步说明了 wire form，并新增回归测试。修复后的聚焦验证为：
+
+```text
+python -m pytest -q tests/test_llm_section_writer.py tests/test_agentic_method_authoring_p0_closure.py tests/test_agentic_publication_replay_diagnostics.py tests/test_agentic_research_derived_authoring.py
+# 91 passed in 1.03s, exit 0
+python -m compileall -q src tests scripts/evaluate_research_derived_authoring.py
+# exit 0
+git diff --check
+# exit 0
+```
+
+最终三次回放的 `execution_record.json` 均记录同一个最终代码指纹：
+`sha256:f40b177810115efbb3cfdd54662931e082e5d740bf10e12403fa9e4c50a9018d`。
+
+### Runtime 证据
+
+```text
+endpoint: http://127.0.0.1:8006/v1
+model: qwen38-27b-nvfp4
+profile: tests/live/profiles/qwen38_vllm_budgeted.example.env
+max_model_len: 131072
+preflight/postflight: /health=200, /v1/models=200
+postflight model: qwen38-27b-nvfp4
+postflight running/waiting/kv_cache_usage_perc: 0 / 0 / 0
+postflight preemptions/abort/error: 0 / 0 / 0
+NVIDIA: 8 x NVIDIA GeForce RTX 5090 visible outside the sandbox
+```
+
+三次运行的 runtime ledger 时间窗口均在起止时回到 idle，且没有服务端错误：
+
+| project | start → end | writer / structural exit | receipt | Binder validation errors |
+| --- | --- | --- | --- | ---: |
+| EBCAR | 01:48:14 → 01:59:17 | `incomplete` / `eligible=false` | valid targets `7/46`; valid required paragraphs `0/9`; accepted/consumed formula `0/0` | 0 |
+| DyG-Mamba | 02:00:14 → 02:10:43 | `incomplete` / `eligible=false` | valid targets `2/59`; valid required paragraphs `0/10`; accepted/consumed formula `0/0` | 0 |
+| LinearRAG | 02:11:47 → 02:18:37 | `incomplete` / `eligible=false` | valid targets `7/24`; valid required paragraphs `0/4`; edge witnessed `0/1`; accepted/consumed formula `0/0` | 0 |
+
+Binder 在三份最终产物中都收到了 schema-valid response；所有显式 unbound target 都在
+已声明闭集内正确解析，未再出现 `binder_unknown_unbound_target` 或
+`binder_target_unreported`。这不等于成功绑定：模型本轮没有新增有效 Binder witness，
+所以 structural exit 仍按缺失 exact witness、段落和公式消费 fail-closed。
+
+### 三项目 exact commands 与 evaluator
+
+```text
+python scripts/run_authoring_replay.py .tmp/c2p-q5-batch3/run-ebcar-research /tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun --repo '/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker' --run-id c2p-s5-qwen38-8006-ebcar-rerun-20260829 --rebuild-authoring --persist-authoring-rebuild-manifest --profile tests/live/profiles/qwen38_vllm_budgeted.example.env --callback-rounds 1 --callback-tool-turns 8
+python scripts/evaluate_research_derived_authoring.py /tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun
+# replay exit 0; evaluator exit 0
+
+python scripts/run_authoring_replay.py .tmp/c2p-stage1-canary/run-dyg /tmp/c2p-s5-qwen38-8006-20260829-dyg-rerun --repo '/data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs' --run-id c2p-s5-qwen38-8006-dyg-rerun-20260829 --rebuild-authoring --persist-authoring-rebuild-manifest --profile tests/live/profiles/qwen38_vllm_budgeted.example.env --callback-rounds 1 --callback-tool-turns 8
+python scripts/evaluate_research_derived_authoring.py /tmp/c2p-s5-qwen38-8006-20260829-dyg-rerun
+# replay exit 0; evaluator exit 0
+
+python scripts/run_authoring_replay.py .tmp/c2p-stage1-canary/run-linearrag /tmp/c2p-s5-qwen38-8006-20260829-linearrag-final --repo '/data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora' --run-id c2p-s5-qwen38-8006-linearrag-final-20260829 --rebuild-authoring --persist-authoring-rebuild-manifest --profile tests/live/profiles/qwen38_vllm_budgeted.example.env --callback-rounds 1 --callback-tool-turns 8
+python scripts/evaluate_research_derived_authoring.py /tmp/c2p-s5-qwen38-8006-20260829-linearrag-final
+# replay exit 0; evaluator exit 0
+```
+
+最终 evaluator 的 cleanliness/leakage 判断均为 `passed=true`、`verified_leakage.count=0`，
+但这不是 structural success。三份 evaluator 的关键覆盖如下：
+
+| project | story | paragraph | slot | edge | formula |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| EBCAR | `3/28` | `3/29` | `0/28` | n/a | `0/3` |
+| DyG-Mamba | `1/23` | `1/22` | `0/33` | n/a | `0/3` |
+| LinearRAG | `1/19` | `1/17` | `0/16` | `0/1` | `0/2` |
+
+三份 `candidate_authority_validation_v1.json` 的 nested `validation.status=passed`，
+Candidate 内部审计词计数为 0；但 `agentic_text_evidence_validation.json` 仍为
+`failed`、`publication_quality_report_v1.json` 仍为 `blocked`，因此不能把 Candidate
+正文升级为 Verified 或 publication-ready。
+
+### 最终静态验证与证据位置
+
+```text
+python -m pytest -q
+# 2964 passed, 3 skipped, 7 warnings, 12 subtests passed in 85.29s, exit 0
+python -m compileall -q src tests scripts/evaluate_research_derived_authoring.py
+# exit 0
+git diff --check
+# exit 0
+```
+
+最终 evidence roots：
+
+* EBCAR：`/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun`，evaluator：
+  `/tmp/c2p-s5-qwen38-8006-20260829-ebcar-rerun-evaluator.json`。
+* DyG-Mamba：`/tmp/c2p-s5-qwen38-8006-20260829-dyg-rerun`，evaluator：
+  `/tmp/c2p-s5-qwen38-8006-20260829-dyg-rerun-evaluator.json`。
+* LinearRAG：`/tmp/c2p-s5-qwen38-8006-20260829-linearrag-final`，evaluator：
+  `/tmp/c2p-s5-qwen38-8006-20260829-linearrag-final-evaluator.json`。
+
+每个 root 均包含 `execution_record.json`、`runtime_ledger_start.json`、
+`runtime_ledger_end.json`、`artifacts/06_authoring/authoring_structural_exit_v1.json`、
+`artifacts/06_authoring/publication_writer_result_v1.json`、Candidate authority、
+authorship、reverse validation、quality report、dossier、derivation/formalization 和
+generation trace。最终结论仍为 Candidate 诊断态：Slice 5 真实测试完成，结构与质量门未通过，
+不得宣布 D5、rollout、default cutover、release freeze 或 Verified 发布。

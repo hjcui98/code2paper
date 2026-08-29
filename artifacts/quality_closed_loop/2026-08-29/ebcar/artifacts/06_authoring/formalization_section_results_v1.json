@@ -1,0 +1,557 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S1:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:3d122ba94528be740b13797d4b6fa8b781a97a0b90bbb18c41df30389edc092a"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:5c00669d2f1c43a75c6c8dea38fa8204c5695ba6f50dc90579a3b3a8224b703f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-d57e6b007d62768e",
+          "formula:facet:facet-6bc5ee440fdc8329",
+          "formula:section:MA-S3:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-d57e6b007d62768e",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-6bc5ee440fdc8329",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-d57e6b007d62768e",
+          "facet_ids": [
+            "facet-d57e6b007d62768e"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder."
+          ],
+          "content_digest": "sha256:02b1fd084639b226a4447d0ccdc64e2cd47e0be9ddf162e93e861ef0cfe1e3f5"
+        },
+        {
+          "obligation_id": "formula:facet:facet-6bc5ee440fdc8329",
+          "facet_ids": [
+            "facet-6bc5ee440fdc8329"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away."
+          ],
+          "content_digest": "sha256:937dc634a228040aac6cee79f47db2c692e9b987425ef8be481c29811c0ae637"
+        },
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:12",
+          "paragraph_ids": [
+            "paragraph:MA-S3:12"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+            "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+            "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+            "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+            "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e",
+            "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:1799d06b686190f0f8956661c228e5a077962da5b823d20d837353c738fc2c57"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S3:derivation",
+        "formula:facet:facet-d57e6b007d62768e",
+        "formula:facet:facet-6bc5ee440fdc8329"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:0fd8abe16559b621bb85bd81e3b67e0115c29a5d54d83ed8c31368740f37b697"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [
+          "formula:facet:facet-833638c7783e3952",
+          "formula:facet:facet-71df0ec224b91883",
+          "formula:section:MA-S4:derivation"
+        ],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-833638c7783e3952",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-71df0ec224b91883",
+          "outcome": "unresolved",
+          "package_id": "",
+          "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+          "reason": "Core equation evidence exists but the Formalizer produced no accepted package.",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-833638c7783e3952",
+          "facet_ids": [
+            "facet-833638c7783e3952"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S4",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives."
+          ],
+          "content_digest": "sha256:3843e66269d7d5d23303435fda4a375f6499dde82fdd8a715fbcd5f8e6b86b00"
+        },
+        {
+          "obligation_id": "formula:facet:facet-71df0ec224b91883",
+          "facet_ids": [
+            "facet-71df0ec224b91883"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Training objective: InfoNCE loss with fixed query anchor.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S4",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "",
+          "paragraph_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Training objective: InfoNCE loss with fixed query anchor."
+          ],
+          "content_digest": "sha256:2550f969ca9f2c6c9ebeba0823ffc858b4ed00440832e66cd30e33976b6ea354"
+        },
+        {
+          "obligation_id": "formula:section:MA-S4:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S4",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S4:2",
+          "paragraph_ids": [
+            "paragraph:MA-S4:2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+            "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+            "slot:fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:afe1756eadc25bf43d5eb6828373a28c6a40e73c419c666e782cfe2e6615b0e1"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [
+        "formula:section:MA-S4:derivation",
+        "formula:facet:facet-833638c7783e3952",
+        "formula:facet:facet-71df0ec224b91883"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:e3731924e547b2ffc7bab40f9a04dc7d58b307e2461aaa727a501e5eca12bf44"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [
+        {
+          "package_id": "pkg:MA-S5:inference-rank",
+          "section_id": "MA-S5",
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "consumer_paragraph_id": "paragraph:MA-S5:3",
+          "satisfied_obligation_ids": [
+            "formula:section:MA-S5:derivation"
+          ],
+          "semantic_formula_digest": "sha256:f09a9d282be02c94c77576bbe039723582a985d0668153121ce393c96dceb5b9",
+          "purpose": "author_intent_academic",
+          "latex": "\\mathbf{q} \\cdot \\mathbf{p}_i",
+          "prose_explanation": "The core mechanism is the dot-product similarity computation between a static query vector and contextualized passage vectors, followed by a descending sort. This aligns with the author's intent to avoid full-text processing and autoregressive generation.",
+          "markdown_block": "### Inference Scoring and Ranking\n\nThe inference procedure realizes the ranking mechanism by computing the relevance score for each candidate passage $i$ as the dot product between the unchanged query embedding $\\mathbf{q} \\in \\mathbb{R}^d$ and the contextualized passage embedding $\\mathbf{p}_i \\in \\mathbb{R}^d$:\n\n$$\ns_i = \\mathbf{q} \\cdot \\mathbf{p}_i = \\sum_{k=1}^{d} q_k p_{i,k}\n$$\n\nwhere $d$ is the embedding dimensionality. The system then sorts the passages in descending order of $s_i$ to produce the final ranking. This operation avoids autoregressive generation, thereby reducing inference latency. The assumption is that the query embedding $\\mathbf{q}$ remains static during the inference phase, while the passage embeddings $\\mathbf{p}_i$ are contextualized based on the input context.",
+          "symbol_definitions": [],
+          "symbol_table": [],
+          "material_conditions": [],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [],
+          "review_question": "Does the repository implementation at src/model/ebcar_dedicated_attention_model.py:334-336 exactly match the academic notation for the dot-product similarity and sorting procedure described in the paper?",
+          "bound_fact_ids": [],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:53246a6d516470f7e3929e507385c1d54238947534f22c0f32a05d69950f9f5c"
+        }
+      ],
+      "disposition": null,
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "outcome": "rendered",
+          "package_id": "pkg:MA-S5:inference-rank",
+          "review_question": "",
+          "reason": "",
+          "expectation": "required",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:3",
+          "paragraph_ids": [
+            "paragraph:MA-S5:3"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:5cdd7964e4d6dff51669e091907ca80467126828c299726ce20998e2b9d3ea5c"
+        }
+      ],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:2b7d3bbe4707241e00575c9df09c4996f596e390a26a2fd4ae71ecb300b4079d"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:fff99f9fe8cb8369c31ba1e7887b3349990d07017273ffed0d68e9419c78da7f",
+          "guard_failures": [
+            "pkg-ma-s3-arch-01:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S3:12\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n&\\\\textbf{Input:} \\\\quad \\\\mathbf{q} \\\\in \\\\mathbb{R}^{d}, \\\\quad \\\\mathbf{P} = [\\\\mathbf{p}_1, \\\\dots, \\\\mathbf{p}_K] \\\\in \\\\mathbb{R}^{K \\\\times d} \\\\text{ (retrieved pass"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:fbc2f91d9c768dbb9ffea01506071960ae5333ccabe2ddd3070522f4a1f37989",
+          "guard_failures": [
+            "pkg-ma-s3-arch-02:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S3:12\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n&\\\\text{Enrichment: } \\\\mathbf{p}_i' = \\\\mathbf{p}_i + \\\\mathbf{e}_{\\\\text{doc}}(\\\\text{id}_i) + \\\\mathbf{e}_{\\\\text{pos}}(\\\\text{pos}_i) \\\\\\\\\\n&\\\\text{Hybrid Attention: } \\"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-d57e6b007d62768e",
+        "formula:facet:facet-6bc5ee440fdc8329",
+        "formula:section:MA-S3:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:cbd75ec971eae16217f883061045705fc238ad5cfc832322eea2bb5c0e0cb11d",
+          "guard_failures": [
+            "pkg-ma-s4-infonce-fixed-anchor:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S4:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathcal{L}_{\\\\text{InfoNCE}} = -\\\\log \\\\frac{\\\\exp(\\\\mathbf{q}^\\\\top \\\\mathbf{p}^+ / \\\\tau)}{\\\\exp(\\\\mathbf{q}^\\\\top \\\\mathbf{p}^+ / \\\\tau) + \\\\sum_{j=1}^{K} \\\\exp(\\\\mathbf{q}^\\\\top \\\\mathbf"
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:27aa6fd5b243dd9dc5c5ce1200b3eb2857b7d1c679a5e0046db293e5aeb211d4",
+          "guard_failures": [
+            "pkg-ma-s4-infonce-fixed-anchor-v2:formula_package_consumer_route_ambiguous"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S4:2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathcal{L}_{\\\\text{InfoNCE}} = -\\\\log \\\\frac{\\\\exp(q^\\\\top p^+ / \\\\tau)}{\\\\exp(q^\\\\top p^+ / \\\\tau) + \\\\sum_{j=1}^{K} \\\\exp(q^\\\\top p_j^- / \\\\tau)}\",\n      \"markdown_block\": \"The training ob"
+        }
+      ],
+      "author_intent_lane": true,
+      "deterministic_fallback": true,
+      "formula_consumer": true,
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-833638c7783e3952",
+        "formula:facet:facet-71df0ec224b91883",
+        "formula:section:MA-S4:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:458478611ee2ee5628ac9ece6de2833a1e92a983bc43c473995ac51ca0e3798e",
+          "guard_failures": [
+            "pkg:MA-S5:inference-rank:markdown_block_missing_exact_latex"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:3\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\text{rank}(p_i) = \\\\text{argsort}_{i} \\\\left( -\\\\mathbf{q}^{\\\\top} \\\\mathbf{P}_i \\\\right)\",\n      \"markdown_block\": \"### Inference Scoring and Ranking\\n\\nThe inference procedure realizes the"
+        },
+        {
+          "attempt": 2,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 1,
+          "response_ref": "sha256:2f9582b7b59b8c66f806b08210ae4e4dd653527b100dfa11016e395c3bbbac90",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:3\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\mathbf{q} \\\\cdot \\\\mathbf{p}_i\",\n      \"markdown_block\": \"### Inference Scoring and Ranking\\n\\nThe inference procedure realizes the ranking mechanism by computing the relevance score for eac"
+        }
+      ],
+      "author_intent_lane": true,
+      "formula_consumer": true,
+      "deterministic_fallback": false,
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}

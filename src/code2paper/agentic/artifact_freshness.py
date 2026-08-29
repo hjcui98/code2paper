@@ -59,6 +59,16 @@ TRUST_DEPENDENCY_ORDER = (
     "rendering_manifest", "post_render_audit", "final_package",
 )
 
+# Research-Derived Method authoring is an optional downstream plane for
+# legacy runs.  It is inserted into the trust chain only when the caller
+# supplies one of its artifacts, so old V1/V2 hand-offs do not become
+# spuriously stale merely because they predate this plane.
+RESEARCH_DERIVED_DEPENDENCY_KEYS = (
+    "research_mechanism_dossiers_v1",
+    "derivation_records_v1",
+    "candidate_authority_validation_v1",
+)
+
 ACCEPTED_EVIDENCE_PACKETS_V3_PRODUCERS = frozenset(
     {
         "code2paper-evidence-compiler-v3",
@@ -79,7 +89,13 @@ def check_artifact_freshness(
     verdicts: list[ArtifactFreshnessVerdict] = []
     upstream_stale = source_drift or bool(round_trip)
     stale_keys: list[str] = []
-    for key in TRUST_DEPENDENCY_ORDER:
+    dependency_order = list(TRUST_DEPENDENCY_ORDER)
+    if any(artifacts.get(key, "") for key in RESEARCH_DERIVED_DEPENDENCY_KEYS):
+        final_package_index = dependency_order.index("final_package")
+        dependency_order[final_package_index:final_package_index] = list(
+            RESEARCH_DERIVED_DEPENDENCY_KEYS
+        )
+    for key in dependency_order:
         path = artifacts.get(key, "")
         if not path or not Path(path).exists():
             verdicts.append(ArtifactFreshnessVerdict(artifact_key=key, status="missing", failures=["artifact_missing"]))
@@ -289,6 +305,96 @@ def _artifact_contract_failures(
             failures.append("evidence_snapshot_id_mismatch")
         if payload.get("evidence_snapshot_digest") != evidence.content_digest:
             failures.append("evidence_snapshot_digest_mismatch")
+    elif key == "research_mechanism_dossiers_v1":
+        if payload.get("schema_version") != "1.0":
+            failures.append("unsupported_schema")
+        digestable = {item: value for item, value in payload.items() if item != "content_digest"}
+        if payload.get("content_digest") != _digest_json(digestable):
+            failures.append("content_digest_mismatch")
+        items = payload.get("items")
+        if not isinstance(items, list):
+            failures.append("items_not_list")
+        else:
+            for item in items:
+                if not isinstance(item, dict):
+                    failures.append("dossier_item_not_object")
+                    continue
+                if item.get("content_digest") != _digest_json({
+                    name: value for name, value in item.items()
+                    if name != "content_digest"
+                }):
+                    failures.append("dossier_item_content_digest_mismatch")
+            source_paths = {
+                "behavior_graph": ("behavior_graph_v1", "code_graph"),
+                "facts": ("code_facts_v1", "facts"),
+                "claims": ("atomic_claims_v3", "claims"),
+                "equations": ("equation_claims_v1", "equations"),
+                "configurations": ("configuration_claims_v1", "configurations"),
+                "evidence_packets": ("evidence_packets_v3", "evidence_packets"),
+                "implementation_scope": ("implementation_scope_v1", "implementation_scope"),
+            }
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                expected_sources = item.get("source_digests")
+                if not isinstance(expected_sources, dict):
+                    continue
+                for source_name, expected_digest in expected_sources.items():
+                    aliases = source_paths.get(str(source_name), ())
+                    source_key = next(
+                        (alias for alias in aliases if artifacts.get(alias)),
+                        "",
+                    )
+                    if not source_key:
+                        failures.append(f"{source_name}_source_artifact_missing")
+                        continue
+                    actual_digest = _source_artifact_content_digest(
+                        artifacts, source_key
+                    )
+                    if not actual_digest:
+                        failures.append(f"{source_name}_source_artifact_unreadable")
+                    elif actual_digest != expected_digest:
+                        failures.append(f"{source_name}_source_digest_mismatch")
+    elif key == "derivation_records_v1":
+        dossiers = _read_artifact_json(artifacts, "research_mechanism_dossiers_v1")
+        if payload.get("schema_version") != "1.0":
+            failures.append("unsupported_schema")
+        digestable = {item: value for item, value in payload.items() if item != "content_digest"}
+        if payload.get("content_digest") != _digest_json(digestable):
+            failures.append("content_digest_mismatch")
+        items = payload.get("items")
+        if not isinstance(items, list):
+            failures.append("items_not_list")
+        else:
+            for item in items:
+                if not isinstance(item, dict):
+                    failures.append("derivation_item_not_object")
+                    continue
+                if item.get("content_digest") != _digest_json({
+                    name: value for name, value in item.items()
+                    if name != "content_digest"
+                }):
+                    failures.append("derivation_item_content_digest_mismatch")
+        if dossiers and payload.get("source_dossier_digest") != dossiers.get("content_digest"):
+            failures.append("source_dossier_digest_mismatch")
+    elif key == "candidate_authority_validation_v1":
+        if payload.get("schema_version") != "1.0":
+            failures.append("unsupported_schema")
+        digestable = {item: value for item, value in payload.items() if item != "content_digest"}
+        if payload.get("content_digest") != _digest_json(digestable):
+            failures.append("content_digest_mismatch")
+        validation = payload.get("validation")
+        if not isinstance(validation, dict):
+            failures.append("validation_missing")
+        elif validation.get("content_digest") != _digest_json({
+            item: value for item, value in validation.items() if item != "content_digest"
+        }):
+            failures.append("validation_digest_mismatch")
+        candidate_path = artifacts.get("publication_candidate_method", "")
+        candidate_digest = payload.get("candidate_text_digest")
+        if candidate_digest and candidate_path and Path(candidate_path).is_file():
+            if candidate_digest != artifact_content_digest(candidate_path):
+                failures.append("candidate_text_digest_mismatch")
     elif key == "evidence_relations_v2":
         if payload.get("repo_snapshot_id") != repo.snapshot_id: failures.append("repo_snapshot_id_mismatch")
         if payload.get("evidence_snapshot_id") != evidence.evidence_snapshot_id: failures.append("evidence_snapshot_id_mismatch")
@@ -336,6 +442,33 @@ def _read_artifact_json(artifacts: dict[str, str], key: str) -> dict[str, Any]:
     path = artifacts.get(key, "")
     if not path:
         return {}
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+        return value if isinstance(value, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _source_artifact_content_digest(
+    artifacts: dict[str, str], key: str
+) -> str:
+    """Read an upstream artifact digest without mutating or repairing it."""
+
+    path = artifacts.get(key, "")
+    if not path or not Path(path).is_file():
+        return ""
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    if not isinstance(payload, dict):
+        return ""
+    if key in {"behavior_graph_v1", "code_graph"}:
+        nested = payload.get("behavior_graph") or payload.get("graph")
+        if isinstance(nested, dict):
+            payload = nested
+    digest = payload.get("content_digest")
+    return str(digest).strip() if str(digest or "").strip() else _digest_json(payload)
 
 
 def _repair_route(stale_keys: list[str]) -> str:
@@ -348,6 +481,8 @@ def _repair_route(stale_keys: list[str]) -> str:
         return "authoring_planner"
     if any(key in stale_keys for key in ("final_text_claims", "text_evidence_validation", "final_text_trace")):
         return "authoring"
+    if any(key in stale_keys for key in RESEARCH_DERIVED_DEPENDENCY_KEYS):
+        return "authoring"
     if any(key in stale_keys for key in (
         "evidence_relations_v2", "figure_scene", "figure_relation_validation", "pre_render_audit",
         "rendering_manifest", "post_render_audit",
@@ -356,11 +491,6 @@ def _repair_route(stale_keys: list[str]) -> str:
     if "final_package" in stale_keys:
         return "finalize"
     return ""
-    try:
-        value = json.loads(Path(path).read_text(encoding="utf-8"))
-        return value if isinstance(value, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
 
 
 def _digest_json(value: Any) -> str:

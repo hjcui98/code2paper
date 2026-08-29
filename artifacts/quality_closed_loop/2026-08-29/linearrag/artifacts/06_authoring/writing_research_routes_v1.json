@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:88a01612824749625b52",
+      "request_id": "REQ:MA-S2:1",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:fef8cefc38fbf84fb3b46ee9f189e710e23680f6f248921f92c709c89546cb0f"
+    },
+    {
+      "route_id": "route:0733014d745717a5b2e1",
+      "request_id": "req-MA-S3-01",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "scope": [
+        "fact-O-STAGE-01-9c8dfe22-node",
+        "f21427b316d80682",
+        "fd688d75587fdee",
+        "slot"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S3 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:90a084d3aedb1caafc0180baf2222354046380ccc4f0aa3bcfc65cdaf52f3a6d"
+    },
+    {
+      "route_id": "route:9a45e2b212d227f5eea5",
+      "request_id": "MA-S5:rq-1",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "scope": [
+        "MA-S5",
+        "semantic",
+        "derivation",
+        "content",
+        "eight",
+        "slot",
+        "targets",
+        "formula",
+        "section"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:3f5f7b486b995411b01542b3a3d162447e807239024c6bfa4c7657d5df96e9a9"
+    }
+  ],
+  "rejections": []
+}

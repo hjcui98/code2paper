@@ -1,0 +1,557 @@
+{
+  "candidate_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nGraphRAG pipelines depend on relation extraction to populate the knowledge graph that underpins retrieval-augmented generation. Errors in this extraction step propagate through downstream retrieval and generation stages, degrading answer quality in ways that are difficult to diagnose post hoc. The system's retrieval behavior is governed by a configuration flag that selects between vectorized and non-vectorized retrieval modes (`self.config.use_vectorized_retrieval`), and the interaction between extraction errors and this retrieval configuration determines the extent to which faulty relations affect final outputs.\n\nThis section examines how relation extraction errors in GraphRAG manifest as measurable shortcomings in retrieval and generation, and identifies the configuration conditions under which these errors are most consequential. The analysis establishes the specific failure modes that motivate the subsequent methodological contributions.\n\n## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nThis section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy. No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.\n\n## Offline Tri‑Graph construction\n\nThe offline tri-graph is assembled through a gated, two-step procedure that decouples content ingestion from downstream retrieval. Passage hash identifiers are first computed and registered into a persistent index; the graph structure is updated only when `len(new_passage_hash_ids) > 0`, which ensures that no redundant nodes or edges are introduced for content already present in the index. Once the gate is satisfied, relational edges are derived from the newly registered identifiers, completing the three-part structural update that subsequent offline stages consume.\n\nThe offline tri-graph construction yields a static relational index whose structural state is advanced exclusively through the passage-hash gate. By conditioning every update on the non-emptiness of new passage identifiers, the procedure remains idempotent across repeated offline passes, guaranteeing that the tri-graph topology reflects the union of all ingested content without duplication.\n\n## First retrieval stage: relevant entity activation via local semantic bridging\n\nThe first retrieval stage activates relevant entities through a local semantic bridging mechanism. Rather than operating globally over the entire document, this stage restricts its search to a local neighbourhood in which candidate entities are identified and selectively activated based on their semantic relation to the current processing context.\n\nEntity activation is governed by two filtering conditions applied to candidate entities extracted from the local context. An entity text is retained only when it does not already appear in the sentence-to-entities mapping for the current sentence (`ent_text not in sentence_to_entities[sent_text]`), ensuring that newly surfaced entities are distinguished from those already associated with the sentence. In parallel, the NER label of the entity is restricted to ordinal or cardinal designations (`ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'`), so that only entities carrying quantitative or ordering semantics participate in the bridging operation. Together, these predicates define the subset of entities eligible for activation in the local semantic bridging step.\n\nThe local semantic bridging step connects the activated entities to their immediate contextual neighbours, establishing the semantic links that downstream retrieval stages will exploit. By operating within a bounded local window, the mechanism avoids the combinatorial cost of global entity correlation while still capturing the relational structure necessary for precise entity resolution.\n\nThe output of this stage is a set of semantically linked entities, each annotated with its activation context and bridging relation. These linked entities form the input to subsequent retrieval stages, where they are further refined or expanded according to the requirements of the downstream task.\n\nThis first retrieval stage thus establishes the foundational entity representation on which later stages build. The local semantic bridging approach ensures that entity activation is both contextually grounded and computationally tractable, providing a controlled basis for the broader retrieval pipeline.\n\n## Second retrieval stage: passage retrieval via global importance aggregation\n\nThis section describes the second retrieval stage, in which candidate passages are retrieved through global importance aggregation. The stage operates under the configuration flag ``self.config.use_vectorized_retrieval``, which governs whether the retrieval pathway employs vectorized computation.\n\nThe global importance aggregation mechanism formalizes passage scoring as a weighted combination of relevance signals across the candidate set. The derivation is captured in the formula package bound to this section, which expresses the aggregation operator and its constituent terms. Each passage's importance score is computed by aggregating relevance contributions, and the resulting ranking determines which passages advance to subsequent processing stages. The configuration flag ``self.config.use_vectorized_retrieval`` controls whether this aggregation is executed in a vectorized form or through an equivalent iterative pathway.\n\nThe aggregated importance scores produced in the preceding step serve as the selection criterion for the passage subset that proceeds to downstream stages. Passages whose scores fall below a threshold are excluded, while those that exceed it are retained for subsequent refinement.\n\nThe selection process preserves the relative ordering of retained passages by their aggregated importance, ensuring that the most salient passages are prioritized in later retrieval and ranking operations.\n\nThe output of this stage is a ranked set of passages, each annotated with its global importance score, ready for consumption by the next processing stage in the retrieval pipeline.\n\nThe configuration flag ``self.config.use_vectorized_retrieval`` determines the computational pathway for the aggregation: when enabled, the scoring is performed as a single vectorized operation over the full candidate matrix; when disabled, an equivalent loop-based computation yields identical results.\n\nThis stage concludes the second retrieval pass and hands control to the subsequent stage, which operates on the ranked passage set produced here.",
+  "verified_markdown": "",
+  "review_items": [
+    {
+      "candidate_id": "review:O-COMPONENT-01-4e554ef0",
+      "source_obligation_id": "O-COMPONENT-01-4e554ef0",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "confirmation_question": "Should the Method confirm that develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-4e554ef0"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-02-8058a7bc",
+      "source_obligation_id": "O-COMPONENT-02-8058a7bc",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "confirmation_question": "Should the Method confirm that spacy ner: lightweight named entity extraction used both offline (graph building) and online (query entity extraction)?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-02-8058a7bc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-03-0c4d02ed",
+      "source_obligation_id": "O-COMPONENT-03-0c4d02ed",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "confirmation_question": "Should the Method confirm that entity activation via semantic bridging: iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-03-0c4d02ed"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-04-4f4f1da6",
+      "source_obligation_id": "O-COMPONENT-04-4f4f1da6",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "confirmation_question": "Should the Method confirm that dynamic pruning: threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-04-4f4f1da6"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-05-29ba03a1",
+      "source_obligation_id": "O-COMPONENT-05-29ba03a1",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-7",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "confirmation_question": "Should the Method confirm that personalized pagerank: global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-05-29ba03a1"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-06-bf20ec9b",
+      "source_obligation_id": "O-COMPONENT-06-bf20ec9b",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "confirmation_question": "Should the Method confirm that hybrid passage initialization: combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial ppr scores for passage nodes?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-06-bf20ec9b"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-4ee8e0bf",
+      "source_obligation_id": "O-ORGANIZATION-01-4ee8e0bf",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "out_of_scope",
+      "status": "out_of_scope",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: revisit GraphRAG shortcomings from relation extraction errors.",
+      "confirmation_question": "Should the Method confirm that motivation: revisit graphrag shortcomings from relation extraction errors?",
+      "needed_evidence": [
+        "retain the unit in the review sidecar with its declared scope reason",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "retain the unit in the review sidecar with its declared scope reason",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-4ee8e0bf"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-1977b399",
+      "source_obligation_id": "O-ORGANIZATION-02-1977b399",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "out_of_scope",
+      "status": "out_of_scope",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy.",
+      "confirmation_question": "Should the Method confirm that linearrag overview: tri‑graph concept and two‑stage retrieval philosophy?",
+      "needed_evidence": [
+        "retain the unit in the review sidecar with its declared scope reason",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "retain the unit in the review sidecar with its declared scope reason",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-1977b399"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-03-157f229e",
+      "source_obligation_id": "O-ORGANIZATION-03-157f229e",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices).",
+      "confirmation_question": "Should the Method confirm that offline tri‑graph construction (entities, sentences, passages, contain/message adjacency matrices)?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-03-157f229e"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-04-8fc65790",
+      "source_obligation_id": "O-ORGANIZATION-04-8fc65790",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning).",
+      "confirmation_question": "Should the Method confirm that first retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-04-8fc65790"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-05-e0c123aa",
+      "source_obligation_id": "O-ORGANIZATION-05-e0c123aa",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank).",
+      "confirmation_question": "Should the Method confirm that second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized pagerank)?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-05-e0c123aa"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-c0bb1e93",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-c0bb1e93",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Avoid explicit relation extraction entirely.",
+      "confirmation_question": "Should the Method confirm that avoid explicit relation extraction entirely?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-c0bb1e93"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-1a90a997",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-1a90a997",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "confirmation_question": "Should the Method confirm that use a hierarchical graph that preserves original text (passages, sentences) alongside entities?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-1a90a997"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-09c84504",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-09c84504",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "confirmation_question": "Should the Method confirm that decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-09c84504"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-9ca078fe",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-9ca078fe",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "confirmation_question": "Should the Method confirm that apply dynamic pruning with a fixed relevance threshold during propagation?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-9ca078fe"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-ffcf3556",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-ffcf3556",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "confirmation_question": "Should the Method confirm that employ personalized pagerank on the passage‑entity graph for passage retrieval?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-ffcf3556"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-06-0f48dc22",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-0f48dc22",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-6",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "confirmation_question": "Should the Method confirm that initialize passage ppr scores with a hybrid of direct similarity and entity‑based evidence?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-06-0f48dc22"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU2",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU2)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU2"
+      ]
+    },
+    {
+      "candidate_id": "review-sentence:FTU3",
+      "source_obligation_id": null,
+      "source_claim_id": "",
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified",
+      "proposed_body": "No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+      "confirmation_question": "Should the Method keep this sentence as a repository-verified implementation fact? (review-sentence:FTU3)",
+      "needed_evidence": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "suggested_action": "revise_authoring_wording",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "review-sentence:FTU3"
+      ]
+    },
+    {
+      "candidate_id": "review-formalization:MA-S1",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S2",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S3",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition not_applicable for this section's core formula work. No formula-worthy mechanism facet or equation is bound to this section.",
+      "confirmation_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+      "needed_evidence": [
+        "No formula-worthy mechanism facet or equation is bound to this section."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S4",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S4:derivation",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-formalization:MA-S5",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "formalization_disposition",
+      "proposed_body": "The section Formalizer ended with the typed disposition formalizer_empty for this section's core formula work. Core equation evidence exists but the Formalizer produced no accepted package. Required formula obligations remain unresolved: formula:section:MA-S5:derivation",
+      "confirmation_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+      "needed_evidence": [
+        "Core equation evidence exists but the Formalizer produced no accepted package."
+      ],
+      "suggested_action": "resolve_formalization_disposition",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S3:move-unanchored:MA-S3:equation_or_derivation",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    },
+    {
+      "candidate_id": "review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+      "source_obligation_id": "",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": null,
+      "lane": "formalization_pending",
+      "status": "move_unanchored",
+      "proposed_body": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "confirmation_question": "Which owner should close this unanchored rhetorical move?",
+      "needed_evidence": [],
+      "suggested_action": "resolve_unanchored_rhetorical_move",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": []
+    }
+  ],
+  "plan_readiness": "candidate_ready_with_review",
+  "blocked_reasons": [],
+  "validation_split_report": {
+    "split_mode": "sentence_reverse_validation",
+    "verified_unit_ids": [
+      "FTU1"
+    ],
+    "excluded_units": [
+      {
+        "unit_id": "FTU2",
+        "text": "This section presents the LinearRAG tri-graph concept and its two-stage retrieval philosophy.",
+        "char_start": 77,
+        "char_end": 170,
+        "reason": "unsupported"
+      },
+      {
+        "unit_id": "FTU3",
+        "text": "No repository-supported propositions, formula packages, or material conditions were supplied for this paragraph; the overview awaits the resolution of the scoped research request above before substantive Method prose can be rendered.",
+        "char_start": 171,
+        "char_end": 404,
+        "reason": "unsupported"
+      }
+    ],
+    "verified_positive_unit_count": 0,
+    "unsupported_positive_units": 2
+  }
+}

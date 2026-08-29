@@ -1,0 +1,673 @@
+{
+  "project_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "author_mode": "none",
+  "author_confirmation_required": true,
+  "method_name": "LinearRAG",
+  "method_goal": "Describe only the code-supported claims in the authoring projection.",
+  "implementation_scope": "/data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora",
+  "latex_expression_preference": "balanced",
+  "entrypoints": [
+    "run.py",
+    "src/LinearRAG.py",
+    "src/config.py",
+    "src/embedding_store.py"
+  ],
+  "stages": [
+    {
+      "stage_id": "SG-INTENT-01-9c8dfe22",
+      "name": "Offline Graph Construction",
+      "purpose": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_1",
+          "description": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-8435ad0964009c0e",
+            "E-V3-c767ed0eaad34547"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-02-93c16851",
+      "name": "Entity Activation via Local Semantic Bridging",
+      "purpose": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_2",
+          "description": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-9094162d3dc795b7",
+            "E-V3-c0c82fa0f8c44b18",
+            "E-V3-cea51762f01fa6cc",
+            "E-V3-d1959e0d7848c3a8",
+            "E-V3-fbab63729214ec2c"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        },
+        {
+          "mechanism_id": "MECH_PROJECTION_3",
+          "description": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-9094162d3dc795b7",
+            "E-V3-cea51762f01fa6cc"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-03-8dda66b9",
+      "name": "Passage Retrieval via Global Importance Aggregation",
+      "purpose": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_2",
+          "description": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-9094162d3dc795b7",
+            "E-V3-cea51762f01fa6cc"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        },
+        {
+          "mechanism_id": "MECH_PROJECTION_3",
+          "description": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-101e5db54bbeff5e",
+            "E-V3-54481ced51092efe",
+            "E-V3-9094162d3dc795b7",
+            "E-V3-a141bc5283231d81",
+            "E-V3-be6473473e7e870f",
+            "E-V3-cea51762f01fa6cc",
+            "E-V3-d19fed787115fa40"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    },
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "inputs": [],
+      "outputs": [],
+      "modules": [],
+      "mechanisms": [
+        {
+          "mechanism_id": "MECH_PROJECTION_4",
+          "description": "Executable details supporting the method beyond the named pipeline stages.",
+          "support_status": "supported",
+          "evidence_ids": [
+            "E-V3-05675598c1c94395",
+            "E-V3-364aa7a1338cb348",
+            "E-V3-5c1ce458bd571719",
+            "E-V3-a758f536b6218e03",
+            "E-V3-f9b43d9bf1b29282"
+          ],
+          "confidence": "medium",
+          "submechanisms": []
+        }
+      ]
+    }
+  ],
+  "behavior_patterns": [],
+  "equation_candidates": [
+    {
+      "equation_id": "EQ-V3-4d7ab50d447e0477",
+      "name": "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-823c29761dbc735a",
+      "name": "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "latex": "x + y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "equation_id": "EQ-V3-3ccc0c5343036a1f",
+      "name": "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "latex": "x * y",
+      "source": "code_pattern",
+      "evidence_ids": [],
+      "confidence": "medium",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    }
+  ],
+  "architecture_parameters": [],
+  "tensor_roles": [],
+  "innovation_candidates": [],
+  "paper_module_aliases": [],
+  "method_overview": {},
+  "stage_packets": [
+    {
+      "stage_id": "SG-INTENT-01-9c8dfe22",
+      "name": "Offline Graph Construction",
+      "purpose": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "stage_claim": "LinearRAG.index branches on len(new_passage_hash_ids) > 0 LinearRAG.index calls self.extract_nodes_and_edges, existing_passage_hash_id_to_entities, existing_sentence_to_entities, result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "claim_ids": [
+        "C-V3-909d3695190d9657",
+        "C-V3-8f02ec2817ddc07a"
+      ],
+      "evidence_ids": [
+        "E-V3-c767ed0eaad34547",
+        "E-V3-8435ad0964009c0e"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "organization_priority": 1
+    },
+    {
+      "stage_id": "SG-INTENT-02-93c16851",
+      "name": "Entity Activation via Local Semantic Bridging",
+      "purpose": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "stage_claim": "SpacyNER.extract_entities_sentences branches on ent_text not in sentence_to_entities[sent_text] LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores) LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights SpacyNER.extract_entities_sentences filters by ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL' LinearRAG.graph_search_with_seed_entities calls self.calculate_entity_scores_vectorized, question_embedding, seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores, result=(entity_weights, actived_entities)",
+      "claim_ids": [
+        "C-V3-03b3a498f5a6b3de",
+        "C-V3-964143773c8824b5",
+        "C-V3-5295dc5f82cc929f",
+        "C-V3-a9b1d44c4fcb14c5",
+        "C-V3-1b9da293118020b8"
+      ],
+      "evidence_ids": [
+        "E-V3-d1959e0d7848c3a8",
+        "E-V3-9094162d3dc795b7",
+        "E-V3-cea51762f01fa6cc",
+        "E-V3-fbab63729214ec2c",
+        "E-V3-c0c82fa0f8c44b18"
+      ],
+      "relation_evidence_ids": [],
+      "covers_obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "organization_priority": 2
+    },
+    {
+      "stage_id": "SG-INTENT-03-8dda66b9",
+      "name": "Passage Retrieval via Global Importance Aggregation",
+      "purpose": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "stage_claim": "LinearRAG.graph_search_with_seed_entities branches on self.config.use_vectorized_retrieval LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores) LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights LinearRAG.graph_search_with_seed_entities calls self.run_ppr, node_weights, result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores) LinearRAG.graph_search_with_seed_entities loads weights self.config.use_vectorized_retrieval LinearRAG.graph_search_with_seed_entities configured by self.config.use_vectorized_retrieval LinearRAG.run_ppr sorts by np.argsort, doc_scores, result=sorted_indices_in_doc_scores LinearRAG.run_ppr propagates self.graph.personalized_pagerank, vertices=range(len(self.node_name_to_vertex_idx)), damping=self.config.damping, directed=False, weights='weight', reset=reset_prob, implementation='prpack', result=pagerank_scores",
+      "claim_ids": [
+        "C-V3-8691d06fa40c80df",
+        "C-V3-256a94ca7d3cbf14",
+        "C-V3-5c4c526930242530",
+        "C-V3-b92b57c3236ff3ab",
+        "C-V3-1fff753672b60410",
+        "C-V3-320a72e70cf4ed02",
+        "C-V3-443a3d34700287ff",
+        "C-V3-d2eb6b3f7f9f9c52"
+      ],
+      "evidence_ids": [
+        "E-V3-d19fed787115fa40",
+        "E-V3-9094162d3dc795b7",
+        "E-V3-cea51762f01fa6cc",
+        "E-V3-54481ced51092efe",
+        "E-V3-be6473473e7e870f",
+        "E-V3-101e5db54bbeff5e",
+        "E-V3-a141bc5283231d81"
+      ],
+      "relation_evidence_ids": [
+        "E-V3-bdaf130619e79653"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "organization_priority": 3
+    },
+    {
+      "stage_id": "SG-INTENT-ADDITIONAL",
+      "name": "Additional repository-verified mechanisms",
+      "purpose": "Executable details supporting the method beyond the named pipeline stages.",
+      "stage_claim": "LinearRAG.retrieve computes formula e2s_shape[0], e2s_shape[1] LinearRAG.retrieve loads weights self.config.use_vectorized_retrieval LinearRAG.retrieve returns retrieval_results LinearRAG.retrieve branches on self.config.use_vectorized_retrieval LinearRAG.retrieve calls logger.info, 'Precomputing sparse adjacency matrices for vectorized retrieval...' LinearRAG.retrieve configured by self.config.use_vectorized_retrieval",
+      "claim_ids": [
+        "C-V3-3a41640cf80e05b3",
+        "C-V3-c3159aaf7c739cfa",
+        "C-V3-9871ee142a4431a9",
+        "C-V3-71a2677dc2c37cdd",
+        "C-V3-028df2c05bcdee42",
+        "C-V3-889e9bb9af4fd50d"
+      ],
+      "evidence_ids": [
+        "E-V3-a758f536b6218e03",
+        "E-V3-364aa7a1338cb348",
+        "E-V3-f9b43d9bf1b29282",
+        "E-V3-05675598c1c94395",
+        "E-V3-5c1ce458bd571719"
+      ],
+      "relation_evidence_ids": [
+        "E-V3-1ca8aa608e0d4843",
+        "E-V3-7219cbbda089cea7"
+      ],
+      "covers_obligation_ids": [
+        "O-COMPONENT-01-bd3b9454"
+      ],
+      "organization_priority": 4
+    }
+  ],
+  "writing_constraints": [
+    "The projection is the writer's only positive method-fact input.",
+    "Follow semantic stage groups in organization_priority order.",
+    "Use only each stage group's ordered authorized claims and relation evidence.",
+    "Author-attested fragments remain caveated and never become repository evidence.",
+    "Do not introduce explicit gaps or unsupported author fragments as positive prose.",
+    "Compatibility evidence id E-V3-bdaf130619e79653 maps to rel:4024da979f792194.",
+    "Compatibility evidence id E-V3-1ca8aa608e0d4843 maps to rel:406492bde7696947.",
+    "Compatibility evidence id E-V3-7219cbbda089cea7 maps to rel:9c39c339b8028cfc.",
+    "Compatibility evidence id E-V3-a758f536b6218e03 maps to span:src/LinearRAG.py:103:103.",
+    "Compatibility evidence id E-V3-f9b43d9bf1b29282 maps to span:src/LinearRAG.py:129:129.",
+    "Compatibility evidence id E-V3-be6473473e7e870f maps to span:src/LinearRAG.py:187:187.",
+    "Compatibility evidence id E-V3-d19fed787115fa40 maps to span:src/LinearRAG.py:187:190.",
+    "Compatibility evidence id E-V3-c0c82fa0f8c44b18 maps to span:src/LinearRAG.py:188:188.",
+    "Compatibility evidence id E-V3-cea51762f01fa6cc maps to span:src/LinearRAG.py:192:192.",
+    "Compatibility evidence id E-V3-54481ced51092efe maps to span:src/LinearRAG.py:193:193.",
+    "Compatibility evidence id E-V3-9094162d3dc795b7 maps to span:src/LinearRAG.py:194:194.",
+    "Compatibility evidence id E-V3-a141bc5283231d81 maps to span:src/LinearRAG.py:198:205.",
+    "Compatibility evidence id E-V3-101e5db54bbeff5e maps to span:src/LinearRAG.py:208:208.",
+    "Compatibility evidence id E-V3-c767ed0eaad34547 maps to span:src/LinearRAG.py:561:564.",
+    "Compatibility evidence id E-V3-8435ad0964009c0e maps to span:src/LinearRAG.py:566:566.",
+    "Compatibility evidence id E-V3-05675598c1c94395 maps to span:src/LinearRAG.py:95:105.",
+    "Compatibility evidence id E-V3-364aa7a1338cb348 maps to span:src/LinearRAG.py:95:95.",
+    "Compatibility evidence id E-V3-5c1ce458bd571719 maps to span:src/LinearRAG.py:96:96.",
+    "Compatibility evidence id E-V3-fbab63729214ec2c maps to span:src/ner.py:32:33.",
+    "Compatibility evidence id E-V3-d1959e0d7848c3a8 maps to span:src/ner.py:36:37.",
+    "Compatibility claim id C-V3-3a41640cf80e05b3 maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3.",
+    "Compatibility claim id C-V3-c3159aaf7c739cfa maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394.",
+    "Compatibility claim id C-V3-9871ee142a4431a9 maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0.",
+    "Compatibility claim id C-V3-71a2677dc2c37cdd maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915.",
+    "Compatibility claim id C-V3-028df2c05bcdee42 maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87.",
+    "Compatibility claim id C-V3-889e9bb9af4fd50d maps to claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2.",
+    "Compatibility claim id C-V3-b92b57c3236ff3ab maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f.",
+    "Compatibility claim id C-V3-1fff753672b60410 maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2.",
+    "Compatibility claim id C-V3-8691d06fa40c80df maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113.",
+    "Compatibility claim id C-V3-5c4c526930242530 maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58.",
+    "Compatibility claim id C-V3-256a94ca7d3cbf14 maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71.",
+    "Compatibility claim id C-V3-320a72e70cf4ed02 maps to claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea.",
+    "Compatibility claim id C-V3-909d3695190d9657 maps to claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee.",
+    "Compatibility claim id C-V3-8f02ec2817ddc07a maps to claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682.",
+    "Compatibility claim id C-V3-5295dc5f82cc929f maps to claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af.",
+    "Compatibility claim id C-V3-03b3a498f5a6b3de maps to claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda.",
+    "Compatibility claim id C-V3-a9b1d44c4fcb14c5 maps to claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567.",
+    "Compatibility claim id C-V3-1b9da293118020b8 maps to claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23.",
+    "Compatibility claim id C-V3-964143773c8824b5 maps to claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbe47970ca704834.",
+    "Compatibility claim id C-V3-443a3d34700287ff maps to claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3.",
+    "Compatibility claim id C-V3-d2eb6b3f7f9f9c52 maps to claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0.",
+    "Compatibility claim id C-V3-9fbd13a890cbeecb maps to l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58:weighted_sum.",
+    "Compatibility claim id C-V3-9f51045a5031518b maps to l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask.",
+    "Compatibility claim id C-V3-6faf68f3e11ecf59 maps to l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum.",
+    "Compatibility claim id C-V3-d4b06f00bbf60a3c maps to l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask."
+  ],
+  "alignment_notes": [],
+  "excluded_sources": [],
+  "author_logic_priority": true,
+  "frozen_mechanisms": [],
+  "distinguishing_mechanisms": [],
+  "author_logic_mapping": {
+    "author_proposed_flow": [],
+    "author_supported_flow": [],
+    "author_unsupported_parts": []
+  },
+  "unsupported_author_parts": [],
+  "claim_contracts": [
+    {
+      "claim_id": "C-V3-8691d06fa40c80df",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities branches on self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d19fed787115fa40"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-256a94ca7d3cbf14",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-9094162d3dc795b7"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-5c4c526930242530",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-b92b57c3236ff3ab",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities calls self.run_ppr, node_weights, result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-54481ced51092efe"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-1fff753672b60410",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities loads weights self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-be6473473e7e870f"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-320a72e70cf4ed02",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities configured by self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d19fed787115fa40",
+        "E-V3-be6473473e7e870f"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-909d3695190d9657",
+      "claim_intent": "LinearRAG.index branches on len(new_passage_hash_ids) > 0",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-8f02ec2817ddc07a",
+      "claim_intent": "LinearRAG.index calls self.extract_nodes_and_edges, existing_passage_hash_id_to_entities, existing_sentence_to_entities, result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-8435ad0964009c0e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "len(new_passage_hash_ids) > 0"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-03b3a498f5a6b3de",
+      "claim_intent": "SpacyNER.extract_entities_sentences branches on ent_text not in sentence_to_entities[sent_text]",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-d1959e0d7848c3a8"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "ent_text not in sentence_to_entities[sent_text]",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-964143773c8824b5",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-9094162d3dc795b7"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-5295dc5f82cc929f",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-a9b1d44c4fcb14c5",
+      "claim_intent": "SpacyNER.extract_entities_sentences filters by ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-fbab63729214ec2c"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-1b9da293118020b8",
+      "claim_intent": "LinearRAG.graph_search_with_seed_entities calls self.calculate_entity_scores_vectorized, question_embedding, seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores, result=(entity_weights, actived_entities)",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-c0c82fa0f8c44b18"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-443a3d34700287ff",
+      "claim_intent": "LinearRAG.run_ppr sorts by np.argsort, doc_scores, result=sorted_indices_in_doc_scores",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-101e5db54bbeff5e"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-d2eb6b3f7f9f9c52",
+      "claim_intent": "LinearRAG.run_ppr propagates self.graph.personalized_pagerank, vertices=range(len(self.node_name_to_vertex_idx)), damping=self.config.damping, directed=False, weights='weight', reset=reset_prob, implementation='prpack', result=pagerank_scores",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-a141bc5283231d81"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-71a2677dc2c37cdd",
+      "claim_intent": "LinearRAG.retrieve branches on self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-05675598c1c94395"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9871ee142a4431a9",
+      "claim_intent": "LinearRAG.retrieve returns retrieval_results",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-f9b43d9bf1b29282"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-3a41640cf80e05b3",
+      "claim_intent": "LinearRAG.retrieve computes formula e2s_shape[0], e2s_shape[1]",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-a758f536b6218e03"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-c3159aaf7c739cfa",
+      "claim_intent": "LinearRAG.retrieve loads weights self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-364aa7a1338cb348"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-028df2c05bcdee42",
+      "claim_intent": "LinearRAG.retrieve calls logger.info, 'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-5c1ce458bd571719"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-889e9bb9af4fd50d",
+      "claim_intent": "LinearRAG.retrieve configured by self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-05675598c1c94395",
+        "E-V3-364aa7a1338cb348"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "required_qualifiers": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9fbd13a890cbeecb",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-9f51045a5031518b",
+      "claim_intent": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-6faf68f3e11ecf59",
+      "claim_intent": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    },
+    {
+      "claim_id": "C-V3-d4b06f00bbf60a3c",
+      "claim_intent": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_span_ids": [
+        "E-V3-fbab63729214ec2c"
+      ],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "required_qualifiers": [],
+      "review_question_id": ""
+    }
+  ],
+  "negative_scope": []
+}

@@ -1,0 +1,1622 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "claims_digest": "sha256:aedcf9c3bc6a6469f8dcaf69d51872642eae6e1566b7b343b43d201a422dac08",
+  "completeness_digest": "sha256:b4ce9574cbe58511c70d6cde53aa992aee3aa49f72f62f55b907fe72ad1a9eec",
+  "coverage_digest": "sha256:db8fc2dcfc676ff2055f480ad2dc5d1b035050e9be363fd505dd0cb3e0dcd124",
+  "intent_digest": "sha256:7bff90c4e8ade0e1fe69a804c64e998d9a06cb944f4dc18ac40e4963e96507e5",
+  "briefs": [
+    {
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+      "story_node_id": "story:O-METHOD-MAINLINE-01-79899e6c",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-METHOD-MAINLINE-01-79899e6c"
+      ],
+      "author_statement": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples. For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance. Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities; apply dynamic threshold pruning to avoid explosion. Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence). Retrieve the top‑k passages by final PageRank score.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:0",
+          "text": "Build Tri-Graph: extract entities from corpus passages, create entity, sentence, and passage nodes, and link them using only occurrence relationships (contain and mention edges) – no relation triples.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:1",
+          "text": "For each query, extract initial entities and compute a query–sentence similarity vector to capture contextual relevance.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:2",
+          "text": "Iteratively propagate entity activation through the sentence–entity subgraph, aggregating similarity signals to activate intermediate bridging entities;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:3",
+          "text": "apply dynamic threshold pruning to avoid explosion.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:4",
+          "text": "Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score (direct query–passage similarity + entity-based evidence).",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-79899e6c:5",
+          "text": "Retrieve the top‑k passages by final PageRank score.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "configuration_ids": [
+        "config:sha256:1edf681053477"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-89077bc932cdaa25",
+        "brief_id": "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "text": "Pipeline mechanism (six stages): (1) Offline Tri-Graph construction: extract entities from corpus passages via NER; create three node types (entity, sentence, passage); link via occurrence edges only — contain edges (passage→entity) and mention edges (sentence→entity); no relation triples are stored. (2) Query preprocessing: extract initial seed entities from the query; compute a query–sentence similarity vector to capture contextual relevance for each sentence in the graph. (3) Iterative entity activation: propagate activation scores through the sentence–entity subgraph; at each iteration, aggregate similarity signals from neighboring sentences to activate intermediate bridging entities that were not directly matched. (4) Dynamic threshold pruning: after each propagation round, discard entities whose activation falls below a running threshold, preventing combinatorial explosion of the active set. (5) Personalized PageRank on the passage–entity subgraph: seed the PPR with the activated entity set; initialize passage-node scores with a hybrid value combining direct query–passage similarity and entity-based evidence (i.e., the sum of activated-entity contributions mapped to their containing passages). (6) Retrieve top-k passages ranked by final PageRank score. The branching between vectorized and non-vectorized retrieval paths is governed by a configuration flag; the weighted aggregation of entity and passage contributions follows a sum-based formula with threshold masking applied to exclude sub-threshold terms. The intended mathematical role of the aggregation is a weighted sum over contributing entity and passage terms, where each term is gated by a threshold mask that zeros out weakly activated contributions before summation. The repository equation for this formula is a placeholder; the author should supply the concrete weighted-sum expression with explicit weight parameters and threshold symbol. The configuration flag determines whether the vectorized path (batched matrix operations) or the fallback path is taken at runtime; both paths converge on the same node_weights output. The spans in the source confirm the branching, formula computation, and weight-loading steps occur in a contiguous block of the graph_search_with_seed_entities method.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+          "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+          "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+          "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-1f936373429e5100"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-1f936373429e5100"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-1f936373429e5100"
+      ],
+      "facet_digest": "sha256:fafeb8f2a8e4d75b2a3119c48095712b9f578029e4e0162f6cc4d820741933a4",
+      "content_digest": "sha256:a0dc5eba8eb83bd34fe50ab0214dcb97c6a6cb2cd2ead6e5cbc38bb975efa6d2"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+      "story_node_id": "story:O-STAGE-01-9c8dfe22",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-01-9c8dfe22"
+      ],
+      "author_statement": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-01-9c8dfe22:0",
+          "text": "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+        "l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-ec9e3dae86c42579",
+        "brief_id": "brief:story:O-STAGE-01-9c8dfe22",
+        "text": "Offline graph construction stage: The index method first checks whether new passage hash IDs are present (branching on the length of the new-passage list). If new passages exist, it invokes extract_nodes_and_edges, passing in the existing passage-to-entity and sentence-to-entity mappings. The extraction routine returns entity nodes, sentence nodes, a passage-hash-to-entities mapping, and two adjacency structures: entity-to-sentence and sentence-to-entity. These adjacency structures are stored as sparse matrices representing the contain (passage–entity) and mention (sentence–entity) relationships. A threshold mask is applied during the branching logic: values that fail the comparison (i.e., passages already indexed) are excluded from further processing, ensuring idempotent incremental indexing. The net effect is that the Tri-Graph is built incrementally: new passages are split into sentences, entities are extracted via NER, and the sparse adjacency matrices are updated without reprocessing existing content.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+          "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+          "l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-36188cb856f44d0d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-36188cb856f44d0d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-36188cb856f44d0d"
+      ],
+      "facet_digest": "sha256:5f49f8e66ecea7f7b880394d20b05eaf35fd94cc4d0b5b12fa8d83c6369cf68b",
+      "content_digest": "sha256:a3815ba1818924f23b0dc7b2eb59ae37742d365177e66baf766541ed19db73e1"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-02-93c16851",
+      "story_node_id": "story:O-STAGE-02-93c16851",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-02-93c16851"
+      ],
+      "author_statement": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-02-93c16851:0",
+          "text": "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+        "l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/ner.py:36:37",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/ner.py:32:33",
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-316a08fefdf05f5a",
+        "brief_id": "brief:story:O-STAGE-02-93c16851",
+        "text": "Entity activation via local semantic bridging: (a) Query entity extraction: run spaCy NER on the query text; filter out entities labeled ORDINAL or CARDINAL (these are noise for multi-hop reasoning); for each remaining entity, check whether it already exists in the sentence-to-entities mapping — if not, it is a new seed. (b) Similarity computation: compute a question embedding and match it against sentence embeddings to obtain query–sentence similarity scores. (c) Iterative propagation: call calculate_entity_scores_vectorized, passing the question embedding, seed entity indices, seed entity hash IDs, and seed entity scores. Internally, scores propagate through the sentence–entity subgraph: at each iteration, an entity's score is updated as a weighted sum of its neighboring sentences' similarity contributions. A threshold mask is applied after each round — terms whose aggregated score falls below the threshold are excluded (zeroed), preventing noise accumulation. (d) Output: the method returns entity_weights (a vector of final activation scores per entity) and the set of activated entities (those exceeding the threshold). The intended mathematical role of the aggregation is a weighted sum over contributing sentence–entity terms, gated by a threshold mask; the repository equation is a placeholder and the author should supply the explicit summation with weight parameters and threshold symbol. The NER filtering (excluding ordinal/cardinal) and the branching on entity presence in the mapping are confirmed by the source spans in the NER module and the LinearRAG method.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+          "l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+          "l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-dfd9e7cedfe705e0"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-dfd9e7cedfe705e0"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-dfd9e7cedfe705e0"
+      ],
+      "facet_digest": "sha256:b2207273e920fa28f66a1605d3e1b8dacc12870ad96545afd217f161eb7eb2df",
+      "content_digest": "sha256:1612f06eb92922f569e8f1c6c5e054c4294b4ddf5615d4828e9ffbc21514b097"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-03-8dda66b9",
+      "story_node_id": "story:O-STAGE-03-8dda66b9",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-03-8dda66b9"
+      ],
+      "author_statement": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-03-8dda66b9:0",
+          "text": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:198:205"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Passage Retrieval via Global Importance Aggregation: Use the activated entities as seeds for personalized PageRank on the passage–entity subgraph, initializing passage nodes with a hybrid score, to obtain a globally ranked list of top passages.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "claim-O-STAGE-03-8dda66b9-fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0",
+        "l2:math:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "configuration_ids": [
+        "config:sha256:1edf681053477"
+      ],
+      "span_ids": [
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:193:193",
+        "span:src/LinearRAG.py:187:187",
+        "span:src/LinearRAG.py:208:208",
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-38640a55ca8e73c8",
+        "brief_id": "brief:story:O-STAGE-03-8dda66b9",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-aee51cb1cb5c563f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-aee51cb1cb5c563f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-aee51cb1cb5c563f"
+      ],
+      "facet_digest": "sha256:99cbdfe851693b8cd031df977c0c5e4a48959011b6cdc3612423849e53ab3bb9",
+      "content_digest": "sha256:a9c048e3fb790a715a300746d212c0a08461268a1a0841377a029801cdf4b2ab"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+      "story_node_id": "story:O-COMPONENT-01-4e554ef0",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-4e554ef0"
+      ],
+      "author_statement": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-4e554ef0:0",
+          "text": "Develop a retrieval-augmented generation system that efficiently handles complex, multi-hop queries over large-scale unstructured corpora by eliminating reliance on error-prone relation extraction, using only entity-based graph indexing and a two-stage retrieval mechanism.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+        "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:561:564",
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-dc2d7f2764570dd0",
+        "brief_id": "brief:story:O-COMPONENT-01-4e554ef0",
+        "text": "System-level setup and motivation: The system is a retrieval-augmented generation pipeline designed for complex multi-hop queries over large unstructured corpora. Its distinguishing design choice is the elimination of error-prone relation extraction: the graph index is built exclusively from entity-based occurrence edges (contain and mention), not from semantic relation triples. Retrieval operates in two stages: first, entity activation via semantic bridging discovers latent intermediate entities; second, personalized PageRank over the passage–entity subgraph ranks candidate passages. The repository supports the graph-construction side: the index method branches on new passage presence and calls extract_nodes_and_edges to produce the node and adjacency structures. The claim that relation extraction is eliminated is partially supported — the repository shows only entity-based adjacency structures being built, but the absence of relation triples is a design choice rather than a directly observable code fact. The two-stage retrieval mechanism is partially supported: the entity-activation stage and the PageRank stage are both present in the code, but the explicit framing as a two-stage pipeline is an author-level organizational claim.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+          "claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-751466939a6d86e8"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-751466939a6d86e8"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-751466939a6d86e8"
+      ],
+      "facet_digest": "sha256:19940b5aa613ba55cc1459a4c84bb02506e90e6b99777b78d0a4970187414263",
+      "content_digest": "sha256:09971bd7899be6e2cc009962eee93defc48aa084981ae15d120d2894a80b48e8"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-bd3b9454",
+      "story_node_id": "story:O-COMPONENT-01-bd3b9454",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-bd3b9454"
+      ],
+      "author_statement": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-bd3b9454:0",
+          "text": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency;",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-01-bd3b9454:1",
+          "text": "anchors the entire retrieval pipeline.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:96:96"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Tri-Graph: Hierarchical graph with entity, sentence, and passage nodes and sparse contain/message adjacency; anchors the entire retrieval pipeline.",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "equation_ids": [
+        "equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:129:129",
+        "span:src/LinearRAG.py:103:103",
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-46350371d11dee4c",
+        "brief_id": "brief:story:O-COMPONENT-01-bd3b9454",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-37ac47cd0b3c324b"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-37ac47cd0b3c324b"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-37ac47cd0b3c324b"
+      ],
+      "facet_digest": "sha256:18cf6e171344fdccff84f2f4b32540d00eee5d2f6f5e5ba9c86857e12322c373",
+      "content_digest": "sha256:55dfd0def0cc99f619364d50bc1d170d676fb5d3e284b10b2be8ff58cf5cffeb"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+      "story_node_id": "story:O-COMPONENT-02-8058a7bc",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-02-8058a7bc"
+      ],
+      "author_statement": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+      "completeness_statuses": [
+        "unverified_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-02-8058a7bc:0",
+          "text": "spaCy NER: Lightweight named entity extraction used both offline (graph building) and online (query entity extraction).",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-0857301b0a32c275",
+        "brief_id": "brief:story:O-COMPONENT-02-8058a7bc",
+        "text": "spaCy NER component: A lightweight named-entity recognition module serves two roles in the pipeline. Offline, it extracts entities from corpus passages during graph construction, populating the entity node set and the mention/contain adjacency matrices. Online, it extracts entities from incoming queries to seed the activation process. The NER module filters out entities labeled ORDINAL and CARDINAL, as these numeric tokens are unlikely to serve as meaningful bridging entities in multi-hop reasoning. The branching logic checks whether an extracted entity text already exists in the sentence-to-entities mapping; if not, it is registered as a new entity. No repository fragments are provided in this brief to independently verify the dual offline/online usage claim; the fragments cited here are drawn from the broader fragment pool and confirm the NER filtering and branching behavior but do not directly evidence the offline graph-building invocation of the same NER module. The author should confirm that the offline extraction path uses the same spaCy pipeline configuration as the online path.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2463c74d9fdec304"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2463c74d9fdec304"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2463c74d9fdec304"
+      ],
+      "facet_digest": "sha256:caceccfab49ebb060186a8a87728efd80ce78f8a57358d6c373468d933753cd6",
+      "content_digest": "sha256:9eb32165086b892f9e848fa9eed8908a56b911a62efca5375265647eee518472"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+      "story_node_id": "story:O-COMPONENT-03-0c4d02ed",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-03-0c4d02ed"
+      ],
+      "author_statement": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity; identifies latent intermediate entities for multi‑hop connections.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-03-0c4d02ed:0",
+          "text": "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-03-0c4d02ed:1",
+          "text": "identifies latent intermediate entities for multi‑hop connections.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-33f94e449572e9dd",
+        "brief_id": "brief:story:O-COMPONENT-03-0c4d02ed",
+        "text": "Entity activation via semantic bridging (component view): This component encapsulates the iterative propagation mechanism. Given a set of seed entities (from query NER) and a query–sentence similarity vector, the algorithm propagates activation scores through the sentence–entity subgraph. At each iteration, an entity's score is updated as a weighted sum of its neighboring sentences' similarity contributions. A threshold mask gates the update: terms below the threshold are excluded, ensuring only strongly relevant entities remain active. The key capability is the identification of latent intermediate entities — entities that are not directly mentioned in the query but become activated because they share sentences with already-active entities. This is the mechanism by which multi-hop connections are discovered without explicit relation paths. The weighted-sum aggregation and threshold masking are confirmed by the formula computation in the graph search method and the threshold_mask claim. The repository equation for the aggregation is a placeholder; the author should supply the concrete expression. No fragments are provided within this brief itself; the cited fragments are drawn from the shared pool and confirm the propagation and aggregation behavior.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+          "l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+          "l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-49c35a32b3156393"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-49c35a32b3156393"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-49c35a32b3156393"
+      ],
+      "facet_digest": "sha256:bab61b4a31dc198e437f3ac9fb917a641eb5bd4333d8bf8ae396a2a9b1737231",
+      "content_digest": "sha256:592b6152de3a7129db2039b4d74ba3855c8b5c0e029ab976ebd6ab997070aa86"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+      "story_node_id": "story:O-COMPONENT-04-4f4f1da6",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-04-4f4f1da6"
+      ],
+      "author_statement": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-04-4f4f1da6:0",
+          "text": "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-870852212c509970",
+        "brief_id": "brief:story:O-COMPONENT-04-4f4f1da6",
+        "text": "Dynamic pruning component: A threshold-based filtering mechanism applied during entity activation propagation. After each propagation round, the algorithm evaluates the activation score of every candidate entity against a threshold. Entities whose scores fall below the threshold are pruned (excluded from further propagation), while those above are retained. This prevents combinatorial expansion of the active entity set as propagation proceeds through multiple hops. The threshold_mask claim confirms that values failing the comparison are excluded from the aggregation. The intended role is to balance recall (discovering bridging entities) against precision (avoiding noise from weakly related entities). No fragments are provided within this brief; the cited fragments are drawn from the shared pool and confirm the threshold-masking behavior in both the indexing and activation contexts. The author should specify whether the threshold is fixed, adaptive, or learned, and how it interacts with the number of propagation iterations.",
+        "cited_claim_ids": [
+          "l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask",
+          "l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-397617ae0c814f4c"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-397617ae0c814f4c"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-397617ae0c814f4c"
+      ],
+      "facet_digest": "sha256:e047f1fdf1cefe122f7230dc01178f61659cf934d21202412f93b57eaed44f40",
+      "content_digest": "sha256:2e8e542b78f15e5b73bb7f79a5d5cdcf25cd24086dab151a1000dd961a3f34a6"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+      "story_node_id": "story:O-COMPONENT-05-29ba03a1",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-05-29ba03a1"
+      ],
+      "author_statement": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph; ranks passages by propagating influence from activated entities.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-05-29ba03a1:0",
+          "text": "Personalized PageRank: Global importance aggregation on the passage–entity subgraph;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-05-29ba03a1:1",
+          "text": "ranks passages by propagating influence from activated entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-1356a1265d4fc1a7",
+        "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-11f57730a8077780"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-11f57730a8077780"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-11f57730a8077780"
+      ],
+      "facet_digest": "sha256:31d16b100bfdfbe22cc6082e897356572997206084ad5d17e5e8b0e564335ffd",
+      "content_digest": "sha256:404715993b50884f91e1dec052fcfdc7703a8ffc0de17c808718e599655f65a4"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+      "story_node_id": "story:O-COMPONENT-06-bf20ec9b",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-06-bf20ec9b"
+      ],
+      "author_statement": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-06-bf20ec9b:0",
+          "text": "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-d31fae9a51107367",
+        "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-6c02c195374453b1"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-6c02c195374453b1"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-6c02c195374453b1"
+      ],
+      "facet_digest": "sha256:0f58e133eb6dd6108aa34ad46ee06eb1c235027c7111024734e24007124c8e0c",
+      "content_digest": "sha256:5e6eb1e4264b630b2e4b4a4d694a4ff9944a954152589a27e437aace9e19c39d"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+      "story_node_id": "story:O-ORGANIZATION-01-4ee8e0bf",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-01-4ee8e0bf"
+      ],
+      "author_statement": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "completeness_statuses": [
+        "out_of_scope"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-01-4ee8e0bf:0",
+          "text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-17639deba01bd591",
+        "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9218cef3b4752e6d"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9218cef3b4752e6d"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9218cef3b4752e6d"
+      ],
+      "facet_digest": "sha256:fdb3218daeebac65e016a7c660e9f045d5da051a9a1d13ddd2f97a9fac17f50d",
+      "content_digest": "sha256:67a77540f3a34fc172040333571f1ac3815d8e9bbda7f5e08b37dbd331ea5967"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+      "story_node_id": "story:O-ORGANIZATION-02-1977b399",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-02-1977b399"
+      ],
+      "author_statement": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "completeness_statuses": [
+        "out_of_scope"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-02-1977b399:0",
+          "text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-d5565e3c05624b07",
+        "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-44d3952a34b9c61b"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-44d3952a34b9c61b"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-44d3952a34b9c61b"
+      ],
+      "facet_digest": "sha256:ca008504da3d9a0b3d16fd08fd5be0a332a815502797843d0f34fb4c2d851492",
+      "content_digest": "sha256:cba52eafc94a7ca47a1236107d3fbd702239b71b27332ba304e89d7be80cb3bd"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+      "story_node_id": "story:O-ORGANIZATION-03-157f229e",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-03-157f229e"
+      ],
+      "author_statement": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-03-157f229e:0",
+          "text": "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-f8d9abe0e5f429d6",
+        "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-8ce6e8dabb55bf84"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-8ce6e8dabb55bf84"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-8ce6e8dabb55bf84"
+      ],
+      "facet_digest": "sha256:4fbfccb2e41d85205310c9769bdbb6705c3025d16e87f907283973b59acdd467",
+      "content_digest": "sha256:09db25f643a08d83452acd890de97a32a4b06cb6c3afa09cd34d1bed7ff952df"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+      "story_node_id": "story:O-ORGANIZATION-04-8fc65790",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-04-8fc65790"
+      ],
+      "author_statement": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-04-8fc65790:0",
+          "text": "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-2685885e200bf8ff",
+        "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-0110bf36238d22ed"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-0110bf36238d22ed"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-0110bf36238d22ed"
+      ],
+      "facet_digest": "sha256:44ec6e83e882da587693ce8156572131c6b9e5de4ad6fa6f4a00e2356b896e43",
+      "content_digest": "sha256:379adaa883efbdb806d3302c27f6a6fdc8834f5e55df7dcaefeda14e5504f415"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+      "story_node_id": "story:O-ORGANIZATION-05-e0c123aa",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-05-e0c123aa"
+      ],
+      "author_statement": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-05-e0c123aa:0",
+          "text": "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-98babe38759d8070",
+        "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2962ffa6059952a7"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2962ffa6059952a7"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2962ffa6059952a7"
+      ],
+      "facet_digest": "sha256:58f4e3b629856db08a49e9642c6cb266e7f26b6bfb5678d4823fe28c6f015909",
+      "content_digest": "sha256:eb241e87a6bf7b238eb7c479caf83d185867d59b1933f34ee9e89f61a2dffe14"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "story_node_id": "story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-01-c0bb1e93"
+      ],
+      "author_statement": "Avoid explicit relation extraction entirely.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-01-c0bb1e93:0",
+          "text": "Avoid explicit relation extraction entirely.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-e56b2bf1e7867ace",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-2d7d68d7654183c5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-2d7d68d7654183c5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-2d7d68d7654183c5"
+      ],
+      "facet_digest": "sha256:c91ae39e4ed8530fa92fdc49d4bfa1b11e21d8ee7464352faddbdf8676c4447c",
+      "content_digest": "sha256:3bdacfdbc30c032646e673430b79a2ffce8e4a270db621d0b00f5955c66117a4"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+      "story_node_id": "story:O-RATIONALE-CHECK-02-1a90a997",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "author_statement": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-02-1a90a997:0",
+          "text": "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-90978946f43904d6",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-f53ce53973fd2859"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-f53ce53973fd2859"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-f53ce53973fd2859"
+      ],
+      "facet_digest": "sha256:f0cac8391fc3b323b293ed7a8f82cfee98daa5de7fa834969a31c9e078b104df",
+      "content_digest": "sha256:507789cf8ac9d859168ad9f623eccd80a2d5544a3fd42d3ee9c47901261a0bf5"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+      "story_node_id": "story:O-RATIONALE-CHECK-03-09c84504",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-03-09c84504"
+      ],
+      "author_statement": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-03-09c84504:0",
+          "text": "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-bc5662596df6c49a",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c94a090684d57a33"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c94a090684d57a33"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c94a090684d57a33"
+      ],
+      "facet_digest": "sha256:8328ebef94434de522b8e60289c51a72434cf8e2b02aa98bd7a91c3630636a1a",
+      "content_digest": "sha256:a160b96d13d4431e4f74f28dee74c58c31ffa82324be28785d5980ae24c62beb"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+      "story_node_id": "story:O-RATIONALE-CHECK-04-9ca078fe",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-04-9ca078fe"
+      ],
+      "author_statement": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+          "text": "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-80a100bd8b5eaa74",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-707cc9a20282c836"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-707cc9a20282c836"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-707cc9a20282c836"
+      ],
+      "facet_digest": "sha256:ed716c8875819870b174f7f5fe2702960e477a2cbee199698fab5208e7d4942f",
+      "content_digest": "sha256:88f507c687742543c95a15c880f60ca010cf89c0a981b0edb0f3bd54f19fde7e"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+      "story_node_id": "story:O-RATIONALE-CHECK-05-ffcf3556",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-05-ffcf3556"
+      ],
+      "author_statement": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-05-ffcf3556:0",
+          "text": "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-cf9b3692d9d112c5",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-77eff1974af1d1d5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-77eff1974af1d1d5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-77eff1974af1d1d5"
+      ],
+      "facet_digest": "sha256:ee472de4770ba1eeab1007ffe4be1669ffb4881b177c1a56f988d1739a92b3ea",
+      "content_digest": "sha256:05e6d68befc343c495470af7c26c21066a5dd27cdb5f8c737d0613954dba8779"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+      "story_node_id": "story:O-RATIONALE-CHECK-06-0f48dc22",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "author_statement": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-06-0f48dc22:0",
+          "text": "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-0a862420da503272",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-14e6716402039fea"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-14e6716402039fea"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-14e6716402039fea"
+      ],
+      "facet_digest": "sha256:219def57cc605a19294a1b12df7246c99ec23c2bc984ab542e036ba066fbbe58",
+      "content_digest": "sha256:c72884b0367e9b13b9ad9c77eb0abec9328836935be79ea3d810f38d74c8ec3d"
+    }
+  ],
+  "planner_used": true,
+  "gaps": [
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-05-29ba03a1",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-06-bf20ec9b",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-02-1977b399",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-03-157f229e",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-04-8fc65790",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-05-e0c123aa",
+      "obligation_id": "",
+      "message": "unknown frag id:"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-09c84504",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+      "obligation_id": "",
+      "message": "unknown frag id:text"
+    }
+  ],
+  "planner_call_traces": [
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "brief:story:O-STAGE-01-9c8dfe22",
+        "brief:story:O-STAGE-02-93c16851",
+        "brief:story:O-COMPONENT-01-4e554ef0",
+        "brief:story:O-COMPONENT-02-8058a7bc",
+        "brief:story:O-COMPONENT-03-0c4d02ed",
+        "brief:story:O-COMPONENT-04-4f4f1da6"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-METHOD-MAINLINE-01-79899e6c\",\n      \"cited_frag_ids\": [\"frag-1\", \"frag-2\", \"frag-3\", \"frag-4\", \"frag-5\", \"frag-6\", \"frag-7\", \"frag-8\", \"frag-9\", \"frag-10\"],\n      \"text\": \"Mechanism sketch for the mainline retrieval pipeline. The algorithm operates in a single forward pass over a pre-built tri-graph (entity, sentence, passage nodes linked by contain and mention edges only; no relation triples are stored). Given a query, the system first extracts seed entities and computes a query-to-sentence similarity vector. It then calls the vectorized entity-score routine, which takes the question embedding, seed entity indices, and seed entity scores as inputs and returns entity_weights and the set of activated entities. The computation of entity_weights, passage_weights, and the final node_weights is governed by a weighted-sum form (the repository equation is a two-term additive combination). The branching on the use_vectorized_retrieval configuration flag selects between vectorized and non-vectorized weight-loading paths. Dynamic threshold pruning is applied during propagation to exclude entities whose scores fall below a running threshold, preventing combinatorial expansion. The activated entities then seed a personalized PageRank pass over the passage-entity subgraph, where passage nodes are initialized with a hybrid score combining direct query-passage similarity and entity-based evidence. The top-k passages are returned by final PageRank score. Supported facets: the weight computation formula, the vectorized-retrieval branching, and the equation form. Unresolved facets: the exact iterative propagation schedule, the dynamic threshold schedule, the hybrid initialization formula, and the top-k selection criterion are described at the mechanism level but lack a dedicated repository equation beyond the two-term additive form.\"\n    },\n    {\n      \"brief_id\": \"brief:story:O-STAGE-01-9c8dfe22\",\n      \"cited_frag_ids\": [\"frag-",
+      "estimated_prompt_tokens": 2712,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:302c2cd9bad0207b1bb10aa2729cb91e1ea61142e108d51e7345bb2e454bbf9c",
+      "response_digest": "sha256:302c2cd9bad0207b1bb10aa2729cb91e1ea61142e108d51e7345bb2e454bbf9c",
+      "parse_error": "formula-like draft without equation binding requires caveat"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-79899e6c",
+        "brief:story:O-STAGE-01-9c8dfe22",
+        "brief:story:O-STAGE-02-93c16851",
+        "brief:story:O-COMPONENT-01-4e554ef0",
+        "brief:story:O-COMPONENT-02-8058a7bc",
+        "brief:story:O-COMPONENT-03-0c4d02ed",
+        "brief:story:O-COMPONENT-04-4f4f1da6"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-METHOD-MAINLINE-01-79899e6c\",\"cited_frag_ids\":[\"frag-1\",\"frag-2\",\"frag-3\",\"frag-4\",\"frag-5\",\"frag-6\",\"frag-7\",\"frag-8\",\"frag-9\",\"frag-10\"],\"text\":\"Pipeline mechanism (six stages): (1) Offline Tri-Graph construction: extract entities from corpus passages via NER; create three node types (entity, sentence, passage); link via occurrence edges only — contain edges (passage→entity) and mention edges (sentence→entity); no relation triples are stored. (2) Query preprocessing: extract initial seed entities from the query; compute a query–sentence similarity vector to capture contextual relevance for each sentence in the graph. (3) Iterative entity activation: propagate activation scores through the sentence–entity subgraph; at each iteration, aggregate similarity signals from neighboring sentences to activate intermediate bridging entities that were not directly matched. (4) Dynamic threshold pruning: after each propagation round, discard entities whose activation falls below a running threshold, preventing combinatorial explosion of the active set. (5) Personalized PageRank on the passage–entity subgraph: seed the PPR with the activated entity set; initialize passage-node scores with a hybrid value combining direct query–passage similarity and entity-based evidence (i.e., the sum of activated-entity contributions mapped to their containing passages). (6) Retrieve top-k passages ranked by final PageRank score. The branching between vectorized and non-vectorized retrieval paths is governed by a configuration flag; the weighted aggregation of entity and passage contributions follows a sum-based formula with threshold masking applied to exclude sub-threshold terms. The intended mathematical role of the aggregation is a weighted sum over contributing entity and passage terms, where each term is gated by a threshold mask that zeros out weakly activated contributions before summation. The repository equation for this formula is a placeholder;",
+      "estimated_prompt_tokens": 2736,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:16a55ad725cdfb1bc808f512a23be03b75e9e35ec6eb3e8f4c8dad49ea203750",
+      "response_digest": "sha256:16a55ad725cdfb1bc808f512a23be03b75e9e35ec6eb3e8f4c8dad49ea203750"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-05-29ba03a1",
+        "brief:story:O-COMPONENT-06-bf20ec9b",
+        "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "brief:story:O-ORGANIZATION-02-1977b399",
+        "brief:story:O-ORGANIZATION-03-157f229e",
+        "brief:story:O-ORGANIZATION-04-8fc65790",
+        "brief:story:O-ORGANIZATION-05-e0c123aa"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\": [{\"brief_id\": \"brief:story:O-COMPONENT-05-29ba03a1\", \"caveat\": \"partially_supported_by_repository; no repository fragments available to license the PPR formulation; author intent is to present a standard personalized PageRank over the passage–entity subgraph with personalization concentrated on stage-1 activated entities\", \"cited_frag_ids\": [\"text\"], \"text\": \"Mechanism sketch – Personalized PageRank on the passage–entity subgraph. Given the set of activated entities E_act produced by the first retrieval stage, extract the induced bipartite subgraph G_PE = (P ∪ E_act, A_PE) where P is the passage node set and A_PE encodes passage–entity containment (a passage is adjacent to an entity if the entity occurs in that passage). Define a personalization vector v over the entity nodes such that v(e) = 1/|E_act| for e ∈ E_act and v(p) = 0 for all passage nodes. The PPR iteration is r^(t+1) = α · M · r^(t) + (1 − α) · v, where M is the column-stochastic transition matrix of G_PE (with a teleportation fallback for dangling nodes). The fixed-point vector r* yields a scalar importance score for each passage node; passages are ranked in descending order of r*(p). Intended mathematical role: the PPR acts as a global importance aggregator that distributes influence from the activated entity set across the passage corpus, so that passages sharing many activated entities (or connected through high-degree entity hubs) receive higher scores. The damping factor α controls the trade-off between local proximity to activated entities and global structural centrality within the subgraph.\"}, {\"brief_id\": \"brief:story:O-COMPONENT-06-bf20ec9b\", \"caveat\": \"partially_supported_by_repository; no repository fragments available to license the hybrid initialization formula; author intent is to combine direct query–passage similarity with entity-based statistics as the starting distribution for PPR\", \"cited_frag_ids\": [\"text\"], \"text\": \"Mechanism sketch – Hybrid Passage Initialization. Befo",
+      "estimated_prompt_tokens": 1179,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:cd5c7feaae2838e6a0788c25de7f3f387b5362ff8939f6d1ce65c1061792ac5e",
+      "response_digest": "sha256:cd5c7feaae2838e6a0788c25de7f3f387b5362ff8939f6d1ce65c1061792ac5e",
+      "parse_error": "unknown frag id:text"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-05-29ba03a1",
+        "brief:story:O-COMPONENT-06-bf20ec9b",
+        "brief:story:O-ORGANIZATION-01-4ee8e0bf",
+        "brief:story:O-ORGANIZATION-02-1977b399",
+        "brief:story:O-ORGANIZATION-03-157f229e",
+        "brief:story:O-ORGANIZATION-04-8fc65790",
+        "brief:story:O-ORGANIZATION-05-e0c123aa"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-COMPONENT-05-29ba03a1\",\"caveat\":\"unlicensed_author_intent_no_repository_evidence\",\"cited_frag_ids\":[\n\"\",\"text\"\n]\n,\"text\":\"Mechanism sketch (setup): Personalized PageRank (PPR) operates on the passage–entity bipartite subgraph of the Tri-Graph. Given a set of activated entity nodes (output of the first retrieval stage), PPR computes a stationary distribution over passage nodes by iteratively propagating influence along entity-to-passage edges. The personalization vector is concentrated on the activated entities, so passages that are reachable from many or high-weight activated entities accumulate higher scores. The final ranking of passages is read off the converged PPR vector restricted to passage nodes. Intended mathematical role: the PPR vector π satisfies π = α·M·π + (1−α)·v, where M is the column-stochastic transition matrix of the subgraph, α is the damping factor, and v is the personalization vector supported on activated entities. This formulation positions PPR as a global importance aggregation that couples local entity activation to passage-level ranking without requiring explicit passage-passage edges.\"}\n,{\"brief_id\":\"brief:story:O-COMPONENT-06-bf20ec9b\",\"caveat\":\"unlicensed_author_intent_no_repository_evidence\",\"cited_frag_ids\":[\n\"\",\"text\"\n]\n,\"text\":\"Mechanism sketch (setup): Hybrid Passage Initialization defines the initial PPR score for each passage node before iterative propagation begins. The initial score is a weighted combination of two signals: (1) direct query–passage similarity (e.g., cosine similarity between query embedding and passage embedding), and (2) entity-based statistics aggregated over the entities contained in the passage, specifically occurrence count (how many times the entity appears across the corpus or within the passage) and entity level (a hierarchical or salience score). The combination is intended to seed the PPR iteration with a prior that reflects both lexical/semantic relevance and str",
+      "estimated_prompt_tokens": 1194,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:551617f4132841414952059d2355b7dca7c9ae19bb6653673167edd7d6a2c69b",
+      "response_digest": "sha256:551617f4132841414952059d2355b7dca7c9ae19bb6653673167edd7d6a2c69b",
+      "parse_error": "unknown frag id:"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+        "brief:story:O-RATIONALE-CHECK-03-09c84504",
+        "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+        "brief:story:O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-01-c0bb1e93\",\n      \"cited_frag_ids\": [\n        \"clause:O-RATIONALE-CHECK-01-c0bb1e93:0\"\n      ],\n      \"text\": \"Design constraint: the system deliberately omits an explicit relation-extraction module. Instead of surfacing typed edges between entities, the architecture relies on co-occurrence and structural proximity within the graph to implicitly encode relational signal. The motivation is to reduce annotation burden and avoid brittle relation schemas; relational evidence is recovered downstream through propagation dynamics rather than pre-extracted triples. [Author confirmation required: the rationale for this design choice and its empirical trade-offs are not yet licensed.]\"\n    },\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-02-1a90a997\",\n      \"cited_frag_ids\": [\n        \"clause:O-RATIONALE-CHECK-02-1a90a997:0\"\n      ],\n      \"text\": \"Graph topology: a two-tier hierarchical structure is proposed. The upper tier contains entity nodes; the lower tier contains text-span nodes (passages and sentences) that serve as provenance anchors. Edges connect entities to the spans in which they appear, preserving the original textual context. This design ensures that every entity activation can be traced back to concrete evidence, and that passage-level retrieval can be grounded in the same structure. [Author confirmation required: the exact hierarchy depth, node types, and edge semantics are not yet licensed.]\"\n    },\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-03-09c84504\",\n      \"cited_frag_ids\": [\n        \"clause:O-RATIONALE-CHECK-03-09c84504:0\"\n      ],\n      \"text\": \"Retrieval pipeline is split into two decoupled stages. Stage 1 (local entity activation): given a query, identify and activate relevant entity nodes in the graph, producing a set of activated entities with associated scores. Stage 2 (global passage ranking): propagate activation scores from entities to their connecte",
+      "estimated_prompt_tokens": 981,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:2f98c42560d352180e6f20627b5bfa6edb7695714cee6cfd2b55192b3a9797c4",
+      "response_digest": "sha256:2f98c42560d352180e6f20627b5bfa6edb7695714cee6cfd2b55192b3a9797c4",
+      "parse_error": "unknown frag id:clause:O-RATIONALE-CHECK-01-c0bb1e93:0"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-c0bb1e93",
+        "brief:story:O-RATIONALE-CHECK-02-1a90a997",
+        "brief:story:O-RATIONALE-CHECK-03-09c84504",
+        "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+        "brief:story:O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-RATIONALE-CHECK-01-c0bb1e93\",\"caveat\":\"author_confirmation_required\",\"cited_frag_ids\":[\n    \"text\"\n  ],\"text\":\"Mechanism sketch (motivation): The design deliberately omits an explicit relation-extraction module. Rather than learning or enumerating typed edges between entities, the system relies on co-occurrence within shared passages and sentences as an implicit relational signal. The intended rationale is that passage-level co-mention already encodes a sufficient relational context for downstream retrieval, and that an explicit relation layer would introduce extraction noise and scale costs without proportional gain. The author should confirm whether this design choice is motivated by empirical ablation evidence, by a principled argument about information sufficiency, or by engineering simplicity.\"},{\"brief_id\":\"brief:story:O-RATIONALE-CHECK-02-1a90a997\",\"caveat\":\"author_confirmation_required\",\"cited_frag_ids\":[\n    \"text\"\n  ],\"text\":\"Mechanism sketch (motivation): The graph is organized hierarchically with three node tiers: (1) passage nodes that retain the full original text, (2) sentence nodes that preserve sentence-level provenance, and (3) entity nodes that serve as shared semantic anchors across passages. Edges connect entities to the sentences in which they appear, and sentences to their parent passages. This hierarchy allows retrieval to operate at multiple granularities: entity-level activation can be traced back to specific sentences and passages, preserving the original textual context rather than reducing it to a flat entity graph. The author should confirm the intended granularity levels and whether sentence-level nodes are always materialized or only on demand.\"},{\"brief_id\":\"brief:story:O-RATIONALE-CHECK-03-09c84504\",\"caveat\":\"partially_supported_by_repository\",\"cited_frag_ids\":[\n    \"text\"\n  ],\"text\":\"Mechanism sketch (motivation): Retrieval is decomposed into two sequential stages. Stage 1 (local entity activat",
+      "estimated_prompt_tokens": 1004,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:febf1d3774a5a46476b966997d8332bcff2a7731337095e0abc79a0e3500ad64",
+      "response_digest": "sha256:febf1d3774a5a46476b966997d8332bcff2a7731337095e0abc79a0e3500ad64",
+      "parse_error": "unknown frag id:text"
+    }
+  ],
+  "content_digest": "sha256:f441b6a6abcca383de2e63f041821e36f7579427088265472f48a8c7aacd0921"
+}

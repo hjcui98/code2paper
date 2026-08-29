@@ -18,6 +18,7 @@ METHOD_OUTLINE_SCHEMA = "method_outline"
 METHOD_PLAN_SCHEMA = "method_plan"
 METHOD_DRAFT_SCHEMA = "method_draft"
 PUBLICATION_METHOD_SECTION_SCHEMA = "publication_method_section_v1"
+PUBLICATION_PARAGRAPH_BINDING_SCHEMA = "publication_paragraph_binding_v1"
 PUBLICATION_METHOD_EDITOR_SCHEMA = "publication_method_editor_v1"
 METHOD_FACET_DECOMPOSITION_SCHEMA = "method_facet_decomposition_v1"
 METHOD_FACET_ALIGNMENT_SCHEMA = "method_facet_alignment_v1"
@@ -46,6 +47,39 @@ class PublicationContentWitnessV1(BaseModel):
     exact_text: str = Field(min_length=1, max_length=4000)
 
 
+class PublicationParagraphBindingResponseV1(BaseModel):
+    """Metadata-only Binder response for a frozen Writer paragraph.
+
+    The Binder never returns paragraph prose.  ``exact_text`` values are
+    copied from the already frozen paragraph and are subsequently checked by
+    the deterministic transaction assessor.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    paragraph_id: str = Field(min_length=1, max_length=240)
+    witnesses: list[PublicationContentWitnessV1] = Field(
+        default_factory=list,
+        max_length=128,
+    )
+    unbound_target_ids: list[str] = Field(default_factory=list, max_length=128)
+
+
+class PublicationFormulaDispositionV1(BaseModel):
+    """Typed Writer disposition for a formula package it did not consume."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    package_id: str = Field(min_length=1, max_length=240)
+    disposition: Literal[
+        "consumed",
+        "writer_rejected_not_material",
+        "writer_rejected_conflict",
+        "missing_from_prose",
+    ]
+    reason: str = Field(default="", max_length=800)
+
+
 class PublicationMethodParagraphOutputV1(BaseModel):
     """Transactional Writer output for exactly one planned paragraph."""
 
@@ -63,6 +97,21 @@ class PublicationMethodParagraphOutputV1(BaseModel):
     witnesses: list[PublicationContentWitnessV1] = Field(
         default_factory=list,
         max_length=128,
+    )
+    # Formula consumption is explicit metadata, separate from exact witness
+    # binding.  The singular alias preserves the compact one-package response
+    # shape; ``formula_dispositions`` supports paragraphs with several routed
+    # packages without allowing an untyped omission.
+    formula_disposition: Literal[
+        "consumed",
+        "writer_rejected_not_material",
+        "writer_rejected_conflict",
+        "missing_from_prose",
+    ] | None = None
+    formula_disposition_reason: str = Field(default="", max_length=800)
+    formula_dispositions: list[PublicationFormulaDispositionV1] = Field(
+        default_factory=list,
+        max_length=16,
     )
 
 

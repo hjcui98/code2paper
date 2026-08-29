@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "schema_version": "1.0",
+      "dossier_id": "dossier:2051cf029826aa71",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:2",
+      "facet_ids": [],
+      "author_question": "How does this setup realize First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)?",
+      "author_statements": [],
+      "entry_symbol_ids": [],
+      "ordered_operation_node_ids": [],
+      "relation_ids": [],
+      "call_path_relation_ids": [],
+      "data_flow_relation_ids": [],
+      "control_flow_relation_ids": [],
+      "operation_atoms": [],
+      "configuration_bindings": [],
+      "default_activation": "unknown",
+      "active_path_conditions": [],
+      "unresolved_relations": [],
+      "exact_span_ids": [],
+      "exact_excerpts": [],
+      "fact_ids": [],
+      "equation_ids": [],
+      "contradiction_ids": [],
+      "source_digests": {
+        "facts": "sha256:306171914145de302997a6e9b4e9831b7ab081c8684654fa6b5b6168e2a6a7c7",
+        "claims": "sha256:aedcf9c3bc6a6469f8dcaf69d51872642eae6e1566b7b343b43d201a422dac08",
+        "equations": "sha256:9f82d1b4f375fe152062a795a66a701958c25769ed7e830f2bde1ffdfcfffc23",
+        "configurations": "sha256:e5a19f5aa6e9b6a4a1ba6c640503f20bfb4954ff3a5bd8c9dcec8450bd7890b2",
+        "evidence_packets": "sha256:bdbb09acafcceb6207de3ac55a8791f3e08a756953827b6f65ab362b1e5b33de"
+      },
+      "content_digest": "sha256:d35b736e2cd79142e1e0aacb46723b9a4ce29c096390b0dbe9445f0a599cd579"
+    },
+    {
+      "schema_version": "1.0",
+      "dossier_id": "dossier:dcdbbe8ad0b53c8f",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:2",
+      "facet_ids": [],
+      "author_question": "How does this setup realize Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)?",
+      "author_statements": [],
+      "entry_symbol_ids": [],
+      "ordered_operation_node_ids": [],
+      "relation_ids": [],
+      "call_path_relation_ids": [],
+      "data_flow_relation_ids": [],
+      "control_flow_relation_ids": [],
+      "operation_atoms": [],
+      "configuration_bindings": [],
+      "default_activation": "unknown",
+      "active_path_conditions": [],
+      "unresolved_relations": [],
+      "exact_span_ids": [],
+      "exact_excerpts": [],
+      "fact_ids": [],
+      "equation_ids": [],
+      "contradiction_ids": [],
+      "source_digests": {
+        "facts": "sha256:306171914145de302997a6e9b4e9831b7ab081c8684654fa6b5b6168e2a6a7c7",
+        "claims": "sha256:aedcf9c3bc6a6469f8dcaf69d51872642eae6e1566b7b343b43d201a422dac08",
+        "equations": "sha256:9f82d1b4f375fe152062a795a66a701958c25769ed7e830f2bde1ffdfcfffc23",
+        "configurations": "sha256:e5a19f5aa6e9b6a4a1ba6c640503f20bfb4954ff3a5bd8c9dcec8450bd7890b2",
+        "evidence_packets": "sha256:bdbb09acafcceb6207de3ac55a8791f3e08a756953827b6f65ab362b1e5b33de"
+      },
+      "content_digest": "sha256:0ce3685a6ca792b3150907ddb15a3d8e7d41ae06d76b42f81e4e6da5fad132f2"
+    }
+  ],
+  "content_digest": "sha256:4e9adab950193f5404084605d589953d2b2324991581410320134c53c16d59e7"
+}

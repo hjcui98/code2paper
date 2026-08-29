@@ -6,6 +6,12 @@
 
 ## 当前状态
 
+- [Research-Derived Method Authoring 下一阶段执行优化手册（2026-08-28）](code2paper_research_derived_authoring_optimization_execution_2026-08-28.md)：
+  基于最新 EBCAR、DyG-Mamba、LinearRAG 真实产物与只看意图/代码的人工盲测基线，确认
+  当前主要损失来自连续代码链缺失、Formalizer 多义务路由丢包、Writer 同步 witness 失败及
+  Candidate 审计措辞污染；给出 connected dossier、typed derivation、AI-first Formalizer、
+  两阶段 Writer/Binder、Candidate/Verified 独立完成语义和三项目真实回归的代码级执行顺序。
+  它承接 2026-08-27 工作包并受 2026-08-22 执行权威约束，不修改 Verified 硬门。
 - [Method Authoring 原文—意图—代码—运行链质量诊断与下一阶段执行计划（2026-08-27）](method_authoring_source_ledger_quality_execution_plan_2026-08-27.md)：
   基于三篇原文、作者意图、实际代码、冻结研究轨迹与 `225116` 产物，把质量损失分为
   not-discovered、discovered-but-blocked、rendered-low-quality 和 intent-code mismatch；

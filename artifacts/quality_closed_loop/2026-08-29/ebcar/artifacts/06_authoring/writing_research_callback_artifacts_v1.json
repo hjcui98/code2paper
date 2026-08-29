@@ -1,0 +1,179 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "REQ-MA-S2-001",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "What are the constituent components, data flow, and objective of the embedding-based reranking framework described in this work?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions",
+        "configuration_state"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions",
+        "configuration_state"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-02-54911271"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "MA-S2:brief-001"
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "transformation",
+        "formula",
+        "condition"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:a74b2ba05e9f244eb0a5ace18910f5828fce6ee6f2140377ae6130a2d4ecff60"
+    },
+    {
+      "request_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "What is the overall mechanism by which the embedding pipeline enriches token representations with document identifiers and positional encodings across all stages, and how does each stage's output feed into the next within the mainline sequence?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "mechanism_overview"
+      ],
+      "current_known_facts": [
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+        "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+      ],
+      "why_needed_for_reader": "The mechanism_overview move requires a coherent account of how the full pipeline transforms base token embeddings into enriched representations through document-ID allocation, positional encoding, and attention-based refinement; no single closed target in the current packets authorizes a complete cross-stage mechanism summary.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "mechanism_overview",
+      "missing_parts": [
+        "mechanism_overview"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-03-2c92c853",
+        "story:O-STAGE-01-039a963a",
+        "story:O-STAGE-02-42e8d68d",
+        "story:O-STAGE-04-c50e0bef",
+        "story:O-METHOD-MAINLINE-01-c8146479",
+        "story:O-COMPONENT-01-de6049e3",
+        "story:O-COMPONENT-04-b5b6af99",
+        "story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "story:O-RATIONALE-CHECK-04-c742a4fc",
+        "story:O-STAGE-03-2c5bd758",
+        "story:O-COMPONENT-06-34021b88",
+        "story:O-RATIONALE-CHECK-06-388166d9",
+        "story:O-COMPONENT-01-c301ecdd",
+        "story:O-COMPONENT-03-d8aa8c77",
+        "story:O-COMPONENT-05-4c3594d2",
+        "story:O-COMPONENT-07-d157b2cc",
+        "story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "target_concept_keys": [
+        "mechanism_overview"
+      ],
+      "target_brief_ids": [
+        ","
+      ],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4b560ac114ae99ec",
+        "slot:fact-O-STAGE-01-039a963a-node:a2dae47572460254",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:0c0995d424e07399",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "slot:fact-O-STAGE-01-039a963a-node:d7c63b2682fd8c2b",
+        "slot:fact-O-STAGE-02-42e8d68d-node:8b16fe71a8eae4f3",
+        "slot:fact-O-STAGE-01-039a963a-node:fa6e917ea8058c33",
+        "slot:fact-O-STAGE-02-42e8d68d-node:8b0629a3bff95e53",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:158ca9dfbb3d0b5f",
+        "slot:fact-O-STAGE-02-42e8d68d-node:43a54d328170aabe",
+        "slot:fact-O-STAGE-02-42e8d68d-node:4916185860793ec5",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:61ac2ec01bcea681",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:6688015baf1776f1",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:d2629fac2863942f",
+        "slot:fact-O-STAGE-02-42e8d68d-rel:78abf1ec4fda1c7d",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:15f8ab428198f369",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "slot:fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "slot:fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:5c18ba6218e543c0",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:f5c29249fa86387f",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:0ae5d071f6e3d691",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:78ee0764fc098ad7",
+        "slot:fact-O-COMPONENT-01-c301ecdd-node:d0291414d20bd520",
+        "slot:fact-O-COMPONENT-01-de6049e3-node:09388818407d0d6e"
+      ],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:c2c01673d42b142964c4a8362d7a9676642aed4dc0308ace258fd5d55acfbf5c"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:3e49b435c8335b5a471358ba363f4ecf7e84c22d7c8beb0da6260548fea54762"
+}

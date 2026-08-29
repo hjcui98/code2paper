@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "producer_version": "code2paper-equation-compiler-v1",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "code_fact_digest": "sha256:306171914145de302997a6e9b4e9831b7ab081c8684654fa6b5b6168e2a6a7c7",
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "canonical_identity": "sha256:a173c98c034592ded2ece64755962c647dcd1e432297bfabff7eac49c1867c9b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "canonical_identity": "sha256:cd9635814c7a259072191a5703d35c4ee68fdd320b669a1c6a4dfd51e45c7713",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[0]"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[1]"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mult"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:67a843dc2a355f9a9c270c936bf962daa007a2719b7558593913a6126ea171ed"
+      ],
+      "canonical_identity": "sha256:7458e85d8f6094c854d925063f46a7d60deeb36acbf9c9322452d0947f9a7285",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "content_digest": "sha256:9f82d1b4f375fe152062a795a66a701958c25769ed7e830f2bde1ffdfcfffc23"
+}

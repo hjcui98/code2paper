@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "items": [
+    {
+      "request_id": "REQ:MA-S2:1",
+      "lane": "expository_bridge",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "exact_question": "What repository-supported propositions, concepts, and formula packages constitute the LinearRAG tri-graph concept and two-stage retrieval philosophy as described in the source material?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What repository-supported propositions, concepts, and formula packages constitute the LinearRAG tri-graph concept and two-stage retrieval philosophy as described in the source material.",
+      "needed_evidence": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "REQ:MA-S2:1"
+      ],
+      "content_digest": "sha256:68fb64adab8af93a3633e727a8a802569005f3e6624623a1a5b64b18aebec08f"
+    },
+    {
+      "request_id": "req-MA-S3-01",
+      "lane": "expository_bridge",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "exact_question": "What specific structural elements and update conditions constitute the offline tri-graph at STAGE-01, and how does the passage-hash gate interact with edge derivation?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: What specific structural elements and update conditions constitute the offline tri-graph at STAGE-01, and how does the passage-hash gate interact with edge derivation.",
+      "needed_evidence": [
+        "fact-O-STAGE-01-9c8dfe22-node",
+        "f21427b316d80682",
+        "fd688d75587fdee",
+        "slot"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "req-MA-S3-01"
+      ],
+      "content_digest": "sha256:c65ee6f18f95596d4f66e91121ef5a3721675c7f2910a0f5479c69db5d9e176f"
+    },
+    {
+      "request_id": "MA-S5:rq-1",
+      "lane": "expository_bridge",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "exact_question": "The semantic content of slots slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f, slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58, slot:fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3, and slot:fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0 is not available in the supplied contract. What repository-supported propositions do these slots carry?",
+      "proposed_body": "The author_confirmation lane is asked to resolve the following Method point, which is currently not asserted as a repository-verified fact: The semantic content of slots slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f, slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71, slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58, slot:fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3, and slot:fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0 is not available in the supplied contract. What repository-supported propositions do these slots carry.",
+      "needed_evidence": [
+        "MA-S5",
+        "semantic",
+        "derivation",
+        "content",
+        "eight",
+        "slot",
+        "targets",
+        "formula",
+        "section"
+      ],
+      "status": "queued",
+      "trace_refs": [
+        "MA-S5:rq-1"
+      ],
+      "content_digest": "sha256:8644511b6d83bea0ac778e3b352fe3ff1cc9ab484bf0fefd59d9cdf17f4d486d"
+    }
+  ]
+}

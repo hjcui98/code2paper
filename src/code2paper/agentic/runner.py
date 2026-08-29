@@ -509,6 +509,11 @@ def _reconcile_publication_writer_result_with_quality(
     status = result.status
     blocked_reason = result.blocked_reason
     failures = list(result.binding_failures)
+    candidate_complete = bool(result.candidate_complete)
+    candidate_completion_status = result.candidate_completion_status
+    candidate_blocking_reasons = list(result.candidate_blocking_reasons)
+    verified_complete = bool(result.verified_complete)
+    verified_blocking_reasons = list(result.verified_blocking_reasons)
     candidate_generated = bool(result.candidate_available) or result.candidate_generation_status == "generated"
     # Q0: derive the independent candidate/verified validation states from the
     # persisted final reverse-gate artifact when the runner knows it.
@@ -530,6 +535,15 @@ def _reconcile_publication_writer_result_with_quality(
     publication_ready = bool(
         quality.status == "publication_ready" and quality.final_integrity_gate_passed
     )
+    if not candidate_generated:
+        candidate_complete = False
+        candidate_completion_status = "blocked"
+        if "candidate_not_generated" not in candidate_blocking_reasons:
+            candidate_blocking_reasons.append("candidate_not_generated")
+    if not publication_ready:
+        verified_complete = False
+        if "publication_quality_gate_open" not in verified_blocking_reasons:
+            verified_blocking_reasons.append("publication_quality_gate_open")
     if quality.status == "blocked":
         # Q0: a blocked quality gate is a warning/quality label; it never
         # flips a generated candidate run to blocked.  Only a true generation
@@ -554,6 +568,11 @@ def _reconcile_publication_writer_result_with_quality(
         and blocked_reason == result.blocked_reason
         and tuple(failures) == result.binding_failures
         and publication_ready == result.publication_ready
+        and candidate_complete == result.candidate_complete
+        and candidate_completion_status == result.candidate_completion_status
+        and tuple(candidate_blocking_reasons) == result.candidate_blocking_reasons
+        and verified_complete == result.verified_complete
+        and tuple(verified_blocking_reasons) == result.verified_blocking_reasons
     ):
         return
     result_payload = result.model_dump(mode="json")
@@ -565,6 +584,11 @@ def _reconcile_publication_writer_result_with_quality(
         "candidate_validation_status": candidate_validation_status,
         "verified_validation_status": verified_validation_status,
         "candidate_warnings_by_severity": dict(quality.candidate_warnings_by_severity or {}),
+        "candidate_completion_status": candidate_completion_status,
+        "candidate_complete": candidate_complete,
+        "candidate_blocking_reasons": candidate_blocking_reasons,
+        "verified_complete": verified_complete,
+        "verified_blocking_reasons": verified_blocking_reasons,
         "content_digest": "",
     })
     updated = PublicationWriterRunResultV1.model_validate(result_payload)

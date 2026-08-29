@@ -1,0 +1,328 @@
+{
+  "claims": [
+    {
+      "claim_id": "C-V3-8691d06fa40c80df",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities branches on self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d19fed787115fa40"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-256a94ca7d3cbf14",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-9094162d3dc795b7"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5c4c526930242530",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-b92b57c3236ff3ab",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities calls self.run_ppr, node_weights, result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-54481ced51092efe"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-1fff753672b60410",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities loads weights self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-be6473473e7e870f"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-320a72e70cf4ed02",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities configured by self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d19fed787115fa40",
+        "E-V3-be6473473e7e870f"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-909d3695190d9657",
+      "claim_text": "LinearRAG.index branches on len(new_passage_hash_ids) > 0",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-8f02ec2817ddc07a",
+      "claim_text": "LinearRAG.index calls self.extract_nodes_and_edges, existing_passage_hash_id_to_entities, existing_sentence_to_entities, result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-8435ad0964009c0e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "claim_id": "C-V3-03b3a498f5a6b3de",
+      "claim_text": "SpacyNER.extract_entities_sentences branches on ent_text not in sentence_to_entities[sent_text]",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-d1959e0d7848c3a8"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "ent_text not in sentence_to_entities[sent_text]",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'"
+      ]
+    },
+    {
+      "claim_id": "C-V3-964143773c8824b5",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities returns (ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-9094162d3dc795b7"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "claim_id": "C-V3-5295dc5f82cc929f",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities computes formula entity_weights, passage_weights, result=node_weights",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "claim_id": "C-V3-a9b1d44c4fcb14c5",
+      "claim_text": "SpacyNER.extract_entities_sentences filters by ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-fbab63729214ec2c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "claim_id": "C-V3-1b9da293118020b8",
+      "claim_text": "LinearRAG.graph_search_with_seed_entities calls self.calculate_entity_scores_vectorized, question_embedding, seed_entity_indices, seed_entities, seed_entity_hash_ids, seed_entity_scores, result=(entity_weights, actived_entities)",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c0c82fa0f8c44b18"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "claim_id": "C-V3-443a3d34700287ff",
+      "claim_text": "LinearRAG.run_ppr sorts by np.argsort, doc_scores, result=sorted_indices_in_doc_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-101e5db54bbeff5e"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-d2eb6b3f7f9f9c52",
+      "claim_text": "LinearRAG.run_ppr propagates self.graph.personalized_pagerank, vertices=range(len(self.node_name_to_vertex_idx)), damping=self.config.damping, directed=False, weights='weight', reset=reset_prob, implementation='prpack', result=pagerank_scores",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a141bc5283231d81"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-71a2677dc2c37cdd",
+      "claim_text": "LinearRAG.retrieve branches on self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-05675598c1c94395"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9871ee142a4431a9",
+      "claim_text": "LinearRAG.retrieve returns retrieval_results",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-f9b43d9bf1b29282"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-3a41640cf80e05b3",
+      "claim_text": "LinearRAG.retrieve computes formula e2s_shape[0], e2s_shape[1]",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-a758f536b6218e03"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-c3159aaf7c739cfa",
+      "claim_text": "LinearRAG.retrieve loads weights self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-364aa7a1338cb348"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-028df2c05bcdee42",
+      "claim_text": "LinearRAG.retrieve calls logger.info, 'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-5c1ce458bd571719"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-889e9bb9af4fd50d",
+      "claim_text": "LinearRAG.retrieve configured by self.config.use_vectorized_retrieval",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-05675598c1c94395",
+        "E-V3-364aa7a1338cb348"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "claim_id": "C-V3-9fbd13a890cbeecb",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-9f51045a5031518b",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-c767ed0eaad34547"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-6faf68f3e11ecf59",
+      "claim_text": "Contributing terms are aggregated by a sum.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-cea51762f01fa6cc"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    },
+    {
+      "claim_id": "C-V3-d4b06f00bbf60a3c",
+      "claim_text": "Values that fail the comparison are excluded.",
+      "support_status": "supported",
+      "evidence_ids": [
+        "E-V3-fbab63729214ec2c"
+      ],
+      "mechanism_ids": [],
+      "source": "authoring_projection",
+      "caveats": []
+    }
+  ]
+}

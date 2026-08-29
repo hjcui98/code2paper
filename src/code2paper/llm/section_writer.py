@@ -69,6 +69,7 @@ from code2paper.llm.capabilities import StructuredResponseMode, load_capability_
 from code2paper.llm.generation_trace import GenerationCallTrace, build_generation_call_trace
 from code2paper.llm.role_config import (
     METHOD_WRITER,
+    SEMANTIC_VERIFIER,
     apply_role_config,
     writer_cumulative_budget,
 )
@@ -79,9 +80,11 @@ from code2paper.llm.writer_section_repair import (
     repair_is_monotonic,
 )
 from code2paper.llm.response_schemas import (
+    PUBLICATION_PARAGRAPH_BINDING_SCHEMA,
     PUBLICATION_METHOD_SECTION_SCHEMA,
     PublicationMethodParagraphOutputV1,
     PublicationMethodSectionOutputV1,
+    PublicationParagraphBindingResponseV1,
     json_schema_for,
     try_parse_structured_response_with_trace,
 )
@@ -238,6 +241,7 @@ _WRITER_VIEW_VISIBLE_FIELDS = frozenset({
     "formula_packages",
     "formula_obligations",
     "mechanism_section",
+    "authoring_packets_v2",
     "required_qualifier_bindings",
     "writing_research_callback_artifacts",
     "writing_research_callback_resolution",
@@ -310,6 +314,11 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
             "conditions": list(item.get("conditions") or ()),
             "allowed_anchor_ids": list(item.get("bound_span_ids") or ()),
             "allowed_exact_excerpts": list(item.get("exact_excerpts") or ()),
+            "derivation_record_ids": list(item.get("derivation_record_ids") or ()),
+            "derivation_kind": item.get("derivation_kind", "direct"),
+            "claim_strength": item.get("claim_strength", "descriptive"),
+            "surface_mode": item.get("surface_mode", "omit_and_review"),
+            "defer_reason": item.get("defer_reason", ""),
         }
         for item in (packet.get("publication_field_candidates") or ())
         if isinstance(item, Mapping)
@@ -406,6 +415,121 @@ def _compact_writer_facet_coverage_repair_for_llm(
     return compact
 
 
+def _compact_authoring_packets_v2_for_llm(
+    packets: Any,
+) -> list[dict[str, Any]]:
+    """Expose only the ordered research-derived packet surface to the Writer.
+
+    Dossier/source ids and audit dispositions stay in the harness-side packet
+    and its persisted sidecars.  The prose Writer needs the operation shape,
+    conditions, surface mode, and exact formula block, not a second unordered
+    inventory of facts that could be paraphrased as prose.
+    """
+
+    if isinstance(packets, Mapping) or isinstance(packets, (str, bytes)):
+        return []
+    try:
+        values = tuple(packets or ())
+    except TypeError:
+        return []
+
+    def compact_target(value: Any) -> dict[str, Any]:
+        row = dict(value) if isinstance(value, Mapping) else {}
+        return {
+            key: row[key]
+            for key in (
+                "target_id", "target_kind", "facet_id", "field_name",
+                "semantic_atom", "polarity", "conditions", "surface_mode",
+                "render_policy", "claim_strength",
+            )
+            if key in row
+        }
+
+    def compact_operation(value: Any) -> dict[str, Any]:
+        row = dict(value) if isinstance(value, Mapping) else {}
+        return {
+            key: row[key]
+            for key in (
+                "operation_id", "predicate", "operands", "result", "guard",
+                "iteration_context", "shape_or_type_hints",
+            )
+            if key in row
+        }
+
+    def compact_config(value: Any) -> dict[str, Any]:
+        row = dict(value) if isinstance(value, Mapping) else {}
+        return {
+            key: row[key]
+            for key in (
+                "configuration_id", "key", "value", "state", "conditions",
+                "active", "unresolved_reason",
+            )
+            if key in row
+        }
+
+    def compact_formula(value: Any) -> dict[str, Any]:
+        row = dict(value) if isinstance(value, Mapping) else {}
+        return {
+            key: row[key]
+            for key in (
+                "package_id", "purpose", "latex", "markdown_block",
+                "prose_explanation", "symbol_definitions", "symbol_table",
+                "material_conditions", "assumptions", "authority_status",
+                "formula_lane", "satisfied_obligation_ids",
+                "consumer_paragraph_id", "semantic_formula_digest",
+            )
+            if key in row
+        }
+
+    compact_packets: list[dict[str, Any]] = []
+    for packet in values:
+        row = dict(packet) if isinstance(packet, Mapping) else {}
+        dossier = row.get("dossier_summary")
+        dossier_row = dict(dossier) if isinstance(dossier, Mapping) else {}
+        compact_dossier = {
+            "operation_atoms": [
+                compact_operation(item)
+                for item in (dossier_row.get("operation_atoms") or ())
+                if isinstance(item, Mapping)
+            ],
+            "default_activation": dossier_row.get("default_activation", "unknown"),
+            "active_path_conditions": list(
+                dossier_row.get("active_path_conditions") or ()
+            ),
+            "call_path_length": len(dossier_row.get("call_path_relation_ids") or ()),
+            "data_flow_length": len(dossier_row.get("data_flow_relation_ids") or ()),
+            "control_flow_length": len(dossier_row.get("control_flow_relation_ids") or ()),
+            "unresolved_relation_count": len(dossier_row.get("unresolved_relations") or ()),
+        }
+        compact_packets.append({
+            "schema_version": row.get("schema_version", "2.0"),
+            "section_id": row.get("section_id", ""),
+            "paragraph_id": row.get("paragraph_id", ""),
+            "rhetorical_goal": row.get("rhetorical_goal", ""),
+            "ordered_targets": [
+                compact_target(item)
+                for item in (row.get("ordered_targets") or ())
+                if isinstance(item, Mapping)
+            ],
+            "dossier_summary": compact_dossier,
+            "material_conditions": list(row.get("material_conditions") or ()),
+            "configuration_state": [
+                compact_config(item)
+                for item in (row.get("configuration_state") or ())
+                if isinstance(item, Mapping)
+            ],
+            "formula_packages": [
+                compact_formula(item)
+                for item in (row.get("formula_packages") or ())
+                if isinstance(item, Mapping)
+            ],
+            "closed_target_ids": list(row.get("closed_target_ids") or ()),
+            "preceding_paragraph_id": row.get("preceding_paragraph_id", ""),
+            "following_paragraph_id": row.get("following_paragraph_id", ""),
+        })
+    return compact_packets
+
+
 def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
     """Keep low-level evidence machinery out of the Writer prose context.
 
@@ -416,6 +540,39 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
     IDs and move proofs are harness-private.
     """
 
+    v2_packets = section.prompt_payload.get("authoring_packets_v2")
+    if v2_packets:
+        # Slice 3: the V2 packet is the single Writer organization surface.
+        # Formula packages and target ids are closed response bindings; exact
+        # witnesses are deliberately absent because the separate Binder adds
+        # them only after prose has been frozen.  Keep callback/repair state
+        # scoped to the same section without reintroducing the legacy fact
+        # projections.
+        result: dict[str, Any] = {
+            "section_id": section.prompt_payload.get("section_id", section.section_id),
+            "heading": section.prompt_payload.get("heading", section.heading),
+            "authoring_packets_v2": _compact_authoring_packets_v2_for_llm(
+                v2_packets
+            ),
+        }
+        for key in (
+            "required_qualifier_bindings",
+            "writing_research_callback_artifacts",
+            "writing_research_callback_resolution",
+            "previous_attempt_error",
+            "previous_attempt_section_markdown",
+            "callback_owner_retry_instruction",
+            "writer_section_repair",
+            "writer_facet_coverage_repair",
+        ):
+            if key in section.prompt_payload:
+                result[key] = section.prompt_payload[key]
+        repair = result.get("writer_facet_coverage_repair")
+        if isinstance(repair, Mapping):
+            result["writer_facet_coverage_repair"] = _compact_writer_facet_coverage_repair_for_llm(
+                repair
+            )
+        return result
     if not section.prompt_payload.get("writer_view"):
         # Frozen pre-proposition artifacts retain the historical surface for
         # backward-compatible replay. New product runs always persist and
@@ -2148,11 +2305,180 @@ class PublicationWriterResult:
         return list(self.aggregate.incomplete_sections)
 
 
+_PUBLICATION_BINDER_PROMPT = """
+You are the metadata-only Paragraph Evidence Binder.
+
+The paragraph_markdown in the input is frozen Writer prose. Return only the
+PublicationParagraphBindingResponseV1 object. For every supplied target,
+either copy one exact unique substring that already occurs in that paragraph
+or list the target as unbound. Do not rewrite, summarize, or add prose. Do not
+bind a target when its semantic atom, required condition, polarity, or formula
+block is absent. Formula witnesses must be copied exactly from the supplied
+formula block as it appears in the paragraph. Use the supplied kind:target
+format in unbound_target_ids. Rendered ids may already include their kind
+prefix, so a target such as slot:fact-X may appear as slot:fact-X or
+slot:slot:fact-X; only a form that resolves to a supplied target is valid.
+Relation targets use witness_kind edge even when their target_id begins with
+rel:, so report that supplied relation target exactly when it is unbound.
+Never invent target ids or witness text.
+""".strip()
+
+
+def _merge_publication_binder_witnesses(
+    transaction: PublicationMethodParagraphOutputV1,
+    witnesses: Iterable[Mapping[str, str]],
+) -> PublicationMethodParagraphOutputV1:
+    """Add only already-validated Binder metadata to a frozen transaction."""
+
+    source = transaction.model_dump(mode="json")
+    existing = list(source.get("witnesses") or ())
+    existing_keys = {
+        (
+            str(item.get("witness_kind") or ""),
+            str(item.get("target_id") or ""),
+        )
+        for item in existing
+        if isinstance(item, Mapping)
+    }
+    for witness in witnesses:
+        key = (
+            str(witness.get("witness_kind") or ""),
+            str(witness.get("target_id") or ""),
+        )
+        if not all(key) or key in existing_keys:
+            continue
+        existing.append({
+            "witness_kind": key[0],
+            "target_id": key[1],
+            "exact_text": str(witness.get("exact_text") or ""),
+        })
+        existing_keys.add(key)
+    source["witnesses"] = existing
+    return transaction.__class__.model_validate(source)
+
+
+def _invoke_publication_paragraph_binder(
+    transaction: PublicationMethodParagraphOutputV1,
+    *,
+    plan_row: Mapping[str, Any],
+    formula_packages: tuple[Mapping[str, Any], ...],
+    binder_caller: _LLMCaller | None,
+    binder_base_config: LLMConfig | None,
+    call_id: str,
+    trace_sink: list[GenerationCallTrace] | None = None,
+    recovery_sink: list[dict[str, Any]] | None = None,
+) -> PublicationMethodParagraphOutputV1:
+    """Run at most one low-temperature Binder retry after deterministic match.
+
+    This function is intentionally scoped to metadata. It never receives a
+    prose-writing instruction and it only merges witnesses after the shared
+    transaction contract validates every returned substring.
+    """
+
+    if binder_caller is None or binder_base_config is None:
+        return transaction
+    from code2paper.agentic.publication_transaction_contract import (
+        paragraph_binding_targets,
+        validate_paragraph_binding_response,
+    )
+
+    targets = paragraph_binding_targets(
+        transaction,
+        plan_row=plan_row,
+        formula_packages=formula_packages,
+    )
+    if not targets:
+        return transaction
+    paragraph_id = str(transaction.paragraph_id or "").strip()
+    body = str(transaction.paragraph_markdown or "")
+    binder_config = apply_role_config(
+        binder_base_config,
+        SEMANTIC_VERIFIER,
+    ).model_copy(update={
+        "temperature": 0.0,
+        "reasoning_effort": "none",
+        "thinking_token_budget": None,
+        "max_output_tokens": min(
+            1536,
+            apply_role_config(
+                binder_base_config,
+                SEMANTIC_VERIFIER,
+            ).max_output_tokens,
+        ),
+    })
+    base_payload: dict[str, Any] = {
+        "paragraph_id": paragraph_id,
+        "paragraph_markdown": body,
+        "target_contracts": list(targets),
+    }
+    last_errors: tuple[str, ...] = ()
+    for attempt in (1, 2):
+        payload = dict(base_payload)
+        if last_errors:
+            payload["previous_attempt_error"] = list(last_errors)
+        request = LLMRequest(
+            prompt_template_id="phase5_publication_paragraph_binder_v1",
+            prompt=_PUBLICATION_BINDER_PROMPT,
+            input_payload=payload,
+            schema_name=PUBLICATION_PARAGRAPH_BINDING_SCHEMA,
+            response_json_schema=json_schema_for(
+                PublicationParagraphBindingResponseV1
+            ),
+        )
+        response = _safe_call(binder_caller, binder_config, request)
+        if trace_sink is not None:
+            trace_sink.append(build_generation_call_trace(
+                call_id=f"{call_id}-binder-{attempt}",
+                config=binder_config,
+                request=request,
+                response=response,
+            ))
+        parsed, recovery, parse_error = try_parse_structured_response_with_trace(
+            response.text,
+            PublicationParagraphBindingResponseV1,
+        )
+        record: dict[str, Any] = {
+            "paragraph_id": paragraph_id,
+            "attempt": attempt,
+            "response_blocked_reason": str(response.blocked_reason or ""),
+            "parsed": parsed is not None,
+            "parse_error": str(parse_error or ""),
+        }
+        if parsed is None:
+            record["validation_errors"] = ["binder_schema_failed"]
+            if recovery_sink is not None:
+                recovery_sink.append(record)
+            last_errors = ("binder_schema_failed",)
+            continue
+        valid, errors, unbound = validate_paragraph_binding_response(
+            parsed,
+            transaction,
+            plan_row=plan_row,
+            formula_packages=formula_packages,
+        )
+        record.update({
+            "bound_count": len(valid),
+            "unbound_count": len(unbound),
+            "validation_errors": list(errors),
+        })
+        if recovery_sink is not None:
+            recovery_sink.append(record)
+        if not errors:
+            return _merge_publication_binder_witnesses(transaction, valid)
+        last_errors = errors
+    return transaction
+
+
 def _normalize_publication_paragraph_transaction(
     output: PublicationMethodSectionOutputV1,
     *,
     section: WriterSectionInput,
     require_transactions: bool = False,
+    binder_caller: _LLMCaller | None = None,
+    binder_base_config: LLMConfig | None = None,
+    binder_trace_sink: list[GenerationCallTrace] | None = None,
+    binder_recovery_sink: list[dict[str, Any]] | None = None,
+    binder_call_id_prefix: str = "LLM-publication-paragraph-binder",
 ) -> tuple[PublicationMethodSectionOutputV1, list[str]]:
     """Validate and assemble paragraph-scoped Writer transactions.
 
@@ -2207,6 +2533,12 @@ def _normalize_publication_paragraph_transaction(
         transaction = by_id.get(paragraph_id)
         if transaction is None:
             continue
+        # Stage B Binder: select exact substrings from the frozen Writer body
+        # before any transaction assessment.  The Binder is representation
+        # metadata only; it cannot change the paragraph or introduce ids.
+        from code2paper.agentic.publication_transaction_contract import (
+            bind_paragraph_witnesses,
+        )
         body = transaction.paragraph_markdown.strip()
         plan_row = plan_by_id.get(paragraph_id, {})
         section_claim_ids = {
@@ -2242,6 +2574,33 @@ def _normalize_publication_paragraph_transaction(
             for item in (section.prompt_payload.get("formula_packages") or ())
             if isinstance(item, dict) and str(item.get("package_id") or "").strip()
         }
+        formula_packages = tuple(
+            item for item in (section.prompt_payload.get("formula_packages") or ())
+            if isinstance(item, Mapping)
+        )
+        transaction = bind_paragraph_witnesses(
+            transaction,
+            plan_row=plan_row,
+            formula_packages=formula_packages,
+        )
+        transaction = _invoke_publication_paragraph_binder(
+            transaction,
+            plan_row=plan_row,
+            formula_packages=formula_packages,
+            binder_caller=binder_caller,
+            binder_base_config=binder_base_config,
+            call_id=(
+                f"{binder_call_id_prefix}-{section.section_id}-{paragraph_id}"
+            ),
+            trace_sink=binder_trace_sink,
+            recovery_sink=binder_recovery_sink,
+        )
+        # Keep the normalized transaction in the output even when a sibling
+        # paragraph later fails.  Returning the original section object on a
+        # partial failure would silently discard safe Binder witnesses from
+        # the Candidate checkpoint.
+        by_id[paragraph_id] = transaction
+        body = transaction.paragraph_markdown.strip()
         plan_field_ids = set(str(value) for value in (plan_row.get("required_field_candidate_ids") or ()))
         plan_facet_ids = set(str(value) for value in (plan_row.get("required_facet_ids") or ()))
         plan_formula_ids = set(str(value) for value in (plan_row.get("formula_obligation_ids") or ()))
@@ -2260,8 +2619,24 @@ def _normalize_publication_paragraph_transaction(
             and str(package.get("package_id") or "").strip()
             and (
                 not plan_formula_ids
-                or str(package.get("obligation_id") or "").strip() in plan_formula_ids
-                and str(package.get("consumer_paragraph_id") or "").strip() == paragraph_id
+                or (
+                    bool(
+                        plan_formula_ids.intersection(
+                            {
+                                str(item).strip()
+                                for item in (package.get("satisfied_obligation_ids") or ())
+                                if str(item).strip()
+                            }
+                            | (
+                                {str(package.get("obligation_id") or "").strip()}
+                                if str(package.get("obligation_id") or "").strip()
+                                else set()
+                            )
+                        )
+                    )
+                    and str(package.get("consumer_paragraph_id") or "").strip()
+                    == paragraph_id
+                )
             )
         }
         allowed = {
@@ -2327,6 +2702,7 @@ def _normalize_publication_paragraph_transaction(
         )
         has_explicit_package_routes = any(
             str(package.get("obligation_id") or "").strip()
+            or bool(package.get("satisfied_obligation_ids"))
             for package in formula_packages
         )
 
@@ -2334,7 +2710,18 @@ def _normalize_publication_paragraph_transaction(
             obligation_id = str(obligation.get("obligation_id") or "").strip()
             exact = tuple(
                 package for package in formula_packages
-                if str(package.get("obligation_id") or "").strip() == obligation_id
+                if obligation_id in {
+                    *(
+                        str(item).strip()
+                        for item in (package.get("satisfied_obligation_ids") or ())
+                        if str(item).strip()
+                    ),
+                    *(
+                        [str(package.get("obligation_id") or "").strip()]
+                        if str(package.get("obligation_id") or "").strip()
+                        else []
+                    ),
+                }
             )
             if exact or has_explicit_package_routes:
                 return exact
@@ -2366,6 +2753,84 @@ def _normalize_publication_paragraph_transaction(
                     if matches else ""
                 ),
             }
+        # A Writer may not silently drop an accepted package.  A typed
+        # disposition is allowed only for a package owned by this paragraph;
+        # required obligations still need ``consumed`` and an exact formula
+        # witness.  The singular field is a compact one-package compatibility
+        # form; the plural form is authoritative when present.
+        disposition_rows = [
+            item.model_dump(mode="json")
+            for item in (getattr(transaction, "formula_dispositions", ()) or ())
+            if hasattr(item, "model_dump")
+        ]
+        singular_disposition = getattr(transaction, "formula_disposition", None)
+        if singular_disposition:
+            owned_package_ids = tuple(
+                package_id for package_id in route_packages
+                if package_id in section_formula_package_ids
+            )
+            if len(owned_package_ids) != 1:
+                failures.append(
+                    f"formula_disposition_package_ambiguous:{paragraph_id}"
+                )
+            else:
+                disposition_rows.append({
+                    "package_id": owned_package_ids[0],
+                    "disposition": singular_disposition,
+                    "reason": str(
+                        getattr(transaction, "formula_disposition_reason", "") or ""
+                    ),
+                })
+        disposition_by_package: dict[str, str] = {}
+        for row in disposition_rows:
+            package_id = str(row.get("package_id") or "").strip()
+            disposition = str(row.get("disposition") or "").strip()
+            if package_id not in allowed["formula"]:
+                failures.append(
+                    f"unknown_formula_disposition:{paragraph_id}:{package_id}"
+                )
+                continue
+            if package_id in disposition_by_package:
+                failures.append(
+                    f"duplicate_formula_disposition:{paragraph_id}:{package_id}"
+                )
+                continue
+            disposition_by_package[package_id] = disposition
+            if disposition == "consumed" and package_id not in set(
+                transaction.used_formula_package_ids
+            ):
+                failures.append(
+                    f"consumed_formula_not_declared:{paragraph_id}:{package_id}"
+                )
+        required_package_ids: set[str] = set()
+        for obligation in (section.prompt_payload.get("formula_obligations") or ()):
+            if not isinstance(obligation, Mapping):
+                continue
+            if str(obligation.get("expectation") or "required") != "required":
+                continue
+            obligation_id = str(obligation.get("obligation_id") or "").strip()
+            required_package_ids.update(
+                str(package.get("package_id") or "").strip()
+                for package in formula_packages
+                if obligation_id in {
+                    *(
+                        str(item).strip()
+                        for item in (package.get("satisfied_obligation_ids") or ())
+                        if str(item).strip()
+                    ),
+                    *(
+                        [str(package.get("obligation_id") or "").strip()]
+                        if str(package.get("obligation_id") or "").strip()
+                        else []
+                    ),
+                }
+                and str(package.get("package_id") or "").strip()
+            )
+        for package_id, disposition in disposition_by_package.items():
+            if package_id in required_package_ids and disposition != "consumed":
+                failures.append(
+                    f"required_formula_disposition_not_consumed:{paragraph_id}:{package_id}"
+                )
         assessment = assess_paragraph_transaction(
             transaction,
             plan_row=plan_row,
@@ -2399,6 +2864,11 @@ def _normalize_publication_paragraph_transaction(
             section_markdown = f"## {heading}\n\n{section_markdown}"
         preserved = output.model_copy(update={
             "section_markdown": section_markdown or output.section_markdown,
+            "paragraphs": [
+                by_id[item_id]
+                for item_id in (expected_ids or tuple(by_id))
+                if item_id in by_id
+            ],
         })
         return preserved, list(dict.fromkeys(failures))
     # Section structure is owned by the Architect, not by whichever
@@ -2413,6 +2883,11 @@ def _normalize_publication_paragraph_transaction(
         section_markdown = f"## {heading}\n\n{section_markdown}"
     return output.model_copy(update={
         "section_markdown": section_markdown,
+        "paragraphs": [
+            by_id[item_id]
+            for item_id in (expected_ids or tuple(by_id))
+            if item_id in by_id
+        ],
         "rendered_paragraph_ids": list(expected_ids or tuple(by_id)),
         "rendered_from_facet_ids": sorted(aggregate_fields["rendered_from_facet_ids"]),
         "rendered_field_candidate_ids": sorted(aggregate_fields["rendered_field_candidate_ids"]),
@@ -2454,6 +2929,7 @@ def write_publication_method_by_sections(
     # the aggregate.
     parsed_outputs_by_section: dict[str, list[PublicationMethodSectionOutputV1]] = {}
     recovery_traces: list[dict[str, Any]] = []
+    binder_traces: list[GenerationCallTrace] = []
 
     def structured_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
         response = caller(config, request)
@@ -2517,6 +2993,11 @@ def write_publication_method_by_sections(
                 parsed,
                 section=private_section,
                 require_transactions=transaction_required,
+                binder_caller=caller,
+                binder_base_config=base_config,
+                binder_trace_sink=binder_traces,
+                binder_recovery_sink=recovery_traces,
+                binder_call_id_prefix=call_id_prefix,
             )
         else:
             paragraph_failures = []
@@ -2647,6 +3128,7 @@ def write_publication_method_by_sections(
         parsed_outputs.append(selected)
         aggregate.research_requests.extend(selected.new_research_requests)
     aggregate.response_recovery_traces.extend(recovery_traces)
+    aggregate.traces.extend(binder_traces)
     return PublicationWriterResult(aggregate=aggregate, outputs=parsed_outputs)
 
 

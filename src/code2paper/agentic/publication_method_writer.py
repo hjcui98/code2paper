@@ -206,6 +206,14 @@ class PublicationWriterRunResultV1(BaseModel):
     candidate_validation_status: Literal["not_run", "passed", "warnings", "error"] = "not_run"
     candidate_warnings_by_severity: dict[str, int] = Field(default_factory=dict)
     verified_validation_status: Literal["not_run", "passed", "incomplete", "error"] = "not_run"
+    # Slice 4: completion is a separate structural state from the legacy
+    # reverse-validation labels above.  Candidate may be complete while
+    # Verified remains blocked by evidence or author-intent material.
+    candidate_completion_status: Literal["not_started", "incomplete", "complete", "blocked"] = "not_started"
+    candidate_complete: bool = False
+    verified_complete: bool = False
+    candidate_blocking_reasons: tuple[str, ...] = ()
+    verified_blocking_reasons: tuple[str, ...] = ()
     publication_ready: bool = False
     content_digest: str = ""
 
@@ -616,6 +624,61 @@ def run_publication_method_writer(
         )
         _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
 
+    # Slice 2: compile a paragraph-local connected research dossier before the
+    # section Formalizer sees the mechanism.  The graph/scope artifacts are
+    # optional for legacy replays; when absent, the compiler preserves a typed
+    # unresolved dossier instead of treating author prose as code evidence.
+    research_dossiers: tuple[Any, ...] = ()
+    research_derivations: tuple[Any, ...] = ()
+    authoring_packets_v2_by_section: dict[str, tuple[Any, ...]] = {}
+    research_derived_failure = ""
+    try:
+        from code2paper.agentic.research_derived_authoring import (
+            build_research_mechanism_dossiers,
+            build_publication_authoring_packets,
+            compile_derivation_records,
+            merge_derivations_into_field_candidates,
+            write_research_derived_artifacts,
+        )
+        from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+
+        behavior_graph = None
+        graph_value = (
+            artifact_paths.get("behavior_graph_v1", "")
+            or artifact_paths.get("code_graph", "")
+        )
+        if graph_value and Path(graph_value).is_file():
+            graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
+            if isinstance(graph_payload, Mapping):
+                graph_payload = graph_payload.get("behavior_graph") or graph_payload.get(
+                    "graph"
+                ) or graph_payload
+                behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
+        implementation_scope = None
+        scope_value = artifact_paths.get("implementation_scope_v1", "")
+        if scope_value and Path(scope_value).is_file():
+            from code2paper.agentic.research_models import ImplementationScopeV1
+
+            implementation_scope = ImplementationScopeV1.model_validate_json(
+                Path(scope_value).read_text(encoding="utf-8")
+            )
+        research_dossiers = build_research_mechanism_dossiers(
+            plan=plan,
+            facets=argument_facets,
+            field_candidates=publication_field_candidates,
+            behavior_graph=behavior_graph,
+            facts=facts,
+            claims=claims,
+            equations=equations,
+            configurations=configurations,
+            evidence_packets=evidence_packets_v3,
+            implementation_scope=implementation_scope,
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        research_derived_failure = (
+            f"research_dossier_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
+        )
+
     # Q2 (plan 19.6): the section-scoped Formalizer produces paper-level
     # formula packages (or typed dispositions) per section, bound to the
     # section's own core equations.  Empty proposal results are never
@@ -676,7 +739,45 @@ def run_publication_method_writer(
         facet_alignments=facet_alignments,
         facet_policies=facet_policies,
         publication_field_candidates=publication_field_candidates,
+        require_llm_call=True,
+        research_dossiers=research_dossiers,
     )
+    if not research_derived_failure:
+        try:
+            research_derivations = compile_derivation_records(
+                dossiers=research_dossiers,
+                facets=argument_facets,
+                alignments=facet_alignments,
+                formula_results=section_formula_results,
+            )
+            if research_derivations:
+                publication_field_candidates = merge_derivations_into_field_candidates(
+                    candidates=publication_field_candidates,
+                    derivations=research_derivations,
+                )
+            research_artifact_paths = write_research_derived_artifacts(
+                str(out_root),
+                dossiers=research_dossiers,
+                derivations=research_derivations,
+            )
+            if research_dossiers or research_derivations:
+                authoring_packets_v2_by_section = build_publication_authoring_packets(
+                    plan=plan,
+                    dossiers=research_dossiers,
+                    derivations=research_derivations,
+                    candidates=publication_field_candidates,
+                    formula_packages_by_section={
+                        result.section_id: _writer_visible_formula_packages(result)
+                        for result in section_formula_results
+                    },
+                )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            research_derived_failure = (
+                f"research_derivation_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
+            )
+            research_artifact_paths = {}
+    else:
+        research_artifact_paths = {}
     effective_resume_section_ids = tuple(resume_section_ids)
     callback_bundle = _load_callback_bundle(artifact_paths)
     callback_bundle_value = artifact_paths.get(
@@ -793,6 +894,7 @@ def run_publication_method_writer(
             audit_override_concept_keys=frozenset(effective_override_keys),
             audit_only_claim_ids=audit_only_claim_ids,
             story_spine_nodes=_story_spine_nodes_from_artifact_paths(artifact_paths),
+            authoring_packets_v2_by_section=authoring_packets_v2_by_section,
         )
     except ValueError as exc:
         result = PublicationWriterRunResultV1(
@@ -1016,6 +1118,7 @@ def run_publication_method_writer(
         formula_routes: dict[str, dict[str, Any]] = {}
         has_explicit_package_routes = any(
             str(package.get("obligation_id") or "").strip()
+            or bool(package.get("satisfied_obligation_ids"))
             for package in packages
         )
         for obligation in obligations:
@@ -1024,7 +1127,18 @@ def run_publication_method_writer(
                 continue
             matches = [
                 package for package in packages
-                if str(package.get("obligation_id") or "").strip() == obligation_id
+                if obligation_id in {
+                    *(
+                        str(item).strip()
+                        for item in (package.get("satisfied_obligation_ids") or ())
+                        if str(item).strip()
+                    ),
+                    *(
+                        [str(package.get("obligation_id") or "").strip()]
+                        if str(package.get("obligation_id") or "").strip()
+                        else []
+                    ),
+                }
             ]
             if not matches and not has_explicit_package_routes:
                 facet_ids = set(str(item) for item in (obligation.get("facet_ids") or ()))
@@ -2310,6 +2424,44 @@ def run_publication_method_writer(
                 generation_trace_id=span.generation_trace_id,
             ))
     ledger = build_final_text_authorship_ledger(final_text, tuple(generated_spans))
+    # A dossier with an unresolved connected relation must emit a directed
+    # owner request before section completeness and product splitting run.
+    # This keeps the gap visible in review/queue artifacts and prevents the
+    # Candidate/Verified split from treating the missing link as resolved.
+    if research_dossiers:
+        try:
+            from code2paper.agentic.research_derived_authoring import (
+                build_research_derived_callback_requests,
+            )
+
+            existing_callback_keys = {
+                (
+                    request.section_id,
+                    request.argument_unit_id,
+                    request.missing_rhetorical_move,
+                )
+                for request in research_requests
+                if request.status == "open"
+            }
+            for raw_request in build_research_derived_callback_requests(
+                plan=plan,
+                dossiers=research_dossiers,
+            ):
+                request = WritingResearchRequestV1.model_validate(raw_request)
+                callback_key = (
+                    request.section_id,
+                    request.argument_unit_id,
+                    request.missing_rhetorical_move,
+                )
+                if callback_key in existing_callback_keys:
+                    continue
+                research_requests.append(fill_writing_research_search_terms(request))
+                existing_callback_keys.add(callback_key)
+        except (TypeError, ValueError) as exc:
+            failures.append(
+                "research_derived_callback_compile:"
+                f"{type(exc).__name__}:{str(exc)[:160]}"
+            )
     callback_section_ids = {
         request.section_id for request in research_requests if request.status == "open"
     }
@@ -2723,6 +2875,8 @@ def run_publication_method_writer(
             row["failures"] = list(dict.fromkeys([*row.get("failures", []), *section_failures]))
     if not ledger.hard_gate_passed:
         failures.extend(ledger.failures)
+    if research_derived_failure:
+        failures.append(research_derived_failure)
     try:
         proposition_alignment_report = _audit_proposition_alignment(
             accepted=accepted,
@@ -3118,6 +3272,99 @@ def run_publication_method_writer(
         transaction_assessment_path
     )
     paths.update(final_validation_paths)
+    paths.update(research_artifact_paths)
+    # Slice 3/4: persist a Candidate-only authority receipt and paragraph
+    # annotation sidecar after the Binder has attached exact substrings.  The
+    # annotation layer is additive; it never rewrites the clean Candidate or
+    # grants any sentence Verified authority.
+    try:
+        from code2paper.agentic.research_derived_authoring import (
+            CandidateAuthorityValidationV1,
+            validate_candidate_authority,
+        )
+
+        candidate_authority = validate_candidate_authority(
+            candidate_text=candidate_markdown,
+            candidates=publication_field_candidates,
+            derivations=research_derivations,
+        )
+    except (TypeError, ValueError) as exc:
+        from code2paper.agentic.research_derived_authoring import (
+            CandidateAuthorityValidationV1,
+        )
+
+        candidate_authority = CandidateAuthorityValidationV1(
+            status="error",
+            violations=(
+                f"candidate_authority_validator_fault:{exc.__class__.__name__}:{str(exc)[:160]}",
+            ),
+        )
+    authority_payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "candidate_text_digest": _digest_text(candidate_markdown) if candidate_markdown else "",
+        "validation": candidate_authority.model_dump(mode="json"),
+    }
+    authority_payload["content_digest"] = _digest_json(authority_payload)
+    authority_path = method_output(Path(out_root), "candidate_authority_validation_v1")
+    _atomic_write_text(
+        authority_path,
+        json.dumps(authority_payload, ensure_ascii=False, indent=2) + "\n",
+    )
+    paths["candidate_authority_validation_v1"] = str(authority_path)
+    annotation_payload, annotated_candidate = _build_candidate_annotation_payload(
+        candidate_markdown=candidate_markdown,
+        verified_markdown=verified_markdown,
+        plan=plan,
+        output_by_section=output_by_section,
+        transaction_assessment_path=transaction_assessment_path,
+        candidates=publication_field_candidates,
+        derivations=research_derivations,
+        formula_packages=(
+            package
+            for formula_result in section_formula_results
+            for package in formula_result.packages
+        ),
+    )
+    annotation_path = method_output(Path(out_root), "publication_candidate_annotations_v1")
+    annotated_path = method_output(Path(out_root), "publication_candidate_annotated")
+    _atomic_write_text(
+        annotation_path,
+        json.dumps(annotation_payload, ensure_ascii=False, indent=2) + "\n",
+    )
+    _atomic_write_text(annotated_path, annotated_candidate)
+    paths["publication_candidate_annotations_v1"] = str(annotation_path)
+    paths["publication_candidate_annotated"] = str(annotated_path)
+    candidate_completion_status, candidate_complete, candidate_blocking_reasons = (
+        _candidate_completion_state(
+            out_root=out_root,
+            candidate_markdown=candidate_markdown,
+            candidate_available=candidate_available,
+            plan=plan,
+            accepted=accepted,
+            output_by_section=output_by_section,
+            incomplete_section_ids=incomplete_ids,
+            required_formula_failures_by_section=required_formula_failures_by_section,
+            section_formula_results=section_formula_results,
+            transaction_assessment_path=transaction_assessment_path,
+            candidate_authority=candidate_authority,
+            review_items=review_items,
+            failures=failures,
+            research_derived_failure=research_derived_failure,
+            research_dossiers=research_dossiers,
+        )
+    )
+    verified_complete, verified_blocking_reasons = _verified_completion_state(
+        final_text_validation_status=final_text_validation_status,
+        verified_markdown=verified_markdown,
+        quality=quality,
+        review_items=review_items,
+        external_queue_items=external_queue_items,
+        failures=failures,
+        annotations=annotation_payload.get("annotations") or (),
+    )
+    if status == "success" and (not candidate_complete or not verified_complete):
+        status = "incomplete"
+        blocked_reason = blocked_reason or "completion_gates_open"
     generation_trace_path = _write_method_generation_trace(
         out_root=out_root,
         artifact_paths=artifact_paths,
@@ -3223,6 +3470,11 @@ def run_publication_method_writer(
             final_text_validation_status=final_text_validation_status,
             verified_markdown=verified_markdown,
         ),
+        candidate_completion_status=candidate_completion_status,
+        candidate_complete=candidate_complete,
+        verified_complete=verified_complete,
+        candidate_blocking_reasons=candidate_blocking_reasons,
+        verified_blocking_reasons=verified_blocking_reasons,
         publication_ready=bool(
             quality.status == "publication_ready"
             and quality.final_integrity_gate_passed
@@ -3498,6 +3750,12 @@ def _writer_visible_formula_packages(result: Any) -> tuple[dict[str, Any], ...]:
             "assumptions": list(item.assumptions),
             "authority_status": item.authority_status,
             "formula_lane": item.formula_lane,
+            "obligation_id": item.obligation_id,
+            "satisfied_obligation_ids": list(
+                getattr(item, "satisfied_obligation_ids", ()) or ()
+            ),
+            "consumer_paragraph_id": item.consumer_paragraph_id,
+            "semantic_formula_digest": getattr(item, "semantic_formula_digest", ""),
             "bound_facet_ids": list(item.bound_facet_ids),
             "bound_equation_ids": list(item.bound_equation_ids),
             "review_status": item.review_status,
@@ -3517,6 +3775,7 @@ def _writer_visible_formula_obligations(result: Any) -> tuple[dict[str, Any], ..
         "reason": truth.reason,
         "expectation": truth.expectation,
         "blocking": truth.blocking,
+        "package_id": truth.package_id,
     } for truth in (getattr(result, "obligation_truths", ()) or ()))
 
 
@@ -3741,7 +4000,7 @@ def _section_formula_obligations(
     neighboring SSM obligation cannot flood a readout section.
     """
 
-    from code2paper.agentic.formalization_agent import MethodFormulaObligationV2
+    from code2paper.agentic.formalization_agent import MethodFormulaObligationV2, facet_mechanism_key
 
     if bool(getattr(graph, "formula_not_applicable", False)):
         return ()
@@ -3831,6 +4090,7 @@ def _section_formula_obligations(
                 "repository_derived_or_explicit_author_intent",
             ),
             section_id=str(graph.section_id),
+            mechanism_key=facet_mechanism_key(facet),
             consumer_paragraph_id=consumer_paragraph_id,
             paragraph_ids=paragraph_ids,
             ordered_semantic_slot_ids=ordered_slots,
@@ -3924,6 +4184,40 @@ def _section_formula_obligations(
                 authority_requirements=("closed_repository_evidence_or_author_intent",),
                 section_id=str(graph.section_id),
             ))
+    # Slice 1.2 / 1.3: merge alias obligations that formalize the same
+    # mechanism in the same consumer paragraph (mechanism_key).  Only the
+    # canonical obligation reaches the Formalizer; its facet/slot/edge ids are
+    # retained as satisfied targets so one formula is not emitted per facet.
+    deduped_index: dict[tuple[str, str], int] = {}
+    canonical_order: list[Any] = []
+    for obligation in obligations:
+        mechanism_key = str(getattr(obligation, "mechanism_key", "") or "").strip()
+        consumer = str(getattr(obligation, "consumer_paragraph_id", "") or "").strip()
+        if not mechanism_key or not consumer:
+            canonical_order.append(obligation)
+            continue
+        key = (mechanism_key, consumer)
+        if key not in deduped_index:
+            deduped_index[key] = len(canonical_order)
+            canonical_order.append(obligation)
+            continue
+        existing = canonical_order[deduped_index[key]]
+        canonical_order[deduped_index[key]] = existing.model_copy(update={
+            "facet_ids": tuple(dict.fromkeys([
+                *(getattr(existing, "facet_ids", ()) or ()),
+                *(getattr(obligation, "facet_ids", ()) or ()),
+            ])),
+            "ordered_semantic_slot_ids": tuple(dict.fromkeys([
+                *(getattr(existing, "ordered_semantic_slot_ids", ()) or ()),
+                *(getattr(obligation, "ordered_semantic_slot_ids", ()) or ()),
+            ])),
+            "required_edge_ids": tuple(dict.fromkeys([
+                *(getattr(existing, "required_edge_ids", ()) or ()),
+                *(getattr(obligation, "required_edge_ids", ()) or ()),
+            ])),
+        })
+    if deduped_index:
+        obligations = canonical_order
     return tuple(obligations)
 
 
@@ -3993,6 +4287,8 @@ def _run_section_formalizer(
     facet_alignments: tuple[Any, ...] | list[Any] = (),
     facet_policies: tuple[Any, ...] | list[Any] = (),
     publication_field_candidates: tuple[Any, ...] | list[Any] = (),
+    require_llm_call: bool = False,
+    research_dossiers: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[tuple[Any, ...], str]:
     """Run the section-scoped Formalizer (R2) for every planned section.
 
@@ -4170,6 +4466,10 @@ def _run_section_formalizer(
             equations=equations,
             facts=facts,
             allowed_equation_ids=bound_equation_ids,
+            dossiers=tuple(
+                item for item in research_dossiers
+                if str(getattr(item, "section_id", "") or "") == str(graph.section_id)
+            ),
             author_statements=tuple(
                 str(getattr(facet, "exact_source_quote", "") or "")
                 for facet in section_facets
@@ -4182,6 +4482,9 @@ def _run_section_formalizer(
         )
         required_formula = any(
             item.expectation == "required" for item in formula_obligations
+        )
+        preferred_formula = any(
+            item.expectation == "preferred" for item in formula_obligations
         )
         # Formula packages are generated only when the section plan exposes a
         # paragraph-level consumer.  Older hand-built plans do not carry the
@@ -4208,16 +4511,21 @@ def _run_section_formalizer(
             if planned_paragraphs
             else bool(required_formula or core)
         )
-        from code2paper.agentic.scientific_claim_ir import l1_chain_length
-
-        chain_length = l1_chain_length(facts) if facts is not None else 0
+        # Formalizer invocation is section-local.  A global L1 chain length
+        # can be zero even when this paragraph has a required mechanism
+        # obligation; using it as a gate silently creates the historical
+        # required-consumer/zero-call failure.
+        formalizer_not_invoked = bool(
+            require_llm_call and required_formula and formula_consumer and caller is None
+        )
         if not core:
-            # Formalizer LLM is not on the default path.  A required
-            # obligation plus an L1 chain of length >= 2 may request paper
-            # notation; lone incidental binary ops never do.
+            # Incidental arithmetic remains outside ``core``.  A required
+            # section-local consumer may still ask the Formalizer for an
+            # author-intent/partial notation package, independent of a
+            # repository-wide chain count.
             packages = ()
             call_traces: list[dict[str, Any]] = []
-            if caller is not None and required_formula and chain_length >= 2 and formula_consumer:
+            if caller is not None and required_formula and formula_consumer:
                 packages, call_traces = _invoke_section_formalizer_llm(
                     graph=graph,
                     unit_by_id=unit_by_id,
@@ -4276,6 +4584,10 @@ def _run_section_formalizer(
                 formula_not_applicable=formula_not_applicable and not formula_obligations,
                 formula_obligations=formula_obligations,
                 evidence_packs=evidence_packs,
+                empty_disposition=(
+                    "formalizer_not_invoked"
+                    if formalizer_not_invoked else "formalizer_empty"
+                ),
             ))
             section_call_traces.append({
                 "section_id": graph.section_id,
@@ -4326,13 +4638,24 @@ def _run_section_formalizer(
                     if str(getattr(unit, "design_objective", "") or "").strip()
                 ),
             )
-        if not packages and formula_consumer:
+        # A configured caller is allowed to fall back to a deterministic
+        # representation package after a bounded call.  No caller is a
+        # typed lifecycle failure for a required consumer, never a silent
+        # deterministic success.
+        if not packages and formula_consumer and not formalizer_not_invoked:
             packages = build_deterministic_formula_packages(
                 section_id=graph.section_id,
                 equations=equations,
                 facts=facts,
                 allowed_equation_ids=bound_equation_ids,
-                formula_obligations=tuple(formula_obligations),
+                # Pre-ledger plans have no paragraph consumer and therefore
+                # cannot close the new obligation route.  Keep their
+                # deterministic package equation-bound and unlabelled; the
+                # current paragraph plan path carries the explicit closed
+                # obligation ids and consumer instead.
+                formula_obligations=(
+                    tuple(formula_obligations) if planned_paragraphs else ()
+                ),
             )
         if packages:
             valid_packages: list[Any] = []
@@ -4360,8 +4683,18 @@ def _run_section_formalizer(
             packages=packages,
             obligation_ids=obligation_ids,
             formula_not_applicable=formula_not_applicable,
-            formula_obligations=formula_obligations,
+            # Frozen pre-paragraph plans have no consumer to close.  Preserve
+            # their historical equation-bound deterministic package path;
+            # current paragraph plans keep the strict obligation/consumer
+            # route above.
+            formula_obligations=(
+                formula_obligations if planned_paragraphs else ()
+            ),
             evidence_packs=evidence_packs,
+            empty_disposition=(
+                "formalizer_not_invoked"
+                if formalizer_not_invoked else "formalizer_empty"
+            ),
         ))
         section_call_traces.append({
             "section_id": graph.section_id,
@@ -4549,9 +4882,45 @@ def _invoke_section_formalizer_llm(
 
         package_id = str(getattr(package, "package_id", "") or "")
         explicit_id = str(getattr(package, "obligation_id", "") or "").strip()
+        explicit_satisfied = tuple(dict.fromkeys(
+            str(item).strip()
+            for item in (
+                getattr(package, "satisfied_obligation_ids", ()) or ()
+            )
+            if str(item).strip()
+        ))
         explicit_consumer = str(
             getattr(package, "consumer_paragraph_id", "") or ""
         ).strip()
+        if explicit_satisfied:
+            if not formula_obligations:
+                return package, f"{package_id}:formula_package_obligation_route_unbound"
+            by_id = {
+                str(getattr(item, "obligation_id", "") or "").strip(): item
+                for item in formula_obligations
+            }
+            routed = [by_id.get(item) for item in explicit_satisfied]
+            if any(item is None for item in routed):
+                return package, f"{package_id}:formula_package_obligation_route_unknown"
+            consumers = tuple(dict.fromkeys(
+                str(
+                    getattr(item, "consumer_paragraph_id", "")
+                    or (
+                        item.paragraph_ids[0]
+                        if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                        else ""
+                    )
+                ).strip()
+                for item in routed
+            ))
+            if len(consumers) != 1 or not consumers[0]:
+                return package, f"{package_id}:formula_package_consumer_route_ambiguous"
+            if explicit_consumer and explicit_consumer != consumers[0]:
+                return package, f"{package_id}:formula_package_consumer_mismatch"
+            return package.model_copy(update={
+                "obligation_id": explicit_satisfied[0] if len(explicit_satisfied) == 1 else "",
+                "consumer_paragraph_id": consumers[0],
+            }), ""
         if explicit_id and explicit_consumer:
             return package, ""
         if not formula_obligations:
@@ -4628,6 +4997,8 @@ def _invoke_section_formalizer_llm(
             "partial or paper_code_mismatch (NEVER code_verified): state the "
             "section's core mechanism in academic paper notation. Use the "
             "supplied formula obligation and author quote as scope; do not "
+            "return satisfied_obligation_ids only from the supplied closed set "
+            "and bind them to one consumer_paragraph_id; do not guess a route. "
             "invent a module, loss, guarantee, or implementation fact. Return "
             "a renderable markdown_block with display math, define the symbols, "
             "and state assumptions explicitly. Missing repository line numbers "
@@ -4638,7 +5009,10 @@ def _invoke_section_formalizer_llm(
         if author_intent_lane
         else (
             "Produce paper-level LaTeX formula packages for the authorized core equations. "
-            "For each package provide formula_lane repository_derived, purpose "
+            "For each package return satisfied_obligation_ids using only the supplied "
+            "section obligation ids and exactly one consumer_paragraph_id; one package "
+            "may satisfy multiple obligations only when they share that consumer. "
+            "Provide formula_lane repository_derived, purpose "
             "(the Method question the formula answers), latex (display math body preserving "
             "the exact operands, operators, numbers "
             "and dimensions of the authorized expression; you may choose notation and "
@@ -4713,6 +5087,28 @@ def _invoke_section_formalizer_llm(
                 "reader_propositions": reader_propositions,
                 "formula_constraints": list(formula_constraints),
                 "formula_obligations": obligation_rows,
+                "closed_satisfied_obligation_ids": [
+                    str(item.obligation_id) for item in formula_obligations
+                ],
+                "closed_consumer_paragraph_ids": list(dict.fromkeys(
+                    str(
+                        getattr(item, "consumer_paragraph_id", "")
+                        or (
+                            item.paragraph_ids[0]
+                            if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                            else ""
+                        )
+                    ).strip()
+                    for item in formula_obligations
+                    if str(
+                        getattr(item, "consumer_paragraph_id", "")
+                        or (
+                            item.paragraph_ids[0]
+                            if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                            else ""
+                        )
+                    ).strip()
+                )),
                 "author_facets": facet_rows,
                 "organization_seed": organization_seed,
                 "evidence_packs": evidence_pack_rows,
@@ -8137,6 +8533,422 @@ def _verified_validation_status(
     return "not_run"
 
 
+def _mapping_value(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _read_json_mapping(path: str | Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _candidate_completion_state(
+    *,
+    out_root: str | Path,
+    candidate_markdown: str,
+    candidate_available: bool,
+    plan: MethodSectionPlanV2,
+    accepted: list[tuple[str, str, str]],
+    output_by_section: Mapping[str, PublicationMethodSectionOutputV1],
+    incomplete_section_ids: Iterable[str],
+    required_formula_failures_by_section: Mapping[str, Iterable[str]],
+    section_formula_results: Iterable[Any],
+    transaction_assessment_path: str | Path,
+    candidate_authority: Any | None = None,
+    review_items: Iterable[Any] = (),
+    failures: Iterable[str] = (),
+    research_derived_failure: str = "",
+    research_dossiers: Iterable[Any] = (),
+) -> tuple[str, bool, tuple[str, ...]]:
+    """Compute the independent Candidate completion state.
+
+    This gate is deliberately narrower than publication readiness: a typed
+    author-intent or repository-mismatch sentence may remain in Candidate,
+    while missing bindings, empty transactions, stale/digest failures, and
+    internal audit leakage keep Candidate incomplete or blocked.
+    """
+
+    reasons: list[str] = []
+
+    def add(reason: str) -> None:
+        value = str(reason or "").strip()
+        if value and value not in reasons:
+            reasons.append(value)
+
+    if not candidate_available or not candidate_markdown.strip():
+        add("candidate_not_generated")
+    candidate_path = method_output(Path(out_root), "publication_candidate_method")
+    if candidate_markdown.strip():
+        if not candidate_path.is_file():
+            add("candidate_not_persisted")
+        else:
+            try:
+                persisted = candidate_path.read_text(encoding="utf-8")
+            except OSError:
+                persisted = ""
+            if persisted != candidate_markdown:
+                add("candidate_persisted_text_digest_mismatch")
+        checkpoint = _load_candidate_checkpoint(out_root)
+        if checkpoint is None:
+            add("candidate_checkpoint_missing_or_invalid")
+        elif checkpoint.get("final_text_digest") != _digest_text(candidate_markdown):
+            add("candidate_checkpoint_digest_mismatch")
+
+    accepted_by_id = {
+        str(section_id): str(text or "").strip()
+        for section_id, text, _ref in accepted
+    }
+    incomplete = set(str(item) for item in incomplete_section_ids if str(item).strip())
+    for section_id in sorted(incomplete):
+        add(f"required_section_incomplete:{section_id}")
+    for graph in plan.sections:
+        section_id = str(graph.section_id)
+        body = accepted_by_id.get(section_id, "")
+        if not body:
+            output = output_by_section.get(section_id)
+            body = str(getattr(output, "section_markdown", "") or "").strip()
+        if not body:
+            add(f"required_section_body_missing:{section_id}")
+            continue
+        body_without_headings = re.sub(r"(?m)^\s*#{1,6}\s+.*$", "", body).strip()
+        if not re.search(r"\b[A-Za-zÀ-ÖØ-öø-ÿ]{3,}\b", body_without_headings):
+            add(f"required_section_body_not_substantive:{section_id}")
+
+    assessment_payload = _read_json_mapping(transaction_assessment_path)
+    transaction_rows = {
+        str(item.get("paragraph_id") or ""): item
+        for item in assessment_payload.get("assessments") or ()
+        if isinstance(item, Mapping) and str(item.get("paragraph_id") or "").strip()
+    }
+    for graph in plan.sections:
+        for plan_row in graph.paragraphs or ():
+            paragraph_id = str(plan_row.paragraph_id)
+            row = transaction_rows.get(paragraph_id)
+            if row is None:
+                add(f"paragraph_transaction_missing:{paragraph_id}")
+                continue
+            if not bool(row.get("valid")):
+                missing = row.get("missing_by_kind") or {}
+                invalid = row.get("invalid_witnesses") or ()
+                semantic = row.get("semantic_failures") or ()
+                for kind, values in missing.items() if isinstance(missing, Mapping) else ():
+                    for value in values or ():
+                        add(f"paragraph_missing:{paragraph_id}:{kind}:{value}")
+                for value in (*invalid, *semantic):
+                    add(f"paragraph_transaction_failure:{paragraph_id}:{value}")
+
+    accepted_packages: dict[str, Any] = {}
+    for result in section_formula_results or ():
+        section_id = str(_mapping_value(result, "section_id", "") or "")
+        for failure in _mapping_value(result, "required_formula_failures", ()) or ():
+            add(f"required_formula_unresolved:{section_id}:{failure}")
+        for truth in _mapping_value(result, "obligation_truths", ()) or ():
+            expectation = str(_mapping_value(truth, "expectation", "required") or "required")
+            if expectation != "required":
+                continue
+            if bool(_mapping_value(truth, "blocking", False)) or str(
+                _mapping_value(truth, "outcome", "") or ""
+            ) == "unresolved":
+                add(
+                    f"required_formula_unresolved:{section_id}:"
+                    f"{_mapping_value(truth, 'obligation_id', '')}"
+                )
+        for package in _mapping_value(result, "packages", ()) or ():
+            package_id = str(_mapping_value(package, "package_id", "") or "").strip()
+            review_status = str(_mapping_value(package, "review_status", "") or "")
+            if package_id and review_status == "accepted":
+                accepted_packages[package_id] = package
+    for section_id, values in required_formula_failures_by_section.items():
+        for value in values or ():
+            add(f"required_formula_unresolved:{section_id}:{value}")
+    for dossier in research_dossiers or ():
+        unresolved = tuple(
+            str(item).strip()
+            for item in (_mapping_value(dossier, "unresolved_relations", ()) or ())
+            if str(item).strip()
+        )
+        for relation_id in unresolved:
+            add(
+                f"research_dossier_unresolved:{_mapping_value(dossier, 'paragraph_id', '')}:"
+                f"{relation_id}"
+            )
+    consumed_packages: set[str] = set()
+    for row in transaction_rows.values():
+        declared = row.get("declared_by_kind") or {}
+        if isinstance(declared, Mapping):
+            consumed_packages.update(
+                str(item).strip()
+                for item in (declared.get("formula") or ())
+                if str(item).strip()
+            )
+    disposition_by_package: dict[str, str] = {}
+    for output in output_by_section.values():
+        for paragraph in getattr(output, "paragraphs", ()) or ():
+            for disposition in getattr(paragraph, "formula_dispositions", ()) or ():
+                package_id = str(_mapping_value(disposition, "package_id", "") or "").strip()
+                value = str(_mapping_value(disposition, "disposition", "") or "").strip()
+                if package_id and value:
+                    disposition_by_package[package_id] = value
+            singular = str(getattr(paragraph, "formula_disposition", "") or "").strip()
+            if singular and len(getattr(paragraph, "used_formula_package_ids", ()) or ()) == 1:
+                disposition_by_package.setdefault(
+                    str(paragraph.used_formula_package_ids[0]).strip(),
+                    singular,
+                )
+    required_package_ids = {
+        str(_mapping_value(truth, "package_id", "") or "").strip()
+        for result in section_formula_results or ()
+        for truth in (_mapping_value(result, "obligation_truths", ()) or ())
+        if str(_mapping_value(truth, "expectation", "required") or "required") == "required"
+        and str(_mapping_value(truth, "package_id", "") or "").strip()
+    }
+    for package_id in sorted(set(accepted_packages) - consumed_packages):
+        disposition = disposition_by_package.get(package_id, "")
+        if disposition in {
+            "writer_rejected_not_material",
+            "writer_rejected_conflict",
+            "missing_from_prose",
+        } and package_id not in required_package_ids:
+            continue
+        if disposition and disposition != "consumed" and package_id in required_package_ids:
+            add(f"required_formula_disposition_not_consumed:{package_id}")
+        else:
+            add(f"accepted_formula_package_unconsumed:{package_id}")
+
+    authority_status = str(_mapping_value(candidate_authority, "status", "") or "")
+    if authority_status == "error":
+        add("candidate_authority_validation_error")
+    if int(_mapping_value(candidate_authority, "internal_audit_term_count", 0) or 0) > 0:
+        add("candidate_internal_audit_terms")
+    for violation in _mapping_value(candidate_authority, "violations", ()) or ():
+        add(f"candidate_authority_violation:{violation}")
+    for item in review_items or ():
+        if bool(_mapping_value(item, "blocks_candidate", False)):
+            add(f"candidate_review_block:{_mapping_value(item, 'candidate_id', 'unknown')}")
+    all_failures = [str(item) for item in failures if str(item).strip()]
+    if research_derived_failure:
+        all_failures.append(research_derived_failure)
+    for failure in all_failures:
+        lowered = failure.casefold()
+        if any(token in lowered for token in (
+            "unknown", "stale", "digest_mismatch", "duplicate", "untyped",
+            "audit_shell", "formalizer_not_invoked", "empty_witness",
+            "research_dossier", "research_derived", "research_derivation",
+        )):
+            add(f"candidate_integrity_failure:{failure}")
+
+    if not candidate_markdown.strip() or not candidate_available:
+        return "blocked", False, tuple(reasons or ("candidate_not_generated",))
+    if reasons:
+        return "incomplete", False, tuple(reasons)
+    return "complete", True, ()
+
+
+def _verified_completion_state(
+    *,
+    final_text_validation_status: str,
+    verified_markdown: str,
+    quality: Any,
+    review_items: Iterable[Any] = (),
+    external_queue_items: Iterable[Any] = (),
+    failures: Iterable[str] = (),
+    annotations: Iterable[Mapping[str, Any]] = (),
+) -> tuple[bool, tuple[str, ...]]:
+    """Compute Verified independently and fail closed on every open gate."""
+
+    reasons: list[str] = []
+
+    def add(reason: str) -> None:
+        value = str(reason or "").strip()
+        if value and value not in reasons:
+            reasons.append(value)
+
+    if not verified_markdown.strip():
+        add("verified_output_empty")
+    if final_text_validation_status != "passed":
+        add(f"reverse_validation_{final_text_validation_status or 'not_run'}")
+    if not bool(getattr(quality, "final_integrity_gate_passed", False)):
+        add("final_integrity_gate_failed")
+    if str(getattr(quality, "status", "")) != "publication_ready":
+        add("publication_quality_not_ready")
+    for item in review_items or ():
+        if bool(_mapping_value(item, "blocks_verified", False)):
+            add(f"verified_review_block:{_mapping_value(item, 'candidate_id', 'unknown')}")
+    if tuple(external_queue_items or ()):
+        add("external_research_queue_open")
+    for failure in failures or ():
+        if str(failure).strip():
+            add(f"verified_upstream_failure:{failure}")
+    for annotation in annotations or ():
+        mode = str(annotation.get("surface_mode") or annotation.get("candidate_surface_mode") or "")
+        if mode in {"author_specification", "mismatch_statement"} and any(
+            bool(annotation.get(key))
+            for key in ("verified", "in_verified", "enters_verified")
+        ):
+            add(f"candidate_surface_leaked_to_verified:{annotation.get('target_id', '')}")
+    for pattern in _READER_FACING_INTERNAL_ID_PATTERNS:
+        if pattern.search(verified_markdown):
+            add("verified_contains_internal_audit_token")
+            break
+    return not reasons, tuple(reasons)
+
+
+def _build_candidate_annotation_payload(
+    *,
+    candidate_markdown: str,
+    verified_markdown: str,
+    plan: MethodSectionPlanV2,
+    output_by_section: Mapping[str, PublicationMethodSectionOutputV1],
+    transaction_assessment_path: str | Path,
+    candidates: Iterable[Any],
+    derivations: Iterable[Any],
+    formula_packages: Iterable[Any] = (),
+) -> tuple[dict[str, Any], str]:
+    """Build a sidecar mapping Candidate paragraphs to atomic provenance."""
+
+    assessment_payload = _read_json_mapping(transaction_assessment_path)
+    assessments = {
+        str(item.get("paragraph_id") or ""): item
+        for item in assessment_payload.get("assessments") or ()
+        if isinstance(item, Mapping)
+    }
+    paragraph_context: dict[str, tuple[str, str, Mapping[str, Any]]] = {}
+    for graph in plan.sections:
+        output = output_by_section.get(str(graph.section_id))
+        output_paragraphs = {
+            str(item.paragraph_id): item
+            for item in (getattr(output, "paragraphs", ()) or ())
+            if str(getattr(item, "paragraph_id", "") or "").strip()
+        }
+        for row in graph.paragraphs or ():
+            paragraph_id = str(row.paragraph_id)
+            paragraph = output_paragraphs.get(paragraph_id)
+            paragraph_text = str(getattr(paragraph, "paragraph_markdown", "") or "")
+            paragraph_context[paragraph_id] = (
+                str(graph.section_id),
+                paragraph_text,
+                assessments.get(paragraph_id, {}),
+            )
+    derivation_by_id = {
+        str(_mapping_value(item, "derivation_id", "")): item
+        for item in derivations or ()
+        if str(_mapping_value(item, "derivation_id", "") or "").strip()
+    }
+    candidate_items = tuple(candidates or ())
+    annotations: list[dict[str, Any]] = []
+    for candidate in candidate_items:
+        candidate_id = str(_mapping_value(candidate, "candidate_id", "") or "").strip()
+        if not candidate_id:
+            continue
+        paragraph_id = ""
+        assessment: Mapping[str, Any] = {}
+        for possible_id, (_section_id, _text_value, row) in paragraph_context.items():
+            declared = row.get("declared_by_kind") or {}
+            required = row.get("required_by_kind") or {}
+            field_ids = set(str(item) for item in (declared.get("field") or ())) if isinstance(declared, Mapping) else set()
+            required_ids = set(str(item) for item in (required.get("field") or ())) if isinstance(required, Mapping) else set()
+            if candidate_id in field_ids or candidate_id in required_ids:
+                paragraph_id = possible_id
+                assessment = row
+                break
+        section_id, paragraph_text, _row = paragraph_context.get(
+            paragraph_id, ("", "", assessment)
+        )
+        derivation_ids = tuple(
+            str(item)
+            for item in (_mapping_value(candidate, "derivation_record_ids", ()) or ())
+            if str(item).strip()
+        )
+        records = [derivation_by_id[item] for item in derivation_ids if item in derivation_by_id]
+        sentences = [
+            item.strip()
+            for item in re.split(r"(?<=[.!?])\s+|\n+", paragraph_text)
+            if item.strip() and not item.lstrip().startswith("#")
+        ]
+        semantic_atom = str(_mapping_value(candidate, "semantic_atom", "") or "").strip()
+        sentence_index = next(
+            (index for index, sentence in enumerate(sentences) if semantic_atom and semantic_atom.casefold() in sentence.casefold()),
+            -1,
+        )
+        surface_mode = str(_mapping_value(candidate, "surface_mode", "omit_and_review") or "omit_and_review")
+        annotations.append({
+            "annotation_id": f"annotation:{candidate_id}",
+            "target_kind": "field_candidate",
+            "target_id": candidate_id,
+            "section_id": section_id,
+            "paragraph_id": paragraph_id,
+            "sentence_index": sentence_index,
+            "sentence_text": sentences[sentence_index] if sentence_index >= 0 else "",
+            "surface_mode": surface_mode,
+            "derivation_kind": str(_mapping_value(candidate, "derivation_kind", "direct") or "direct"),
+            "claim_strength": str(_mapping_value(candidate, "claim_strength", "descriptive") or "descriptive"),
+            "derivation_record_ids": list(derivation_ids),
+            "derivation_authority_statuses": [
+                str(_mapping_value(item, "authority_status", "") or "") for item in records
+            ],
+            "verified_eligible": any(
+                bool(_mapping_value(item, "verified_eligible", False)) for item in records
+            ),
+            "enters_verified": bool(
+                surface_mode == "repository_statement"
+                and semantic_atom
+                and semantic_atom.casefold() in verified_markdown.casefold()
+            ),
+            "witnessed": bool(
+                isinstance(assessment, Mapping)
+                and candidate_id in set(
+                    str(item)
+                    for item in ((assessment.get("witnessed_by_kind") or {}).get("field") or ())
+                )
+            ),
+        })
+    for package in formula_packages or ():
+        package_id = str(_mapping_value(package, "package_id", "") or "").strip()
+        if not package_id:
+            continue
+        consumer = str(_mapping_value(package, "consumer_paragraph_id", "") or "").strip()
+        section_id = ""
+        for graph in plan.sections:
+            if consumer and any(str(row.paragraph_id) == consumer for row in graph.paragraphs or ()):
+                section_id = str(graph.section_id)
+                break
+        annotations.append({
+            "annotation_id": f"annotation:{package_id}",
+            "target_kind": "formula",
+            "target_id": package_id,
+            "section_id": section_id,
+            "paragraph_id": consumer,
+            "surface_mode": "repository_statement" if str(_mapping_value(package, "authority_status", "")) == "code_verified" else "omit_and_review",
+            "derivation_kind": "formal_derived",
+            "claim_strength": "structural",
+            "verified_eligible": str(_mapping_value(package, "authority_status", "")) == "code_verified",
+            "enters_verified": bool(
+                str(_mapping_value(package, "authority_status", "")) == "code_verified"
+                and str(_mapping_value(package, "latex", "") or "") in verified_markdown
+            ),
+        })
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "candidate_text_digest": _digest_text(candidate_markdown) if candidate_markdown else "",
+        "annotations": annotations,
+    }
+    payload["content_digest"] = _digest_json(payload)
+    annotated = candidate_markdown
+    if annotations:
+        annotated = candidate_markdown.rstrip() + "\n\n" + "\n".join(
+            "<!-- code2paper-annotation "
+            + json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            + " -->"
+            for item in annotations
+        ) + "\n"
+    return payload, annotated
+
+
 def _has_local_validation_repair_issue(
     validation_paths: Mapping[str, str],
 ) -> bool:
@@ -10268,6 +11080,7 @@ def _writer_section_inputs(
     audit_override_concept_keys: frozenset[str] = frozenset(),
     audit_only_claim_ids: set[str] | frozenset[str] | None = None,
     story_spine_nodes: tuple[Any, ...] | list[Any] = (),
+    authoring_packets_v2_by_section: Mapping[str, tuple[Any, ...]] | None = None,
 ) -> list[WriterSectionInput]:
     """Build the Writer-facing projection for each planned section.
 
@@ -10828,6 +11641,10 @@ def _writer_section_inputs(
             for item in configuration_ids
             if item in configuration_by_id
         ]
+        authoring_packets_v2 = [
+            item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+            for item in (authoring_packets_v2_by_section or {}).get(graph.section_id, ())
+        ]
         # Validation constraints carry the exact canonical tokens the reverse
         # validator enforces.  They are a validation-only channel: the Writer
         # renders operations from ``argument_flow`` and never treats these
@@ -11248,6 +12065,7 @@ def _writer_section_inputs(
                     "frame_digests": section_frame_digests,
                 },
                 "paragraph_plan": section_paragraphs,
+                "authoring_packets_v2": authoring_packets_v2,
                 "paragraph_transaction_required": paragraph_transactions_enabled,
                 "validation_constraints": validation_constraints,
                 "reader_facing_claims": reader_facing_claims,
@@ -11333,16 +12151,16 @@ def _writer_section_inputs(
                         "Use paragraph_plan as the only organization skeleton. "
                         "Return one paragraphs item for every paragraph_plan row. "
                         "Each item must contain only that paragraph's substantive "
-                        "Markdown and exact witness strings for every rendered facet, "
-                        "field candidate, slot, edge, formula package, claim, or equation id. The "
-                        "harness assembles section_markdown from these transactions; "
-                        "do not use a single section paragraph to stand in for several "
-                        "planned paragraphs. A witness must occur exactly once in its "
-                        "paragraph text. "
+                        "Markdown and the closed ids it actually renders. Do not emit "
+                        "exact witness strings or perform witness bookkeeping: the "
+                        "separate deterministic Binder selects unique substrings only "
+                        "after the prose is frozen. The harness assembles section_markdown "
+                        "from these transactions; do not use a single section paragraph "
+                        "to stand in for several planned paragraphs. "
                         "For each required field candidate, follow the paragraph's "
                         "witness_contract semantic_atom, polarity, conditions, and "
                         "allowed factual anchors; never bind a sibling field or use an "
-                        "unrelated exact witness. "
+                        "unrelated source phrase. "
                         "Use writer_view and its facet policies to decide the "
                         "author-intent scope and caveat mode, but use the supplied "
                         "argument_flow semantic frames as the only repository fact "
@@ -11415,25 +12233,29 @@ def _writer_section_inputs(
                         (
                             "Use paragraph_plan as the only organization skeleton. "
                             "Return one paragraphs item for every paragraph_plan row. "
-                            "Each paragraph_markdown must be substantive body text "
-                            "without a section H2 heading, and every rendered facet, "
-                            "field candidate, slot, edge, formula package, claim, or equation id must "
-                            "have one exact witness occurring exactly once in that "
-                            "paragraph. The harness assembles one section H2 and the "
-                            "paragraphs in plan order; do not collapse multiple plan "
-                            "rows into one transaction. "
-                            "The paragraph witness_contract is the local target "
-                            "authority: a required field candidate must express its "
-                            "semantic_atom with the stated polarity/conditions, and its "
-                            "exact witness must remain compatible with an allowed source "
-                            "anchor. "
+                        "Each paragraph_markdown must be substantive body text "
+                        "without a section H2 heading. Report only the closed ids "
+                        "actually rendered; do not emit exact witnesses because the "
+                        "separate deterministic Binder selects them from the frozen "
+                        "paragraph. The harness assembles one section H2 and the "
+                        "paragraphs in plan order; do not collapse multiple plan "
+                        "rows into one transaction. The paragraph witness_contract "
+                        "is the local semantic authority: a required field candidate "
+                        "must express its semantic_atom with the stated "
+                        "polarity/conditions and remain compatible with an allowed "
+                        "source anchor. "
                         )
                         if section_paragraphs else ""
                     )
-                    + "Use writer_view as the only content plan. Answer purpose, "
+                    + "The prose itself must not contain harness or audit vocabulary such as "
+                    "audit, callback, sidecar, pending, unverified, validation status, "
+                    "repository evidence, formalization pending, or typed gap. Express an "
+                    "unresolved point as a natural scoped limitation or author-intent "
+                    "sentence, and keep it out of positive repository fact claims. "
+                    "Use writer_view as the only content plan. Answer purpose, "
                     "render positive_propositions as normal Method statements, and "
-                    "render caveated_propositions as substantive intended/partial/"
-                    "pending Method statements. When the view carries "
+                    "render caveated_propositions as substantive naturally caveated "
+                    "author-intent or partial Method statements. When the view carries "
                     "positive_concepts/caveated_concepts instead (Stage 4 concept "
                     "cards), render each positive_concept's method_subject and "
                     "operation as one normal Method statement in reader language, "
@@ -11490,8 +12312,8 @@ def _writer_section_inputs(
                     "reader_facing_claim with requires_caveat=true only as candidate "
                     "narrative. Preserve its paper_statement but visibly frame its "
                     "authority with wording such as 'we aim', 'our intended design', "
-                    "'repository evidence partially supports', an explicit mismatch, "
-                    "or 'pending confirmation'. Never add implementation details from "
+                    "'the repository only partially supports', or an explicit mismatch. "
+                    "Never add implementation details from "
                     "a neighboring section or from supported_fragments that are not "
                     "bound as a reader_facing_claim. You may add at most one claim-free "
                     "organization or transition sentence when the logical connection "
@@ -11548,6 +12370,21 @@ def _writer_section_inputs(
                         "required facet must be reported in rendered_from_facet_ids "
                         "after substantive prose covers it."
                         if section_facets else ""
+                    )
+                    + (
+                        " Authoring packets V2 are the primary paragraph contract for this call. "
+                        "Follow each packet's ordered_targets, surface_mode, dossier summary, "
+                        "conditions, configuration state, and consumer-scoped formula packages. "
+                        "Return rendered target ids and rendered formula package ids, but do not "
+                        "invent exact evidence witnesses or copy internal audit terms into prose; "
+                        "the separate Binder attaches exact witnesses after clean prose is written. "
+                        "Every supplied formula package must either be rendered and listed as "
+                        "consumed or receive one typed formula disposition with its package_id "
+                        "and a substantive reason; never silently omit an accepted package. "
+                        "Keep author_specification, mismatch_statement, scoped_limitation, and "
+                        "repository_statement visibly distinct. A target with omit_and_review or "
+                        "deferred policy must remain out of positive repository prose."
+                        if authoring_packets_v2 else ""
                     )
                 ),
                 "grounding_contract": {
@@ -13357,6 +14194,7 @@ def _write_paragraph_transaction_assessments(
         routes: dict[str, dict[str, Any]] = {}
         has_explicit_package_routes = any(
             str(package.get("obligation_id") or "").strip()
+            or bool(package.get("satisfied_obligation_ids"))
             for package in packages
         )
         for obligation in obligations:
@@ -13365,7 +14203,18 @@ def _write_paragraph_transaction_assessments(
                 continue
             matches = [
                 package for package in packages
-                if str(package.get("obligation_id") or "").strip() == obligation_id
+                if obligation_id in {
+                    *(
+                        str(item).strip()
+                        for item in (package.get("satisfied_obligation_ids") or ())
+                        if str(item).strip()
+                    ),
+                    *(
+                        [str(package.get("obligation_id") or "").strip()]
+                        if str(package.get("obligation_id") or "").strip()
+                        else []
+                    ),
+                }
             ]
             if not matches and not has_explicit_package_routes:
                 facet_ids = set(str(item) for item in (obligation.get("facet_ids") or ()))
@@ -13939,15 +14788,35 @@ def _write_result_only(
     # rewrite an incumbent Candidate as ``failed`` / ``not_run``.
     incumbent_digest = _incumbent_candidate_digest(out_root)
     if incumbent_digest:
-        result = result.model_copy(update={
+        updates: dict[str, Any] = {
             "candidate_generation_status": "generated",
             "candidate_available": True,
             "final_text_digest": result.final_text_digest or incumbent_digest,
-        })
+        }
+        if result.candidate_completion_status == "not_started":
+            updates.update({
+                "candidate_completion_status": "incomplete",
+                "candidate_complete": False,
+                "candidate_blocking_reasons": (
+                    "writer_run_did_not_complete_candidate_audit",
+                ),
+            })
+        if not result.verified_blocking_reasons:
+            updates["verified_blocking_reasons"] = ("writer_run_did_not_complete",)
+        result = result.model_copy(update=updates)
     elif result.status == "blocked" and not result.candidate_available:
         result = result.model_copy(update={
             "candidate_generation_status": "failed",
             "candidate_available": False,
+            "candidate_completion_status": "blocked",
+            "candidate_complete": False,
+            "verified_complete": False,
+            "candidate_blocking_reasons": result.candidate_blocking_reasons or (
+                "candidate_not_generated",
+            ),
+            "verified_blocking_reasons": result.verified_blocking_reasons or (
+                "candidate_not_generated",
+            ),
         })
     path = method_output(Path(out_root), "publication_writer_result_v1")
     _atomic_write_text(path, result.model_dump_json(indent=2) + "\n")
@@ -13980,6 +14849,9 @@ def _publish_checkpoint_fallback(
             blocked_reason=f"candidate_checkpoint_unavailable_after_failure:{failure}",
             candidate_generation_status="failed",
             candidate_available=False,
+            candidate_completion_status="blocked",
+            candidate_blocking_reasons=(f"candidate_checkpoint_unavailable:{failure}",),
+            verified_blocking_reasons=("candidate_not_generated",),
         )
         return result, _write_result_only(root, result)
     final_text = str(payload.get("final_text") or "")
@@ -14015,6 +14887,11 @@ def _publish_checkpoint_fallback(
         candidate_available=True,
         candidate_validation_status="error",
         verified_validation_status="error",
+        candidate_completion_status="incomplete",
+        candidate_complete=False,
+        verified_complete=False,
+        candidate_blocking_reasons=(f"publication_stage_fault:{failure}",),
+        verified_blocking_reasons=(f"publication_stage_fault:{failure}",),
         publication_ready=False,
         final_text_digest=_digest_text(final_text) if final_text else "",
         rendered_text_digest=_digest_text(rendered_text) if rendered_text else "",

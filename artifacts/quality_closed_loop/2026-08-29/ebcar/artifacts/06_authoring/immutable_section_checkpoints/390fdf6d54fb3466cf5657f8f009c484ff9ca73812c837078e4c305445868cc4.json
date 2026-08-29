@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:aba15cbcb1dfdfc0cb86460155cc564698c37298f0bf9efd15b6f39c538bbb24",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Embedding‑based reranking formulation and overall framework.",
+    "section_markdown": "## Embedding‑based reranking formulation and overall framework.\n\nNo repository-supported content was supplied for this paragraph. The authoring packet contains no ordered targets, formula packages, material conditions, or configuration state, and the dossier summary reports zero operation atoms and zero data-flow or control-flow length. An overview of the embedding-based reranking formulation and overall framework requires at least one ordered target identifying the specific components, transformations, or objectives to be described.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-54911271"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "evidence_refs_used": [],
+        "exact_question": "What are the constituent components, data flow, and objective of the embedding-based reranking framework described in this work?",
+        "missing_parts": [
+          "ordered_targets",
+          "formula_packages",
+          "material_conditions",
+          "configuration_state"
+        ],
+        "missing_rhetorical_move": "problem_or_local_context",
+        "request_id": "REQ-MA-S2-001",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "MA-S2:brief-001"
+        ],
+        "target_clause_ids": []
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "No repository-supported content was supplied for this paragraph. The authoring packet contains no ordered targets, formula packages, material conditions, or configuration state, and the dossier summary reports zero operation atoms and zero data-flow or control-flow length. An overview of the embedding-based reranking formulation and overall framework requires at least one ordered target identifying the specific components, transformations, or objectives to be described.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": [],
+        "formula_disposition": null,
+        "formula_disposition_reason": "",
+        "formula_dispositions": []
+      }
+    ]
+  },
+  "output_digest": "sha256:3c859d6d901067d0861ca1f59f8e23ddea92c6836ad3664187c12d2071b329b1",
+  "content_digest": "sha256:390fdf6d54fb3466cf5657f8f009c484ff9ca73812c837078e4c305445868cc4"
+}

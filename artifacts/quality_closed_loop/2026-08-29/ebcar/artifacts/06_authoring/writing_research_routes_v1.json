@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:9c6affc823b3f2a0f856",
+      "request_id": "REQ-MA-S2-001",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "ordered_targets",
+        "formula_packages",
+        "material_conditions",
+        "configuration_state"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:7f307409e5fc7e5042be157676d3a37266379676fb1d8a011a51ef9b569c7221"
+    },
+    {
+      "route_id": "route:92fb17bb30e1e481021b",
+      "request_id": "MA-S3:unit-1",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "scope": [
+        "mechanism_overview"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S3 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:ea8175e93222634d3195e027b3006808664a8b2879dc3dd5da7bef28581fff16"
+    }
+  ],
+  "rejections": []
+}

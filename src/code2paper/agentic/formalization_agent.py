@@ -147,6 +147,11 @@ class MethodFormulaObligationV2(BaseModel):
     mathematical_goal: str = ""
     authority_requirements: tuple[str, ...] = Field(default_factory=tuple)
     section_id: str = ""
+    # Canonical mechanism identity used by the Architect to de-duplicate
+    # alias obligations that formalize the same transformation in one
+    # paragraph.  Distinct facet ids may share one mechanism_key; only the
+    # canonical obligation is then emitted to the Formalizer.
+    mechanism_key: str = ""
     # Canonical placement for the current plan.  ``paragraph_ids`` remains
     # readable for frozen pre-consumer artifacts, but new obligations must
     # identify exactly one paragraph that will consume the package.
@@ -183,6 +188,31 @@ class MethodFormulaObligationV2(BaseModel):
         return self
 
 
+def facet_mechanism_key(facet: Any) -> str:
+    """Canonical, paragraph-independent mechanism identity for one facet.
+
+    Two facets that formalize the same transformation share this key.  The
+    Architect and the obligation builder use it to de-duplicate alias
+    obligations instead of emitting one paper formula per facet.  The key is
+    derived from the facet's reader-facing operation/subject, never from
+    project paths, symbols, or known answers; an empty key means "no shared
+    mechanism identity" and disables de-duplication for that facet.
+    """
+
+    fields = dict(getattr(facet, "semantic_fields", {}) or {})
+    operation = str(
+        fields.get("mechanism_key")
+        or fields.get("operation")
+        or fields.get("mechanism")
+        or fields.get("transformation")
+        or fields.get("subject")
+        or ""
+    ).strip()
+    if operation:
+        return "mechanism:" + re.sub(r"\s+", " ", operation.casefold())
+    return ""
+
+
 class MechanismEquationEvidencePackV1(BaseModel):
     """Connected source operations supplied to a section Formalizer.
 
@@ -196,6 +226,13 @@ class MechanismEquationEvidencePackV1(BaseModel):
 
     pack_id: str
     section_id: str = ""
+    dossier_ids: tuple[str, ...] = Field(default_factory=tuple)
+    ordered_operation_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    call_path_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    data_flow_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    configuration_bindings: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    default_activation: Literal["active", "inactive", "conditional", "unknown"] = "unknown"
+    unresolved_relations: tuple[str, ...] = Field(default_factory=tuple)
     operation_atoms: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     exact_span_ids: tuple[str, ...] = Field(default_factory=tuple)
     exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
@@ -216,6 +253,11 @@ class MechanismEquationEvidencePackV1(BaseModel):
             "exact_span_ids",
             "bound_fact_ids",
             "bound_equation_ids",
+            "dossier_ids",
+            "ordered_operation_node_ids",
+            "call_path_relation_ids",
+            "data_flow_relation_ids",
+            "unresolved_relations",
         ):
             values = getattr(self, name)
             if len(values) != len(set(values)):
@@ -249,6 +291,14 @@ class SectionFormulaPackageV1(BaseModel):
     # single paragraph consumer before the Writer can count it as consumed.
     obligation_id: str = ""
     consumer_paragraph_id: str = ""
+    # One accepted package may formalize several section obligations when they
+    # share a single consumer paragraph (Section 6.4).  ``obligation_id`` is
+    # retained only as a compatibility alias for single-obligation artifacts.
+    satisfied_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Stable digest over the reader-facing math content (latex, symbol table,
+    # conditions, assumptions) used for recovery and reference; not a quality
+    # score.
+    semantic_formula_digest: str = ""
     purpose: str  # the Method question this formula answers
     latex: str  # formula body that can be placed in Markdown/LaTeX
     prose_explanation: str
@@ -317,6 +367,57 @@ class SectionFormulaPackageV1(BaseModel):
             self.bound_fact_ids or self.bound_equation_ids
         ):
             raise ValueError("code_verified formula packages must bind exact ids")
+        # Compatibility normalization (Section 6.4): a historical package that
+        # carries only ``obligation_id`` is normalized to a single-element
+        # ``satisfied_obligation_ids``.  New packages return the closed-set ids
+        # explicitly; ``obligation_id`` remains a single-element alias only.
+        if not self.satisfied_obligation_ids and self.obligation_id.strip():
+            object.__setattr__(
+                self,
+                "satisfied_obligation_ids",
+                (self.obligation_id.strip(),),
+            )
+        object.__setattr__(
+            self,
+            "satisfied_obligation_ids",
+            tuple(dict.fromkeys(
+                str(item).strip()
+                for item in self.satisfied_obligation_ids
+                if str(item).strip()
+            )),
+        )
+        if self.obligation_id.strip() and self.satisfied_obligation_ids and (
+            self.obligation_id.strip() not in self.satisfied_obligation_ids
+        ):
+            raise ValueError(
+                "formula package obligation_id is not in satisfied_obligation_ids"
+            )
+        if len(self.satisfied_obligation_ids) != 1 and self.obligation_id.strip():
+            # The old alias is intentionally not carried on a multi-obligation
+            # package.  Keeping it would make legacy consumers route only the
+            # first obligation and silently lose the remaining closed ids.
+            object.__setattr__(self, "obligation_id", "")
+        elif len(self.satisfied_obligation_ids) == 1 and not self.obligation_id.strip():
+            object.__setattr__(
+                self, "obligation_id", self.satisfied_obligation_ids[0]
+            )
+        if self.semantic_formula_digest and self.semantic_formula_digest != _digest_json({
+            "latex": self.latex.strip(),
+            "symbol_definitions": self.symbol_definitions,
+            "material_conditions": self.material_conditions,
+            "assumptions": self.assumptions,
+        }):
+            raise ValueError("formula package semantic_formula_digest mismatch")
+        object.__setattr__(
+            self,
+            "semantic_formula_digest",
+            _digest_json({
+                "latex": self.latex.strip(),
+                "symbol_definitions": self.symbol_definitions,
+                "material_conditions": self.material_conditions,
+                "assumptions": self.assumptions,
+            }),
+        )
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         computed = "sha256:" + hashlib.sha256(json.dumps(
             payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -336,7 +437,14 @@ class SectionFormulaDispositionV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     section_id: str
-    disposition: Literal["not_applicable", "insufficient_binding", "paper_code_mismatch", "formalizer_empty", "declined_empty"]
+    disposition: Literal[
+        "not_applicable",
+        "insufficient_binding",
+        "paper_code_mismatch",
+        "formalizer_empty",
+        "formalizer_not_invoked",
+        "declined_empty",
+    ]
     review_question: str = ""
     review_note: str = ""
     required_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
@@ -634,6 +742,7 @@ def build_mechanism_equation_evidence_packs(
     facts: Any,
     allowed_equation_ids: set[str] | None = None,
     author_statements: tuple[str, ...] = (),
+    dossiers: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[MechanismEquationEvidencePackV1, ...]:
     """Build bounded evidence packs for mechanism-level equations.
 
@@ -647,6 +756,30 @@ def build_mechanism_equation_evidence_packs(
         str(item.fact_id): item
         for item in (facts.facts if facts is not None else ())
     }
+    dossier_values = tuple(dossiers or ())
+
+    def dossier_value(item: Any, name: str, default: Any = None) -> Any:
+        if isinstance(item, Mapping):
+            return item.get(name, default)
+        return getattr(item, name, default)
+
+    def unique_dicts(values: Any) -> tuple[dict[str, Any], ...]:
+        result: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for value in values or ():
+            if isinstance(value, Mapping):
+                row = dict(value)
+            elif hasattr(value, "model_dump"):
+                dumped = value.model_dump(mode="json")
+                row = dumped if isinstance(dumped, dict) else {}
+            else:
+                continue
+            key = _digest_json(row)
+            if key not in seen:
+                seen.add(key)
+                result.append(row)
+        return tuple(result)
+
     packs: list[MechanismEquationEvidencePackV1] = []
     for equation in select_core_equations(
         equations=equations,
@@ -704,27 +837,145 @@ def build_mechanism_equation_evidence_packs(
         )
         if not connected:
             continue
+        equation_id = str(getattr(equation, "equation_id", ""))
+        equation_fact_ids = set(
+            str(item) for item in (getattr(equation, "fact_ids", ()) or ())
+        )
+        matching_dossiers = tuple(
+            dossier
+            for dossier in dossier_values
+            if str(dossier_value(dossier, "section_id", "")) == section_id
+            and (
+                equation_id in set(
+                    str(item)
+                    for item in (dossier_value(dossier, "equation_ids", ()) or ())
+                )
+                or equation_fact_ids.intersection(set(
+                    str(item)
+                    for item in (dossier_value(dossier, "fact_ids", ()) or ())
+                ))
+            )
+        )
+        dossier_ids = tuple(dict.fromkeys(
+            str(dossier_value(item, "dossier_id", ""))
+            for item in matching_dossiers
+            if str(dossier_value(item, "dossier_id", "")).strip()
+        ))
+        dossier_atoms = [
+            atom
+            for dossier in matching_dossiers
+            for atom in (dossier_value(dossier, "operation_atoms", ()) or ())
+        ]
+        all_atoms: list[dict[str, Any]] = []
+        atom_keys: set[str] = set()
+        for atom in (*atoms, *dossier_atoms):
+            if not isinstance(atom, Mapping):
+                continue
+            row = dict(atom)
+            key = str(row.get("atom_id") or row.get("node_id") or _digest_json(row))
+            if key in atom_keys:
+                continue
+            atom_keys.add(key)
+            all_atoms.append(row)
+        dossier_span_ids = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "exact_span_ids", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_conditions = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "active_path_conditions", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_author_statements = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "author_statements", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_unresolved = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "unresolved_relations", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_node_ids = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "ordered_operation_node_ids", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_call_ids = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "call_path_relation_ids", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_data_ids = [
+            str(item)
+            for dossier in matching_dossiers
+            for item in (dossier_value(dossier, "data_flow_relation_ids", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_configs = unique_dicts(
+            config
+            for dossier in matching_dossiers
+            for config in (dossier_value(dossier, "configuration_bindings", ()) or ())
+        )
+        activation_values = tuple(dict.fromkeys(
+            str(dossier_value(dossier, "default_activation", "unknown"))
+            for dossier in matching_dossiers
+            if str(dossier_value(dossier, "default_activation", "unknown")).strip()
+        ))
+        default_activation = (
+            activation_values[0]
+            if len(activation_values) == 1
+            and activation_values[0] in {"active", "inactive", "conditional", "unknown"}
+            else "conditional"
+            if dossier_conditions
+            else "unknown"
+        )
         pack_identity = {
             "section_id": section_id,
-            "equation_id": str(getattr(equation, "equation_id", "")),
+            "equation_id": equation_id,
             "fact_ids": list(getattr(equation, "fact_ids", ()) or ()),
-            "span_ids": span_ids,
+            "span_ids": list(dict.fromkeys((*span_ids, *dossier_span_ids))),
+            "dossier_ids": dossier_ids,
         }
         packs.append(MechanismEquationEvidencePackV1(
             pack_id="eqpack:" + _digest_json(pack_identity)[7:23],
             section_id=section_id,
-            operation_atoms=tuple(atoms),
-            exact_span_ids=tuple(span_ids),
-            preconditions=tuple(conditions),
+            dossier_ids=dossier_ids,
+            ordered_operation_node_ids=tuple(dict.fromkeys(dossier_node_ids)),
+            call_path_relation_ids=tuple(dict.fromkeys(dossier_call_ids)),
+            data_flow_relation_ids=tuple(dict.fromkeys(dossier_data_ids)),
+            configuration_bindings=dossier_configs,
+            default_activation=default_activation,
+            unresolved_relations=tuple(dict.fromkeys(dossier_unresolved)),
+            operation_atoms=tuple(all_atoms),
+            exact_span_ids=tuple(dict.fromkeys((*span_ids, *dossier_span_ids))),
+            exact_excerpts=tuple(dict.fromkeys(
+                str(item).strip()
+                for dossier in matching_dossiers
+                for item in (dossier_value(dossier, "exact_excerpts", ()) or ())
+                if str(item).strip()
+            )),
+            preconditions=tuple(dict.fromkeys((*conditions, *dossier_conditions))),
             shape_or_type_hints=tuple(shape_hints),
             author_statements=tuple(
-                str(item).strip() for item in author_statements if str(item).strip()
+                dict.fromkeys(
+                    str(item).strip()
+                    for item in (*author_statements, *dossier_author_statements)
+                    if str(item).strip()
+                )
             ),
             bound_fact_ids=tuple(
                 str(item) for item in (getattr(equation, "fact_ids", ()) or ())
                 if str(item) in facts_by_id
             ),
-            bound_equation_ids=(str(getattr(equation, "equation_id", "")),),
+            bound_equation_ids=(equation_id,),
             connected=True,
         ))
     return tuple(packs)
@@ -789,23 +1040,33 @@ def validate_section_formula_package(
         )
     if require_consumer:
         obligations = tuple(formula_obligations or ())
-        package_obligation_id = str(package.obligation_id or "").strip()
-        package_consumer_id = str(package.consumer_paragraph_id or "").strip()
-        # Current plans use a canonical obligation id and a single explicit
-        # consumer.  Facet overlap is intentionally not an alternative route:
-        # it was the source of formula:facet/formula:equation aliasing and
-        # allowed an unrelated package to appear consumed.
-        if not package_obligation_id:
-            failures.append("formula_package_obligation_id_missing")
         obligation_by_id = {
             str(getattr(item, "obligation_id", "") or "").strip(): item
             for item in obligations
             if str(getattr(item, "obligation_id", "") or "").strip()
         }
-        obligation = obligation_by_id.get(package_obligation_id)
-        if obligation is None:
-            failures.append("formula_package_obligation_route_mismatch")
-        else:
+        package_consumer_id = str(package.consumer_paragraph_id or "").strip()
+        satisfied_ids = tuple(
+            str(item).strip() for item in package.satisfied_obligation_ids
+            if str(item).strip()
+        )
+        if not satisfied_ids:
+            failures.append("formula_package_obligation_id_missing")
+        # Every satisfied obligation must be in the section's closed set and
+        # resolve to the same single consumer paragraph (Section 6.4).  A
+        # package that names obligations spanning several paragraphs is
+        # rejected as a whole; it can never close a paragraph transaction.
+        resolved_consumers: set[str] = set()
+        for obligation_id in satisfied_ids:
+            obligation = obligation_by_id.get(obligation_id)
+            if obligation is None:
+                failures.append(f"formula_package_obligation_route_mismatch:{obligation_id}")
+                continue
+            obligation_section = str(
+                getattr(obligation, "section_id", "") or ""
+            ).strip()
+            if obligation_section and package.section_id != obligation_section:
+                failures.append(f"formula_package_section_mismatch:{obligation_id}")
             expected_consumer = str(
                 getattr(obligation, "consumer_paragraph_id", "")
                 or (
@@ -815,15 +1076,23 @@ def validate_section_formula_package(
                 )
             ).strip()
             if not expected_consumer:
-                failures.append("formula_package_without_paragraph_consumer")
-            if not package_consumer_id:
-                failures.append("formula_package_consumer_id_missing")
-            elif expected_consumer and package_consumer_id != expected_consumer:
-                failures.append("formula_package_consumer_paragraph_mismatch")
+                failures.append(f"formula_package_without_paragraph_consumer:{obligation_id}")
+            else:
+                resolved_consumers.add(expected_consumer)
             package_facets = set(package.bound_facet_ids)
             obligation_facets = set(getattr(obligation, "facet_ids", ()) or ())
             if obligation_facets and package_facets and not obligation_facets.intersection(package_facets):
-                failures.append("formula_package_facet_binding_mismatch")
+                failures.append(f"formula_package_facet_binding_mismatch:{obligation_id}")
+        if len(resolved_consumers) > 1:
+            failures.append("formula_package_consumer_paragraph_mismatch")
+        elif not package_consumer_id and resolved_consumers:
+            failures.append("formula_package_consumer_id_missing")
+        elif (
+            package_consumer_id
+            and resolved_consumers
+            and package_consumer_id not in resolved_consumers
+        ):
+            failures.append("formula_package_consumer_paragraph_mismatch")
     equation_by_id = {
         item.equation_id: item
         for item in (equations.equations if equations is not None else ())
@@ -1488,7 +1757,15 @@ def resolve_formalization_route_artifact(
                 # Current sections expose the canonical route explicitly;
                 # do not fall back to equation/facet aliases when a package
                 # lacks the requested obligation id.
-                if str(package.obligation_id or "").strip() not in target_obligations:
+                package_satisfied = set(
+                    str(item).strip()
+                    for item in (
+                        package.satisfied_obligation_ids
+                        or ((package.obligation_id,) if package.obligation_id else ())
+                    )
+                    if str(item).strip()
+                )
+                if not package_satisfied.intersection(target_obligations):
                     continue
             elif not any(
                     _package_covers_formula_obligation(package, obligation_id)
@@ -1515,6 +1792,8 @@ def resolve_formalization_route_artifact(
                 package,
                 equations=equations,
                 facts=facts,
+                formula_obligations=tuple(section_result.formula_obligations),
+                require_consumer=bool(section_result.formula_obligations),
             )
             if guard_failures:
                 continue
@@ -1611,46 +1890,93 @@ def build_deterministic_formula_packages(
             values.add(raw[len("equation:"):])
         return values
 
-    def _package_obligation(group: list[Any]) -> MethodFormulaObligationV2 | None:
+    def _package_obligations(group: list[Any]) -> tuple[MethodFormulaObligationV2, ...]:
         if not obligations:
-            return None
+            return ()
         equation_ids = {
             str(getattr(item, "equation_id", "") or "").strip()
             for item in group
             if str(getattr(item, "equation_id", "") or "").strip()
         }
         equation_keys = set().union(*(_formula_identity(item) for item in equation_ids)) if equation_ids else set()
-        matches = []
+        matches: list[MethodFormulaObligationV2] = []
         for obligation in obligations:
             obligation_keys = _formula_identity(obligation.obligation_id)
             if equation_keys.intersection(obligation_keys):
                 matches.append(obligation)
-        # A single mechanism group can be safely bound to the sole current
-        # obligation even when the id is facet-scoped rather than equation-
-        # scoped.  Multiple obligations remain unbound and are rejected by
-        # the strict route validator instead of being guessed.
-        if len(matches) == 1:
-            return matches[0]
+        if not matches:
+            group_key = str(mechanism_for_group := next(
+                (
+                    str(item).strip().casefold()
+                    for item in (
+                        getattr(group[0], "operation_descriptors", ()) or ()
+                    )
+                    if str(item).strip().casefold() in _CORE_EQUATION_DESCRIPTORS
+                ),
+                "",
+            ))
+            def _norm(value: Any) -> str:
+                return re.sub(r"[^a-z0-9]+", "", str(value or "").casefold())
+            keyed = [
+                obligation for obligation in obligations
+                if str(getattr(obligation, "mechanism_key", "") or "").strip()
+                and _norm(getattr(obligation, "mechanism_key", ""))
+                in {_norm(group_key), _norm(mechanism)}
+            ]
+            if keyed:
+                matches = keyed
+        # A single mechanism group can safely satisfy every obligation that
+        # explicitly names the same mechanism and consumer.  Different
+        # consumers must remain separate and are never guessed together.
+        if matches:
+            consumers = {
+                str(
+                    getattr(item, "consumer_paragraph_id", "")
+                    or (
+                        item.paragraph_ids[0]
+                        if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                        else ""
+                    )
+                ).strip()
+                for item in matches
+            }
+            keys = {
+                str(getattr(item, "mechanism_key", "") or "").strip()
+                for item in matches
+                if str(getattr(item, "mechanism_key", "") or "").strip()
+            }
+            if len(consumers) <= 1 and (len(matches) == 1 or len(keys) == 1):
+                return tuple(matches)
         if len(obligations) == 1 and len(groups) == 1:
-            return obligations[0]
-        return None
+            return (obligations[0],)
+        return ()
 
     packages: list[SectionFormulaPackageV1] = []
     for index, (mechanism, group) in enumerate(
         sorted(groups.items(), key=lambda item: item[0]), start=1
     ):
         primary = group[0]
-        obligation = _package_obligation(group)
+        package_obligations = _package_obligations(group)
         consumer = ""
         obligation_id = ""
+        satisfied_obligation_ids: tuple[str, ...] = ()
         bound_facets: tuple[str, ...] = ()
-        if obligation is not None:
-            obligation_id = str(obligation.obligation_id)
+        if package_obligations:
+            satisfied_obligation_ids = tuple(
+                str(item.obligation_id) for item in package_obligations
+            )
+            if len(satisfied_obligation_ids) == 1:
+                obligation_id = satisfied_obligation_ids[0]
+            obligation = package_obligations[0]
             consumer = str(
                 obligation.consumer_paragraph_id
                 or (obligation.paragraph_ids[0] if len(obligation.paragraph_ids) == 1 else "")
             ).strip()
-            bound_facets = tuple(obligation.facet_ids)
+            bound_facets = tuple(dict.fromkeys(
+                facet_id
+                for item in package_obligations
+                for facet_id in item.facet_ids
+            ))
         bound_facts = tuple(
             fact_id for fact_id in (getattr(primary, "fact_ids", ()) or ())
             if fact_id in facts_by_id
@@ -1668,6 +1994,7 @@ def build_deterministic_formula_packages(
             section_id=section_id,
             obligation_id=obligation_id,
             consumer_paragraph_id=consumer,
+            satisfied_obligation_ids=satisfied_obligation_ids,
             purpose=f"Formalize the {mechanism} that this section explains.",
             latex=str(getattr(primary, "expression", "") or ""),
             prose_explanation=(
@@ -1725,8 +2052,12 @@ def build_formula_obligation_truths(
     package_by_equation: dict[str, SectionFormulaPackageV1] = {}
     package_by_obligation: dict[str, SectionFormulaPackageV1] = {}
     for package in packages:
-        if str(package.obligation_id or "").strip():
-            package_by_obligation[str(package.obligation_id)] = package
+        for obligation_id in (
+            package.satisfied_obligation_ids
+            or ((package.obligation_id,) if str(package.obligation_id or "").strip() else ())
+        ):
+            if str(obligation_id or "").strip():
+                package_by_obligation[str(obligation_id)] = package
         for equation_id in (package.bound_equation_ids or ()):
             package_by_equation[str(equation_id)] = package
             tail = str(equation_id).split(":", 1)[-1]
@@ -1755,7 +2086,9 @@ def build_formula_obligation_truths(
                 or (obligation.paragraph_ids[0] if len(obligation.paragraph_ids) == 1 else "")
             ).strip()
             package_consumer = str(package.consumer_paragraph_id or "").strip()
-            if expected_consumer and package_consumer != expected_consumer:
+            if not expected_consumer:
+                package = None
+            elif package_consumer != expected_consumer:
                 package = None
         if package is None and obligation is not None and obligation.facet_ids and not strict_identity:
             package = next(
@@ -1829,97 +2162,167 @@ def section_result_from_packages(
     formula_not_applicable: bool = False,
     formula_obligations: tuple[MethodFormulaObligationV2, ...] = (),
     evidence_packs: tuple[MechanismEquationEvidencePackV1, ...] = (),
+    empty_disposition: str = "formalizer_empty",
 ) -> FormalizationSectionResultV1:
     """Wrap accepted packages into a section result (empty packages never
     silently count as completion).
+
+    Section 6.4 route isolation: a package that fails its obligation/consumer
+    route is rejected on its own; the other packages in the same section are
+    kept.  New packages carry explicit ``satisfied_obligation_ids`` (one
+    canonical consumer paragraph, possibly several obligations); historical
+    packages are bound only when their route is uniquely resolvable.
     """
 
-    # Bind each accepted package to one planned obligation/consumer before it
-    # reaches the Writer.  Facet/equation overlap is only a compatibility
-    # resolver for historical packages; current packages should already carry
-    # the explicit ids.  Ambiguous packages remain unbound and therefore
-    # cannot satisfy a required paragraph transaction.
-    normalized_packages: list[SectionFormulaPackageV1] = []
-    route_failures: list[str] = []
     obligation_by_id = {
         str(item.obligation_id): item
         for item in formula_obligations
         if str(item.obligation_id).strip()
     }
+    normalized_packages: list[SectionFormulaPackageV1] = []
+    route_failures: list[str] = []
+    claimed_obligations: set[str] = set()
+    claimed_consumers: dict[str, str] = {}
+
+    def _expected_consumer(obligation: Any) -> str:
+        return str(
+            getattr(obligation, "consumer_paragraph_id", "")
+            or (
+                obligation.paragraph_ids[0]
+                if len(tuple(getattr(obligation, "paragraph_ids", ()) or ())) == 1
+                else ""
+            )
+        ).strip()
+
     for package in packages:
-        package_obligation_id = str(package.obligation_id or "").strip()
         package_consumer_id = str(package.consumer_paragraph_id or "").strip()
+        satisfied_ids = tuple(
+            str(item).strip() for item in package.satisfied_obligation_ids
+            if str(item).strip()
+        )
+        if satisfied_ids:
+            # Explicit closed-set route (new responses).  Every satisfied id
+            # must be a planned obligation in this section and must resolve to
+            # one consumer paragraph.
+            resolved_consumers: set[str] = set()
+            package_ok = True
+            for obligation_id in satisfied_ids:
+                obligation = obligation_by_id.get(obligation_id)
+                if obligation is None:
+                    route_failures.append(
+                        f"unknown_obligation:{package.package_id}:{obligation_id}"
+                    )
+                    package_ok = False
+                    continue
+                expected_consumer = _expected_consumer(obligation)
+                if expected_consumer:
+                    resolved_consumers.add(expected_consumer)
+                elif getattr(obligation, "paragraph_ids", ()):
+                    route_failures.append(f"consumer_not_unique:{obligation_id}")
+                    package_ok = False
+                elif package_consumer_id:
+                    route_failures.append(f"consumer_not_planned:{obligation_id}")
+                    package_ok = False
+                else:
+                    route_failures.append(f"consumer_not_planned:{obligation_id}")
+                    package_ok = False
+            if len(resolved_consumers) > 1:
+                route_failures.append(f"consumer_mismatch:{package.package_id}")
+                package_ok = False
+            elif resolved_consumers and package_consumer_id and package_consumer_id not in resolved_consumers:
+                route_failures.append(f"consumer_mismatch:{package.package_id}")
+                package_ok = False
+            duplicate = [oid for oid in satisfied_ids if oid in claimed_obligations]
+            if duplicate:
+                route_failures.append(f"duplicate_obligation_consumers:{package.package_id}")
+                package_ok = False
+            if not package_ok:
+                continue
+            for obligation_id in satisfied_ids:
+                claimed_obligations.add(obligation_id)
+            if resolved_consumers and not package_consumer_id:
+                package = package.model_copy(update={
+                    "consumer_paragraph_id": next(iter(resolved_consumers)),
+                    "obligation_id": satisfied_ids[0],
+                })
+            for obligation_id in satisfied_ids:
+                claimed_consumers[obligation_id] = package.package_id
+            normalized_packages.append(package)
+            continue
+
+        # Legacy single-obligation route: only ``obligation_id`` is present.
+        package_obligation_id = str(package.obligation_id or "").strip()
         if package_obligation_id:
             obligation = obligation_by_id.get(package_obligation_id)
             if obligation is None:
                 route_failures.append(
                     f"unknown_obligation:{package.package_id}:{package_obligation_id}"
                 )
-            else:
-                expected_consumer = str(
-                    obligation.consumer_paragraph_id
-                    or (
-                        obligation.paragraph_ids[0]
-                        if len(obligation.paragraph_ids) == 1 else ""
-                    )
-                ).strip()
-                if expected_consumer and package_consumer_id != expected_consumer:
-                    route_failures.append(
-                        f"consumer_mismatch:{package_obligation_id}"
-                    )
-                elif obligation.paragraph_ids and not expected_consumer:
-                    route_failures.append(
-                        f"consumer_not_unique:{package_obligation_id}"
-                    )
-                elif not expected_consumer and package_consumer_id:
-                    route_failures.append(
-                        f"consumer_not_planned:{package_obligation_id}"
-                    )
+                continue
+            expected_consumer = _expected_consumer(obligation)
+            if expected_consumer and package_consumer_id and package_consumer_id != expected_consumer:
+                route_failures.append(f"consumer_mismatch:{package_obligation_id}")
+                continue
+            if not expected_consumer:
+                if getattr(obligation, "paragraph_ids", ()):
+                    route_failures.append(f"consumer_not_unique:{package_obligation_id}")
+                else:
+                    route_failures.append(f"consumer_not_planned:{package_obligation_id}")
+                continue
+            if package_obligation_id in claimed_obligations:
+                route_failures.append(f"duplicate_obligation_consumers:{package.package_id}")
+                continue
+            claimed_obligations.add(package_obligation_id)
+            claimed_consumers[package_obligation_id] = package.package_id
+            package = package.model_copy(update={
+                "satisfied_obligation_ids": (package_obligation_id,),
+                "consumer_paragraph_id": expected_consumer,
+            })
+            normalized_packages.append(package)
+            continue
+
+        # No explicit ids: bind only when the facet/equation overlap is
+        # unique; otherwise reject this package alone (never a whole-section
+        # flush).
+        # Historical callers may provide only ``obligation_ids`` and an
+        # equation-bound package, without materialized obligation objects.
+        # Preserve that representation-only compatibility path; once the
+        # closed obligation objects exist, the strict branch above owns route
+        # resolution and ambiguity remains fail-closed.
+        if not formula_obligations:
             normalized_packages.append(package)
             continue
         matches = [
             obligation
             for obligation in formula_obligations
             if (
-                (set(package.bound_facet_ids) & set(obligation.facet_ids))
+                (set(package.bound_facet_ids) & set(getattr(obligation, "facet_ids", ()) or ()))
                 or str(obligation.obligation_id) in set(package.bound_equation_ids)
             )
         ]
         if len(matches) == 1:
             obligation = matches[0]
-            consumer = str(
-                getattr(obligation, "consumer_paragraph_id", "")
-                or (obligation.paragraph_ids[0] if len(obligation.paragraph_ids) == 1 else "")
-            ).strip()
+            consumer = _expected_consumer(obligation)
+            if not consumer:
+                if getattr(obligation, "paragraph_ids", ()):
+                    route_failures.append(f"consumer_not_unique:{obligation.obligation_id}")
+                else:
+                    route_failures.append(f"consumer_not_planned:{obligation.obligation_id}")
+                continue
+            if str(obligation.obligation_id) in claimed_obligations:
+                route_failures.append(f"duplicate_obligation_consumers:{package.package_id}")
+                continue
+            claimed_obligations.add(str(obligation.obligation_id))
+            claimed_consumers[str(obligation.obligation_id)] = package.package_id
             package = package.model_copy(update={
                 "obligation_id": str(obligation.obligation_id),
+                "satisfied_obligation_ids": (str(obligation.obligation_id),),
                 "consumer_paragraph_id": consumer,
             })
+            normalized_packages.append(package)
         elif formula_obligations:
-            route_failures.append(
-                f"ambiguous_obligation:{package.package_id}"
-            )
-        normalized_packages.append(package)
+            route_failures.append(f"ambiguous_obligation:{package.package_id}")
     packages = tuple(normalized_packages)
-    # An obligation and a consumer are one-to-one.  If a Formalizer returns
-    # duplicate routes, retain the typed failure and expose no accepted
-    # packages to downstream Writer/trace code.
-    explicit_obligation_ids = [
-        str(package.obligation_id).strip()
-        for package in packages
-        if str(package.obligation_id or "").strip()
-    ]
-    explicit_consumers = [
-        str(package.consumer_paragraph_id).strip()
-        for package in packages
-        if str(package.consumer_paragraph_id or "").strip()
-    ]
-    if len(explicit_obligation_ids) != len(set(explicit_obligation_ids)):
-        route_failures.append("duplicate_obligation_consumers")
-    if len(explicit_consumers) != len(set(explicit_consumers)):
-        route_failures.append("duplicate_consumer_paragraphs")
-    if route_failures:
-        packages = ()
 
     effective_obligation_ids = tuple(dict.fromkeys([
         *obligation_ids,
@@ -1938,12 +2341,22 @@ def section_result_from_packages(
     else:
         disposition = SectionFormulaDispositionV1(
             section_id=section_id,
-            disposition="formalizer_empty",
-            review_question="Which core mechanism formula should this section present, and which repository evidence binds it?",
+            disposition=empty_disposition,
+            review_question=(
+                "The section has a required formula consumer but the Formalizer "
+                "was never invoked; route it through a real consumer before it can complete."
+                if empty_disposition == "formalizer_not_invoked"
+                else "Which core mechanism formula should this section present, and which repository evidence binds it?"
+            ),
             review_note=(
                 "Formula package route failed: " + "; ".join(dict.fromkeys(route_failures))
                 if route_failures
-                else "Core equation evidence exists but the Formalizer produced no accepted package."
+                else (
+                    "The section has a required formula obligation and consumer, but no "
+                    "Formalizer call or deterministic package was produced."
+                    if empty_disposition == "formalizer_not_invoked"
+                    else "Core equation evidence exists but the Formalizer produced no accepted package."
+                )
             ),
             required_obligation_ids=tuple(
                 item.obligation_id
@@ -1955,7 +2368,7 @@ def section_result_from_packages(
                 for item in formula_obligations
                 if item.expectation == "preferred"
             ),
-            blocking_for_candidate=False,
+            blocking_for_candidate=empty_disposition == "formalizer_not_invoked",
         )
     obligation_truths = build_formula_obligation_truths(
         section_id=section_id,
@@ -2012,6 +2425,7 @@ __all__ = [
     "build_mechanism_equation_evidence_packs",
     "build_formula_obligation_truths",
     "coerce_section_formalizer_response",
+    "facet_mechanism_key",
     "formalize_code_facts",
     "load_formalization_section_results",
     "resolve_formalization_route_artifact",

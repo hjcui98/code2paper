@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "candidate_text_digest": "sha256:f462be62601638306614f0a873253462d001334d1240dc7fdc36642f93b8144a",
+  "annotations": [
+    {
+      "annotation_id": "annotation:pkg:MA-S5:inference-rank",
+      "target_kind": "formula",
+      "target_id": "pkg:MA-S5:inference-rank",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:3",
+      "surface_mode": "omit_and_review",
+      "derivation_kind": "formal_derived",
+      "claim_strength": "structural",
+      "verified_eligible": false,
+      "enters_verified": false
+    }
+  ],
+  "content_digest": "sha256:8f8ab2d32ada5460f1f3ee808cdefde2b4f07eda5acc092dfddda650e23b1855"
+}

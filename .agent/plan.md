@@ -1,5 +1,39 @@
 # Autonomous Method Agent reorientation plan
 
+## Active assignment update — attachment-aligned P0 closure (2026-08-28)
+
+The user asked for the attached three-project root-cause audit to be implemented. The attachment is
+an input diagnosis; repository architecture/design/execution documents remain authoritative. The
+current uncommitted tree already contains a partial attempt, so the implementation agent must work
+serially in place and preserve all existing changes.
+
+This assignment closes the attachment's P0-A–P0-J risks through the source-ledger plan's WP0–WP7
+sequence. The implementation must fix integration defects in the partial baseline, not merely add
+model fields or metrics. The critical end-to-end proof is:
+
+```text
+generic ownership + candidate acquisition closure
+  -> cumulative research/evidence ledger
+  -> atomic field rebinding with polarity/conditions
+  -> consumable Architect targets and ordered semantic frames
+  -> paragraph-local witness/anchor contracts
+  -> canonical, paragraph-consumed formulas
+  -> Writer transaction + content trace
+  -> semantic-delta callback/resume and fail-closed Verified
+```
+
+Implementation acceptance is behavior-based: no high-priority candidate disappears, no sibling
+baseline is promoted as target core, proven fields survive a different field's failure, unresolved
+intent does not become a hard publication target, every required slot/edge/formula has an authorized
+same-paragraph witness, and no extra call is accepted without semantic delta. Generic production
+code must not contain LinearRAG, DyG-Mamba, EBCAR, their paths, claim text, or known answers.
+
+The worker must add project-neutral negative/mutation regressions and update `.agent/implementation.md`
+with WP-level behavior, exact commands/exit codes, worktree state, and frozen artifact roots. It must
+not edit this plan, `.agent/task.md`, `.agent/review.md`, AGENTS.md, or authority documents. Do not
+run live replay or APIs unless the authority protocol and the recorded implementation evidence show
+the static/source-to-render exit conditions are ready; never rerun an unchanged failed sample.
+
 - Date: 2026-08-27
 - State: `QUALITY_REPAIR_READY_FOR_SERIAL_IMPLEMENTATION`
 - Active acceptance decision: the next quality slice is

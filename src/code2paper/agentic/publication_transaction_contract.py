@@ -174,6 +174,13 @@ def _witness_satisfies_constraints(
     witness: str,
     constraints: Mapping[str, Any],
 ) -> bool:
+    semantic_atom = str(constraints.get("semantic_atom") or "").strip()
+    if (
+        semantic_atom
+        and semantic_atom.casefold() not in {"formal expression", "formula"}
+        and not _anchor_compatible(witness, "", (semantic_atom,))
+    ):
+        return False
     conditions = _text_values(constraints.get("conditions"))
     exact = _text_values(constraints.get("exact"))
     polarity = str(constraints.get("polarity") or "").strip()
@@ -199,6 +206,337 @@ def _witness_satisfies_constraints(
     if expected_actions and observed_action and observed_action not in expected_actions:
         return False
     return True
+
+
+_TRANSACTION_DECLARATION_FIELDS: tuple[tuple[str, str], ...] = (
+    ("facet", "rendered_from_facet_ids"),
+    ("field", "rendered_field_candidate_ids"),
+    ("slot", "rendered_slot_ids"),
+    ("edge", "rendered_edge_ids"),
+    ("formula", "used_formula_package_ids"),
+    ("claim", "used_claim_ids"),
+    ("equation", "used_equation_ids"),
+)
+
+
+def _transaction_declarations(get: Any) -> dict[str, tuple[str, ...]]:
+    """Read the closed declaration sets from a transaction-like object."""
+
+    return {
+        kind: _ids(get(field, ()))
+        for kind, field in _TRANSACTION_DECLARATION_FIELDS
+    }
+
+
+def _transaction_witness_keys(get: Any) -> set[tuple[str, str]]:
+    """Return existing witness keys without trusting their textual values."""
+
+    existing: set[tuple[str, str]] = set()
+    for raw in get("witnesses", ()) or ():
+        if isinstance(raw, Mapping):
+            key = (
+                str(raw.get("witness_kind") or raw.get("kind") or "").strip(),
+                str(raw.get("target_id") or "").strip(),
+            )
+        else:
+            key = (
+                str(getattr(raw, "witness_kind", "") or "").strip(),
+                str(getattr(raw, "target_id", "") or "").strip(),
+            )
+        if all(key):
+            existing.add(key)
+    return existing
+
+
+def _formula_package_indexes(
+    formula_packages: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
+) -> tuple[dict[str, Mapping[str, Any]], dict[str, Mapping[str, Any]]]:
+    """Index formula packages by package id and routed obligation id."""
+
+    packages = tuple(item for item in formula_packages if isinstance(item, Mapping))
+    package_by_id = {
+        str(item.get("package_id") or "").strip(): item
+        for item in packages
+        if str(item.get("package_id") or "").strip()
+    }
+    package_by_obligation: dict[str, Mapping[str, Any]] = {}
+    for package in packages:
+        ids = _ids(
+            package.get("satisfied_obligation_ids")
+            or ((package.get("obligation_id"),) if package.get("obligation_id") else ())
+        )
+        for obligation_id in ids:
+            package_by_obligation[obligation_id] = package
+    return package_by_id, package_by_obligation
+
+
+def _formula_package_for_target(
+    target_id: str,
+    *,
+    package_by_id: Mapping[str, Mapping[str, Any]],
+    package_by_obligation: Mapping[str, Mapping[str, Any]],
+) -> Mapping[str, Any] | None:
+    return package_by_id.get(target_id) or package_by_obligation.get(target_id)
+
+
+def _binding_anchors(constraints: Mapping[str, Any]) -> tuple[str, ...]:
+    """Project exact, semantic, and condition anchors for both Binder stages."""
+
+    values = list(_text_values(constraints.get("exact")))
+    semantic_atom = str(constraints.get("semantic_atom") or "").strip()
+    if semantic_atom and semantic_atom.casefold() not in {"formal expression", "formula"}:
+        values.append(semantic_atom)
+    values.extend(_text_values(constraints.get("conditions")))
+    return tuple(dict.fromkeys(value for value in values if value))
+
+
+def _resolve_binding_target_key(
+    witness_kind: str,
+    target_id: str,
+    target_keys: set[tuple[str, str]],
+) -> tuple[str, str] | None:
+    """Resolve compatible target-id wire forms against closed declarations.
+
+    Rendered transaction declarations conventionally store ids with their
+    kind prefix (for example ``slot:fact-...``), while some Binder responses
+    encode the same target as ``slot:fact-...`` after already using ``slot``
+    as the kind.  A plan may also use an unprefixed id.  Accept only an exact
+    target or its one-step kind-prefix alias, and only when that alias is
+    present in the closed declaration set.  This is a representation-only
+    compatibility repair; it cannot authorize a new target.
+    """
+
+    kind = str(witness_kind or "").strip()
+    value = str(target_id or "").strip()
+    if not kind or not value:
+        return None
+    candidate_ids = [value]
+    prefix = f"{kind}:"
+    if value.startswith(prefix):
+        candidate_ids.append(value[len(prefix):])
+    else:
+        candidate_ids.append(prefix + value)
+    matches = tuple(dict.fromkeys(
+        (kind, candidate)
+        for candidate in candidate_ids
+        if (kind, candidate) in target_keys
+    ))
+    return matches[0] if len(matches) == 1 else None
+
+
+def _resolve_unbound_target_key(
+    value: str,
+    target_keys: set[tuple[str, str]],
+) -> tuple[str, str] | None:
+    """Resolve an unbound id in either kind-prefixed wire representation."""
+
+    kind, separator, target_id = str(value or "").partition(":")
+    if not separator:
+        return None
+    direct = _resolve_binding_target_key(kind, target_id, target_keys)
+    if direct is not None:
+        return direct
+
+    # Edge declarations use witness kind ``edge`` but their stable ids use
+    # the repository relation prefix ``rel:``.  The Binder commonly reports
+    # that id directly (``rel:...``).  Accept it only when the complete value
+    # is already the target id of exactly one declared target.
+    matches = tuple(dict.fromkeys(
+        key for key in target_keys if key[1] == str(value or "").strip()
+    ))
+    return matches[0] if len(matches) == 1 else None
+
+
+def paragraph_binding_targets(
+    transaction: Mapping[str, Any] | Any,
+    *,
+    plan_row: Mapping[str, Any] | None = None,
+    formula_packages: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] = (),
+) -> tuple[dict[str, Any], ...]:
+    """Return local contracts still eligible for a metadata-only Binder.
+
+    Only targets already declared by the Writer are returned. A Binder can
+    attach a witness to such a closed target, but it cannot invent a target or
+    turn an unanchored id into evidence. Targets without a local semantic
+    contract (and without an exact formula package) are deliberately omitted.
+    """
+
+    if isinstance(transaction, Mapping):
+        get = transaction.get
+    else:
+        get = lambda name, default=None: getattr(transaction, name, default)
+    body = str(get("paragraph_markdown", "") or "")
+    if not body:
+        return ()
+    declarations = _transaction_declarations(get)
+    existing = _transaction_witness_keys(get)
+    constraints = _witness_constraints_from_plan_row(plan_row)
+    package_by_id, package_by_obligation = _formula_package_indexes(formula_packages)
+    rows: list[dict[str, Any]] = []
+    for kind, target_ids in declarations.items():
+        for target_id in target_ids:
+            if (kind, target_id) in existing:
+                continue
+            local = constraints.get((kind, target_id), {})
+            package = (
+                _formula_package_for_target(
+                    target_id,
+                    package_by_id=package_by_id,
+                    package_by_obligation=package_by_obligation,
+                )
+                if kind == "formula"
+                else None
+            )
+            has_local_contract = bool(
+                local.get("exact")
+                or str(local.get("semantic_atom") or "").strip()
+                and str(local.get("semantic_atom") or "").strip().casefold()
+                not in {"formal expression", "formula"}
+                or local.get("conditions")
+                or str(local.get("polarity") or "unknown").strip().casefold()
+                not in {"", "unknown"}
+            )
+            if not has_local_contract and package is None:
+                continue
+            rows.append({
+                "witness_kind": kind,
+                "target_id": target_id,
+                "semantic_atom": str(local.get("semantic_atom") or ""),
+                "required_conditions": list(local.get("conditions") or ()),
+                "required_polarity": str(local.get("polarity") or "unknown"),
+                "allowed_exact_excerpts": list(local.get("exact") or ()),
+                "formula_exact_texts": list(dict.fromkeys(
+                    str(value).strip()
+                    for value in (
+                        package.get("markdown_block") if package is not None else "",
+                        package.get("latex") if package is not None else "",
+                    )
+                    if str(value or "").strip()
+                )),
+            })
+    return tuple(rows)
+
+
+def validate_paragraph_binding_response(
+    response: Mapping[str, Any] | Any,
+    transaction: Mapping[str, Any] | Any,
+    *,
+    plan_row: Mapping[str, Any] | None = None,
+    formula_packages: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] = (),
+) -> tuple[tuple[dict[str, str], ...], tuple[str, ...], tuple[str, ...]]:
+    """Validate a Binder response without granting it prose authority.
+
+    The first return value contains only witnesses whose exact text is a
+    unique substring of the frozen body and whose local semantic, polarity,
+    and condition contract passes. The second contains representation
+    failures; the third contains explicitly reported unbound kind:target keys.
+    """
+
+    if isinstance(transaction, Mapping):
+        transaction_get = transaction.get
+    else:
+        transaction_get = lambda name, default=None: getattr(transaction, name, default)
+    if isinstance(response, Mapping):
+        response_get = response.get
+    else:
+        response_get = lambda name, default=None: getattr(response, name, default)
+    body = str(transaction_get("paragraph_markdown", "") or "")
+    paragraph_id = str(transaction_get("paragraph_id", "") or "").strip()
+    response_paragraph_id = str(response_get("paragraph_id", "") or "").strip()
+    errors: list[str] = []
+    if response_paragraph_id != paragraph_id:
+        errors.append(
+            f"binder_paragraph_id:{response_paragraph_id!r}!={paragraph_id!r}"
+        )
+
+    target_rows = paragraph_binding_targets(
+        transaction,
+        plan_row=plan_row,
+        formula_packages=formula_packages,
+    )
+    by_key = {
+        (str(row["witness_kind"]), str(row["target_id"])): row
+        for row in target_rows
+    }
+    target_keys = set(by_key)
+    raw_witnesses = response_get("witnesses", ()) or ()
+    valid: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for index, raw in enumerate(raw_witnesses):
+        if isinstance(raw, Mapping):
+            kind = str(raw.get("witness_kind") or raw.get("kind") or "").strip()
+            target_id = str(raw.get("target_id") or "").strip()
+            exact_text = str(raw.get("exact_text") or "").strip()
+        else:
+            kind = str(getattr(raw, "witness_kind", "") or "").strip()
+            target_id = str(getattr(raw, "target_id", "") or "").strip()
+            exact_text = str(getattr(raw, "exact_text", "") or "").strip()
+        key = _resolve_binding_target_key(kind, target_id, target_keys)
+        if key is None:
+            errors.append(f"binder_unknown_target:{index}:{kind}:{target_id}")
+            continue
+        if key in seen:
+            errors.append(f"binder_duplicate_target:{kind}:{target_id}")
+            continue
+        seen.add(key)
+        if not exact_text:
+            errors.append(f"binder_empty_exact_text:{kind}:{target_id}")
+            continue
+        if not body or body.count(exact_text) != 1:
+            errors.append(f"binder_nonunique_substring:{kind}:{target_id}")
+            continue
+        row = by_key[key]
+        constraints = {
+            "exact": tuple(row.get("allowed_exact_excerpts") or ()),
+            "semantic_atom": str(row.get("semantic_atom") or ""),
+            "conditions": tuple(row.get("required_conditions") or ()),
+            "polarity": str(row.get("required_polarity") or "unknown"),
+        }
+        anchors = _binding_anchors(constraints)
+        if anchors and not _anchor_compatible(exact_text, body, anchors):
+            errors.append(f"binder_anchor_mismatch:{kind}:{target_id}")
+            continue
+        if not _witness_satisfies_constraints(exact_text, constraints):
+            errors.append(
+                f"binder_condition_or_polarity_mismatch:{kind}:{target_id}"
+            )
+            continue
+        formula_exact_texts = tuple(row.get("formula_exact_texts") or ())
+        if formula_exact_texts:
+            if exact_text not in formula_exact_texts:
+                errors.append(f"binder_formula_not_exact_package_block:{target_id}")
+                continue
+            if not _DISPLAY_MATH_RE.search(body):
+                errors.append(f"binder_formula_without_display_math:{target_id}")
+                continue
+        valid.append({
+            "witness_kind": kind,
+            "target_id": target_id,
+            "exact_text": exact_text,
+        })
+
+    unbound_keys: list[tuple[str, str]] = []
+    unbound_values: list[str] = []
+    for raw in response_get("unbound_target_ids", ()) or ():
+        value = str(raw or "").strip()
+        if not value:
+            errors.append("binder_empty_unbound_target")
+            continue
+        key = _resolve_unbound_target_key(value, target_keys)
+        if key is None:
+            errors.append(f"binder_unknown_unbound_target:{value}")
+            continue
+        if key in seen:
+            errors.append(f"binder_target_both_bound_and_unbound:{value}")
+            continue
+        if key not in unbound_keys:
+            unbound_keys.append(key)
+            unbound_values.append(value)
+
+    reported = set(seen) | set(unbound_keys)
+    for kind, target_id in sorted(target_keys - reported):
+        errors.append(f"binder_target_unreported:{kind}:{target_id}")
+    return tuple(valid), tuple(dict.fromkeys(errors)), tuple(unbound_values)
 
 
 class ParagraphTransactionAssessmentV1(BaseModel):
@@ -275,6 +613,148 @@ def _route_package_ids(
     return _ids(route if not isinstance(route, str) else (route,))
 
 
+def bind_paragraph_witnesses(
+    transaction: Mapping[str, Any] | Any,
+    *,
+    plan_row: Mapping[str, Any] | None = None,
+    formula_packages: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] = (),
+) -> Any:
+    """Bind exact metadata to a frozen paragraph without changing its prose.
+
+    This is the deterministic first Binder stage.  It only selects substrings
+    already present in ``paragraph_markdown`` and authorized by the local
+    contract or an exact formula package.  It never adds declarations, edits
+    text, or treats an internal identifier as a textual witness.  The returned
+    object is the same transaction type when a Pydantic response model was
+    supplied; mappings receive a plain mapping copy.
+    """
+
+    if isinstance(transaction, Mapping):
+        source = dict(transaction)
+        get = source.get
+    else:
+        source = transaction.model_dump(mode="json") if hasattr(transaction, "model_dump") else {}
+        get = lambda name, default=None: getattr(transaction, name, default)
+    body = str(get("paragraph_markdown", "") or "")
+    if not body:
+        return transaction
+
+    declarations = _transaction_declarations(get)
+    existing = _transaction_witness_keys(get)
+
+    constraints = _witness_constraints_from_plan_row(plan_row)
+    packages = tuple(item for item in formula_packages if isinstance(item, Mapping))
+    package_by_id, package_by_obligation = _formula_package_indexes(packages)
+
+    def _select_unique_witness(
+        *,
+        local: Mapping[str, Any],
+        package: Mapping[str, Any] | None,
+    ) -> str:
+        has_local_contract = bool(
+            local.get("exact")
+            or (
+                str(local.get("semantic_atom") or "").strip()
+                and str(local.get("semantic_atom") or "").strip().casefold()
+                not in {"formal expression", "formula"}
+            )
+            or local.get("conditions")
+            or str(local.get("polarity") or "unknown").strip().casefold()
+            not in {"", "unknown"}
+        )
+        if package is None and not has_local_contract:
+            return ""
+        values: list[str] = []
+        if package is not None:
+            values.extend((
+                str(package.get("markdown_block") or ""),
+                str(package.get("latex") or ""),
+            ))
+        values.extend(local.get("exact", ()))
+        values.append(str(local.get("semantic_atom", "") or ""))
+        values.extend(local.get("conditions", ()))
+        exact_values = tuple(
+            dict.fromkeys(value for value in (
+                str(item or "").strip() for item in values
+            ) if value)
+        )
+        # Stage B starts with exact contract/package anchors only.  A
+        # paraphrased sentence is intentionally left for the low-temperature
+        # metadata Binder; broad sentence selection here would make the
+        # deterministic path bind the same generic paragraph to unrelated
+        # targets.
+        candidates = exact_values
+        anchors = _binding_anchors(local)
+        for raw in candidates:
+            candidate = str(raw or "").strip()
+            if not candidate or body.count(candidate) != 1:
+                continue
+            if package is not None and candidate not in {
+                str(package.get("markdown_block") or "").strip(),
+                str(package.get("latex") or "").strip(),
+            }:
+                continue
+            if anchors and not _anchor_compatible(candidate, body, anchors):
+                continue
+            if not _witness_satisfies_constraints(candidate, local):
+                continue
+            if package is not None and not _DISPLAY_MATH_RE.search(body):
+                continue
+            return candidate
+        return ""
+
+    additions: list[dict[str, str]] = []
+    for kind, target_ids in declarations.items():
+        for target_id in target_ids:
+            if (kind, target_id) in existing:
+                continue
+            values: list[str] = []
+            if kind == "formula":
+                package = package_by_id.get(target_id) or package_by_obligation.get(target_id)
+                if package is not None:
+                    values.extend((
+                        str(package.get("markdown_block") or ""),
+                        str(package.get("latex") or ""),
+                    ))
+            local = constraints.get((kind, target_id), {})
+            package = (
+                _formula_package_for_target(
+                    target_id,
+                    package_by_id=package_by_id,
+                    package_by_obligation=package_by_obligation,
+                )
+                if kind == "formula"
+                else None
+            )
+            exact = _select_unique_witness(
+                local=local,
+                package=package,
+            )
+            if exact:
+                additions.append({
+                    "witness_kind": kind,
+                    "target_id": target_id,
+                    "exact_text": exact,
+                })
+    if additions:
+        source["witnesses"] = [*(source.get("witnesses") or ()), *additions]
+    if "unbound_target_ids" in source:
+        source["unbound_target_ids"] = [
+            f"{kind}:{target}"
+            for kind, target_ids in declarations.items()
+            for target in target_ids
+            if not any(
+                str(item.get("witness_kind") or "") == kind
+                and str(item.get("target_id") or "") == target
+                for item in source.get("witnesses") or ()
+                if isinstance(item, Mapping)
+            )
+        ]
+    if isinstance(transaction, Mapping):
+        return source
+    return transaction.__class__.model_validate(source)
+
+
 def assess_paragraph_transaction(
     transaction: Mapping[str, Any] | Any,
     *,
@@ -287,7 +767,8 @@ def assess_paragraph_transaction(
     ``required_anchors`` is deliberately supplied by the authority projection;
     this function never searches the repository or invents source terms.  An
     empty anchor list means that exact target/witness closure is the available
-    check for that target.
+    check for that target, except that a declared target must still have a
+    non-empty local contract anchor when one was supplied.
     """
 
     if isinstance(transaction, Mapping):
@@ -420,6 +901,8 @@ def assess_paragraph_transaction(
 __all__ = [
     "ParagraphTransactionAssessmentV1",
     "assess_paragraph_transaction",
+    "paragraph_binding_targets",
     "required_anchors_from_plan_row",
     "required_targets_from_plan_row",
+    "validate_paragraph_binding_response",
 ]

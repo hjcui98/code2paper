@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "section_id": "MA-S2",
+  "response_ref": "sha256:a2c2e109926e601b6b4fa777e3b9881e4a7db2527842c12ff1d9dc6f15b38652",
+  "output": {
+    "section_id": "MA-S2",
+    "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+    "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nVanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step. This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations. A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel. These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+    "rendered_proposition_ids": [],
+    "deferred_proposition_ids": [],
+    "rendered_concept_keys": [],
+    "deferred_concept_keys": [],
+    "rendered_brief_ids": [
+      "brief:story:O-ORGANIZATION-02-780817ba"
+    ],
+    "deferred_brief_ids": [],
+    "rendered_from_facet_ids": [],
+    "rendered_field_candidate_ids": [],
+    "deferred_facet_ids": [],
+    "rendered_paragraph_ids": [
+      "paragraph:MA-S2:1"
+    ],
+    "rendered_slot_ids": [],
+    "rendered_edge_ids": [],
+    "used_formula_package_ids": [],
+    "used_argument_unit_ids": [],
+    "used_claim_ids": [],
+    "used_equation_ids": [],
+    "used_configuration_ids": [],
+    "completed_rhetorical_moves": [],
+    "new_research_requests": [
+      {
+        "argument_unit_id": "MA-S2:unit",
+        "candidate_symbols_or_terms": [
+          "irregular timespan",
+          "input noise",
+          "state-space model"
+        ],
+        "current_known_facts": [
+          "Vanilla SSMs assume uniform temporal discretization",
+          "Standard SSMs lack selective attenuation of input perturbations"
+        ],
+        "evidence_refs_used": [],
+        "exact_question": "What specific SSM variant addresses both irregular timespans and input noise, and what is its formal state-update rule?",
+        "missing_parts": [
+          "formal time-aware state update",
+          "noise-robust dynamics specification"
+        ],
+        "missing_rhetorical_move": "transition_to_next_section",
+        "request_id": "req:MA-S2:1",
+        "required_authority_lane": "expository_bridge",
+        "section_id": "MA-S2",
+        "status": "open",
+        "target_brief_ids": [
+          "brief:MA-S2:irregular"
+        ],
+        "target_clause_ids": [
+          "clause:MA-S2:limit1"
+        ],
+        "why_needed_for_reader": "The reader needs to know which specific variant overcomes both limitations before the Method section can introduce its formalism."
+      }
+    ],
+    "self_identified_risks": [],
+    "unresolved_points": [],
+    "paragraphs": [
+      {
+        "paragraph_id": "paragraph:MA-S2:1",
+        "paragraph_markdown": "Vanilla state-space models assume a uniform temporal discretization, treating each consecutive pair of observations as separated by an identical time step. This assumption fails when the underlying signal is sampled at irregular intervals, because the model cannot represent the varying durations between observations. A second limitation is that standard SSMs propagate input perturbations through the recurrent state without a mechanism for selective attenuation, leaving the hidden dynamics sensitive to stochastic noise in the observation channel. These two shortcomings—insensitivity to irregular timespans and vulnerability to input noise—motivate the design of SSM variants that incorporate time-aware dynamics and noise-robust state updates.",
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "witnesses": [],
+        "formula_disposition": null,
+        "formula_disposition_reason": "",
+        "formula_dispositions": []
+      }
+    ]
+  },
+  "output_digest": "sha256:663f14c33a134ddbcea4b1c7e56895d1da2e5b2bf1c2da44065e2f667a337f10",
+  "content_digest": "sha256:07e16d807af1f33f7af8155566abd3b5911ee1c05769ff4dba4c68f574723342"
+}
