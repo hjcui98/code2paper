@@ -1,0 +1,24 @@
+===== SERIAL START 2026-09-01T18:02:22+08:00 =====
+repair Candidate-first Method surface (six root causes)
+code_state_digest sha256:3bdeeb8d57368664dea46f60a2df739c6f1edae02d4c8d1cd983f08bd1834109
+
+{"object":"list","data":[{"id":"qwen38-27b-nvfp4","object":"model","created":1788256942,"owned_by":"vllm","root":"/data1/users/cuihengjia/qwen3.8-modelopt","parent":null,"max_model_len":131072,"permission":[{"id":"modelperm-99846d8d4ab7a7b9","object":"model_permission","created":1788256942,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== START ebcar 2026-09-01T18:02:22+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-ebcar-v34-20260831 fresh=/tmp/c2p-sixrepair-8006-ebcar-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE ebcar exit=2 2026-09-01T18:27:42+08:00 =====
+===== START dyg 2026-09-01T18:27:42+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-dyg-v33-20260831 fresh=/tmp/c2p-sixrepair-8006-dyg-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE dyg exit=2 2026-09-01T18:57:25+08:00 =====
+===== START linearrag 2026-09-01T18:57:25+08:00 frozen=/tmp/c2p-method-authoring-8006-20260830-linearrag fresh=/tmp/c2p-sixrepair-8006-linearrag-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE linearrag exit=2 2026-09-01T19:13:59+08:00 =====
+===== SERIAL COMPLETE 2026-09-01T19:13:59+08:00 =====

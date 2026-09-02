@@ -1,0 +1,23 @@
+===== SERIAL START 2026-09-01T13:41:04+08:00 =====
+code_state_digest sha256:64b7ab754a1ca5a9855271fab8f431eeb1da329dd42f54d47015af702eeb7cdc
+
+{"object":"list","data":[{"id":"qwen38-27b-nvfp4","object":"model","created":1788241264,"owned_by":"vllm","root":"/data1/users/cuihengjia/qwen3.8-modelopt","parent":null,"max_model_len":131072,"permission":[{"id":"modelperm-909ceedebd60e237","object":"model_permission","created":1788241264,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== START ebcar 2026-09-01T13:41:04+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-ebcar-v34-20260831 fresh=/tmp/c2p-v34p0p3-8006-ebcar-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE ebcar exit=2 2026-09-01T14:16:53+08:00 =====
+===== START dyg 2026-09-01T14:16:54+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-dyg-v33-20260831 fresh=/tmp/c2p-v34p0p3-8006-dyg-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE dyg exit=2 2026-09-01T15:06:27+08:00 =====
+===== START linearrag 2026-09-01T15:06:27+08:00 frozen=/tmp/c2p-method-authoring-8006-20260830-linearrag fresh=/tmp/c2p-v34p0p3-8006-linearrag-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE linearrag exit=2 2026-09-01T15:33:39+08:00 =====
+===== SERIAL COMPLETE 2026-09-01T15:33:39+08:00 =====

@@ -1,0 +1,20 @@
+[replay] copied 12 research artifacts: intent_obligation_graph_v2, research_agenda_v1, method_evidence, claim_evidence_map, obligation_coverage_v2, reference_method_agenda_v1, method_completeness_matrix_v1, equation_claims_v1, configuration_claims_v1, evidence_packets_v3, code_facts_v1, atomic_claims_v3
+[replay] copied optional research artifact: behavior_graph_v1
+[replay] writer status: incomplete blocked=
+[replay] paths: {
+ "author_review_candidates": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/author_review_candidates.json",
+ "authoring_projection_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/authoring_projection_v1.json",
+ "candidate_authority_validation_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/07_validation/candidate_authority_validation_v1.json",
+ "derivation_records_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/derivation_records_v1.json",
+ "external_research_queue_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/external_research_queue_v1.json",
+ "final_text_authorship_ledger_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/07_validation/final_text_authorship_ledger_v1.json",
+ "final_text_claims": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/07_validation/agentic_final_text_claims.json",
+ "formalization_result_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/formalization_result_v1.json",
+ "formalization_section_results_v1": "/tmp/c2p-v34prose-8006-ebcar-20260901/artifacts/06_authoring/formalization_section_results_v1.json",
+ "method_draft_bundle_v1": "/tmp/c2p-v34prose-8006-e
+[replay] reused_fulfilled_callback_ids: []
+[replay] writer_resumed_section_ids: []
+[replay] structural exit: eligible=False reasons=['required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-3', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:slot', 'rendered_invalid:1', 'required_target_coverage_incomplete', 'required_slot_coverage_incomplete'] targets=31/32 formula=4/4
+[replay] callback continuation: fulfilled=2 pending=2 resumed=['MA-S1', 'MA-S3'] stopped=budget_exhausted
+[replay] structural exit: eligible=False reasons=['required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:facet', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:formula', 'required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-2', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-2:facet', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-2:slot', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-2:formula', 'required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-3', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:facet', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:slot', 'required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1', 'required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:formula', 'required_paragraph_not_rendered:MA-S5:paragraph:MA-S5:method-unit-1', 'rendered_invalid:5', 'required_target_coverage_incomplete', 'required_slot_coverage_incomplete', 'formula_packages_unconsumed:opfp:MA-S4:1'] targets=7/31 formula=0/1
+[replay] structural exit: eligible=False reasons=['required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-3', 'required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:slot', 'rendered_invalid:1', 'required_target_coverage_incomplete', 'required_slot_coverage_incomplete'] targets=31/32 formula=4/4
