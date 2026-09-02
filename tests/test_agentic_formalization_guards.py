@@ -1089,3 +1089,52 @@ def test_formula_obligation_expectations_distinguish_required_and_preferred() ->
     truths = {item.obligation_id: item for item in result.obligation_truths}
     assert truths["formula:facet:required"].blocking is True
     assert truths["formula:facet:preferred"].blocking is False
+
+
+def test_formalizer_receives_connected_exact_code_excerpts() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+    )
+
+    pack = MechanismEquationEvidencePackV1(
+        pack_id="pack:MA-S1",
+        section_id="MA-S1",
+        exact_excerpts=("def compute_score(x, w, b):\n    return x @ w + b",),
+        bound_fact_ids=("fact:1",),
+    )
+    assert pack.exact_excerpts == ("def compute_score(x, w, b):\n    return x @ w + b",)
+    assert pack.pack_id == "pack:MA-S1"
+
+
+def test_candidate_formula_may_be_review_required_without_entering_verified() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    academic = SectionFormulaPackageV1(
+        package_id="pkg-candidate-only",
+        section_id="MA-S2",
+        purpose="Define contrastive InfoNCE objective.",
+        latex=r"\mathcal{L}_i = -\log \frac{\exp(s_i^+ / \tau)}{\sum_j \exp(s_{ij} / \tau)}",
+        prose_explanation="The contrastive loss maximizes positive alignment relative to sampled negatives.",
+        symbol_definitions=(
+            (r"\mathcal{L}_i", "sample loss"),
+            (r"s_i^+", "positive score"),
+            (r"s_{ij}", "similarity score"),
+            (r"\tau", "temperature parameter"),
+        ),
+        authority_status="author_intent",
+        formula_lane="author_intent_academic",
+        review_status="review_required",
+        review_question="Verify whether negative sampling temperature tau is dynamically scheduled.",
+        bound_fact_ids=(),
+        bound_equation_ids=(),
+    )
+    failures = validate_section_formula_package(
+        academic,
+        equations=_equations(),
+        facts=_facts(),
+    )
+    assert failures == []
+    assert academic.authority_status != "code_verified"

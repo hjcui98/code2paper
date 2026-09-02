@@ -216,3 +216,51 @@ def test_assembled_heading_keeps_coherent_writer_repair_of_truncated_plan() -> N
         prompt_payload={},
     )
     assert _assembled_section_heading(intact, output) == "Offline graph construction"
+
+
+def test_canonical_formula_suppresses_duplicate_code_shaped_equation() -> None:
+    from code2paper.agentic.publication_method_writer import _suppress_duplicate_and_code_shaped_display_formulas
+
+    academic_latex = r"\mathcal{L}_i = -\log \frac{\exp(s_i^+ / \tau)}{\sum_j \exp(s_{ij} / \tau)}"
+    academic_block = f"$$\n{academic_latex}\n$$"
+    code_block = "$$\nloss_i = -pos_sim + \\operatorname{logsumexp}(all_sims, dim=0)\n$$"
+    text = (
+        "## Training objective\n\n"
+        f"The contrastive loss is given by\n\n{academic_block}\n\n"
+        f"where the score is computed as\n\n{code_block}\n\n"
+        "and optimized via gradient descent."
+    )
+    cleaned = _suppress_duplicate_and_code_shaped_display_formulas(
+        text,
+        formula_packages=({
+            "package_id": "pkg-1",
+            "latex": academic_latex,
+            "markdown_block": academic_block,
+        },),
+    )
+    assert academic_block in cleaned
+    assert code_block not in cleaned
+
+
+def test_duplicate_identical_display_math_is_deduplicated() -> None:
+    from code2paper.agentic.publication_method_writer import _suppress_duplicate_and_code_shaped_display_formulas
+
+    latex = r"y = Wx + b"
+    block = f"$$\n{latex}\n$$"
+    text = f"First:\n\n{block}\n\nSecond:\n\n{block}\n"
+    cleaned = _suppress_duplicate_and_code_shaped_display_formulas(text)
+    assert cleaned.count(block) == 1
+
+
+def test_scientific_symbol_survives_operation_projection() -> None:
+    projected = project_operation_to_reader_surface({
+        "predicate": "computes",
+        "description": "computes state transition",
+        "subject": r"\mathbf{h}_t",
+        "operands": [r"\mathbf{W}", r"\mathbf{x}_t", r"\mathbf{b}"],
+        "result": r"\mathbf{h}_{t+1}",
+    })
+    assert projected is not None
+    assert projected["subject"] == r"\mathbf{h}_t"
+    assert projected["operands"] == [r"\mathbf{W}", r"\mathbf{x}_t", r"\mathbf{b}"]
+    assert projected["result"] == r"\mathbf{h}_{t+1}"

@@ -6369,11 +6369,11 @@ def _invoke_section_formalizer_llm(
             "at most ONE formula package with authority_status author_intent, "
             "partial or paper_code_mismatch (NEVER code_verified): state the "
             "section's core mechanism in academic paper notation. Use the "
-            "supplied formula obligation and author quote as scope; do not "
+            "supplied formula obligation and author quote as scope; "
             "return satisfied_obligation_ids only from the supplied closed set "
-            "and bind them to one consumer_paragraph_id; do not guess a route. "
-            "invent a module, loss, guarantee, or implementation fact. Return "
-            "a renderable markdown_block with display math, define the symbols, "
+            "and bind them to one consumer_paragraph_id; do not guess a route; "
+            "do not invent an ungrounded module, loss, guarantee, or implementation fact. Return "
+            "a renderable markdown_block with display math ($$...$$), define the symbols, "
             "and state assumptions explicitly. Missing repository line numbers "
             "are NOT a reason to omit latex: put the upgrade question in "
             "review_question on the emitted author_intent_academic package. "
@@ -6381,38 +6381,24 @@ def _invoke_section_formalizer_llm(
         )
         if author_intent_lane
         else (
-            "Produce paper-level LaTeX formula packages for the authorized core equations "
-            "or fact-backed operation evidence packs. When no core equation is supplied, "
-            "use only the operations, operands, conditions, and spans in the supplied "
-            "operation evidence packs; do not promote an author statement into code "
-            "authority. If core_equations is empty, bound_equation_ids MUST be an "
-            "empty list; bind the exact operation fact ids from the current pack "
-            "instead. Do not copy an equation id merely because it appears in a "
-            "dossier or an earlier attempt. The operation expression must preserve "
-            "the supplied predicate/operator, operands, result, guard, and shape "
-            "information; do not add averaging, normalization, exponentials, sums, "
-            "indices, constants, or dimensions that no supplied atom authorizes. "
-            "For each package return satisfied_obligation_ids using only the supplied "
-            "section obligation ids and exactly one consumer_paragraph_id; one package "
-            "may satisfy multiple obligations only when they share that consumer. "
-            "Provide formula_lane repository_derived, purpose "
-            "(the Method question the formula answers), latex (display math body preserving "
-            "the exact operands, operators, numbers "
-            "and dimensions of the authorized expression; you may choose notation and "
-            "symbol names but must NOT add operations, constants, dimensions or causal "
-            "conclusions), prose_explanation (one to three reader sentences), "
-            "markdown_block containing renderable display math, "
-            "symbol_definitions (every symbol used in latex), material_conditions and "
-            "assumptions from the equation conditions, authority_status "
-            "(code_verified only when bound to the supplied equations; otherwise "
-            "author_intent, partial or paper_code_mismatch with a review_question), "
-            "risks, and bound_fact_ids/bound_equation_ids from the supplied sets. "
-            "The reader_propositions/concept points carry the section's story "
-            "mechanisms: prefer them when choosing which core equation each package "
-            "formalizes. Preserve the supplied formula_constraints exactly, and "
-            "honor the author notation_hints when naming symbols. "
-            "Never claim convergence, optimality, statistical significance, or any "
-            "property the code facts cannot license."
+            "Produce paper-level LaTeX formula packages that mathematically formulate the section's "
+            "mechanism using the connected implementation context (exact source code excerpts and "
+            "operation evidence packs) and the author's mathematical goal. "
+            "Treat repository source code as the primary mathematical specification; equation atoms "
+            "and operation atoms are auxiliary evidence only. "
+            "Reconstruct the paper-level mathematical formulation that best explains the section claim. "
+            "You may introduce paper-facing symbols grounded in the code/data flow and define them in symbol_definitions. "
+            "If core_equations is empty, bound_equation_ids MUST be an empty list; bind the exact operation fact ids "
+            "from the current pack instead. Do not copy an equation id merely because it appears in a dossier. "
+            "For each package return satisfied_obligation_ids using only the supplied section obligation ids "
+            "and exactly one consumer_paragraph_id; one package may satisfy multiple obligations only when they share that consumer. "
+            "Provide formula_lane repository_derived (or hybrid_partial/author_intent_academic when partial), purpose, "
+            "latex (display math body in clear paper notation; do not emit Python syntax, keyword args like dim=0, or tuple assignments), "
+            "prose_explanation (one to three reader sentences), markdown_block containing renderable display math ($$...$$), "
+            "symbol_definitions (every symbol used in latex), material_conditions and assumptions, authority_status "
+            "(code_verified when grounded in code facts/equations; otherwise partial or author_intent with review_question), "
+            "risks, and bound_fact_ids from the supplied sets. "
+            "Never claim global guarantees, proof of optimality, or scale-invariance that the code facts cannot license."
         )
     )
     claim_centered_contract = (
@@ -11923,7 +11909,7 @@ def _canonical_section_heading_phrase(heading: str) -> str:
     text = str(heading or "").strip()
     while text.startswith("#"):
         text = text[1:].lstrip()
-    return " ".join(text.split()).strip()
+    return " ".join(text.split()).strip().rstrip(":").rstrip()
 
 
 def _markdown_has_non_heading_body(markdown: str) -> bool:
@@ -12336,6 +12322,40 @@ def _collapse_duplicate_section_h2(markdown: str, *, expected_heading: str = "")
     return "\n".join(kept)
 
 
+def _suppress_duplicate_and_code_shaped_display_formulas(
+    markdown: str,
+    formula_packages: Iterable[Mapping[str, Any]] | None = None,
+) -> str:
+    """Drop duplicate display math blocks and redundant code-trace formulas."""
+
+    from code2paper.agentic.formalization_agent import _FORMULA_CODE_TRACE_PATTERNS
+
+    packages = tuple(item for item in (formula_packages or ()) if isinstance(item, Mapping))
+    has_academic_package = any(
+        str(pkg.get("latex") or "").strip()
+        and not any(pattern.search(str(pkg.get("latex") or "")) for _, pattern in _FORMULA_CODE_TRACE_PATTERNS)
+        for pkg in packages
+    )
+
+    blocks = re.findall(
+        r"\$\$(?:[\s\S]*?)\$\$|\\\[(?:[\s\S]*?)\\\]|\\begin\{(?:equation|align)\*?\}(?:[\s\S]*?)\\end\{(?:equation|align)\*?\}",
+        markdown,
+    )
+    seen_blocks: set[str] = set()
+    result = markdown
+    for block in blocks:
+        canonical_b = " ".join(block.split())
+        if canonical_b in seen_blocks:
+            result = result.replace(block, "", 1)
+            continue
+        seen_blocks.add(canonical_b)
+        if has_academic_package:
+            is_code_shaped = any(pattern.search(block) for _, pattern in _FORMULA_CODE_TRACE_PATTERNS)
+            if is_code_shaped:
+                result = result.replace(block, "", 1)
+    return re.sub(r"\n{3,}", "\n\n", result)
+
+
 def _with_normalized_section_markdown(
     output: PublicationMethodSectionOutputV1 | None,
     *,
@@ -12373,6 +12393,9 @@ def _with_normalized_section_markdown(
         normalized = before_paste
     else:
         normalized = pasted
+    normalized = _suppress_duplicate_and_code_shaped_display_formulas(
+        normalized, formula_packages=formula_packages,
+    )
     updates: dict[str, Any] = {}
     rendered_package_ids = list(dict.fromkeys(
         [str(value) for value in (output.used_formula_package_ids or ()) if str(value).strip()]

@@ -1,5 +1,53 @@
 # Implementation and evidence
 
+## Candidate-First Method Code Repair (2026-09-02) — COMPLETE (static-verified; WP1–WP5 closure)
+
+Transformed the codebase according to `docs/code2paper_candidate_first_method_code_repair_guide_2026-09-02.md` across 5 core work packages (P0-A through P0-E), fixing the root causes diagnosed across EBCAR, DyG, and LinearRAG. No git reset, branch switch, or merge was performed; Verified authority gates and reverse validation remain strictly fail-closed.
+
+### Implemented Work Packages
+
+1. **WP1 / P0-A (Reader Surface Refresh on Reused Plans):**
+   - In `src/code2paper/agentic/method_architect.py`: `_refresh_incumbent_method_unit_surface` cleanly decouples reader surface (rationale facets, reader questions, sentence ranges, context reordering) from stable architectural IDs (`section_id`, `method_unit_id`, `paragraph_id`).
+   - `_order_context_sections_before_mechanism` passes current units and current argument facets so pure context/motivation sections precede mechanism sections even when an incumbent plan had inverted ordering.
+   - Emits structured `method_unit_trace` logging with `reuse_mode: "refresh_reader_surface"`, `reader_surface_mode: "rebuilt"`, and `context_reorder_applied`.
+
+2. **WP2 / P0-B (Semantic Callback Query Compiler):**
+   - In `src/code2paper/agentic/writer_research_router.py`: `_INTERNAL_ID_RE` and `_INTERNAL_ID_IN_TEXT_RE` filter internal tokens (`facet-...`, `brief-...`, `paragraph-...`, `claim-...`, `formula-...`, `obligation-...`, `method-unit-...`, `MA-S...`).
+   - `directed_search_terms_from_texts` extracts meaningful academic keywords from `missing_parts` and author statements, preventing internal ID pollution in research queries.
+
+3. **WP3 / P0-C (Claim-Centered Formalizer):**
+   - In `src/code2paper/agentic/publication_method_writer.py`: Refined Formalizer `lane_contract` and prompt instructions. Formalizer treats repository source code as the primary mathematical specification, connected operations and equation atoms as auxiliary evidence, and recovers paper-level mathematical formulations using grounded symbols instead of line-by-line syntax transcriptions.
+   - Guard `_THEORETICAL_UPGRADE_PATTERN` in `formalization_agent.py` continues to block ungrounded global optimality/convergence claims while allowing grounded transition and amplification formulations.
+
+4. **WP4 / P0-D (Canonical Paper Formula Ownership & Deduplication):**
+   - In `src/code2paper/agentic/publication_method_writer.py` and `src/code2paper/authoring/writer_skill.py`: Enforced single canonical formula ownership per mechanism.
+   - Added `_suppress_duplicate_and_code_shaped_display_formulas` to remove redundant duplicate display math blocks and suppress leftover code-shaped display math (e.g., `logsumexp(..., dim=0)`) when a canonical academic formula package is present.
+   - Writer prompt instructs the model that supplied `formula_packages` are the exclusive authorized paper-level mathematical rendering for that mechanism.
+
+5. **WP5 / P0-E (Operation Projection & Heading Normalization):**
+   - In `src/code2paper/llm/section_writer.py` and `src/code2paper/agentic/publication_method_writer.py`: `project_operation_to_reader_surface` sanitizes operands, conditions, and predicates, dropping internal storage handles and raw runtime traces while preserving scientific symbols.
+   - `normalize_publication_heading` and `_canonical_section_heading_phrase` strip trailing colons and markdown hashes from H2/H3 headings across planning, writing, and candidate assembly.
+
+### Verification Evidence
+
+```text
+python -m compileall -q src tests
+exit 0
+
+git diff --check
+exit 0
+
+python -m pytest -q \
+  tests/test_v34like_candidate_plan_freeze.py \
+  tests/test_v34prose_formula_and_leak_repair.py \
+  tests/test_llm_section_writer.py \
+  tests/test_agentic_formalization_guards.py \
+  tests/test_agentic_publication_method_writer.py \
+  tests/test_agentic_method_architect_product_readiness.py \
+  tests/test_agentic_callback_semantic_contract.py
+345 passed, 6 warnings in 10.17s (exit 0)
+```
+
 ## Active attachment-aligned P0 closure (2026-08-28) — COMPLETE (static-verified; no live claim)
 
 The attached three-project root-cause audit was treated as an implementation

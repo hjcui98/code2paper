@@ -534,3 +534,177 @@ def test_preserve_incumbent_keeps_argument_units_for_plan_validate() -> None:
     assert trace["preserved_existing_method_units"] is True
     assert sections[0].argument_unit_ids == ("MA-S1:unit-1", "MA-S1:unit-2")
     assert plan.method_units[0].argument_unit_ids == ("MA-S1:unit-1", "MA-S1:unit-2")
+
+
+def test_reused_plan_refreshes_reader_ordering() -> None:
+    mech_unit = MethodArgumentUnitV1(
+        argument_unit_id="MA-S2:u1",
+        section_role="mechanism",
+        research_question="How is the entity graph constructed?",
+        claim_ids=(),
+        authority_lanes=("author_attested",),
+    )
+    context_unit = MethodArgumentUnitV1(
+        argument_unit_id="MA-S1:u1",
+        section_role="motivation",
+        research_question="Why is linear indexing needed?",
+        claim_ids=(),
+        authority_lanes=("author_attested",),
+    )
+    prior = SimpleNamespace(
+        method_units=(
+            MethodUnitV2(
+                method_unit_id="MU-S2",
+                section_id="MA-S2",
+                reader_question="How is the entity graph constructed?",
+                purpose="build graph",
+                author_statement="The graph is constructed from entity spans.",
+                paragraph_ids=("P-S2",),
+                argument_unit_ids=("MA-S2:u1",),
+            ),
+            MethodUnitV2(
+                method_unit_id="MU-S1",
+                section_id="MA-S1",
+                reader_question="Why is linear indexing needed?",
+                purpose="motivation",
+                author_statement="Linear indexing avoids quadratic complexity.",
+                paragraph_ids=("P-S1",),
+                argument_unit_ids=("MA-S1:u1",),
+            ),
+        ),
+        sections=(
+            SectionArgumentGraphV1(
+                section_id="MA-S2",
+                heading="Graph construction",
+                reader_question="How?",
+                argument_unit_ids=("MA-S2:u1",),
+                paragraphs=(SectionParagraphPlanV1(
+                    paragraph_id="P-S2",
+                    argument_unit_ids=("MA-S2:u1",),
+                ),),
+            ),
+            SectionArgumentGraphV1(
+                section_id="MA-S1",
+                heading="Motivation",
+                reader_question="Why?",
+                argument_unit_ids=("MA-S1:u1",),
+                paragraphs=(SectionParagraphPlanV1(
+                    paragraph_id="P-S1",
+                    argument_unit_ids=("MA-S1:u1",),
+                ),),
+            ),
+        ),
+        argument_units=(mech_unit, context_unit),
+    )
+    rebuilt_units = (
+        MethodUnitV2(
+            method_unit_id="MU-S2-fresh",
+            section_id="MA-S2",
+            reader_question="How is the entity graph constructed?",
+            purpose="build graph",
+            author_statement="The graph is constructed from entity spans.",
+            paragraph_ids=("P-S2",),
+            argument_unit_ids=("MA-S2:u1",),
+        ),
+        MethodUnitV2(
+            method_unit_id="MU-S1-fresh",
+            section_id="MA-S1",
+            reader_question="Why is linear indexing needed?",
+            purpose="motivation",
+            author_statement="Linear indexing avoids quadratic complexity.",
+            paragraph_ids=("P-S1",),
+            argument_unit_ids=("MA-S1:u1",),
+        ),
+    )
+    rebuilt_graphs = [
+        SectionArgumentGraphV1(
+            section_id="MA-S2",
+            heading="Graph construction",
+            reader_question="How?",
+            argument_unit_ids=("MA-S2:u1",),
+            paragraphs=(SectionParagraphPlanV1(
+                paragraph_id="P-S2",
+                argument_unit_ids=("MA-S2:u1",),
+            ),),
+        ),
+        SectionArgumentGraphV1(
+            section_id="MA-S1",
+            heading="Motivation",
+            reader_question="Why?",
+            argument_unit_ids=("MA-S1:u1",),
+            paragraphs=(SectionParagraphPlanV1(
+                paragraph_id="P-S1",
+                argument_unit_ids=("MA-S1:u1",),
+            ),),
+        ),
+    ]
+    method_units, sections, trace = _refresh_incumbent_method_unit_surface(
+        prior_plan=prior,
+        rebuilt_method_units=rebuilt_units,
+        rebuilt_sections=rebuilt_graphs,
+        units=(mech_unit, context_unit),
+        argument_facets=(),
+    )
+    assert [s.section_id for s in sections] == ["MA-S1", "MA-S2"]
+    assert trace["context_reorder_applied"] is True
+
+
+def test_reused_plan_preserves_section_identity() -> None:
+    prior_unit = MethodArgumentUnitV1(
+        argument_unit_id="MA-S1:u1",
+        section_role="mechanism",
+        research_question="How?",
+        claim_ids=(),
+        authority_lanes=("author_attested",),
+    )
+    prior = SimpleNamespace(
+        method_units=(MethodUnitV2(
+            method_unit_id="MU-S1-original",
+            section_id="MA-S1",
+            reader_question="How?",
+            purpose="old",
+            author_statement="Old statement.",
+            paragraph_ids=("P-S1-original",),
+            argument_unit_ids=("MA-S1:u1",),
+        ),),
+        sections=(SectionArgumentGraphV1(
+            section_id="MA-S1",
+            heading="Overview",
+            reader_question="How?",
+            argument_unit_ids=("MA-S1:u1",),
+            paragraphs=(SectionParagraphPlanV1(
+                paragraph_id="P-S1-original",
+                argument_unit_ids=("MA-S1:u1",),
+            ),),
+        ),),
+        argument_units=(prior_unit,),
+    )
+    rebuilt = MethodUnitV2(
+        method_unit_id="MU-S1-new",
+        section_id="MA-S1",
+        reader_question="How?",
+        purpose="new refined rationale",
+        author_statement="New refined statement.",
+        paragraph_ids=("P-S1-new",),
+        argument_unit_ids=("MA-S1:u1",),
+    )
+    rebuilt_graph = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Overview",
+        reader_question="How?",
+        argument_unit_ids=("MA-S1:u1",),
+        paragraphs=(SectionParagraphPlanV1(
+            paragraph_id="P-S1-new",
+            argument_unit_ids=("MA-S1:u1",),
+        ),),
+    )
+    method_units, sections, trace = _refresh_incumbent_method_unit_surface(
+        prior_plan=prior,
+        rebuilt_method_units=(rebuilt,),
+        rebuilt_sections=[rebuilt_graph],
+        units=(prior_unit,),
+    )
+    assert sections[0].section_id == "MA-S1"
+    assert method_units[0].method_unit_id == "MU-S1-original"
+    assert sections[0].paragraphs[0].paragraph_id == "P-S1-original"
+    assert method_units[0].purpose == "new refined rationale"

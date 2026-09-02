@@ -371,3 +371,32 @@ def test_structural_exit_accepts_rhetorical_move_as_callback_target() -> None:
         candidate_digest="sha256:candidate",
     )
     assert decision.eligible
+
+
+def test_internal_facet_id_not_emitted_as_research_search_term() -> None:
+    from code2paper.agentic.writer_research_router import directed_search_terms_from_texts
+
+    terms = directed_search_terms_from_texts(
+        "facet:linear_rag_01",
+        "brief:MA-S1",
+        "paragraph:MA-S2:P1",
+        "claim:fact-1",
+        "obligation:formula-1",
+        "method-unit:MU-1",
+        "MA-S3",
+        "How is the attention weight calculated?",
+    )
+    for term in terms:
+        assert not term.startswith(("facet:", "brief:", "paragraph:", "claim:", "obligation:", "method-unit:", "MA-S"))
+    assert any("attention weight" in term.casefold() or "attention" in term.casefold() for term in terms)
+
+
+def test_semantic_missing_parts_produce_meaningful_search_terms() -> None:
+    from code2paper.agentic.writer_research_router import directed_search_terms_from_texts
+
+    terms = directed_search_terms_from_texts(
+        "InfoNCE temperature scaling parameter tau",
+        "facet:loss_fn",
+    )
+    assert "facet:loss_fn" not in terms
+    assert any("temperature" in term.casefold() or "infonce" in term.casefold() for term in terms)
