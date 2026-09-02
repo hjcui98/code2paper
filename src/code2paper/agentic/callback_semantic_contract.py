@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
+from typing import Any, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -87,6 +87,22 @@ class AuthoringStructuralExitV1(BaseModel):
         return self
 
 
+def _formula_package_uniquely_in_body(body: str, package: Mapping[str, Any]) -> bool:
+    """True when accepted package latex occurs once inside display math."""
+
+    from code2paper.agentic.publication_transaction_contract import _DISPLAY_MATH_RE
+
+    block = str(package.get("markdown_block") or "")
+    latex = str(package.get("latex") or "").strip()
+    if not _DISPLAY_MATH_RE.search(str(body or "")):
+        return False
+    if block and body.count(block) == 1:
+        return True
+    if latex and body.count(latex) == 1:
+        return True
+    return False
+
+
 def _ids(values: Any) -> tuple[str, ...]:
     if isinstance(values, (str, bytes, dict)) or values is None:
         return ()
@@ -100,9 +116,13 @@ def _ids(values: Any) -> tuple[str, ...]:
 
 
 def _required_targets(row: dict[str, Any]) -> dict[str, tuple[str, ...]]:
+    from code2paper.agentic.publication_transaction_contract import (
+        _publication_slot_ids,
+    )
+
     return {
         "facet": _ids(row.get("required_facet_ids")),
-        "slot": _ids(row.get("ordered_semantic_slot_ids")),
+        "slot": _publication_slot_ids(row),
         "edge": _ids(row.get("required_edge_ids")),
         "formula": _ids(row.get("formula_obligation_ids")),
     }
@@ -142,6 +162,7 @@ def evaluate_authoring_structural_exit(
     callback_payload: Any = None,
     assessment_payload: Any = None,
     candidate_digest: str = "",
+    candidate_markdown: str = "",
 ) -> AuthoringStructuralExitV1:
     """Evaluate whether callback=1 is structurally authorized.
 
@@ -208,6 +229,37 @@ def evaluate_authoring_structural_exit(
         if key[1]:
             trace_rows[key] = raw
 
+    # Formula obligations are not all hard Writer targets.  The Formalizer's
+    # terminal state is the only authority for this distinction: an
+    # ``intent_ready``/``review_required`` or ``not_applicable`` result stays
+    # visible as a review/terminal outcome, but cannot inflate the accepted
+    # code-equivalent target denominator.  Failed/unresolved obligations are
+    # deliberately retained so the callback gate remains fail-closed.
+    from code2paper.agentic.publication_transaction_contract import (
+        _formula_package_terminal_disposition,
+    )
+    non_hard_formula_obligation_ids: set[str] = set()
+    for section in formalization.get("sections") or ():
+        if not isinstance(section, dict):
+            continue
+        package_dispositions = {
+            str(package.get("package_id") or "").strip():
+            _formula_package_terminal_disposition(package)
+            for package in section.get("packages") or ()
+            if isinstance(package, dict)
+            and str(package.get("package_id") or "").strip()
+        }
+        for truth in section.get("obligation_truths") or ():
+            if not isinstance(truth, dict):
+                continue
+            obligation_id = str(truth.get("obligation_id") or "").strip()
+            terminal = str(truth.get("terminal_disposition") or "").strip()
+            package_id = str(truth.get("package_id") or "").strip()
+            if not terminal and package_id:
+                terminal = package_dispositions.get(package_id, "")
+            if obligation_id and terminal in {"review_required", "not_applicable"}:
+                non_hard_formula_obligation_ids.add(obligation_id)
+
     required_paragraph_count = 0
     valid_required_paragraph_count = 0
     required_target_count = 0
@@ -217,6 +269,11 @@ def evaluate_authoring_structural_exit(
     blocked_keys: set[str] = set()
     for key, row in plan_rows.items():
         required = _required_targets(row)
+        required["formula"] = tuple(
+            obligation_id
+            for obligation_id in required["formula"]
+            if obligation_id not in non_hard_formula_obligation_ids
+        )
         target_count = sum(len(values) for values in required.values())
         if not target_count:
             continue
@@ -284,8 +341,7 @@ def evaluate_authoring_structural_exit(
             if (
                 isinstance(package, dict)
                 and str(package.get("package_id") or "").strip()
-                and str(package.get("review_status") or "").strip()
-                in {"", "accepted"}
+                and _formula_package_terminal_disposition(package) == "accepted"
             ):
                 accepted_packages.add(str(package["package_id"]).strip())
     consumed_packages = {
@@ -294,6 +350,34 @@ def evaluate_authoring_structural_exit(
         if isinstance(raw, dict) and str(raw.get("terminal_state") or "") == "rendered"
         for package_id in _ids(raw.get("accepted_formula_package_ids"))
     }
+    body = str(candidate_markdown or "").strip()
+    if not body:
+        aggregate = writer.get("writer_aggregate") or {}
+        parts = []
+        for section in aggregate.get("sections") or ():
+            if not isinstance(section, dict):
+                continue
+            text = str(section.get("section_markdown") or section.get("text") or "")
+            if text.strip():
+                parts.append(text)
+        body = "\n\n".join(parts)
+    if body:
+        body_consumed: set[str] = set()
+        for section in formalization.get("sections") or ():
+            if not isinstance(section, dict):
+                continue
+            for package in section.get("packages") or ():
+                if not isinstance(package, dict):
+                    continue
+                package_id = str(package.get("package_id") or "").strip()
+                if package_id not in accepted_packages:
+                    continue
+                if _formula_package_uniquely_in_body(body, package):
+                    body_consumed.add(package_id)
+        # Assembled Candidate text is the consume authority.  A paragraph
+        # transaction that still has ``$$`` while the published section lost
+        # display math must not count as consumed.
+        consumed_packages = body_consumed
     unresolved_required: list[str] = []
     for section in formalization.get("sections") or ():
         if not isinstance(section, dict):
@@ -311,6 +395,9 @@ def evaluate_authoring_structural_exit(
             if not isinstance(truth, dict) or str(truth.get("expectation") or "required") != "required":
                 continue
             obligation_id = str(truth.get("obligation_id") or "").strip()
+            terminal = str(truth.get("terminal_disposition") or "").strip()
+            if terminal in {"review_required", "not_applicable"}:
+                continue
             if str(truth.get("outcome") or "") == "rendered":
                 continue
             if not typed_no_safe:
@@ -346,7 +433,25 @@ def evaluate_authoring_structural_exit(
             or item.get("target_clause_ids")
             or (item.get("missing_rhetorical_move"),)
         )
-        request_targets.append((str(item.get("section_id") or ""), tuple(sorted(_ids(target_values)))))
+        # A target is paragraph/operation scoped, not merely a section plus a
+        # generic slot name.  EBCAR exposed the previous coarse key: several
+        # independent units in one section legitimately requested the same
+        # ``transformation`` slot and were incorrectly treated as duplicate
+        # callbacks.  Keep the duplicate guard, but include the stable owner
+        # and semantic target identity; two requests for the same owner and
+        # same target still fail closed.
+        request_targets.append((
+            str(item.get("section_id") or ""),
+            str(item.get("argument_unit_id") or ""),
+            str(item.get("missing_rhetorical_move") or ""),
+            str(item.get("concept_key") or ""),
+            tuple(sorted(_ids(target_values))),
+            tuple(sorted(_ids(item.get("target_formula_obligation_ids")))),
+            tuple(sorted(_ids(item.get("target_story_node_ids")))),
+            tuple(sorted(_ids(item.get("target_concept_keys")))),
+            tuple(sorted(_ids(item.get("target_brief_ids")))),
+            tuple(sorted(_ids(item.get("target_clause_ids")))),
+        ))
     if len(request_targets) != len(set(request_targets)):
         reasons.append("callback_request_targets_not_unique")
 

@@ -97,3 +97,69 @@ def test_threshold_polarity_reversal_is_mismatch() -> None:
     binding = alignment.field_bindings[0]
     assert binding.status == "mismatch"
     assert any("polarity_conflict" in item for item in alignment.schema_failures)
+
+
+def test_formula_field_does_not_bind_on_one_generic_norm_token() -> None:
+    facet = AuthorMechanismFacetV1(
+        facet_id="facet:stability",
+        clause_id="clause:stability",
+        exact_source_quote="maintain stability through spectral norm constraints",
+        facet_kind="formula",
+        semantic_fields={
+            "formula_goal": "maintain stability through spectral norm constraints",
+        },
+        formula_expectation="required",
+    )
+    row = {
+        **_rows()[0],
+        "exact_excerpt": "hidden_states = norm_f(hidden_states)",
+        "fact_atoms": [{"predicate": "calls", "object": "norm_f"}],
+        "equation_atoms": [{"equation_id": "equation:normalization"}],
+        "_excerpt": _rows()[0]["_excerpt"].model_copy(
+            update={"span_id": "span:normalization", "exact_excerpt": "hidden_states = norm_f(hidden_states)"}
+        ),
+    }
+    alignment = _alignment_from_owner(
+        {},
+        facet=facet,
+        rows=(row,),
+        owner_error="provider_unavailable",
+    )
+    assert alignment.status == "unresolved"
+    assert alignment.bound_span_ids == ()
+    assert alignment.field_bindings[0].status == "unresolved"
+
+
+def test_owner_cannot_promote_semantically_unrelated_formula_row() -> None:
+    facet = AuthorMechanismFacetV1(
+        facet_id="facet:stability-owner",
+        clause_id="clause:stability-owner",
+        exact_source_quote="maintain stability through spectral norm constraints",
+        facet_kind="formula",
+        semantic_fields={
+            "formula_goal": "maintain stability through spectral norm constraints",
+        },
+        formula_expectation="required",
+    )
+    row = {
+        **_rows()[0],
+        "exact_excerpt": "hidden_states = norm_f(hidden_states)",
+        "_excerpt": _rows()[0]["_excerpt"].model_copy(
+            update={"span_id": "span:normalization-owner", "exact_excerpt": "hidden_states = norm_f(hidden_states)"}
+        ),
+    }
+    alignment = _alignment_from_owner(
+        {
+            "status": "entailed",
+            "supported_fields": ["formula_goal"],
+            "field_bindings": [{
+                "field_name": "formula_goal",
+                "status": "entailed",
+                "bound_span_indices": [0],
+            }],
+        },
+        facet=facet,
+        rows=(row,),
+    )
+    assert alignment.status == "unresolved"
+    assert alignment.field_bindings[0].bound_span_ids == ()

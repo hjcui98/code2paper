@@ -134,6 +134,51 @@ def _humanize_code_identifier(value: str) -> str:
     return " ".join(rendered)
 
 
+_CFG_ATTR_RE = re.compile(
+    r"\bself\.(?:cfg|config)\.([A-Za-z_][A-Za-z0-9_]*)\b"
+)
+_FLAG_PREFIXES = frozenset({"add", "use", "enable", "with", "include"})
+
+
+def candidate_qualifier_phrase(value: str) -> str:
+    """Project a repository qualifier into Candidate-facing academic prose.
+
+    Exact identifiers remain the Verified reverse-validation authority.  The
+    Candidate Writer must not be required to paste ``self.cfg.*`` into Method
+    sentences; this helper is a lexical rewrite of the same predicate.
+    """
+
+    text = str(value or "").strip()
+    if not text:
+        return ""
+
+    if "self." not in text and "torch." not in text:
+        return text
+
+    def _flag_words(identifier: str) -> str:
+        words = _humanize_code_identifier(identifier).split()
+        if words and words[0] in _FLAG_PREFIXES and len(words) > 1:
+            words = words[1:]
+        return " ".join(words)
+
+    match = _CFG_ATTR_RE.search(text)
+    if match and text.strip() == match.group(0):
+        name = _flag_words(match.group(1))
+        return f"when {name} is enabled" if name else text
+
+    def _replace_member(match: re.Match[str]) -> str:
+        name = _flag_words(match.group(0).rsplit(".", 1)[-1])
+        return name or match.group(0)
+
+    cleaned = re.sub(
+        r"\b(?:self|torch)\.[A-Za-z_][A-Za-z0-9_.]*",
+        _replace_member,
+        text,
+    )
+    cleaned = " ".join(cleaned.split())
+    return cleaned or text
+
+
 def _code_term_hints(cluster: PropositionCandidateClusterV1) -> tuple[dict[str, str], ...]:
     """Expose exact identifiers as terminology aids, never as new evidence."""
 

@@ -135,7 +135,10 @@ from code2paper.agentic.publication_transaction_contract import (
 )
 from code2paper.core.output_names import method_output
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
-from code2paper.llm.response_schemas import PublicationMethodSectionOutputV1
+from code2paper.llm.response_schemas import (
+    PublicationMethodParagraphOutputV1,
+    PublicationMethodSectionOutputV1,
+)
 from code2paper.llm.section_writer import (
     WriterSectionInput,
     write_publication_method_by_sections,
@@ -194,6 +197,12 @@ class PublicationWriterRunResultV1(BaseModel):
     rewrite_transition_digest: str = ""
     callback_bundle_digest: str = ""
     transaction_assessment_digest: str = ""
+    # The publication ``status`` also reflects quality/review readiness.  The
+    # paragraph assessment sidecar is the separate authoritative state for
+    # whether the Writer transaction itself closed.  Keeping this field
+    # explicit prevents downstream callback/replay code from treating a
+    # quality warning as a missing Writer transaction.
+    writer_transaction_status: Literal["not_run", "success", "incomplete", "blocked"] = "not_run"
     rendered_text_digest: str = ""
     resumed_section_ids: tuple[str, ...] = ()
     blocked_reason: str = ""
@@ -222,6 +231,68 @@ class PublicationWriterRunResultV1(BaseModel):
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest_json(payload))
         return self
+
+
+def _writer_transaction_status_from_assessments(
+    assessment_path: str | Path | None,
+    *,
+    writer_aggregate: Mapping[str, Any] | None = None,
+    publication_status: str = "",
+) -> Literal["not_run", "success", "incomplete", "blocked"]:
+    """Return the authoritative paragraph-transaction status.
+
+    ``PublicationWriterRunResultV1.status`` is intentionally broader: it can
+    be ``incomplete`` because quality, reverse validation, or an external
+    review item remains open even after every paragraph transaction closed.
+    The persisted paragraph assessment is therefore consulted first.  An
+    aggregate fallback is retained for early/legacy runs that predate the
+    sidecar, but it never upgrades an explicit incomplete section set.
+    """
+
+    if assessment_path:
+        try:
+            payload = json.loads(Path(assessment_path).read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            payload = None
+        if isinstance(payload, Mapping):
+            rows = payload.get("assessments")
+            if isinstance(rows, list):
+                if not rows:
+                    return "blocked"
+                if all(
+                    bool(row.get("valid"))
+                    and str(row.get("status") or "") == "valid"
+                    for row in rows
+                    if isinstance(row, Mapping)
+                ) and all(isinstance(row, Mapping) for row in rows):
+                    return "success"
+                return "incomplete"
+
+    aggregate = writer_aggregate if isinstance(writer_aggregate, Mapping) else {}
+    aggregate_incomplete = tuple(
+        str(item).strip()
+        for item in (aggregate.get("incomplete_sections") or ())
+        if str(item).strip()
+    )
+    aggregate_sections = aggregate.get("sections")
+    if isinstance(aggregate_sections, (list, tuple)) and aggregate_sections:
+        return "incomplete" if aggregate_incomplete else "success"
+    if publication_status in {"success", "incomplete", "blocked"}:
+        return publication_status  # type: ignore[return-value]
+    return "not_run"
+
+
+def effective_writer_transaction_status(result: Any) -> str:
+    """Read the transaction state without falling back to quality status.
+
+    Older in-memory test doubles and pre-sidecar artifacts do not carry the
+    new field, so their legacy ``status`` remains the compatibility fallback.
+    """
+
+    value = str(getattr(result, "writer_transaction_status", "") or "").strip()
+    if value in {"success", "incomplete", "blocked"}:
+        return value
+    return str(getattr(result, "status", "") or "").strip()
 
 
 def run_publication_method_writer(
@@ -533,8 +604,10 @@ def run_publication_method_writer(
 
     architect_trace_path = ""
     architect_plan_path = ""
-    if rebuild_architect_plan or not any(
-        unit.semantic_frame is not None for unit in plan.argument_units
+    if (
+        rebuild_architect_plan
+        or not any(unit.semantic_frame is not None for unit in plan.argument_units)
+        or bool(argument_facets and facet_alignments and not plan.method_units)
     ):
         # The tracked matrix consumes the prebuilt frozen plan as the
         # planning authority.  The Architect must still be a real, traceable
@@ -573,6 +646,17 @@ def run_publication_method_writer(
         # frames.  Persist that exact plan beside the architect trace so
         # downstream content-trace/quality readers do not reload the stale
         # pre-replan plan and erase slot, edge, and formula-consumer bindings.
+        architect_plan_path = str(method_output(Path(out_root), "method_section_plan_v2"))
+        _atomic_write_text(
+            architect_plan_path,
+            plan.model_dump_json(indent=2) + "\n",
+        )
+
+    # Always persist the Writer-loaded (rehashed) plan into 06_authoring,
+    # including when Architect is skipped.  Assessment, structural exit, and
+    # callback snapshots must share this digest rather than a stale copy
+    # left only under artifacts/.
+    if not architect_plan_path:
         architect_plan_path = str(method_output(Path(out_root), "method_section_plan_v2"))
         _atomic_write_text(
             architect_plan_path,
@@ -665,7 +749,9 @@ def run_publication_method_writer(
         research_dossiers = build_research_mechanism_dossiers(
             plan=plan,
             facets=argument_facets,
+            facet_alignments=facet_alignments,
             field_candidates=publication_field_candidates,
+            argument_briefs=argument_briefs,
             behavior_graph=behavior_graph,
             facts=facts,
             claims=claims,
@@ -673,11 +759,48 @@ def run_publication_method_writer(
             configurations=configurations,
             evidence_packets=evidence_packets_v3,
             implementation_scope=implementation_scope,
+            require_nonempty=bool(argument_facets and facet_alignments),
         )
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         research_derived_failure = (
             f"research_dossier_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
         )
+
+    # Candidate and Verified have different evidence contracts.  Research
+    # readiness gates repository-derived/Verified claims and formulas, but it
+    # must not suppress the complete author specification that Candidate is
+    # meant to preserve.  Keep readiness failures as typed diagnostics; the
+    # downstream Binder and Verified split consume the same dossier state.
+    research_readiness_warnings: list[str] = []
+    if research_derived_failure:
+        research_readiness_warnings.append(research_derived_failure)
+    if argument_facets and facet_alignments:
+        not_ready_dossiers = tuple(
+            dossier for dossier in research_dossiers
+            if bool(getattr(dossier, "code_required", False))
+            and str(getattr(dossier, "evidence_readiness", "blocked") or "")
+            != "code_ready"
+        )
+        if not research_dossiers:
+            research_readiness_warnings.append("research_dossier_empty_run")
+        elif not_ready_dossiers:
+            for dossier in not_ready_dossiers:
+                details = ":".join(item for item in (
+                    str(getattr(dossier, "section_id", "") or ""),
+                    str(getattr(dossier, "paragraph_id", "") or ""),
+                    ",".join(
+                        str(reason)
+                        for reason in (
+                            getattr(dossier, "readiness_failures", ()) or ()
+                        )
+                    ) or str(
+                        getattr(dossier, "evidence_readiness", "blocked") or "blocked"
+                    ),
+                ) if item)
+                if details:
+                    research_readiness_warnings.append(
+                        "research_dossier_not_code_ready:" + details
+                    )
 
     # Q2 (plan 19.6): the section-scoped Formalizer produces paper-level
     # formula packages (or typed dispositions) per section, bound to the
@@ -742,6 +865,15 @@ def run_publication_method_writer(
         require_llm_call=True,
         research_dossiers=research_dossiers,
     )
+    plan = _canonicalize_plan_formula_targets(
+        plan=plan,
+        section_results=section_formula_results,
+    )
+    if architect_plan_path:
+        _atomic_write_text(
+            architect_plan_path,
+            plan.model_dump_json(indent=2) + "\n",
+        )
     if not research_derived_failure:
         try:
             research_derivations = compile_derivation_records(
@@ -815,6 +947,11 @@ def run_publication_method_writer(
             blocked_reason="publication_section_checkpoint_missing_or_invalid",
         )
         return result, _write_result_only(out_root, result)
+    prior_paragraph_outputs = _load_valid_paragraph_checkpoint(
+        out_root=out_root,
+        artifact_paths=artifact_paths,
+        resume_section_ids=effective_resume_section_ids,
+    )
     raw_callback_artifacts = raw_callback_artifacts or {}
     callback_artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] = {}
     try:
@@ -927,9 +1064,10 @@ def run_publication_method_writer(
             heading=item.heading,
             prompt_payload={
                 **item.prompt_payload,
-                "required_qualifier_bindings": list(
-                    qualifier_terms_by_section.get(item.section_id, ())
-                ),
+                "required_qualifier_bindings": [
+                    _candidate_qualifier_binding(term)
+                    for term in qualifier_terms_by_section.get(item.section_id, ())
+                ],
             },
             system_prompt=item.system_prompt,
             publication_mode=item.publication_mode,
@@ -1104,12 +1242,21 @@ def run_publication_method_writer(
         if not isinstance(output, PublicationMethodSectionOutputV1):
             return {
                 "valid_target_count": 0,
+                "required_target_count": 0,
                 "invalid_count": 1,
+                "invalid_witness_count": 1,
+                "valid_paragraph_count": 0,
+                "formula_exact_body_count": 0,
+                "formula_consumed_count": 0,
+                "authority_violation_count": 1,
                 "missing": ("transaction_metadata_missing",),
             }
         packages = tuple(
             item for item in (section.prompt_payload.get("formula_packages") or ())
             if isinstance(item, Mapping)
+        )
+        from code2paper.agentic.publication_transaction_contract import (
+            _formula_package_terminal_disposition,
         )
         obligations = tuple(
             item for item in (section.prompt_payload.get("formula_obligations") or ())
@@ -1158,6 +1305,11 @@ def run_publication_method_writer(
                 "latex": str(
                     matches[0].get("markdown_block") or matches[0].get("latex") or ""
                 ) if matches else "",
+                "terminal_disposition": (
+                    _formula_package_terminal_disposition(matches[0])
+                    if len(matches) == 1
+                    else "failed"
+                ),
             }
         plans = tuple(
             item for item in (section.argument_graph.get("paragraphs") or ())
@@ -1168,30 +1320,52 @@ def run_publication_method_writer(
             for item in (output.paragraphs or ())
             if str(item.paragraph_id or "").strip()
         }
+        from code2paper.agentic.publication_transaction_contract import (
+            assess_paragraph_transaction,
+            required_anchors_from_plan_row,
+        )
         valid_target_count = 0
+        required_target_count = 0
         invalid_count = 0
+        invalid_witness_count = 0
+        valid_paragraph_count = 0
         missing: list[str] = []
+        assessments: dict[str, Any] = {}
         for plan_row in plans:
-            transaction = transactions.get(str(plan_row.get("paragraph_id") or ""))
+            paragraph_id = str(plan_row.get("paragraph_id") or "")
+            transaction = transactions.get(paragraph_id)
             if transaction is None:
                 invalid_count += 1
+                invalid_witness_count += sum(
+                    len(values)
+                    for values in (
+                        assess_paragraph_transaction(
+                            {"paragraph_id": paragraph_id},
+                            plan_row=plan_row,
+                            formula_routes=formula_routes,
+                        ).missing_by_kind
+                    ).values()
+                )
                 missing.append(f"missing_paragraph:{plan_row.get('paragraph_id')}")
                 continue
-            from code2paper.agentic.publication_transaction_contract import (
-                required_anchors_from_plan_row,
-            )
             assessment = assess_paragraph_transaction(
                 transaction,
                 plan_row=plan_row,
                 formula_routes=formula_routes,
                 required_anchors=required_anchors_from_plan_row(plan_row),
             )
-            required_count = sum(
-                len(values) for values in assessment.required_by_kind.values()
-            )
+            assessments[paragraph_id] = assessment
+            required_count = sum(len(values) for values in assessment.required_by_kind.values())
+            required_target_count += required_count
             valid_target_count += sum(
                 len(values) for values in assessment.witnessed_by_kind.values()
             )
+            invalid_witness_count += (
+                len(assessment.invalid_witnesses)
+                + len(assessment.semantic_failures)
+                + sum(len(values) for values in assessment.missing_by_kind.values())
+            )
+            valid_paragraph_count += int(assessment.valid)
             if not assessment.valid and required_count:
                 invalid_count += 1
                 missing.extend(
@@ -1199,9 +1373,100 @@ def run_publication_method_writer(
                     for kind, values in assessment.missing_by_kind.items()
                     for target in values
                 )
+
+        # In the paragraph transaction lane, section-level target arrays are
+        # a derived reporting view, not Writer authority.  A candidate repair
+        # must be compared through the paragraph sidecar; otherwise a model's
+        # partial section aggregate can appear as a new authority violation
+        # even when the repaired paragraph witnesses are valid.  Unknown or
+        # duplicate paragraph declarations have already been rejected by the
+        # structured normalizer, and the blocked response remains a hard
+        # invalid transaction here.
+        if (
+            response.blocked_reason
+            and str(response.blocked_reason).startswith(
+                "publication_paragraph_transaction_failed:"
+            )
+        ):
+            invalid_count += 1
+            invalid_witness_count += 1
+            missing.append("response_blocked:paragraph_transaction")
+
+        accepted_packages = tuple(
+            package for package in packages
+            if _formula_package_terminal_disposition(package) == "accepted"
+        )
+        formula_exact_body_count = 0
+        formula_consumed_count = 0
+        for package in accepted_packages:
+            package_id = str(package.get("package_id") or "").strip()
+            consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
+            transaction = transactions.get(consumer_id)
+            if transaction is None:
+                continue
+            body = str(transaction.paragraph_markdown or "")
+            block = str(package.get("markdown_block") or "")
+            exact = bool(block and body.count(block) == 1)
+            if exact:
+                formula_exact_body_count += 1
+            assessment = assessments.get(consumer_id)
+            if (
+                exact
+                and assessment is not None
+                and assessment.valid
+                and package_id in set(transaction.used_formula_package_ids or ())
+            ):
+                formula_consumed_count += 1
+
+        authority_violation_count = 0
+        authority_failures: tuple[str, ...] = ()
+        try:
+            from code2paper.llm.section_writer import (
+                _hard_publication_binding_failures,
+                _publication_contract_failures,
+            )
+
+            contract = section.prompt_payload.get("binding_contract") or {}
+            allow_subset = bool(
+                (section.prompt_payload.get("grounding_contract") or {}).get(
+                    "callback_required"
+                )
+            )
+            authority_output = output
+            if section.prompt_payload.get("paragraph_transaction_required"):
+                authority_output = output.model_copy(update={
+                    # These arrays are reconstructed from the private
+                    # paragraph sidecar.  The Writer may not gain or lose
+                    # authority by echoing a section-level projection.
+                    "rendered_from_facet_ids": [],
+                    "rendered_field_candidate_ids": [],
+                    "rendered_paragraph_ids": [],
+                    "rendered_slot_ids": [],
+                    "rendered_edge_ids": [],
+                    "used_formula_package_ids": [],
+                })
+            authority_failures = tuple(_hard_publication_binding_failures(
+                _publication_contract_failures(
+                    authority_output,
+                    expected_section_id=section.section_id,
+                    contract=contract,
+                    allow_subset=allow_subset,
+                )
+            ))
+            authority_violation_count = len(authority_failures)
+        except (AttributeError, TypeError, ValueError):
+            authority_violation_count = 1
+            authority_failures = ("structured_authority_assessment_failed",)
         return {
             "valid_target_count": valid_target_count,
+            "required_target_count": required_target_count,
             "invalid_count": invalid_count,
+            "invalid_witness_count": invalid_witness_count,
+            "valid_paragraph_count": valid_paragraph_count,
+            "formula_exact_body_count": formula_exact_body_count,
+            "formula_consumed_count": formula_consumed_count,
+            "authority_violation_count": authority_violation_count,
+            "authority_failures": authority_failures,
             "missing": tuple(dict.fromkeys(missing)),
         }
 
@@ -1214,9 +1479,46 @@ def run_publication_method_writer(
         candidate = _assess_structured_writer_output(section, candidate_response)
         if candidate["invalid_count"] > incumbent["invalid_count"]:
             return False, "transaction_invalid_count_regressed"
-        if candidate["valid_target_count"] <= incumbent["valid_target_count"]:
-            return False, "required_target_coverage_no_gain"
-        return True, "required_target_coverage_gain"
+        monotonic_dimensions = (
+            ("invalid_witness_count", "invalid_witnesses_regressed", "lower"),
+            ("authority_violation_count", "authority_violations_regressed", "lower"),
+            ("valid_target_count", "required_target_coverage_regressed", "higher"),
+            ("valid_paragraph_count", "valid_paragraphs_regressed", "higher"),
+            ("formula_exact_body_count", "formula_exact_body_regressed", "higher"),
+            ("formula_consumed_count", "formula_consumption_regressed", "higher"),
+        )
+        for field, reason, direction in monotonic_dimensions:
+            incumbent_value = int(incumbent.get(field, 0) or 0)
+            candidate_value = int(candidate.get(field, 0) or 0)
+            if direction == "lower" and candidate_value > incumbent_value:
+                if field == "authority_violation_count":
+                    reason = (
+                        f"{reason}:incumbent={list(incumbent.get('authority_failures') or ())}"
+                        f":candidate={list(candidate.get('authority_failures') or ())}"
+                    )
+                return False, reason
+            if direction == "higher" and candidate_value < incumbent_value:
+                return False, reason
+
+        gain_fields = (
+            ("invalid_count", "transaction_invalid_count_gain", "lower"),
+            ("invalid_witness_count", "invalid_witness_count_gain", "lower"),
+            ("valid_target_count", "required_target_coverage_gain", "higher"),
+            ("valid_paragraph_count", "valid_paragraph_count_gain", "higher"),
+            ("formula_exact_body_count", "formula_exact_body_gain", "higher"),
+            ("formula_consumed_count", "formula_consumption_gain", "higher"),
+            ("authority_violation_count", "authority_violation_gain", "lower"),
+        )
+        for field, reason, direction in gain_fields:
+            incumbent_value = int(incumbent.get(field, 0) or 0)
+            candidate_value = int(candidate.get(field, 0) or 0)
+            if (
+                direction == "lower" and candidate_value < incumbent_value
+            ) or (
+                direction == "higher" and candidate_value > incumbent_value
+            ):
+                return True, reason
+        return False, "required_target_coverage_no_gain"
 
     writer = write_publication_method_by_sections(
         llm_config,
@@ -1231,11 +1533,40 @@ def run_publication_method_writer(
     for section_id in effective_resume_section_ids:
         output_by_section.pop(section_id, None)
     output_by_section.update({item.section_id: item for item in writer.outputs})
+    # A section retry may return only the paragraph that requested repair.  Put
+    # independently frozen valid siblings back into the in-memory section
+    # output before the section-level checkpoint is evaluated.  The section
+    # remains fail-closed until every required paragraph is valid; this merge
+    # only prevents a retry from erasing already-witnessed paragraph state.
+    for (section_id, paragraph_id), prior_paragraph in prior_paragraph_outputs.items():
+        if section_id not in effective_resume_section_ids:
+            continue
+        current = output_by_section.get(section_id)
+        if current is None:
+            output_by_section[section_id] = PublicationMethodSectionOutputV1(
+                section_id=section_id,
+                paragraphs=[prior_paragraph],
+                section_markdown=prior_paragraph.paragraph_markdown,
+            )
+            continue
+        current_ids = {
+            str(item.paragraph_id or "")
+            for item in (current.paragraphs or ())
+        }
+        if paragraph_id in current_ids:
+            continue
+        output_by_section[section_id] = current.model_copy(update={
+            "paragraphs": [*(current.paragraphs or ()), prior_paragraph],
+        })
     aggregate_by_section = {item.section_id: item for item in writer.aggregate.sections}
     unit_by_id = {item.argument_unit_id: item for item in plan.argument_units}
     authority_proofs = plan.proofs_by_key()
     accepted: list[tuple[str, str, str]] = []
-    failures: list[str] = []
+    failures: list[str] = list(dict.fromkeys(
+        f"research_readiness_warning:{item}"
+        for item in research_readiness_warnings
+        if str(item).strip()
+    ))
     section_rows: list[dict[str, Any]] = []
     # Binding-contract faults (unknown or duplicate IDs) are malformed Writer
     # responses rather than reviewable prose.  Keep the old blocked semantics
@@ -1264,12 +1595,50 @@ def run_publication_method_writer(
         original_input = input_by_section.get(graph.section_id)
         if output is None or original_input is None:
             continue
-        _recovered, _emitted, _dropped, missing_moves = _recover_missing_writing_callbacks(
+        output, sidecar_operations = _restore_callback_request_sidecar(
+            output=output,
+            callback_request_prototypes=_callback_request_prototypes_from_input(
+                original_input
+            ),
+        )
+        if sidecar_operations:
+            output_by_section[graph.section_id] = output
+            callback_recovery_traces.append({
+                "section_id": graph.section_id,
+                "applied": True,
+                "provenance": "harness_callback_sidecar",
+                "operations": list(sidecar_operations),
+            })
+        output, _emitted, _dropped, missing_moves = _recover_missing_writing_callbacks(
             output=output,
             graph=graph,
             unit_by_id=unit_by_id,
             authority_proofs=authority_proofs,
         )
+        output_by_section[graph.section_id] = output
+        if _dropped:
+            callback_recovery_traces.append({
+                "section_id": graph.section_id,
+                "applied": False,
+                "provenance": "rejected_missing",
+                "operations": [
+                    f"rejected_malformed_writing_research_request:{_dropped}",
+                    *(
+                        f"rejected_missing_writing_callback:{move_name}"
+                        for move_name in missing_moves
+                    ),
+                ],
+                "raw_response_hash": (
+                    aggregate_by_section[graph.section_id].trace.response_hash
+                    if graph.section_id in aggregate_by_section
+                    and aggregate_by_section[graph.section_id].trace is not None
+                    else ""
+                ),
+                "request_ids": [],
+                "parsed_request_digests": [],
+                "dropped_malformed_requests": _dropped,
+                "missing_request_moves": list(missing_moves),
+            })
         if not missing_moves:
             continue
         retry_missing_by_section[graph.section_id] = missing_moves
@@ -1324,6 +1693,19 @@ def run_publication_method_writer(
             retry_output = retry_outputs.get(graph.section_id)
             if retry_output is None:
                 continue
+            retry_output, sidecar_operations = _restore_callback_request_sidecar(
+                output=retry_output,
+                callback_request_prototypes=_callback_request_prototypes_from_input(
+                    input_by_section.get(graph.section_id)
+                ),
+            )
+            if sidecar_operations:
+                callback_recovery_traces.append({
+                    "section_id": graph.section_id,
+                    "applied": True,
+                    "provenance": "harness_callback_sidecar",
+                    "operations": list(sidecar_operations),
+                })
             retry_output, emitted, dropped, missing_after = _recover_missing_writing_callbacks(
                 output=retry_output,
                 graph=graph,
@@ -1461,8 +1843,10 @@ def run_publication_method_writer(
                         "for genuinely omitted non-required facets. A caveat may "
                         "qualify content but may not be the content. Never replace "
                         "the mechanism with a deferral memo about missing formula "
-                        "packages. When formula_packages is present, embed each "
-                        "display-math environment, not a second heading."
+                        "packages. When formula_packages is present, emit the exact "
+                        "[[FORMULA:<package_id>]] placeholder in the owning "
+                        "paragraph; the harness inserts the stored display-math "
+                        "block verbatim, so never type or rewrite the formula."
                     ),
                 },
             },
@@ -1726,6 +2110,11 @@ def run_publication_method_writer(
     for graph in plan.sections:
         output = output_by_section.get(graph.section_id)
         aggregate = aggregate_by_section.get(graph.section_id)
+        # This loop is the final transaction projection for each section.  Do
+        # not reuse the ``original_input`` left by one of the earlier repair
+        # loops: the callback sidecar is section-scoped and must be read from
+        # the matching closed Writer input.
+        original_input = input_by_section.get(graph.section_id)
         if output is not None:
             persisted_early = _with_normalized_section_markdown(
                 output,
@@ -1745,6 +2134,20 @@ def run_publication_method_writer(
             if persisted_early is not None:
                 output = persisted_early
                 output_by_section[graph.section_id] = output
+            output, sidecar_operations = _restore_callback_request_sidecar(
+                output=output,
+                callback_request_prototypes=_callback_request_prototypes_from_input(
+                    original_input
+                ),
+            )
+            if sidecar_operations:
+                output_by_section[graph.section_id] = output
+                callback_recovery_traces.append({
+                    "section_id": graph.section_id,
+                    "applied": True,
+                    "provenance": "harness_callback_sidecar",
+                    "operations": list(sidecar_operations),
+                })
             output, emitted_requests, dropped_malformed, missing_moves = _recover_missing_writing_callbacks(
                 output=output,
                 graph=graph,
@@ -2462,6 +2865,13 @@ def run_publication_method_writer(
                 "research_derived_callback_compile:"
                 f"{type(exc).__name__}:{str(exc)[:160]}"
             )
+    # Writer and deterministic dossier recovery can describe the same
+    # unresolved move with different missing-part lists.  Merge only identical
+    # paragraph/unit/move target scopes before routing and persistence so the
+    # callback structural receipt contains one unique continuation target.
+    research_requests[:] = list(
+        _dedupe_writing_research_requests(research_requests)
+    )
     callback_section_ids = {
         request.section_id for request in research_requests if request.status == "open"
     }
@@ -3268,9 +3678,35 @@ def run_publication_method_writer(
             formalization_path=formalization_section_path,
         )
     )
+    writer_transaction_status = _writer_transaction_status_from_assessments(
+        transaction_assessment_path,
+        writer_aggregate=writer.aggregate.to_json_dict(),
+        publication_status=status,
+    )
     paths["publication_paragraph_transaction_assessments_v1"] = (
         transaction_assessment_path
     )
+    paragraph_checkpoint_path = method_output(
+        Path(out_root), "publication_paragraph_checkpoint_v1"
+    )
+    try:
+        _write_paragraph_checkpoint(
+            paragraph_checkpoint_path,
+            section_outputs=output_by_section,
+            assessment_path=transaction_assessment_path,
+        )
+        paths["publication_paragraph_checkpoint_v1"] = str(
+            paragraph_checkpoint_path
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        # A paragraph checkpoint is a recovery aid, not a reason to erase the
+        # already-published Candidate.  Keep the failure explicit so the
+        # acceptance evaluator can reject the run if paragraph recovery is
+        # required, while preserving the candidate bytes for diagnosis.
+        failures.append(
+            "paragraph_checkpoint_write:"
+            f"{type(exc).__name__}:{str(exc)[:160]}"
+        )
     paths.update(final_validation_paths)
     paths.update(research_artifact_paths)
     # Slice 3/4: persist a Candidate-only authority receipt and paragraph
@@ -3448,6 +3884,7 @@ def run_publication_method_writer(
         rewrite_transition_digest=rewrite_transition_digest,
         callback_bundle_digest=callback_bundle_digest,
         transaction_assessment_digest=transaction_assessment_digest,
+        writer_transaction_status=writer_transaction_status,
         rendered_text_digest=_digest_text(final_text) if final_text else "",
         # Truthful resume telemetry: zero Writer generation/recovery traces or
         # zero model-call delta means zero actually regenerated sections.  The
@@ -3725,15 +4162,33 @@ def _writer_visible_formula_packages(result: Any) -> tuple[dict[str, Any], ...]:
 
     visible: list[dict[str, Any]] = []
     for item in (getattr(result, "packages", ()) or ()):
-        if str(getattr(item, "authority_status", "") or "") not in {
-            "code_verified", "accepted", "author_intent", "partial",
-        }:
+        # Candidate Writer may consume academic/hybrid packages as
+        # placeholders.  Verified eligibility still uses
+        # ``_formula_package_terminal_disposition`` (code_verified +
+        # repository_derived + accepted only).  Mismatch and rejected
+        # packages stay off the Writer surface.
+        authority = str(getattr(item, "authority_status", "") or "")
+        lane = str(getattr(item, "formula_lane", "") or "")
+        review = str(getattr(item, "review_status", "") or "")
+        if review == "rejected" or authority == "paper_code_mismatch":
+            continue
+        verified = (
+            authority == "code_verified"
+            and lane == "repository_derived"
+            and review == "accepted"
+        )
+        candidate_academic = (
+            authority in {"author_intent", "partial"}
+            and lane in {"author_intent_academic", "hybrid_partial"}
+        )
+        if not (verified or candidate_academic):
             continue
         latex = str(getattr(item, "latex", "") or "").strip()
         if not latex or is_bare_binary_expression(latex):
             continue
         visible.append({
             "package_id": item.package_id,
+            "placeholder": f"[[FORMULA:{item.package_id}]]",
             "purpose": item.purpose,
             "latex": item.latex,
             "markdown_block": item.markdown_block,
@@ -3756,6 +4211,13 @@ def _writer_visible_formula_packages(result: Any) -> tuple[dict[str, Any], ...]:
             ),
             "consumer_paragraph_id": item.consumer_paragraph_id,
             "semantic_formula_digest": getattr(item, "semantic_formula_digest", ""),
+            # Keep evidence bindings on the Harness side of the Writer
+            # contract.  They are needed by the private Binder to prove that
+            # an exact canonical formula block also witnesses a strict
+            # source-fact operation slot; they are intentionally removed by
+            # ``_compact_formula_packages_for_llm`` before the model sees the
+            # package.
+            "bound_fact_ids": list(getattr(item, "bound_fact_ids", ()) or ()),
             "bound_facet_ids": list(item.bound_facet_ids),
             "bound_equation_ids": list(item.bound_equation_ids),
             "review_status": item.review_status,
@@ -3771,6 +4233,9 @@ def _writer_visible_formula_obligations(result: Any) -> tuple[dict[str, Any], ..
     return tuple({
         "obligation_id": truth.obligation_id,
         "outcome": truth.outcome,
+        "terminal_disposition": getattr(
+            truth, "terminal_disposition", "failed"
+        ),
         "review_question": truth.review_question,
         "reason": truth.reason,
         "expectation": truth.expectation,
@@ -4118,6 +4583,31 @@ def _section_formula_obligations(
             for paragraph in (getattr(graph, "paragraphs", ()) or ())
             if normalized in (getattr(paragraph, "formula_obligation_ids", ()) or ())
         )
+        paragraph_facet_ids = tuple(dict.fromkeys(
+            str(facet_id).strip()
+            for paragraph in obligation_paragraphs
+            for facet_id in (getattr(paragraph, "required_facet_ids", ()) or ())
+            if str(facet_id).strip()
+        ))
+        paragraph_facet_keys = tuple(dict.fromkeys(
+            facet_mechanism_key(facet)
+            for facet in facets
+            if str(getattr(facet, "facet_id", "") or "") in paragraph_facet_ids
+            and str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+            and facet_mechanism_key(facet)
+        ))
+        if not paragraph_facet_keys:
+            paragraph_facet_keys = tuple(dict.fromkeys(
+                facet_mechanism_key(facet)
+                for facet in facets
+                if str(getattr(facet, "facet_id", "") or "") in paragraph_facet_ids
+                and facet_mechanism_key(facet)
+            ))
+        explicit_mechanism_key = (
+            paragraph_facet_keys[0]
+            if len(paragraph_facet_keys) == 1
+            else ""
+        )
         obligations.append(MethodFormulaObligationV2(
             obligation_id=normalized,
             expectation="required",
@@ -4128,6 +4618,7 @@ def _section_formula_obligations(
             ),
             authority_requirements=("closed_repository_evidence",),
             section_id=str(graph.section_id),
+            mechanism_key=explicit_mechanism_key,
             consumer_paragraph_id=(
                 str(getattr(obligation_paragraphs[0], "paragraph_id", "") or "")
                 if len(obligation_paragraphs) == 1 else ""
@@ -4184,6 +4675,10 @@ def _section_formula_obligations(
                 authority_requirements=("closed_repository_evidence_or_author_intent",),
                 section_id=str(graph.section_id),
             ))
+    obligations = list(_canonicalize_formula_obligations_for_consumers(
+        graph=graph,
+        obligations=obligations,
+    ))
     # Slice 1.2 / 1.3: merge alias obligations that formalize the same
     # mechanism in the same consumer paragraph (mechanism_key).  Only the
     # canonical obligation reaches the Formalizer; its facet/slot/edge ids are
@@ -4219,6 +4714,219 @@ def _section_formula_obligations(
     if deduped_index:
         obligations = canonical_order
     return tuple(obligations)
+
+
+def _canonicalize_formula_obligations_for_consumers(
+    *,
+    graph: Any,
+    obligations: tuple[Any, ...] | list[Any],
+) -> tuple[Any, ...]:
+    """Bind each formula obligation to at most one paragraph consumer."""
+
+    paragraphs = tuple(getattr(graph, "paragraphs", ()) or ())
+    if not paragraphs:
+        return tuple(obligations)
+    paragraph_ids = {
+        str(getattr(paragraph, "paragraph_id", "") or "").strip()
+        for paragraph in paragraphs
+        if str(getattr(paragraph, "paragraph_id", "") or "").strip()
+    }
+    formula_role_ids = {
+        str(getattr(paragraph, "paragraph_id", "") or "").strip()
+        for paragraph in paragraphs
+        if str(getattr(paragraph, "paragraph_role", "") or "") == "formula"
+        and str(getattr(paragraph, "paragraph_id", "") or "").strip()
+    }
+    routed: list[Any] = []
+    for obligation in obligations:
+        consumer = str(getattr(obligation, "consumer_paragraph_id", "") or "").strip()
+        if consumer:
+            routed.append(obligation)
+            continue
+        declared = tuple(
+            str(item).strip()
+            for item in (getattr(obligation, "paragraph_ids", ()) or ())
+            if str(item).strip() in paragraph_ids
+        )
+        candidate_ids = list(dict.fromkeys(declared))
+        if not candidate_ids:
+            obligation_id = str(getattr(obligation, "obligation_id", "") or "").strip()
+            candidate_ids = [
+                str(getattr(paragraph, "paragraph_id", "") or "").strip()
+                for paragraph in paragraphs
+                if obligation_id in (getattr(paragraph, "formula_obligation_ids", ()) or ())
+            ]
+        if not candidate_ids:
+            facet_ids = set(getattr(obligation, "facet_ids", ()) or ())
+            candidate_ids = [
+                str(getattr(paragraph, "paragraph_id", "") or "").strip()
+                for paragraph in paragraphs
+                if facet_ids.intersection(set(getattr(paragraph, "required_facet_ids", ()) or ()))
+            ]
+        candidate_ids = list(dict.fromkeys(item for item in candidate_ids if item))
+        if len(candidate_ids) != 1 and len(formula_role_ids) == 1:
+            candidate_ids = list(formula_role_ids)
+        if len(candidate_ids) != 1 and len(paragraph_ids) == 1:
+            candidate_ids = list(paragraph_ids)
+        if len(candidate_ids) == 1:
+            routed.append(obligation.model_copy(update={
+                "consumer_paragraph_id": candidate_ids[0],
+                "paragraph_ids": (candidate_ids[0],),
+            }))
+        else:
+            # Preserve the unresolved route so the existing Formalizer guard
+            # rejects it explicitly; never select a paragraph by guesswork.
+            routed.append(obligation)
+    return tuple(routed)
+
+
+def _canonicalize_plan_formula_targets(
+    *,
+    plan: Any,
+    section_results: tuple[Any, ...] | list[Any],
+) -> Any:
+    """Replace pre-consumer formula aliases with the closed typed targets.
+
+    Architect plans produced before consumer-first routing may place a
+    section-level id such as ``formula:section:<section>:derivation`` on a
+    paragraph.  The section Formalizer can intentionally merge that alias
+    into one facet obligation for the same consumer.  Carrying both ids into
+    Writer/Binder makes the alias look like an additional unconsumable
+    formula.  Resolve an alias only when the current typed result identifies
+    exactly one obligation for that paragraph; ambiguous aliases stay in the
+    plan and therefore fail closed.
+    """
+
+    result_by_section = {
+        str(getattr(result, "section_id", "") or ""): result
+        for result in section_results
+        if str(getattr(result, "section_id", "") or "").strip()
+    }
+    updated_sections: list[Any] = []
+    for graph in getattr(plan, "sections", ()) or ():
+        section_id = str(getattr(graph, "section_id", "") or "")
+        result = result_by_section.get(section_id)
+        obligations = tuple(
+            getattr(result, "formula_obligations", ()) or ()
+        ) if result is not None else ()
+        typed_ids = {
+            str(getattr(item, "obligation_id", "") or "").strip()
+            for item in obligations
+            if str(getattr(item, "obligation_id", "") or "").strip()
+        }
+
+        def resolve(raw_ids: Any, paragraph_id: str = "") -> tuple[str, ...]:
+            resolved: list[str] = []
+            for raw_value in raw_ids or ():
+                raw_id = str(raw_value or "").strip()
+                if not raw_id:
+                    continue
+                if raw_id in typed_ids or not obligations:
+                    resolved.append(raw_id)
+                    continue
+                # Only section-level legacy aliases are eligible for this
+                # representation repair.  An unknown facet/equation id is a
+                # genuine route defect and must not be silently rewritten.
+                if not raw_id.startswith(f"formula:section:{section_id}:"):
+                    if raw_id.startswith("formula:facet:"):
+                        facet_id = raw_id[len("formula:facet:"):].strip()
+                        facet_candidates = [
+                            str(getattr(item, "obligation_id", "") or "").strip()
+                            for item in obligations
+                            if facet_id in set(getattr(item, "facet_ids", ()) or ())
+                            and (
+                                not paragraph_id
+                                or str(
+                                    getattr(item, "consumer_paragraph_id", "")
+                                    or (
+                                        item.paragraph_ids[0]
+                                        if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                                        else ""
+                                    )
+                                ).strip() == paragraph_id
+                            )
+                        ]
+                        facet_candidates = list(dict.fromkeys(
+                            item for item in facet_candidates if item
+                        ))
+                        if len(facet_candidates) == 1:
+                            resolved.append(facet_candidates[0])
+                            continue
+                    resolved.append(raw_id)
+                    continue
+                candidates = [
+                    str(getattr(item, "obligation_id", "") or "").strip()
+                    for item in obligations
+                    if str(
+                        getattr(item, "consumer_paragraph_id", "")
+                        or (
+                            item.paragraph_ids[0]
+                            if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                            else ""
+                        )
+                    ).strip() == paragraph_id
+                ]
+                candidates = list(dict.fromkeys(item for item in candidates if item))
+                if len(candidates) == 1:
+                    resolved.append(candidates[0])
+                else:
+                    resolved.append(raw_id)
+            return tuple(dict.fromkeys(resolved))
+
+        paragraphs: list[Any] = []
+        for paragraph in getattr(graph, "paragraphs", ()) or ():
+            paragraph_id = str(getattr(paragraph, "paragraph_id", "") or "")
+            formula_ids = resolve(
+                getattr(paragraph, "formula_obligation_ids", ()) or (),
+                paragraph_id,
+            )
+            if formula_ids != tuple(getattr(paragraph, "formula_obligation_ids", ()) or ()):
+                paragraph = paragraph.model_copy(update={
+                    "formula_obligation_ids": formula_ids,
+                })
+            paragraphs.append(paragraph)
+        graph_updates: dict[str, Any] = {}
+        if paragraphs:
+            graph_updates["paragraphs"] = tuple(paragraphs)
+        original_graph_formula_ids = tuple(
+            getattr(graph, "formula_obligation_ids", ()) or ()
+        )
+        graph_formula_ids = resolve(
+            original_graph_formula_ids,
+            "",
+        )
+        paragraph_formula_ids = tuple(
+            formula_id
+            for paragraph in paragraphs
+            for formula_id in (getattr(paragraph, "formula_obligation_ids", ()) or ())
+        )
+        paragraph_formula_ids = tuple(dict.fromkeys(paragraph_formula_ids))
+        if paragraph_formula_ids and any(
+            tuple(getattr(paragraph, "formula_obligation_ids", ()) or ())
+            != tuple(getattr(original, "formula_obligation_ids", ()) or ())
+            for paragraph, original in zip(
+                paragraphs,
+                getattr(graph, "paragraphs", ()) or (),
+            )
+        ):
+            # Once a paragraph alias has been resolved, the graph-level
+            # projection must carry the same closed typed ids.  Leaving the
+            # legacy section alias at graph scope recreates a ghost formula
+            # route in the next Writer/Binder projection.
+            graph_updates["formula_obligation_ids"] = paragraph_formula_ids
+        elif graph_formula_ids != original_graph_formula_ids:
+            # Section-level ids can be resolved from the single paragraph that
+            # owns them when the paragraph pass above found one.  Otherwise
+            # preserve the alias and let the normal route gate report it.
+            graph_updates["formula_obligation_ids"] = tuple(dict.fromkeys(
+                paragraph_formula_ids or graph_formula_ids
+            ))
+        if graph_updates:
+            graph = graph.model_copy(update=graph_updates)
+        updated_sections.append(graph)
+    if not updated_sections:
+        return plan
+    return plan.model_copy(update={"sections": tuple(updated_sections)})
 
 
 def _formula_obligation_matches_core(
@@ -4306,10 +5014,12 @@ def _run_section_formalizer(
     from code2paper.agentic.formalization_agent import (
         FormalizationSectionResultV1,
         build_deterministic_formula_packages,
+        build_deterministic_operation_formula_packages,
         build_mechanism_equation_evidence_packs,
         section_result_from_packages,
         select_core_equations,
         validate_section_formula_package,
+        _formula_code_trace_failures,
     )
 
     unit_by_id = {item.argument_unit_id: item for item in plan.argument_units}
@@ -4341,6 +5051,17 @@ def _run_section_formalizer(
     ))
     results: list[FormalizationSectionResultV1] = []
     section_call_traces: list[dict[str, Any]] = []
+    method_unit_facet_ids_by_section: dict[str, set[str]] = {}
+    has_method_unit_contract = bool(getattr(plan, "method_units", ()) or ())
+    for method_unit in (getattr(plan, "method_units", ()) or ()):
+        section_id = str(getattr(method_unit, "section_id", "") or "").strip()
+        if not section_id:
+            continue
+        method_unit_facet_ids_by_section.setdefault(section_id, set()).update(
+            str(facet_id).strip()
+            for facet_id in (getattr(method_unit, "facet_ids", ()) or ())
+            if str(facet_id).strip()
+        )
     for graph in plan.sections:
         units = [
             unit_by_id[unit_id]
@@ -4353,12 +5074,22 @@ def _run_section_formalizer(
             for brief_id in (getattr(unit, "brief_order", ()) or getattr(unit, "brief_ids", ()) or ())
             if str(brief_id).strip()
         }
-        section_facets = tuple(
-            facet
-            for facet in argument_facets
-            if not str(getattr(facet, "brief_id", "") or "").strip()
-            or str(getattr(facet, "brief_id", "")) in section_brief_ids
-        )
+        if has_method_unit_contract:
+            section_facet_ids = method_unit_facet_ids_by_section.get(
+                str(graph.section_id), set()
+            )
+            section_facets = tuple(
+                facet for facet in argument_facets
+                if str(getattr(facet, "facet_id", "") or "").strip()
+                in section_facet_ids
+            )
+        else:
+            section_facets = tuple(
+                facet
+                for facet in argument_facets
+                if not str(getattr(facet, "brief_id", "") or "").strip()
+                or str(getattr(facet, "brief_id", "")) in section_brief_ids
+            )
         obligation_ids = tuple(
             str(item) for item in (getattr(graph, "formula_obligation_ids", ()) or ())
             if str(item).strip()
@@ -4461,6 +5192,18 @@ def _run_section_formalizer(
             },
             publication_field_candidates=publication_field_candidates,
         )
+        consumer_route_map = {
+            str(item.obligation_id): str(
+                getattr(item, "consumer_paragraph_id", "") or ""
+            ).strip()
+            for item in formula_obligations
+        }
+        consumer_route_ambiguous = [
+            str(item.obligation_id)
+            for item in formula_obligations
+            if not str(getattr(item, "consumer_paragraph_id", "") or "").strip()
+            and len(tuple(getattr(item, "paragraph_ids", ()) or ())) != 1
+        ]
         evidence_packs = build_mechanism_equation_evidence_packs(
             section_id=graph.section_id,
             equations=equations,
@@ -4518,20 +5261,133 @@ def _run_section_formalizer(
         formalizer_not_invoked = bool(
             require_llm_call and required_formula and formula_consumer and caller is None
         )
-        if not core:
-            # Incidental arithmetic remains outside ``core``.  A required
-            # section-local consumer may still ask the Formalizer for an
-            # author-intent/partial notation package, independent of a
-            # repository-wide chain count.
-            packages = ()
-            call_traces: list[dict[str, Any]] = []
-            if caller is not None and required_formula and formula_consumer:
-                packages, call_traces = _invoke_section_formalizer_llm(
+
+        # Consumer-first routing is a call boundary, not only a metadata
+        # field.  A package produced for one paragraph must never see another
+        # paragraph's obligation in the same Formalizer request.  Legacy
+        # section-only plans retain one synthetic section group because they
+        # have no paragraph transaction to close.
+        consumer_groups: list[tuple[str, tuple[Any, ...]]] = []
+        if planned_paragraphs:
+            grouped: dict[str, list[Any]] = {}
+            for obligation in formula_obligations:
+                consumer_id = str(
+                    getattr(obligation, "consumer_paragraph_id", "") or ""
+                ).strip()
+                if not consumer_id and len(tuple(
+                    getattr(obligation, "paragraph_ids", ()) or ()
+                )) == 1:
+                    consumer_id = str(obligation.paragraph_ids[0]).strip()
+                if consumer_id:
+                    grouped.setdefault(consumer_id, []).append(obligation)
+            consumer_groups = [
+                (consumer_id, tuple(group))
+                for consumer_id, group in grouped.items()
+            ]
+        elif formula_consumer:
+            consumer_groups = [("", tuple(formula_obligations))]
+
+        def consumer_evidence(
+            consumer_id: str,
+            consumer_obligations: tuple[Any, ...],
+        ) -> tuple[Any, ...]:
+            """Keep Formalizer evidence inside the current paragraph scope."""
+
+            paragraph_dossiers = tuple(
+                dossier
+                for dossier in (research_dossiers or ())
+                if str(getattr(dossier, "section_id", "") or "")
+                == str(graph.section_id)
+                and (
+                    not consumer_id
+                    or str(getattr(dossier, "paragraph_id", "") or "")
+                    == consumer_id
+                )
+            )
+            target_dossier_ids = {
+                str(getattr(dossier, "dossier_id", "") or "")
+                for dossier in paragraph_dossiers
+                if str(getattr(dossier, "dossier_id", "") or "").strip()
+            }
+            target_fact_ids = {
+                str(fact_id)
+                for dossier in paragraph_dossiers
+                for fact_id in (getattr(dossier, "fact_ids", ()) or ())
+                if str(fact_id).strip()
+            }
+            target_equation_ids = {
+                str(equation_id)
+                for dossier in paragraph_dossiers
+                for equation_id in (getattr(dossier, "equation_ids", ()) or ())
+                if str(equation_id).strip()
+            }
+            target_facets = {
+                str(facet_id)
+                for obligation in consumer_obligations
+                for facet_id in (getattr(obligation, "facet_ids", ()) or ())
+                if str(facet_id).strip()
+            }
+            # A synthetic section obligation has no facet ids.  Its consumer
+            # dossier is still the authoritative scope; a facet fallback is
+            # only used when no paragraph dossier was materialized.
+            filtered: list[Any] = []
+            for pack in evidence_packs:
+                pack_dossier_ids = {
+                    str(value)
+                    for value in (getattr(pack, "dossier_ids", ()) or ())
+                    if str(value).strip()
+                }
+                pack_fact_ids = {
+                    str(value)
+                    for value in (getattr(pack, "bound_fact_ids", ()) or ())
+                    if str(value).strip()
+                }
+                pack_equation_ids = {
+                    str(value)
+                    for value in (getattr(pack, "bound_equation_ids", ()) or ())
+                    if str(value).strip()
+                }
+                if (
+                    pack_dossier_ids.intersection(target_dossier_ids)
+                    or pack_fact_ids.intersection(target_fact_ids)
+                    or pack_equation_ids.intersection(target_equation_ids)
+                ):
+                    filtered.append(pack)
+            return tuple(filtered) if filtered else tuple(evidence_packs)
+
+        def invoke_for_consumers(
+            *,
+            core_equations: list[Any],
+            author_intent: bool,
+        ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
+            grouped_packages: list[Any] = []
+            grouped_traces: list[dict[str, Any]] = []
+            for consumer_id, consumer_obligations in consumer_groups:
+                group_required = any(
+                    item.expectation == "required"
+                    for item in consumer_obligations
+                )
+                group_facet_ids = {
+                    str(facet_id)
+                    for obligation in consumer_obligations
+                    for facet_id in (getattr(obligation, "facet_ids", ()) or ())
+                    if str(facet_id).strip()
+                }
+                group_facets = tuple(
+                    facet for facet in section_facets
+                    if not group_facet_ids
+                    or str(getattr(facet, "facet_id", "") or "") in group_facet_ids
+                )
+                group_excerpts = _facet_alignment_excerpts(
+                    facets=group_facets,
+                    alignments=facet_alignments,
+                )
+                group_packages, group_traces = _invoke_section_formalizer_llm(
                     graph=graph,
                     unit_by_id=unit_by_id,
                     proposition_by_id=proposition_by_id,
                     card_by_key=card_by_key,
-                    core=(),
+                    core=core_equations,
                     equations=equations,
                     facts=facts,
                     reader_points=reader_points,
@@ -4539,20 +5395,56 @@ def _run_section_formalizer(
                     notation_hints=notation_hints,
                     llm_config=llm_config,
                     caller=caller,
-                    author_intent_lane=True,
+                    author_intent_lane=author_intent,
                     formula_not_applicable=bool(
                         getattr(graph, "formula_not_applicable", False)
                     ),
-                    formula_obligation_required=required_formula,
-                    formula_obligations=formula_obligations,
-                    evidence_packs=evidence_packs,
-                    exact_excerpts=exact_excerpts,
-                    author_facets=section_facets,
+                    formula_obligation_required=group_required,
+                    formula_obligations=consumer_obligations,
+                    evidence_packs=consumer_evidence(
+                        consumer_id,
+                        consumer_obligations,
+                    ),
+                    exact_excerpts=group_excerpts or exact_excerpts,
+                    author_facets=group_facets,
                     organization_seed="; ".join(
                         str(getattr(unit, "design_objective", "") or "").strip()
                         for unit in units
                         if str(getattr(unit, "design_objective", "") or "").strip()
                     ),
+                )
+                grouped_packages.extend(group_packages)
+                grouped_traces.extend(
+                    {
+                        **trace,
+                        "consumer_paragraph_id": consumer_id,
+                        "consumer_obligation_ids": [
+                            str(item.obligation_id)
+                            for item in consumer_obligations
+                        ],
+                    }
+                    for trace in group_traces
+                )
+            return tuple(grouped_packages), grouped_traces
+
+        operation_evidence = tuple(
+            pack for pack in evidence_packs
+            if bool(getattr(pack, "connected", False))
+            and bool(getattr(pack, "operation_atoms", ()) or ())
+            and bool(getattr(pack, "exact_span_ids", ()) or ())
+            and bool(getattr(pack, "bound_fact_ids", ()) or ())
+            and not bool(getattr(pack, "unresolved_relations", ()) or ())
+        )
+        if not core and not operation_evidence:
+            # Incidental arithmetic remains outside ``core``.  A required
+            # section-local consumer may still ask the Formalizer for an
+            # author-intent/partial notation package, independent of a
+            # repository-wide chain count.
+            packages = ()
+            call_traces: list[dict[str, Any]] = []
+            if caller is not None and required_formula and formula_consumer:
+                packages, call_traces = invoke_for_consumers(
+                    core_equations=[], author_intent=True,
                 )
             if packages:
                 results.append(section_result_from_packages(
@@ -4568,7 +5460,10 @@ def _run_section_formalizer(
                     "core_equation_ids": [],
                     "call_traces": call_traces,
                     "author_intent_lane": True,
+                    "operation_evidence_lane": False,
                     "formula_consumer": formula_consumer,
+                    "consumer_route_map": consumer_route_map,
+                    "consumer_route_ambiguous": consumer_route_ambiguous,
                     "deterministic_fallback": False,
                     "preferred_formula_obligation_ids": [
                         item.obligation_id
@@ -4594,8 +5489,11 @@ def _run_section_formalizer(
                 "core_equation_ids": [],
                 "call_traces": call_traces,
                 "author_intent_lane": True,
+                "operation_evidence_lane": False,
                 "deterministic_fallback": True,
                 "formula_consumer": formula_consumer,
+                "consumer_route_map": consumer_route_map,
+                "consumer_route_ambiguous": consumer_route_ambiguous,
                 "required_formula_obligation_ids": [
                     item.obligation_id
                     for item in formula_obligations
@@ -4610,53 +5508,93 @@ def _run_section_formalizer(
             continue
         packages = ()
         call_traces: list[dict[str, Any]] = []
+        operation_deterministic_fallback = False
         if caller is not None and formula_consumer:
-            packages, call_traces = _invoke_section_formalizer_llm(
-                graph=graph,
-                unit_by_id=unit_by_id,
-                proposition_by_id=proposition_by_id,
-                card_by_key=card_by_key,
-                core=core,
-                equations=equations,
-                facts=facts,
-                reader_points=reader_points,
-                formula_constraints=formula_constraints,
-                notation_hints=notation_hints,
-                llm_config=llm_config,
-                caller=caller,
-                formula_not_applicable=bool(
-                    getattr(graph, "formula_not_applicable", False)
-                ),
-                formula_obligation_required=required_formula,
-                formula_obligations=formula_obligations,
-                evidence_packs=evidence_packs,
-                exact_excerpts=exact_excerpts,
-                author_facets=section_facets,
-                organization_seed="; ".join(
-                    str(getattr(unit, "design_objective", "") or "").strip()
-                    for unit in units
-                    if str(getattr(unit, "design_objective", "") or "").strip()
-                ),
+            packages, call_traces = invoke_for_consumers(
+                core_equations=core, author_intent=False,
             )
+        # A valid evidence-bound academic package takes precedence over the
+        # exact-operation compiler.  Deterministic assignment/function-call
+        # notation is an audit fallback, not a Candidate display formula.
+        # Code-shaped LLM packages are dropped; if nothing academic remains,
+        # the obligation stays typed-unresolved rather than publishing code
+        # as math.  Verified still requires code_verified + repository_derived.
+        if formula_consumer and not formalizer_not_invoked and operation_evidence:
+            operation_packages: list[Any] = []
+            for group_index, (consumer_id, consumer_obligations) in enumerate(
+                consumer_groups, start=1
+            ):
+                operation_packages.extend(build_deterministic_operation_formula_packages(
+                    section_id=graph.section_id,
+                    formula_obligations=consumer_obligations,
+                    operation_evidence_packs=consumer_evidence(
+                        consumer_id,
+                        consumer_obligations,
+                    ),
+                    package_namespace=(
+                        f"consumer{group_index}-" if len(consumer_groups) > 1 else ""
+                    ),
+                ))
+
+            retained_packages: list[Any] = []
+            for package in packages:
+                if _formula_code_trace_failures(package):
+                    continue
+                retained_packages.append(package)
+            packages = tuple(retained_packages)
+            operation_deterministic_fallback = False
+            operation_audit_package_ids = [
+                str(getattr(package, "package_id", "") or "")
+                for package in operation_packages
+                if str(getattr(package, "package_id", "") or "").strip()
+            ]
+        else:
+            operation_audit_package_ids = []
+
         # A configured caller is allowed to fall back to a deterministic
-        # representation package after a bounded call.  No caller is a
-        # typed lifecycle failure for a required consumer, never a silent
+        # equation representation package after a bounded call.  No caller is
+        # a typed lifecycle failure for a required consumer, never a silent
         # deterministic success.
         if not packages and formula_consumer and not formalizer_not_invoked:
-            packages = build_deterministic_formula_packages(
-                section_id=graph.section_id,
-                equations=equations,
-                facts=facts,
-                allowed_equation_ids=bound_equation_ids,
-                # Pre-ledger plans have no paragraph consumer and therefore
-                # cannot close the new obligation route.  Keep their
-                # deterministic package equation-bound and unlabelled; the
-                # current paragraph plan path carries the explicit closed
-                # obligation ids and consumer instead.
-                formula_obligations=(
-                    tuple(formula_obligations) if planned_paragraphs else ()
-                ),
+            deterministic_packages: list[Any] = []
+            for group_index, (_consumer_id, consumer_obligations) in enumerate(
+                consumer_groups, start=1
+            ):
+                deterministic_packages.extend(build_deterministic_formula_packages(
+                    section_id=graph.section_id,
+                    equations=equations,
+                    facts=facts,
+                    allowed_equation_ids=bound_equation_ids,
+                    package_namespace=(
+                        f"consumer{group_index}-" if len(consumer_groups) > 1 else ""
+                    ),
+                    # Pre-ledger plans have no paragraph consumer and
+                    # therefore cannot close the new obligation route.  Keep
+                    # their deterministic package equation-bound and
+                    # unlabelled; current paragraph plans carry the explicit
+                    # closed obligation ids and consumer instead.
+                    formula_obligations=(
+                        consumer_obligations if planned_paragraphs else ()
+                    ),
+                ))
+            packages = tuple(deterministic_packages)
+        if (
+            not packages
+            and formula_consumer
+            and required_formula
+            and caller is not None
+            and not formalizer_not_invoked
+        ):
+            # Operation packs that are only branch guards cannot compile a
+            # repository-derived package.  A required consumer still needs a
+            # Candidate academic definition; Verified stays fail-closed.
+            intent_packages, intent_traces = invoke_for_consumers(
+                core_equations=[],
+                author_intent=True,
             )
+            if intent_packages:
+                packages = intent_packages
+            call_traces = [*(call_traces or ()), *(intent_traces or ())]
         if packages:
             valid_packages: list[Any] = []
             allowed_facet_ids = {
@@ -4670,7 +5608,25 @@ def _run_section_formalizer(
                     equations=equations,
                     facts=facts,
                     allowed_facet_ids=allowed_facet_ids or None,
-                    formula_obligations=tuple(formula_obligations),
+                    allowed_equation_ids={
+                        str(item.equation_id)
+                        for item in core
+                        if str(getattr(item, "equation_id", "") or "").strip()
+                    },
+                    operation_evidence_packs=evidence_packs,
+                    formula_obligations=(
+                        tuple(formula_obligations)
+                        if not planned_paragraphs
+                        else tuple(
+                            obligation
+                            for _consumer_id, consumer_obligations in consumer_groups
+                            for obligation in consumer_obligations
+                            if (
+                                str(getattr(package, "consumer_paragraph_id", "") or "").strip()
+                                == str(_consumer_id).strip()
+                            )
+                        )
+                    ),
                     require_consumer=bool(
                         formula_obligations and (getattr(graph, "paragraphs", ()) or ())
                     ),
@@ -4700,8 +5656,13 @@ def _run_section_formalizer(
             "section_id": graph.section_id,
             "core_equation_ids": [str(item.equation_id) for item in core],
             "call_traces": call_traces,
-            "deterministic_fallback": bool(call_traces) is False,
+            "operation_evidence_lane": bool(operation_evidence and not core),
+            "deterministic_fallback": bool(call_traces) is False or operation_deterministic_fallback,
+            "operation_deterministic_fallback": operation_deterministic_fallback,
+            "operation_audit_package_ids": list(operation_audit_package_ids),
             "formula_consumer": formula_consumer,
+            "consumer_route_map": consumer_route_map,
+            "consumer_route_ambiguous": consumer_route_ambiguous,
             "required_formula_obligation_ids": [
                 item.obligation_id
                 for item in formula_obligations
@@ -4877,6 +5838,89 @@ def _invoke_section_formalizer_llm(
     guard_log: list[list[str]] = []
     self_trace_rows: list[dict[str, Any]] = []
 
+    def _repair_operation_equation_binding(package: Any) -> Any:
+        """Drop a stale equation alias only after fact-pack proof.
+
+        The equation compiler and the Research operation compiler are two
+        distinct authority lanes.  A Formalizer response written against an
+        older prompt can repeat a known equation id that is not in the
+        current core set even though it binds exactly the current operation
+        facts.  That id is representation residue, not permission to promote
+        the equation.  Remove it only when every package fact is contained in
+        one current, section-local operation pack; otherwise leave the
+        response untouched so the normal guard fails closed.
+        """
+
+        if str(getattr(package, "authority_status", "") or "") != "code_verified":
+            return package
+        current_equation_ids = {
+            str(getattr(item, "equation_id", "") or "").strip()
+            for item in core
+            if str(getattr(item, "equation_id", "") or "").strip()
+        }
+        package_equation_ids = tuple(
+            str(item).strip()
+            for item in (getattr(package, "bound_equation_ids", ()) or ())
+            if str(item).strip()
+        )
+        stale_equation_ids = set(package_equation_ids) - current_equation_ids
+        if not stale_equation_ids:
+            return package
+        package_fact_ids = {
+            str(item).strip()
+            for item in (getattr(package, "bound_fact_ids", ()) or ())
+            if str(item).strip()
+        }
+        if not package_fact_ids:
+            return package
+        equation_by_id = {
+            str(getattr(item, "equation_id", "") or "").strip(): item
+            for item in (getattr(equations, "equations", ()) or ())
+            if str(getattr(item, "equation_id", "") or "").strip()
+        }
+        stale_fact_ids: set[str] = set()
+        for equation_id in stale_equation_ids:
+            equation = equation_by_id.get(equation_id)
+            if equation is None:
+                return package
+            stale_fact_ids.update(
+                str(item).strip()
+                for item in (getattr(equation, "fact_ids", ()) or ())
+                if str(item).strip()
+            )
+        if not stale_fact_ids or not stale_fact_ids.issubset(package_fact_ids):
+            return package
+
+        def pack_value(pack: Any, name: str) -> Any:
+            if isinstance(pack, Mapping):
+                return pack.get(name)
+            return getattr(pack, name, None)
+
+        package_section = str(getattr(package, "section_id", "") or "").strip()
+        for pack in evidence_packs:
+            pack_section = str(pack_value(pack, "section_id") or "").strip()
+            pack_fact_ids = {
+                str(item).strip()
+                for item in (pack_value(pack, "bound_fact_ids") or ())
+                if str(item).strip()
+            }
+            if (
+                pack_section
+                and package_section
+                and pack_section != package_section
+            ):
+                continue
+            if package_fact_ids.issubset(pack_fact_ids):
+                allowed_equations = tuple(
+                    equation_id
+                    for equation_id in package_equation_ids
+                    if equation_id in current_equation_ids
+                )
+                return package.model_copy(update={
+                    "bound_equation_ids": allowed_equations,
+                })
+        return package
+
     def _bind_current_formula_route(package: Any) -> tuple[Any, str]:
         """Bind a uniquely identifiable Formalizer package before guards."""
 
@@ -4899,9 +5943,70 @@ def _invoke_section_formalizer_llm(
                 str(getattr(item, "obligation_id", "") or "").strip(): item
                 for item in formula_obligations
             }
-            routed = [by_id.get(item) for item in explicit_satisfied]
-            if any(item is None for item in routed):
-                return package, f"{package_id}:formula_package_obligation_route_unknown"
+            routed: list[Any] = []
+            unresolved_ids: list[str] = []
+            for item in explicit_satisfied:
+                obligation = by_id.get(item)
+                if obligation is not None:
+                    routed.append(obligation)
+                else:
+                    unresolved_ids.append(item)
+            if unresolved_ids:
+                # Older Formalizer prompts exposed the pre-consumer section
+                # alias (for example ``formula:section:<section>:derivation``)
+                # or an obligation id from the same mechanism before the
+                # current typed facet obligation was canonicalized.  Recover
+                # only a one-to-one route proven by the package's explicit
+                # consumer/facet binding; an unresolved or ambiguous alias
+                # remains a hard route failure.
+                if len(unresolved_ids) > 1:
+                    return package, f"{package_id}:formula_package_obligation_route_unknown"
+                package_facets = {
+                    str(value).strip()
+                    for value in (getattr(package, "bound_facet_ids", ()) or ())
+                    if str(value).strip()
+                }
+
+                def expected_consumer(obligation: Any) -> str:
+                    return str(
+                        getattr(obligation, "consumer_paragraph_id", "")
+                        or (
+                            obligation.paragraph_ids[0]
+                            if len(tuple(getattr(obligation, "paragraph_ids", ()) or ())) == 1
+                            else ""
+                        )
+                    ).strip()
+
+                alias_candidates = list(formula_obligations)
+                if explicit_consumer:
+                    alias_candidates = [
+                        obligation for obligation in alias_candidates
+                        if expected_consumer(obligation) == explicit_consumer
+                    ]
+                if package_facets:
+                    facet_candidates = [
+                        obligation for obligation in alias_candidates
+                        if package_facets.intersection(
+                            set(getattr(obligation, "facet_ids", ()) or ())
+                        )
+                    ]
+                    if facet_candidates:
+                        alias_candidates = facet_candidates
+                # A section alias is eligible only inside the same section;
+                # a foreign opaque id cannot be upgraded by a sole-consumer
+                # coincidence.
+                alias_candidates = [
+                    obligation for obligation in alias_candidates
+                    if not unresolved_ids
+                    or all(
+                        item.startswith(f"formula:section:{graph.section_id}:")
+                        for item in unresolved_ids
+                    )
+                ]
+                if len(alias_candidates) != 1:
+                    return package, f"{package_id}:formula_package_obligation_route_unknown"
+                routed.extend(alias_candidates)
+            routed = list(dict.fromkeys(routed))
             consumers = tuple(dict.fromkeys(
                 str(
                     getattr(item, "consumer_paragraph_id", "")
@@ -4918,7 +6023,13 @@ def _invoke_section_formalizer_llm(
             if explicit_consumer and explicit_consumer != consumers[0]:
                 return package, f"{package_id}:formula_package_consumer_mismatch"
             return package.model_copy(update={
-                "obligation_id": explicit_satisfied[0] if len(explicit_satisfied) == 1 else "",
+                "obligation_id": (
+                    str(routed[0].obligation_id)
+                    if len(routed) == 1 else ""
+                ),
+                "satisfied_obligation_ids": tuple(
+                    str(item.obligation_id) for item in routed
+                ),
                 "consumer_paragraph_id": consumers[0],
             }), ""
         if explicit_id and explicit_consumer:
@@ -4948,7 +6059,17 @@ def _invoke_section_formalizer_llm(
                 or package_equation_keys.intersection(_keys(obligation.obligation_id))
             )
         ]
-        if not matches and len(formula_obligations) == 1:
+        # A current paragraph plan may contain several unrelated operation
+        # packs in one section.  Assigning an unlabelled package to the sole
+        # obligation merely because this call has one consumer can route a
+        # sibling paragraph's formula into the wrong consumer (the previous
+        # EBCAR failure).  Legacy section-only callers retain the old
+        # one-obligation compatibility fallback.
+        if (
+            not matches
+            and len(formula_obligations) == 1
+            and not getattr(graph, "paragraphs", ())
+        ):
             matches = [formula_obligations[0]]
         if len(matches) != 1:
             return package, f"{package_id}:formula_package_obligation_route_ambiguous"
@@ -5008,7 +6129,17 @@ def _invoke_section_formalizer_llm(
         )
         if author_intent_lane
         else (
-            "Produce paper-level LaTeX formula packages for the authorized core equations. "
+            "Produce paper-level LaTeX formula packages for the authorized core equations "
+            "or fact-backed operation evidence packs. When no core equation is supplied, "
+            "use only the operations, operands, conditions, and spans in the supplied "
+            "operation evidence packs; do not promote an author statement into code "
+            "authority. If core_equations is empty, bound_equation_ids MUST be an "
+            "empty list; bind the exact operation fact ids from the current pack "
+            "instead. Do not copy an equation id merely because it appears in a "
+            "dossier or an earlier attempt. The operation expression must preserve "
+            "the supplied predicate/operator, operands, result, guard, and shape "
+            "information; do not add averaging, normalization, exponentials, sums, "
+            "indices, constants, or dimensions that no supplied atom authorizes. "
             "For each package return satisfied_obligation_ids using only the supplied "
             "section obligation ids and exactly one consumer_paragraph_id; one package "
             "may satisfy multiple obligations only when they share that consumer. "
@@ -5112,6 +6243,21 @@ def _invoke_section_formalizer_llm(
                 "author_facets": facet_rows,
                 "organization_seed": organization_seed,
                 "evidence_packs": evidence_pack_rows,
+                "operation_evidence_mode": bool(evidence_packs and not core),
+                "authorized_operation_fact_ids": list(dict.fromkeys(
+                    str(value).strip()
+                    for pack in evidence_packs
+                    for value in (
+                        (pack.get("bound_fact_ids", ()) if isinstance(pack, Mapping)
+                         else getattr(pack, "bound_fact_ids", ())) or ()
+                    )
+                    if str(value).strip()
+                )),
+                "authorized_equation_ids": [
+                    str(item.equation_id)
+                    for item in core
+                    if str(getattr(item, "equation_id", "") or "").strip()
+                ],
                 "exact_evidence_excerpts": list(exact_excerpts),
                 "notation_hints": list(notation_hints),
                 "core_equations": equation_rows,
@@ -5232,6 +6378,7 @@ def _invoke_section_formalizer_llm(
             if str(getattr(facet, "facet_id", "") or "").strip()
         }
         for raw_package in parsed.packages:
+            raw_package = _repair_operation_equation_binding(raw_package)
             package, route_failure = _bind_current_formula_route(raw_package)
             if route_failure:
                 failures.append(route_failure)
@@ -5245,14 +6392,26 @@ def _invoke_section_formalizer_llm(
                     f"{package.package_id}:author_intent_lane_requires_academic_lane"
                 )
             if not author_intent_lane and package.formula_lane == "author_intent_academic":
-                failures.append(
-                    f"{package.package_id}:repository_lane_forbids_author_intent_formula"
-                )
+                # A repository-scoped Formalizer may still return an explicit
+                # author-intent formula when the code evidence is insufficient.
+                # Preserve that package as the unique review_required terminal
+                # state so the evidence/quality diagnostics remain truthful;
+                # the Writer projection and acceptance funnel only expose
+                # code_verified repository packages, so this cannot authorize
+                # or consume a repository-derived formula.
+                if package.review_status == "accepted":
+                    package = package.model_copy(update={"review_status": "review_required"})
             package_failures = validate_section_formula_package(
                 package,
                 equations=equations,
                 facts=facts,
                 allowed_facet_ids=allowed_facet_ids or None,
+                allowed_equation_ids={
+                    str(item.equation_id)
+                    for item in core
+                    if str(getattr(item, "equation_id", "") or "").strip()
+                },
+                operation_evidence_packs=evidence_packs,
                 formula_obligations=tuple(formula_obligations),
                 require_consumer=bool(
                     formula_obligations and (getattr(graph, "paragraphs", ()) or ())
@@ -5457,6 +6616,7 @@ _CANDIDATE_AUTHORITY_MARKERS = (
     "repository evidence partially", "available repository evidence partially",
     "the current repository covers", "pending", "awaiting", "unverified",
     "requires confirmation", "mismatch", "not yet verified",
+    "not yet fixed", "not yet established", "not yet been",
 )
 
 
@@ -7793,6 +8953,16 @@ def _audit_only_claim_ids(
     return result
 
 
+def _candidate_qualifier_binding(term: str) -> str:
+    """Writer-facing qualifier: academic phrase, not ``self.cfg`` spelling."""
+
+    from code2paper.agentic.method_proposition_provider import candidate_qualifier_phrase
+
+    exact = str(term or "").strip()
+    reader = candidate_qualifier_phrase(exact)
+    return reader or exact
+
+
 def _qualifier_terms_by_section(
     *,
     plan: MethodSectionPlanV2,
@@ -7950,8 +9120,9 @@ def _writer_retry_required_action(failure_code: str, *, heading: str) -> str:
         "research callback remains open. Do not emit a deferral "
         "memo such as 'no accepted formula' or 'therefore deferred' "
         "in place of the mechanism. When formula_packages is "
-        "present, embed each display-math environment beside the "
-        "mechanism; do not paste a second heading or duplicate H3."
+        "present, emit each owning [[FORMULA:<package_id>]] placeholder "
+        "beside the mechanism; the harness inserts the stored display-math "
+        "block verbatim, so do not type it or paste a second heading."
     )
     if failure_code == "section_body_missing_or_headings_only":
         action += (
@@ -9325,7 +10496,10 @@ def _rewrite_transaction_has_cluster_gain(
         < int(incumbent.get("formula_missing_count", 0)),
         "missing_supported_proposition": proposition_improved or validation_improved,
         "section_structure": structure_improved,
-        "method_language_style": style_improved,
+        "method_language_style": style_improved or (
+            int(candidate.get("formula_missing_count", 0))
+            < int(incumbent.get("formula_missing_count", 0))
+        ),
         "duplicate_or_transition": style_improved,
     }.get(cluster_name, False)
     if not expected_gain:
@@ -10343,7 +11517,10 @@ def _normalize_writer_representation_noise(markdown: str) -> str:
     text = _BRACKET_QUALIFIER_RUN_RE.sub("", text)
     text = _EMPTY_BRACE_RUN_RE.sub("", text)
     text = _HEADING_ANCHOR_RE.sub("", text)
-    text = re.sub(r"\$\s*\$", "", text)
+    # Empty inline math such as ``$ $`` is representation noise.  Display
+    # delimiters ``$$`` must be preserved: ``\$\s*\$`` previously deleted
+    # them and left Formalizer latex as a bare code assignment.
+    text = re.sub(r"(?<!\$)\$(?:[ \t]+)\$+(?!\$)", "", text)
     text = re.sub(r"[ \t]+\n", "\n", text)
     return text
 
@@ -10774,15 +11951,49 @@ def _formula_latex_already_in_prose(text: str, package: Mapping[str, Any]) -> bo
 def _formula_display_math(package: Mapping[str, Any]) -> str:
     """Display math only: never a second H3 or Formalizer prose wrapper."""
 
+    from code2paper.agentic.formalization_agent import canonical_formula_markdown_block
+
     latex = str(package.get("latex") or "").strip()
+    if latex:
+        return canonical_formula_markdown_block(latex)
     block = str(package.get("markdown_block") or "").strip()
     if block:
         environments = _FORMULA_ENVIRONMENT_RE.findall(block)
         if environments:
             return "\n\n".join(environments)
-    if latex:
-        return f"$$\n{latex}\n$$"
     return ""
+
+
+def _restore_inline_formula_display_math(
+    markdown: str,
+    packages: Iterable[Mapping[str, Any]] | None,
+) -> str:
+    """Wrap a unique inline latex occurrence in the stored display block.
+
+    Representation-only: the Writer already authored the package latex, but
+    heading-break normalization or a missing placeholder left it outside a
+    math environment.  This does not invent a formula or append a tail block.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import _DISPLAY_MATH_RE
+
+    text = _repair_writer_text_commands(markdown)
+    for package in packages or ():
+        if not isinstance(package, Mapping):
+            continue
+        latex = str(package.get("latex") or "").strip()
+        if not latex or is_bare_binary_expression(latex):
+            continue
+        if _formula_package_rendered(text, package):
+            continue
+        if text.count(latex) != 1:
+            continue
+        block = str(package.get("markdown_block") or "").strip()
+        canonical = block if _DISPLAY_MATH_RE.search(block or "") else f"$$\n{latex}\n$$"
+        if not _DISPLAY_MATH_RE.search(canonical):
+            continue
+        text = text.replace(latex, canonical, 1)
+    return text
 
 
 def _paste_missing_formula_blocks(
@@ -10791,7 +12002,7 @@ def _paste_missing_formula_blocks(
 ) -> str:
     """Harness-insert Formalizer display math when the Writer paraphrased it."""
 
-    text = _repair_writer_text_commands(markdown)
+    text = _restore_inline_formula_display_math(markdown, packages)
     for package in packages or ():
         if not isinstance(package, Mapping):
             continue
@@ -10809,6 +12020,30 @@ def _paste_missing_formula_blocks(
     return text
 
 
+def _collapse_duplicate_section_h2(markdown: str, *, expected_heading: str = "") -> str:
+    """Keep exactly one H2; repeated Architect headings are dropped."""
+
+    lines = str(markdown or "").splitlines()
+    if not lines:
+        return markdown
+    expected = _canonical_section_heading_phrase(expected_heading).casefold()
+    kept: list[str] = []
+    seen_h2 = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("## ") and not stripped.startswith("###"):
+            phrase = _canonical_section_heading_phrase(stripped[3:]).casefold()
+            if not seen_h2:
+                kept.append(line)
+                seen_h2 = True
+                continue
+            if not phrase or (expected and phrase == expected):
+                continue
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
 def _with_normalized_section_markdown(
     output: PublicationMethodSectionOutputV1 | None,
     *,
@@ -10824,13 +12059,15 @@ def _with_normalized_section_markdown(
         output.section_markdown,
         expected_heading=expected_heading,
     )
+    normalized = _collapse_duplicate_section_h2(
+        normalized, expected_heading=expected_heading,
+    )
     normalized = _strip_provenance_tokens(normalized)
+    # In-place wrap is representation repair and is safe with a paragraph
+    # plan.  Tail-append paste remains legacy-only so a missing consumer
+    # cannot be hidden by a section-end dump.
+    normalized = _restore_inline_formula_display_math(normalized, formula_packages)
     before_paste = normalized
-    # When a paragraph plan is present, formula placement belongs to the
-    # Writer's paragraph transaction.  The harness may repair representation
-    # noise, but must not append a missing display block at the section tail
-    # and thereby hide a formula/consumer mismatch.  Legacy callers without a
-    # plan retain the representation-only paste compatibility path.
     pasted = (
         _paste_missing_formula_blocks(normalized, formula_packages)
         if paragraph_plan is None
@@ -11316,6 +12553,17 @@ def _writer_section_inputs(
         }
         for graph in plan.sections
     }
+    method_unit_facet_ids_by_section: dict[str, set[str]] = {}
+    has_method_unit_contract = bool(getattr(plan, "method_units", ()) or ())
+    for method_unit in (getattr(plan, "method_units", ()) or ()):
+        section_id = str(getattr(method_unit, "section_id", "") or "").strip()
+        if not section_id:
+            continue
+        method_unit_facet_ids_by_section.setdefault(section_id, set()).update(
+            str(facet_id).strip()
+            for facet_id in (getattr(method_unit, "facet_ids", ()) or ())
+            if str(facet_id).strip()
+        )
     result: list[WriterSectionInput] = []
     for graph in plan.sections:
         units = [unit_by_id[item] for item in graph.argument_unit_ids if item in unit_by_id]
@@ -11396,12 +12644,23 @@ def _writer_section_inputs(
                 if brief_id in brief_by_id
             ]
         section_brief_ids = {brief.brief_id for brief in section_briefs}
-        section_facets = [
-            facet
-            for facet in argument_facets
-            if not getattr(facet, "brief_id", "")
-            or facet.brief_id in section_brief_ids
-        ]
+        if has_method_unit_contract:
+            method_unit_facet_ids = method_unit_facet_ids_by_section.get(
+                str(graph.section_id), set()
+            )
+            section_facets = [
+                facet
+                for facet in argument_facets
+                if str(getattr(facet, "facet_id", "") or "").strip()
+                in method_unit_facet_ids
+            ]
+        else:
+            section_facets = [
+                facet
+                for facet in argument_facets
+                if not getattr(facet, "brief_id", "")
+                or facet.brief_id in section_brief_ids
+            ]
         section_facet_ids = {facet.facet_id for facet in section_facets}
         section_facet_alignments = [
             alignment
@@ -11447,6 +12706,31 @@ def _writer_section_inputs(
             paragraph.model_dump(mode="json")
             for paragraph in (getattr(graph, "paragraphs", ()) or ())
         ]
+        section_formula_packages = tuple(
+            formula_packages_by_section.get(graph.section_id, ())
+            if formula_packages_by_section else ()
+        )
+        accepted_formula_obligation_ids = {
+            str(value).strip()
+            for package in section_formula_packages
+            if isinstance(package, Mapping)
+            for value in (
+                *(package.get("satisfied_obligation_ids") or ()),
+                *(
+                    (package.get("obligation_id"),)
+                    if str(package.get("obligation_id") or "").strip()
+                    else ()
+                ),
+            )
+            if str(value).strip()
+        }
+        for paragraph in section_paragraphs:
+            if "formula_obligation_ids" in paragraph:
+                paragraph["formula_obligation_ids"] = [
+                    str(value)
+                    for value in (paragraph.get("formula_obligation_ids") or ())
+                    if str(value).strip() in accepted_formula_obligation_ids
+                ]
         if not section_paragraphs:
             # Backward-compatible projection for frozen plans created before
             # paragraph contracts existed: retain move order as a minimal
@@ -11645,6 +12929,24 @@ def _writer_section_inputs(
             item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
             for item in (authoring_packets_v2_by_section or {}).get(graph.section_id, ())
         ]
+        # Formula packages are consumed through the paragraph-transaction
+        # boundary, regardless of whether the frozen input also contains the
+        # newer MethodUnit packet projection.  Gating this on
+        # ``authoring_packets_v2`` lets a facets-only replay write a raw
+        # equation while still reporting an accepted package; the Binder then
+        # has no exact package body to witness.  The typed authoring marker is
+        # the same capability used below for ``paragraph_transaction_required``.
+        paragraph_transactions_enabled = bool(
+            section_paragraphs
+            and (
+                argument_briefs is not None
+                or bool(argument_facets)
+                or concept_cards is not None
+            )
+        )
+        formula_placeholders_required = bool(
+            paragraph_transactions_enabled and section_formula_packages
+        )
         # Validation constraints carry the exact canonical tokens the reverse
         # validator enforces.  They are a validation-only channel: the Writer
         # renders operations from ``argument_flow`` and never treats these
@@ -12007,20 +13309,6 @@ def _writer_section_inputs(
             callback_required = bool(
                 unanchored_required_moves or callback_request_prototypes
             )
-        # Paragraph transactions are the production contract for the
-        # intent-first (brief/facet or concept-card) lane.  Frozen
-        # proposition-only replays predate that contract and intentionally
-        # retain the legacy section_markdown path so their checkpoints remain
-        # readable; the presence of the typed authoring layer is the explicit
-        # capability marker rather than the synthetic fallback paragraph plan.
-        paragraph_transactions_enabled = bool(
-            section_paragraphs
-            and (
-                argument_briefs is not None
-                or bool(argument_facets)
-                or concept_cards is not None
-            )
-        )
         result.append(WriterSectionInput(
             section_id=graph.section_id,
             heading=graph.heading,
@@ -12067,6 +13355,7 @@ def _writer_section_inputs(
                 "paragraph_plan": section_paragraphs,
                 "authoring_packets_v2": authoring_packets_v2,
                 "paragraph_transaction_required": paragraph_transactions_enabled,
+                "formula_placeholders_required": formula_placeholders_required,
                 "validation_constraints": validation_constraints,
                 "reader_facing_claims": reader_facing_claims,
                 "section_candidate_points": section_candidate_points,
@@ -12120,28 +13409,25 @@ def _writer_section_inputs(
                             "why_needed_for_reader": "why this missing information matters for this section",
                             "priority": "high",
                             "status": "open",
-                            **({
-                                "target_brief_ids": (
-                                    "copy callback_request_prototypes[].target_brief_ids"
-                                ),
-                                "target_clause_ids": (
-                                    "copy callback_request_prototypes[].target_clause_ids"
-                                ),
-                                "missing_parts": (
-                                    "copy the matching brief_binding[].missing_parts list"
-                                ),
-                                "evidence_refs_used": (
-                                    "copy the matching brief_binding[].evidence_refs_used list"
-                                ),
-                            } if any(
-                                item.get("brief_binding") for item in callback_request_prototypes
-                            ) else {
-                                "concept_key": "one concept key from callback_request_prototypes[].concept_binding",
-                                "missing_parts": "copy the matching concept_binding[].missing_parts list",
-                                "evidence_refs_used": "copy the matching concept_binding[].evidence_refs_used list",
-                            } if any(
-                                item.get("concept_binding") for item in callback_request_prototypes
-                            ) else {}),
+                            "concept_key": (
+                                "one concept key from "
+                                "callback_request_prototypes[].concept_binding"
+                            ),
+                            "missing_parts": (
+                                "copy the missing_parts for that concept from "
+                                "callback_request_prototypes[].concept_binding"
+                            ),
+                            "evidence_refs_used": (
+                                "copy the evidence_refs_used for that concept from "
+                                "callback_request_prototypes[].concept_binding"
+                            ),
+                            "private_target_fields": (
+                                "Do not emit target_brief_ids, target_clause_ids, "
+                                "target_concept_keys, target_formula_obligation_ids, "
+                                "or mandatory_missing_slots. The Harness restores these "
+                                "from the matching closed callback_request_prototypes "
+                                "sidecar after parsing; any model copies are ignored."
+                            ),
                         },
                         "callback_request_prototypes": callback_request_prototypes,
                     } if callback_required else {}),
@@ -12193,9 +13479,11 @@ def _writer_section_inputs(
                             "mechanism contract. Follow its story order from "
                             "motivation/problem through mechanism, notation or "
                             "formula, algorithm/interface, and output. For every "
-                            "required_facet_id, write substantive mechanism content "
-                            "authorized by that facet's prose_mode and report the "
-                            "exact id in rendered_from_facet_ids. Do not satisfy "
+                            "required facet, write substantive mechanism content "
+                            "authorized by that facet's prose_mode. The harness "
+                            "restores facet/slot/edge targets from the private "
+                            "paragraph contract, so ids in rendered_from_facet_ids "
+                            "and the other binding fields are optional. Do not satisfy "
                             "facet coverage with a bare 'pending', 'intended', "
                             "'partial', or 'pending confirmation' token; a caveat "
                             "may qualify a substantive sentence but may not replace "
@@ -12212,9 +13500,9 @@ def _writer_section_inputs(
                             "formula gap in review; never replace the mechanism "
                             "with a deferral such as 'no accepted formula' or "
                             "'therefore deferred'. If formula_packages is present, "
-                            "embed each complete display-math environment beside "
-                            "the mechanism and skip any truncated block or second "
-                            "heading. "
+                            "emit its exact [[FORMULA:<package_id>]] placeholder "
+                            "beside the mechanism; the harness inserts the complete "
+                            "display-math block and you must not type or rewrite it. "
                             "Do not copy brief:story: or obligation ids into prose. "
                             if section_facets else ""
                         )
@@ -12222,9 +13510,10 @@ def _writer_section_inputs(
                         "copied from the supplied heading field, then write substantive "
                         "Method body sentences."
                         + (
-                            " When callback_request_prototypes carries brief_binding, "
-                            "emit one callback with the listed target_brief_ids, "
-                            "target_clause_ids, missing_parts, and evidence_refs_used."
+                            " When callback_request_prototypes carries a brief or "
+                            "concept binding, emit the matching move, exact question, "
+                            "and authority lane only; the Harness restores private "
+                            "target IDs and missing-part fields from the closed sidecar."
                             if brief_callback_payload else ""
                         )
                     )
@@ -12234,12 +13523,13 @@ def _writer_section_inputs(
                             "Use paragraph_plan as the only organization skeleton. "
                             "Return one paragraphs item for every paragraph_plan row. "
                         "Each paragraph_markdown must be substantive body text "
-                        "without a section H2 heading. Report only the closed ids "
-                        "actually rendered; do not emit exact witnesses because the "
+                            "without a section H2 heading. Binding ids are optional; the "
+                            "harness restores only targets witnessed in the body. Do not "
+                            "emit exact witnesses because the "
                         "separate deterministic Binder selects them from the frozen "
                         "paragraph. The harness assembles one section H2 and the "
                         "paragraphs in plan order; do not collapse multiple plan "
-                        "rows into one transaction. The paragraph witness_contract "
+                            "rows into one transaction. The paragraph witness_contract "
                         "is the local semantic authority: a required field candidate "
                         "must express its semantic_atom with the stated "
                         "polarity/conditions and remain compatible with an allowed "
@@ -12301,14 +13591,11 @@ def _writer_section_inputs(
                     "validation_constraints claim projection omits a row; "
                     "do not preserve raw code token spelling unless it is the "
                     "paper-level term or an implementation-realization detail, and "
-                    "never emit a constraint record itself as a sentence. An exact "
-                    "required qualifier condition (for example `doc['chunk_id'] == "
-                    "query['chunk_id']` or `loss_i.shape[0] == 0`) is a repository "
-                    "predicate the validator must see verbatim: render it as "
-                    "academic prose plus the exact predicate in ONE compact "
-                    "parenthetical backtick binding, e.g. (when the chunk "
-                    "identifiers match, `doc['chunk_id'] == query['chunk_id']`), "
-                    "never as bare inline code. Write a "
+                    "never emit a constraint record itself as a sentence. A "
+                    "required qualifier must appear as academic prose from "
+                    "required_qualifier_bindings (for example 'when positional "
+                    "encoding is enabled'); never paste self.cfg, self.config, "
+                    "or torch. identifiers into Candidate sentences. Write a "
                     "reader_facing_claim with requires_caveat=true only as candidate "
                     "narrative. Preserve its paper_statement but visibly frame its "
                     "authority with wording such as 'we aim', 'our intended design', "
@@ -12374,11 +13661,12 @@ def _writer_section_inputs(
                     + (
                         " Authoring packets V2 are the primary paragraph contract for this call. "
                         "Follow each packet's ordered_targets, surface_mode, dossier summary, "
-                        "conditions, configuration state, and consumer-scoped formula packages. "
+                        "conditions, configuration state, and consumer-scoped formula placeholders. "
                         "Return rendered target ids and rendered formula package ids, but do not "
                         "invent exact evidence witnesses or copy internal audit terms into prose; "
                         "the separate Binder attaches exact witnesses after clean prose is written. "
-                        "Every supplied formula package must either be rendered and listed as "
+                        "Every supplied formula package must either have its exact "
+                        "[[FORMULA:<package_id>]] placeholder emitted and be listed as "
                         "consumed or receive one typed formula disposition with its package_id "
                         "and a substantive reason; never silently omit an accepted package. "
                         "Keep author_specification, mismatch_statement, scoped_limitation, and "
@@ -12835,6 +14123,225 @@ def _local_lane_candidates_ok(
             return True
         return bool(authorized_set) and requested_set.issubset(authorized_set)
     return bool(requested_set) and requested_set.issubset(authorized_set)
+
+
+def _callback_binding_values(value: Any) -> tuple[str, ...]:
+    """Return non-empty callback binding values without accepting placeholders."""
+
+    if isinstance(value, (str, bytes, Mapping)) or value is None:
+        return ()
+    try:
+        values = tuple(value)
+    except TypeError:
+        return ()
+    return tuple(dict.fromkeys(
+        str(item).strip()
+        for item in values
+        if str(item).strip()
+    ))
+
+
+def _callback_placeholder(value: Any) -> bool:
+    """Detect punctuation-only model placeholders such as ``":"`` or ``","``.
+
+    Stable internal ids all contain an alphanumeric component.  This helper
+    therefore only classifies punctuation-only residue as representation
+    damage; a non-placeholder model term still goes through the closed-set
+    candidate validator and is rejected if it is not authorized.
+    """
+
+    text = str(value or "").strip()
+    return bool(text) and not any(character.isalnum() for character in text)
+
+
+def _callback_request_prototypes_from_input(
+    original_input: Any,
+) -> tuple[Mapping[str, Any], ...]:
+    """Read the closed callback sidecar belonging to one Writer section."""
+
+    prompt_payload = getattr(original_input, "prompt_payload", None)
+    if not isinstance(prompt_payload, Mapping):
+        return ()
+    grounding_contract = prompt_payload.get("grounding_contract")
+    if not isinstance(grounding_contract, Mapping):
+        return ()
+    return tuple(
+        item
+        for item in (grounding_contract.get("callback_request_prototypes") or ())
+        if isinstance(item, Mapping)
+    )
+
+
+def _restore_callback_request_sidecar(
+    *,
+    output: PublicationMethodSectionOutputV1,
+    callback_request_prototypes: Iterable[Mapping[str, Any]] = (),
+) -> tuple[PublicationMethodSectionOutputV1, tuple[str, ...]]:
+    """Restore callback-only internal bindings from the closed Writer sidecar.
+
+    Writer callback JSON is reader-facing metadata and models sometimes copy
+    schema prose (``":"``/``,``) into id arrays.  The section prompt already
+    carries a deterministic prototype built from the closed plan, briefs, and
+    concept bindings.  Restore only those private binding fields here; the
+    Writer-owned move, question, lane, and substantive search terms remain
+    subject to the normal callback contract.  This is representation recovery,
+    not evidence or authority recovery.
+    """
+
+    prototypes = tuple(
+        item for item in callback_request_prototypes
+        if isinstance(item, Mapping)
+    )
+    if not prototypes or not output.new_research_requests:
+        return output, ()
+    by_scope: dict[tuple[str, str], Mapping[str, Any]] = {}
+    by_move: dict[str, list[Mapping[str, Any]]] = {}
+    for item in prototypes:
+        move = str(item.get("missing_rhetorical_move") or "").strip()
+        if not move:
+            continue
+        unit = str(item.get("argument_unit_id") or "").strip()
+        if unit:
+            by_scope[(move, unit)] = item
+        by_move.setdefault(move, []).append(item)
+    normalized: list[dict[str, Any]] = []
+    operations: list[str] = []
+    changed = False
+    for raw in output.new_research_requests:
+        if not isinstance(raw, Mapping):
+            normalized.append(raw)
+            continue
+        payload = dict(raw)
+        move = str(
+            payload.get("missing_rhetorical_move")
+            or payload.get("move")
+            or payload.get("missing_move")
+            or ""
+        ).strip()
+        raw_terms = _callback_binding_values(
+            payload.get("candidate_symbols_or_terms")
+        )
+        cleaned_terms = tuple(
+            value for value in raw_terms if not _callback_placeholder(value)
+        )
+        placeholder_only_terms = bool(raw_terms) and not cleaned_terms
+        if raw_terms != cleaned_terms:
+            payload["candidate_symbols_or_terms"] = list(cleaned_terms)
+            operations.append("remove_callback_placeholder:candidate_symbols_or_terms")
+            changed = True
+        request_unit = str(payload.get("argument_unit_id") or "").strip()
+        prototype = by_scope.get((move, request_unit))
+        if prototype is None and len(by_move.get(move, ())) == 1:
+            # A move-only fallback is safe only when the closed sidecar has a
+            # unique owner.  Multiple same-move requests must remain distinct
+            # (for example two transformation slots in one section).
+            prototype = by_move[move][0]
+        if prototype is None:
+            normalized.append(payload)
+            continue
+
+        # These fields are Harness-owned sidecar bindings.  Do not trust a
+        # model copy or placeholder, and do not broaden a prototype that has
+        # no value for the field.
+        for field in (
+            "target_brief_ids",
+            "target_clause_ids",
+            "target_formula_obligation_ids",
+            "mandatory_missing_slots",
+        ):
+            expected = _callback_binding_values(prototype.get(field))
+            if not expected:
+                continue
+            if _callback_binding_values(payload.get(field)) != expected:
+                payload[field] = list(expected)
+                operations.append(f"restore_callback_sidecar:{field}")
+                changed = True
+
+        concept_binding = prototype.get("concept_binding")
+        if isinstance(concept_binding, (list, tuple)):
+            concept_keys = tuple(dict.fromkeys(
+                str(item.get("concept_key") or "").strip()
+                for item in concept_binding
+                if isinstance(item, Mapping)
+                and str(item.get("concept_key") or "").strip()
+            ))
+            if concept_keys and _callback_binding_values(
+                payload.get("target_concept_keys")
+            ) != concept_keys:
+                payload["target_concept_keys"] = list(concept_keys)
+                operations.append("restore_callback_sidecar:target_concept_keys")
+                changed = True
+            expected_missing = tuple(dict.fromkeys(
+                str(value).strip()
+                for item in concept_binding
+                if isinstance(item, Mapping)
+                for value in (item.get("missing_parts") or ())
+                if str(value).strip()
+            ))
+            expected_refs = tuple(dict.fromkeys(
+                str(value).strip()
+                for item in concept_binding
+                if isinstance(item, Mapping)
+                for value in (item.get("evidence_refs_used") or ())
+                if str(value).strip()
+            ))
+            for field, expected in (
+                ("missing_parts", expected_missing),
+                ("evidence_refs_used", expected_refs),
+            ):
+                if expected and _callback_binding_values(payload.get(field)) != expected:
+                    payload[field] = list(expected)
+                    operations.append(f"restore_callback_sidecar:{field}")
+                    changed = True
+
+        brief_binding = prototype.get("brief_binding")
+        if isinstance(brief_binding, (list, tuple)):
+            expected_missing = tuple(dict.fromkeys(
+                str(value).strip()
+                for item in brief_binding
+                if isinstance(item, Mapping)
+                for value in (item.get("missing_parts") or ())
+                if str(value).strip()
+            ))
+            expected_refs = tuple(dict.fromkeys(
+                str(value).strip()
+                for item in brief_binding
+                if isinstance(item, Mapping)
+                for value in (item.get("evidence_refs_used") or ())
+                if str(value).strip()
+            ))
+            for field, expected in (
+                ("missing_parts", expected_missing),
+                ("evidence_refs_used", expected_refs),
+            ):
+                if expected and _callback_binding_values(payload.get(field)) != expected:
+                    payload[field] = list(expected)
+                    operations.append(f"restore_callback_sidecar:{field}")
+                    changed = True
+
+        expected_terms = _callback_binding_values(
+            prototype.get("candidate_symbols_or_terms")
+        )
+        requested_terms = _callback_binding_values(
+            payload.get("candidate_symbols_or_terms")
+        )
+        if placeholder_only_terms:
+            payload["candidate_symbols_or_terms"] = list(expected_terms)
+            operations.append("restore_callback_sidecar:candidate_symbols_or_terms")
+            changed = True
+        elif expected_terms and not requested_terms and (
+            str(payload.get("required_authority_lane") or "") in _LOCALLY_OWNED_LANES
+        ):
+            # Empty terms are legal only for an unanchored proof.  Leave them
+            # empty so the existing proof-aware validator decides; never fill
+            # an anchored request merely because a prototype has vocabulary.
+            pass
+        normalized.append(payload)
+    if not changed:
+        return output, ()
+    return output.model_copy(update={"new_research_requests": normalized}), tuple(
+        dict.fromkeys(operations)
+    )
 
 
 def _recover_missing_writing_callbacks(
@@ -13492,6 +14999,94 @@ def _request_candidate_terms(
                 str(item) for item in getattr(unit, "equation_ids", ()) or ()
             )
     return tuple(dict.fromkeys(item for item in candidates if str(item).strip()))
+
+
+def _dedupe_writing_research_requests(
+    requests: Iterable[WritingResearchRequestV1],
+) -> tuple[WritingResearchRequestV1, ...]:
+    """Merge duplicate Writer callbacks without changing their authority.
+
+    Two requests can ask for different missing parts of the same unresolved
+    section/unit/move.  Persisting both makes the structural callback receipt
+    see the same target twice and blocks an otherwise well-scoped continuation.
+    Merge only identical target scopes; keep the first request id/question and
+    union the evidence/search payload.  Different target scopes remain
+    separate and continue to be checked independently.
+    """
+
+    def values(request: WritingResearchRequestV1, name: str) -> tuple[str, ...]:
+        raw = getattr(request, name, ())
+        return tuple(dict.fromkeys(
+            str(item).strip() for item in (raw or ()) if str(item).strip()
+        ))
+
+    def target_signature(request: WritingResearchRequestV1) -> tuple[str, ...]:
+        for name in (
+            "mandatory_missing_slots",
+            "remaining_slots",
+            "target_formula_obligation_ids",
+            "target_story_node_ids",
+            "target_concept_keys",
+            "target_brief_ids",
+            "target_clause_ids",
+        ):
+            selected = tuple(sorted(values(request, name)))
+            if selected:
+                return (name, *selected)
+        # When no typed target exists, missing_parts is the only scope the
+        # callback contract can use.  Different author questions must not be
+        # collapsed merely because they share a section and move.
+        return ("missing_parts", *sorted(values(request, "missing_parts")))
+
+    def key(request: WritingResearchRequestV1) -> tuple[Any, ...]:
+        return (
+            request.section_id,
+            request.argument_unit_id,
+            request.missing_rhetorical_move,
+            request.required_authority_lane,
+            request.concept_key,
+            request.status,
+            target_signature(request),
+        )
+
+    tuple_fields = (
+        "candidate_symbols_or_terms",
+        "current_known_facts",
+        "fulfilled_artifact_ids",
+        "missing_parts",
+        "evidence_refs_used",
+        "baseline_span_ids",
+        "target_story_node_ids",
+        "target_concept_keys",
+        "target_brief_ids",
+        "target_clause_ids",
+        "target_formula_obligation_ids",
+        "mandatory_missing_slots",
+        "baseline_fact_fingerprints",
+        "baseline_claim_ids",
+        "excluded_audit_concept_keys",
+        "satisfied_slots",
+        "remaining_slots",
+    )
+    priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    merged: dict[tuple[Any, ...], WritingResearchRequestV1] = {}
+    for request in requests:
+        scope = key(request)
+        incumbent = merged.get(scope)
+        if incumbent is None:
+            merged[scope] = request
+            continue
+        payload = incumbent.model_dump(mode="json", exclude={"content_digest"})
+        for name in tuple_fields:
+            payload[name] = list(dict.fromkeys((*values(incumbent, name), *values(request, name))))
+        if not str(payload.get("why_needed_for_reader") or "").strip():
+            payload["why_needed_for_reader"] = request.why_needed_for_reader
+        if priority_rank.get(request.priority, 9) < priority_rank.get(
+            incumbent.priority, 9
+        ):
+            payload["priority"] = request.priority
+        merged[scope] = WritingResearchRequestV1.model_validate(payload)
+    return tuple(merged.values())
 
 
 def _load_product_validation_artifacts(
@@ -14179,6 +15774,9 @@ def _write_paragraph_transaction_assessments(
     }
 
     def _routes_for(section_id: str, section: WriterSectionInput) -> dict[str, dict[str, Any]]:
+        from code2paper.agentic.publication_transaction_contract import (
+            _formula_package_terminal_disposition,
+        )
         formal = formalization_by_section.get(section_id, {})
         packages = tuple(
             item for item in (formal.get("packages") or ()) if isinstance(item, Mapping)
@@ -14234,6 +15832,11 @@ def _write_paragraph_transaction_assessments(
                 "latex": str(
                     matches[0].get("latex") or matches[0].get("markdown_block") or ""
                 ) if matches else "",
+                "terminal_disposition": (
+                    _formula_package_terminal_disposition(matches[0])
+                    if len(matches) == 1
+                    else "failed"
+                ),
             }
         # A prompt may carry packages even when the persisted Formalizer
         # result is unavailable (e.g. a unit test or a resumed section).  Keep
@@ -14251,6 +15854,7 @@ def _write_paragraph_transaction_assessments(
                     routes.setdefault(obligation_id, {
                         "package_ids": (package_id,),
                         "latex": str(package.get("latex") or package.get("markdown_block") or ""),
+                        "terminal_disposition": _formula_package_terminal_disposition(package),
                     })
         return routes
 
@@ -14281,6 +15885,14 @@ def _write_paragraph_transaction_assessments(
                     if hasattr(plan_row, "model_dump") else plan_row
                 ),
             )
+            assessment = assessment.model_copy(update={
+                "section_id": section_id,
+                "status": (
+                    assessment.status
+                    if transaction is not None
+                    else "not_run"
+                ),
+            })
             row = {
                 "section_id": section_id,
                 **assessment.model_dump(mode="json"),
@@ -14786,8 +16398,19 @@ def _write_result_only(
     # Q0: an early blocked result is a true generation failure only when no
     # durable candidate exists.  A later resume/callback block must not
     # rewrite an incumbent Candidate as ``failed`` / ``not_run``.
+    incumbent_payload = _load_candidate_checkpoint(out_root)
     incumbent_digest = _incumbent_candidate_digest(out_root)
-    if incumbent_digest:
+    incumbent_matches_revision = bool(
+        incumbent_payload
+        and str(incumbent_payload.get("plan_digest") or "")
+        == str(result.plan_digest or "")
+        and (
+            not result.claim_digest
+            or str(incumbent_payload.get("claim_digest") or "")
+            == str(result.claim_digest)
+        )
+    )
+    if incumbent_digest and incumbent_matches_revision:
         updates: dict[str, Any] = {
             "candidate_generation_status": "generated",
             "candidate_available": True,
@@ -14908,6 +16531,122 @@ def _atomic_write_text(path: Path, content: str) -> None:
     """Persist a hand-off artifact with an fsync + atomic replace boundary."""
 
     atomic_write_bytes(path, content.encode("utf-8"))
+
+
+def _write_paragraph_checkpoint(
+    checkpoint_path: Path,
+    *,
+    section_outputs: Mapping[str, PublicationMethodSectionOutputV1],
+    assessment_path: str | Path,
+) -> None:
+    """Freeze valid paragraph transactions without committing their section.
+
+    Section checkpoints are intentionally all-or-nothing for publication, but
+    a failed section may contain valid sibling paragraphs.  This sidecar
+    persists those paragraph transactions independently so a later repair can
+    target only the invalid paragraph while retaining exact Writer bytes and
+    Binder witnesses for its siblings.  The transaction assessment remains
+    the authority for validity; this file only freezes the already-validated
+    representation.
+    """
+
+    checkpoint_path = Path(checkpoint_path)
+    try:
+        assessment_payload = json.loads(
+            Path(assessment_path).read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        assessment_payload = {}
+    assessments = {
+        (
+            str(item.get("section_id") or "").strip(),
+            str(item.get("paragraph_id") or "").strip(),
+        ): item
+        for item in (assessment_payload.get("assessments") or ())
+        if isinstance(item, Mapping)
+        and str(item.get("paragraph_id") or "").strip()
+    }
+    assessment_digest = str(
+        assessment_payload.get("content_digest") or ""
+    ).strip()
+    store_root = checkpoint_path.parent / "immutable_paragraph_checkpoints"
+    paragraph_refs: dict[str, dict[str, str]] = {}
+    invalid_paragraph_ids: list[str] = []
+    for section_id, output in section_outputs.items():
+        section_key = str(section_id or "").strip()
+        if not section_key:
+            continue
+        for paragraph in (output.paragraphs or ()):
+            paragraph_id = str(paragraph.paragraph_id or "").strip()
+            if not paragraph_id:
+                continue
+            key = f"{section_key}:{paragraph_id}"
+            assessment = assessments.get((section_key, paragraph_id))
+            if assessment is None or not bool(assessment.get("valid")):
+                invalid_paragraph_ids.append(key)
+                continue
+            transaction_payload = paragraph.model_dump(mode="json")
+            output_digest = _digest_json(transaction_payload)
+            store_payload: dict[str, Any] = {
+                "schema_version": "1.0",
+                "checkpoint_format": "immutable_paragraph_v1",
+                "section_id": section_key,
+                "paragraph_id": paragraph_id,
+                "transaction": transaction_payload,
+                "output_digest": output_digest,
+                "assessment_digest": str(
+                    assessment.get("content_digest") or ""
+                ).strip(),
+            }
+            store_payload["content_digest"] = _digest_json(store_payload)
+            store_digest = str(store_payload["content_digest"])
+            store_path = store_root / f"{store_digest.removeprefix('sha256:')}.json"
+            if not store_path.is_file():
+                _atomic_write_text(
+                    store_path,
+                    json.dumps(store_payload, ensure_ascii=False, indent=2) + "\n",
+                )
+            paragraph_refs[key] = {
+                "section_id": section_key,
+                "paragraph_id": paragraph_id,
+                "output_ref": str(store_path.relative_to(checkpoint_path.parent)),
+                "output_digest": output_digest,
+                "assessment_digest": str(
+                    assessment.get("content_digest") or ""
+                ).strip(),
+            }
+
+    try:
+        checkpoint_payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        checkpoint_payload = {
+            "schema_version": "1.1",
+            "checkpoint_format": "immutable_section_refs_v1",
+            "sections": {},
+            "proposition_set_digest": "",
+        }
+    if not isinstance(checkpoint_payload, dict):
+        checkpoint_payload = {
+            "schema_version": "1.1",
+            "checkpoint_format": "immutable_section_refs_v1",
+            "sections": {},
+            "proposition_set_digest": "",
+        }
+    checkpoint_payload.pop("content_digest", None)
+    checkpoint_payload["paragraphs"] = paragraph_refs
+    checkpoint_payload["invalid_paragraph_ids"] = sorted(
+        dict.fromkeys(invalid_paragraph_ids)
+    )
+    checkpoint_payload["paragraph_checkpoint"] = {
+        "assessment_digest": assessment_digest,
+        "valid_count": len(paragraph_refs),
+        "invalid_count": len(set(invalid_paragraph_ids)),
+    }
+    checkpoint_payload["content_digest"] = _digest_json(checkpoint_payload)
+    _atomic_write_text(
+        checkpoint_path,
+        json.dumps(checkpoint_payload, ensure_ascii=False, indent=2) + "\n",
+    )
 
 
 def _write_section_checkpoint(
@@ -15308,6 +17047,73 @@ def _load_section_checkpoint(
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         return None, {}
     return outputs, refs
+
+
+def _load_valid_paragraph_checkpoint(
+    *,
+    out_root: str | Path,
+    artifact_paths: Mapping[str, str],
+    resume_section_ids: tuple[str, ...],
+) -> dict[tuple[str, str], PublicationMethodParagraphOutputV1]:
+    """Load only digest-valid paragraph transactions from the sidecar."""
+
+    if not resume_section_ids:
+        return {}
+    value = artifact_paths.get("publication_paragraph_checkpoint_v1", "")
+    path = Path(value) if value else method_output(
+        Path(out_root), "publication_paragraph_checkpoint_v1"
+    )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        declared_digest = str(payload.get("content_digest") or "")
+        if not declared_digest or declared_digest != _digest_json({
+            key: item for key, item in payload.items() if key != "content_digest"
+        }):
+            return {}
+        rows = payload.get("paragraphs") or {}
+        if not isinstance(rows, Mapping):
+            return {}
+        allowed_sections = {str(value).strip() for value in resume_section_ids}
+        store_root = (path.parent / "immutable_paragraph_checkpoints").resolve()
+        outputs: dict[tuple[str, str], PublicationMethodParagraphOutputV1] = {}
+        for _key, row in rows.items():
+            if not isinstance(row, Mapping):
+                return {}
+            section_id = str(row.get("section_id") or "").strip()
+            paragraph_id = str(row.get("paragraph_id") or "").strip()
+            if section_id not in allowed_sections or not paragraph_id:
+                continue
+            output_ref = str(row.get("output_ref") or "")
+            if not output_ref:
+                return {}
+            store_path = Path(output_ref)
+            if not store_path.is_absolute():
+                store_path = path.parent / store_path
+            if store_path.is_symlink() or store_path.resolve().parent != store_root:
+                return {}
+            store = json.loads(store_path.read_text(encoding="utf-8"))
+            store_digest = str(store.get("content_digest") or "")
+            if not store_digest or store_digest != _digest_json({
+                key: item for key, item in store.items()
+                if key != "content_digest"
+            }):
+                return {}
+            if (
+                str(store.get("section_id") or "").strip() != section_id
+                or str(store.get("paragraph_id") or "").strip() != paragraph_id
+                or str(store.get("output_digest") or "")
+                != str(row.get("output_digest") or "")
+            ):
+                return {}
+            transaction = store.get("transaction")
+            if not isinstance(transaction, Mapping):
+                return {}
+            outputs[(section_id, paragraph_id)] = (
+                PublicationMethodParagraphOutputV1.model_validate(transaction)
+            )
+        return outputs
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return {}
 
 
 def rebase_callback_bundle_artifacts(

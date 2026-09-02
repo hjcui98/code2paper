@@ -16,9 +16,17 @@ from code2paper.agentic.evidence_compiler_v3 import (
 from code2paper.agentic.method_argument_models import (
     MethodCompletenessItemV1,
     MethodCompletenessMatrixV1,
+    MethodArgumentUnitV1,
     SectionArgumentGraphV1,
+    SectionArgumentMoveV1,
+    SectionParagraphPlanV1,
+)
+from code2paper.agentic.method_argument_brief_models import (
+    AuthorMechanismFacetV1,
+    FacetEvidenceAlignmentV1,
 )
 from code2paper.agentic.method_architect import (
+    _attach_method_unit_witness_contracts,
     build_method_section_plan_with_product_readiness,
     build_method_section_plan_with_trace,
 )
@@ -155,6 +163,145 @@ def test_supported_unit_is_candidate_and_verified_ready() -> None:
     }
     assert readiness.review_required_obligation_ids == ()
     assert isinstance(trace["product_readiness"], dict)
+
+
+def test_closed_method_unit_slot_order_keeps_required_slots_after_display_budget() -> None:
+    from code2paper.agentic.method_architect import _closed_method_unit_slots
+
+    support, publication, ordered = _closed_method_unit_slots(
+        section_id="MA-S1",
+        paragraph_id="paragraph:MA-S1:method-unit-1",
+        original_order=tuple(f"slot-{index}" for index in range(17)),
+        support_slots=("support-required",),
+        publication_slots=("publication-required",),
+    )
+
+    assert support == ("support-required",)
+    assert publication == ("publication-required",)
+    assert len(ordered) == 19
+    assert ordered[-2:] == ("support-required", "publication-required")
+
+
+def test_broad_claim_coverage_does_not_expand_stage_membership() -> None:
+    """Claim evidence coverage is not a paragraph/brief ownership edge."""
+
+    claim = AtomicClaimV3(
+        claim_id="claim:broad",
+        canonical_text="The stage performs the bounded transformation.",
+        fact_ids=["fact:broad"],
+        covers_obligation_ids=["obl:stage", "obl:other"],
+        direct_evidence_ids=["span:broad.py:1:2"],
+        allowed_wording_boundary="bounded transformation only",
+        canonical_identity="sha256:claim-broad",
+        status="supported",
+    )
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:architect-product",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts",
+        claims=[claim],
+        semantic_stage_groups=[SemanticStageGroupV1(
+            stage_id="stage:bounded",
+            name="Bounded stage",
+            purpose="Explain the bounded transformation.",
+            ordered_claim_ids=[claim.claim_id],
+            covers_obligation_ids=["obl:stage"],
+            organization_priority=1,
+        )],
+        content_digest="sha256:claims-broad",
+    )
+
+    plan, _trace = build_method_section_plan_with_trace(claims=claims)
+
+    assert plan.argument_units[0].source_obligation_ids == ("obl:stage",)
+
+
+def test_partial_facet_target_carries_intent_surface_contract() -> None:
+    """An exact span does not turn a compound partial facet into a fact."""
+
+    facet = AuthorMechanismFacetV1(
+        facet_id="facet:partial",
+        clause_id="clause:partial",
+        exact_source_quote="Use the encoder and guarantee stable forgetting.",
+        facet_kind="mechanism",
+        semantic_fields={"operation": "Encode the sequence."},
+        required=True,
+    )
+    alignment = FacetEvidenceAlignmentV1(
+        facet_id=facet.facet_id,
+        status="partial",
+        bound_span_ids=("span:encoder.py:10:12",),
+    )
+    graph = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Encoding",
+        reader_question="How is the sequence encoded?",
+        argument_unit_ids=("unit:partial",),
+        paragraphs=(SectionParagraphPlanV1(
+            paragraph_id="paragraph:MA-S1:1",
+            argument_unit_ids=("unit:partial",),
+            required_facet_ids=(facet.facet_id,),
+        ),),
+    )
+    enriched = _attach_method_unit_witness_contracts(
+        [graph],
+        [MethodArgumentUnitV1(
+            argument_unit_id="unit:partial",
+            section_role="stage",
+            research_question="How?",
+        )],
+        argument_facets=(facet,),
+        facet_alignments=(alignment,),
+        publication_field_candidates=(),
+    )
+
+    target = enriched[0].paragraphs[0].witness_contract.targets[0]
+    assert target.authority_lane == "author_attested"
+    assert target.surface_mode == "author_specification"
+    assert target.render_policy == "optional"
+
+
+def test_replan_identity_is_assigned_once_when_new_paragraphs_share_a_unit() -> None:
+    from code2paper.agentic.method_architect import _restore_prior_paragraph_identities
+
+    prior = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Stage",
+        reader_question="How?",
+        paragraphs=(SectionParagraphPlanV1(
+            paragraph_id="paragraph:MA-S1:old",
+            argument_unit_ids=("unit:shared",),
+            required_facet_ids=("facet:old",),
+        ),),
+    )
+    rebuilt = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Stage",
+        reader_question="How?",
+        paragraphs=(
+            SectionParagraphPlanV1(
+                paragraph_id="paragraph:MA-S1:new-1",
+                argument_unit_ids=("unit:shared",),
+                required_facet_ids=("facet:new-1",),
+            ),
+            SectionParagraphPlanV1(
+                paragraph_id="paragraph:MA-S1:new-2",
+                argument_unit_ids=("unit:shared",),
+                required_facet_ids=("facet:new-2",),
+            ),
+        ),
+    )
+
+    restored = _restore_prior_paragraph_identities(
+        prior_sections=(prior,), rebuilt_sections=[rebuilt],
+    )[0]
+    facet_locations = [
+        paragraph.paragraph_id
+        for paragraph in restored.paragraphs
+        if "facet:old" in paragraph.required_facet_ids
+    ]
+    assert facet_locations == ["paragraph:MA-S1:new-1"]
 
 
 def test_remaining_claims_for_same_obligation_extend_stage_not_duplicate_section() -> None:
@@ -1688,3 +1835,159 @@ def test_short_stage_encoding_heading_folds_into_long_organization_title() -> No
         for claim_id in unit.claim_ids
     ]
     assert "claim-encode" not in motivation_claims
+
+
+def test_optional_rationale_facet_survives_method_unit_compaction() -> None:
+    from code2paper.agentic.method_architect import _build_method_units_v2
+
+    rationale = AuthorMechanismFacetV1(
+        facet_id="facet:rationale",
+        clause_id="clause:rationale",
+        exact_source_quote="Avoid explicit relation extraction entirely.",
+        facet_kind="motivation",
+        brief_id="brief:context",
+        semantic_fields={"rationale": "Avoid explicit relation extraction entirely."},
+        required=False,
+    )
+    mechanism = AuthorMechanismFacetV1(
+        facet_id="facet:mechanism",
+        clause_id="clause:mechanism",
+        exact_source_quote="The hierarchical graph organizes entity and passage nodes.",
+        facet_kind="mechanism",
+        brief_id="brief:mechanism",
+        semantic_fields={"operation": "Organize entity and passage nodes."},
+        required=True,
+    )
+    audit = AuthorMechanismFacetV1(
+        facet_id="facet:audit",
+        clause_id="clause:audit",
+        exact_source_quote="Cache the adjacency matrix for faster lookup.",
+        facet_kind="constraint",
+        brief_id="brief:mechanism",
+        semantic_fields={"constraint": "Cache the adjacency matrix."},
+        required=False,
+    )
+    context_unit = MethodArgumentUnitV1(
+        argument_unit_id="unit:context",
+        section_role="motivation",
+        research_question="Why avoid explicit relation extraction?",
+        design_objective="Avoid explicit relation extraction entirely.",
+        brief_ids=("brief:context",),
+        brief_order=("brief:context",),
+        allowed_expository_moves=("problem_or_local_context", "design_objective"),
+    )
+    mechanism_unit = MethodArgumentUnitV1(
+        argument_unit_id="unit:mechanism",
+        section_role="stage",
+        research_question="How is the graph organized?",
+        brief_ids=("brief:mechanism",),
+        brief_order=("brief:mechanism",),
+        allowed_expository_moves=("algorithm_or_data_flow",),
+    )
+    graph = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Motivation and construction",
+        reader_question="Why this graph, and how is it built?",
+        argument_unit_ids=("unit:context", "unit:mechanism"),
+        moves=(
+            SectionArgumentMoveV1(
+                move="problem_or_local_context",
+                argument_unit_ids=("unit:context",),
+            ),
+            SectionArgumentMoveV1(
+                move="algorithm_or_data_flow",
+                argument_unit_ids=("unit:mechanism",),
+            ),
+        ),
+    )
+    units, graphs, _trace = _build_method_units_v2(
+        [graph],
+        [context_unit, mechanism_unit],
+        argument_facets=(rationale, mechanism, audit),
+        facet_alignments=(
+            FacetEvidenceAlignmentV1(facet_id=rationale.facet_id, status="unresolved"),
+            FacetEvidenceAlignmentV1(facet_id=mechanism.facet_id, status="unresolved"),
+            FacetEvidenceAlignmentV1(facet_id=audit.facet_id, status="unresolved"),
+        ),
+        publication_field_candidates=(),
+    )
+    kept = {facet_id for unit in units for facet_id in unit.facet_ids}
+    assert "facet:rationale" in kept
+    assert "facet:mechanism" in kept
+    assert "facet:audit" not in kept
+    range_high = max(
+        paragraph.expected_sentence_range[1]
+        for graph in graphs
+        for paragraph in graph.paragraphs
+    )
+    assert range_high >= 3
+
+
+def test_pure_context_section_is_placed_before_mechanism_sections() -> None:
+    from code2paper.agentic.method_architect import _build_method_units_v2
+
+    encoding = AuthorMechanismFacetV1(
+        facet_id="facet:encode",
+        clause_id="clause:encode",
+        exact_source_quote="Interaction sequences are padded and stacked.",
+        facet_kind="mechanism",
+        brief_id="brief:encode",
+        semantic_fields={"operation": "Pad and stack interaction sequences."},
+        required=True,
+    )
+    motivation = AuthorMechanismFacetV1(
+        facet_id="facet:why",
+        clause_id="clause:why",
+        exact_source_quote="Vanilla state-space models ignore irregular timespans.",
+        facet_kind="motivation",
+        brief_id="brief:why",
+        semantic_fields={"motivation": "Vanilla models ignore irregular timespans."},
+        required=False,
+    )
+    encode_unit = MethodArgumentUnitV1(
+        argument_unit_id="unit:encode",
+        section_role="stage",
+        research_question="How are sequences encoded?",
+        brief_ids=("brief:encode",),
+        brief_order=("brief:encode",),
+        allowed_expository_moves=("algorithm_or_data_flow",),
+    )
+    why_unit = MethodArgumentUnitV1(
+        argument_unit_id="unit:why",
+        section_role="motivation",
+        research_question="What limitation motivates the redesign?",
+        brief_ids=("brief:why",),
+        brief_order=("brief:why",),
+        allowed_expository_moves=("problem_or_local_context",),
+    )
+    encoding_graph = SectionArgumentGraphV1(
+        section_id="MA-S1",
+        heading="Sequence encoding",
+        reader_question="How are sequences encoded?",
+        argument_unit_ids=("unit:encode",),
+        moves=(SectionArgumentMoveV1(
+            move="algorithm_or_data_flow",
+            argument_unit_ids=("unit:encode",),
+        ),),
+    )
+    motivation_graph = SectionArgumentGraphV1(
+        section_id="MA-S2",
+        heading="Problem setting",
+        reader_question="What limitation motivates the redesign?",
+        argument_unit_ids=("unit:why",),
+        moves=(SectionArgumentMoveV1(
+            move="problem_or_local_context",
+            argument_unit_ids=("unit:why",),
+        ),),
+    )
+    _units, graphs, _trace = _build_method_units_v2(
+        [encoding_graph, motivation_graph],
+        [encode_unit, why_unit],
+        argument_facets=(encoding, motivation),
+        facet_alignments=(
+            FacetEvidenceAlignmentV1(facet_id=encoding.facet_id, status="unresolved"),
+            FacetEvidenceAlignmentV1(facet_id=motivation.facet_id, status="unresolved"),
+        ),
+        publication_field_candidates=(),
+    )
+    assert [graph.section_id for graph in graphs] == ["MA-S2", "MA-S1"]

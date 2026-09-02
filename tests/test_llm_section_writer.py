@@ -36,6 +36,7 @@ from code2paper.llm.section_writer import (
     dynamic_writer_cumulative_budget,
     _llm_visible_section_payload,
     _normalize_publication_paragraph_transaction,
+    _recover_exact_formula_block_representation,
     write_publication_method_by_sections,
     write_method_by_sections,
 )
@@ -46,6 +47,9 @@ from code2paper.llm.response_schemas import (
     json_schema_for,
 )
 from code2paper.agentic.publication_transaction_contract import (
+    bind_paragraph_witnesses,
+    paragraph_binding_targets,
+    splice_formula_placeholders,
     validate_paragraph_binding_response,
 )
 from code2paper.schemas import LLMConfig, LLMProvider
@@ -69,6 +73,419 @@ def _section(section_id: str, heading: str = "Section") -> WriterSectionInput:
         heading=heading,
         prompt_payload={"section_id": section_id, "evidence": []},
     )
+
+
+def test_v2_surface_bounds_author_specification_before_writer_sees_it() -> None:
+    long_intent = (
+        "Extract the interaction sequence and pass it through the redesigned SSM. "
+        "Then make the step size learnable and monotone, initialize the transition "
+        "matrix with stable eigenvalues, constrain input-dependent matrices, and "
+        "use separate encoders for downstream tasks."
+    )
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Encoding",
+        prompt_payload={
+            "section_id": "MA-S1",
+            "authoring_packets_v2": [{
+                "section_id": "MA-S1",
+                "paragraph_id": "paragraph:MA-S1:1",
+                "rhetorical_goal": "construction",
+                "ordered_targets": [{
+                    "target_kind": "facet",
+                    "surface_mode": "author_specification",
+                    "render_policy": "optional",
+                }],
+                "method_unit": {
+                    "reader_question": "How is the sequence encoded?",
+                    "purpose": long_intent,
+                    "ordered_operations": [{
+                        "predicate": "author_specification",
+                        "description": long_intent,
+                    }],
+                },
+            }],
+        },
+    )
+
+    visible = _llm_visible_section_payload(section)
+    method_unit = visible["authoring_packets_v2"][0]["method_unit"]
+    assert len(method_unit["purpose"]) <= 320
+    assert method_unit["ordered_operations"] == []
+    assert len(method_unit["intent_hints"]) == 1
+    assert len(method_unit["intent_hints"][0]) <= 240
+    assert method_unit["intent_hints"][0] != long_intent
+
+
+def test_v2_merges_source_operation_variants_without_losing_conditions() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S4",
+        heading="Node encoding",
+        prompt_payload={
+            "section_id": "MA-S4",
+            "authoring_packets_v2": [{
+                "section_id": "MA-S4",
+                "paragraph_id": "paragraph:MA-S4:3",
+                "rhetorical_goal": "encode nodes",
+                "ordered_targets": [],
+                "method_unit": {
+                    "authority": "mismatch_pending",
+                    "ordered_operations": [
+                        {
+                            "source_span_id": "span:models/GraphMixer.py:118:118",
+                            "predicate": "concatenates",
+                            "subject": "GraphMixer",
+                            "operands": ["edge features", "time features"],
+                            "result": "combined_features",
+                            "guard": "",
+                            "conditions": [],
+                        },
+                        {
+                            "source_span_id": "span:models/GraphMixer.py:118:118",
+                            "predicate": "concatenates",
+                            "subject": "GraphMixer",
+                            "operands": ["edge features", "time features"],
+                            "result": "combined_features",
+                            "guard": "case_study",
+                            "conditions": ["case_study"],
+                        },
+                    ],
+                },
+            }],
+        },
+    )
+
+    visible = _llm_visible_section_payload(section)
+    method_unit = visible["authoring_packets_v2"][0]["method_unit"]
+    operations = method_unit["ordered_operations"]
+    assert method_unit["surface_mode"] == "mismatch_statement"
+    assert len(operations) == 1
+    assert operations[0].get("conditions") not in (["case_study"], "case_study")
+    assert "case_study" not in str(operations[0])
+    assert operations[0]["predicate"] == "concatenates"
+
+
+def test_v2_filters_membership_target_but_keeps_scientific_operation() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S5",
+        heading="Downstream prediction",
+        prompt_payload={
+            "section_id": "MA-S5",
+            "authoring_packets_v2": [{
+                "section_id": "MA-S5",
+                "paragraph_id": "paragraph:MA-S5:1",
+                "rhetorical_goal": "readout",
+                "ordered_targets": [
+                    {
+                        "target_kind": "slot",
+                        "semantic_atom": "(src_node_id, dst_node_id) in edge_memories",
+                        "conditions": ["(src_node_id, dst_node_id) in edge_memories"],
+                        "surface_mode": "repository_statement",
+                    },
+                    {
+                        "target_kind": "slot",
+                        "semantic_atom": "mean pooling over the sequence dimension",
+                        "surface_mode": "repository_statement",
+                    },
+                ],
+                "method_unit": {
+                    "authority": "code_equivalent",
+                    "ordered_operations": [
+                        {
+                            "source_span_id": "span:model.py:40:42",
+                            "predicate": "aggregates",
+                            "operands": ["sequence embeddings"],
+                            "result": "fixed-size node embedding",
+                        },
+                        {
+                            "source_span_id": "span:model.py:80:81",
+                            "predicate": "branches_on",
+                            "operands": ["(src_node_id, dst_node_id)"],
+                            "result": "in edge_memories",
+                        },
+                    ],
+                },
+            }],
+        },
+    )
+    visible = _llm_visible_section_payload(section)
+    packet = visible["authoring_packets_v2"][0]
+    atoms = [item.get("semantic_atom") for item in packet["ordered_targets"]]
+    assert "mean pooling over the sequence dimension" in atoms
+    assert not any("edge_memories" in str(item) for item in packet["ordered_targets"])
+    operations = packet["method_unit"]["ordered_operations"]
+    assert any(item.get("predicate") == "aggregates" for item in operations)
+    assert not any("edge_memories" in str(item) for item in operations)
+
+
+def test_formula_placeholder_replacement_preserves_formalizer_block_verbatim() -> None:
+    block = "$$\n\\bar{p}=p+e_{doc}\n$$"
+    rendered, failures = splice_formula_placeholders(
+        "The augmented passage is [[FORMULA:package:augmentation]].",
+        [{"package_id": "package:augmentation", "markdown_block": block}],
+        required_package_ids=("package:augmentation",),
+        allowed_package_ids=("package:augmentation",),
+    )
+    assert failures == ()
+    assert rendered == f"The augmented passage is {block}."
+    assert block in rendered
+
+    _, wrong_consumer = splice_formula_placeholders(
+        "[[FORMULA:package:augmentation]]",
+        [{"package_id": "package:augmentation", "markdown_block": block}],
+        required_package_ids=("package:augmentation",),
+        allowed_package_ids=("package:other",),
+    )
+    assert "formula_placeholder_wrong_consumer:package:augmentation" in wrong_consumer
+
+
+def test_splice_strips_formula_memo_wrapper_to_display_math() -> None:
+    latex = r"\Delta t = f(\tau)"
+    rendered, failures = splice_formula_placeholders(
+        "The step is [[FORMULA:pkg-s5]].",
+        [{
+            "package_id": "pkg-s5",
+            "latex": latex,
+            "markdown_block": (
+                "### Core\n\n"
+                f"$$\n{latex}\n$$\n\n"
+                "**Symbol Definitions:**\n* step size"
+            ),
+        }],
+        required_package_ids=("pkg-s5",),
+        allowed_package_ids=("pkg-s5",),
+    )
+    assert failures == ()
+    assert rendered == f"The step is $$\n{latex}\n$$."
+    assert "###" not in rendered
+    assert "Symbol Definitions" not in rendered
+
+
+def test_splice_wraps_inline_latex_as_display_math_block() -> None:
+    latex = r"loss_i = -pos_sim + \operatorname{logsumexp}(all_sims, dim=0)"
+    rendered, failures = splice_formula_placeholders(
+        "The objective is [[FORMULA:opfp:MA-S4:1]].",
+        [{"package_id": "opfp:MA-S4:1", "latex": latex, "markdown_block": latex}],
+        required_package_ids=("opfp:MA-S4:1",),
+        allowed_package_ids=("opfp:MA-S4:1",),
+    )
+    assert failures == ()
+    assert "[[FORMULA:" not in rendered
+    assert f"$$\n{latex}\n$$" in rendered
+
+
+def test_source_fact_formula_block_witnesses_its_operation_slot_once() -> None:
+    block = "$$\nloss_i = -pos_sim + \\operatorname{logsumexp}(all_sims, dim=0)\n$$"
+    fact_id = "fact-O-METHOD-MAINLINE-01-node:loss"
+    slot_id = f"slot:{fact_id}"
+    package_id = "opfp:section:loss"
+    transaction = {
+        "paragraph_id": "paragraph:section:loss",
+        "paragraph_markdown": f"The contrastive objective is defined as:\n{block}",
+        "used_formula_package_ids": [package_id],
+        "witnesses": [{
+            "witness_kind": "formula",
+            "target_id": package_id,
+            "exact_text": block,
+        }],
+    }
+    plan_row = {
+        "required_publication_slot_ids": [slot_id],
+        "required_facet_ids": [],
+        "formula_obligation_ids": ["formula:facet:loss"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": slot_id,
+            "semantic_atom": "compute formula pos sim log sum exp all sims dim loss",
+            "allowed_anchor_ids": [fact_id],
+        }, {
+            "target_kind": "formula",
+            "target_id": "formula:facet:loss",
+            "semantic_atom": "formal expression",
+        }]},
+    }
+    package = {
+        "package_id": package_id,
+        "obligation_id": "formula:facet:loss",
+        "consumer_paragraph_id": transaction["paragraph_id"],
+        "bound_fact_ids": [fact_id],
+        "markdown_block": block,
+        "latex": "loss_i = -pos_sim + \\operatorname{logsumexp}(all_sims, dim=0)",
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+    }
+
+    bound = bind_paragraph_witnesses(
+        transaction,
+        plan_row=plan_row,
+        formula_packages=[package],
+    )
+
+    slot_witnesses = [
+        item for item in bound["witnesses"]
+        if item["witness_kind"] == "slot"
+    ]
+    assert bound["rendered_slot_ids"] == [slot_id]
+    assert slot_witnesses == [{
+        "witness_kind": "slot",
+        "target_id": slot_id,
+        "exact_text": block,
+    }]
+    assert bound["witnesses"].count({
+        "witness_kind": "formula",
+        "target_id": package_id,
+        "exact_text": block,
+    }) == 1
+
+
+def test_exact_canonical_formula_block_recovers_lost_placeholder() -> None:
+    block = "$$\ny = x + z\n$$"
+    transaction = PublicationMethodParagraphOutputV1(
+        paragraph_id="paragraph:section:formula",
+        paragraph_markdown=f"The operation is specified by:\n{block}",
+    )
+    package = {
+        "package_id": "opfp:section:formula",
+        "obligation_id": "formula:section:formula",
+        "consumer_paragraph_id": transaction.paragraph_id,
+        "markdown_block": block,
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+    }
+
+    recovered, package_ids = _recover_exact_formula_block_representation(
+        transaction,
+        missing_failures=("formula_placeholder_missing:opfp:section:formula",),
+        formula_packages=[package],
+    )
+
+    assert package_ids == (package["package_id"],)
+    assert recovered.used_formula_package_ids == [package["package_id"]]
+    assert recovered.witnesses[0].target_id == package["package_id"]
+    assert recovered.witnesses[0].exact_text == block
+
+
+def test_inline_latex_without_display_math_recovers_canonical_block() -> None:
+    latex = r"\pi_{t+1} = (1-\alpha) \pi_t + \alpha r_t"
+    block = f"$$\n{latex}\n$$"
+    transaction = PublicationMethodParagraphOutputV1(
+        paragraph_id="paragraph:section:formula",
+        paragraph_markdown=f"The recurrence is {latex} on the recorded path.",
+    )
+    package = {
+        "package_id": "opfp:section:formula",
+        "obligation_id": "formula:section:formula",
+        "consumer_paragraph_id": transaction.paragraph_id,
+        "markdown_block": block,
+        "latex": latex,
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+    }
+
+    recovered, package_ids = _recover_exact_formula_block_representation(
+        transaction,
+        missing_failures=("formula_placeholder_missing:opfp:section:formula",),
+        formula_packages=[package],
+    )
+
+    assert package_ids == (package["package_id"],)
+    assert recovered.paragraph_markdown.count(block) == 1
+    assert recovered.paragraph_markdown.count(latex) == 1
+    assert recovered.used_formula_package_ids == [package["package_id"]]
+    assert recovered.witnesses[0].exact_text == block
+
+
+def test_binder_recovers_unique_omitted_slot_from_semantic_sentence() -> None:
+    transaction = {
+        "paragraph_id": "paragraph:method:step",
+        "paragraph_markdown": (
+            "The encoder computes a weighted sum and returns the score."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:score"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:score",
+            "semantic_atom": "encoder computes a weighted sum result score",
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:score"]
+    assert bound["witnesses"] == [{
+        "witness_kind": "slot",
+        "target_id": "slot:score",
+        "exact_text": transaction["paragraph_markdown"],
+    }]
+
+
+def test_binder_does_not_bind_ambiguous_omitted_slot_sentence() -> None:
+    sentence = "The encoder computes a weighted sum and returns the score."
+    transaction = {
+        "paragraph_id": "paragraph:method:step",
+        "paragraph_markdown": f"{sentence} {sentence}",
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:score"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:score",
+            "semantic_atom": "encoder computes a weighted sum result score",
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == []
+    assert bound["witnesses"] == []
+
+
+def test_binder_allows_one_sentence_to_witness_two_closed_facets() -> None:
+    sentence = (
+        "The dense retriever produces candidate passage embeddings for the query."
+    )
+    transaction = {
+        "paragraph_id": "paragraph:method:pipeline",
+        "paragraph_markdown": sentence,
+        "rendered_from_facet_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_facet_ids": ["facet:pipeline", "facet:retrieval"],
+        "witness_contract": {"targets": [
+            {
+                "target_kind": "facet",
+                "target_id": "facet:pipeline",
+                "semantic_atom": "dense retriever produces candidate passage embeddings",
+            },
+            {
+                "target_kind": "facet",
+                "target_id": "facet:retrieval",
+                "semantic_atom": "retrieval uses a dense retriever for candidate passages",
+            },
+        ]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_from_facet_ids"] == [
+        "facet:pipeline",
+        "facet:retrieval",
+    ]
+    assert [item["target_id"] for item in bound["witnesses"]] == [
+        "facet:pipeline",
+        "facet:retrieval",
+    ]
+    assert all(item["exact_text"] in sentence for item in bound["witnesses"])
 
 
 class _RecordingCaller:
@@ -335,6 +752,92 @@ class WriteMethodBySectionsBasicTests(unittest.TestCase):
             result.writer_repair_transaction_rejections[0]["reason"],
             "writer_unsupported_positive_regressed",
         )
+
+    def test_formula_placeholder_failure_enters_writer_content_repair(self) -> None:
+        formula_block = "$$\nL = q + k\n$$"
+        package = {
+            "package_id": "opfp:test:1",
+            "markdown_block": formula_block,
+            "latex": "L = q + k",
+            "consumer_paragraph_id": "MA-S1:p1",
+            "purpose": "test operation",
+            "authority_status": "code_verified",
+            "formula_lane": "repository_derived",
+            "review_status": "accepted",
+        }
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Encoder",
+            publication_mode=True,
+            argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+            prompt_payload={
+                "writer_view": {
+                    "mechanism_authoring_packet": {
+                        "facets": [],
+                        "required_facet_ids": [],
+                        "formula_packages": [package],
+                    },
+                },
+                "formula_packages": [package],
+                "formula_obligations": [],
+                "paragraph_transaction_required": True,
+                "formula_placeholders_required": True,
+                "binding_contract": {
+                    "used_argument_unit_ids": [],
+                    "used_claim_ids": [],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": [],
+                    "allowed_paragraph_ids": ["MA-S1:p1"],
+                    "allowed_formula_package_ids": ["opfp:test:1"],
+                },
+            },
+        )
+
+        def payload(markdown: str) -> str:
+            return json.dumps({
+                "section_id": "MA-S1",
+                # Exercise the paragraph-preservation bridge: some providers
+                # return only paragraph transactions on a formula failure.
+                "section_markdown": "",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": markdown,
+                }],
+            })
+
+        # The initial response and the representation retry both omit the
+        # placeholder.  The third response is reached only through the
+        # bounded Writer-owned content repair path.
+        caller = _RecordingCaller([
+            _response(text=payload("The operation is described.")),
+            _response(text=payload("The operation is described.")),
+            _response(text=payload(
+                "The operation is described [[FORMULA:opfp:test:1]]."
+            )),
+        ])
+
+        result = write_publication_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+        )
+
+        self.assertEqual(len(caller.calls), 3)
+        repair_payload = caller.calls[2][1].input_payload["writer_section_repair"]
+        self.assertEqual(
+            repair_payload["missing_formula_witnesses"],
+            ["[[FORMULA:opfp:test:1]]"],
+        )
+        self.assertIn(
+            "Do not write or alter the mathematical block",
+            repair_payload["formula_placeholder_instruction"],
+        )
+        self.assertNotIn(formula_block, json.dumps(caller.calls[2][1].input_payload))
+        self.assertEqual(result.aggregate.writer_repair_rounds, 1)
+        self.assertEqual(result.aggregate.writer_repair_commits, 1)
+        self.assertEqual(len(result.outputs), 1)
+        self.assertIn(formula_block, result.outputs[0].section_markdown)
 
 
 class FinishReasonLengthEscalationTests(unittest.TestCase):
@@ -1009,10 +1512,8 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
         item = schema["properties"]["new_research_requests"]["items"]
         self.assertNotIn("candidate_symbols_or_terms", item["required"])
 
-    def test_publication_schema_requires_concept_payload_when_binding_present(self) -> None:
-        """Stage 5: when the callback prototype carries a concept_binding,
-        the request must name the concept key, its missing parts, and the
-        evidence refs used — the researcher needs the semantic gap."""
+    def test_publication_schema_keeps_concept_sidecar_fields_optional(self) -> None:
+        """Harness-owned concept bindings are restored after Writer parsing."""
         section = WriterSectionInput(
             section_id="MA-S1",
             heading="Transformation and output",
@@ -1063,9 +1564,9 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
 
         schema = caller.calls[0][1].response_json_schema
         item = schema["properties"]["new_research_requests"]["items"]
-        self.assertIn("concept_key", item["required"])
-        self.assertIn("missing_parts", item["required"])
-        self.assertIn("evidence_refs_used", item["required"])
+        self.assertNotIn("concept_key", item["required"])
+        self.assertNotIn("missing_parts", item["required"])
+        self.assertNotIn("evidence_refs_used", item["required"])
 
     def test_stop_response_with_wrong_section_binding_is_rejected(self) -> None:
         section = WriterSectionInput(
@@ -2228,6 +2729,70 @@ class ParagraphTransactionTests(unittest.TestCase):
         self.assertEqual(failures, [])
         self.assertEqual(len(caller.calls), 2)
         self.assertEqual(len(normalized.paragraphs[0].witnesses), 1)
+
+    def test_sidecar_restores_omitted_target_before_binder(self) -> None:
+        section = WriterSectionInput(
+            section_id="MA-S1",
+            heading="Ranking",
+            publication_mode=True,
+            argument_graph={"paragraphs": [{
+                "paragraph_id": "MA-S1:p1",
+                "required_facet_ids": ["facet:ranking"],
+                "witness_contract": {"targets": [{
+                    "target_kind": "facet",
+                    "target_id": "facet:ranking",
+                    "semantic_atom": "embedding-based reranking formulation",
+                }]},
+            }]},
+            prompt_payload={"writer_view": {"mechanism_authoring_packet": {"facets": []}}},
+        )
+        output = PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown=(
+                    "The model produces embedding-based reranking scores. "
+                    "This embedding-based reranking representation is used downstream."
+                ),
+            )],
+        )
+        binder_json = json.dumps({
+            "paragraph_id": "MA-S1:p1",
+            "witnesses": [{
+                "witness_kind": "facet",
+                "target_id": "facet:ranking",
+                "exact_text": "The model produces embedding-based reranking scores.",
+            }],
+            "unbound_target_ids": [],
+        })
+        caller = _RecordingCaller([_response(text=binder_json, completion_tokens=3)])
+
+        targets = paragraph_binding_targets(
+            output.paragraphs[0],
+            plan_row=section.argument_graph["paragraphs"][0],
+        )
+        self.assertEqual(
+            [(item["witness_kind"], item["target_id"]) for item in targets],
+            [("facet", "facet:ranking")],
+        )
+        normalized, failures = _normalize_publication_paragraph_transaction(
+            output,
+            section=section,
+            require_transactions=True,
+            binder_caller=caller,
+            binder_base_config=_base_config(),
+        )
+
+        self.assertEqual(failures, [])
+        self.assertEqual(len(caller.calls), 1)
+        self.assertEqual(
+            normalized.paragraphs[0].rendered_from_facet_ids,
+            ["facet:ranking"],
+        )
+        self.assertEqual(
+            normalized.paragraphs[0].witnesses[0].exact_text,
+            "The model produces embedding-based reranking scores.",
+        )
 
     def test_binder_accepts_single_prefix_unbound_wire_form(self) -> None:
         transaction = PublicationMethodParagraphOutputV1(

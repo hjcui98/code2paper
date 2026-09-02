@@ -2263,6 +2263,17 @@ def _phrase_present(text: str, phrase: str) -> bool:
         for index in range(max(0, len(text_tokens) - width + 1))
     ):
         return True
+    from code2paper.agentic.method_proposition_provider import candidate_qualifier_phrase
+
+    reader = candidate_qualifier_phrase(phrase)
+    if reader and reader != phrase:
+        reader_tokens = re.findall(r"[a-z0-9_]+", reader.lower())
+        reader_width = len(reader_tokens)
+        if reader_tokens and any(
+            text_tokens[index:index + reader_width] == reader_tokens
+            for index in range(max(0, len(text_tokens) - reader_width + 1))
+        ):
+            return True
     # Code conditions are often rendered as equivalent paper prose, e.g.
     # ``knn_method in ['ivf', 'brute_force']`` becomes "when knn_method is
     # either 'ivf' or 'brute_force'".  Permit that narrow paraphrase only when

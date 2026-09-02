@@ -60,6 +60,14 @@ class WriterSectionRepairPacketV1(_RepairModel):
     planner_drafts: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     facet_policies: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     formula_packages: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    # Paragraph-local transaction defects are projected as reader-facing
+    # semantic targets.  The Writer can repair the owning paragraph without
+    # copying Harness facet/slot/edge ids; the Harness keeps those ids in the
+    # private sidecar and merges untouched valid siblings after the retry.
+    paragraph_transaction_repairs: tuple[dict[str, Any], ...] = Field(
+        default_factory=tuple
+    )
+    formula_placeholder_instruction: str = ""
     previous_progress: dict[str, int]
     transaction_failure: str = ""
 
@@ -72,6 +80,7 @@ def build_writer_section_repair_packet(
     writer_view: dict[str, Any],
     progress: "WriterRepairProgressV1",
     failures: list[str] | tuple[str, ...],
+    paragraph_transaction_repairs: Any = (),
 ) -> WriterSectionRepairPacketV1:
     """Project deterministic Writer failures into a closed, typed packet."""
 
@@ -113,15 +122,39 @@ def build_writer_section_repair_packet(
     missing_concepts = tuple(sorted(
         set(writer_view.get("required_concept_keys") or ()) - rendered_concepts
     ))
-    missing_formulas = tuple(sorted(
+    packet = writer_view.get("mechanism_authoring_packet") or {}
+    packet_formula_packages = (
+        packet.get("formula_packages")
+        if isinstance(packet, dict) else ()
+    ) or ()
+    visible_formula_packages = tuple(
+        item for item in (
+            writer_view.get("formula_packages")
+            or packet_formula_packages
+            or ()
+        )
+        if isinstance(item, dict)
+    )
+    missing_formula_witnesses = {
         str(item.get("obligation_id") or item)
         for item in (writer_view.get("formula_obligations") or ())
         if (
             isinstance(item, dict)
             and str(item.get("outcome") or "") == "unresolved"
         )
-    ))
-    packet = writer_view.get("mechanism_authoring_packet") or {}
+    }
+    missing_formula_placeholders: set[str] = set()
+    for package in visible_formula_packages:
+        package_id = str(package.get("package_id") or "").strip()
+        if not package_id:
+            continue
+        placeholder = str(
+            package.get("placeholder") or f"[[FORMULA:{package_id}]]"
+        ).strip()
+        if placeholder and placeholder not in incumbent_text:
+            missing_formula_witnesses.add(placeholder)
+            missing_formula_placeholders.add(placeholder)
+    missing_formula_values = tuple(sorted(missing_formula_witnesses))
     packet_facets = (
         packet.get("facets") if isinstance(packet, dict) else ()
     ) or ()
@@ -139,7 +172,14 @@ def build_writer_section_repair_packet(
         if not isinstance(facet, dict):
             continue
         facet_id = str(facet.get("facet_id") or "")
-        semantic_values: list[str] = [str(facet.get("exact_source_quote") or "")]
+        semantic_values: list[str] = [
+            str(facet.get("exact_source_quote") or ""),
+            # The LLM-visible compact packet carries a reader-facing gist in
+            # place of the private semantic_fields mapping.  Treat it as a
+            # repair hint only; the final transaction Binder still checks the
+            # frozen paragraph against the full sidecar contract.
+            str(facet.get("gist") or ""),
+        ]
         fields = facet.get("semantic_fields") or {}
         if isinstance(fields, dict):
             semantic_values.extend(
@@ -219,7 +259,7 @@ def build_writer_section_repair_packet(
         incumbent_text=incumbent_text,
         missing_proposition_ids=missing,
         missing_concept_keys=missing_concepts,
-        missing_formula_witnesses=missing_formulas,
+        missing_formula_witnesses=missing_formula_values,
         missing_required_facet_ids=missing_facets,
         unsupported_spans=unsupported_spans,
         caveat_failures=tuple(caveat_spans),
@@ -250,8 +290,17 @@ def build_writer_section_repair_packet(
             if isinstance(item, dict)
         ),
         formula_packages=tuple(
-            item for item in (writer_view.get("formula_packages") or ())
+            visible_formula_packages
+        ),
+        paragraph_transaction_repairs=tuple(
+            item for item in (paragraph_transaction_repairs or ())
             if isinstance(item, dict)
+        ),
+        formula_placeholder_instruction=(
+            "Emit each exact token listed in missing_formula_witnesses in its "
+            "owning paragraph. Do not write or alter the mathematical block; "
+            "the harness inserts it verbatim."
+            if missing_formula_placeholders else ""
         ),
         previous_progress={
             "unsafe_uncaveated_positives": progress.unsafe_uncaveated_positives,
@@ -261,6 +310,7 @@ def build_writer_section_repair_packet(
             "code_trace_style_failures": progress.code_trace_style_failures,
             "duplicate_sentences": progress.duplicate_sentences,
             "missing_required_facets": progress.missing_required_facets,
+            "missing_formula_placeholders": progress.missing_formula_placeholders,
         },
         transaction_failure=next((
             item.removeprefix("transaction:") for item in failures
@@ -278,6 +328,7 @@ class WriterRepairProgressV1:
     code_trace_style_failures: int
     duplicate_sentences: int
     missing_required_facets: int = 0
+    missing_formula_placeholders: int = 0
 
     @property
     def validated_propositions(self) -> int:
@@ -289,6 +340,7 @@ def assess_writer_section_progress(
     *,
     writer_view: dict[str, Any],
     rendered_proposition_ids: list[str] | tuple[str, ...] = (),
+    rendered_formula_package_ids: list[str] | tuple[str, ...] | None = None,
 ) -> tuple[WriterRepairProgressV1, list[str]]:
     lowered = text.casefold()
     failures: list[str] = []
@@ -362,7 +414,10 @@ def assess_writer_section_progress(
         if not isinstance(facet, dict):
             continue
         facet_id = str(facet.get("facet_id") or "")
-        semantic_values: list[str] = [str(facet.get("exact_source_quote") or "")]
+        semantic_values: list[str] = [
+            str(facet.get("exact_source_quote") or ""),
+            str(facet.get("gist") or ""),
+        ]
         fields = facet.get("semantic_fields") or {}
         if isinstance(fields, dict):
             for value in fields.values():
@@ -390,6 +445,41 @@ def assess_writer_section_progress(
                     missing_constraints += 1
     if missing_constraints:
         failures.append("immutable_constraints_missing")
+    formula_packages = (
+        writer_view.get("formula_packages")
+        or (packet.get("formula_packages") if isinstance(packet, dict) else ())
+        or ()
+    )
+    if rendered_formula_package_ids is None:
+        missing_formula_placeholders = sum(
+            1
+            for package in formula_packages
+            if isinstance(package, dict)
+            and (
+                str(
+                    package.get("placeholder")
+                    or (
+                        f"[[FORMULA:{package.get('package_id')}]]"
+                        if str(package.get("package_id") or "").strip()
+                        else ""
+                    )
+                ).casefold()
+                not in lowered
+            )
+        )
+    else:
+        consumed_formula_ids = {
+            str(value).strip() for value in rendered_formula_package_ids if str(value).strip()
+        }
+        missing_formula_placeholders = sum(
+            1
+            for package in formula_packages
+            if isinstance(package, dict)
+            and str(package.get("package_id") or "").strip()
+            not in consumed_formula_ids
+        )
+    if missing_formula_placeholders:
+        failures.append("formula_placeholders_missing")
     code_tokens = _CODE_TOKEN.findall(text)
     sentences = [
         item.strip().casefold()
@@ -410,6 +500,7 @@ def assess_writer_section_progress(
         code_trace_style_failures=code_trace,
         duplicate_sentences=duplicates,
         missing_required_facets=missing_facet_count,
+        missing_formula_placeholders=missing_formula_placeholders,
     ), failures
 
 
@@ -419,5 +510,7 @@ def repair_is_monotonic(incumbent: WriterRepairProgressV1, candidate: WriterRepa
     if candidate.constraint_failures > incumbent.constraint_failures:
         return False
     if candidate.missing_required_facets > incumbent.missing_required_facets:
+        return False
+    if candidate.missing_formula_placeholders > incumbent.missing_formula_placeholders:
         return False
     return candidate < incumbent

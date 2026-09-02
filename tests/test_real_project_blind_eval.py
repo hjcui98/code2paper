@@ -36,6 +36,31 @@ def test_blind_eval_keeps_original_out_of_generation_and_labels_blocked_candidat
         run / "artifacts/10_run/agentic_run_evaluation_report.json",
         {"traceability_passed": True},
     )
+    _write_json(
+        run / "artifacts/06_authoring/formalization_section_results_v1.json",
+        {
+            "sections": [{
+                "section_id": "MA-S1",
+                "formula_obligations": [{
+                    "obligation_id": "formula:MA-S1:1",
+                    "consumer_paragraph_id": "paragraph:MA-S1:1",
+                    "expectation": "required",
+                }],
+                "packages": [],
+            }],
+            "formalizer_call_traces": [{
+                "section_id": "MA-S1",
+                "call_traces": [{
+                    "proposed_package_count": 1,
+                    "accepted_package_count": 0,
+                    "status": "guards_failed",
+                    "guard_failures": [
+                        "pkg:rejected:formula_package_consumer_route_ambiguous"
+                    ],
+                }],
+            }],
+        },
+    )
     manifest = tmp_path / "manifest.json"
     _write_json(
         manifest,
@@ -61,6 +86,10 @@ def test_blind_eval_keeps_original_out_of_generation_and_labels_blocked_candidat
     assert case["generated_method_source"] == "blocked_candidate_not_for_delivery"
     assert case["generated_intent_concepts"]["coverage"] == 1.0
     assert case["original_role"] == "evaluation_only"
+    assert case["formula_funnel"]["proposed_packages"] == 1
+    assert case["formula_funnel"]["rejected_packages"] == 1
+    assert case["formula_funnel"]["route_ambiguous_failures"] == 1
+    assert case["replay_diagnostics"]["formula_funnel"] == case["formula_funnel"]
 
 
 def test_blind_eval_rejects_original_digest_in_generation_manifest(tmp_path: Path) -> None:

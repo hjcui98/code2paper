@@ -297,8 +297,10 @@ def test_brief_mode_callback_schema_forces_research_requests_without_unanchored_
     requests = schema["properties"]["new_research_requests"]
     assert requests["minItems"] == 1
     item = requests["items"]
-    assert "target_brief_ids" in item["required"]
-    assert "target_clause_ids" in item["required"]
+    # These are private Harness sidecar bindings; the Writer is not required
+    # to copy internal target IDs into its callback JSON.
+    assert "target_brief_ids" not in item["required"]
+    assert "target_clause_ids" not in item["required"]
     assert item["properties"]["target_brief_ids"]["minItems"] == 1
     assert item["properties"]["missing_rhetorical_move"]["enum"] == [
         "mechanism_overview"

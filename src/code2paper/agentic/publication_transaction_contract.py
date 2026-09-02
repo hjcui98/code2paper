@@ -12,7 +12,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -27,6 +27,115 @@ _POLARITY_RE = re.compile(
     r"\b(?:threshold|comparison)_(gt|gte|lt|lte)_(selects|excludes)\b",
     re.I,
 )
+_FORMULA_PLACEHOLDER_RE = re.compile(r"\[\[FORMULA:([A-Za-z0-9_.:-]+)\]\]")
+
+
+def splice_formula_placeholders(
+    markdown: str,
+    packages: Any,
+    *,
+    required_package_ids: Any = (),
+    allowed_package_ids: Any = None,
+    require_all: bool = False,
+) -> tuple[str, tuple[str, ...]]:
+    """Replace formula placeholders with the stored display block verbatim.
+
+    Formula text crosses the Writer boundary as a package-owned artifact, not
+    as model-authored prose.  Unknown, duplicate, missing, or malformed
+    package routes fail closed before Binder/transaction validation.  The
+    replacement deliberately does not strip or normalize the package block.
+    """
+
+    rows = tuple(packages or ()) if not isinstance(packages, (str, bytes, Mapping)) else ()
+    package_by_id: dict[str, Any] = {}
+    failures: list[str] = []
+    for package in rows:
+        raw_package_id = (
+            package.get("package_id", "") if isinstance(package, Mapping)
+            else getattr(package, "package_id", "")
+        )
+        package_id = str(raw_package_id or "").strip()
+        if not package_id:
+            failures.append("formula_package_id_missing")
+            continue
+        if package_id in package_by_id:
+            failures.append(f"formula_package_id_duplicate:{package_id}")
+            continue
+        package_by_id[package_id] = package
+
+    required = {
+        str(item).strip() for item in (required_package_ids or ())
+        if str(item).strip()
+    }
+    allowed = None if allowed_package_ids is None else {
+        str(item).strip() for item in (allowed_package_ids or ())
+        if str(item).strip()
+    }
+    used: list[str] = []
+    spans: list[tuple[int, int, str]] = []
+    for match in _FORMULA_PLACEHOLDER_RE.finditer(str(markdown or "")):
+        package_id = match.group(1).strip()
+        if package_id not in package_by_id:
+            failures.append(f"formula_placeholder_unknown_package:{package_id}")
+            continue
+        if allowed is not None and package_id not in allowed:
+            failures.append(f"formula_placeholder_wrong_consumer:{package_id}")
+            continue
+        if package_id in used:
+            failures.append(f"formula_placeholder_duplicate:{package_id}")
+            continue
+        used.append(package_id)
+        spans.append((match.start(), match.end(), package_id))
+
+    expected = required or (set(package_by_id) if require_all else set())
+    missing = sorted(expected - set(used))
+    failures.extend(f"formula_placeholder_missing:{package_id}" for package_id in missing)
+    if failures:
+        return str(markdown or ""), tuple(dict.fromkeys(failures))
+
+    replacements: list[tuple[int, int, str]] = []
+    for start, end, package_id in spans:
+        package = package_by_id[package_id]
+        block = (
+            package.get("markdown_block") if isinstance(package, Mapping)
+            else getattr(package, "markdown_block", "")
+        )
+        latex = (
+            package.get("latex") if isinstance(package, Mapping)
+            else getattr(package, "latex", "")
+        )
+        latex = str(latex or "").strip()
+        from code2paper.agentic.formalization_agent import canonical_formula_markdown_block
+        if latex:
+            block = canonical_formula_markdown_block(latex)
+        else:
+            raw = str(block or "")
+            match = _DISPLAY_MATH_RE.search(raw)
+            if match:
+                inner = match.group(0).strip()
+                if inner.startswith("$$") and inner.endswith("$$"):
+                    inner = inner[2:-2].strip()
+                block = canonical_formula_markdown_block(inner) if inner else match.group(0)
+            elif raw.strip():
+                block = canonical_formula_markdown_block(raw)
+            else:
+                block = ""
+        if not block.strip():
+            failures.append(f"formula_package_block_empty:{package_id}")
+            continue
+        if not _DISPLAY_MATH_RE.search(block):
+            failures.append(f"formula_package_block_not_display_math:{package_id}")
+            continue
+        replacements.append((start, end, block))
+    if failures:
+        return str(markdown or ""), tuple(dict.fromkeys(failures))
+    result = str(markdown or "")
+    for start, end, block in reversed(replacements):
+        result = result[:start] + block + result[end:]
+    return result, ()
+
+
+insert_formula_blocks_verbatim = splice_formula_placeholders
 
 
 def _ids(values: Any) -> tuple[str, ...]:
@@ -49,13 +158,140 @@ def _digest(payload: Any) -> str:
 
 
 def _semantic_tokens(value: Any) -> set[str]:
-    return {
-        token.casefold()
-        for token in _SEMANTIC_TOKEN_RE.findall(str(value or ""))
-        if token.casefold() not in _ANCHOR_STOPWORDS and (
-            len(token) >= 3 or token.isdigit() or token.startswith(("Δ", "δ"))
-        )
-    }
+    """Return conservative lexical forms for paragraph-local matching.
+
+    Writer prose is allowed to paraphrase a MethodUnit, so ``embedding`` and
+    ``embeddings`` (or ``formulate`` and ``formulation``) must be comparable.
+    The matcher still keeps the raw token's identity and only removes a small
+    set of productive English suffixes; it is not a general-purpose semantic
+    similarity function and cannot authorize an unanchored target.
+    """
+
+    def forms(token: str) -> tuple[str, ...]:
+        value = token.casefold()
+        if value in _ANCHOR_STOPWORDS or (
+            len(value) < 3 and not value.isdigit() and not value.startswith(("δ", "Δ"))
+        ):
+            return ()
+        values = [value]
+        # Split identifiers into stable lexical pieces as well as retaining
+        # the identifier itself.  This lets a natural-language witness refer
+        # to ``passage_id_embeddings`` without making the whole identifier a
+        # required verbatim substring.
+        for part in re.split(r"[_\-]+|(?<=[a-z])(?=[A-Z])", token):
+            part = part.casefold()
+            if part and part not in _ANCHOR_STOPWORDS and (
+                len(part) >= 3 or part.isdigit() or part.startswith(("δ", "Δ"))
+            ):
+                values.append(part)
+
+        # Keep stems deliberately shallow.  The raw form remains above, so a
+        # short stem can only help when the surrounding target has enough
+        # independent overlap to pass _anchor_compatible's ratio gate.
+        for suffix in ("ization", "isation", "ation", "tion", "ment", "ing", "ers", "er", "ed", "es", "s"):
+            if value.endswith(suffix) and len(value) - len(suffix) >= 4:
+                values.append(value[:-len(suffix)])
+                break
+        aliases = {
+            "compute": "compute",
+            "computes": "compute",
+            "computed": "compute",
+            "computing": "compute",
+            "computation": "compute",
+            "calculate": "calculate",
+            "calculates": "calculate",
+            "calculated": "calculate",
+            "calculating": "calculate",
+            "normalize": "normalize",
+            "normalizes": "normalize",
+            "normalized": "normalize",
+            "normalizing": "normalize",
+            "normalization": "normalize",
+            "concatenate": "concatenate",
+            "concatenates": "concatenate",
+            "concatenated": "concatenate",
+            "concatenating": "concatenate",
+            "concatenation": "concatenate",
+            "reduce": "reduce",
+            "reduces": "reduce",
+            "reduced": "reduce",
+            "reducing": "reduce",
+            "reduction": "reduce",
+            "average": "average",
+            "averages": "average",
+            "averaged": "average",
+            "averaging": "average",
+            "sort": "sort",
+            "sorts": "sort",
+            "sorted": "sort",
+            "sorting": "sort",
+            "branch": "branch",
+            "branches": "branch",
+            "branched": "branch",
+            "branching": "branch",
+            "return": "return",
+            "returns": "return",
+            "returned": "return",
+            "returning": "return",
+            "output": "output",
+            "outputs": "output",
+            "embedding": "embed",
+            "embeddings": "embed",
+            "embedded": "embed",
+            "encodes": "encode",
+            "encoded": "encode",
+            "encoding": "encode",
+            "encoders": "encode",
+            "similarities": "similarity",
+            "scores": "score",
+            "weights": "weight",
+            "passages": "passage",
+            "documents": "document",
+            "positions": "position",
+            "enabled": "enable",
+            "enables": "enable",
+            "active": "enable",
+            "activates": "enable",
+            "yielding": "yield",
+            "yields": "yield",
+            "yielded": "yield",
+            "additive": "add",
+            "additively": "add",
+            "add": "add",
+            "adds": "add",
+            "added": "add",
+            "adding": "add",
+            "addition": "add",
+            "augment": "add",
+            "augments": "add",
+            "augmented": "add",
+            "augmenting": "add",
+            "combine": "combine",
+            "combines": "combine",
+            "combined": "combine",
+            "combining": "combine",
+            "control": "control",
+            "controls": "control",
+            "controlled": "control",
+            "controlling": "control",
+            "dimension": "dim",
+            "dimensions": "dim",
+            "yield": "return",
+            "rerank": "rank",
+            "reranking": "rank",
+            "reranked": "rank",
+            "reranker": "rank",
+            "rerankers": "rank",
+        }
+        alias = aliases.get(value)
+        if alias:
+            values.append(alias)
+        return tuple(dict.fromkeys(values))
+
+    result: set[str] = set()
+    for token in _SEMANTIC_TOKEN_RE.findall(str(value or "")):
+        result.update(forms(token))
+    return result
 
 
 def _anchor_compatible(witness: str, body: str, anchors: tuple[str, ...]) -> bool:
@@ -84,6 +320,94 @@ def _anchor_compatible(witness: str, body: str, anchors: tuple[str, ...]) -> boo
         if len(overlap) / denominator >= 0.35:
             return True
     return not anchors
+
+
+def _semantic_anchor_variants(semantic_atom: Any) -> tuple[str, ...]:
+    """Return bounded reader-language projections for legacy semantic atoms.
+
+    Older frozen MethodUnit plans serialized implementation operands directly
+    into ``semantic_atom`` (for example ``src``, ``shared_out`` and
+    ``dropout1``).  Those strings are closed sidecar metadata, but they are
+    not words a Writer is expected to reproduce.  The projections below are
+    deliberately pattern-gated and generic: they normalize only a known
+    representation mismatch, while the original atom and all source-backed
+    target ids remain part of the contract.
+    """
+
+    atom = str(semantic_atom or "").strip()
+    if not atom or atom.casefold() in {"formal expression", "formula"}:
+        return ()
+    lowered = atom.casefold()
+    tokens = _semantic_tokens(atom)
+    variants: list[str] = []
+
+    def add(value: str) -> None:
+        value = " ".join(str(value or "").split()).strip()
+        if value and value.casefold() != atom.casefold() and value not in variants:
+            variants.append(value)
+
+    # Legacy operation slots that exposed local variable names.
+    if (
+        "src" in tokens
+        and {"shared", "dedicated", "dropout"}.issubset(tokens)
+        and ("+" in lowered or "combine" in tokens or "combines" in tokens)
+    ):
+        add("attention dropout residual")
+    if (
+        "return" in tokens
+        and ("attn" in tokens or "attention" in tokens)
+        and "weight" in tokens
+    ):
+        add("return attention weights")
+
+    # Facet atoms can also be longer than one prose sentence.  These compact
+    # forms are activated only when several independent operation terms are
+    # present, so a generic document-id sentence cannot satisfy them.
+    if (
+        "contrastive" in tokens
+        and ("infonce" in tokens or {"info", "nce"}.issubset(tokens))
+        and ("loss" in tokens or "objective" in tokens)
+    ):
+        add("contrastive InfoNCE loss")
+    if (
+        ("retriever" in tokens or "retrieve" in tokens or "retrieval" in tokens)
+        and ("passage" in tokens or "embedding" in tokens or "embed" in tokens)
+    ):
+        # Keep the retriever marker itself in the compact form.  Adding
+        # ``passage`` and ``embedding`` here lets an unrelated sentence about
+        # passage embeddings satisfy a retriever facet because the tokenizer
+        # intentionally emits both noun and stem aliases.
+        add("dense retriever")
+    if (
+        "sinusoidal" in tokens
+        and ("position" in tokens or "positional" in tokens)
+        and ("encode" in tokens or "encoding" in tokens)
+    ):
+        if "structural" in tokens and ("augment" in tokens or "augmentation" in tokens):
+            add("structural augmentation sinusoidal positional encoding")
+        else:
+            add("sinusoidal positional encoding")
+    if "hybrid" in tokens and "attention" in tokens:
+        add("hybrid attention")
+        if {"transformer", "shared", "dedicated"}.issubset(tokens):
+            add("transformer shared dedicated attention")
+    if (
+        "dedicated" in tokens
+        and "attention" in tokens
+        and "hybrid" not in tokens
+        and ("masked" in tokens or "use" in tokens or "enable" in tokens)
+    ):
+        add("dedicated masked attention" if "masked" in tokens else "dedicated attention")
+    if (
+        "sinusoidal" not in tokens
+        and
+        ("position" in tokens or "positional" in tokens)
+        and ("add" in tokens or "enable" in tokens)
+        and ("encode" in tokens or "encoding" in tokens)
+    ):
+        add("position encoding")
+
+    return tuple(variants)
 
 
 def _polarity_signature(value: Any) -> tuple[str, str]:
@@ -152,6 +476,7 @@ def _witness_constraints_from_plan_row(
             semantic_atom = str(item.get("semantic_atom") or "").strip()
             conditions = _text_values(item.get("required_conditions"))
             polarity = str(item.get("required_polarity") or "unknown").strip()
+            paper_role = str(item.get("paper_role") or "").strip()
         else:
             kind = str(getattr(item, "target_kind", "") or "").strip()
             target_id = str(getattr(item, "target_id", "") or "").strip()
@@ -159,6 +484,7 @@ def _witness_constraints_from_plan_row(
             semantic_atom = str(getattr(item, "semantic_atom", "") or "").strip()
             conditions = _text_values(getattr(item, "required_conditions", ()))
             polarity = str(getattr(item, "required_polarity", "unknown") or "unknown").strip()
+            paper_role = str(getattr(item, "paper_role", "") or "").strip()
         if not kind or not target_id:
             continue
         result[(kind, target_id)] = {
@@ -166,6 +492,12 @@ def _witness_constraints_from_plan_row(
             "semantic_atom": semantic_atom,
             "conditions": conditions,
             "polarity": polarity,
+            "paper_role": paper_role,
+            "source_anchor_ids": _text_values(
+                item.get("allowed_anchor_ids")
+            ) if isinstance(item, Mapping) else _text_values(
+                getattr(item, "allowed_anchor_ids", ())
+            ),
         }
     return result
 
@@ -175,10 +507,13 @@ def _witness_satisfies_constraints(
     constraints: Mapping[str, Any],
 ) -> bool:
     semantic_atom = str(constraints.get("semantic_atom") or "").strip()
+    semantic_anchors = tuple(dict.fromkeys(
+        (semantic_atom, *_semantic_anchor_variants(semantic_atom))
+    ))
     if (
         semantic_atom
         and semantic_atom.casefold() not in {"formal expression", "formula"}
-        and not _anchor_compatible(witness, "", (semantic_atom,))
+        and not _anchor_compatible(witness, "", semantic_anchors)
     ):
         return False
     conditions = _text_values(constraints.get("conditions"))
@@ -270,6 +605,37 @@ def _formula_package_indexes(
     return package_by_id, package_by_obligation
 
 
+def _formula_package_terminal_disposition(package: Mapping[str, Any]) -> str:
+    """Return the one terminal formula state visible to downstream stages.
+
+    A package with an author-intent or review-required lane remains a review
+    item, not a Writer obligation.  Keeping this projection here prevents the
+    assessment, trace, and replay diagnostics from independently deciding
+    whether the same package is code-accepted.
+    """
+
+    review_status = str(package.get("review_status") or "").strip()
+    authority_status = str(package.get("authority_status") or "").strip()
+    formula_lane = str(package.get("formula_lane") or "").strip()
+    if review_status == "rejected":
+        return "failed"
+    if review_status == "accepted" and (
+        authority_status == "code_verified"
+        and formula_lane == "repository_derived"
+    ):
+        return "accepted"
+    if not review_status and authority_status in {"", "code_verified"} and formula_lane in {
+        "", "repository_derived"
+    }:
+        # Pre-V2 frozen artifacts did not persist all three disposition
+        # fields.  Preserve their accepted-package compatibility without
+        # weakening the explicit current-state rules above.
+        return "accepted"
+    if review_status == "not_applicable":
+        return "not_applicable"
+    return "review_required"
+
+
 def _formula_package_for_target(
     target_id: str,
     *,
@@ -279,6 +645,62 @@ def _formula_package_for_target(
     return package_by_id.get(target_id) or package_by_obligation.get(target_id)
 
 
+def _formula_package_for_source_fact_target(
+    target_id: str,
+    *,
+    local: Mapping[str, Any],
+    paragraph_id: str,
+    packages: tuple[Mapping[str, Any], ...],
+) -> Mapping[str, Any] | None:
+    """Return one accepted formula package that also proves a slot/edge.
+
+    A formula block may be the only exact rendered representation of an
+    operation slot.  Recovering that representation is safe only when the
+    target names the exact source fact bound by one accepted repository
+    package, that package has one owner paragraph, and the local semantic atom
+    overlaps the package symbols.  This is deliberately narrower than normal
+    semantic matching: a formula is never allowed to satisfy an unrelated
+    slot merely because both occur in the same paragraph.
+    """
+
+    value = str(target_id or "").strip()
+    if not value or not value.startswith(("slot:", "edge:")):
+        return None
+    source_fact_id = value.split(":", 1)[1].strip()
+    if not source_fact_id.startswith("fact-"):
+        return None
+    semantic_atom = str(local.get("semantic_atom") or "").strip()
+    semantic_tokens = _semantic_tokens(semantic_atom)
+    if not semantic_tokens or not semantic_tokens.intersection({
+        "compute", "calculation", "formula", "equation", "loss", "log",
+        "sum", "exp", "similarity", "sim", "score", "rank",
+    }):
+        return None
+
+    matches: list[Mapping[str, Any]] = []
+    for package in packages:
+        if str(package.get("authority_status") or "").strip() != "code_verified":
+            continue
+        if str(package.get("formula_lane") or "").strip() != "repository_derived":
+            continue
+        if str(package.get("review_status") or "").strip() != "accepted":
+            continue
+        consumer = str(package.get("consumer_paragraph_id") or "").strip()
+        if not consumer or consumer != paragraph_id:
+            continue
+        if source_fact_id not in _ids(package.get("bound_fact_ids")):
+            continue
+        block = str(package.get("markdown_block") or "").strip()
+        latex = str(package.get("latex") or "").strip()
+        if not block or not _DISPLAY_MATH_RE.search(block):
+            continue
+        formula_tokens = _semantic_tokens(f"{block} {latex}")
+        if len(semantic_tokens.intersection(formula_tokens)) < 2:
+            continue
+        matches.append(package)
+    return matches[0] if len(matches) == 1 else None
+
+
 def _binding_anchors(constraints: Mapping[str, Any]) -> tuple[str, ...]:
     """Project exact, semantic, and condition anchors for both Binder stages."""
 
@@ -286,6 +708,7 @@ def _binding_anchors(constraints: Mapping[str, Any]) -> tuple[str, ...]:
     semantic_atom = str(constraints.get("semantic_atom") or "").strip()
     if semantic_atom and semantic_atom.casefold() not in {"formal expression", "formula"}:
         values.append(semantic_atom)
+        values.extend(_semantic_anchor_variants(semantic_atom))
     values.extend(_text_values(constraints.get("conditions")))
     return tuple(dict.fromkeys(value for value in values if value))
 
@@ -328,11 +751,22 @@ def _resolve_unbound_target_key(
     value: str,
     target_keys: set[tuple[str, str]],
 ) -> tuple[str, str] | None:
-    """Resolve an unbound id in either kind-prefixed wire representation."""
+    """Resolve an unbound id in the closed target set.
 
-    kind, separator, target_id = str(value or "").partition(":")
+    Models sometimes omit the kind prefix even though the same target was
+    supplied in a typed contract.  Recover that representation only when the
+    bare id maps to exactly one closed target; a bare id shared by two kinds
+    remains invalid rather than being guessed.
+    """
+
+    raw_value = str(value or "").strip()
+    kind, separator, target_id = raw_value.partition(":")
     if not separator:
-        return None
+        bare_matches = tuple(
+            key for key in target_keys
+            if key[1] == raw_value
+        )
+        return bare_matches[0] if len(bare_matches) == 1 else None
     direct = _resolve_binding_target_key(kind, target_id, target_keys)
     if direct is not None:
         return direct
@@ -342,7 +776,7 @@ def _resolve_unbound_target_key(
     # that id directly (``rel:...``).  Accept it only when the complete value
     # is already the target id of exactly one declared target.
     matches = tuple(dict.fromkeys(
-        key for key in target_keys if key[1] == str(value or "").strip()
+        key for key in target_keys if key[1] == raw_value
     ))
     return matches[0] if len(matches) == 1 else None
 
@@ -355,10 +789,13 @@ def paragraph_binding_targets(
 ) -> tuple[dict[str, Any], ...]:
     """Return local contracts still eligible for a metadata-only Binder.
 
-    Only targets already declared by the Writer are returned. A Binder can
-    attach a witness to such a closed target, but it cannot invent a target or
-    turn an unanchored id into evidence. Targets without a local semantic
-    contract (and without an exact formula package) are deliberately omitted.
+    The Writer is not the authority for the paragraph's internal ids.  The
+    paragraph plan/MethodUnit sidecar supplies the closed required-target set;
+    Writer declarations are only additional representation proposals.  A
+    Binder can attach a witness to a supplied target, but it cannot invent a
+    target or turn an unanchored id into evidence. Targets without a local
+    semantic contract (and without an exact formula package) are deliberately
+    omitted so a malformed sidecar remains fail-closed.
     """
 
     if isinstance(transaction, Mapping):
@@ -371,49 +808,106 @@ def paragraph_binding_targets(
     declarations = _transaction_declarations(get)
     existing = _transaction_witness_keys(get)
     constraints = _witness_constraints_from_plan_row(plan_row)
-    package_by_id, package_by_obligation = _formula_package_indexes(formula_packages)
+    packages = tuple(item for item in formula_packages if isinstance(item, Mapping))
+    package_by_id, package_by_obligation = _formula_package_indexes(packages)
     rows: list[dict[str, Any]] = []
+    candidate_targets: list[tuple[str, str]] = []
+
+    # Required non-formula targets are restored from the paragraph sidecar,
+    # even when the Writer omitted their private ids.  The slot projection is
+    # intentionally the publication set; support slots remain in
+    # ordered_semantic_slot_ids for the Writer but are not hard prose targets.
+    required = required_targets_from_plan_row(plan_row)
+    for kind, target_ids in required.items():
+        for target_id in target_ids:
+            if kind == "formula":
+                package = package_by_obligation.get(target_id)
+                package_id = str(package.get("package_id") or "").strip() if package else ""
+                if package_id:
+                    candidate_targets.append((kind, package_id))
+                continue
+            candidate_targets.append((kind, target_id))
+
+    # A Writer declaration is only a proposal.  Keep it in the Binder's
+    # closed input when it names a sidecar-required target (or an already
+    # witnessed target for a legacy transaction); never let a sibling or
+    # invented id expand the paragraph contract.  In particular, a section
+    # response can contain ids from another paragraph because its structured
+    # schema is shared by all paragraph items.
+    required_keys: set[tuple[str, str]] = set()
+    for kind, target_ids in required.items():
+        for target_id in target_ids:
+            required_keys.add((kind, target_id))
+            if kind == "formula":
+                package = package_by_obligation.get(target_id)
+                package_id = str(package.get("package_id") or "").strip() if package else ""
+                if package_id:
+                    required_keys.add((kind, package_id))
+    # Small legacy/unit-test plan rows may carry the complete sidecar only as
+    # ``witness_contract.targets`` and omit the denormalized required_* lists.
+    # Those typed contract entries are still closed authority; they are not a
+    # license to accept arbitrary Writer declarations.
+    required_keys.update(constraints)
     for kind, target_ids in declarations.items():
         for target_id in target_ids:
-            if (kind, target_id) in existing:
-                continue
-            local = constraints.get((kind, target_id), {})
-            package = (
-                _formula_package_for_target(
-                    target_id,
-                    package_by_id=package_by_id,
-                    package_by_obligation=package_by_obligation,
+            key = (kind, target_id)
+            if key in required_keys or key in existing:
+                candidate_targets.append((kind, target_id))
+
+    seen_candidates: set[tuple[str, str]] = set()
+    paragraph_id = str(get("paragraph_id", "") or "").strip()
+    for kind, target_id in candidate_targets:
+        key = (kind, target_id)
+        if key in seen_candidates or key in existing:
+            continue
+        seen_candidates.add(key)
+        local = constraints.get(key, {})
+        package = (
+            _formula_package_for_target(
+                target_id,
+                package_by_id=package_by_id,
+                package_by_obligation=package_by_obligation,
+            )
+            if kind == "formula"
+            else _formula_package_for_source_fact_target(
+                target_id,
+                local=local,
+                paragraph_id=paragraph_id,
+                packages=packages,
+            )
+        )
+        if package is not None:
+            consumer = str(package.get("consumer_paragraph_id") or "").strip()
+            if consumer and paragraph_id and consumer != paragraph_id:
+                package = None
+        has_local_contract = bool(
+            local.get("exact")
+            or str(local.get("semantic_atom") or "").strip()
+            and str(local.get("semantic_atom") or "").strip().casefold()
+            not in {"formal expression", "formula"}
+            or local.get("conditions")
+            or str(local.get("polarity") or "unknown").strip().casefold()
+            not in {"", "unknown"}
+        )
+        if not has_local_contract and package is None:
+            continue
+        rows.append({
+            "witness_kind": kind,
+            "target_id": target_id,
+            "semantic_atom": str(local.get("semantic_atom") or ""),
+            "paper_role": str(local.get("paper_role") or ""),
+            "required_conditions": list(local.get("conditions") or ()),
+            "required_polarity": str(local.get("polarity") or "unknown"),
+            "allowed_exact_excerpts": list(local.get("exact") or ()),
+            "formula_exact_texts": list(dict.fromkeys(
+                str(value).strip()
+                for value in (
+                    package.get("markdown_block") if package is not None else "",
+                    package.get("latex") if package is not None else "",
                 )
-                if kind == "formula"
-                else None
-            )
-            has_local_contract = bool(
-                local.get("exact")
-                or str(local.get("semantic_atom") or "").strip()
-                and str(local.get("semantic_atom") or "").strip().casefold()
-                not in {"formal expression", "formula"}
-                or local.get("conditions")
-                or str(local.get("polarity") or "unknown").strip().casefold()
-                not in {"", "unknown"}
-            )
-            if not has_local_contract and package is None:
-                continue
-            rows.append({
-                "witness_kind": kind,
-                "target_id": target_id,
-                "semantic_atom": str(local.get("semantic_atom") or ""),
-                "required_conditions": list(local.get("conditions") or ()),
-                "required_polarity": str(local.get("polarity") or "unknown"),
-                "allowed_exact_excerpts": list(local.get("exact") or ()),
-                "formula_exact_texts": list(dict.fromkeys(
-                    str(value).strip()
-                    for value in (
-                        package.get("markdown_block") if package is not None else "",
-                        package.get("latex") if package is not None else "",
-                    )
-                    if str(value or "").strip()
-                )),
-            })
+                if str(value or "").strip()
+            )),
+        })
     return tuple(rows)
 
 
@@ -545,6 +1039,8 @@ class ParagraphTransactionAssessmentV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     paragraph_id: str
+    section_id: str = ""
+    status: Literal["not_run", "blocked", "invalid", "valid"] = "not_run"
     valid: bool = False
     required_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     declared_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
@@ -552,6 +1048,19 @@ class ParagraphTransactionAssessmentV1(BaseModel):
     missing_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     invalid_witnesses: tuple[str, ...] = ()
     semantic_failures: tuple[str, ...] = ()
+    ordered_semantic_slot_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_source_fact_ids: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+    target_source_span_ids: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+    formula_package_ids_by_obligation: dict[str, tuple[str, ...]] = Field(
+        default_factory=dict
+    )
+    formula_terminal_dispositions_by_obligation: dict[str, str] = Field(
+        default_factory=dict
+    )
+    required_conditions_by_target: dict[str, tuple[str, ...]] = Field(
+        default_factory=dict
+    )
+    required_polarity_by_target: dict[str, str] = Field(default_factory=dict)
     body_digest: str = ""
     content_digest: str = ""
 
@@ -569,15 +1078,28 @@ def required_targets_from_plan_row(plan_row: Mapping[str, Any] | None) -> dict[s
     return {
         "facet": _ids(row.get("required_facet_ids")),
         "field": _ids(row.get("required_field_candidate_ids")),
-        # Frozen plans predate the support/publication split.  Preserve their
-        # exact behavior; new plans explicitly list only reader-facing slots.
-        "slot": _ids(
-            row.get("required_publication_slot_ids")
-            or row.get("ordered_semantic_slot_ids")
-        ),
+        # ``support_slot_ids`` must remain in the ordered MethodUnit closure,
+        # but only ``required_publication_slot_ids`` are hard prose
+        # obligations.  A frozen pre-split row has no publication field and
+        # therefore falls back to its ordered slots for compatibility; an
+        # explicit empty publication list is meaningful and must not promote
+        # support-only atoms into required prose targets.  MethodUnit-era
+        # dumps may omit that empty list; presence of support/field keys
+        # still means publication slots were split and must stay empty.
+        "slot": _publication_slot_ids(row),
         "edge": _ids(row.get("required_edge_ids")),
         "formula": _ids(row.get("formula_obligation_ids")),
     }
+
+
+def _publication_slot_ids(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """Hard Candidate slots: never promote ordered support slots past an empty pub list."""
+
+    if "required_publication_slot_ids" in row:
+        return _ids(row.get("required_publication_slot_ids"))
+    if "support_slot_ids" in row or "required_field_candidate_ids" in row:
+        return _ids(row.get("required_publication_slot_ids"))
+    return _ids(row.get("ordered_semantic_slot_ids"))
 
 
 def required_anchors_from_plan_row(
@@ -593,6 +1115,7 @@ def required_anchors_from_plan_row(
         values = list(exact)
         if semantic_atom and semantic_atom.casefold() not in {"formal expression", "formula"}:
             values.append(semantic_atom)
+            values.extend(_semantic_anchor_variants(semantic_atom))
         values.extend(conditions)
         values = list(dict.fromkeys(values))
         if values:
@@ -641,15 +1164,23 @@ def bind_paragraph_witnesses(
 
     declarations = _transaction_declarations(get)
     existing = _transaction_witness_keys(get)
+    existing_witness_texts = {
+        str(raw.get("exact_text") or "").strip()
+        for raw in (get("witnesses", ()) or ())
+        if isinstance(raw, Mapping) and str(raw.get("exact_text") or "").strip()
+    }
 
     constraints = _witness_constraints_from_plan_row(plan_row)
     packages = tuple(item for item in formula_packages if isinstance(item, Mapping))
     package_by_id, package_by_obligation = _formula_package_indexes(packages)
+    paragraph_id = str(get("paragraph_id", "") or "").strip()
 
     def _select_unique_witness(
         *,
+        target_kind: str,
         local: Mapping[str, Any],
         package: Mapping[str, Any] | None,
+        allow_semantic_fallback: bool,
     ) -> str:
         has_local_contract = bool(
             local.get("exact")
@@ -685,9 +1216,27 @@ def bind_paragraph_witnesses(
         # targets.
         candidates = exact_values
         anchors = _binding_anchors(local)
+        semantic_atom = str(local.get("semantic_atom") or "").strip()
+        semantic_fallback_anchors = tuple(dict.fromkeys(
+            (
+                semantic_atom,
+                *_semantic_anchor_variants(semantic_atom),
+            )
+            if semantic_atom
+            and semantic_atom.casefold() not in {"formal expression", "formula"}
+            else anchors
+        ))
         for raw in candidates:
             candidate = str(raw or "").strip()
             if not candidate or body.count(candidate) != 1:
+                continue
+            # The canonical package block may prove both the owning formula
+            # and its source-fact slot.  Reuse the exact same substring only
+            # for the strict package-backed slot/edge path; ordinary prose
+            # witnesses remain unique across targets.
+            if candidate in existing_witness_texts and not (
+                package is not None and target_kind in {"slot", "edge"}
+            ):
                 continue
             if package is not None and candidate not in {
                 str(package.get("markdown_block") or "").strip(),
@@ -701,43 +1250,221 @@ def bind_paragraph_witnesses(
             if package is not None and not _DISPLAY_MATH_RE.search(body):
                 continue
             return candidate
+        # When the Writer omits internal ids, the harness may recover one
+        # target from an existing semantic anchor.  Select only a unique
+        # sentence-level match; never bind an entire paragraph or choose
+        # among several plausible sentences.
+        if (
+            package is None
+            and target_kind in {"facet", "field", "slot", "edge"}
+            and semantic_fallback_anchors
+            and allow_semantic_fallback
+        ):
+            # One reader sentence may legitimately satisfy two closed
+            # contracts (for example a pipeline sentence can state both the
+            # high-level formula context and retrieval).  Existing witness
+            # text is therefore not a uniqueness constraint across target
+            # ids; uniqueness is enforced per sentence and per target below.
+            # Formula blocks are package-owned text and must not compete with
+            # prose anchors.  Remove complete blocks before sentence
+            # splitting, retaining a newline boundary so prose immediately
+            # before and after a display equation remains independently
+            # recoverable as an exact substring of the original body.
+            prose_body = _DISPLAY_MATH_RE.sub("\n", body)
+            sentences = tuple(
+                sentence.strip()
+                for sentence in re.split(r"(?<=[.!?])\s+|\n+", prose_body)
+                if sentence.strip()
+            )
+            semantic_matches: list[tuple[float, int, str, str]] = []
+            for sentence in sentences:
+                if (
+                    body.count(sentence) != 1
+                    or not _witness_satisfies_constraints(sentence, local)
+                ):
+                    continue
+                sentence_tokens = _semantic_tokens(sentence)
+                if not sentence_tokens:
+                    continue
+                best_score = 0.0
+                best_overlap = 0
+                best_anchor = ""
+                for raw_anchor in semantic_fallback_anchors:
+                    anchor_tokens = _semantic_tokens(raw_anchor)
+                    if not anchor_tokens:
+                        continue
+                    overlap = len(sentence_tokens.intersection(anchor_tokens))
+                    if overlap < 2:
+                        continue
+                    # Prefer coverage of the authorized semantic atom while
+                    # retaining a precision term so a generic long sentence
+                    # cannot win merely by containing two common words.
+                    score = (
+                        0.75 * overlap / max(1, len(anchor_tokens))
+                        + 0.25 * overlap / max(1, len(sentence_tokens))
+                    )
+                    if score > best_score:
+                        best_score = score
+                        best_overlap = overlap
+                        best_anchor = raw_anchor
+                # Slots and edges are also recoverable from the paragraph's
+                # closed semantic contract, but require three overlapping
+                # lexical forms.  This keeps a short generic sentence from
+                # binding an implementation target while allowing ordinary
+                # prose to witness a paraphrased operation.
+                minimum_score = 0.34 if target_kind in {"slot", "edge"} else 0.38
+                minimum_overlap = 3 if target_kind in {"slot", "edge"} else 2
+                if (
+                    best_overlap >= minimum_overlap
+                    and best_score >= minimum_score
+                    and _anchor_compatible(sentence, body, semantic_fallback_anchors)
+                ):
+                    semantic_matches.append((best_score, best_overlap, sentence, best_anchor))
+            semantic_matches.sort(key=lambda item: (-item[0], -item[1], item[2]))
+            if semantic_matches:
+                top = semantic_matches[0]
+                second_score = semantic_matches[1][0] if len(semantic_matches) > 1 else 0.0
+                second_overlap = semantic_matches[1][1] if len(semantic_matches) > 1 else 0
+                # A uniquely strongest sentence is a representation recovery;
+                # a near tie remains unbound for the dedicated Binder instead
+                # of guessing which sentence carries the target.
+                raw_semantic_atom = str(local.get("semantic_atom") or "").strip()
+                derived_anchors = set(_semantic_anchor_variants(raw_semantic_atom))
+                # A legacy frozen slot can have a specific raw atom such as
+                # ``enable use dedicated attention attend``.  Its reader
+                # sentence may lose one implementation word and therefore
+                # score only slightly above a sibling sentence that happens
+                # to contain the compact derived anchor.  Prefer the raw
+                # atom only when it is itself specific and has at least two
+                # more authorized terms; this closes that representation
+                # mismatch without turning generic overlap into a guess.
+                raw_specificity_recovery = (
+                    len(_semantic_tokens(raw_semantic_atom)) >= 5
+                    and top[3].casefold() == raw_semantic_atom.casefold()
+                    and top[1] >= second_overlap + 2
+                    and top[0] > second_score
+                )
+                if (
+                    top[0] - second_score >= 0.05
+                    or raw_specificity_recovery
+                    or (
+                        len(semantic_matches) > 1
+                        and top[3] in derived_anchors
+                        and top[3] == semantic_matches[1][3]
+                    )
+                    or (
+                        len(semantic_matches) > 1
+                        and top[3] not in derived_anchors
+                        and top[1] >= 3 * max(1, semantic_matches[1][1])
+                    )
+                ):
+                    return top[2]
         return ""
 
     additions: list[dict[str, str]] = []
-    for kind, target_ids in declarations.items():
+    required = required_targets_from_plan_row(plan_row)
+    required_keys: set[tuple[str, str]] = set()
+    for kind, target_ids in required.items():
         for target_id in target_ids:
-            if (kind, target_id) in existing:
-                continue
-            values: list[str] = []
+            required_keys.add((kind, target_id))
             if kind == "formula":
-                package = package_by_id.get(target_id) or package_by_obligation.get(target_id)
-                if package is not None:
-                    values.extend((
-                        str(package.get("markdown_block") or ""),
-                        str(package.get("latex") or ""),
-                    ))
-            local = constraints.get((kind, target_id), {})
-            package = (
-                _formula_package_for_target(
-                    target_id,
-                    package_by_id=package_by_id,
-                    package_by_obligation=package_by_obligation,
-                )
-                if kind == "formula"
-                else None
+                package = package_by_obligation.get(target_id)
+                package_id = str(package.get("package_id") or "").strip() if package else ""
+                if package_id:
+                    required_keys.add((kind, package_id))
+    required_keys.update(constraints)
+    # A formula package is a closed section-sidecar contract even in a
+    # legacy frozen row that omitted formula_obligation_ids. Preserve a
+    # Writer declaration only for the package's owning paragraph; the exact
+    # package block is still required before a witness can be added.
+    for package in packages:
+        package_id = str(package.get("package_id") or "").strip()
+        consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
+        if package_id and (not consumer_id or consumer_id == paragraph_id):
+            required_keys.add(("formula", package_id))
+    # Preserve a required self-report until assessment so it remains a
+    # visible ``missing_exact_witness`` failure; discard only declarations
+    # outside the sidecar contract.  This is the representation-only repair
+    # that prevents a model from selecting a sibling paragraph's slot.
+    candidate_declarations = {
+        kind: [
+            target_id for target_id in target_ids
+            if (kind, target_id) in required_keys or (kind, target_id) in existing
+        ]
+        for kind, target_ids in declarations.items()
+    }
+    candidate_targets: list[tuple[str, str, str]] = []
+    for kind, target_ids in required.items():
+        for required_id in target_ids:
+            target_id = required_id
+            if kind == "formula":
+                package = package_by_obligation.get(required_id)
+                target_id = str(package.get("package_id") or "").strip() if package else ""
+                if not target_id:
+                    # An unresolved formula obligation remains unresolved; it
+                    # must not be converted into a declaration by the Writer.
+                    continue
+            if target_id:
+                candidate_targets.append((kind, target_id, required_id))
+    for kind, target_ids in declarations.items():
+        candidate_targets.extend(
+            (kind, target_id, target_id)
+            for target_id in target_ids
+            if (kind, target_id) in required_keys or (kind, target_id) in existing
+        )
+    seen_candidates: set[tuple[str, str]] = set()
+    for kind, target_id, _required_id in candidate_targets:
+        if (kind, target_id) in seen_candidates:
+            continue
+        seen_candidates.add((kind, target_id))
+        if (kind, target_id) in existing:
+            continue
+        local = constraints.get((kind, target_id), {})
+        package = (
+            _formula_package_for_target(
+                target_id,
+                package_by_id=package_by_id,
+                package_by_obligation=package_by_obligation,
             )
-            exact = _select_unique_witness(
+            if kind == "formula"
+            else _formula_package_for_source_fact_target(
+                target_id,
                 local=local,
-                package=package,
+                paragraph_id=paragraph_id,
+                packages=packages,
             )
-            if exact:
-                additions.append({
-                    "witness_kind": kind,
-                    "target_id": target_id,
-                    "exact_text": exact,
-                })
+        )
+        exact = _select_unique_witness(
+            target_kind=kind,
+            local=local,
+            package=package,
+            # An omitted id is the normal sidecar-recovery case.  When the
+            # Writer explicitly proposes a required target, leave a
+            # paraphrase for the dedicated Binder (the existing exact-witness
+            # test and its bounded retry depend on that distinction).  A
+            # declaration-only extra never reaches this loop.
+            allow_semantic_fallback=(
+                (kind, target_id) in required_keys
+                and target_id not in declarations.get(kind, ())
+            ),
+        )
+        if exact:
+            if target_id not in candidate_declarations.setdefault(kind, []):
+                candidate_declarations[kind].append(target_id)
+            additions.append({
+                "witness_kind": kind,
+                "target_id": target_id,
+                "exact_text": exact,
+            })
+            existing.add((kind, target_id))
+            existing_witness_texts.add(exact)
     if additions:
         source["witnesses"] = [*(source.get("witnesses") or ()), *additions]
+    declaration_fields = dict(_TRANSACTION_DECLARATION_FIELDS)
+    for kind, values in candidate_declarations.items():
+        field_name = declaration_fields.get(kind)
+        if field_name:
+            source[field_name] = list(dict.fromkeys(values))
     if "unbound_target_ids" in source:
         source["unbound_target_ids"] = [
             f"{kind}:{target}"
@@ -825,6 +1552,21 @@ def assess_paragraph_transaction(
     witnessed: dict[str, tuple[str, ...]] = {}
     routes = formula_routes or {}
     routes_are_authoritative = formula_routes is not None
+    if routes_are_authoritative:
+        # A review-required/not-applicable Formalizer result is a terminal
+        # state for the formula lane, but it is not a required accepted-code
+        # target for this paragraph transaction.  Keep the obligation and its
+        # route in the sidecar below; remove only the downstream hard target
+        # so Binder/Writer cannot be asked to consume a non-accepted package.
+        required["formula"] = tuple(
+            obligation_id
+            for obligation_id in required["formula"]
+            if str(
+                routes.get(obligation_id, {}).get("terminal_disposition", "")
+                if isinstance(routes.get(obligation_id), Mapping) else ""
+            ).strip()
+            not in {"review_required", "not_applicable"}
+        )
     for kind, values in required.items():
         if kind != "formula":
             seen = tuple(target for target in values if (kind, target) in witness_keys)
@@ -884,9 +1626,53 @@ def assess_paragraph_transaction(
             )
 
     valid = bool(paragraph_id and body) and not invalid and not missing and not semantic_failures
+    row = plan_row if isinstance(plan_row, Mapping) else {}
+    source_fact_ids: dict[str, tuple[str, ...]] = {}
+    source_span_ids: dict[str, tuple[str, ...]] = {}
+    conditions_by_target: dict[str, tuple[str, ...]] = {}
+    polarity_by_target: dict[str, str] = {}
+    for (kind, target), local in _witness_constraints_from_plan_row(plan_row).items():
+        target_key = f"{kind}:{target}"
+        anchors = tuple(local.get("source_anchor_ids") or ())
+        facts = tuple(dict.fromkeys(
+            anchor for anchor in anchors
+            if str(anchor).startswith("fact-")
+        ))
+        if kind in {"slot", "edge"} and target.startswith(f"{kind}:fact-"):
+            facts = tuple(dict.fromkeys((*facts, target.split(":", 1)[1])))
+        spans = tuple(dict.fromkeys(
+            anchor for anchor in anchors
+            if str(anchor).startswith(("span:", "span-", "direct:", "l2:"))
+        ))
+        if facts:
+            source_fact_ids[target_key] = facts
+        if spans:
+            source_span_ids[target_key] = spans
+        if local.get("conditions"):
+            conditions_by_target[target_key] = tuple(local["conditions"])
+        polarity = str(local.get("polarity") or "unknown").strip()
+        if polarity and polarity.casefold() != "unknown":
+            polarity_by_target[target_key] = polarity
+    formula_package_ids_by_obligation = {
+        str(obligation_id): _ids(
+            route.get("package_ids") if isinstance(route, Mapping) else route
+        )
+        for obligation_id, route in routes.items()
+        if str(obligation_id).strip()
+    }
+    formula_terminal_dispositions = {
+        str(obligation_id): str(
+            route.get("terminal_disposition") or "accepted"
+            if isinstance(route, Mapping) else "accepted"
+        ).strip()
+        for obligation_id, route in routes.items()
+        if str(obligation_id).strip()
+    }
     body_digest = _digest(body)
     return ParagraphTransactionAssessmentV1(
         paragraph_id=paragraph_id,
+        section_id=str(row.get("section_id") or "").strip(),
+        status="valid" if valid else "invalid" if body else "not_run",
         valid=valid,
         required_by_kind=required,
         declared_by_kind=declared,
@@ -894,6 +1680,13 @@ def assess_paragraph_transaction(
         missing_by_kind=missing,
         invalid_witnesses=tuple(dict.fromkeys(invalid)),
         semantic_failures=tuple(dict.fromkeys(semantic_failures)),
+        ordered_semantic_slot_ids=_ids(row.get("ordered_semantic_slot_ids")),
+        target_source_fact_ids=source_fact_ids,
+        target_source_span_ids=source_span_ids,
+        formula_package_ids_by_obligation=formula_package_ids_by_obligation,
+        formula_terminal_dispositions_by_obligation=formula_terminal_dispositions,
+        required_conditions_by_target=conditions_by_target,
+        required_polarity_by_target=polarity_by_target,
         body_digest=body_digest,
     )
 
@@ -901,8 +1694,10 @@ def assess_paragraph_transaction(
 __all__ = [
     "ParagraphTransactionAssessmentV1",
     "assess_paragraph_transaction",
+    "insert_formula_blocks_verbatim",
     "paragraph_binding_targets",
     "required_anchors_from_plan_row",
     "required_targets_from_plan_row",
+    "splice_formula_placeholders",
     "validate_paragraph_binding_response",
 ]

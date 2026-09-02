@@ -60,7 +60,8 @@ import logging
 import copy
 import json
 import os
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 import hashlib
 from typing import Any, Callable, Iterable, Mapping, Protocol
 
@@ -265,6 +266,39 @@ _COMPACT_SEMANTIC_FIELD_KEYS = (
 )
 
 
+def _is_implementation_trace_text(*values: Any) -> bool:
+    """True for debug/logging/NER-skip/membership atoms that must not own Method prose."""
+
+    blob = " ".join(
+        " ".join(str(item) for item in value)
+        if isinstance(value, (list, tuple, set))
+        else str(value or "")
+        for value in values
+    )
+    return bool(re.search(
+        r"(?i)(?:\bcase_study\b|logger\.|"
+        r"ent\.label_|label_\s*==|"
+        r"['\"]ORDINAL['\"]|['\"]CARDINAL['\"]|"
+        r"\([^)]{0,120}\)\s+in\s+[A-Za-z_][A-Za-z0-9_]*|"
+        r"\b(?:debug|logging)\b)",
+        blob,
+    ))
+
+
+def _strip_implementation_trace_values(value: Any) -> Any:
+    """Drop audit/debug tokens from an otherwise scientific operation row."""
+
+    if isinstance(value, (list, tuple, set)):
+        cleaned = [
+            item for item in value
+            if str(item).strip() and not _is_implementation_trace_text(item)
+        ]
+        return type(value)(cleaned) if not isinstance(value, set) else cleaned
+    if isinstance(value, str) and _is_implementation_trace_text(value):
+        return ""
+    return value
+
+
 def _compact_semantic_gist(fields: Mapping[str, Any] | None) -> str:
     """One-line facet gist from semantic fields (no author quote)."""
 
@@ -279,6 +313,50 @@ def _compact_semantic_gist(fields: Mapping[str, Any] | None) -> str:
             elif str(value).strip():
                 parts.append(str(value))
     return "; ".join(parts[:8])[:800] if parts else ""
+
+
+def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
+    """Expose formula consumption tokens without exposing formula text."""
+
+    compact_packages: list[dict[str, Any]] = []
+    for item in packages or ():
+        if not isinstance(item, Mapping):
+            continue
+        package_id = str(item.get("package_id") or "").strip()
+        if not package_id:
+            # Pre-package/legacy callers may provide a display-only formula
+            # row without an internal package id.  Preserve that row as a
+            # non-bindable context hint so the compatibility surface does not
+            # silently erase the only formula input.  Current production
+            # packages always carry an id and use the placeholder-only path
+            # below; an id-less row can never be consumed by Binder.
+            compact_packages.append({
+                key: item[key]
+                for key in (
+                    "purpose", "latex", "prose_explanation",
+                    "symbol_definitions", "symbol_table", "material_conditions",
+                    "assumptions", "authority_status", "formula_lane",
+                )
+                if key in item
+            })
+            continue
+        compact = {
+            key: item[key]
+            for key in (
+                "package_id", "purpose", "prose_explanation",
+                "symbol_definitions", "symbol_table", "material_conditions",
+                "assumptions", "authority_status", "formula_lane",
+                "satisfied_obligation_ids", "consumer_paragraph_id",
+                "semantic_formula_digest",
+            )
+            if key in item
+        }
+        compact["placeholder"] = (
+            str(item.get("placeholder") or "").strip()
+            or f"[[FORMULA:{package_id}]]"
+        )
+        compact_packages.append(compact)
+    return compact_packages
 
 
 def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, Any]:
@@ -322,6 +400,11 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
         }
         for item in (packet.get("publication_field_candidates") or ())
         if isinstance(item, Mapping)
+        and not _is_implementation_trace_text(
+            item.get("semantic_atom"),
+            item.get("conditions"),
+            item.get("exact_excerpts") or item.get("allowed_exact_excerpts"),
+        )
     ]
     deferred_fields = [
         {
@@ -334,6 +417,9 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
         for item in (packet.get("typed_field_deferred") or ())
         if isinstance(item, Mapping)
     ]
+    formula_packages = _compact_formula_packages_for_llm(
+        packet.get("formula_packages") or ()
+    )
     seed = str(packet.get("organization_seed") or "")
     return {
         "organization_seed": seed[:4000],
@@ -349,6 +435,7 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
         ],
         "publication_field_candidates": field_candidates,
         "typed_field_deferred": deferred_fields,
+        "formula_packages": formula_packages,
         "brief_ids": list(packet.get("brief_ids") or ()),
     }
 
@@ -433,12 +520,43 @@ def _compact_authoring_packets_v2_for_llm(
     except TypeError:
         return []
 
+    def bounded_text(value: Any, limit: int = 360) -> str:
+        """Keep organization hints bounded and clause-complete.
+
+        Author specifications can contain an entire multi-stage design
+        statement.  Passing that statement verbatim to a paragraph Writer
+        makes it a tempting source of unsupported positive prose and also
+        collapses otherwise separate operations.  The full statement remains
+        in the harness-side facet/brief artifacts; the LLM receives only a
+        short organization hint.
+        """
+
+        text = " ".join(str(value or "").split())
+        if len(text) <= limit:
+            return text
+        clauses = [
+            item.strip()
+            for item in re.split(r"(?<=[.!?;。；])\s+", text)
+            if item.strip()
+        ]
+        if clauses and len(clauses[0]) <= limit:
+            return clauses[0]
+        clipped = text[:limit].rsplit(" ", 1)[0].rstrip(" ,:;-")
+        return (clipped or text[:limit]).rstrip() + "…"
+
     def compact_target(value: Any) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
+        if _is_implementation_trace_text(
+            row.get("semantic_atom"),
+            row.get("conditions"),
+            row.get("field_name"),
+            row.get("paper_role"),
+        ):
+            return {}
         return {
             key: row[key]
             for key in (
-                "target_id", "target_kind", "facet_id", "field_name",
+                "target_kind", "field_name", "paper_role", "authority_lane",
                 "semantic_atom", "polarity", "conditions", "surface_mode",
                 "render_policy", "claim_strength",
             )
@@ -447,14 +565,43 @@ def _compact_authoring_packets_v2_for_llm(
 
     def compact_operation(value: Any) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
-        return {
+        predicate = str(row.get("predicate") or "").strip().casefold()
+        if _is_implementation_trace_text(
+            predicate,
+            row.get("operands"),
+            row.get("result"),
+            row.get("description"),
+            row.get("statement"),
+        ):
+            return {}
+        compact = {
             key: row[key]
             for key in (
-                "operation_id", "predicate", "operands", "result", "guard",
-                "iteration_context", "shape_or_type_hints",
+                "predicate", "operands", "result", "guard", "conditions",
+                "iteration_context", "shape_or_type_hints", "description",
+                "statement",
             )
             if key in row
         }
+        for key in ("guard", "conditions", "description", "statement"):
+            if key in compact:
+                compact[key] = _strip_implementation_trace_values(compact[key])
+                if compact[key] in ("", [], ()):
+                    compact.pop(key, None)
+        for key in ("description", "statement"):
+            if key in compact:
+                compact[key] = bounded_text(
+                    compact[key],
+                    240 if predicate == "author_specification" else 360,
+                )
+        if predicate == "author_specification":
+            # Do not expose both alternate copies of a long author sentence;
+            # one bounded intent hint is sufficient for organization.
+            if compact.get("description"):
+                compact.pop("statement", None)
+            elif compact.get("statement"):
+                compact["statement"] = bounded_text(compact["statement"], 240)
+        return compact
 
     def compact_config(value: Any) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
@@ -469,10 +616,10 @@ def _compact_authoring_packets_v2_for_llm(
 
     def compact_formula(value: Any) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
-        return {
+        compact = {
             key: row[key]
             for key in (
-                "package_id", "purpose", "latex", "markdown_block",
+                "package_id", "purpose",
                 "prose_explanation", "symbol_definitions", "symbol_table",
                 "material_conditions", "assumptions", "authority_status",
                 "formula_lane", "satisfied_obligation_ids",
@@ -480,18 +627,226 @@ def _compact_authoring_packets_v2_for_llm(
             )
             if key in row
         }
+        package_id = str(row.get("package_id") or "").strip()
+        if package_id:
+            compact["placeholder"] = f"[[FORMULA:{package_id}]]"
+        return compact
+
+    def compact_method_unit(value: Any) -> dict[str, Any]:
+        row = dict(value) if isinstance(value, Mapping) else {}
+        compact = {
+            key: row[key]
+            for key in (
+                "reader_question", "purpose", "inputs",
+                "outputs", "conditions", "shape_or_type_hints",
+                "return_value_descriptors", "formula_roles", "authority",
+                "intent_code_status",
+            )
+            if key in row
+        }
+        authority = str(row.get("authority") or "").strip().casefold()
+        if authority == "code_equivalent":
+            compact["surface_mode"] = "repository_statement"
+            compact["render_policy"] = "required"
+        elif authority == "mismatch_pending":
+            compact["surface_mode"] = "mismatch_statement"
+            compact["render_policy"] = "required"
+        elif authority == "intent_specification":
+            compact["surface_mode"] = "author_specification"
+            compact["render_policy"] = "optional"
+        if "purpose" in compact:
+            compact["purpose"] = bounded_text(compact["purpose"], 320)
+
+        def bounded_items(value: Any, limit: int = 240) -> list[str]:
+            if isinstance(value, str):
+                values = (value,)
+            else:
+                try:
+                    values = tuple(value or ())
+                except TypeError:
+                    values = (value,)
+            return [bounded_text(item, limit) for item in values if str(item or "").strip()]
+
+        for key in ("inputs", "outputs", "conditions", "return_value_descriptors"):
+            if key in compact:
+                compact[key] = bounded_items(compact[key])
+        intent_hints: list[str] = []
+        operations: list[dict[str, Any]] = []
+        operation_indexes_by_shape: dict[tuple[Any, ...], int] = {}
+
+        def operation_display_shape(item: Mapping[str, Any]) -> tuple[Any, ...] | None:
+            """Return the stable reader-operation identity for display merging.
+
+            The private MethodUnit keeps one operation per obligation so the
+            Binder can recover every target.  The Writer does not need those
+            duplicate obligation rows: when the source span and operation
+            shape are identical, emitting them separately encourages repeated
+            sentences.  Guards/conditions are merged below rather than used
+            as identity, so conditional variants remain visible to the model.
+            """
+
+            source_span = str(
+                item.get("source_span_id")
+                or item.get("span_id")
+                or item.get("exact_span_id")
+                or ""
+            ).strip()
+            predicate = str(item.get("predicate") or "").strip().casefold()
+            if not source_span or not predicate or predicate == "author_specification":
+                return None
+            operands = item.get("operands") or ()
+            if isinstance(operands, str):
+                operands = (operands,)
+            try:
+                operand_shape = tuple(str(part).strip() for part in operands)
+            except TypeError:
+                operand_shape = (str(operands).strip(),)
+            return (
+                source_span,
+                predicate,
+                str(item.get("subject") or "").strip(),
+                operand_shape,
+                str(
+                    item.get("result")
+                    or item.get("output")
+                    or item.get("return_value")
+                    or ""
+                ).strip(),
+            )
+
+        def merge_display_variants(
+            existing: dict[str, Any],
+            item: Mapping[str, Any],
+        ) -> None:
+            """Merge condition/shape metadata without merging semantics away."""
+
+            def unique_texts(*values: Any) -> list[str]:
+                result: list[str] = []
+                for value in values:
+                    if isinstance(value, str):
+                        candidates = (value,)
+                    else:
+                        try:
+                            candidates = tuple(value or ())
+                        except TypeError:
+                            candidates = (value,)
+                    for candidate in candidates:
+                        text = str(candidate or "").strip()
+                        if text and text not in result:
+                            result.append(text)
+                return result
+
+            merged_conditions = unique_texts(
+                existing.get("conditions"),
+                item.get("conditions"),
+            )
+            if merged_conditions:
+                existing["conditions"] = merged_conditions
+            merged_shapes = unique_texts(
+                existing.get("shape_or_type_hints"),
+                item.get("shape_or_type_hints"),
+            )
+            if merged_shapes:
+                existing["shape_or_type_hints"] = merged_shapes
+            raw_guards: list[str] = []
+            if "guard" in existing:
+                raw_guards.append(str(existing.get("guard") or "").strip())
+            raw_guards.extend(unique_texts(existing.get("guard_variants")))
+            if "guard" in item:
+                raw_guards.append(str(item.get("guard") or "").strip())
+            raw_guards.extend(unique_texts(item.get("guard_variants")))
+            guards: list[str] = []
+            for guard in raw_guards:
+                normalized = "" if guard.casefold() == "unconditional" else guard
+                if normalized not in guards:
+                    guards.append(normalized)
+            if len(guards) > 1:
+                existing.pop("guard", None)
+                existing["guard_variants"] = [
+                    guard if guard else "unconditional"
+                    for guard in guards
+                ]
+            elif guards:
+                existing["guard"] = guards[0]
+
+        for item in (row.get("ordered_operations") or ()):
+            if not isinstance(item, Mapping):
+                continue
+            predicate = str(item.get("predicate") or "").strip().casefold()
+            if predicate == "author_specification":
+                hint = item.get("description") or item.get("statement")
+                if str(hint or "").strip():
+                    intent_hints.append(bounded_text(hint, 240))
+                continue
+            display = compact_operation(item)
+            if not display:
+                continue
+            shape = operation_display_shape(item)
+            if shape is None or shape not in operation_indexes_by_shape:
+                if shape is not None:
+                    operation_indexes_by_shape[shape] = len(operations)
+                operations.append(display)
+                continue
+            merge_display_variants(operations[operation_indexes_by_shape[shape]], item)
+        if intent_hints:
+            compact["intent_hints"] = list(dict.fromkeys(intent_hints))
+        sanitized_operations: list[dict[str, Any]] = []
+        for item in operations:
+            if not item:
+                continue
+            if "guard_variants" in item:
+                variants = [
+                    variant for variant in (item.get("guard_variants") or ())
+                    if str(variant).strip()
+                    and str(variant).casefold() != "unconditional"
+                    and not _is_implementation_trace_text(variant)
+                ]
+                if variants:
+                    item["guard_variants"] = variants
+                else:
+                    item.pop("guard_variants", None)
+            if "guard" in item and _is_implementation_trace_text(item.get("guard")):
+                item.pop("guard", None)
+            if "conditions" in item:
+                item["conditions"] = _strip_implementation_trace_values(item["conditions"])
+                if item["conditions"] in ("", [], ()):
+                    item.pop("conditions", None)
+            sanitized_operations.append(item)
+        compact["ordered_operations"] = sanitized_operations
+        return compact
 
     compact_packets: list[dict[str, Any]] = []
     for packet in values:
         row = dict(packet) if isinstance(packet, Mapping) else {}
         dossier = row.get("dossier_summary")
         dossier_row = dict(dossier) if isinstance(dossier, Mapping) else {}
+        raw_dossier_operations = [
+            item for item in (dossier_row.get("operation_atoms") or ())
+            if isinstance(item, Mapping)
+        ]
+        method_unit = row.get("method_unit")
+        has_primary_operation_chain = bool(
+            isinstance(method_unit, Mapping)
+            and any(
+                isinstance(item, Mapping)
+                and str(item.get("predicate") or "").strip().casefold()
+                != "author_specification"
+                for item in (method_unit.get("ordered_operations") or ())
+            )
+        )
         compact_dossier = {
-            "operation_atoms": [
-                compact_operation(item)
-                for item in (dossier_row.get("operation_atoms") or ())
-                if isinstance(item, Mapping)
-            ],
+            # MethodUnit is the ordered paragraph source.  Repeating its
+            # complete dossier chain created a second unordered inventory in
+            # the model context and encouraged the Writer to blend spans from
+            # neighboring components.  Keep the count for audit-free context
+            # sizing, but expose the raw chain only when no MethodUnit chain
+            # exists (legacy/intent-only packets).
+            "operation_atoms": (
+                [] if has_primary_operation_chain else [
+                    compact_operation(item) for item in raw_dossier_operations
+                ]
+            ),
+            "operation_atom_count": len(raw_dossier_operations),
             "default_activation": dossier_row.get("default_activation", "unknown"),
             "active_path_conditions": list(
                 dossier_row.get("active_path_conditions") or ()
@@ -501,15 +856,18 @@ def _compact_authoring_packets_v2_for_llm(
             "control_flow_length": len(dossier_row.get("control_flow_relation_ids") or ()),
             "unresolved_relation_count": len(dossier_row.get("unresolved_relations") or ()),
         }
-        compact_packets.append({
+        compact_packet = {
             "schema_version": row.get("schema_version", "2.0"),
             "section_id": row.get("section_id", ""),
             "paragraph_id": row.get("paragraph_id", ""),
-            "rhetorical_goal": row.get("rhetorical_goal", ""),
+            "rhetorical_goal": bounded_text(row.get("rhetorical_goal", ""), 240),
+            "expected_sentence_range": list(
+                row.get("expected_sentence_range") or (1, 4)
+            ),
             "ordered_targets": [
                 compact_target(item)
                 for item in (row.get("ordered_targets") or ())
-                if isinstance(item, Mapping)
+                if isinstance(item, Mapping) and compact_target(item)
             ],
             "dossier_summary": compact_dossier,
             "material_conditions": list(row.get("material_conditions") or ()),
@@ -523,10 +881,12 @@ def _compact_authoring_packets_v2_for_llm(
                 for item in (row.get("formula_packages") or ())
                 if isinstance(item, Mapping)
             ],
-            "closed_target_ids": list(row.get("closed_target_ids") or ()),
             "preceding_paragraph_id": row.get("preceding_paragraph_id", ""),
             "following_paragraph_id": row.get("following_paragraph_id", ""),
-        })
+        }
+        if isinstance(method_unit, Mapping) and method_unit:
+            compact_packet["method_unit"] = compact_method_unit(method_unit)
+        compact_packets.append(compact_packet)
     return compact_packets
 
 
@@ -589,6 +949,10 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
     writer_view = result.get("writer_view")
     if isinstance(writer_view, Mapping):
         result["writer_view"] = _compact_writer_view_for_llm(writer_view)
+    if "formula_packages" in result:
+        result["formula_packages"] = _compact_formula_packages_for_llm(
+            result["formula_packages"]
+        )
     repair = result.get("writer_facet_coverage_repair")
     if isinstance(repair, Mapping):
         result["writer_facet_coverage_repair"] = _compact_writer_facet_coverage_repair_for_llm(
@@ -1214,6 +1578,7 @@ def write_method_by_sections(
     content_transaction_assessor: Callable[
         [WriterSectionInput, LLMResponse, LLMResponse], tuple[bool, str]
     ] | None = None,
+    accepted_response_sink: Callable[[WriterSectionInput, LLMResponse], None] | None = None,
 ) -> WriterAggregateResult:
     """Render a Method document by calling the writer once per section.
 
@@ -1521,15 +1886,44 @@ def write_method_by_sections(
 
         # Content-level repair belongs to the Writer owner.
         writer_view = repair_input_payload.get("writer_view")
+        if not isinstance(writer_view, dict):
+            # V2 packets are the primary LLM organization surface and are
+            # intentionally stripped of the full WriterView.  A transaction
+            # failure still needs a Writer-owned content repair path, so
+            # derive a compact repair-only view from the original private
+            # input.  This view carries gists and closed facet ids, never
+            # source spans or new authority.
+            original_writer_view = section.prompt_payload.get("writer_view")
+            if isinstance(original_writer_view, Mapping):
+                writer_view = _compact_writer_view_for_llm(original_writer_view)
         if isinstance(writer_view, dict):
+            visible_formula_obligations = (
+                repair_input_payload.get("formula_obligations")
+                or section.prompt_payload.get("formula_obligations")
+                or writer_view.get("formula_obligations")
+                or ()
+            )
+            visible_formula_packages = (
+                writer_view.get("formula_packages")
+                or section.prompt_payload.get("formula_packages")
+                or (
+                    (writer_view.get("mechanism_authoring_packet") or {}).get(
+                        "formula_packages"
+                    )
+                    if isinstance(writer_view.get("mechanism_authoring_packet"), Mapping)
+                    else ()
+                )
+                or ()
+            )
             writer_view = {
                 **writer_view,
-                "formula_obligations": list(
-                    repair_input_payload.get("formula_obligations") or ()
+                "formula_obligations": list(visible_formula_obligations),
+                "formula_packages": _compact_formula_packages_for_llm(
+                    visible_formula_packages
                 ),
             }
-        transaction_failure = str(accepted_response.blocked_reason or "").startswith(
-            "publication_paragraph_transaction_failed:"
+        transaction_failure = _is_writer_content_repairable_failure(
+            accepted_response.blocked_reason
         )
         if (
             isinstance(writer_view, dict)
@@ -1545,6 +1939,10 @@ def write_method_by_sections(
                 accepted_response.text or "",
                 writer_view=writer_view,
                 rendered_proposition_ids=(),
+                rendered_formula_package_ids=(
+                    _response_rendered_formula_package_ids(accepted_response)
+                    if visible_formula_packages else None
+                ),
             )
             try:
                 configured_rounds = int(os.environ.get("CODE2PAPER_MAX_WRITER_REPAIR_ROUNDS", "3"))
@@ -1563,6 +1961,12 @@ def write_method_by_sections(
                     writer_view=writer_view,
                     progress=incumbent_progress,
                     failures=content_failures,
+                    paragraph_transaction_repairs=(
+                        _publication_paragraph_repair_contract(
+                            section,
+                            accepted_response,
+                        )
+                    ),
                 )
                 repair_payload["writer_section_repair"] = repair_packet.model_dump(
                     mode="json"
@@ -1590,6 +1994,15 @@ def write_method_by_sections(
                     repair_response = blocked_response
                 else:
                     repair_response = _safe_call(caller, repair_config, repair_request)
+                # A paragraph-level repair is evaluated against the same
+                # section transaction as its incumbent.  Preserve valid
+                # siblings before scoring so a focused retry cannot appear to
+                # regress merely because it omitted untouched paragraphs.
+                repair_response = _merge_publication_repair_response(
+                    section,
+                    accepted_response,
+                    repair_response,
+                )
                 result.writer_repair_rounds += 1
                 used = _output_tokens_used(repair_response)
                 cumulative = min(cap, result.cumulative_budget_consumed + used)
@@ -1603,9 +2016,9 @@ def write_method_by_sections(
                 )
                 result.traces.append(repair_trace)
                 result.cumulative_budget_consumed = cumulative
-                repair_transaction_failure = str(
-                    repair_response.blocked_reason or ""
-                ).startswith("publication_paragraph_transaction_failed:")
+                repair_transaction_failure = _is_writer_content_repairable_failure(
+                    repair_response.blocked_reason
+                )
                 if (
                     (repair_response.blocked_reason and not repair_transaction_failure)
                     or not (repair_response.text or "").strip()
@@ -1615,6 +2028,10 @@ def write_method_by_sections(
                     repair_response.text or "",
                     writer_view=writer_view,
                     rendered_proposition_ids=(),
+                    rendered_formula_package_ids=(
+                        _response_rendered_formula_package_ids(repair_response)
+                        if visible_formula_packages else None
+                    ),
                 )
                 if content_transaction_assessor is not None:
                     transaction_ok, transaction_reason = content_transaction_assessor(
@@ -1630,6 +2047,8 @@ def write_method_by_sections(
                             "section_id": section.section_id,
                             "repair_round": repair_round,
                             "reason": transaction_reason,
+                            "incumbent_metrics": dict(vars(incumbent_progress)),
+                            "candidate_metrics": dict(vars(candidate_progress)),
                             "incumbent_digest": hashlib.sha256(
                                 (accepted_response.text or "").encode("utf-8")
                             ).hexdigest(),
@@ -1646,6 +2065,15 @@ def write_method_by_sections(
                             *candidate_failures,
                         ]))
                         continue
+                    # The typed failure that entered this bounded repair loop
+                    # belongs to the rejected representation/content attempt,
+                    # not to a candidate whose merged paragraph transaction
+                    # has now been accepted.  Keep the response immutable
+                    # while clearing only this repair-owned marker; unknown
+                    # authority/research failures are stopped above and never
+                    # reach this branch.
+                    if repair_response.blocked_reason and repair_transaction_failure:
+                        repair_response = replace(repair_response, blocked_reason=None)
                 # Run the semantic/evidence transaction before the local
                 # progress comparison.  This preserves an actionable owner
                 # failure (and permits its single correction turn) when a
@@ -1664,6 +2092,8 @@ def write_method_by_sections(
         section_text = accepted_response.text or (
             "" if publication_section else _placeholder_section(section, reason="empty_response")
         )
+        if accepted_response_sink is not None:
+            accepted_response_sink(section, accepted_response)
         if section_text:
             rendered_sections.append(section_text)
         incomplete = not bool(section_text.strip()) or bool(accepted_response.blocked_reason)
@@ -1830,7 +2260,13 @@ def _closed_set_publication_schema(
                 for field_name, plan_key in (
                     ("rendered_from_facet_ids", "required_facet_ids"),
                     ("rendered_field_candidate_ids", "required_field_candidate_ids"),
-                    ("rendered_slot_ids", "ordered_semantic_slot_ids"),
+                    # ``ordered_semantic_slot_ids`` is Writer grounding and
+                    # may contain support slots.  Only the explicit
+                    # publication subset is a renderable paragraph target;
+                    # otherwise native decoding exposes support ids and the
+                    # model can declare a non-publication slot that the
+                    # transaction contract must later reject.
+                    ("rendered_slot_ids", "required_publication_slot_ids"),
                     ("rendered_edge_ids", "required_edge_ids"),
                     ("used_formula_package_ids", "formula_obligation_ids"),
                 ):
@@ -1842,11 +2278,10 @@ def _closed_set_publication_schema(
                         for item in paragraph_plans
                         for value in (
                             item.get(plan_key)
-                            or (
-                                item.get("required_publication_slot_ids")
-                                if plan_key == "ordered_semantic_slot_ids"
-                                else ()
-                            )
+                            or (item.get("ordered_semantic_slot_ids")
+                                if plan_key == "required_publication_slot_ids"
+                                and "required_publication_slot_ids" not in item
+                                else ())
                             or ()
                         )
                         if str(value).strip()
@@ -1896,6 +2331,26 @@ def _closed_set_publication_schema(
                     ]
                     if paragraph_ids:
                         id_schema["enum"] = paragraph_ids
+                if paragraph_transaction_required:
+                    # Paragraph transactions are prose-first.  Internal
+                    # facet/field/slot/edge/package ids belong to the
+                    # MethodUnit sidecar and Binder, not to the Writer's
+                    # response contract.  A package placeholder is still
+                    # allowed in prose; the harness restores its package id
+                    # after verbatim splicing.
+                    for field_name in (
+                        "rendered_from_facet_ids",
+                        "rendered_field_candidate_ids",
+                        "rendered_slot_ids",
+                        "rendered_edge_ids",
+                        "used_formula_package_ids",
+                    ):
+                        field_schema = paragraph_properties.get(field_name)
+                        if not isinstance(field_schema, dict):
+                            continue
+                        field_schema.pop("minItems", None)
+                        field_schema["maxItems"] = 0
+                        field_schema["items"] = {"type": "string"}
     writer_view = section.prompt_payload.get("writer_view")
     concept_mode = bool(
         isinstance(writer_view, dict)
@@ -2034,6 +2489,25 @@ def _closed_set_publication_schema(
             "maxItems": len(values) if values else 64,
             "uniqueItems": True,
         }
+    if paragraph_transaction_required:
+        # Section-level aggregate ids are also reconstructed from the
+        # paragraph transactions after Binder validation.  Keep only the
+        # paragraph ids visible to the Writer; all other internal ids are
+        # sidecar state.  This block follows the legacy facet/slot schema
+        # loops so their enums cannot overwrite the prose-first contract.
+        for field_name in (
+            "rendered_from_facet_ids",
+            "rendered_field_candidate_ids",
+            "rendered_slot_ids",
+            "rendered_edge_ids",
+            "used_formula_package_ids",
+        ):
+            field_schema = properties.get(field_name)
+            if not isinstance(field_schema, dict):
+                continue
+            field_schema.pop("minItems", None)
+            field_schema["maxItems"] = 0
+            field_schema["items"] = {"type": "string"}
     required_moves = list(dict.fromkeys(
         str(value) for value in contract.get("completed_rhetorical_moves", ())
     ))
@@ -2162,14 +2636,6 @@ def _closed_set_publication_schema(
                         ["candidate_symbols_or_terms"]
                         if require_candidate_symbols
                         else []
-                    ),
-                    *(
-                        ["concept_key", "missing_parts", "evidence_refs_used"]
-                        if concept_binding_present else []
-                    ),
-                    *(
-                        ["target_brief_ids", "target_clause_ids", "missing_parts", "evidence_refs_used"]
-                        if brief_binding_present else []
                     ),
                 ],
                 "properties": {
@@ -2327,10 +2793,20 @@ Never invent target ids or witness text.
 def _merge_publication_binder_witnesses(
     transaction: PublicationMethodParagraphOutputV1,
     witnesses: Iterable[Mapping[str, str]],
+    *,
+    plan_row: Mapping[str, Any] | None = None,
+    formula_packages: tuple[Mapping[str, Any], ...] = (),
 ) -> PublicationMethodParagraphOutputV1:
-    """Add only already-validated Binder metadata to a frozen transaction."""
+    """Add only already-validated Binder metadata to a frozen transaction.
+
+    The plan/MethodUnit sidecar is the authority for ids.  Once the shared
+    Binder contract has validated a witness against that sidecar, restoring
+    its declaration in the transaction is a representation repair, not a
+    model-authorized content binding.
+    """
 
     source = transaction.model_dump(mode="json")
+    validated = tuple(witnesses)
     existing = list(source.get("witnesses") or ())
     existing_keys = {
         (
@@ -2340,7 +2816,7 @@ def _merge_publication_binder_witnesses(
         for item in existing
         if isinstance(item, Mapping)
     }
-    for witness in witnesses:
+    for witness in validated:
         key = (
             str(witness.get("witness_kind") or ""),
             str(witness.get("target_id") or ""),
@@ -2353,6 +2829,38 @@ def _merge_publication_binder_witnesses(
             "exact_text": str(witness.get("exact_text") or ""),
         })
         existing_keys.add(key)
+    authorized_by_kind: dict[str, set[str]] = {}
+    from code2paper.agentic.publication_transaction_contract import (
+        paragraph_binding_targets,
+    )
+    for row in paragraph_binding_targets(
+        transaction,
+        plan_row=plan_row,
+        formula_packages=formula_packages,
+    ):
+        authorized_by_kind.setdefault(str(row["witness_kind"]), set()).add(
+            str(row["target_id"])
+        )
+    declaration_fields = {
+        "facet": "rendered_from_facet_ids",
+        "field": "rendered_field_candidate_ids",
+        "slot": "rendered_slot_ids",
+        "edge": "rendered_edge_ids",
+        "formula": "used_formula_package_ids",
+        "claim": "used_claim_ids",
+        "equation": "used_equation_ids",
+    }
+    for raw in validated:
+        kind = str(raw.get("witness_kind") or "").strip()
+        target_id = str(raw.get("target_id") or "").strip()
+        if target_id not in authorized_by_kind.get(kind, set()):
+            continue
+        field_name = declaration_fields.get(kind)
+        if field_name:
+            values = list(source.get(field_name) or ())
+            if target_id not in values:
+                values.append(target_id)
+            source[field_name] = values
     source["witnesses"] = existing
     return transaction.__class__.model_validate(source)
 
@@ -2464,9 +2972,168 @@ def _invoke_publication_paragraph_binder(
         if recovery_sink is not None:
             recovery_sink.append(record)
         if not errors:
-            return _merge_publication_binder_witnesses(transaction, valid)
+            return _merge_publication_binder_witnesses(
+                transaction,
+                valid,
+                plan_row=plan_row,
+                formula_packages=formula_packages,
+            )
         last_errors = errors
     return transaction
+
+
+def _recover_exact_formula_block_representation(
+    transaction: PublicationMethodParagraphOutputV1,
+    *,
+    missing_failures: Iterable[str],
+    formula_packages: Iterable[Mapping[str, Any]],
+) -> tuple[PublicationMethodParagraphOutputV1, tuple[str, ...]]:
+    """Recover a lost placeholder when the exact canonical block is present.
+
+    The Writer is allowed to lose the placeholder as a representation detail,
+    but it is not allowed to change formula content.  Recovery therefore
+    requires one owning accepted package and one byte-identical canonical
+    block occurring exactly once in the paragraph.  The Harness restores the
+    package witness from its private sidecar; no approximate or newly authored
+    formula is accepted.
+    """
+
+    missing_ids = tuple(dict.fromkeys(
+        str(value).split("formula_placeholder_missing:", 1)[1].strip()
+        for value in (missing_failures or ())
+        if str(value).startswith("formula_placeholder_missing:")
+        and str(value).split("formula_placeholder_missing:", 1)[1].strip()
+    ))
+    if not missing_ids:
+        return transaction, ()
+    packages_by_id = {
+        str(package.get("package_id") or "").strip(): package
+        for package in formula_packages
+        if isinstance(package, Mapping)
+        and str(package.get("package_id") or "").strip()
+    }
+    body = str(transaction.paragraph_markdown or "")
+    witnesses = [
+        item.model_dump(mode="json")
+        for item in (transaction.witnesses or ())
+    ]
+    used_formula_ids = [
+        str(value).strip()
+        for value in (transaction.used_formula_package_ids or ())
+        if str(value).strip()
+    ]
+    recovered: list[str] = []
+    for package_id in missing_ids:
+        package = packages_by_id.get(package_id)
+        if package is None:
+            continue
+        if str(package.get("authority_status") or "").strip() != "code_verified":
+            continue
+        if str(package.get("formula_lane") or "").strip() != "repository_derived":
+            continue
+        if str(package.get("review_status") or "").strip() != "accepted":
+            continue
+        if str(package.get("consumer_paragraph_id") or "").strip() != str(
+            transaction.paragraph_id or ""
+        ).strip():
+            continue
+        block = str(package.get("markdown_block") or "")
+        latex = str(package.get("latex") or "").strip()
+        # Keep this import local to avoid the section-writer/contract import
+        # cycle at module load time.
+        from code2paper.agentic.publication_transaction_contract import _DISPLAY_MATH_RE
+
+        if block and body.count(block) == 1:
+            pass
+        elif latex and body.count(latex) == 1 and (not block or block not in body):
+            canonical = block if _DISPLAY_MATH_RE.search(block or "") else f"$$\n{latex}\n$$"
+            if not _DISPLAY_MATH_RE.search(canonical):
+                continue
+            body = body.replace(latex, canonical, 1)
+            block = canonical
+        else:
+            continue
+        if not _DISPLAY_MATH_RE.search(block):
+            continue
+        obligation_ids = {
+            str(package.get("obligation_id") or "").strip(),
+            *(
+                str(value).strip()
+                for value in (package.get("satisfied_obligation_ids") or ())
+                if str(value).strip()
+            ),
+        }
+        replaced = False
+        normalized_witnesses: list[dict[str, str]] = []
+        for witness in witnesses:
+            kind = str(witness.get("witness_kind") or "").strip()
+            target_id = str(witness.get("target_id") or "").strip()
+            if kind == "formula" and target_id in {package_id, *obligation_ids}:
+                if not replaced:
+                    normalized_witnesses.append({
+                        "witness_kind": "formula",
+                        "target_id": package_id,
+                        "exact_text": block,
+                    })
+                    replaced = True
+                continue
+            normalized_witnesses.append(witness)
+        if not replaced:
+            normalized_witnesses.append({
+                "witness_kind": "formula",
+                "target_id": package_id,
+                "exact_text": block,
+            })
+        witnesses = normalized_witnesses
+        if package_id not in used_formula_ids:
+            used_formula_ids.append(package_id)
+        recovered.append(package_id)
+
+    if not recovered:
+        return transaction, ()
+    payload = transaction.model_dump(mode="json")
+    payload.update({
+        "paragraph_markdown": body,
+        "used_formula_package_ids": list(dict.fromkeys(used_formula_ids)),
+        "witnesses": witnesses,
+    })
+    return transaction.__class__.model_validate(payload), tuple(
+        dict.fromkeys(recovered)
+    )
+
+
+def _assembled_section_heading(
+    section: WriterSectionInput,
+    output: PublicationMethodSectionOutputV1,
+) -> str:
+    """Keep Architect headings except a validated repair of a truncated H2."""
+
+    from code2paper.agentic.publication_quality import (
+        heading_is_truncated,
+        heading_replacement_is_coherent,
+    )
+
+    def _clean(value: Any) -> str:
+        text = " ".join(str(value or "").split()).strip()
+        if text.startswith("#"):
+            text = text.lstrip("#").strip()
+        return text
+
+    planned = _clean(section.heading)
+    written = _clean(getattr(output, "heading_text", ""))
+    if not written:
+        markdown = str(getattr(output, "section_markdown", "") or "")
+        first = next((line.strip() for line in markdown.splitlines() if line.strip()), "")
+        if first.startswith("#"):
+            written = _clean(first)
+    if (
+        planned
+        and written
+        and heading_is_truncated(planned)
+        and heading_replacement_is_coherent(written, planned_heading=planned)
+    ):
+        return written
+    return planned or written
 
 
 def _normalize_publication_paragraph_transaction(
@@ -2644,7 +3311,8 @@ def _normalize_publication_paragraph_transaction(
             "field": allowed_field_ids,
             "slot": set(str(value) for value in (
                 plan_row.get("required_publication_slot_ids")
-                or plan_row.get("ordered_semantic_slot_ids")
+                if "required_publication_slot_ids" in plan_row
+                else plan_row.get("ordered_semantic_slot_ids")
                 or ()
             )),
             "edge": set(str(value) for value in (plan_row.get("required_edge_ids") or ())),
@@ -2769,7 +3437,13 @@ def _normalize_publication_paragraph_transaction(
                 package_id for package_id in route_packages
                 if package_id in section_formula_package_ids
             )
-            if len(owned_package_ids) != 1:
+            if not owned_package_ids and not section_formula_package_ids:
+                # A review-required or not-applicable Formalizer outcome is
+                # intentionally absent from the Writer package set.  Ignore
+                # a stale optional disposition field; no package id or
+                # formula target can be granted by this branch.
+                pass
+            elif len(owned_package_ids) != 1:
                 failures.append(
                     f"formula_disposition_package_ambiguous:{paragraph_id}"
                 )
@@ -2856,9 +3530,7 @@ def _normalize_publication_paragraph_transaction(
         # separately and the caller/trace must not count these rows as
         # rendered, but dropping the body here would make a quality defect
         # indistinguishable from a transport failure.
-        heading = " ".join(str(section.heading or output.heading_text or "").split()).strip()
-        if heading.startswith("#"):
-            heading = heading.lstrip("#").strip()
+        heading = _assembled_section_heading(section, output)
         section_markdown = "\n\n".join(assembled_parts)
         if heading and section_markdown:
             section_markdown = f"## {heading}\n\n{section_markdown}"
@@ -2875,9 +3547,7 @@ def _normalize_publication_paragraph_transaction(
     # paragraph happens to be emitted first.  Assemble exactly one H2 here
     # and keep each transaction's body substantive; this makes the reverse
     # validator see the same heading/paragraph boundary on every retry.
-    heading = " ".join(str(section.heading or output.heading_text or "").split()).strip()
-    if heading.startswith("#"):
-        heading = heading.lstrip("#").strip()
+    heading = _assembled_section_heading(section, output)
     section_markdown = "\n\n".join(assembled_parts)
     if heading:
         section_markdown = f"## {heading}\n\n{section_markdown}"
@@ -2928,8 +3598,19 @@ def write_publication_method_by_sections(
     # duplicate callback metadata and let a discarded short response affect
     # the aggregate.
     parsed_outputs_by_section: dict[str, list[PublicationMethodSectionOutputV1]] = {}
+    accepted_outputs_by_section: dict[str, PublicationMethodSectionOutputV1] = {}
     recovery_traces: list[dict[str, Any]] = []
     binder_traces: list[GenerationCallTrace] = []
+
+    def capture_accepted_response(
+        section: WriterSectionInput,
+        response: LLMResponse,
+    ) -> None:
+        metadata = response.metadata
+        if isinstance(metadata, PublicationMethodSectionOutputV1):
+            accepted_outputs_by_section[section.section_id] = metadata.model_copy(
+                update={"section_id": section.section_id}
+            )
 
     def structured_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
         response = caller(config, request)
@@ -2942,6 +3623,13 @@ def write_publication_method_by_sections(
         private_section = private_sections_by_id.get(scoped_section_id)
         private_payload = (
             private_section.prompt_payload if private_section is not None else {}
+        )
+        # A content repair is allowed to return only the failed paragraph(s).
+        # The outer Writer loop merges that representation with the incumbent
+        # section; the normal first-pass contract still requires every planned
+        # paragraph.
+        content_repair_request = isinstance(
+            request.input_payload.get("writer_section_repair"), Mapping
         )
         private_graph = (
             private_section.argument_graph if private_section is not None else {}
@@ -2983,6 +3671,149 @@ def write_publication_method_by_sections(
                 token_usage=_failed_response_token_usage(response),
             )
         parsed = _sanitize_publication_output_overlap(parsed)
+        formula_placeholder_failures: list[str] = []
+        if (
+            isinstance(private_payload, dict)
+            and private_payload.get("formula_placeholders_required")
+        ):
+            from code2paper.agentic.publication_transaction_contract import (
+                splice_formula_placeholders,
+            )
+
+            formula_packages = tuple(
+                item for item in (private_payload.get("formula_packages") or ())
+                if isinstance(item, Mapping)
+            )
+            package_ids = {
+                str(item.get("package_id") or "").strip()
+                for item in formula_packages
+                if str(item.get("package_id") or "").strip()
+            }
+            paragraph_owner_ids: dict[str, set[str]] = {}
+            for package in formula_packages:
+                package_id = str(package.get("package_id") or "").strip()
+                consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
+                if not package_id:
+                    formula_placeholder_failures.append("formula_package_id_missing")
+                if not consumer_id:
+                    formula_placeholder_failures.append(
+                        f"formula_package_without_consumer:{package_id or 'unknown'}"
+                    )
+                paragraph_owner_ids.setdefault(consumer_id, set()).add(package_id)
+            parsed_transactions = list(parsed.paragraphs or ())
+            parsed_ids = {
+                str(item.paragraph_id or "").strip() for item in parsed_transactions
+            }
+            for consumer_id in paragraph_owner_ids:
+                if (
+                    consumer_id
+                    and consumer_id not in parsed_ids
+                    and not content_repair_request
+                ):
+                    formula_placeholder_failures.append(
+                        f"formula_package_consumer_missing:{consumer_id}"
+                    )
+            replaced_transactions: list[PublicationMethodParagraphOutputV1] = []
+            for transaction in parsed_transactions:
+                paragraph_id = str(transaction.paragraph_id or "").strip()
+                replaced, failures = splice_formula_placeholders(
+                    transaction.paragraph_markdown,
+                    formula_packages,
+                    required_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
+                    allowed_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
+                )
+                if failures:
+                    recovered_transaction, recovered_package_ids = (
+                        _recover_exact_formula_block_representation(
+                            transaction,
+                            missing_failures=failures,
+                            formula_packages=formula_packages,
+                        )
+                    )
+                    if recovered_package_ids:
+                        transaction = recovered_transaction
+                        replaced = transaction.paragraph_markdown
+                        failures = tuple(
+                            failure for failure in failures
+                            if not (
+                                str(failure).startswith(
+                                    "formula_placeholder_missing:"
+                                )
+                                and str(failure).split(
+                                    "formula_placeholder_missing:", 1
+                                )[1].strip() in set(recovered_package_ids)
+                            )
+                        )
+                        recovery_traces.append({
+                            "section_id": scoped_section_id,
+                            "paragraph_id": paragraph_id,
+                            "operation": "recover_existing_canonical_formula_block",
+                            "package_ids": list(recovered_package_ids),
+                        })
+                formula_placeholder_failures.extend(
+                    f"{paragraph_id}:{failure}" for failure in failures
+                )
+                transaction_updates: dict[str, Any] = {
+                    "paragraph_markdown": replaced,
+                }
+                # The placeholder is the Writer-side consumption signal.
+                # Restore the corresponding package declaration here after
+                # successful verbatim insertion; the model is not required
+                # to copy an internal package id into its response.  This is
+                # representation repair only—the later Binder still needs
+                # an exact formula witness in the resulting body.
+                if not failures:
+                    transaction_updates["used_formula_package_ids"] = list(
+                        dict.fromkeys([
+                            *(
+                                str(value).strip()
+                                for value in transaction.used_formula_package_ids
+                                if str(value).strip()
+                            ),
+                            *sorted(paragraph_owner_ids.get(paragraph_id, ())),
+                        ])
+                    )
+                replaced_transactions.append(transaction.model_copy(update=transaction_updates))
+            section_markdown = parsed.section_markdown
+            if not parsed_transactions:
+                section_markdown, failures = splice_formula_placeholders(
+                    section_markdown,
+                    formula_packages,
+                    required_package_ids=package_ids,
+                    allowed_package_ids=package_ids,
+                    require_all=True,
+                )
+                formula_placeholder_failures.extend(failures)
+            if not formula_placeholder_failures:
+                parsed = parsed.model_copy(update={
+                    "paragraphs": replaced_transactions,
+                    "section_markdown": section_markdown,
+                })
+        if formula_placeholder_failures:
+            section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
+            preserved_text = str(parsed.section_markdown or "").strip()
+            if not preserved_text and parsed.paragraphs:
+                preserved_text = "\n\n".join(
+                    str(item.paragraph_markdown or "").strip()
+                    for item in parsed.paragraphs
+                    if str(item.paragraph_markdown or "").strip()
+                )
+            parsed_outputs_by_section[section_id] = [
+                parsed.model_copy(update={"section_id": section_id})
+            ]
+            return LLMResponse(
+                text=preserved_text,
+                response_hash=response.response_hash,
+                blocked_reason=(
+                    "publication_section_binding_failed:formula_placeholder:"
+                    + ";".join(dict.fromkeys(formula_placeholder_failures))
+                ),
+                cached=response.cached,
+                response_mode=response.response_mode,
+                finish_reason=response.finish_reason,
+                token_usage=_failed_response_token_usage(response),
+                metadata=parsed,
+            )
         section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
         transaction_required = bool(
             isinstance(private_payload, dict)
@@ -2992,7 +3823,7 @@ def write_publication_method_by_sections(
             parsed, paragraph_failures = _normalize_publication_paragraph_transaction(
                 parsed,
                 section=private_section,
-                require_transactions=transaction_required,
+                require_transactions=transaction_required and not content_repair_request,
                 binder_caller=caller,
                 binder_base_config=base_config,
                 binder_trace_sink=binder_traces,
@@ -3103,11 +3934,24 @@ def write_publication_method_by_sections(
         publication_mode=True,
         content_transaction_validator=content_transaction_validator,
         content_transaction_assessor=content_transaction_assessor,
+        accepted_response_sink=capture_accepted_response,
     )
     parsed_outputs: list[PublicationMethodSectionOutputV1] = []
     for section_result in aggregate.sections:
         candidates = parsed_outputs_by_section.get(section_result.section_id, [])
         if not candidates:
+            continue
+        # ``write_method_by_sections`` is the state owner.  Its sink captures
+        # the exact response that survived representation, paragraph, and
+        # bounded Writer-repair decisions.  Never select a later rejected
+        # parsed attempt merely because it contains more complete metadata.
+        if (
+            section_result.section_id not in aggregate.context_partitioned_section_ids
+            and section_result.section_id in accepted_outputs_by_section
+        ):
+            selected = accepted_outputs_by_section[section_result.section_id]
+            parsed_outputs.append(selected)
+            aggregate.research_requests.extend(selected.new_research_requests)
             continue
         # The accepted text is the exact structured section_markdown returned
         # through ``write_method_by_sections``.  Prefer that match so a
@@ -3123,7 +3967,7 @@ def write_publication_method_by_sections(
                     for candidate in reversed(candidates)
                     if candidate.section_markdown == section_result.text
                 ),
-                candidates[-1],
+                candidates[0] if section_result.incomplete else candidates[-1],
             )
         parsed_outputs.append(selected)
         aggregate.research_requests.extend(selected.new_research_requests)
@@ -3435,6 +4279,381 @@ def _hard_publication_binding_failures(failures: Iterable[str]) -> list[str]:
         for failure in failures
         if not str(failure).startswith(_CONTENT_COMPLETENESS_FAILURE_PREFIXES)
     ]
+
+
+_WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES = (
+    "publication_paragraph_transaction_failed:",
+    "publication_section_binding_failed:formula_placeholder:",
+)
+
+
+def _response_rendered_formula_package_ids(
+    response: LLMResponse,
+) -> tuple[str, ...] | None:
+    """Read package consumption from the normalized section sidecar."""
+
+    metadata = response.metadata
+    if metadata is None:
+        return None
+
+    def value_from(item: Any, key: str) -> Any:
+        if isinstance(item, Mapping):
+            return item.get(key)
+        return getattr(item, key, None)
+
+    ids: list[str] = []
+    ids.extend(
+        str(value).strip()
+        for value in (value_from(metadata, "used_formula_package_ids") or ())
+        if str(value).strip()
+    )
+    for paragraph in value_from(metadata, "paragraphs") or ():
+        ids.extend(
+            str(value).strip()
+            for value in (value_from(paragraph, "used_formula_package_ids") or ())
+            if str(value).strip()
+        )
+    return tuple(dict.fromkeys(ids))
+
+
+def _publication_paragraph_repair_contract(
+    section: WriterSectionInput,
+    response: LLMResponse,
+) -> tuple[dict[str, Any], ...]:
+    """Project the shared paragraph assessment into Writer repair hints.
+
+    The paragraph transaction sidecar remains the only authority for target
+    identity and acceptance.  This projection is deliberately reader-facing:
+    it tells the Writer which semantic atoms are absent from which paragraph,
+    while withholding source ids/spans and never asking the model to reproduce
+    Harness metadata.  A content retry may return only the listed paragraphs;
+    the caller merges those candidates with the incumbent valid siblings.
+    """
+
+    graph = section.argument_graph if isinstance(section.argument_graph, dict) else {}
+    plans = tuple(
+        item for item in (graph.get("paragraphs") or ()) if isinstance(item, Mapping)
+    )
+    if not plans:
+        return ()
+    metadata = response.metadata
+    if isinstance(metadata, PublicationMethodSectionOutputV1):
+        transactions = {
+            str(item.paragraph_id or "").strip(): item
+            for item in (metadata.paragraphs or ())
+            if str(item.paragraph_id or "").strip()
+        }
+    else:
+        transactions = {}
+
+    formula_packages = tuple(
+        item
+        for item in (section.prompt_payload.get("formula_packages") or ())
+        if isinstance(item, Mapping)
+    )
+    formula_obligations = tuple(
+        item
+        for item in (section.prompt_payload.get("formula_obligations") or ())
+        if isinstance(item, Mapping)
+    )
+    has_explicit_routes = any(
+        str(item.get("obligation_id") or "").strip()
+        or bool(item.get("satisfied_obligation_ids"))
+        for item in formula_packages
+    )
+    from code2paper.agentic.publication_transaction_contract import (
+        _formula_package_terminal_disposition,
+        _witness_constraints_from_plan_row,
+        assess_paragraph_transaction,
+        required_anchors_from_plan_row,
+    )
+
+    formula_routes: dict[str, dict[str, Any]] = {}
+    for obligation in formula_obligations:
+        obligation_id = str(obligation.get("obligation_id") or "").strip()
+        if not obligation_id:
+            continue
+        matches = tuple(
+            package for package in formula_packages
+            if obligation_id in {
+                *(
+                    str(value).strip()
+                    for value in (package.get("satisfied_obligation_ids") or ())
+                    if str(value).strip()
+                ),
+                *(
+                    [str(package.get("obligation_id") or "").strip()]
+                    if str(package.get("obligation_id") or "").strip()
+                    else []
+                ),
+            }
+        )
+        if not matches and not has_explicit_routes:
+            facet_ids = {
+                str(value).strip()
+                for value in (obligation.get("facet_ids") or ())
+                if str(value).strip()
+            }
+            matches = tuple(
+                package for package in formula_packages
+                if not facet_ids
+                or facet_ids.intersection(
+                    {
+                        str(value).strip()
+                        for value in (package.get("bound_facet_ids") or ())
+                        if str(value).strip()
+                    }
+                )
+            )
+        formula_routes[obligation_id] = {
+            "package_ids": tuple(
+                str(package.get("package_id") or "").strip()
+                for package in matches
+                if str(package.get("package_id") or "").strip()
+            ),
+            "terminal_disposition": (
+                _formula_package_terminal_disposition(matches[0])
+                if len(matches) == 1 else "failed"
+            ),
+        }
+
+    repairs: list[dict[str, Any]] = []
+    for raw_plan in plans:
+        paragraph_id = str(raw_plan.get("paragraph_id") or "").strip()
+        if not paragraph_id:
+            continue
+        plan_row = {**raw_plan, "section_id": section.section_id}
+        transaction = transactions.get(paragraph_id)
+        if transaction is None:
+            transaction = {
+                "paragraph_id": paragraph_id,
+                "paragraph_markdown": "",
+            }
+        assessment = assess_paragraph_transaction(
+            transaction,
+            plan_row=plan_row,
+            formula_routes=formula_routes,
+            required_anchors=required_anchors_from_plan_row(plan_row),
+        )
+        missing_by_kind = {
+            str(kind): tuple(str(value) for value in values if str(value).strip())
+            for kind, values in assessment.missing_by_kind.items()
+            if values
+        }
+        if not missing_by_kind and not assessment.invalid_witnesses and not assessment.semantic_failures:
+            continue
+        constraints = _witness_constraints_from_plan_row(plan_row)
+        semantic_targets: list[dict[str, Any]] = []
+        for kind, target_ids in missing_by_kind.items():
+            for target_id in target_ids:
+                local = constraints.get((kind, target_id), {})
+                target: dict[str, Any] = {
+                    "target_kind": kind,
+                    "paper_role": str(local.get("paper_role") or ""),
+                    "semantic_atom": str(local.get("semantic_atom") or ""),
+                    "conditions": list(local.get("conditions") or ()),
+                    "polarity": str(local.get("polarity") or "unknown"),
+                }
+                if kind == "formula":
+                    route = formula_routes.get(target_id, {})
+                    package_ids = tuple(route.get("package_ids") or ())
+                    package = next(
+                        (
+                            item for item in formula_packages
+                            if str(item.get("package_id") or "").strip()
+                            in package_ids
+                        ),
+                        None,
+                    )
+                    if package is not None:
+                        target.update({
+                            "placeholder": str(
+                                package.get("placeholder")
+                                or f"[[FORMULA:{package.get('package_id')}]]"
+                            ),
+                            "purpose": str(package.get("purpose") or ""),
+                            "prose_explanation": str(
+                                package.get("prose_explanation") or ""
+                            ),
+                            "material_conditions": list(
+                                package.get("material_conditions") or ()
+                            ),
+                            "assumptions": list(package.get("assumptions") or ()),
+                            "terminal_disposition": str(
+                                route.get("terminal_disposition") or "failed"
+                            ),
+                        })
+                semantic_targets.append(target)
+        repairs.append({
+            "paragraph_id": paragraph_id,
+            "paragraph_role": str(raw_plan.get("paragraph_role") or ""),
+            "repair_mode": "rewrite_only_missing_paragraph_content",
+            "missing_targets_by_kind": missing_by_kind,
+            "missing_targets": semantic_targets,
+            "invalid_witnesses": list(assessment.invalid_witnesses),
+            "semantic_failures": list(assessment.semantic_failures),
+            "instruction": (
+                "Repair only this paragraph. Preserve its correct existing content, "
+                "add natural Method sentences for every missing semantic target, "
+                "and emit the exact formula placeholder when one is listed. "
+                "Do not mention ids, validators, or this repair packet."
+            ),
+        })
+    return tuple(repairs)
+
+
+def _merge_publication_repair_response(
+    section: WriterSectionInput,
+    incumbent: LLMResponse,
+    candidate: LLMResponse,
+) -> LLMResponse:
+    """Merge a paragraph-scoped retry with the incumbent section.
+
+    This is representation assembly only.  Every candidate paragraph has
+    already crossed the same structured/Binder boundary; the shared assessor
+    still decides whether the merged transaction is valid.  Missing candidate
+    siblings retain their frozen incumbent transactions and therefore cannot
+    be erased by a retry that addresses one paragraph.
+    """
+
+    old = incumbent.metadata
+    new = candidate.metadata
+    if not isinstance(old, PublicationMethodSectionOutputV1):
+        return candidate
+    if not isinstance(new, PublicationMethodSectionOutputV1):
+        return candidate
+    candidate_by_id: dict[str, PublicationMethodParagraphOutputV1] = {}
+    for item in new.paragraphs or ():
+        paragraph_id = str(item.paragraph_id or "").strip()
+        if not paragraph_id:
+            continue
+        # Do not silently collapse duplicate or out-of-plan transactions.
+        # The structured boundary must report those defects to the shared
+        # assessor instead of allowing the merge to manufacture a valid view.
+        if paragraph_id in candidate_by_id:
+            return candidate
+        candidate_by_id[paragraph_id] = item
+    if not candidate_by_id:
+        return candidate
+    incumbent_by_id = {
+        str(item.paragraph_id or "").strip(): item
+        for item in (old.paragraphs or ())
+        if str(item.paragraph_id or "").strip()
+    }
+    graph = section.argument_graph if isinstance(section.argument_graph, dict) else {}
+    planned_ids = tuple(
+        str(item.get("paragraph_id") or "").strip()
+        for item in (graph.get("paragraphs") or ())
+        if isinstance(item, Mapping) and str(item.get("paragraph_id") or "").strip()
+    )
+    ordered_ids = planned_ids or tuple(dict.fromkeys((*incumbent_by_id, *candidate_by_id)))
+    if planned_ids and set(candidate_by_id) - set(planned_ids):
+        return candidate
+    merged_by_id = {
+        paragraph_id: candidate_by_id.get(paragraph_id, incumbent_by_id.get(paragraph_id))
+        for paragraph_id in ordered_ids
+        if candidate_by_id.get(paragraph_id) is not None
+        or incumbent_by_id.get(paragraph_id) is not None
+    }
+    if not merged_by_id:
+        return candidate
+    heading = str(old.heading_text or new.heading_text or section.heading or "").strip()
+    heading = heading.lstrip("#").strip()
+    body = "\n\n".join(
+        str(merged_by_id[paragraph_id].paragraph_markdown or "").strip()
+        for paragraph_id in ordered_ids
+        if paragraph_id in merged_by_id
+        and str(merged_by_id[paragraph_id].paragraph_markdown or "").strip()
+    )
+    section_markdown = f"## {heading}\n\n{body}" if heading and body else body
+
+    def union(field_name: str) -> list[str]:
+        return list(dict.fromkeys(
+            str(value).strip()
+            for paragraph in merged_by_id.values()
+            for value in (getattr(paragraph, field_name) or ())
+            if str(value).strip()
+        ))
+
+    def merge_items(field_name: str) -> list[Any]:
+        """Preserve incumbent state, then retain new diagnostic items."""
+
+        values: list[Any] = []
+        seen: set[str] = set()
+        for source in (getattr(old, field_name) or (), getattr(new, field_name) or ()):
+            for value in source:
+                try:
+                    key = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+                except (TypeError, ValueError):
+                    key = repr(value)
+                if key in seen:
+                    continue
+                seen.add(key)
+                values.append(value)
+        return values
+
+    rendered_facets = set(union("rendered_from_facet_ids"))
+    rendered_briefs = {
+        str(value).strip()
+        for value in (old.rendered_brief_ids or ())
+        if str(value).strip()
+    }
+    rendered_concepts = {
+        str(value).strip()
+        for value in (old.rendered_concept_keys or ())
+        if str(value).strip()
+    }
+    merged = old.model_copy(update={
+        # Aggregate authority fields that are not paragraph-derived remain
+        # frozen at the incumbent.  A repair response may add prose and
+        # paragraph witnesses, but it cannot replace the Architect's closed
+        # concept/brief/unit/move contract with an incomplete self-report.
+        "heading_text": old.heading_text or new.heading_text,
+        "section_markdown": section_markdown,
+        "paragraphs": [merged_by_id[item] for item in ordered_ids if item in merged_by_id],
+        "rendered_paragraph_ids": union("paragraph_id"),
+        "rendered_from_facet_ids": union("rendered_from_facet_ids"),
+        "rendered_field_candidate_ids": union("rendered_field_candidate_ids"),
+        "rendered_slot_ids": union("rendered_slot_ids"),
+        "rendered_edge_ids": union("rendered_edge_ids"),
+        "used_formula_package_ids": union("used_formula_package_ids"),
+        "used_claim_ids": union("used_claim_ids"),
+        "used_equation_ids": union("used_equation_ids"),
+        "deferred_facet_ids": [
+            value for value in (old.deferred_facet_ids or ())
+            if str(value) not in rendered_facets
+        ],
+        "deferred_brief_ids": [
+            value for value in (old.deferred_brief_ids or ())
+            if str(value) not in rendered_briefs
+        ],
+        "deferred_concept_keys": [
+            value for value in (old.deferred_concept_keys or ())
+            if str(value) not in rendered_concepts
+        ],
+        "new_research_requests": merge_items("new_research_requests"),
+        "unresolved_points": merge_items("unresolved_points"),
+        "self_identified_risks": merge_items("self_identified_risks"),
+    })
+    return replace(
+        candidate,
+        text=section_markdown,
+        metadata=merged,
+    )
+
+
+def _is_writer_content_repairable_failure(reason: str | None) -> bool:
+    """Return whether a typed representation/content failure may be repaired.
+
+    Formula placeholder failures are emitted after the structured response has
+    already parsed successfully and therefore still carry usable prose.  They
+    belong in the same bounded Writer repair loop as paragraph transaction
+    failures.  Unknown-id, schema, transport, and authority failures remain
+    terminal at this layer.
+    """
+
+    value = str(reason or "")
+    return value.startswith(_WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES)
 
 
 def _safe_call(

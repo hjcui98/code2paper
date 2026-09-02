@@ -757,6 +757,100 @@ class SectionArgumentMoveV1(_MethodModel):
         return max(0, value)
 
 
+class MethodUnitV2(_MethodModel):
+    """Reader-sized mechanism unit used between Research and the Writer.
+
+    A method unit is deliberately larger than an atomic fact and smaller than
+    a section.  It records the question, ordered operation atoms, and the
+    authority ceiling that the downstream prose transaction may use.  Evidence
+    ids are carried for deterministic binding only; they are never prose.
+    """
+
+    schema_version: str = "2.0"
+    method_unit_id: str
+    section_id: str
+    reader_question: str
+    purpose: str
+    inputs: tuple[str, ...] = Field(default_factory=tuple)
+    ordered_operations: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    outputs: tuple[str, ...] = Field(default_factory=tuple)
+    entry_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    conditions: tuple[str, ...] = Field(default_factory=tuple)
+    shape_or_type_hints: tuple[str, ...] = Field(default_factory=tuple)
+    return_value_descriptors: tuple[str, ...] = Field(default_factory=tuple)
+    formalizable_signatures: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    formula_roles: tuple[str, ...] = Field(default_factory=tuple)
+    evidence_spans: tuple[str, ...] = Field(default_factory=tuple)
+    authority: Literal[
+        "code_equivalent",
+        "intent_specification",
+        "conventional_notation",
+        "mismatch_pending",
+    ] = "intent_specification"
+    intent_code_status: str = "unspecified"
+    author_statement: str = ""
+    facet_ids: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids: tuple[str, ...] = Field(default_factory=tuple)
+    equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
+    argument_unit_ids: tuple[str, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @field_validator(
+        "inputs", "outputs", "entry_symbol_ids", "conditions", "shape_or_type_hints",
+        "return_value_descriptors", "formula_roles", "evidence_spans",
+        "facet_ids", "fact_ids", "claim_ids", "equation_ids", "paragraph_ids",
+        "argument_unit_ids",
+    )
+    @classmethod
+    def _dedupe_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _clean_tuple(value)
+
+    @field_validator("method_unit_id", "section_id", "reader_question", "purpose")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        value = str(value or "").strip()
+        if not value:
+            raise ValueError("method unit requires stable ids and reader-facing purpose")
+        return value
+
+    @model_validator(mode="after")
+    def _authority_ceiling(self) -> "MethodUnitV2":
+        operations = tuple(item for item in self.ordered_operations if isinstance(item, dict))
+        operation_spans = {
+            str(item.get(key) or "").strip()
+            for item in operations
+            for key in ("source_span_id", "span_id", "exact_span_id")
+            if str(item.get(key) or "").strip()
+        }
+        has_repository_anchor = bool(self.evidence_spans or operation_spans)
+        has_intent_anchor = bool(self.author_statement.strip()) or (
+            any(
+                marker in self.intent_code_status.strip().casefold()
+                for marker in ("intent", "specification", "mismatch", "partial")
+            )
+        )
+        if not self.ordered_operations and not has_repository_anchor and not has_intent_anchor:
+            raise ValueError("method unit cannot be an empty mechanism shell")
+        if self.authority == "code_equivalent" and not has_repository_anchor:
+            raise ValueError("code-equivalent method unit requires an evidence span")
+        if self.authority == "code_equivalent" and not self.formalizable_signatures:
+            raise ValueError("code-equivalent method unit requires a formalizable signature")
+        if self.authority in {"intent_specification", "conventional_notation"} and not has_intent_anchor:
+            raise ValueError("intent method unit requires an explicit author specification")
+        if self.authority == "mismatch_pending" and not (has_repository_anchor or has_intent_anchor):
+            raise ValueError("mismatch-pending method unit requires evidence or author intent")
+        if any(not isinstance(item, dict) for item in self.ordered_operations):
+            raise ValueError("method unit operations must be typed operation objects")
+        if any(not isinstance(item, dict) for item in self.formalizable_signatures):
+            raise ValueError("method unit formalizable signatures must be typed objects")
+        object.__setattr__(self, "content_digest", _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        ))
+        return self
+
+
 class ParagraphWitnessTargetV1(_MethodModel):
     """One paragraph-local semantic target visible to the Writer."""
 
@@ -769,6 +863,14 @@ class ParagraphWitnessTargetV1(_MethodModel):
     allowed_anchor_ids: tuple[str, ...] = Field(default_factory=tuple)
     allowed_exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
     authority_lane: str = "executable_hard"
+    # These two fields are the Writer-facing surface contract.  They are
+    # deliberately independent of ``authority_lane``: a target may have a
+    # closed repository span while still being only partially aligned with
+    # the author's compound statement and therefore require an intent/caveat
+    # surface.  Keeping the distinction in the paragraph sidecar prevents
+    # each downstream stage from re-interpreting the same target differently.
+    surface_mode: str = "repository_statement"
+    render_policy: str = "required"
 
     @field_validator("target_id")
     @classmethod
@@ -797,7 +899,34 @@ class ParagraphWitnessTargetV1(_MethodModel):
             or self.allowed_exact_excerpts
         ):
             raise ValueError("paragraph witness target requires a non-empty authorized anchor")
+        object.__setattr__(self, "surface_mode", _earned_witness_surface_mode(self))
         return self
+
+
+def _earned_witness_surface_mode(target: ParagraphWitnessTargetV1) -> str:
+    """Keep ``repository_statement`` only when executable evidence earned it.
+
+    Legacy MethodUnit dumps omitted ``surface_mode``.  The field default is
+    ``repository_statement``, which would otherwise tell the Writer to state
+    only supplied code operations for author-attested story facets.  Unearned
+    defaults become Candidate ``author_specification`` so Motivation /
+    framework units can expand author statements without claiming a closed
+    implementation binding.
+    """
+
+    current = str(target.surface_mode or "").strip() or "repository_statement"
+    if current != "repository_statement":
+        return current
+    lane = str(target.authority_lane or "").strip().casefold()
+    has_anchor = bool(target.allowed_anchor_ids or target.allowed_exact_excerpts)
+    executable_lanes = {
+        "executable_hard",
+        "configuration_resolved",
+        "formal_derivation",
+    }
+    if lane in executable_lanes and has_anchor:
+        return "repository_statement"
+    return "author_specification"
 
 
 class ParagraphWitnessContractV1(_MethodModel):
@@ -1198,6 +1327,7 @@ class MethodSectionPlanV2(_MethodModel):
     method_name: str = ""
     sections: tuple[SectionArgumentGraphV1, ...] = Field(default_factory=tuple)
     argument_units: tuple[MethodArgumentUnitV1, ...] = Field(default_factory=tuple)
+    method_units: tuple[MethodUnitV2, ...] = Field(default_factory=tuple)
     venue: str = ""
     audience: str = ""
     total_page_budget: float = 0.0
@@ -1222,8 +1352,17 @@ class MethodSectionPlanV2(_MethodModel):
             raise ValueError("method section plan contains duplicate section IDs")
         if len(unit_ids) != len(set(unit_ids)):
             raise ValueError("method section plan contains duplicate argument unit IDs")
+        method_unit_ids = [item.method_unit_id for item in self.method_units]
+        if len(method_unit_ids) != len(set(method_unit_ids)):
+            raise ValueError("method section plan contains duplicate method unit IDs")
         known_sections = set(section_ids)
         known_units = set(unit_ids)
+        paragraphs_by_section: dict[str, set[str]] = {
+            section.section_id: {
+                paragraph.paragraph_id for paragraph in section.paragraphs
+            }
+            for section in self.sections
+        }
         sections_by_unit: dict[str, set[str]] = {}
         moves_by_section: dict[str, set[str]] = {}
         for section in self.sections:
@@ -1241,6 +1380,37 @@ class MethodSectionPlanV2(_MethodModel):
             for unit_id in section.argument_unit_ids:
                 sections_by_unit.setdefault(unit_id, set()).add(section.section_id)
             moves_by_section[section.section_id] = {item.move for item in section.moves}
+
+        for method_unit in self.method_units:
+            if method_unit.section_id not in known_sections:
+                raise ValueError(
+                    f"method unit {method_unit.method_unit_id} binds an unknown section"
+                )
+            if not method_unit.paragraph_ids:
+                raise ValueError(
+                    f"method unit {method_unit.method_unit_id} requires paragraph bindings"
+                )
+            unknown_paragraphs = set(method_unit.paragraph_ids) - paragraphs_by_section.get(
+                method_unit.section_id, set()
+            )
+            if unknown_paragraphs:
+                raise ValueError(
+                    f"method unit {method_unit.method_unit_id} binds unknown paragraphs: "
+                    + ",".join(sorted(unknown_paragraphs))
+                )
+            unknown_method_units = set(method_unit.argument_unit_ids) - known_units
+            if unknown_method_units:
+                raise ValueError(
+                    f"method unit {method_unit.method_unit_id} binds unknown argument units: "
+                    + ",".join(sorted(unknown_method_units))
+                )
+            if any(
+                method_unit.section_id not in sections_by_unit.get(unit_id, set())
+                for unit_id in method_unit.argument_unit_ids
+            ):
+                raise ValueError(
+                    f"method unit {method_unit.method_unit_id} crosses an argument-unit section"
+                )
 
         assignment_ids = [item.obligation_id for item in self.obligation_assignments]
         if len(assignment_ids) != len(set(assignment_ids)):
@@ -1567,6 +1737,7 @@ __all__ = [
     "MethodCompletenessItemV1",
     "MethodCompletenessMatrixV1",
     "MethodSectionPlanV2",
+    "MethodUnitV2",
     "ProofObligationV1",
     "REFERENCE_METHOD_STATUSES",
     "ReferenceMethodAgendaV1",

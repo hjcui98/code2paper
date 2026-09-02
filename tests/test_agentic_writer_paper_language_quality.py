@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from code2paper.agentic.evidence_compiler_v3 import (
     AtomicClaimSetV3,
     AtomicClaimV3,
@@ -415,6 +417,43 @@ def test_writer_section_inputs_expose_mechanism_section_contract() -> None:
     assert "formula_obligations" in inputs[0].prompt_payload
 
 
+def test_facets_or_briefs_route_requires_formula_placeholders_without_packets() -> None:
+    claim_set = _claim_set()
+    plan = build_method_section_plan(claims=claim_set)
+    section = plan.sections[0]
+    paragraph_id = section.paragraphs[0].paragraph_id
+    inputs = _writer_section_inputs(
+        plan=plan,
+        claims=claim_set,
+        equations=EquationClaimSetV1(
+            repo_snapshot_id="repo:writer-quality",
+            project_tree_hash="sha256:tree",
+            equations=[],
+            code_fact_digest="sha256:facts",
+            content_digest="sha256:equations",
+        ),
+        configurations=ConfigurationClaimSetV1(
+            repo_snapshot_id="repo:writer-quality",
+            project_tree_hash="sha256:tree",
+            claims=[],
+            content_digest="sha256:configs",
+        ),
+        # This models a typed brief/facet replay whose frozen packet
+        # projection is absent.  Formula consumption must still use the
+        # paragraph placeholder contract.
+        argument_briefs=SimpleNamespace(briefs=()),
+        formula_packages_by_section={section.section_id: ({
+            "package_id": "package:mechanism",
+            "consumer_paragraph_id": paragraph_id,
+            "latex": "z = x",
+            "markdown_block": "$$z = x$$",
+        },)},
+    )
+    payload = inputs[0].prompt_payload
+    assert payload["paragraph_transaction_required"] is True
+    assert payload["formula_placeholders_required"] is True
+
+
 def test_mechanism_section_visible_when_present_in_payload() -> None:
     from code2paper.llm.section_writer import (
         _llm_visible_section_payload,
@@ -470,7 +509,7 @@ def test_writer_skill_treats_design_objective_as_caveated_content() -> None:
     from code2paper.authoring.writer_skill import PublicationMethodWriterSkillV1
 
     skill = PublicationMethodWriterSkillV1()
-    assert skill.version == "1.12"
+    assert skill.version == "1.15"
     joined = " ".join(skill.style_rules)
     assert "design_objective and story caveated concepts are caveated content sources" in joined
     assert "realizes_story_node=false is implementation-binding material only" in joined

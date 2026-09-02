@@ -900,6 +900,7 @@ def write_d25_method_research_artifacts(
         completeness=completeness,
         equations=equation_set,
         configurations=configurations,
+        facts=fact_set,
         method_name=method_name,
     )
     values = {

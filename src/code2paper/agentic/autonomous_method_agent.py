@@ -1141,6 +1141,7 @@ def build_product_planning(
             concept_cards=concept_cards,
             argument_briefs=argument_briefs,
             prior_plan=prior_plan,
+            facts=fact_set,
             publication_field_candidates=(
                 facet_alignment_result.publication_field_candidates
                 if facet_alignment_result is not None
@@ -1494,11 +1495,28 @@ def persist_product_artifacts(
             paths["atomic_claims_v3"], claim_set
         )
     if plan is not None:
-        paths["method_section_plan_v2"] = _write(
-            "method_section_plan_v2",
-            plan.model_dump(mode="json"),
-            product=False,
+        # An incumbent MethodUnit plan is freeze authority.  Callback Research
+        # may rebuild claims and dossiers, but must not remint paragraph
+        # identity, publication slots, or formula consumers.
+        incumbent_plan = next(
+            (
+                path
+                for path in (
+                    root / "artifacts" / "06_authoring" / "method_section_plan_v2.json",
+                    artifacts_dir / "method_section_plan_v2.json",
+                )
+                if path.is_file()
+            ),
+            None,
         )
+        if incumbent_plan is not None:
+            paths["method_section_plan_v2"] = str(incumbent_plan)
+        else:
+            paths["method_section_plan_v2"] = _write(
+                "method_section_plan_v2",
+                plan.model_dump(mode="json"),
+                product=False,
+            )
     if propositions is not None:
         paths["method_propositions_v1"] = _write(
             "method_propositions_v1",

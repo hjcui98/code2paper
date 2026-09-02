@@ -1,5 +1,45 @@
 # Autonomous Method Agent reorientation plan
 
+## Active assignment — Candidate-first Method surface repair (2026-09-01)
+
+Implement the six bound root-cause repairs in `.agent/task.md` in this same dirty worktree. This
+assignment supersedes the older attachment/P0 assignment only for the current implementation turn;
+the established trust boundary, Candidate durability, callback bounds, and fail-closed Verified
+projection remain unchanged.
+
+Work serially in this order because each later surface consumes the earlier one:
+
+1. **MethodUnit content and organization:** retain bounded author rationale/design intent alongside
+   mechanism facets; carry its argument-unit/author-statement ownership; normalize only clearly
+   context-first rhetorical order; compute non-trivial paragraph guidance from conceptual payload.
+2. **Formalizer package authority and surface:** let a valid evidence-bound academic operation
+   package win; confine deterministic exact-operation notation to fallback/audit use; reject
+   code-shaped Candidate formula surfaces; canonicalize all accepted `markdown_block` values to one
+   display-math block.
+3. **Writer input and assembly:** filter/project audit-only low-level operations and targets in the
+   V2 LLM packet without changing frozen evidence sidecars; retain meaningful scientific data flow;
+   honor a validated Writer heading only when the planned heading is deterministically truncated.
+4. **Focused regression proof:** add the six project-neutral counterexamples named in
+   `.agent/task.md`, run the relevant focused suites, compileall, and diff hygiene. Update
+   `.agent/implementation.md` with exact evidence and stop. Do not run 8006/live APIs in this turn.
+
+Acceptance is by code path and Candidate-surface behavior, not coverage-account improvement:
+
+- Motivation/problem intent reaches the Writer before mechanism detail when its semantic role owns
+  that context.
+- EBCAR-like operation evidence can produce paper notation instead of assignments, member access,
+  function keywords, tuple assignment, or raw snake_case display math.
+- Placeholder substitution cannot inject headings, prose memos, lists, or Symbol Definitions.
+- Audit/debug/type-label/cache-membership mechanics do not become the grammatical center of Method
+  prose merely because they exist in semantic-frame operations.
+- A coherent repair of a syntactically truncated H2 remains in final Candidate assembly.
+- No production rule contains the audited project names, paths, identifiers, or expected wording;
+  no Verified gate or authority lane is weakened.
+
+Implementation owner edits production/tests and `.agent/implementation.md` only. Codex performs
+read-only acceptance from the diff and recorded verification; if it issues `REPAIR`, continue with
+`/implement` in the same worktree and task.
+
 ## Active assignment update — attachment-aligned P0 closure (2026-08-28)
 
 The user asked for the attached three-project root-cause audit to be implemented. The attachment is

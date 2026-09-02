@@ -43,11 +43,12 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SRC = _ROOT / "src"
@@ -86,6 +87,8 @@ DERIVED_AUTHORING_ARTIFACTS = (
     "method_argument_facets_v1",
     "facet_evidence_alignments_v1",
     "candidate_facet_policies_v1",
+    "publication_field_candidates_v1",
+    "typed_field_deferred_v1",
     "method_argument_facet_alignment_trace_v1",
     "publication_paragraph_transaction_assessments_v1",
     "authoring_structural_exit_v1",
@@ -107,12 +110,214 @@ RESEARCH_STAGE_CHECKPOINT_CANDIDATES = (
 )
 
 
+_METHOD_UNIT_FREEZE_ARTIFACTS = (
+    "method_section_plan_v2",
+    "method_argument_briefs_v1",
+    "method_argument_facets_v1",
+    "facet_evidence_alignments_v1",
+    "candidate_facet_policies_v1",
+)
+
+
+def _persist_reused_method_unit_surface(fresh: Path) -> None:
+    """Write the Writer-loaded MethodUnit freeze into ``06_authoring``.
+
+    ``--reuse-derived-authoring`` copies plans into ``artifacts/*.json``.
+    The Writer rehashes ``MethodSectionPlanV2`` on load, and Architect or
+    callback persist write a second copy under ``06_authoring``.  Persist
+    the loaded (rehashed) plan bytes in both places so assessment and Writer
+    digests match, and mirror the frozen briefs/facets beside it.
+    """
+
+    artifacts = fresh / "artifacts"
+    authoring = artifacts / "06_authoring"
+    authoring.mkdir(parents=True, exist_ok=True)
+    plan_path = artifacts / "method_section_plan_v2.json"
+    authoring_plan = authoring / "method_section_plan_v2.json"
+    if plan_path.is_file():
+        try:
+            from code2paper.agentic.method_argument_models import MethodSectionPlanV2
+
+            plan = MethodSectionPlanV2.model_validate_json(
+                plan_path.read_text(encoding="utf-8")
+            )
+            loaded = plan.model_dump_json(indent=2) + "\n"
+            plan_path.write_text(loaded, encoding="utf-8")
+            authoring_plan.write_text(loaded, encoding="utf-8")
+        except (OSError, TypeError, ValueError):
+            shutil.copy2(plan_path, authoring_plan)
+    for name in _METHOD_UNIT_FREEZE_ARTIFACTS:
+        if name == "method_section_plan_v2":
+            continue
+        source = artifacts / f"{name}.json"
+        if source.is_file():
+            shutil.copy2(source, authoring / f"{name}.json")
+
+
 def _digest_file(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _digest_text(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _capture_authoring_transaction_snapshot(fresh: Path) -> dict[str, bytes]:
+    """Capture the direct publication files before a callback resume.
+
+    A callback may create new Research evidence, but its resumed Writer view
+    is still one paragraph transaction.  The publication/checkpoint files
+    therefore need an incumbent snapshot so a regressing resume can be
+    rejected atomically.  Nested immutable stores are intentionally excluded:
+    the restored direct checkpoints continue to authenticate their original
+    immutable refs, while the Research continuation trace remains available
+    for diagnosis.
+    """
+
+    snapshot: dict[str, bytes] = {}
+    for dirname in ("06_authoring", "07_validation"):
+        base = fresh / "artifacts" / dirname
+        if not base.is_dir():
+            continue
+        for path in base.iterdir():
+            if not path.is_file():
+                continue
+            try:
+                snapshot[str(path.relative_to(fresh))] = path.read_bytes()
+            except OSError:
+                continue
+    return snapshot
+
+
+def _restore_authoring_transaction_snapshot(
+    fresh: Path,
+    snapshot: Mapping[str, bytes],
+) -> None:
+    """Restore the direct publication files captured before a resume.
+
+    Restore is atomic with respect to the captured file set: files created
+    after the snapshot (for example a callback-reminted MethodUnit plan)
+    are deleted, then snapshot bytes are written back.  Leaving post-snapshot
+    files in place would mix a 6-unit plan with 7-unit assessments.
+    """
+
+    snapshot_paths = set(snapshot)
+    for dirname in ("06_authoring", "07_validation"):
+        base = fresh / "artifacts" / dirname
+        if not base.is_dir():
+            continue
+        for path in list(base.iterdir()):
+            if not path.is_file():
+                continue
+            relative = str(path.relative_to(fresh))
+            if relative in snapshot_paths:
+                continue
+            try:
+                path.unlink()
+            except OSError:
+                continue
+    for relative, content in snapshot.items():
+        path = fresh / relative
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        except OSError:
+            # The caller will keep the callback failure visible; a partial
+            # restore must not turn the original failure into a false pass.
+            continue
+
+
+def _structural_quality_vector(payload: Mapping[str, Any] | None) -> dict[str, int]:
+    """Return the paragraph transaction dimensions used for callback commits."""
+
+    payload = payload if isinstance(payload, Mapping) else {}
+    keys = (
+        "required_paragraphs", "valid_required_paragraphs", "invalid_paragraphs",
+        "required_targets", "valid_targets", "required_slots", "witnessed_slots",
+        "required_edges", "witnessed_edges", "accepted_formula_packages",
+        "consumed_formula_packages", "blocked_representation", "invalid_witnesses",
+    )
+    return {key: int(payload.get(key) or 0) for key in keys}
+
+
+def _callback_transaction_decision(
+    incumbent: Mapping[str, Any] | None,
+    candidate: Mapping[str, Any] | None,
+) -> tuple[bool, str]:
+    """Decide whether a resumed callback view may replace its incumbent.
+
+    The decision is intentionally based on the same structural receipt used
+    by acceptance.  Denominators may change after a scoped Research recompile,
+    so target/slot/edge/formula comparisons use coverage cross-products, not
+    raw counts alone.  A no-gain resume is rejected as well as a regression:
+    evidence can remain in Research history without replacing usable prose.
+    """
+
+    before = _structural_quality_vector(incumbent)
+    after = _structural_quality_vector(candidate)
+    ratios = (
+        ("targets", "valid_targets", "required_targets"),
+        ("slots", "witnessed_slots", "required_slots"),
+        ("edges", "witnessed_edges", "required_edges"),
+        ("formulas", "consumed_formula_packages", "accepted_formula_packages"),
+    )
+    improvements: list[str] = []
+    for label, numerator, denominator in ratios:
+        before_den = before[denominator]
+        after_den = after[denominator]
+        before_num = before[numerator]
+        after_num = after[numerator]
+        if before_den and not after_den:
+            return False, f"{label}_coverage_regressed:{before_num}/{before_den}->0/0"
+        if before_den and after_den:
+            before_product = before_num * after_den
+            after_product = after_num * before_den
+            if after_product < before_product:
+                return False, (
+                    f"{label}_coverage_regressed:{before_num}/{before_den}->"
+                    f"{after_num}/{after_den}"
+                )
+            if after_product > before_product:
+                improvements.append(f"{label}_coverage_gain")
+        elif after_den and not before_den:
+            if after_num:
+                improvements.append(f"{label}_coverage_gain")
+
+    lower_is_better = (
+        ("invalid_paragraphs", "invalid_paragraphs_increased"),
+        ("blocked_representation", "blocked_representation_increased"),
+        ("invalid_witnesses", "invalid_witnesses_increased"),
+    )
+    for field, reason in lower_is_better:
+        if after[field] > before[field]:
+            return False, f"{reason}:{before[field]}->{after[field]}"
+        if after[field] < before[field]:
+            improvements.append(f"{field}_reduced")
+
+    higher_is_better = (
+        ("valid_required_paragraphs", "valid_paragraphs"),
+        ("valid_targets", "valid_targets"),
+        ("witnessed_slots", "witnessed_slots"),
+        ("witnessed_edges", "witnessed_edges"),
+        ("consumed_formula_packages", "consumed_formulas"),
+    )
+    for field, label in higher_is_better:
+        if after[field] < before[field]:
+            return False, f"{label}_count_regressed:{before[field]}->{after[field]}"
+        if after[field] > before[field]:
+            improvements.append(f"{label}_gain")
+
+    if not improvements:
+        return False, "no_safe_quality_gain"
+    return True, ";".join(dict.fromkeys(improvements))
+
+
+def _read_json_mapping(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def _code_state_digest() -> str:
@@ -151,8 +356,8 @@ def _execution_manifest_digest(
         parts.append("profile:missing")
     for name in sorted(copied_artifact_names):
         candidates = [
-            frozen / "artifacts" / f"{name}.json",
             frozen / "artifacts" / "06_authoring" / f"{name}.json",
+            frozen / "artifacts" / f"{name}.json",
         ]
         source = next((path for path in candidates if path.is_file()), None)
         if source is None:
@@ -178,6 +383,203 @@ def _apply_live_profile(profile: str | Path) -> None:
         value = value.strip().strip("'").strip('"')
         if key and not key.startswith("_") and value and "$" not in value:
             os.environ[key] = value
+
+
+def _authoring_failure_path(fresh: Path) -> Path:
+    return fresh / "artifacts" / "06_authoring" / "authoring_failure_v1.json"
+
+
+def _safe_failure_text(value: Any, *, limit: int = 320) -> str:
+    """Keep failure diagnostics useful without persisting credentials."""
+
+    text = str(value or "")
+    for marker in ("api_key", "access_token", "authorization", "bearer"):
+        text = re.sub(
+            rf"(?i)({re.escape(marker)}\s*[:=]\s*)[^,;\s]+",
+            r"\1<redacted>",
+            text,
+        )
+    return text[:limit]
+
+
+def _failure_scope_from_artifacts(
+    *,
+    fresh: Path,
+    structural: Mapping[str, Any] | None,
+    terminal_reason: str,
+) -> dict[str, Any]:
+    """Resolve the first concrete paragraph/target failure for diagnostics."""
+
+    structural = structural if isinstance(structural, Mapping) else {}
+    reasons = [
+        str(value).strip()
+        for value in (structural.get("reasons") or ())
+        if str(value).strip()
+    ]
+    priority = (
+        "required_paragraph_invalid:",
+        "required_paragraph_unassessed:",
+        "required_paragraph_not_rendered:",
+        "required_target_uncovered:",
+        "required_formula_unresolved:",
+        "formula_packages_unconsumed:",
+    )
+    direct_reason = next(
+        (reason for prefix in priority for reason in reasons if reason.startswith(prefix)),
+        _safe_failure_text(terminal_reason),
+    )
+    section_id = ""
+    paragraph_id = ""
+    target_kind = ""
+    target_id = ""
+    if direct_reason.startswith("required_target_uncovered:"):
+        payload = direct_reason.removeprefix("required_target_uncovered:")
+        section_id, _, payload = payload.partition(":")
+        target_kind = payload.rsplit(":", 1)[-1].strip()
+        paragraph_id = payload[:-(len(target_kind) + 1)] if target_kind else payload
+    elif direct_reason.startswith((
+        "required_paragraph_invalid:",
+        "required_paragraph_unassessed:",
+        "required_paragraph_not_rendered:",
+    )):
+        payload = direct_reason.split(":", 1)[1]
+        section_id, _, paragraph_id = payload.partition(":")
+
+    assessment_path = fresh / "artifacts" / "06_authoring" / (
+        "publication_paragraph_transaction_assessments_v1.json"
+    )
+    try:
+        assessment_payload = json.loads(assessment_path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        assessment_payload = {}
+    for row in assessment_payload.get("assessments", ()) if isinstance(
+        assessment_payload, Mapping
+    ) else ():
+        if not isinstance(row, Mapping):
+            continue
+        if section_id and str(row.get("section_id") or "") != section_id:
+            continue
+        if paragraph_id and str(row.get("paragraph_id") or "") != paragraph_id:
+            continue
+        missing = row.get("missing_by_kind") or {}
+        if target_kind:
+            values = missing.get(target_kind) or () if isinstance(missing, Mapping) else ()
+            target_id = str(next(iter(values), "") or "").strip()
+        elif isinstance(missing, Mapping):
+            for kind in ("formula", "slot", "edge", "facet", "field"):
+                values = missing.get(kind) or ()
+                if values:
+                    target_kind = kind
+                    target_id = str(values[0]).strip()
+                    break
+        break
+    cascade = [reason for reason in reasons if reason != direct_reason]
+    if not section_id or not paragraph_id:
+        # Writer boundary messages carry a paragraph id even when the
+        # structural receipt was not generated.  Recover it only from the
+        # stable typed prefixes; never guess a section from prose text.
+        match = re.search(
+            r"(?:required_target_contract|witness_not_unique_substring|missing_exact_witness):"
+            r"([^;]+)",
+            str(terminal_reason or ""),
+        )
+        if match:
+            token = match.group(1)
+            parts = token.split(":")
+            if len(parts) >= 2 and parts[0].startswith("MA-"):
+                section_id = section_id or parts[0]
+                paragraph_id = paragraph_id or ":".join(parts[1:-1])
+                target_id = target_id or parts[-1]
+    return {
+        "section_id": section_id,
+        "paragraph_id": paragraph_id,
+        "target_kind": target_kind,
+        "target_id": target_id,
+        "direct_reason": direct_reason,
+        "cascade_reasons": cascade,
+    }
+
+
+def _remember_first_failure(
+    telemetry: dict[str, Any],
+    *,
+    stage: str,
+    reason: str,
+    error_code: str = "authoring_failure",
+) -> None:
+    """Keep the first failed boundary stable across later cleanup gates."""
+
+    if telemetry.get("first_failed_stage"):
+        return
+    telemetry["first_failed_stage"] = str(stage or "replay")
+    telemetry["first_failed_reason"] = _safe_failure_text(reason)
+    telemetry["first_failed_error_code"] = str(error_code or "authoring_failure")
+
+
+def _write_authoring_failure(
+    *,
+    fresh: Path,
+    terminal_stage: str,
+    terminal_reason: str,
+    error_code: str = "",
+    section_id: str = "",
+    paragraph_id: str = "",
+    target_kind: str = "",
+    target_id: str = "",
+    direct_reason: str = "",
+    cascade_reasons: tuple[str, ...] | list[str] = (),
+    exc: BaseException | None = None,
+) -> str:
+    """Persist one typed terminal failure for replay/evaluator consumers."""
+
+    path = _authoring_failure_path(fresh)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stage_order = ("research", "formalizer", "writer")
+    stage_index = {
+        stage: index for index, stage in enumerate(stage_order)
+    }
+    terminal_index = stage_index.get(str(terminal_stage or ""), -1)
+
+    def stage_status(stage: str) -> str:
+        if terminal_index < 0:
+            return "not_run"
+        index = stage_index[stage]
+        if index < terminal_index:
+            return "completed"
+        if index == terminal_index:
+            return "failed"
+        return "not_run"
+
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "artifact": "authoring_failure_v1",
+        "terminal_stage": str(terminal_stage or "replay"),
+        "error_code": str(error_code or "authoring_failure"),
+        "terminal_reason": _safe_failure_text(terminal_reason),
+        "section_id": str(section_id or ""),
+        "paragraph_id": str(paragraph_id or ""),
+        "target_kind": str(target_kind or ""),
+        "target_id": str(target_id or ""),
+        "direct_reason": _safe_failure_text(direct_reason or terminal_reason),
+        "cascade_reasons": [
+            _safe_failure_text(value)
+            for value in (cascade_reasons or ())
+            if str(value).strip()
+        ],
+        "input_summary": {
+            "fresh_root_name": fresh.name,
+            "exception_type": type(exc).__name__ if exc is not None else "",
+            "exception_message": _safe_failure_text(exc) if exc is not None else "",
+        },
+        "downstream_stages": {
+            stage: stage_status(stage) for stage in stage_order
+        },
+    }
+    payload["content_digest"] = _digest_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return str(path)
 
 
 def _write_execution_record(
@@ -213,7 +615,21 @@ def _write_execution_record(
             "writer_resumed_section_ids", []
         ),
         "writer_status": telemetry.get("writer_status", ""),
+        "writer_transaction_status": telemetry.get(
+            "writer_transaction_status", telemetry.get("writer_status", "")
+        ),
+        "publication_status": telemetry.get("publication_status", ""),
         "writer_blocked_reason": telemetry.get("writer_blocked_reason", ""),
+        "terminal_stage": telemetry.get("terminal_stage", ""),
+        "terminal_reason": telemetry.get("terminal_reason", ""),
+        "terminal_error_code": telemetry.get("terminal_error_code", ""),
+        "first_failed_stage": telemetry.get("first_failed_stage", ""),
+        "first_failed_reason": telemetry.get("first_failed_reason", ""),
+        "first_failed_error_code": telemetry.get("first_failed_error_code", ""),
+        "failure_artifact": str(
+            _authoring_failure_path(fresh)
+            if _authoring_failure_path(fresh).is_file() else ""
+        ),
         "candidate_digest": telemetry.get("candidate_digest", ""),
         "research_continuation_seed": telemetry.get(
             "research_continuation_seed", {}
@@ -330,6 +746,11 @@ def _record_authoring_structural_exit(
     callback_path = paths.get("writing_research_callback_artifacts_v1") or _find_fresh_artifact(
         fresh, "writing_research_callback_artifacts_v1"
     )
+    candidate_path = method_output(fresh, "publication_candidate_method")
+    try:
+        candidate_markdown = candidate_path.read_text(encoding="utf-8")
+    except OSError:
+        candidate_markdown = ""
     decision = evaluate_authoring_structural_exit(
         plan_payload=_load_artifact_payload(plan_path),
         trace_payload=_load_artifact_payload(trace_path),
@@ -338,6 +759,7 @@ def _record_authoring_structural_exit(
         callback_payload=_load_artifact_payload(callback_path),
         assessment_payload=_load_artifact_payload(assessment_path),
         candidate_digest=str(telemetry.get("candidate_digest") or ""),
+        candidate_markdown=candidate_markdown,
     )
     exit_path = method_output(fresh, "authoring_structural_exit_v1")
     exit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -594,6 +1016,10 @@ def _rebuild_derived_authoring(
         story_spine=story_spine,
         policy=build_default_method_output_policy(),
         argument_briefs=argument_briefs,
+        facts=facts,
+        argument_facets=facet_result.facets,
+        facet_alignments=facet_result.alignments,
+        publication_field_candidates=facet_result.publication_field_candidates,
     )
     projection = build_authoring_projection(
         method_evidence=method_template,
@@ -630,6 +1056,25 @@ def _rebuild_derived_authoring(
             "schema_version": "1.0",
             "policies": [
                 item.model_dump(mode="json") for item in facet_result.policies
+            ],
+        },
+        # Keep the field-level surface that was used to build the plan.  If
+        # this projection is omitted, the later Writer reloads only aggregate
+        # facet alignments and recompiles fields without the original
+        # ownership/readiness context, which changes the prose surface during
+        # one replay.
+        "publication_field_candidates_v1": {
+            "schema_version": "1.0",
+            "candidates": [
+                item.model_dump(mode="json")
+                for item in facet_result.publication_field_candidates
+            ],
+        },
+        "typed_field_deferred_v1": {
+            "schema_version": "1.0",
+            "deferred": [
+                item.model_dump(mode="json")
+                for item in facet_result.typed_field_deferred
             ],
         },
         "method_argument_facet_alignment_trace_v1": {
@@ -847,6 +1292,8 @@ def _replay(
     arguments: argparse.Namespace,
     telemetry: dict,
 ) -> int:
+    telemetry["terminal_stage"] = "input"
+    telemetry["terminal_reason"] = ""
     # Load the live profile into the environment (same as the probe).
     profile_path = Path(arguments.profile).expanduser()
     _apply_live_profile(profile_path)
@@ -862,8 +1309,8 @@ def _replay(
     manifest_entries: list[dict[str, Any]] = []
     for name in RESEARCH_COPY_ARTIFACTS:
         source_candidates = [
-            frozen / "artifacts" / f"{name}.json",
             frozen / "artifacts" / "06_authoring" / f"{name}.json",
+            frozen / "artifacts" / f"{name}.json",
         ]
         source = next((path for path in source_candidates if path.is_file()), None)
         if source is None:
@@ -883,6 +1330,14 @@ def _replay(
         if not (artifacts / f"{name}.json").is_file()
     ]
     if missing:
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = "missing_frozen_artifacts:" + ",".join(missing)
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="missing_frozen_artifacts",
+        )
         print(f"[replay] FATAL missing frozen artifacts: {missing}")
         return 2
 
@@ -909,6 +1364,14 @@ def _replay(
         copied_artifact_names=tuple(copied),
     )
     if not profile_path.is_file():
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = "authoring_rebuild_profile_missing"
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="authoring_rebuild_profile_missing",
+        )
         print("[replay] FATAL authoring rebuild manifest missing profile digest")
         return 2
 
@@ -921,13 +1384,62 @@ def _replay(
             reason="not_copied_by_default",
         ))
 
+    # A frozen authoring replay may intentionally exercise the current
+    # Formalizer/Writer/Binder against an already-built MethodUnit surface.
+    # Keep that mode explicit, while still rebuilding the transaction trace
+    # and structural exit below.  Callback bundles are excluded here because
+    # their file-backed references require the dedicated rebase/integrity
+    # path guarded by ``--reuse-authoring-callbacks``.
+    if getattr(arguments, "reuse_derived_authoring", False):
+        for derived_name in DERIVED_AUTHORING_ARTIFACTS:
+            if derived_name in {
+                # Callback references have a dedicated rebase path below.
+                "writing_research_callback_artifacts_v1",
+                # These are transaction results, not planning authority.  A
+                # historical copy can describe a different plan revision and
+                # would make a blocked replay look like a zero-coverage run.
+                "publication_paragraph_transaction_assessments_v1",
+                "authoring_structural_exit_v1",
+            }:
+                continue
+            source_candidates = [
+                # The final authoring lane is authoritative.  Historical
+                # replay roots also contain pre-writer or stale diagnostics
+                # with a different plan digest.
+                frozen / "artifacts" / "06_authoring" / f"{derived_name}.json",
+                frozen / "artifacts" / f"{derived_name}.json",
+            ]
+            source = next((path for path in source_candidates if path.is_file()), None)
+            if source is None:
+                continue
+            target = artifacts / f"{derived_name}.json"
+            shutil.copy2(source, target)
+            copied.append(derived_name)
+            manifest_entries.append(_manifest_entry(
+                name=derived_name,
+                path=target,
+                authority_class="derived-authoring",
+                decision="copied",
+                reason="reuse_frozen_authoring",
+            ))
+        _persist_reused_method_unit_surface(fresh)
+
     if arguments.rebuild_authoring:
+        telemetry["terminal_stage"] = "method_unit_reassembly"
         rebuilt_paths, rebuilt_entries, refused = _rebuild_derived_authoring(
             fresh=fresh,
             artifacts=artifacts,
             llm_config=llm_config,
         )
         if refused:
+            telemetry["terminal_stage"] = "method_unit_reassembly"
+            telemetry["terminal_reason"] = "authoring_rebuild_refused:" + str(refused)
+            _remember_first_failure(
+                telemetry,
+                stage="method_unit_reassembly",
+                reason=telemetry["terminal_reason"],
+                error_code="method_unit_reassembly_refused",
+            )
             print(f"[replay] FATAL authoring rebuild refused: {refused}")
             if arguments.persist_authoring_rebuild_manifest:
                 _write_authoring_rebuild_manifest(
@@ -977,6 +1489,18 @@ def _replay(
                 fresh_root=fresh,
             )
             if rebase_report["failures"]:
+                telemetry["terminal_stage"] = "callback"
+                telemetry["terminal_reason"] = (
+                    "callback_artifact_integrity:" + ";".join(
+                        str(item) for item in rebase_report["failures"]
+                    )
+                )
+                _remember_first_failure(
+                    telemetry,
+                    stage="callback",
+                    reason=telemetry["terminal_reason"],
+                    error_code="callback_artifact_integrity",
+                )
                 print(
                     "[replay] FATAL callback artifact integrity failures: "
                     + "; ".join(rebase_report["failures"])
@@ -984,6 +1508,14 @@ def _replay(
                 return 2
             bundle_payload = rebase_report["bundle"]
             if bundle_payload is None:
+                telemetry["terminal_stage"] = "callback"
+                telemetry["terminal_reason"] = "callback_bundle_rebase_empty"
+                _remember_first_failure(
+                    telemetry,
+                    stage="callback",
+                    reason=telemetry["terminal_reason"],
+                    error_code="callback_bundle_rebase_empty",
+                )
                 print("[replay] FATAL callback bundle rebase produced no bundle")
                 return 2
             fresh_bundle_path = artifacts / "writing_research_callback_artifacts_v1.json"
@@ -1019,9 +1551,11 @@ def _replay(
     }
 
     from code2paper.agentic.publication_method_writer import (
+        effective_writer_transaction_status,
         run_publication_method_writer,
     )
 
+    telemetry["terminal_stage"] = "writer"
     result, paths = run_publication_method_writer(
         out_root=fresh,
         artifact_paths=artifact_paths,
@@ -1039,8 +1573,26 @@ def _replay(
     print(f"[replay] writer_resumed_section_ids: {list(result.resumed_section_ids)}")
     telemetry["reused_fulfilled_callback_ids"] = reused_fulfilled_callback_ids
     telemetry["writer_resumed_section_ids"] = list(result.resumed_section_ids)
-    telemetry["writer_status"] = result.status
+    telemetry["publication_status"] = result.status
+    telemetry["writer_transaction_status"] = effective_writer_transaction_status(result)
+    telemetry["writer_status"] = telemetry["writer_transaction_status"]
     telemetry["writer_blocked_reason"] = result.blocked_reason
+    if telemetry["writer_status"] != "success":
+        telemetry["terminal_reason"] = str(
+            result.blocked_reason or f"writer_status:{result.status}"
+        )
+        research_block = str(result.blocked_reason or "").startswith(
+            "research_dossier_"
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="research" if research_block else "writer",
+            reason=telemetry["terminal_reason"],
+            error_code=(
+                "research_boundary_not_ready"
+                if research_block else "writer_boundary_failed"
+            ),
+        )
     telemetry["candidate_digest"] = _candidate_digest_for_root(fresh)
     trace_path = _record_method_content_trace(
         fresh=fresh,
@@ -1059,19 +1611,58 @@ def _replay(
         paths=paths,
         telemetry=telemetry,
     )
+    if not bool(structural_exit.get("eligible")) and str(
+        telemetry.get("writer_status") or result.status
+    ) == "success":
+        telemetry["terminal_stage"] = "structural_exit"
+        telemetry["terminal_reason"] = "structural_exit_not_eligible:" + ";".join(
+            str(item) for item in (structural_exit.get("reasons") or ())
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="structural_exit",
+            reason=telemetry["terminal_reason"],
+            error_code="structural_exit_not_eligible",
+        )
 
     callback_requested = (
         arguments.repo
         and Path(arguments.repo).is_dir()
         and int(arguments.callback_rounds) > 0
     )
-    if callback_requested and not bool(structural_exit.get("eligible")):
-        # Fail closed before constructing a Research runtime or making a
-        # callback LLM/tool call.  The Candidate and its diagnostics stay
-        # available, but this run is never reported as a successful
-        # callback continuation.
+    writer_status_for_callback = str(
+        telemetry.get("writer_status") or result.status or ""
+    )
+    callback_needed = bool(
+        callback_requested and _authoring_continuation_needed(fresh)
+    )
+    callback_repair_authorized = bool(
+        callback_needed
+        and (
+            writer_status_for_callback == "incomplete"
+            or (
+                writer_status_for_callback == "success"
+                and bool(structural_exit.get("eligible"))
+            )
+        )
+    )
+    if callback_requested and not callback_repair_authorized and (
+        not bool(structural_exit.get("eligible"))
+        or writer_status_for_callback != "success"
+    ):
+        # A structurally complete Writer may enter the normal callback round
+        # only through the structural receipt.  An incomplete Writer is a
+        # different, bounded repair case: when it emitted an actionable local
+        # request, let the owning Research route repair the affected
+        # paragraph, while the final structural/acceptance gates remain
+        # unchanged and fail closed.
         reason = "callback1_not_authorized:" + ";".join(
-            str(item) for item in (structural_exit.get("reasons") or ())
+            str(item)
+            for item in (
+                (structural_exit.get("reasons") or ())
+                if writer_status_for_callback == "success"
+                else ("writer_status:" + (writer_status_for_callback or "missing"),)
+            )
         )
         telemetry["callback_fulfillment"] = {
             "status": "not_authorized",
@@ -1081,15 +1672,17 @@ def _replay(
                 telemetry.get("structural_exit", {}).get("content_digest") or ""
             ),
         }
-        telemetry["writer_status"] = (
-            "incomplete" if telemetry.get("writer_status") == "success"
-            else telemetry.get("writer_status", "incomplete")
-        )
         telemetry["writer_blocked_reason"] = reason
+        telemetry["terminal_stage"] = "callback"
+        telemetry["terminal_reason"] = reason
+        _remember_first_failure(
+            telemetry,
+            stage="callback",
+            reason=reason,
+            error_code="callback1_not_authorized",
+        )
     if (
-        callback_requested
-        and bool(structural_exit.get("eligible"))
-        and _authoring_continuation_needed(fresh)
+        callback_repair_authorized
     ):
         from code2paper.agentic.writing_callback_fulfillment import (
             WritingCallbackFulfillmentBudgetV1,
@@ -1151,6 +1744,10 @@ def _replay(
             )
             runtime = None
         if runtime is not None:
+            callback_transaction_snapshot = _capture_authoring_transaction_snapshot(fresh)
+            incumbent_structural_exit = _read_json_mapping(
+                fresh / "artifacts" / "06_authoring" / "authoring_structural_exit_v1.json"
+            )
             callback_paths, callback_status, callback_reason, callback_result = (
                 fulfill_and_resume_writing_callbacks(
                     runtime=runtime,
@@ -1175,8 +1772,45 @@ def _replay(
                 f"resumed={list(callback_result.resumed_section_ids)} "
                 f"stopped={callback_result.stopped_reason}"
             )
+            callback_writer_payload = _load_artifact_payload(
+                callback_paths.get("publication_writer_result_v1")
+                or writer_paths.get("publication_writer_result_v1")
+                or ""
+            )
+            telemetry["publication_status"] = str(
+                callback_writer_payload.get("status") or telemetry.get(
+                    "publication_status", ""
+                )
+            )
+            telemetry["writer_transaction_status"] = callback_status
             telemetry["writer_status"] = callback_status
             telemetry["writer_blocked_reason"] = callback_reason
+            telemetry["terminal_stage"] = "callback"
+            telemetry["terminal_reason"] = str(
+                callback_reason or callback_result.stopped_reason or ""
+            )
+            callback_stop_reason = str(callback_result.stopped_reason or "")
+            callback_stop_is_normal = callback_stop_reason in {
+                "completed",
+                "no_open_requests",
+                "no_open_local_requests",
+                "no_progress",
+                "no_information_gain",
+                "writer_success",
+                "review_ready_with_warnings",
+                "callback_gated_off",
+            }
+            if (
+                callback_status != "success"
+                or callback_reason
+                or not callback_stop_is_normal
+            ):
+                _remember_first_failure(
+                    telemetry,
+                    stage="callback",
+                    reason=telemetry["terminal_reason"],
+                    error_code="callback_continuation_failed",
+                )
             telemetry["writer_resumed_section_ids"] = list(callback_result.resumed_section_ids)
             telemetry["callback_fulfillment"] = callback_result.model_dump(mode="json")
             telemetry["candidate_digest"] = _candidate_digest_for_root(fresh)
@@ -1209,20 +1843,90 @@ def _replay(
                 paths=paths,
                 telemetry=telemetry,
             )
-            _record_authoring_structural_exit(
+            resumed_structural_exit = _record_authoring_structural_exit(
                 fresh=fresh,
                 paths=paths,
                 telemetry=telemetry,
             )
+            if incumbent_structural_exit:
+                callback_commit, callback_commit_reason = _callback_transaction_decision(
+                    incumbent_structural_exit,
+                    resumed_structural_exit,
+                )
+                if not callback_commit:
+                    # A Research callback may be valid in its own authority
+                    # lane while the resumed Writer still loses paragraph
+                    # coverage or formula witnesses.  Treat the callback and
+                    # its publication view as one transaction: retain the
+                    # research trace for diagnosis, but restore every direct
+                    # publication/checkpoint artifact from the incumbent.
+                    _restore_authoring_transaction_snapshot(
+                        fresh,
+                        callback_transaction_snapshot,
+                    )
+                    callback_reason = (
+                        "callback_candidate_rolled_back:" + callback_commit_reason
+                    )
+                    callback_status = "incomplete"
+                    callback_result = callback_result.model_copy(update={
+                        "local_requests_fulfilled": 0,
+                        "resumed_section_ids": (),
+                        "stopped_reason": "quality_regression_incumbent_restored",
+                    })
+                    telemetry["writer_status"] = callback_status
+                    telemetry["writer_transaction_status"] = callback_status
+                    telemetry["writer_blocked_reason"] = callback_reason
+                    telemetry["terminal_stage"] = "callback"
+                    telemetry["terminal_reason"] = callback_reason
+                    telemetry["writer_resumed_section_ids"] = []
+                    telemetry["callback_fulfillment"] = callback_result.model_dump(mode="json")
+                    telemetry["candidate_digest"] = _candidate_digest_for_root(fresh)
+                    _remember_first_failure(
+                        telemetry,
+                        stage="callback",
+                        reason=callback_reason,
+                        error_code="callback_candidate_not_monotonic",
+                    )
+                    # Rebuild the shared state/receipt from the restored
+                    # incumbent so downstream evaluators see one coherent
+                    # transaction rather than the rejected resume.
+                    _record_method_content_trace(
+                        fresh=fresh,
+                        artifact_paths={**artifact_paths, **paths},
+                        telemetry=telemetry,
+                    )
+                    _state, product_state_path = persist_product_authoring_state_from_writer(
+                        out_root=fresh,
+                        artifact_paths={**artifact_paths, **paths},
+                        run_id=arguments.run_id,
+                        terminal_status="review_ready_with_warnings",
+                        stop_reason=callback_reason,
+                    )
+                    paths["product_authoring_state_v1"] = product_state_path
+                    _record_product_authoring_state(
+                        fresh=fresh,
+                        paths=paths,
+                        telemetry=telemetry,
+                    )
+                    _record_authoring_structural_exit(
+                        fresh=fresh,
+                        paths=paths,
+                        telemetry=telemetry,
+                    )
 
     writer_status = str(telemetry.get("writer_status") or result.status)
     candidate_digest = str(telemetry.get("candidate_digest") or "")
-    if writer_status == "blocked" and not candidate_digest:
+    if writer_status == "success" and bool(
+        telemetry.get("structural_exit", {}).get("eligible")
+    ):
+        telemetry["terminal_stage"] = "complete"
+        telemetry["terminal_reason"] = ""
+    if writer_status != "success":
+        # A retained incumbent/candidate is useful diagnostic evidence, but
+        # it is not a successful replay.  Exit non-zero so evaluators cannot
+        # mistake an incomplete or blocked writer for acceptance.
         return 2
-    if writer_status == "blocked" and candidate_digest:
-        # Incumbent survives a blocked post-callback writer; warnings only.
-        return 0
-    if writer_status == "blocked":
+    if not bool(telemetry.get("structural_exit", {}).get("eligible")):
         return 2
     return 0
 
@@ -1248,6 +1952,11 @@ def main(argv: list[str] | None = None) -> int:
         "--reuse-authoring-callbacks",
         action="store_true",
         help="Copy and rebase a frozen writing_research_callback_artifacts_v1 bundle",
+    )
+    parser.add_argument(
+        "--reuse-derived-authoring",
+        action="store_true",
+        help="Reuse frozen MethodUnit/Writer authoring artifacts while rebuilding current downstream outputs",
     )
     parser.add_argument(
         "--persist-authoring-rebuild-manifest",
@@ -1284,20 +1993,101 @@ def main(argv: list[str] | None = None) -> int:
     except SystemExit as exc:
         raw = exc.code
         exit_code = raw if isinstance(raw, int) else 143
+        telemetry.setdefault("terminal_stage", "replay")
+        telemetry["terminal_reason"] = telemetry.get(
+            "terminal_reason", ""
+        ) or f"process_exit:{exit_code}"
         print(f"[replay] interrupted SystemExit={exit_code}")
         raise
     except KeyboardInterrupt:
         exit_code = 130
+        telemetry["terminal_stage"] = telemetry.get("terminal_stage") or "replay"
+        telemetry["terminal_reason"] = telemetry.get(
+            "terminal_reason", ""
+        ) or "keyboard_interrupt"
         print("[replay] interrupted KeyboardInterrupt")
         raise
     except Exception as exc:  # noqa: BLE001 - replay boundary must record
         print(f"[replay] FATAL unhandled error: {exc!r}")
+        message = str(exc)
+        lowered = message.casefold()
+        if "slot" in lowered or "methodunit" in lowered:
+            stage = "method_unit_reassembly"
+            code = "method_unit_slot_closure_failed"
+        elif "research" in lowered or "dossier" in lowered:
+            stage = "research"
+            code = "research_boundary_failed"
+        elif "formal" in lowered or "equation" in lowered:
+            stage = "formalizer"
+            code = "formalizer_boundary_failed"
+        elif "writer" in lowered or "paragraph" in lowered:
+            stage = "writer"
+            code = "writer_boundary_failed"
+        else:
+            stage = "replay"
+            code = "replay_unhandled_error"
+        telemetry["terminal_stage"] = stage
+        telemetry["terminal_reason"] = _safe_failure_text(message)
+        telemetry["terminal_error_code"] = code
+        telemetry["terminal_exception_type"] = type(exc).__name__
+        _remember_first_failure(
+            telemetry,
+            stage=stage,
+            reason=telemetry["terminal_reason"],
+            error_code=code,
+        )
         exit_code = 2
     finally:
         try:
             runtime_end = record_runtime_ledger(fresh, "end")
         except Exception as exc:  # noqa: BLE001 - diagnostics-only
             print(f"[replay] runtime end ledger failed: {exc!r}")
+        structural = telemetry.get("structural_exit") or {}
+        writer_status = str(telemetry.get("writer_status") or "")
+        failure_needed = bool(
+            exit_code != 0
+            or writer_status not in {"", "success"}
+            or not bool(structural.get("eligible"))
+        )
+        if telemetry.get("first_failed_stage"):
+            telemetry["terminal_stage"] = telemetry["first_failed_stage"]
+            telemetry["terminal_reason"] = telemetry.get(
+                "first_failed_reason", ""
+            )
+            telemetry["terminal_error_code"] = telemetry.get(
+                "first_failed_error_code", "authoring_failure"
+            )
+        failure_path = _authoring_failure_path(fresh)
+        if failure_needed and not failure_path.is_file():
+            try:
+                terminal_reason = str(
+                    telemetry.get("terminal_reason")
+                    or telemetry.get("writer_blocked_reason")
+                    or f"process_exit:{exit_code}"
+                )
+                failure_scope = _failure_scope_from_artifacts(
+                    fresh=fresh,
+                    structural=structural,
+                    terminal_reason=terminal_reason,
+                )
+                _write_authoring_failure(
+                    fresh=fresh,
+                    terminal_stage=str(telemetry.get("terminal_stage") or "replay"),
+                    terminal_reason=terminal_reason,
+                    error_code=str(
+                        telemetry.get("terminal_error_code")
+                        or "authoring_acceptance_not_reached"
+                    ),
+                    section_id=str(failure_scope.get("section_id") or ""),
+                    paragraph_id=str(failure_scope.get("paragraph_id") or ""),
+                    target_kind=str(failure_scope.get("target_kind") or ""),
+                    target_id=str(failure_scope.get("target_id") or ""),
+                    direct_reason=str(failure_scope.get("direct_reason") or ""),
+                    cascade_reasons=tuple(failure_scope.get("cascade_reasons") or ()),
+                    exc=None,
+                )
+            except Exception as exc:  # noqa: BLE001 - diagnostics-only
+                print(f"[replay] authoring failure write failed: {exc!r}")
         try:
             _write_execution_record(
                 frozen=frozen,

@@ -60,6 +60,8 @@ from code2paper.agentic.writer_research_router import (
     execute_open_requests_for_routes,
 )
 from code2paper.agentic.publication_method_writer import (
+    _writer_transaction_status_from_assessments,
+    effective_writer_transaction_status,
     fulfill_writing_research_callbacks,
     run_publication_method_writer,
 )
@@ -135,6 +137,78 @@ class WritingCallbackFulfillmentResultV1(BaseModel):
     resumed_section_ids: tuple[str, ...] = Field(default_factory=tuple)
     stopped_reason: str = ""
     trace_path: str = ""
+
+
+# Paths returned by ``persist_product_artifacts`` when a Research callback
+# creates a new authoring revision.  Writer/callback output paths intentionally
+# do not belong to this set: the fresh callback bundle and the incumbent
+# checkpoint are owned by the resume transaction and must remain selected.
+_AUTHORING_REVISION_PATH_KEYS: frozenset[str] = frozenset({
+    "behavior_graph_v1",
+    "intent_obligation_graph_v2",
+    "research_agenda_v1",
+    "user_claims_input_v1",
+    "research_trace",
+    "typed_gaps",
+    "implementation_scope_v1",
+    "candidate_acquisition_ledger_v1",
+    "obligation_coverage_v2",
+    "reference_method_agenda_v1",
+    "method_completeness_matrix_v1",
+    "completeness_matrix",
+    "story_spine",
+    "authoring_projection_v1",
+    "method_evidence",
+    "claim_evidence_map",
+    "equation_claims_v1",
+    "configuration_claims_v1",
+    "evidence_packets_v3",
+    "evidence_packets",
+    "code_facts_v1",
+    "code_facts",
+    "atomic_claims_v3",
+    "atomic_claims",
+    "technical_claims_v1",
+    "method_propositions_v1",
+    "method_proposition_bindings_v1",
+    "method_proposition_clusters_v1",
+    "method_concept_cards_v1",
+    "method_argument_facet_alignment_trace_v1",
+    "publication_field_candidates_v1",
+    "typed_field_deferred_v1",
+    "plan_product_readiness_v1",
+    "review_candidates",
+    "agent_trace",
+    "run_summary",
+    # These are produced by the resumed Writer from the new authority.  If a
+    # caller supplies them in a recompile mapping, they should also supersede
+    # an older snapshot; the callback bundle itself is deliberately absent.
+    "research_mechanism_dossiers_v1",
+    "derivation_records_v1",
+})
+
+
+def _merge_resumed_writer_paths(
+    *,
+    writer_paths: dict[str, str],
+    authoring_paths: dict[str, str],
+) -> dict[str, str]:
+    """Merge a resumed Writer view with the newest authoring revision.
+
+    A callback recompile can return the same logical artifact keys as the
+    initial Writer call.  Recompiled facts, claims, and dossiers are the
+    current evidence authority.  The MethodUnit plan, briefs, facets,
+    alignments, and Candidate policies stay frozen from the incumbent Writer
+    view so a Research rebuild cannot remint paragraph identity.
+    """
+
+    merged = dict(writer_paths)
+    for key, value in authoring_paths.items():
+        if key not in _AUTHORING_REVISION_PATH_KEYS:
+            continue
+        if str(value or "").strip():
+            merged[str(key)] = str(value)
+    return merged
 
 
 def build_research_continuation_seed(
@@ -364,7 +438,27 @@ def fulfill_and_resume_writing_callbacks(
     local_fulfilled: set[str] = set()
     external_seen: set[str] = set()
     resumed: set[str] = set()
-    writer_status = "incomplete"
+    initial_writer_payload: dict[str, Any] = {}
+    initial_writer_path = str(
+        writer_paths.get("publication_writer_result_v1") or ""
+    ).strip()
+    if initial_writer_path and Path(initial_writer_path).is_file():
+        try:
+            loaded = json.loads(Path(initial_writer_path).read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                initial_writer_payload = loaded
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            initial_writer_payload = {}
+    initial_assessment_path = str(
+        writer_paths.get("publication_paragraph_transaction_assessments_v1") or ""
+    ).strip()
+    writer_status = _writer_transaction_status_from_assessments(
+        initial_assessment_path,
+        writer_aggregate=initial_writer_payload.get("writer_aggregate"),
+        publication_status=str(initial_writer_payload.get("status") or ""),
+    )
+    if writer_status == "not_run":
+        writer_status = str(initial_writer_payload.get("status") or "incomplete")
     writer_blocked_reason = ""
     continuation_rounds: list[dict[str, Any]] = []
     consecutive_no_gain = 0
@@ -530,10 +624,18 @@ def fulfill_and_resume_writing_callbacks(
             "research_traces": _research_traces_for_selected(provider, selected),
         })
 
-        merged_paths = {
-            **artifact_paths,
-            **writer_paths,
-        }
+        # ``artifact_paths`` contains the authoring revision just rebuilt by
+        # the Research continuation.  It must win over the initial Writer
+        # snapshot: both mappings contain the same logical keys, and letting
+        # ``writer_paths`` overwrite them makes the resumed Writer consume a
+        # stale plan/fact/dossier while the freshly persisted artifacts claim
+        # the opposite state.  Writer output paths remain available through
+        # the left-hand mapping and are only replaced when the revision
+        # actually produced a newer path.
+        merged_paths = _merge_resumed_writer_paths(
+            writer_paths=writer_paths,
+            authoring_paths=artifact_paths,
+        )
         resume_artifacts = {
             request_id: tuple(items)
             for request_id, items in (bundle.artifacts or {}).items()
@@ -546,7 +648,7 @@ def fulfill_and_resume_writing_callbacks(
             resume_section_ids=bundle.resume_section_ids,
             research_callback_artifacts=resume_artifacts,
         )
-        writer_status = getattr(writer_result, "status", "blocked")
+        writer_status = effective_writer_transaction_status(writer_result)
         writer_blocked_reason = getattr(writer_result, "blocked_reason", "")
         # A blocked resume writes only publication_writer_result_v1.  Keep
         # the 06_authoring bundle/formalization paths so the next round does

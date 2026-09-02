@@ -1355,20 +1355,33 @@ def _field_evidence_score(
     """
 
     value = (facet.semantic_fields or {}).get(field_name, "")
-    field_aliases = {
-        "inputs": "input",
-        "outputs": "output",
-        "conditions": "condition",
-        "effects": "effect",
-        "formula_goal": "formula equation",
-        "operation": "operation transformation",
-    }
-    target = _tokens(" ".join((
-        field_name,
-        field_aliases.get(field_name, ""),
-        _atom_text(value),
-    )))
-    evidence = _tokens(_row_text(row))
+    # Do not score the field label (``formula``, ``equation``, ``operation``)
+    # against serialized evidence metadata.  Every equation row contains
+    # keys such as ``equation_id`` and every fact row contains ``predicate``;
+    # using those labels made an unsupported formula facet tie all unrelated
+    # code spans and then inherit their operations.  Only the semantic value
+    # and reader-visible evidence content can establish a local match.
+    target = _tokens(_atom_text(value))
+    if not target:
+        return 0
+    evidence = _tokens(
+        " ".join(
+            (
+                str(row.get("exact_excerpt") or ""),
+                " ".join(str(item) for item in (row.get("claim_texts") or ())),
+                " ".join(
+                    str(value)
+                    for atom in (
+                        *(row.get("fact_atoms") or ()),
+                        *(row.get("equation_atoms") or ()),
+                    )
+                    if isinstance(atom, Mapping)
+                    for value in atom.values()
+                    if not isinstance(value, (list, tuple, dict, set))
+                ),
+            )
+        )
+    )
     return len(target.intersection(evidence))
 
 
@@ -1381,7 +1394,17 @@ def _select_field_evidence_rows(
         return ()
     scored = [(_field_evidence_score(facet, field_name, row), row) for row in rows]
     maximum = max(score for score, _row in scored)
-    if maximum <= 0:
+    target_tokens = _tokens(
+        _atom_text((facet.semantic_fields or {}).get(field_name, ""))
+    )
+    # A multi-token semantic field needs more than one incidental code token
+    # to become evidence.  Without this floor, a formula such as
+    # ``spectral norm stability`` matched every row mentioning ``norm`` (the
+    # normalization layer), which imported unrelated operations into the
+    # Writer paragraph.  A genuinely one-token field, such as ``threshold``
+    # or ``inputs``, still has a one-token floor.
+    minimum_score = 1 if len(target_tokens) <= 1 else 2
+    if maximum < minimum_score:
         return ()
     return tuple(row for score, row in scored if score == maximum)
 
@@ -1486,25 +1509,35 @@ def _alignment_from_owner(
         # never grant Verified authorization by itself.
         selected = _select_evidence_rows(facet, rows)
         if selected:
-            selected_indices = [int(row["evidence_index"]) for row in selected]
             field_rows = []
+            selected_indices: list[int] = []
+            supported_fields: list[str] = []
             for field_name in facet.semantic_fields:
                 field_selected = _select_field_evidence_rows(
                     facet, _canonical_facet_field_name(field_name), rows
-                ) or selected
+                )
+                # A facet-level match is not evidence for every field in a
+                # compound author statement.  In particular, a generic
+                # formula row must not be reused to claim an unsupported
+                # stability/norm condition.  Leave that field unresolved and
+                # let the author-intent surface carry the caveat.
+                field_indices = [
+                    int(row["evidence_index"]) for row in field_selected
+                ]
+                if field_indices:
+                    supported_fields.append(field_name)
+                    selected_indices.extend(field_indices)
                 field_rows.append({
                     "field_name": field_name,
-                    "status": "partial",
+                    "status": "partial" if field_indices else "unresolved",
                     "polarity": "unknown",
-                    "bound_span_indices": [
-                        int(row["evidence_index"]) for row in field_selected
-                    ],
+                    "bound_span_indices": field_indices,
                 })
             raw = {
-                "status": "partial",
-                "supported_fields": list(facet.semantic_fields),
+                "status": "partial" if supported_fields else "unresolved",
+                "supported_fields": supported_fields,
                 "field_bindings": field_rows,
-                "bound_span_indices": selected_indices,
+                "bound_span_indices": list(dict.fromkeys(selected_indices)),
                 "rationale": "Deterministic local evidence fallback after owner unavailability.",
             }
             owner_error = (owner_error + ";deterministic_local_evidence_fallback").strip(";")
@@ -1599,6 +1632,9 @@ def _alignment_from_owner(
                 unique.append(row)
         return tuple(unique)
 
+    def _field_relevant_rows(field_name: str) -> tuple[dict[str, Any], ...]:
+        return _select_field_evidence_rows(facet, field_name, rows)
+
     for item in raw_field_bindings:
         raw_item = (
             item.model_dump(mode="python")
@@ -1661,6 +1697,57 @@ def _alignment_from_owner(
             )
             if inferred_span_rows:
                 span_rows = inferred_span_rows
+
+        # Model-selected ordinals are closed-set references, but they are not
+        # by themselves a semantic proof.  Intersect every positive field with
+        # the deterministic field-local evidence envelope.  This keeps a
+        # valid provider from turning a broad brief envelope into one mixed
+        # paragraph, while preserving all rows when the field has a real
+        # multi-token match.
+        relevant_rows = _field_relevant_rows(field_name)
+        relevant_row_ids = {id(row) for row in relevant_rows}
+        if field_status in {"entailed", "partial"}:
+            if not relevant_rows:
+                if claim_rows or fact_rows or span_rows or equation_rows:
+                    owner_error = (
+                        owner_error
+                        + f";field_evidence_semantic_mismatch:{field_name}"
+                    ).strip(";")
+                claim_rows = ()
+                fact_rows = ()
+                span_rows = ()
+                equation_rows = ()
+            else:
+                before_count = (
+                    len(claim_rows)
+                    + len(fact_rows)
+                    + len(span_rows)
+                    + len(equation_rows)
+                )
+                claim_rows = tuple(
+                    row for row in claim_rows if id(row) in relevant_row_ids
+                )
+                fact_rows = tuple(
+                    row for row in fact_rows if id(row) in relevant_row_ids
+                )
+                span_rows = tuple(
+                    row for row in span_rows if id(row) in relevant_row_ids
+                )
+                equation_rows = tuple(
+                    row for row in equation_rows if id(row) in relevant_row_ids
+                )
+                after_count = (
+                    len(claim_rows)
+                    + len(fact_rows)
+                    + len(span_rows)
+                    + len(equation_rows)
+                )
+                if after_count < before_count:
+                    owner_error = (
+                        owner_error
+                        + f";field_evidence_pruned:{field_name}"
+                    ).strip(";")
+
         field_claim_ids = _clean_strings(
             claim_id for row in claim_rows for claim_id in (row.get("claim_ids") or ())
         )
@@ -1748,20 +1835,20 @@ def _alignment_from_owner(
             status = "mismatch"
         else:
             status = "unresolved"
+        # Once field bindings exist, their selected rows are the authoritative
+        # aggregate.  Do not union the model's unscoped facet-level ids back
+        # in: those ids are exactly the path by which a sibling field's
+        # evidence used to leak into this facet.
         bound_claim_ids = _clean_strings(
-            (*bound_claim_ids,
-             *(value for binding in field_bindings for value in binding.bound_claim_ids))
+            value for binding in field_bindings for value in binding.bound_claim_ids
         )
         bound_span_ids = _clean_strings(
-            (*bound_span_ids,
-             *(value for binding in field_bindings for value in binding.bound_span_ids))
+            value for binding in field_bindings for value in binding.bound_span_ids
         )
         bound_equation_ids = _clean_strings(
-            (*bound_equation_ids,
-             *(value for binding in field_bindings for value in binding.bound_equation_ids))
+            value for binding in field_bindings for value in binding.bound_equation_ids
         )
         exact_excerpts = list(dict.fromkeys([
-            *exact_excerpts,
             *(excerpt for binding in field_bindings for excerpt in binding.exact_excerpts),
         ]))
     else:

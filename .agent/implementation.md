@@ -8057,3 +8057,371 @@ git diff --check
 authorship、reverse validation、quality report、dossier、derivation/formalization 和
 generation trace。最终结论仍为 Candidate 诊断态：Slice 5 真实测试完成，结构与质量门未通过，
 不得宣布 D5、rollout、default cutover、release freeze 或 Verified 发布。
+
+## v34-like Candidate freeze (2026-09-01)
+
+Implemented plan A–F on the current dirty tree. Verified stays fail-closed.
+No git reset/clean/checkout/commit/merge. Architecture docs were not edited.
+
+### Code
+
+- Reuse (`--reuse-derived-authoring`) now rehashes `MethodSectionPlanV2` and
+  writes the loaded bytes to both `artifacts/` and `06_authoring/`, mirroring
+  briefs/facets/policies. First Writer always persists the loaded plan into
+  `06_authoring` even when Architect is skipped.
+- Callback merge no longer overwrites `method_section_plan_v2`, briefs, facets,
+  alignments, or candidate policies. `persist_product_artifacts` keeps an
+  incumbent plan file. Snapshot restore deletes post-snapshot files in
+  `06_authoring`/`07_validation` before writing captured bytes.
+- `replan_moves_with_trace` / `build_method_section_plan_with_trace` keep
+  existing MethodUnits and paragraph publication-slot/formula contracts;
+  groups-of-4 compaction runs only when method_units are empty.
+- Explicit empty `required_publication_slot_ids` (including omitted empty
+  MethodUnit-era dumps) is not replaced by ordered support slots.
+- Harness wraps unique inline package latex as the stored `markdown_block`.
+  Structural exit counts a formula consumed when that latex or block appears
+  uniquely in Candidate body, even if the paragraph is `rendered_invalid`.
+- Writer skill 1.13: Candidate mismatch/author_specification is author
+  mechanism plus one natural caveat, not an audit “observed vs intended”
+  spine. Duplicate section H2 copies of the Architect heading are dropped.
+
+### Verification
+
+```text
+python -m pytest -q tests/test_v34like_candidate_plan_freeze.py \
+  tests/test_llm_section_writer.py::test_exact_canonical_formula_block_recovers_lost_placeholder \
+  tests/test_llm_section_writer.py::test_inline_latex_without_display_math_recovers_canonical_block \
+  tests/test_agentic_autonomous_callback_fulfillment.py::test_resumed_writer_keeps_incumbent_method_unit_plan \
+  tests/test_agentic_callback_semantic_contract.py \
+  tests/test_agentic_writer_paper_language_quality.py::test_writer_skill_treats_design_objective_as_caveated_content \
+  tests/test_agentic_replay_execution_record.py
+# 41 passed, exit 0
+
+python -m pytest -q tests/test_agentic_research_derived_authoring.py \
+  tests/test_agentic_method_authoring_p0_closure.py \
+  tests/test_agentic_autonomous_callback_fulfillment.py
+# 43 passed, exit 0
+
+python -m pytest -q tests/test_agentic_publication_method_writer.py -k "replan or method_unit"
+# 3 passed, 138 deselected, exit 0
+
+python -m pytest -q tests/test_agentic_intent_authoring_live_repair.py
+# 59 passed, exit 0
+
+python -m compileall -q src tests
+# exit 0
+
+git diff --check
+# exit 0
+```
+
+No live 8006 rerun in this patch. A later Candidate replay should freeze
+v34/v33/08-30 `06_authoring` (not v3 fat slots), run serially, and keep
+Verified fail-closed.
+
+## v34-quality Writer surface (2026-09-01)
+
+Same dirty tree. No git reset. Verified stays fail-closed. Candidate remains
+the deliverable. This patch changes the Writer generation surface so a reused
+v34/v33/08-30 plan is not rewritten as an audit memo.
+
+### Code
+
+- `ParagraphWitnessTargetV1`: unearned `repository_statement` (author-attested
+  or no executable/config/formal anchors) becomes `author_specification` on
+  load. Span-backed executable/config/formal targets stay `repository_statement`.
+- Callback rebuild keeps incumbent `argument_units` and section
+  `argument_unit_ids` with MethodUnits, so recompile no longer raises
+  `binds unknown argument units`.
+- `splice_formula_placeholders` wraps package latex as display math when the
+  stored `markdown_block` is not already display math, then replaces
+  `[[FORMULA:...]]`.
+- Writer skill 1.14: expand supplied author statements within the paragraph
+  budget; one natural limitation is enough when support is partial; stop only
+  after that budget is used. Author-specification spine is the mechanism, not
+  “has not yet been established”.
+
+### Verification
+
+```text
+python -m pytest -q tests/test_v34like_candidate_plan_freeze.py \
+  tests/test_llm_section_writer.py::test_exact_canonical_formula_block_recovers_lost_placeholder \
+  tests/test_llm_section_writer.py::test_inline_latex_without_display_math_recovers_canonical_block \
+  tests/test_llm_section_writer.py::test_splice_wraps_inline_latex_as_display_math_block \
+  tests/test_llm_section_writer.py::test_formula_placeholder_replacement_preserves_formalizer_block_verbatim \
+  tests/test_agentic_autonomous_callback_fulfillment.py::test_resumed_writer_keeps_incumbent_method_unit_plan \
+  tests/test_agentic_callback_semantic_contract.py \
+  tests/test_agentic_writer_paper_language_quality.py::test_writer_skill_treats_design_objective_as_caveated_content \
+  tests/test_agentic_method_architect_product_readiness.py::test_partial_facet_target_carries_intent_surface_contract
+# 33 passed, exit 0
+
+python -m pytest -q tests/test_agentic_research_derived_authoring.py \
+  tests/test_agentic_autonomous_callback_fulfillment.py \
+  tests/test_agentic_publication_method_writer.py -k "replan or method_unit or surface"
+# 7 passed, 162 deselected, exit 0
+
+python -m compileall -q src tests
+# exit 0
+
+git diff --check
+# exit 0
+```
+
+`code_state_digest` after this patch:
+`sha256:fbec291bb6234e199622867007dda04220856b1ce390496930b12ad5a3b5eb7f`
+
+### Live serial replay
+
+Preflight 2026-09-01T11:09+08: `http://127.0.0.1:8006` health 200; model
+`qwen38-27b-nvfp4`; running=0 waiting=0 kv=0. Frozen roots remain v34/v33/08-30
+`06_authoring`. Wrapper `/tmp/c2p-v34prose-8006-20260901/run_serial.sh`.
+Callback 1×8. Verified fail-closed. Not D5 / not rollout.
+
+```text
+SERIAL 11:10:57 → 12:37:33 +08
+qwen38-27b-nvfp4 @ 8006  digest sha256:fbec291bb6234e199622867007dda04220856b1ce390496930b12ad5a3b5eb7f
+EBCAR     11:10–11:41  exit 2  /tmp/c2p-v34prose-8006-ebcar-20260901
+DyG       11:41–12:08  exit 2  /tmp/c2p-v34prose-8006-dyg-20260901
+LinearRAG 12:08–12:37  exit 2  /tmp/c2p-v34prose-8006-linearrag-20260901
+```
+
+| Project | eligible | paras | slots | formula | Candidate | callback stop |
+|---|---|---|---|---|---|---|
+| EBCAR | false | 6/7 | 10/11 | 4/4 | 5274 B | quality_regression_incumbent_restored |
+| DyG | false | 0/6 | 15/17 | 0/0 | 5270 B | quality_regression_incumbent_restored |
+| LinearRAG | false | 0/5 | 9/16 | 0/0 | 4107 B | quality_regression_incumbent_restored |
+
+EBCAR callback now recompiles (no MethodUnit ValidationError) and resumed MA-S1/MA-S3; the resume lost coverage and was rolled back to the first Writer incumbent. First-pass EBCAR was 31/32 targets and 4/4 formulas. Morning freeze was structurally 7/7 11/11 eligible; this run is 6/7 10/11.
+
+Prose vs morning freeze (reading, not gates): EBCAR Motivation/Framework are Method sentences again (no “binding has not yet been established”, no leftover `[[FORMULA:]]`). Still shorter than v34 and still leaks `passages = …` / bare latex / one `self.cfg`. DyG/LinearRAG dropped most intended/not-yet audit spines but remain without paper equations. Verified fail-closed. Not publication_ready / not D5.
+
+## v34-quality P0–P3 (display math, Candidate formulas, leaks)
+
+Code-state digest after this patch:
+`sha256:64b7ab754a1ca5a9855271fab8f431eeb1da329dd42f54d47015af702eeb7cdc`
+
+P0: `_normalize_writer_representation_noise` no longer deletes `$$`. Unique inline
+latex is wrapped in-place even when a paragraph plan is present. Structural
+consume now requires display math in the assembled Candidate body.
+
+P1: Candidate Writer sees `author_intent_academic` / `hybrid_partial` packages.
+Required consumers with empty operation-derived packages fall back to the
+author-intent Formalizer. Verified still counts only `code_verified` +
+`repository_derived` + `accepted`.
+
+P2: Writer skill 1.15; Candidate qualifier projection humanizes `self.cfg.*`;
+logging / case_study / NER-skip field candidates are dropped from the Writer
+LLM packet. Exact identifiers remain Verified authority.
+
+P3: `method_language_style` Rewrite gain accepts a drop in
+`formula_missing_count`.
+
+Verification:
+
+```text
+python -m pytest -q tests/test_v34prose_formula_and_leak_repair.py \
+  tests/test_v34like_candidate_plan_freeze.py \
+  tests/test_agentic_formula_obligation_truths.py \
+  tests/test_agentic_callback_semantic_contract.py \
+  tests/test_agentic_writer_paper_language_quality.py \
+  tests/test_llm_section_writer.py \
+  tests/test_agentic_text_repair_supervisor.py \
+  tests/test_agentic_formalization_guards.py \
+  tests/test_agentic_publication_method_writer.py::test_exact_qualifier_binding_satisfies_validation_and_style \
+  tests/test_agentic_publication_method_writer.py::test_internal_id_leakage_cluster_requires_deterministic_leakage_gain
+# 64 + 109 + 44 focused groups passed (see commands above)
+python -m compileall -q src tests
+# exit 0
+git diff --check
+# only pre-existing .agent/implementation.md trailing newline
+```
+
+Live serial replay wrapper `/tmp/c2p-v34p0p3-8006-20260901/run_serial.sh`.
+Preflight 2026-09-01T13:41:04+08: 8006 model `qwen38-27b-nvfp4`; running=0 waiting=0 kv=0.
+Frozen roots remain v34/v33/08-30. Callback 1×8. `--reuse-derived-authoring`.
+Code-state digest at launch:
+`sha256:64b7ab754a1ca5a9855271fab8f431eeb1da329dd42f54d47015af702eeb7cdc`
+
+### Live serial result (2026-09-01 13:41–15:33) — COMPLETE (exit 2×3; not publication_ready)
+
+SERIAL COMPLETE 2026-09-01T15:33:39+08:00. Wrapper `display_math` grep was
+wrong (counts 0); reading counts below use `\$\$[\s\S]+?\$\$`.
+
+| Project | window | exit | eligible | paras | slots | formula | Candidate | `$$` | `self.` |
+|---|---|---|---|---|---|---|---|---|---|
+| EBCAR | 13:41–14:16 | 2 | false | 6/7 | 10/11 | 2/4 | 5503 B | 4 | 0 |
+| DyG | 14:16–15:06 | 2 | false | 0/6 | 7/17 | 0/0 | 8215 B | 5 | 0 |
+| LinearRAG | 15:06–15:33 | 2 | false | 0/5 | 0/16 | 0/0 | 4653 B | 2 | 0 |
+
+Fresh roots:
+- `/tmp/c2p-v34p0p3-8006-ebcar-20260901`
+- `/tmp/c2p-v34p0p3-8006-dyg-20260901`
+- `/tmp/c2p-v34p0p3-8006-linearrag-20260901`
+
+Reading vs morning `v34prose` and freeze oracles (not a D5 claim):
+
+- EBCAR: P0 worked — published Candidate now has four display-math blocks
+  (morning 0). Motivation/Framework stay Motivation/Framework. `self.` gone.
+  Display latex is still code-shaped (`passages = …`, `logsumexp(..., dim=0)`,
+  `sort(..., descending=True)`). Training heading still truncated. Formula
+  2/4 because consume now requires published `$$` matching packages; two
+  `opfp:` assignment packages remain unconsumed. Shorter than v34.
+- DyG: P1 worked as prose — Pad/Stack, Δt/A, continuous SSM display math
+  (morning 0; v33 also 0 `$$` and still said “not yet fully resolved”). No
+  `self.time_mamba` / `case_study`. Encoding still precedes Motivation.
+  Downstream still has `(src_node_id, dst_node_id) in edge_memories`. Last
+  section nested a `###` plus Symbol Definitions. Structural formula 0/0:
+  academic packages did not satisfy the required consumer ids.
+- LinearRAG: P2 leak drop — no `self.config`, no “not yet fixed” spine, no
+  `graph_search_with_seed_entities` dump (morning had 5 `self.` / 24
+  backticks / 2 “not yet”). Two PPR display-math blocks. Motivation still
+  opens as Tri-Graph mechanism. First-stage still mentions ordinal/cardinal
+  labels. Slot coverage 0/16 is worse than morning 9/16.
+
+Verified fail-closed on all three. Not publication_ready / not D5. No extra
+8006 job started after SERIAL COMPLETE.
+
+## Candidate-first Method surface repair — six bound root causes (2026-09-01)
+
+Authority: `.agent/task.md` Active Candidate-first Method quality repair
+(2026-09-01); `.agent/plan.md` Active assignment — Candidate-first Method
+surface repair (2026-09-01). Bound counterexample:
+`/tmp/c2p-v34p0p3-8006-{ebcar,dyg,linearrag}-20260901` (all `exit=2`). This
+turn is static implementation and focused verification only; no new 8006 or
+live API/model job. Not D5; Verified gates unchanged.
+
+Code-state digest (`scripts/run_authoring_replay.py::_code_state_digest` over
+`src/**/*.py`):
+`sha256:3bdeeb8d57368664dea46f60a2df739c6f1edae02d4c8d1cd983f08bd1834109`
+
+### Six repairs implemented
+
+1. **Optional rationale survives MethodUnit compaction**
+   (`method_architect._build_method_units_v2`): retain one representative
+   context/rationale facet via `_select_representative_context_facet` before
+   the empty-`selected` continue; derive paragraph budgets from
+   `_method_unit_expected_sentence_range` (conceptual payload, not required
+   facet count).
+2. **Academic operation formulas take precedence over deterministic code**
+   (`publication_method_writer._run_section_formalizer`): keep non-code-shaped
+   LLM packages; compile `build_deterministic_operation_formula_packages` for
+   audit only (`operation_audit_package_ids`); drop code-shaped LLM packages via
+   `_formula_code_trace_failures`; Verified still requires `code_verified` +
+   `repository_derived` + `accepted`.
+3. **Formula `markdown_block` is display-only**
+   (`formalization_agent.canonical_formula_markdown_block`,
+   `SectionFormulaPackageV1._valid`, `validate_section_formula_package`,
+   `publication_transaction_contract.splice_formula_placeholders`): exactly
+   `$$\n<latex>\n$$`; memo headings/prose/symbol lists are Writer inputs, not
+   placeholder bytes.
+4. **V2 Writer operation/target publication filtering**
+   (`section_writer._is_implementation_trace_text`,
+   `_compact_authoring_packets_v2_for_llm`): filter membership/type-label/debug
+   rows from `ordered_targets` and `ordered_operations`; strip
+   `case_study`/audit guards while keeping scientific transforms.
+5. **Truncated heading repair survives assembly**
+   (`section_writer._assembled_section_heading`): use Writer/Rewrite heading when
+   `heading_is_truncated(planned)` and `heading_replacement_is_coherent`.
+6. **Rhetorical context order and paragraph development**
+   (`method_architect._order_context_sections_before_mechanism`,
+   `_section_is_pure_context`): place pure context sections before mechanism
+   when a reused plan inverts them; preserve relative order otherwise.
+
+### Project-neutral synthetic regressions
+
+- `tests/test_agentic_method_architect_product_readiness.py`:
+  `test_optional_rationale_facet_survives_method_unit_compaction`,
+  `test_pure_context_section_is_placed_before_mechanism_sections`
+- `tests/test_v34prose_formula_and_leak_repair.py`:
+  `test_formula_package_canonicalizes_markdown_block_to_display_math_only`,
+  `test_membership_and_type_label_rows_are_implementation_traces`,
+  `test_assembled_heading_keeps_coherent_writer_repair_of_truncated_plan`
+- `tests/test_llm_section_writer.py`:
+  `test_v2_merges_source_operation_variants_without_losing_conditions`,
+  `test_v2_filters_membership_target_but_keeps_scientific_operation`,
+  `test_splice_strips_formula_memo_wrapper_to_display_math`
+- `tests/test_agentic_formalization_guards.py`:
+  `test_formula_markdown_block_rejects_memo_wrapper`
+- `tests/test_agentic_publication_method_writer.py`:
+  `test_operation_evidence_routes_a_no_equation_section_to_code_lane` (academic
+  `s = w + x` wins; `opfp:` audit-only),
+  `test_code_shaped_operation_formula_is_not_a_candidate_display_package`,
+  `test_truncated_plan_heading_is_repaired_before_final_assembly`
+
+### Verification (this turn)
+
+```text
+python -m pytest -q \
+  tests/test_v34prose_formula_and_leak_repair.py \
+  tests/test_v34like_candidate_plan_freeze.py \
+  tests/test_llm_section_writer.py \
+  tests/test_agentic_formalization_guards.py \
+  tests/test_agentic_publication_method_writer.py \
+  tests/test_agentic_method_architect_product_readiness.py
+# 320 passed, 6 warnings in 9.76s; exit 0
+
+python -m compileall -q src tests
+# exit 0
+
+git diff --check
+# exit 0 (after removing trailing blank line at EOF of this file)
+```
+
+### Deviations
+
+- Architect compaction tests now pass non-empty `facet_alignments` stubs so
+  `_build_method_units_v2` compaction path is exercised (empty alignments
+  short-circuit to `enabled: false`).
+- `_preserve_incumbent_method_unit_surface` uses
+  `getattr(prior_plan, "argument_units", ())` so freeze fixtures with
+  `SimpleNamespace` prior plans do not break context reordering.
+- `test_v2_merges_source_operation_variants_without_losing_conditions` expects
+  stripped `case_study` conditions absent from the compact row (not merely
+  unequal).
+- Formula placeholder repair test uses spaced latex `L = q + k` to match
+  canonical `markdown_block` from `SectionFormulaPackageV1._valid`.
+
+No Verified gate weakening. No project-specific production literals added for
+the three audited projects. A later live replay must use a fresh `/tmp` root and
+is prose-quality evidence only, never D5 by itself.
+
+## Live serial replay — six-repair prose evidence (2026-09-01 evening)
+
+User-authorized live replay on qwen38@8006 after static six-repair acceptance.
+Not D5; prose-quality evidence only.
+
+Runtime preflight (`http://127.0.0.1:8006`):
+
+- health: HTTP 200
+- model: `qwen38-27b-nvfp4`, `max_model_len=131072`
+- queue at launch: `num_requests_running=0`, `num_requests_waiting=0`,
+  `kv_cache_usage_perc=0.0`
+
+Code-state digest at launch:
+`sha256:3bdeeb8d57368664dea46f60a2df739c6f1edae02d4c8d1cd983f08bd1834109`
+
+Profile: `tests/live/profiles/qwen38_vllm_budgeted.example.env`
+
+Wrapper: `/tmp/c2p-sixrepair-8006-20260901/run_serial.sh`
+
+Fresh output roots:
+
+- `/tmp/c2p-sixrepair-8006-ebcar-20260901`
+- `/tmp/c2p-sixrepair-8006-dyg-20260901`
+- `/tmp/c2p-sixrepair-8006-linearrag-20260901`
+
+Frozen inputs (unchanged from prior v34/v33/08-30 oracles):
+
+- EBCAR: `/tmp/c2p-method-authoring-8006-direct-ebcar-v34-20260831`
+- DyG: `/tmp/c2p-method-authoring-8006-direct-dyg-v33-20260831`
+- LinearRAG: `/tmp/c2p-method-authoring-8006-20260830-linearrag`
+
+Launch command:
+
+```text
+nohup bash /tmp/c2p-sixrepair-8006-20260901/run_serial.sh \
+  > /tmp/c2p-sixrepair-8006-20260901/nohup.out 2>&1 &
+```
+
+Monitor: `/tmp/c2p-sixrepair-8006-20260901/serial.log` and per-project
+`replay.stdout.log`. Results to be appended when SERIAL COMPLETE.

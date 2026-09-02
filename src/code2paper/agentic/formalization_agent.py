@@ -200,16 +200,44 @@ def facet_mechanism_key(facet: Any) -> str:
     """
 
     fields = dict(getattr(facet, "semantic_fields", {}) or {})
+    explicit = str(fields.get("mechanism_key") or "").strip()
     operation = str(
-        fields.get("mechanism_key")
-        or fields.get("operation")
+        fields.get("operation")
         or fields.get("mechanism")
         or fields.get("transformation")
         or fields.get("subject")
         or ""
     ).strip()
+    if explicit:
+        operation = explicit
     if operation:
         return "mechanism:" + re.sub(r"\s+", " ", operation.casefold())
+    # Formula facets often carry only a long mathematical goal.  Use a
+    # canonical role only when the goal has one unambiguous role signal;
+    # umbrella goals that mention several stages deliberately stay
+    # uncollapsed so a positional/attention/loss distinction is not erased.
+    goal = str(
+        fields.get("formula_goal")
+        or fields.get("mathematical_goal")
+        or getattr(facet, "exact_source_quote", "")
+        or ""
+    ).casefold()
+    role_signals = (
+        ("contrastive_loss", ("infonce", "contrastive loss", "contrastive")),
+        ("attention_mask", ("masked attention", "attention mask", "attention")),
+        ("positional_encoding", ("positional encoding", "position encoding", "sinusoidal")),
+        ("embedding_augmentation", ("augment", "additive embedding", "embedding augmentation")),
+        ("inference_ranking", ("dot-product", "dot product", "ranking", "rank passages")),
+        ("normalization", ("normaliz", "softmax")),
+        ("state_update", ("state update", "selective scan")),
+        ("propagation", ("pagerank", "page rank", "propagat")),
+    )
+    matches = [
+        role for role, signals in role_signals
+        if any(signal in goal for signal in signals)
+    ]
+    if len(matches) == 1:
+        return "mechanism:" + matches[0]
     return ""
 
 
@@ -234,6 +262,7 @@ class MechanismEquationEvidencePackV1(BaseModel):
     default_activation: Literal["active", "inactive", "conditional", "unknown"] = "unknown"
     unresolved_relations: tuple[str, ...] = Field(default_factory=tuple)
     operation_atoms: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    formalizable_signatures: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     exact_span_ids: tuple[str, ...] = Field(default_factory=tuple)
     exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
     preconditions: tuple[str, ...] = Field(default_factory=tuple)
@@ -270,6 +299,15 @@ class MechanismEquationEvidencePackV1(BaseModel):
 # ---------------------------------------------------------------------------
 # Q2 - section-scoped paper-formula packages (plan 19.6)
 # ---------------------------------------------------------------------------
+
+
+def canonical_formula_markdown_block(latex: str) -> str:
+    """Exactly one display-math block; Writer inputs stay off this surface."""
+
+    body = str(latex or "").strip()
+    if not body:
+        return ""
+    return "$$\n" + body + "\n$$"
 
 
 class SectionFormulaPackageV1(BaseModel):
@@ -340,14 +378,11 @@ class SectionFormulaPackageV1(BaseModel):
             raise ValueError(
                 "semantic or partial formula lanes cannot be code_verified"
             )
-        if not self.markdown_block.strip() or not _FORMULA_DISPLAY_MATH_RE.search(
-            self.markdown_block
-        ):
-            object.__setattr__(
-                self,
-                "markdown_block",
-                "$$\n" + self.latex.strip() + "\n$$",
-            )
+        object.__setattr__(
+            self,
+            "markdown_block",
+            canonical_formula_markdown_block(self.latex),
+        )
         if not self.symbol_table:
             object.__setattr__(
                 self,
@@ -362,6 +397,12 @@ class SectionFormulaPackageV1(BaseModel):
                 self,
                 "review_status",
                 "accepted" if lane == "repository_derived" else "review_required",
+            )
+        if self.review_status == "accepted" and not (
+            lane == "repository_derived" and self.authority_status == "code_verified"
+        ):
+            raise ValueError(
+                "only code-verified repository-derived formula packages may be accepted"
             )
         if self.authority_status == "code_verified" and not (
             self.bound_fact_ids or self.bound_equation_ids
@@ -460,6 +501,14 @@ class SectionFormulaObligationTruthV1(BaseModel):
 
     obligation_id: str
     outcome: Literal["rendered", "unresolved", "not_applicable"]
+    # ``outcome`` describes representation (a package was rendered or not),
+    # while this field is the closed lifecycle state used by Binder and
+    # acceptance.  In particular, an author-intent or partial package may be
+    # rendered for review but can never be counted as an accepted code
+    # formula.
+    terminal_disposition: Literal[
+        "accepted", "review_required", "not_applicable", "failed"
+    ] = "failed"
     package_id: str = ""
     review_question: str = ""
     reason: str = ""
@@ -735,6 +784,846 @@ def select_core_equations(
     return selected
 
 
+_OPERATION_SIGNATURE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("attention", r"attention|attn"),
+    ("mask", r"mask|masked|same[_ -]?document|\-infinity|\-inf|indicator"),
+    ("position", r"position|sin(?:usoidal)?|cos(?:ine)?|positional"),
+    ("normalize", r"normaliz|l2|functional\.normalize|norm"),
+    ("concat", r"concat|concatenate|torch\.cat|\bcat\b|stack"),
+    ("logsumexp", r"logsumexp|log\s*sum"),
+    ("exp", r"\\exp\b|\bexp(?:onential)?\b"),
+    ("reduce", r"\\sum\b|\bsum\b|reduce|mean|average"),
+    ("rank", r"argsort|sort|ranking|rank|descending|top[_ -]?k"),
+    ("threshold", r"threshold|compare|greater|less|select(?:s|ed)?|indicator"),
+    ("ppr", r"pagerank|page[_ -]?rank|personalized[_ -]?pagerank|ppr"),
+    ("multiply", r"\\cdot|\\times|\bmatmul\b|\bmm\b|\bdot\b|multiply|product|\*|@"),
+    ("divide", r"\\frac|\bdivide\b|\bratio\b|\bquotient\b|/"),
+    ("subtract", r"subtract|minus|negative|\-"),
+    ("add", r"\badd(?:ed|ition)?\b|accumulat|residual|\+"),
+)
+
+
+def _operation_signature_families(value: Any) -> set[str]:
+    """Extract conservative operation families from frozen source evidence."""
+
+    if isinstance(value, Mapping):
+        raw_payload = dict(value)
+    elif hasattr(value, "model_dump"):
+        raw_payload = value.model_dump(mode="json")
+    else:
+        raw_payload = {"value": str(value or "")}
+    # Paths, span ids, and exact excerpts contain punctuation that is not an
+    # operation signature (for example the slashes in ``src/model.py``).
+    # Only retain the source operation vocabulary and execution conditions;
+    # author statements are intentionally excluded from this authority check.
+    atom_fields = (
+        "predicate", "operands", "result", "operation_descriptors", "diagnostics",
+        "guard", "iteration_context", "shape_or_type_hints", "description",
+    )
+    atoms = []
+    for raw_atom in (
+        *(raw_payload.get("operation_atoms") or ()),
+        *(raw_payload.get("formalizable_signatures") or ()),
+    ):
+        if not isinstance(raw_atom, Mapping):
+            continue
+        atoms.append({key: raw_atom.get(key) for key in atom_fields if key in raw_atom})
+    payload = {
+        "operation_atoms": atoms,
+        "preconditions": raw_payload.get("preconditions") or (),
+        "shape_or_type_hints": raw_payload.get("shape_or_type_hints") or (),
+    }
+    text = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    families = {
+        family for family, pattern in _OPERATION_SIGNATURE_PATTERNS
+        if re.search(pattern, text, flags=re.IGNORECASE)
+    }
+    # ``logsumexp`` is a fused source operation.  A paper expression that
+    # expands the same implementation into exp/sum notation is still
+    # operation-equivalent; requiring the source fact to contain the literal
+    # expanded primitives would reject a faithful formalization.  The
+    # implication is one-way and deliberately narrow: seeing exp or reduce
+    # in source evidence does not authorize a fused logsumexp formula.
+    if "logsumexp" in families:
+        families.update({"exp", "reduce"})
+    return families
+
+
+def _formula_signature_families(package: SectionFormulaPackageV1) -> set[str]:
+    """Extract operation families asserted by a paper formula package."""
+
+    # The prose explanation may legitimately mention neighbouring operations
+    # in the mechanism (for example position encoding while the displayed
+    # expression is augmentation).  Signature authority belongs to the
+    # displayed expression itself; otherwise explanatory context creates a
+    # false operation-signature mismatch.
+    text = package.latex
+    return {
+        family for family, pattern in _OPERATION_SIGNATURE_PATTERNS
+        if re.search(pattern, text, flags=re.IGNORECASE)
+    }
+
+
+_OPERATION_BINDING_STOPWORDS = frozenset({
+    "self", "the", "a", "an", "and", "or", "to", "of", "in", "on", "for",
+    "with", "from", "this", "that", "is", "are", "be", "as", "by", "via",
+    "input", "output", "value", "values", "data", "tensor", "item", "items",
+    "element", "elements", "result", "operation",
+})
+
+
+def _operation_rows(value: Any) -> tuple[Mapping[str, Any], ...]:
+    """Return typed source operation rows from an evidence pack-like value."""
+
+    if isinstance(value, Mapping):
+        payload = value
+    elif hasattr(value, "model_dump"):
+        dumped = value.model_dump(mode="json")
+        payload = dumped if isinstance(dumped, Mapping) else {}
+    else:
+        payload = {}
+    rows: list[Mapping[str, Any]] = []
+    for raw in (
+        *(payload.get("operation_atoms") or ()),
+        *(payload.get("formalizable_signatures") or ()),
+    ):
+        if isinstance(raw, Mapping):
+            rows.append(raw)
+    return tuple(rows)
+
+
+def _operation_binding_tokens(value: Any) -> set[str]:
+    """Extract conservative semantic tokens for an operand/condition binding."""
+
+    raw_tokens = re.findall(
+        r"[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?",
+        str(value or ""),
+    )
+    tokens: set[str] = set()
+    for token in raw_tokens:
+        token = token.casefold()
+        tokens.add(token)
+        # Source operands are commonly snake_case implementation names while
+        # paper symbols/meanings use ordinary words (for example
+        # ``document_id_embeddings`` -> ``document``/``embeddings``).  Keep
+        # the raw identifier for exact binding, and add only its lexical
+        # components so a declared paper meaning can prove the mapping.
+        for part in re.split(r"[_\-]+|(?<=[a-z])(?=[A-Z])", token):
+            if part:
+                tokens.add(part)
+        for suffix in (
+            "ization", "isation", "ation", "tion", "ment", "ing",
+            "ers", "er", "ed", "es", "s",
+        ):
+            if token.endswith(suffix) and len(token) - len(suffix) >= 4:
+                tokens.add(token[:-len(suffix)])
+                break
+    return {
+        token for token in tokens
+        if token not in _OPERATION_BINDING_STOPWORDS
+    }
+
+
+def _operation_binding_values(value: Any) -> tuple[str, ...]:
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() else ()
+    if value is None or isinstance(value, Mapping):
+        return ()
+    try:
+        return tuple(
+            str(item).strip()
+            for item in value
+            if str(item).strip()
+        )
+    except TypeError:
+        text = str(value).strip()
+        return (text,) if text else ()
+
+
+def _operation_binding_surface(package: SectionFormulaPackageV1) -> tuple[str, set[str], tuple[tuple[str, set[str]], ...]]:
+    """Build the package surface used for source operand/guard matching.
+
+    Academic symbols may differ from implementation names, so a source term
+    can bind through a declared symbol meaning (for example ``q`` meaning
+    ``query embedding``).  One-letter implementation operands still require
+    an exact symbol/token match; this keeps the check conservative without
+    forcing code identifiers into publication prose.
+    """
+
+    meanings: list[tuple[str, set[str]]] = []
+    for symbol, meaning in package.symbol_definitions:
+        meanings.append((str(symbol).strip().casefold(), _operation_binding_tokens(meaning)))
+    for symbol in (package.symbol_table or ()):
+        meanings.append((str(symbol.symbol).strip().casefold(), _operation_binding_tokens(symbol.meaning)))
+    text = " ".join((
+        package.latex,
+        package.prose_explanation,
+        *(str(symbol) for symbol, _meaning in package.symbol_definitions),
+        *(str(meaning) for _symbol, meaning in package.symbol_definitions),
+        *(str(item) for item in package.material_conditions),
+        *(str(item) for item in package.assumptions),
+    ))
+    return text, _operation_binding_tokens(text), tuple(meanings)
+
+
+def _operation_value_is_bound(
+    value: str,
+    *,
+    surface_tokens: set[str],
+    declared_meanings: tuple[tuple[str, set[str]], ...],
+) -> bool:
+    source_tokens = _operation_binding_tokens(value)
+    if not source_tokens:
+        return True
+    # A one-character variable has no reliable semantic overlap signal; it
+    # must be present as a declared/visible mathematical symbol.
+    if len(source_tokens) == 1 and len(next(iter(source_tokens))) <= 2:
+        return next(iter(source_tokens)) in surface_tokens or any(
+            symbol == next(iter(source_tokens)) for symbol, _meaning in declared_meanings
+        )
+    if source_tokens.issubset(surface_tokens):
+        return True
+    # Qualified code names often become a compact academic symbol whose
+    # meaning retains one or more substantive tokens (``query_embedding`` ->
+    # ``q`` / ``query embedding``).  Require overlap with a declared meaning,
+    # never with the symbol name alone.
+    for _symbol, meaning_tokens in declared_meanings:
+        if meaning_tokens and len(source_tokens.intersection(meaning_tokens)) >= 1:
+            return True
+    return False
+
+
+def _operation_callable_is_rendered(value: str, latex: str) -> bool:
+    """Accept a known source callable when its math operator is displayed.
+
+    Operation-formula packages use reader-facing operators (for example
+    ``\\operatorname{sort}``) instead of leaking ``torch.sort`` into the
+    paper.  The callable itself is still part of the closed source atom; it
+    is considered bound only through this exact terminal-name/operator alias
+    mapping, never through a generic lexical overlap.
+    """
+
+    terminal = str(value or "").strip().rsplit(".", 1)[-1].casefold()
+    if not terminal:
+        return False
+    aliases = {
+        "cat": "concat",
+        "concatenate": "concat",
+        "argsort": "sort",
+        "logsumexp": "logsumexp",
+    }
+    operator = aliases.get(terminal, terminal)
+    return bool(re.search(
+        r"\\operatorname\{" + re.escape(operator) + r"\}",
+        str(latex or ""),
+        flags=re.IGNORECASE,
+    ))
+
+
+def _operation_source_conditions(packs: tuple[Any, ...]) -> tuple[str, ...]:
+    conditions: list[str] = []
+    for pack in packs:
+        conditions.extend(
+            str(item).strip()
+            for item in ((pack.get("preconditions", ()) if isinstance(pack, Mapping)
+                          else getattr(pack, "preconditions", ())) or ())
+            if str(item).strip()
+        )
+        for atom in _operation_rows(pack):
+            conditions.extend(
+                str(item).strip()
+                for item in (
+                    *_operation_binding_values(atom.get("conditions")),
+                    *_operation_binding_values(atom.get("guard")),
+                )
+                if str(item).strip()
+            )
+    return tuple(dict.fromkeys(conditions))
+
+
+def _operation_source_shapes(packs: tuple[Any, ...]) -> tuple[str, ...]:
+    shapes: list[str] = []
+    for pack in packs:
+        shapes.extend(
+            str(item).strip()
+            for item in ((pack.get("shape_or_type_hints", ())
+                          if isinstance(pack, Mapping)
+                          else getattr(pack, "shape_or_type_hints", ())) or ())
+            if str(item).strip()
+        )
+        for atom in _operation_rows(pack):
+            shapes.extend(
+                str(item).strip()
+                for item in _operation_binding_values(
+                    atom.get("shape_or_type_hints")
+                    or atom.get("shape_hints")
+                    or atom.get("types")
+                )
+                if str(item).strip()
+            )
+    return tuple(dict.fromkeys(shapes))
+
+
+def _operation_explicit_families(atom: Mapping[str, Any]) -> set[str]:
+    """Return arithmetic families explicitly recorded by one source atom.
+
+    ``_operation_signature_families`` is intentionally broader because it is
+    also used to validate a rendered formula.  Candidate construction needs a
+    narrower signal: an implementation operand such as ``x + y`` may contain
+    the operator, but a source descriptor (or an explicit diagnostic) is what
+    gives the deterministic compiler permission to select the operation.
+    """
+
+    values = (
+        *(atom.get("operation_descriptors") or ()),
+        *(atom.get("diagnostics") or ()),
+        atom.get("operation"),
+        atom.get("operator"),
+        atom.get("predicate"),
+    )
+    text = " ".join(str(value).strip().casefold() for value in values if str(value).strip())
+    families: set[str] = set()
+    if re.search(r"(?<![a-z0-9_])(?:add|added|addition|plus|accumulat)(?![a-z0-9_])", text):
+        families.add("add")
+    if re.search(r"(?<![a-z0-9_])(?:sub|subtract|subtraction|minus|negative)(?![a-z0-9_])", text):
+        families.add("subtract")
+    if re.search(r"(?<![a-z0-9_])(?:mult|multiply|multiplication|product)(?![a-z0-9_])", text):
+        families.add("multiply")
+    if re.search(r"(?<![a-z0-9_])(?:div|divide|division|quotient|ratio)(?![a-z0-9_])", text):
+        families.add("divide")
+    return families
+
+
+def _operation_topic_groups(goal: str) -> tuple[frozenset[str], ...]:
+    """Extract narrow mechanism signals used to avoid cross-stage binding."""
+
+    text = str(goal or "").casefold()
+    groups: list[frozenset[str]] = []
+    if any(term in text for term in ("infonce", "contrastive", "contrastive loss", "loss")):
+        groups.append(frozenset({
+            "infonce", "contrastive", "loss", "loss_i", "pos_sim", "logsumexp",
+            "negative", "positive", "similarity",
+        }))
+    if any(term in text for term in (
+        "dot-product", "dot product", "rank", "ranking", "sort", "descending",
+        "similarity", "relevance score",
+    )):
+        groups.append(frozenset({
+            "dot", "similarity", "similarities", "rank", "ranking", "sort",
+            "sorting", "descending", "score", "scores", "relevance",
+        }))
+    if any(term in text for term in (
+        "augment", "document id embedding", "passage-position", "passage position",
+    )):
+        groups.append(frozenset({
+            "augment", "document", "document_id", "passage", "passage_id",
+            "embedding", "embeddings", "position", "positional",
+        }))
+    if any(term in text for term in ("positional encoding", "position encoding", "sinusoidal")):
+        groups.append(frozenset({
+            "position", "positions", "positional", "sinusoidal", "arange",
+            "div_term", "sin", "cos",
+        }))
+    if any(term in text for term in ("attention", "masked attention", "attention mask")):
+        groups.append(frozenset({"attention", "attn", "mask", "masked", "same_document"}))
+    if any(term in text for term in ("pagerank", "page rank", "ppr", "propagation")):
+        groups.append(frozenset({"pagerank", "page_rank", "ppr", "propagat"}))
+    return tuple(groups)
+
+
+def _render_operation_term(value: str) -> str:
+    """Translate only known math calls; leave unknown implementation syntax out."""
+
+    rendered = str(value or "").strip()
+    replacements = (
+        (r"\btorch\.logsumexp\s*\(", r"\\operatorname{logsumexp}("),
+        (r"\btorch\.exp\s*\(", r"\\exp("),
+        (r"\bmath\.log\s*\(", r"\\log("),
+        (r"\btorch\.sum\s*\(", r"\\sum("),
+        (r"\btorch\.mean\s*\(", r"\\operatorname{mean}("),
+        (r"\btorch\.cat\s*\(", r"\\operatorname{concat}("),
+    )
+    for pattern, replacement in replacements:
+        rendered = re.sub(pattern, replacement, rendered, flags=re.IGNORECASE)
+    return rendered
+
+
+def build_deterministic_operation_formula_packages(
+    *,
+    section_id: str,
+    formula_obligations: tuple[MethodFormulaObligationV2, ...]
+    | list[MethodFormulaObligationV2] = (),
+    operation_evidence_packs: tuple[Any, ...] | list[Any] = (),
+    package_namespace: str = "",
+) -> tuple[SectionFormulaPackageV1, ...]:
+    """Compile one conservative formula per closed operation obligation.
+
+    This is a representation-only fallback for a ``code_ready`` Research
+    dossier.  It admits only fact-backed ``computes_formula`` atoms with an
+    exact span, an explicit arithmetic descriptor, operands, and a result.
+    The obligation's mechanism words select the atom; no cross-scope call or
+    semantic relation is inferred here.  A missing or ambiguous match returns
+    no package so the normal typed failure path remains fail-closed.
+    """
+
+    obligations = tuple(formula_obligations or ())
+    if not obligations:
+        return ()
+
+    def pack_value(pack: Any, name: str, default: Any = None) -> Any:
+        if isinstance(pack, Mapping):
+            return pack.get(name, default)
+        return getattr(pack, name, default)
+
+    candidates: dict[str, dict[str, Any]] = {}
+    for pack in tuple(operation_evidence_packs or ()):
+        if not bool(pack_value(pack, "connected", False)):
+            continue
+        readiness = str(pack_value(pack, "evidence_readiness", "code_ready") or "").strip()
+        if readiness and readiness != "code_ready":
+            continue
+        if pack_value(pack, "unresolved_relations", ()):
+            continue
+        bound_fact_ids = {
+            str(value).strip()
+            for value in (pack_value(pack, "bound_fact_ids", ()) or ())
+            if str(value).strip()
+        }
+        exact_span_ids = {
+            str(value).strip()
+            for value in (pack_value(pack, "exact_span_ids", ()) or ())
+            if str(value).strip()
+        }
+        for raw_atom in _operation_rows(pack):
+            atom = dict(raw_atom)
+            predicate = str(
+                atom.get("predicate") or atom.get("operation") or ""
+            ).strip().casefold()
+            operation_kind = ""
+            if predicate in {"computes_formula", "computes", "compute", "formula"}:
+                operation_kind = "arithmetic"
+            elif predicate in {"sorts_by", "sort", "argsort"}:
+                # A source-backed ranking signature is a valid formal
+                # object even though it is not arithmetic.  Keep the
+                # operation conservative: the displayed formula will retain
+                # the exact result, score input, dimension, and direction.
+                operation_kind = "sort"
+            elif predicate in {"normalizes", "normalize"}:
+                operation_kind = "normalize"
+            elif predicate in {"reshapes", "reshape"}:
+                operation_kind = "reshape"
+            elif predicate in {"concatenates", "concatenate", "concat"}:
+                operation_kind = "concat"
+            if not operation_kind:
+                continue
+            fact_id = str(atom.get("fact_id") or "").strip()
+            source_span_id = str(
+                atom.get("source_span_id") or atom.get("span_id") or ""
+            ).strip()
+            operands = tuple(
+                str(value).strip()
+                for value in _operation_binding_values(atom.get("operands"))
+                if str(value).strip()
+            )
+            result = str(
+                atom.get("result") or atom.get("output") or atom.get("return_value") or ""
+            ).strip()
+            if not fact_id or fact_id not in bound_fact_ids:
+                continue
+            if not source_span_id or (exact_span_ids and source_span_id not in exact_span_ids):
+                continue
+            if not operands or not result:
+                continue
+            families = _operation_explicit_families(atom)
+            if operation_kind != "arithmetic":
+                families = {operation_kind}
+            elif not families:
+                source_families = _operation_signature_families({"operation_atoms": [atom]})
+                families = source_families & {"add", "subtract", "multiply", "divide"}
+            if len(families) != 1:
+                continue
+            atom_key = fact_id
+            score_key = (
+                len(atom.get("operation_descriptors") or ())
+                + len(atom.get("conditions") or ())
+                + len(atom.get("span_ids") or ())
+            )
+            previous = candidates.get(atom_key)
+            if previous is None or score_key > int(previous.get("score_key", -1)):
+                candidates[atom_key] = {
+                    "atom": atom,
+                    "pack": pack,
+                    "family": next(iter(families)),
+                    "operation_kind": operation_kind,
+                    "score_key": score_key,
+                }
+
+    if not candidates:
+        return ()
+
+    packages: list[SectionFormulaPackageV1] = []
+    used_fact_ids: set[str] = set()
+    for obligation_index, obligation in enumerate(obligations, start=1):
+        if obligation.expectation == "none":
+            continue
+        goal = " ".join(
+            str(value).strip()
+            for value in (
+                getattr(obligation, "mathematical_goal", ""),
+                getattr(obligation, "mechanism_key", ""),
+            )
+            if str(value).strip()
+        )
+        goal_tokens = _operation_binding_tokens(goal)
+        topic_groups = _operation_topic_groups(goal)
+        scored: list[tuple[int, str, dict[str, Any]]] = []
+        for fact_id, candidate in candidates.items():
+            if fact_id in used_fact_ids:
+                continue
+            atom = candidate["atom"]
+            atom_text = " ".join(
+                str(atom.get(name) or "")
+                for name in (
+                    "predicate", "operands", "result", "operation_descriptors",
+                    "diagnostics", "guard", "conditions",
+                )
+            )
+            atom_tokens = _operation_binding_tokens(atom_text)
+            if topic_groups and not any(group.intersection(atom_tokens) for group in topic_groups):
+                continue
+            overlap = len(goal_tokens.intersection(atom_tokens))
+            if goal_tokens and overlap == 0:
+                continue
+            topic_bonus = sum(
+                3 for group in topic_groups if group.intersection(atom_tokens)
+            )
+            scored.append((overlap + topic_bonus, fact_id, candidate))
+        if not scored and not topic_groups:
+            remaining = [
+                (fact_id, candidate)
+                for fact_id, candidate in candidates.items()
+                if fact_id not in used_fact_ids
+            ]
+            if len(remaining) == 1:
+                # A generic section obligation may carry no operation words.
+                # A single code-ready atom in the already scoped consumer
+                # dossier is still an unambiguous representation target;
+                # multiple atoms remain unresolved rather than guessed.
+                fact_id, candidate = remaining[0]
+                scored.append((0, fact_id, candidate))
+        if not scored:
+            continue
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        best_score = scored[0][0]
+        best = [item for item in scored if item[0] == best_score]
+        if len(best) > 1:
+            # Different facts with the same score are not interchangeable
+            # source authority.  Keep the obligation unresolved instead of
+            # guessing which operation the author meant.
+            continue
+        _score, fact_id, candidate = best[0]
+        atom = candidate["atom"]
+        family = str(candidate["family"])
+        rendered_operands = tuple(_render_operation_term(value) for value in (
+            str(value).strip() for value in _operation_binding_values(atom.get("operands"))
+        ))
+        operation_kind = str(candidate.get("operation_kind") or "arithmetic")
+        if operation_kind == "arithmetic" and any(
+            re.search(r"\b(?:self|torch|numpy|np|tensorflow|tf|nn|math)\s*\.", value)
+            for value in rendered_operands
+        ):
+            continue
+        rendered_result = _render_operation_term(str(
+            atom.get("result") or atom.get("output") or atom.get("return_value") or ""
+        ).strip())
+        if not rendered_result or not all(rendered_operands):
+            continue
+        if operation_kind == "arithmetic":
+            operator = {
+                "add": " + ",
+                "subtract": " - ",
+                "multiply": r" \cdot ",
+                "divide": " / ",
+            }[family]
+            latex = rendered_result + " = " + operator.join(rendered_operands)
+        else:
+            function_names = {
+                "sort": {"sort", "torch.sort", "argsort", "torch.argsort"},
+                "normalize": {"normalize", "torch.nn.functional.normalize"},
+                "reshape": {"reshape", "torch.reshape", "view"},
+                "concat": {"concat", "concatenate", "torch.cat", "cat"},
+            }
+            args = tuple(
+                value for value in rendered_operands
+                if value.casefold() not in function_names.get(operation_kind, set())
+            )
+            if not args:
+                continue
+            operator_name = {
+                "sort": "sort",
+                "normalize": "normalize",
+                "reshape": "reshape",
+                "concat": "concat",
+            }[operation_kind]
+            latex = (
+                rendered_result
+                + r" = \operatorname{" + operator_name + "}("
+                + ", ".join(args)
+                + ")"
+            )
+        pack = candidate["pack"]
+        conditions = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (
+                *(pack_value(pack, "preconditions", ()) or ()),
+                *(atom.get("conditions") or ()),
+                atom.get("guard") or "",
+            )
+            if str(value).strip()
+        ))
+        consumer = str(
+            getattr(obligation, "consumer_paragraph_id", "")
+            or (
+                obligation.paragraph_ids[0]
+                if len(tuple(getattr(obligation, "paragraph_ids", ()) or ())) == 1
+                else ""
+            )
+        ).strip()
+        obligation_id = str(obligation.obligation_id).strip()
+        package = SectionFormulaPackageV1(
+            package_id=f"opfp:{section_id}:{package_namespace}{obligation_index}",
+            section_id=section_id,
+            obligation_id=obligation_id,
+            consumer_paragraph_id=consumer,
+            satisfied_obligation_ids=(obligation_id,),
+            purpose=goal or "Formalize the authorized source operation.",
+            latex=latex,
+            prose_explanation=(
+                "The repository operation computes the recorded result from the "
+                "recorded operands using the authorized source operation."
+            ),
+            material_conditions=conditions,
+            assumptions=(),
+            authority_status="code_verified",
+            formula_lane="repository_derived",
+            bound_facet_ids=tuple(
+                dict.fromkeys(
+                    str(value).strip()
+                    for value in (getattr(obligation, "facet_ids", ()) or ())
+                    if str(value).strip()
+                )
+            ),
+            bound_fact_ids=(fact_id,),
+            bound_equation_ids=(),
+        )
+        packages.append(package)
+        used_fact_ids.add(fact_id)
+    return tuple(packages)
+
+
+def _operation_condition_is_bound(
+    condition: str,
+    *,
+    surface_text: str,
+    surface_tokens: set[str],
+) -> bool:
+    normalized_surface = " ".join(surface_text.casefold().split())
+    normalized_condition = " ".join(str(condition).casefold().split())
+    if normalized_condition and normalized_condition in normalized_surface:
+        return True
+    condition_tokens = _operation_binding_tokens(condition)
+    if not condition_tokens:
+        return True
+    numeric_tokens = {
+        token for token in condition_tokens if token[0].isdigit()
+    }
+    if not numeric_tokens.issubset(surface_tokens):
+        return False
+    overlap = condition_tokens.intersection(surface_tokens)
+    # Paraphrasing a condition is allowed, but not replacing it with a generic
+    # sentence.  A third of the substantive predicate tokens is a deliberately
+    # conservative floor; exact numeric thresholds remain mandatory.
+    return len(overlap) >= max(1, (len(condition_tokens) + 2) // 3)
+
+
+def _operation_evidence_failures(
+    package: SectionFormulaPackageV1,
+    *,
+    operation_evidence_packs: tuple[Any, ...] | list[Any],
+) -> list[str]:
+    """Check a code-equivalent package against operation-level evidence.
+
+    Equation ids are sufficient for the historical equation compiler.  When
+    the compiler has only source operation chains, however, a package must be
+    linked to a matching fact-backed pack and its claimed operator families
+    must be present in that pack.  This keeps conventional notation separate
+    from a code-equivalent authority upgrade.
+    """
+
+    if package.authority_status != "code_verified":
+        return []
+    if package.bound_equation_ids:
+        # Equation-bound packages already pass the exact expression,
+        # operand, operator, and condition checks below.  Operation-level
+        # signature matching is the additional authority check only for the
+        # equation-less path produced from a Research operation chain.
+        return []
+    packs = tuple(operation_evidence_packs or ())
+    if not packs:
+        # Preserve the pre-operation-pack contract for isolated callers that
+        # validate a package directly against the frozen equation set.
+        return []
+
+    package_facts = set(str(item).strip() for item in package.bound_fact_ids if str(item).strip())
+    package_equations = set(str(item).strip() for item in package.bound_equation_ids if str(item).strip())
+    matching: list[Any] = []
+    for pack in packs:
+        pack_section = str(getattr(pack, "section_id", "") or "").strip()
+        if pack_section and package.section_id != pack_section:
+            continue
+        pack_facts = set(str(item).strip() for item in (getattr(pack, "bound_fact_ids", ()) or ()) if str(item).strip())
+        pack_equations = set(str(item).strip() for item in (getattr(pack, "bound_equation_ids", ()) or ()) if str(item).strip())
+        if package_facts.intersection(pack_facts) or package_equations.intersection(pack_equations):
+            matching.append(pack)
+    if not matching:
+        return ["operation_evidence_unbound"]
+    scoped_matching: list[dict[str, Any]] = []
+    for pack in matching:
+        payload = (
+            pack.model_dump(mode="json")
+            if hasattr(pack, "model_dump")
+            else dict(pack)
+            if isinstance(pack, Mapping)
+            else {}
+        )
+        if package_facts:
+            # A dossier pack can carry the whole paragraph chain.  A formula
+            # package is allowed to bind only the fact atoms it names; using
+            # every neighbouring atom here made unrelated reshape/call
+            # operands look like missing formula operands.
+            rows = [
+                row for row in _operation_rows(payload)
+                if str(row.get("fact_id") or "").strip() in package_facts
+            ]
+            if rows:
+                payload["operation_atoms"] = rows
+                payload["formalizable_signatures"] = rows
+        scoped_matching.append(payload)
+    failures: list[str] = []
+    if any(getattr(pack, "unresolved_relations", ()) for pack in matching):
+        failures.append("operation_evidence_unresolved")
+    if any(
+        str(getattr(pack, "default_activation", "unknown") or "unknown") == "inactive"
+        for pack in matching
+    ):
+        failures.append("operation_evidence_inactive")
+    source_families = set().union(*(
+        _operation_signature_families(pack) for pack in scoped_matching
+    ))
+    formula_families = _formula_signature_families(package)
+    if not formula_families and not source_families:
+        failures.append("operation_signature_not_detected")
+    unsupported = sorted(formula_families - source_families)
+    if unsupported:
+        failures.append("operation_signature_mismatch:" + ",".join(unsupported))
+    surface_text, surface_tokens, declared_meanings = _operation_binding_surface(package)
+    relevant_packs: list[dict[str, Any]] = []
+    for pack in scoped_matching:
+        rows = list(_operation_rows(pack))
+        if formula_families and rows:
+            scored = [
+                (
+                    len(
+                        formula_families.intersection(
+                            _operation_signature_families({"operation_atoms": [row]})
+                        )
+                    ),
+                    row,
+                )
+                for row in rows
+            ]
+            best_score = max((score for score, _row in scored), default=0)
+            if best_score:
+                rows = [row for score, row in scored if score == best_score]
+        # A package with no recognizable displayed operator still has to bind
+        # the sole source atom (the guarded-normalization case); with several
+        # atoms the operand/result checks remain conservative and use all
+        # rows because no deterministic family can select a subset.
+        selected = dict(pack)
+        selected["operation_atoms"] = rows
+        selected["formalizable_signatures"] = rows
+        if rows:
+            selected["shape_or_type_hints"] = tuple(dict.fromkeys(
+                str(item).strip()
+                for row in rows
+                for item in _operation_binding_values(
+                    row.get("shape_or_type_hints")
+                    or row.get("shape_hints")
+                    or row.get("types")
+                )
+                if str(item).strip()
+            ))
+        relevant_packs.append(selected)
+    missing_values: list[str] = []
+    for pack in relevant_packs:
+        for atom in _operation_rows(pack):
+            for field in ("operands", "result", "output", "return_value"):
+                values = _operation_binding_values(atom.get(field))
+                for value in values:
+                    # Free-form fact descriptions are already checked by the
+                    # operation-family guard; identifier-shaped values are
+                    # where an operation-equivalent formula can silently swap
+                    # an input or output.
+                    if (
+                        re.fullmatch(
+                            r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*",
+                            value,
+                        )
+                        and not _operation_value_is_bound(
+                            value,
+                            surface_tokens=surface_tokens,
+                            declared_meanings=declared_meanings,
+                        )
+                        and not _operation_callable_is_rendered(
+                            value,
+                            package.latex,
+                        )
+                    ):
+                        missing_values.append(value)
+    if missing_values:
+        failures.append(
+            "operation_operand_binding_missing:"
+            + ",".join(list(dict.fromkeys(missing_values))[:8])
+        )
+    missing_conditions = [
+        condition for condition in _operation_source_conditions(tuple(relevant_packs))
+        if not _operation_condition_is_bound(
+            condition,
+            surface_text=surface_text,
+            surface_tokens=surface_tokens,
+        )
+    ]
+    if missing_conditions:
+        failures.append(
+            "operation_condition_missing:"
+            + ",".join(list(dict.fromkeys(missing_conditions))[:4])
+        )
+    missing_shapes = [
+        shape for shape in _operation_source_shapes(tuple(relevant_packs))
+        if not _operation_condition_is_bound(
+            shape,
+            surface_text=surface_text,
+            surface_tokens=surface_tokens,
+        )
+    ]
+    if missing_shapes:
+        failures.append(
+            "operation_shape_or_type_missing:"
+            + ",".join(list(dict.fromkeys(missing_shapes))[:4])
+        )
+    return failures
+
+
 def build_mechanism_equation_evidence_packs(
     *,
     section_id: str,
@@ -751,6 +1640,10 @@ def build_mechanism_equation_evidence_packs(
     multi-operation chain or a relation-backed mechanism is eligible for
     Formalizer review.
     """
+
+    from code2paper.agentic.research_derived_authoring import (
+        compile_code_fact_operation_chain,
+    )
 
     facts_by_id = {
         str(item.fact_id): item
@@ -781,6 +1674,7 @@ def build_mechanism_equation_evidence_packs(
         return tuple(result)
 
     packs: list[MechanismEquationEvidencePackV1] = []
+    covered_dossier_ids: set[str] = set()
     for equation in select_core_equations(
         equations=equations,
         facts=facts,
@@ -792,11 +1686,27 @@ def build_mechanism_equation_evidence_packs(
             if str(fact_id) in facts_by_id
         ]
         atoms: list[dict[str, Any]] = []
+        compiled_facts = compile_code_fact_operation_chain(
+            facts=selected_facts,
+        )
+        compiled_by_fact_id = {
+            str(atom.get("fact_id")): dict(atom)
+            for atom in compiled_facts["operation_atoms"]
+            if str(atom.get("fact_id") or "").strip()
+        }
         span_ids: list[str] = []
         conditions: list[str] = []
         shape_hints: list[str] = []
         relation_ids = set(getattr(equation, "relation_evidence_ids", ()) or ())
         for fact in selected_facts:
+            compiled_atom = compiled_by_fact_id.get(str(fact.fact_id))
+            if compiled_atom is not None:
+                atoms.append(compiled_atom)
+                relation_ids.update(compiled_atom.get("relation_evidence_ids") or ())
+                conditions.extend(compiled_atom.get("conditions") or ())
+                span_ids.extend(compiled_atom.get("span_ids") or ())
+                shape_hints.extend(compiled_atom.get("shape_or_type_hints") or ())
+                continue
             values = (
                 list(fact.object)
                 if isinstance(fact.object, list)
@@ -866,6 +1776,14 @@ def build_mechanism_equation_evidence_packs(
             for dossier in matching_dossiers
             for atom in (dossier_value(dossier, "operation_atoms", ()) or ())
         ]
+        dossier_signatures = [
+            signature
+            for dossier in matching_dossiers
+            for signature in (
+                dossier_value(dossier, "formalizable_signatures", ()) or ()
+            )
+            if isinstance(signature, Mapping)
+        ]
         all_atoms: list[dict[str, Any]] = []
         atom_keys: set[str] = set()
         for atom in (*atoms, *dossier_atoms):
@@ -887,6 +1805,14 @@ def build_mechanism_equation_evidence_packs(
             str(item)
             for dossier in matching_dossiers
             for item in (dossier_value(dossier, "active_path_conditions", ()) or ())
+            if str(item).strip()
+        ]
+        dossier_shape_hints = [
+            str(item).strip()
+            for dossier in matching_dossiers
+            for item in (
+                dossier_value(dossier, "shape_or_type_hints", ()) or ()
+            )
             if str(item).strip()
         ]
         dossier_author_statements = [
@@ -924,6 +1850,50 @@ def build_mechanism_equation_evidence_packs(
             for dossier in matching_dossiers
             for config in (dossier_value(dossier, "configuration_bindings", ()) or ())
         )
+        signature_rows: list[dict[str, Any]] = []
+        signature_keys: set[str] = set()
+        for signature in dossier_signatures:
+            key = _digest_json(signature)
+            if key not in signature_keys:
+                signature_keys.add(key)
+                signature_rows.append(dict(signature))
+        if not signature_rows:
+            for atom in all_atoms:
+                if not isinstance(atom, Mapping):
+                    continue
+                predicate = str(
+                    atom.get("predicate") or atom.get("operation")
+                    or atom.get("operation_id") or ""
+                ).strip()
+                operands = tuple(
+                    str(item).strip()
+                    for item in (atom.get("operands") or ())
+                    if str(item).strip()
+                )
+                result = str(
+                    atom.get("result") or atom.get("output")
+                    or atom.get("return_value") or ""
+                ).strip()
+                if not (predicate or operands or result):
+                    continue
+                row = {
+                    "predicate": predicate,
+                    "operands": list(dict.fromkeys(operands)),
+                    "result": result,
+                    "guard": str(atom.get("guard") or "").strip(),
+                    "shape_or_type_hints": list(dict.fromkeys(
+                        str(item).strip()
+                        for item in (atom.get("shape_or_type_hints") or ())
+                        if str(item).strip()
+                    )),
+                    "source_span_id": str(
+                        atom.get("source_span_id") or atom.get("span_id") or ""
+                    ).strip(),
+                }
+                key = _digest_json(row)
+                if key not in signature_keys:
+                    signature_keys.add(key)
+                    signature_rows.append(row)
         activation_values = tuple(dict.fromkeys(
             str(dossier_value(dossier, "default_activation", "unknown"))
             for dossier in matching_dossiers
@@ -955,6 +1925,7 @@ def build_mechanism_equation_evidence_packs(
             default_activation=default_activation,
             unresolved_relations=tuple(dict.fromkeys(dossier_unresolved)),
             operation_atoms=tuple(all_atoms),
+            formalizable_signatures=tuple(signature_rows),
             exact_span_ids=tuple(dict.fromkeys((*span_ids, *dossier_span_ids))),
             exact_excerpts=tuple(dict.fromkeys(
                 str(item).strip()
@@ -963,7 +1934,7 @@ def build_mechanism_equation_evidence_packs(
                 if str(item).strip()
             )),
             preconditions=tuple(dict.fromkeys((*conditions, *dossier_conditions))),
-            shape_or_type_hints=tuple(shape_hints),
+            shape_or_type_hints=tuple(dict.fromkeys((*shape_hints, *dossier_shape_hints))),
             author_statements=tuple(
                 dict.fromkeys(
                     str(item).strip()
@@ -978,6 +1949,227 @@ def build_mechanism_equation_evidence_packs(
             bound_equation_ids=(equation_id,),
             connected=True,
         ))
+        covered_dossier_ids.update(dossier_ids)
+
+    # The equation compiler can legitimately reject incidental ``x + y`` /
+    # ``x * y`` wrappers even when the Research dossier contains a connected,
+    # fact-backed operation chain.  Preserve that chain as a separate
+    # operation evidence pack so the Formalizer can derive an equivalent
+    # paper expression without promoting the incidental equation itself.
+    for dossier in dossier_values:
+        dossier_section = str(dossier_value(dossier, "section_id", "") or "").strip()
+        dossier_id = str(dossier_value(dossier, "dossier_id", "") or "").strip()
+        if dossier_section != section_id or not dossier_id or dossier_id in covered_dossier_ids:
+            continue
+        # Author-intent and blocked dossiers may carry operation-looking
+        # descriptions, but they are not repository authority.  Only an
+        # explicitly code-ready dossier can enter the operation formula lane;
+        # legacy callers without a readiness field retain the structural
+        # checks below for compatibility.
+        dossier_readiness = str(
+            dossier_value(dossier, "evidence_readiness", "") or ""
+        ).strip()
+        if dossier_readiness and dossier_readiness != "code_ready":
+            continue
+        raw_atoms = [
+            dict(atom)
+            for atom in (dossier_value(dossier, "operation_atoms", ()) or ())
+            if isinstance(atom, Mapping)
+        ]
+        if not raw_atoms:
+            continue
+        # A dossier may reference helper functions in several scopes.  Keep
+        # those as independent packs unless a relation-backed pack was
+        # already produced; never turn a shared symbol name into an invented
+        # call/data-flow edge.
+        chain_groups: dict[str, list[dict[str, Any]]] = {}
+        for atom in raw_atoms:
+            chain_scope = str(
+                atom.get("chain_scope") or atom.get("scope")
+                or atom.get("symbol_id") or "scope:unknown"
+            ).strip()
+            chain_groups.setdefault(chain_scope, []).append(atom)
+        raw_dossier_fact_ids = tuple(dict.fromkeys(
+            str(item).strip()
+            for item in (dossier_value(dossier, "fact_ids", ()) or ())
+            if str(item).strip() and str(item).strip() in facts_by_id
+        ))
+        dossier_spans = tuple(dict.fromkeys(
+            str(item).strip()
+            for item in (dossier_value(dossier, "exact_span_ids", ()) or ())
+            if str(item).strip()
+        ))
+        dossier_signatures = tuple(
+            dict(signature)
+            for signature in (dossier_value(dossier, "formalizable_signatures", ()) or ())
+            if isinstance(signature, Mapping)
+        )
+        activation = str(
+            dossier_value(dossier, "default_activation", "unknown") or "unknown"
+        ).strip()
+        if activation not in {"active", "inactive", "conditional", "unknown"}:
+            activation = "unknown"
+        for chain_index, (chain_scope, chain_atoms) in enumerate(
+            sorted(chain_groups.items()), start=1
+        ):
+            atom_rows: list[dict[str, Any]] = []
+            seen_atoms: set[str] = set()
+            chain_fact_ids: list[str] = []
+            span_ids: list[str] = []
+            relation_ids: list[str] = []
+            for atom in chain_atoms:
+                atom_spans = atom.get("span_ids") or ()
+                if isinstance(atom_spans, str):
+                    atom_spans = (atom_spans,)
+                span_ids.extend(
+                    str(item).strip() for item in atom_spans if str(item).strip()
+                )
+                source_span = str(
+                    atom.get("source_span_id") or atom.get("span_id") or ""
+                ).strip()
+                if source_span:
+                    span_ids.append(source_span)
+                atom_fact_id = str(atom.get("fact_id") or "").strip()
+                if atom_fact_id and atom_fact_id in facts_by_id:
+                    chain_fact_ids.append(atom_fact_id)
+                relation_ids.extend(
+                    str(item).strip()
+                    for item in (atom.get("relation_evidence_ids") or ())
+                    if str(item).strip()
+                )
+                atom_key = str(
+                    atom.get("atom_id") or atom.get("node_id")
+                    or atom.get("operation_id") or _digest_json(atom)
+                ).strip()
+                if atom_key in seen_atoms:
+                    continue
+                seen_atoms.add(atom_key)
+                atom_rows.append(atom)
+            chain_fact_ids = list(dict.fromkeys(chain_fact_ids))
+            if not chain_fact_ids and len(chain_groups) == 1:
+                chain_fact_ids = list(raw_dossier_fact_ids)
+            if not span_ids:
+                span_ids.extend(dossier_spans)
+            span_ids = list(dict.fromkeys(item for item in span_ids if item))
+            if not chain_fact_ids or not span_ids or not atom_rows:
+                continue
+            chain_fact_set = set(chain_fact_ids)
+            chain_span_set = set(span_ids)
+            signature_rows = [
+                dict(signature) for signature in dossier_signatures
+                if (
+                    not signature.get("fact_id")
+                    or str(signature.get("fact_id")) in chain_fact_set
+                    or str(signature.get("source_span_id") or "") in chain_span_set
+                    or str(signature.get("scope") or "") == chain_scope
+                )
+            ]
+            if not signature_rows:
+                for atom in atom_rows:
+                    predicate = str(
+                        atom.get("predicate") or atom.get("operation")
+                        or atom.get("operation_id") or ""
+                    ).strip()
+                    operands = tuple(
+                        str(item).strip()
+                        for item in (atom.get("operands") or ())
+                        if str(item).strip()
+                    )
+                    result = str(
+                        atom.get("result") or atom.get("output")
+                        or atom.get("return_value") or ""
+                    ).strip()
+                    if predicate or operands or result:
+                        signature_rows.append({
+                            "predicate": predicate,
+                            "operands": list(dict.fromkeys(operands)),
+                            "result": result,
+                            "guard": str(atom.get("guard") or "").strip(),
+                            "shape_or_type_hints": list(dict.fromkeys(
+                                str(item).strip()
+                                for item in (atom.get("shape_or_type_hints") or ())
+                                if str(item).strip()
+                            )),
+                            "source_span_id": str(
+                                atom.get("source_span_id") or atom.get("span_id") or ""
+                            ).strip(),
+                        })
+            pack_identity = {
+                "section_id": section_id,
+                "dossier_id": dossier_id,
+                "chain_scope": chain_scope,
+                "chain_index": chain_index,
+                "fact_ids": chain_fact_ids,
+                "span_ids": span_ids,
+                "atoms": atom_rows,
+            }
+            packs.append(MechanismEquationEvidencePackV1(
+                pack_id="opack:" + _digest_json(pack_identity)[7:23],
+                section_id=section_id,
+                dossier_ids=(dossier_id,),
+                ordered_operation_node_ids=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "ordered_operation_node_ids", ()) or ())
+                    if str(item).strip()
+                )),
+                call_path_relation_ids=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "call_path_relation_ids", ()) or ())
+                    if str(item).strip()
+                )),
+                data_flow_relation_ids=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "data_flow_relation_ids", ()) or ())
+                    if str(item).strip()
+                )),
+                configuration_bindings=unique_dicts(
+                    dossier_value(dossier, "configuration_bindings", ()) or ()
+                ),
+                default_activation=activation,
+                unresolved_relations=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "unresolved_relations", ()) or ())
+                    if str(item).strip()
+                )),
+                operation_atoms=tuple(atom_rows),
+                formalizable_signatures=tuple(signature_rows),
+                exact_span_ids=tuple(span_ids),
+                shape_or_type_hints=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "shape_or_type_hints", ()) or ())
+                    if str(item).strip()
+                )),
+                exact_excerpts=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "exact_excerpts", ()) or ())
+                    if str(item).strip()
+                )),
+                preconditions=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "active_path_conditions", ()) or ())
+                    if str(item).strip()
+                )),
+                author_statements=tuple(dict.fromkeys(
+                    str(item).strip()
+                    for item in (dossier_value(dossier, "author_statements", ()) or ())
+                    if str(item).strip()
+                )),
+                bound_fact_ids=tuple(chain_fact_ids),
+                connected=bool(
+                    len(atom_rows) > 1
+                    or relation_ids
+                    or any(
+                        str(atom.get("predicate") or "").casefold()
+                        not in {"add", "sub", "mult", "div", "computes_formula"}
+                        for atom in atom_rows
+                    )
+                    or any(
+                        atom.get("result")
+                        or atom.get("operation_descriptors")
+                        for atom in atom_rows
+                    )
+                ),
+            ))
     return tuple(packs)
 
 
@@ -987,8 +2179,10 @@ def validate_section_formula_package(
     equations: Any,
     facts: Any,
     allowed_facet_ids: set[str] | None = None,
+    allowed_equation_ids: set[str] | None = None,
     formula_obligations: tuple[Any, ...] | list[Any] = (),
     require_consumer: bool = False,
+    operation_evidence_packs: tuple[Any, ...] | list[Any] = (),
 ) -> list[str]:
     """Deterministic authority guards over one section formula package.
 
@@ -1017,9 +2211,16 @@ def validate_section_formula_package(
         failures.append("latex_contains_document_command")
     if not _FORMULA_DISPLAY_MATH_RE.search(package.markdown_block):
         failures.append("markdown_block_not_display_math")
+    canonical_block = canonical_formula_markdown_block(package.latex)
+    if package.markdown_block.strip() != canonical_block.strip():
+        failures.append("markdown_block_not_canonical_display")
     if package.markdown_block.strip() and package.latex.strip() not in package.markdown_block:
         failures.append("markdown_block_missing_exact_latex")
     failures.extend(_formula_code_trace_failures(package))
+    failures.extend(_operation_evidence_failures(
+        package,
+        operation_evidence_packs=operation_evidence_packs,
+    ))
     if package.formula_lane == "repository_derived":
         if package.authority_status != "code_verified":
             failures.append("repository_lane_requires_code_verified")
@@ -1037,6 +2238,13 @@ def validate_section_formula_package(
         failures.extend(
             f"unknown_facet:{facet_id}"
             for facet_id in sorted(set(package.bound_facet_ids) - set(allowed_facet_ids))
+        )
+    if allowed_equation_ids is not None:
+        failures.extend(
+            f"equation_not_in_current_core:{equation_id}"
+            for equation_id in sorted(
+                set(package.bound_equation_ids) - set(allowed_equation_ids)
+            )
         )
     if require_consumer:
         obligations = tuple(formula_obligations or ())
@@ -1329,6 +2537,16 @@ _FORMULA_CODE_TRACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("python_function_name", re.compile(
         r"\b[A-Za-z_][A-Za-z0-9_]*_[A-Za-z0-9_]*\s*\(",
     )),
+    ("python_keyword_arg", re.compile(
+        r"\b(?:dim|descending|keepdim|axis|dtype|device)\s*=",
+        flags=re.IGNORECASE,
+    )),
+    ("python_tuple_assignment", re.compile(
+        r"\([^()\n]{1,80}\)\s*=",
+    )),
+    ("raw_snake_case_identifier", re.compile(
+        r"\b[a-z]+(?:_[a-z0-9]+){2,}\b",
+    )),
 )
 
 
@@ -1593,6 +2811,44 @@ def _normalize_formalizer_payload(
                 row["prose_explanation"] = row["purpose"]
             if not str(row.get("latex") or "").strip():
                 continue
+            # Guided decoding occasionally emits the requested repository
+            # lane together with an explicit author-intent (or partial)
+            # authority.  That is a representation conflict, not evidence
+            # that the package is code licensed.  Normalize the lane toward
+            # the less-authoritative declaration so the package can enter
+            # the typed review_required terminal state instead of being
+            # discarded by Pydantic before the Formalizer guard sees it.
+            # Never perform the inverse upgrade: intent/partial content must
+            # not become repository-derived merely because the model copied
+            # the prompt's lane label.
+            authority_status = str(row.get("authority_status") or "").strip()
+            formula_lane = str(row.get("formula_lane") or "").strip()
+            if (
+                authority_status == "author_intent"
+                and formula_lane == "repository_derived"
+            ):
+                row["formula_lane"] = "author_intent_academic"
+            elif (
+                authority_status in {"partial", "paper_code_mismatch"}
+                and formula_lane == "repository_derived"
+            ):
+                row["formula_lane"] = "hybrid_partial"
+            elif (
+                authority_status == "code_verified"
+                and formula_lane in {"author_intent_academic", "hybrid_partial"}
+            ):
+                row["authority_status"] = (
+                    "author_intent"
+                    if formula_lane == "author_intent_academic"
+                    else "partial"
+                )
+            # For every package lane, markdown_block is representation-only
+            # display math.  Extra headings, Symbol Definitions, and prose
+            # memos stay in Writer-facing sidecar fields.
+            if str(row.get("latex") or "").strip():
+                row["markdown_block"] = canonical_formula_markdown_block(
+                    str(row["latex"])
+                )
             normalized.append(row)
         data["packages"] = normalized
     elif str(data.get("outcome") or "") == "unresolved" and not str(
@@ -1604,6 +2860,30 @@ def _normalize_formalizer_payload(
     return data
 
 
+def _normalize_non_code_formula_package(
+    package: SectionFormulaPackageV1,
+) -> SectionFormulaPackageV1:
+    """Canonicalize representation-only residue on review-lane packages."""
+
+    if (
+        str(package.authority_status or "") == "code_verified"
+        or not package.latex.strip()
+        or (
+            package.markdown_block.strip()
+            and package.latex.strip() in package.markdown_block
+        )
+    ):
+        return package
+    payload = package.model_dump(mode="json", exclude={"content_digest"})
+    payload["markdown_block"] = canonical_formula_markdown_block(package.latex)
+    try:
+        return SectionFormulaPackageV1.model_validate(payload)
+    except (TypeError, ValueError):
+        # The normal validator remains authoritative if the package contains
+        # a deeper content/schema error; do not manufacture a fallback object.
+        return package
+
+
 def coerce_section_formalizer_response(
     payload: Any,
     *,
@@ -1612,6 +2892,15 @@ def coerce_section_formalizer_response(
     """Parse guided-decoding payloads, including legacy package batches."""
 
     if isinstance(payload, SectionFormalizerResponseV1):
+        packages = tuple(
+            _normalize_non_code_formula_package(item)
+            for item in payload.packages
+        )
+        if packages != payload.packages:
+            try:
+                payload = payload.model_copy(update={"packages": packages})
+            except (TypeError, ValueError):
+                pass
         if payload.packages and payload.outcome != "rendered":
             try:
                 return payload.model_copy(update={"outcome": "rendered"})
@@ -1622,7 +2911,10 @@ def coerce_section_formalizer_response(
         return SectionFormalizerResponseV1(
             outcome="rendered",
             section_id=payload.section_id,
-            packages=payload.packages,
+            packages=tuple(
+                _normalize_non_code_formula_package(item)
+                for item in payload.packages
+            ),
             formula_obligation_ids=payload.formula_obligation_ids,
             review_question=payload.review_question,
             reason=payload.reason,
@@ -1817,6 +3109,7 @@ def build_deterministic_formula_packages(
     facts: Any,
     allowed_equation_ids: set[str] | None = None,
     formula_obligations: tuple[MethodFormulaObligationV2, ...] | list[MethodFormulaObligationV2] = (),
+    package_namespace: str = "",
 ) -> tuple[SectionFormulaPackageV1, ...]:
     """Representation-only formula packages from authorized core equations.
 
@@ -1990,7 +3283,7 @@ def build_deterministic_formula_packages(
             if str(getattr(binding, "symbol", "") or "").strip()
         )
         packages.append(SectionFormulaPackageV1(
-            package_id=f"fp:{section_id}:{index}",
+            package_id=f"fp:{section_id}:{package_namespace}{index}",
             section_id=section_id,
             obligation_id=obligation_id,
             consumer_paragraph_id=consumer,
@@ -2035,7 +3328,6 @@ def build_formula_obligation_truths(
         obligation_ids = tuple(
             dict.fromkeys(
                 [
-                    *obligation_ids,
                     *(str(item.obligation_id) for item in obligations),
                 ]
             )
@@ -2111,23 +3403,53 @@ def build_formula_obligation_truths(
                 ),
                 None,
             )
+        synthetic_not_applicable = str(obligation_id).strip() == (
+            f"formula:section:{section_id}:none"
+        )
         expectation = (
-            obligation.expectation
+            "none"
+            if synthetic_not_applicable
+            else obligation.expectation
             if obligation is not None
             else "required"
         )
         if package is not None and package in packages:
+            terminal_disposition = (
+                "accepted"
+                if (
+                    str(package.review_status or "") == "accepted"
+                    and package.formula_lane == "repository_derived"
+                    and package.authority_status == "code_verified"
+                )
+                else "review_required"
+            )
             truths.append(SectionFormulaObligationTruthV1(
                 obligation_id=obligation_id,
                 outcome="rendered",
+                terminal_disposition=terminal_disposition,
                 package_id=package.package_id,
+                review_question=(
+                    package.review_question
+                    if terminal_disposition == "review_required"
+                    else ""
+                ),
+                reason=(
+                    "formula package is not code-accepted"
+                    if terminal_disposition == "review_required"
+                    else ""
+                ),
                 expectation=expectation,
+                blocking=(
+                    expectation == "required"
+                    and terminal_disposition != "accepted"
+                ),
             ))
             continue
         if expectation == "none":
             truths.append(SectionFormulaObligationTruthV1(
                 obligation_id=obligation_id,
                 outcome="not_applicable",
+                terminal_disposition="not_applicable",
                 reason="formula expectation is none",
                 expectation=expectation,
             ))
@@ -2136,6 +3458,7 @@ def build_formula_obligation_truths(
             truths.append(SectionFormulaObligationTruthV1(
                 obligation_id=obligation_id,
                 outcome="unresolved",
+                terminal_disposition="failed",
                 review_question=disposition.review_question,
                 reason=disposition.review_note,
                 expectation=expectation,
@@ -2145,6 +3468,7 @@ def build_formula_obligation_truths(
             truths.append(SectionFormulaObligationTruthV1(
                 obligation_id=obligation_id,
                 outcome="unresolved",
+                terminal_disposition="failed",
                 review_question=(
                     "Which repository evidence binds this section formula obligation?"
                 ),
@@ -2324,10 +3648,22 @@ def section_result_from_packages(
             route_failures.append(f"ambiguous_obligation:{package.package_id}")
     packages = tuple(normalized_packages)
 
-    effective_obligation_ids = tuple(dict.fromkeys([
-        *obligation_ids,
-        *(item.obligation_id for item in formula_obligations),
-    ]))
+    # Once the current typed obligation set exists, the graph-level ids are
+    # aliases from the pre-consumer plan.  Keeping those aliases here creates
+    # a second unresolved target after an alias was already merged into its
+    # canonical consumer obligation.  Legacy plans without typed obligations
+    # still retain their original ids below.
+    effective_obligation_ids = tuple(dict.fromkeys(
+        [
+            *(
+                item.obligation_id
+                for item in formula_obligations
+                if str(getattr(item, "obligation_id", "") or "").strip()
+            ),
+        ]
+        if formula_obligations
+        else [*obligation_ids]
+    ))
     if packages:
         disposition = None
     elif not effective_obligation_ids and formula_not_applicable:
@@ -2382,13 +3718,13 @@ def section_result_from_packages(
         truth.obligation_id
         for truth in obligation_truths
         if truth.expectation == "required"
-        and truth.outcome != "rendered"
+        and truth.terminal_disposition != "accepted"
     )
     preferred_formula_review_ids = tuple(
         truth.obligation_id
         for truth in obligation_truths
         if truth.expectation == "preferred"
-        and truth.outcome != "rendered"
+        and truth.terminal_disposition != "accepted"
     )
     return FormalizationSectionResultV1(
         section_id=section_id,
@@ -2422,6 +3758,8 @@ __all__ = [
     "SectionFormulaPackageV1",
     "SymbolDefinitionV1",
     "build_deterministic_formula_packages",
+    "build_deterministic_operation_formula_packages",
+    "canonical_formula_markdown_block",
     "build_mechanism_equation_evidence_packs",
     "build_formula_obligation_truths",
     "coerce_section_formalizer_response",

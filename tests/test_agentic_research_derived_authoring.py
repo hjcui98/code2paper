@@ -445,3 +445,258 @@ def test_research_artifacts_are_content_addressed(tmp_path: Path) -> None:
         Path(paths["derivation_records_v1"]).read_text(encoding="utf-8")
     )
     assert derivation_payload["source_dossier_digest"] == dossier_payload["content_digest"]
+
+
+def test_strict_research_rejects_an_empty_mechanism_dossier() -> None:
+    bare_candidate = _candidate().model_copy(update={
+        "bound_fact_ids": (),
+        "bound_span_ids": (),
+        "exact_excerpts": (),
+        "semantic_atom": "",
+    })
+    with pytest.raises(ValueError, match="research_dossier_empty_mechanism_unit"):
+        build_research_mechanism_dossiers(
+            plan=_plan(),
+            facets=[{
+                "facet_id": "facet:mechanism",
+                "clause_id": "clause:mechanism",
+                "exact_source_quote": "",
+                "semantic_fields": {},
+            }],
+            field_candidates=[bare_candidate],
+            facet_alignments=[{
+                "facet_id": "facet:mechanism",
+                "status": "unresolved",
+                "field_bindings": [],
+            }],
+            require_nonempty=True,
+        )
+
+
+def test_exact_alignment_span_recovers_omitted_fact_id() -> None:
+    candidate = _candidate().model_copy(update={
+        "bound_fact_ids": (),
+        "bound_span_ids": (),
+        "exact_excerpts": (),
+    })
+    dossiers = build_research_mechanism_dossiers(
+        plan=_plan(),
+        facets=[{
+            "facet_id": "facet:mechanism",
+            "clause_id": "clause:mechanism",
+            "exact_source_quote": "normalizes representations",
+            "semantic_fields": {"operation": "normalizes representations"},
+            "required": True,
+        }],
+        field_candidates=[candidate],
+        facet_alignments=[{
+            "facet_id": "facet:mechanism",
+            "status": "partial",
+            "bound_fact_ids": [],
+            "bound_span_ids": ["span:normalize"],
+            "exact_excerpts": [{
+                "span_id": "span:normalize",
+                "exact_excerpt": "normalized = normalize(input)",
+            }],
+        }],
+        behavior_graph=_graph(),
+        facts={"facts": [{
+            "fact_id": "fact:normalize",
+            "subject": "normalize",
+            "predicate": "normalizes",
+            "object": ["input", "result=normalized"],
+            "conditions": [],
+            "scope": "normalize",
+            "direct_span_ids": ["span:normalize"],
+            "relation_span_ids": [],
+            "relation_evidence_ids": [],
+            "validation_status": "supported",
+        }]},
+        require_nonempty=True,
+    )
+
+    assert len(dossiers) == 1
+    assert dossiers[0].evidence_readiness == "code_ready"
+    assert dossiers[0].fact_ids == ("fact:normalize",)
+    assert dossiers[0].formalizable_signatures[0]["result"] == "normalized"
+
+
+def test_argument_unit_bindings_seed_formula_only_paragraph_dossier() -> None:
+    """A replan-split paragraph may carry evidence only on its argument unit."""
+
+    dossiers = build_research_mechanism_dossiers(
+        plan={
+            "sections": [{
+                "section_id": "section:method",
+                "paragraphs": [{
+                    "paragraph_id": "paragraph:formula",
+                    "paragraph_role": "formula",
+                    "argument_unit_ids": ["unit:mechanism"],
+                    "required_facet_ids": [],
+                    "required_field_candidate_ids": [],
+                    "formula_obligation_ids": ["formula:section:derivation"],
+                }],
+            }],
+            "argument_units": [{
+                "argument_unit_id": "unit:mechanism",
+                "claim_ids": ["claim:normalize"],
+                "equation_ids": ["equation:normalize"],
+                "source_artifact_ids": ["span:normalize"],
+            }],
+        },
+        facets=(),
+        field_candidates=(),
+        claims={"claims": [{
+            "claim_id": "claim:normalize",
+            "fact_ids": ["fact:normalize"],
+            "span_ids": ["span:normalize"],
+        }]},
+        equations={"equations": [{
+            "equation_id": "equation:normalize",
+            "fact_ids": ["fact:normalize"],
+            "span_ids": ["span:normalize"],
+        }]},
+        facts={"facts": [{
+            "fact_id": "fact:normalize",
+            "subject": "normalize",
+            "predicate": "normalizes",
+            "object": ["input", "result=normalized"],
+            "conditions": [],
+            "scope": "normalize",
+            "direct_span_ids": ["span:normalize"],
+            "relation_span_ids": [],
+            "relation_evidence_ids": [],
+            "validation_status": "supported",
+        }]},
+        require_nonempty=True,
+    )
+
+    assert len(dossiers) == 1
+    dossier = dossiers[0]
+    assert dossier.evidence_readiness == "code_ready"
+    assert dossier.fact_ids == ("fact:normalize",)
+    assert dossier.exact_span_ids == ("span:normalize",)
+    assert dossier.formalizable_signatures[0]["result"] == "normalized"
+
+
+def test_exact_method_unit_prevents_coarse_argument_unit_fact_inheritance() -> None:
+    """A split paragraph consumes its MethodUnit, not every unit fact."""
+
+    facts = {
+        "facts": [
+            {
+                "fact_id": "fact:method",
+                "subject": "normalize",
+                "predicate": "normalizes",
+                "object": ["input", "result=normalized"],
+                "conditions": [],
+                "scope": "normalize",
+                "direct_span_ids": ["span:method"],
+                "validation_status": "supported",
+            },
+            {
+                "fact_id": "fact:coarse",
+                "subject": "unrelated_stage",
+                "predicate": "returns",
+                "object": ["unrelated"],
+                "conditions": [],
+                "scope": "unrelated_stage",
+                "direct_span_ids": ["span:coarse"],
+                "validation_status": "supported",
+            },
+        ]
+    }
+    dossiers = build_research_mechanism_dossiers(
+        plan={
+            "sections": [{
+                "section_id": "section:method",
+                "paragraphs": [{
+                    "paragraph_id": "paragraph:method",
+                    "paragraph_role": "step_sequence",
+                    "argument_unit_ids": ["unit:coarse"],
+                    "required_facet_ids": ["facet:mechanism"],
+                    "required_field_candidate_ids": ["field:mechanism"],
+                    "formula_obligation_ids": [],
+                }],
+            }],
+            "argument_units": [{
+                "argument_unit_id": "unit:coarse",
+                "fact_ids": ["fact:coarse"],
+                "claim_ids": [],
+                "equation_ids": [],
+            }],
+            "method_units": [{
+                "method_unit_id": "method-unit:method",
+                "paragraph_ids": ["paragraph:method"],
+                "fact_ids": ["fact:method"],
+                "claim_ids": [],
+                "equation_ids": [],
+                "evidence_spans": ["span:method"],
+            }],
+        },
+        facets=[{
+            "facet_id": "facet:mechanism",
+            "semantic_fields": {"operation": "normalizes representations"},
+        }],
+        field_candidates=[_candidate().model_copy(update={
+            "bound_fact_ids": ("fact:method",),
+            "bound_span_ids": ("span:method",),
+            "exact_excerpts": ("normalize",),
+        })],
+        facts=facts,
+        require_nonempty=True,
+    )
+
+    assert len(dossiers) == 1
+    assert dossiers[0].evidence_readiness == "code_ready"
+    assert "fact:method" in dossiers[0].fact_ids
+    assert "fact:coarse" not in dossiers[0].fact_ids
+
+
+def test_unbound_alignment_cannot_compile_all_facts_by_default() -> None:
+    candidate = _candidate().model_copy(update={
+        "bound_fact_ids": (),
+        "bound_span_ids": (),
+        "exact_excerpts": (),
+    })
+    dossiers = build_research_mechanism_dossiers(
+        plan=_plan(),
+        facets=[{
+            "facet_id": "facet:mechanism",
+            "clause_id": "clause:mechanism",
+            "exact_source_quote": "the intended transformation",
+            "semantic_fields": {"operation": "the intended transformation"},
+        }],
+        field_candidates=[candidate],
+        facet_alignments=[{
+            "facet_id": "facet:mechanism",
+            "status": "unresolved",
+            "field_bindings": [],
+        }],
+        facts={"facts": [{
+            "fact_id": "fact:normalize",
+            "subject": "normalize",
+            "predicate": "normalizes",
+            "object": ["input", "result=normalized"],
+            "scope": "normalize",
+            "direct_span_ids": ["span:normalize"],
+            "validation_status": "supported",
+        }]},
+    )
+
+    assert len(dossiers) == 1
+    assert dossiers[0].fact_ids == ()
+    assert dossiers[0].evidence_readiness == "intent_ready"
+    assert "facet_alignment_unresolved:facet:mechanism" in dossiers[0].readiness_failures
+
+
+def test_method_unit_rejects_an_empty_mechanism_shell() -> None:
+    from code2paper.agentic.method_argument_models import MethodUnitV2
+
+    with pytest.raises(ValueError, match="empty mechanism shell"):
+        MethodUnitV2(
+            method_unit_id="method-unit:empty",
+            section_id="section:method",
+            reader_question="How does the method work?",
+            purpose="Explain the method.",
+        )

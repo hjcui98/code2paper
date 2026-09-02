@@ -34,6 +34,7 @@ from code2paper.agentic.method_argument_models import (
     ObligationMoveAssignmentV1,
     SectionArgumentGraphV1,
     SectionArgumentMoveV1,
+    SectionParagraphPlanV1,
     WritingResearchCallbackArtifactV1,
     WritingResearchCallbackBundleV1,
     WritingResearchRequestV1,
@@ -47,9 +48,13 @@ from code2paper.agentic.publication_method_writer import (
     _editor_claim_regressions,
     _editor_rendered_proposition_ids,
     _select_safe_editor_section_transactions,
+    _load_valid_paragraph_checkpoint,
     _load_section_checkpoint,
     _sentence_validated_concept_claim_ids,
     _compose_candidate_markdown,
+    _dedupe_writing_research_requests,
+    _restore_callback_request_sidecar,
+    _write_paragraph_checkpoint,
     _write_section_checkpoint,
     fulfill_writing_research_callbacks,
     run_publication_method_writer,
@@ -84,6 +89,59 @@ def test_candidate_view_keeps_invalid_transaction_body_but_excludes_malformed_bi
     assert "Accepted body." in candidate
     assert "Invalid witness body." in candidate
     assert "Malformed binding body." not in candidate
+
+
+def test_paragraph_checkpoint_keeps_valid_sibling_of_failed_section(
+    tmp_path: Path,
+) -> None:
+    checkpoint = tmp_path / "publication_section_checkpoint_v1.json"
+    assessment = tmp_path / "publication_paragraph_transaction_assessments_v1.json"
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="paragraph:MA-S1:valid",
+                paragraph_markdown="A valid paragraph.",
+            ),
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="paragraph:MA-S1:invalid",
+                paragraph_markdown="A failed paragraph.",
+            ),
+        ],
+    )
+    assessment.write_text(json.dumps({
+        "assessments": [
+            {
+                "section_id": "MA-S1",
+                "paragraph_id": "paragraph:MA-S1:valid",
+                "valid": True,
+                "content_digest": "sha256:valid-assessment",
+            },
+            {
+                "section_id": "MA-S1",
+                "paragraph_id": "paragraph:MA-S1:invalid",
+                "valid": False,
+                "content_digest": "sha256:invalid-assessment",
+            },
+        ],
+        "content_digest": "sha256:assessments",
+    }))
+
+    _write_paragraph_checkpoint(
+        checkpoint,
+        section_outputs={"MA-S1": output},
+        assessment_path=assessment,
+    )
+
+    manifest = json.loads(checkpoint.read_text())
+    assert "MA-S1:paragraph:MA-S1:valid" in manifest["paragraphs"]
+    assert "MA-S1:paragraph:MA-S1:invalid" not in manifest["paragraphs"]
+    loaded = _load_valid_paragraph_checkpoint(
+        out_root=tmp_path,
+        artifact_paths={"publication_paragraph_checkpoint_v1": str(checkpoint)},
+        resume_section_ids=("MA-S1",),
+    )
+    assert set(loaded) == {("MA-S1", "paragraph:MA-S1:valid")}
 from code2paper.agentic.method_proposition_models import (
     MethodPropositionSetV1,
     MethodPropositionV1,
@@ -115,7 +173,10 @@ from code2paper.agentic.cross_section_editor import (
     SectionTextPatchV1,
     edit_sections,
 )
-from code2paper.llm.response_schemas import PublicationMethodSectionOutputV1
+from code2paper.llm.response_schemas import (
+    PublicationMethodParagraphOutputV1,
+    PublicationMethodSectionOutputV1,
+)
 from code2paper.agentic.v3_runtime import write_d25_method_research_artifacts, write_v3_evidence_artifacts
 from code2paper.agentic.writer_research_router import route_writing_research_request
 from code2paper.llm.client import LLMResponse
@@ -414,6 +475,111 @@ def test_method_architect_does_not_authorize_code_as_design_objective() -> None:
     )
     route = route_writing_research_request(request)
     assert route.owner == "author_confirmation_queue"
+
+
+def test_duplicate_writing_callbacks_merge_missing_parts_by_target_scope() -> None:
+    first = WritingResearchRequestV1(
+        request_id="request:first",
+        section_id="MA-S1",
+        argument_unit_id="MA-S1:unit-1",
+        missing_rhetorical_move="algorithm_or_data_flow",
+        exact_question="Which implementation detail is missing?",
+        required_authority_lane="author_attested",
+        missing_parts=("input",),
+        evidence_refs_used=("span:input",),
+        mandatory_missing_slots=("transformation",),
+    )
+    second = first.model_copy(update={
+        "request_id": "request:second",
+        "missing_parts": ("output",),
+        "evidence_refs_used": ("span:output",),
+    })
+
+    merged = _dedupe_writing_research_requests((first, second))
+
+    assert len(merged) == 1
+    assert merged[0].request_id == "request:first"
+    assert merged[0].missing_parts == ("input", "output")
+    assert merged[0].evidence_refs_used == ("span:input", "span:output")
+
+
+def test_callback_request_sidecar_restores_internal_targets_and_placeholder_terms() -> None:
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        section_markdown="## Method\n\nBody.",
+        new_research_requests=[{
+            "request_id": "request:MA-S1:mechanism_overview",
+            "section_id": "MA-S1",
+            "argument_unit_id": "MA-S1:unit-1",
+            "missing_rhetorical_move": "mechanism_overview",
+            "exact_question": "Which implementation span is still needed?",
+            "required_authority_lane": "executable_hard",
+            "candidate_symbols_or_terms": [":"],
+            "target_brief_ids": [":"],
+            "target_clause_ids": [","],
+            "status": "open",
+        }],
+    )
+
+    restored, operations = _restore_callback_request_sidecar(
+        output=output,
+        callback_request_prototypes=[{
+            "missing_rhetorical_move": "mechanism_overview",
+            "candidate_symbols_or_terms": ["Encoder.forward"],
+            "target_brief_ids": ["brief:story:mechanism"],
+            "target_clause_ids": ["clause:mechanism"],
+            "brief_binding": [{
+                "missing_parts": ["state update"],
+                "evidence_refs_used": ["span:encoder.py:10:12"],
+            }],
+        }],
+    )
+
+    request = restored.new_research_requests[0]
+    assert request["candidate_symbols_or_terms"] == ["Encoder.forward"]
+    assert request["target_brief_ids"] == ["brief:story:mechanism"]
+    assert request["target_clause_ids"] == ["clause:mechanism"]
+    assert request["missing_parts"] == ["state update"]
+    assert request["evidence_refs_used"] == ["span:encoder.py:10:12"]
+    assert "restore_callback_sidecar:target_brief_ids" in operations
+    assert "restore_callback_sidecar:candidate_symbols_or_terms" in operations
+
+
+def test_callback_request_sidecar_does_not_cross_bind_same_move_between_units() -> None:
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        section_markdown="## Method\n\nBody.",
+        new_research_requests=[{
+            "request_id": "request:MA-S1:unit-2",
+            "section_id": "MA-S1",
+            "argument_unit_id": "MA-S1:unit-2",
+            "missing_rhetorical_move": "mechanism_overview",
+            "exact_question": "Which implementation span is still needed?",
+            "required_authority_lane": "executable_hard",
+            "candidate_symbols_or_terms": [":"],
+            "status": "open",
+        }],
+    )
+
+    restored, operations = _restore_callback_request_sidecar(
+        output=output,
+        callback_request_prototypes=[
+            {
+                "missing_rhetorical_move": "mechanism_overview",
+                "argument_unit_id": "MA-S1:unit-1",
+                "target_brief_ids": ["brief:unit-1"],
+            },
+            {
+                "missing_rhetorical_move": "mechanism_overview",
+                "argument_unit_id": "MA-S1:unit-2",
+                "target_brief_ids": ["brief:unit-2"],
+            },
+        ],
+    )
+
+    request = restored.new_research_requests[0]
+    assert request["target_brief_ids"] == ["brief:unit-2"]
+    assert "restore_callback_sidecar:target_brief_ids" in operations
 
 
 def test_intent_stage_groups_are_an_authoring_allow_list() -> None:
@@ -8508,6 +8674,327 @@ def test_formula_centric_section_binds_equations_via_claims_facts(tmp_path: Path
     assert result.packages[0].authority_status == "code_verified"
     assert result.packages[0].latex == "s = w x + b"
     assert result.packages[0].symbol_definitions
+
+
+def test_operation_evidence_routes_a_no_equation_section_to_code_lane(
+    tmp_path: Path,
+) -> None:
+    from code2paper.agentic.publication_method_writer import _run_section_formalizer
+
+    base_plan = _quality_plan(claims=("claim-a",))
+    obligation_id = "formula:section:section-a:derivation"
+    paragraph = SectionParagraphPlanV1(
+        paragraph_id="paragraph:section-a:formula",
+        paragraph_role="formula",
+        argument_unit_ids=("unit-a",),
+        formula_obligation_ids=(obligation_id,),
+    )
+    graph = base_plan.sections[0].model_copy(update={
+        "paragraphs": (paragraph,),
+        "formula_obligation_ids": (obligation_id,),
+    })
+    plan = base_plan.model_copy(update={"sections": (graph,)})
+    facts = CodeFactSetV1(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        facts=[CodeFactV1(
+            fact_id="fact:score",
+            subject="score",
+            predicate="computes",
+            object="score",
+            scope="sym:score",
+            direct_span_ids=["span:model.py:1:2"],
+            exact_source_digest="sha256:source",
+            canonical_identity="sha256:fact-score",
+        )],
+        content_digest="sha256:facts2",
+    )
+    equations = EquationClaimSetV1(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        code_fact_digest="sha256:facts2",
+        equations=[],
+        content_digest="sha256:eqs2",
+    )
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts2",
+        claims=[_quality_claim()],
+        content_digest="sha256:claims",
+    )
+    requests = []
+
+    def caller(_config, request):
+        requests.append(request)
+        return LLMResponse(
+            text=json.dumps({
+                "outcome": "rendered",
+                "section_id": "section-a",
+                "packages": [{
+                    "package_id": "package:operation",
+                    "satisfied_obligation_ids": [obligation_id],
+                    "consumer_paragraph_id": "paragraph:section-a:formula",
+                    "purpose": "State the source addition.",
+                    "latex": "s = w + x",
+                    "prose_explanation": "The operation adds the two inputs.",
+                    "authority_status": "code_verified",
+                    "bound_fact_ids": ["fact:score"],
+                }],
+            }),
+            response_hash="sha256:formalizer",
+        )
+
+    results, trace_path = _run_section_formalizer(
+        out_root=tmp_path,
+        plan=plan,
+        equations=equations,
+        facts=facts,
+        claims=claims,
+        propositions=None,
+        proposition_bindings=None,
+        concept_cards=None,
+        llm_config=_config(),
+        caller=caller,
+        require_llm_call=True,
+        research_dossiers=(SimpleNamespace(
+            dossier_id="dossier:operation",
+            section_id="section-a",
+            fact_ids=("fact:score",),
+            exact_span_ids=("span:model.py:1:2",),
+            operation_atoms=({
+                "node_id": "node:add",
+                "fact_id": "fact:score",
+                "predicate": "COMPUTE",
+                "operands": ["w", "x"],
+                "result": "s",
+                "diagnostics": ["add"],
+                "source_span_id": "span:model.py:1:2",
+            },),
+            unresolved_relations=(),
+            ordered_operation_node_ids=("node:add",),
+            call_path_relation_ids=(),
+            data_flow_relation_ids=(),
+            configuration_bindings=(),
+            default_activation="active",
+            active_path_conditions=(),
+            exact_excerpts=(),
+            author_statements=(),
+        ),),
+    )
+
+    assert len(requests) == 1
+    assert requests[0].input_payload["core_equations"] == []
+    assert requests[0].input_payload["evidence_packs"]
+    assert results[0].packages[0].authority_status == "code_verified"
+    assert results[0].packages[0].package_id == "package:operation"
+    assert results[0].packages[0].latex == "s = w + x"
+    assert not results[0].packages[0].package_id.startswith("opfp:")
+    trace = json.loads(Path(trace_path).read_text(encoding="utf-8"))
+    assert trace["formalizer_call_traces"][0]["operation_evidence_lane"] is True
+    assert any(
+        str(item).startswith("opfp:")
+        for item in trace["formalizer_call_traces"][0].get(
+            "operation_audit_package_ids", ()
+        )
+    )
+
+
+def test_code_shaped_operation_formula_is_not_a_candidate_display_package(
+    tmp_path: Path,
+) -> None:
+    from code2paper.agentic.publication_method_writer import _run_section_formalizer
+
+    base_plan = _quality_plan(claims=("claim-a",))
+    obligation_id = "formula:section:section-a:derivation"
+    paragraph = SectionParagraphPlanV1(
+        paragraph_id="paragraph:section-a:formula",
+        paragraph_role="formula",
+        argument_unit_ids=("unit-a",),
+        formula_obligation_ids=(obligation_id,),
+    )
+    graph = base_plan.sections[0].model_copy(update={
+        "paragraphs": (paragraph,),
+        "formula_obligation_ids": (obligation_id,),
+    })
+    plan = base_plan.model_copy(update={"sections": (graph,)})
+    facts = CodeFactSetV1(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        facts=[CodeFactV1(
+            fact_id="fact:score",
+            subject="score",
+            predicate="computes",
+            object="score",
+            scope="sym:score",
+            direct_span_ids=["span:model.py:1:2"],
+            exact_source_digest="sha256:source",
+            canonical_identity="sha256:fact-score",
+        )],
+        content_digest="sha256:facts2",
+    )
+    equations = EquationClaimSetV1(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        code_fact_digest="sha256:facts2",
+        equations=[],
+        content_digest="sha256:eqs2",
+    )
+    claims = AtomicClaimSetV3(
+        repo_snapshot_id="repo:formalizer",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        code_fact_digest="sha256:facts2",
+        claims=[_quality_claim()],
+        content_digest="sha256:claims",
+    )
+
+    def caller(_config, request):
+        return LLMResponse(
+            text=json.dumps({
+                "outcome": "rendered",
+                "section_id": "section-a",
+                "packages": [{
+                    "package_id": "package:python",
+                    "satisfied_obligation_ids": [obligation_id],
+                    "consumer_paragraph_id": "paragraph:section-a:formula",
+                    "purpose": "State the source addition.",
+                    "latex": (
+                        "(relevance_scores, indices) = "
+                        r"\operatorname{sort}(similarities, dim=1, descending=True)"
+                    ),
+                    "prose_explanation": "Sort the scores.",
+                    "authority_status": "code_verified",
+                    "bound_fact_ids": ["fact:score"],
+                }],
+            }),
+            response_hash="sha256:formalizer-code",
+        )
+
+    results, _trace_path = _run_section_formalizer(
+        out_root=tmp_path,
+        plan=plan,
+        equations=equations,
+        facts=facts,
+        claims=claims,
+        propositions=None,
+        proposition_bindings=None,
+        concept_cards=None,
+        llm_config=_config(),
+        caller=caller,
+        require_llm_call=True,
+        research_dossiers=(SimpleNamespace(
+            dossier_id="dossier:operation",
+            section_id="section-a",
+            fact_ids=("fact:score",),
+            exact_span_ids=("span:model.py:1:2",),
+            operation_atoms=({
+                "node_id": "node:add",
+                "fact_id": "fact:score",
+                "predicate": "COMPUTE",
+                "operands": ["w", "x"],
+                "result": "s",
+                "diagnostics": ["add"],
+                "source_span_id": "span:model.py:1:2",
+            },),
+            unresolved_relations=(),
+            ordered_operation_node_ids=("node:add",),
+            call_path_relation_ids=(),
+            data_flow_relation_ids=(),
+            configuration_bindings=(),
+            default_activation="active",
+            active_path_conditions=(),
+            exact_excerpts=(),
+            author_statements=(),
+        ),),
+    )
+    assert not any(
+        str(getattr(package, "package_id", "")).startswith("opfp:")
+        for package in results[0].packages
+    )
+    assert not any(
+        "descending" in str(getattr(package, "latex", ""))
+        for package in results[0].packages
+    )
+
+
+def test_operation_evidence_compiles_non_arithmetic_sort_signature() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+        MethodFormulaObligationV2,
+        build_deterministic_operation_formula_packages,
+        validate_section_formula_package,
+    )
+    from code2paper.agentic.evidence_compiler_v3 import CodeFactSetV1, CodeFactV1
+
+    obligation = MethodFormulaObligationV2(
+        obligation_id="formula:section:section-a:ranking",
+        section_id="section-a",
+        mathematical_goal="Compute relevance scores and sort passages by descending score.",
+        consumer_paragraph_id="paragraph:section-a:ranking",
+        paragraph_ids=("paragraph:section-a:ranking",),
+        authority_requirements=("closed_repository_evidence",),
+    )
+    evidence = MechanismEquationEvidencePackV1(
+        pack_id="opack:sort",
+        section_id="section-a",
+        connected=True,
+        unresolved_relations=(),
+        bound_fact_ids=("fact:sort",),
+        exact_span_ids=("span:model.py:10:12",),
+        operation_atoms=({
+            "fact_id": "fact:sort",
+            "predicate": "sorts_by",
+            "operands": ["torch.sort", "similarities", "dim=1", "descending=True"],
+            "result": "(relevance_scores, indices)",
+            "shape_or_type_hints": ["dim=1"],
+            "source_span_id": "span:model.py:10:12",
+        },),
+    )
+    facts = CodeFactSetV1(
+        repo_snapshot_id="repo:sort",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        facts=[CodeFactV1(
+            fact_id="fact:sort",
+            subject="score",
+            predicate="sorts_by",
+            object="relevance_scores",
+            scope="sym:score",
+            direct_span_ids=["span:model.py:10:12"],
+            exact_source_digest="sha256:source",
+            canonical_identity="sha256:fact-sort",
+        )],
+        content_digest="sha256:facts",
+    )
+
+    packages = build_deterministic_operation_formula_packages(
+        section_id="section-a",
+        formula_obligations=(obligation,),
+        operation_evidence_packs=(evidence,),
+    )
+
+    assert len(packages) == 1
+    package = packages[0]
+    assert package.authority_status == "code_verified"
+    assert package.latex == (
+        r"(relevance_scores, indices) = \operatorname{sort}(similarities, "
+        r"dim=1, descending=True)"
+    )
+    failures = validate_section_formula_package(
+        package,
+        equations=None,
+        facts=facts,
+        allowed_facet_ids=set(),
+        allowed_equation_ids=set(),
+        operation_evidence_packs=(evidence,),
+        formula_obligations=(obligation,),
+        require_consumer=True,
+    )
+    assert any("code_shaped_formula" in failure for failure in failures)
 
 
 def test_unrendered_formula_package_routes_to_rewrite_cluster() -> None:

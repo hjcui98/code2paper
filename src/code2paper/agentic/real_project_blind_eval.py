@@ -7,6 +7,10 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+from code2paper.agentic.publication_replay_diagnostics import (
+    diagnose_publication_replay,
+)
+
 
 def _sha256(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
@@ -85,6 +89,12 @@ def evaluate_case(
     )
     generated_text = generated_path.read_text(encoding="utf-8")
 
+    # Keep the blind evaluator's original-paper isolation boundary intact while
+    # exposing the read-only replay funnel.  In particular, rejected packages
+    # are visible through formalizer call traces even when no package survives
+    # into the persisted result artifact.
+    replay_diagnostics = diagnose_publication_replay(run_root)
+
     # The reference is deliberately opened only after generation artifacts and status
     # have been resolved. It is an evaluator input, never an authoring/evidence input.
     original_digest = _sha256(original_path)
@@ -119,6 +129,14 @@ def evaluate_case(
             generated_concepts["coverage"] - original_concepts["coverage"], 4
         ),
         "generated_repetition": _repetition_metrics(generated_text),
+        "formula_funnel": replay_diagnostics.get("formula_funnel", {}),
+        "replay_diagnostics": {
+            "formula_funnel": replay_diagnostics.get("formula_funnel", {}),
+            "content_chain": replay_diagnostics.get("content_chain", {}),
+            "authoring_observations": replay_diagnostics.get(
+                "authoring_observations", {}
+            ),
+        },
         "trust_metrics": {
             key: run_evaluation.get(key)
             for key in (

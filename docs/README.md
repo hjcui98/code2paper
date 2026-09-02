@@ -6,6 +6,13 @@
 
 ## 当前状态
 
+- [Method Authoring 原文可推断性、公式丢失根因与下一阶段执行计划（2026-08-29）](method_authoring_original_equivalence_diagnosis_and_next_execution_plan_2026-08-29.md)：
+  对照 EBCAR、DyG-Mamba、LinearRAG 原文、作者意图、真实代码、人工盲测和 8006 最终产物，
+  区分可直接恢复、代码等价推导、意图/纸码差异和不可授权效果；确认真实 dossier/derivation
+  为空、Formalizer 正确公式被 consumer 路由拒绝、Writer 粒度过细和 evaluator 漏记拒包是
+  当前主损失。下一步先以 EBCAR 做 Method Unit、consumer-first 公式、精确公式插入和独立
+  Binder 的单项目闭环，再泛化到 LinearRAG 与 DyG-Mamba。本文承接 2026-08-28 手册，
+  不替代总体架构或放宽 Verified 硬门。
 - [Research-Derived Method Authoring 下一阶段执行优化手册（2026-08-28）](code2paper_research_derived_authoring_optimization_execution_2026-08-28.md)：
   基于最新 EBCAR、DyG-Mamba、LinearRAG 真实产物与只看意图/代码的人工盲测基线，确认
   当前主要损失来自连续代码链缺失、Formalizer 多义务路由丢包、Writer 同步 witness 失败及

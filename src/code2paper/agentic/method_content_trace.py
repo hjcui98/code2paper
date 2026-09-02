@@ -365,6 +365,15 @@ def build_method_content_trace_from_artifact_paths(
     transaction_assessments = _load_json(
         artifact_paths.get("publication_paragraph_transaction_assessments_v1")
     )
+    assessment_by_key = {
+        (
+            str(item.get("section_id") or "").strip(),
+            str(item.get("paragraph_id") or "").strip(),
+        ): item
+        for item in (transaction_assessments.get("assessments") or ())
+        if isinstance(item, Mapping)
+        and str(item.get("paragraph_id") or "").strip()
+    }
     facets_by_id = _rows_by_id(facets_payload, "facets", "facet_id")
     alignments_by_id = _rows_by_id(alignments_payload, "alignments", "facet_id")
     policies_by_id = _rows_by_id(policies_payload, "policies", "facet_id")
@@ -423,7 +432,8 @@ def build_method_content_trace_from_artifact_paths(
                 "field": _ids(row.get("required_field_candidate_ids")),
                 "slot": _ids(
                     row.get("required_publication_slot_ids")
-                    or row.get("ordered_semantic_slot_ids")
+                    if "required_publication_slot_ids" in row
+                    else row.get("ordered_semantic_slot_ids")
                 ),
                 "edge": _ids(row.get("required_edge_ids")),
                 "formula": _ids(row.get("formula_obligation_ids")),
@@ -436,6 +446,9 @@ def build_method_content_trace_from_artifact_paths(
             return required_anchors_from_plan_row(plan_by_id.get(paragraph_id, {}))
 
         formula_routes: dict[str, dict[str, Any]] = {}
+        from code2paper.agentic.publication_transaction_contract import (
+            _formula_package_terminal_disposition,
+        )
         has_explicit_package_routes = any(
             isinstance(package, Mapping)
             and (
@@ -486,6 +499,11 @@ def build_method_content_trace_from_artifact_paths(
                 "latex": str(
                     matches[0].get("markdown_block") or matches[0].get("latex") or ""
                 ) if matches else "",
+                "terminal_disposition": (
+                    _formula_package_terminal_disposition(matches[0])
+                    if len(matches) == 1
+                    else "failed"
+                ),
             }
 
         # When paragraph transactions are present, only their exact
@@ -501,50 +519,71 @@ def build_method_content_trace_from_artifact_paths(
             rendered_paragraphs = set()
             rendered_slots = {
                 value for paragraph_id, item in paragraph_transactions.items()
-                if _transaction_has_valid_witnesses(
-                    item,
-                    required_targets=_required_targets(paragraph_id),
-                    formula_routes=formula_routes,
-                    required_anchors=_required_anchors(paragraph_id),
+                if (
+                    bool(assessment_by_key.get((section_id, paragraph_id), {}).get("valid"))
+                    if (section_id, paragraph_id) in assessment_by_key
+                    else _transaction_has_valid_witnesses(
+                        item,
+                        required_targets=_required_targets(paragraph_id),
+                        formula_routes=formula_routes,
+                        required_anchors=_required_anchors(paragraph_id),
+                    )
                 )
                 for value in _ids(item.get("rendered_slot_ids"))
             }
             rendered_edges = {
                 value for paragraph_id, item in paragraph_transactions.items()
-                if _transaction_has_valid_witnesses(
-                    item,
-                    required_targets=_required_targets(paragraph_id),
-                    formula_routes=formula_routes,
-                    required_anchors=_required_anchors(paragraph_id),
+                if (
+                    bool(assessment_by_key.get((section_id, paragraph_id), {}).get("valid"))
+                    if (section_id, paragraph_id) in assessment_by_key
+                    else _transaction_has_valid_witnesses(
+                        item,
+                        required_targets=_required_targets(paragraph_id),
+                        formula_routes=formula_routes,
+                        required_anchors=_required_anchors(paragraph_id),
+                    )
                 )
                 for value in _ids(item.get("rendered_edge_ids"))
             }
             used_packages = {
                 value for paragraph_id, item in paragraph_transactions.items()
-                if _transaction_has_valid_witnesses(
-                    item,
-                    required_targets=_required_targets(paragraph_id),
-                    formula_routes=formula_routes,
-                    required_anchors=_required_anchors(paragraph_id),
+                if (
+                    bool(assessment_by_key.get((section_id, paragraph_id), {}).get("valid"))
+                    if (section_id, paragraph_id) in assessment_by_key
+                    else _transaction_has_valid_witnesses(
+                        item,
+                        required_targets=_required_targets(paragraph_id),
+                        formula_routes=formula_routes,
+                        required_anchors=_required_anchors(paragraph_id),
+                    )
                 )
                 for value in _ids(item.get("used_formula_package_ids"))
             }
             writer_claim_refs = {
                 value for paragraph_id, item in paragraph_transactions.items()
-                if _transaction_has_valid_witnesses(
-                    item,
-                    required_targets=_required_targets(paragraph_id),
-                    formula_routes=formula_routes,
-                    required_anchors=_required_anchors(paragraph_id),
+                if (
+                    bool(assessment_by_key.get((section_id, paragraph_id), {}).get("valid"))
+                    if (section_id, paragraph_id) in assessment_by_key
+                    else _transaction_has_valid_witnesses(
+                        item,
+                        required_targets=_required_targets(paragraph_id),
+                        formula_routes=formula_routes,
+                        required_anchors=_required_anchors(paragraph_id),
+                    )
                 )
                 for value in _ids(item.get("used_claim_ids"))
             }
             for paragraph_id, item in paragraph_transactions.items():
-                valid = _transaction_has_valid_witnesses(
-                    item,
-                    required_targets=_required_targets(paragraph_id),
-                    formula_routes=formula_routes,
-                    required_anchors=_required_anchors(paragraph_id),
+                assessment_row = assessment_by_key.get((section_id, paragraph_id))
+                valid = (
+                    bool(assessment_row.get("valid"))
+                    if assessment_row is not None
+                    else _transaction_has_valid_witnesses(
+                        item,
+                        required_targets=_required_targets(paragraph_id),
+                        formula_routes=formula_routes,
+                        required_anchors=_required_anchors(paragraph_id),
+                    )
                 )
                 transaction_validity[paragraph_id] = valid
                 if valid:
@@ -570,7 +609,8 @@ def build_method_content_trace_from_artifact_paths(
             slot_ids = _ids(paragraph.get("ordered_semantic_slot_ids"))
             publication_slot_ids = _ids(
                 paragraph.get("required_publication_slot_ids")
-                or paragraph.get("ordered_semantic_slot_ids")
+                if "required_publication_slot_ids" in paragraph
+                else paragraph.get("ordered_semantic_slot_ids")
             )
             field_candidate_ids = _ids(paragraph.get("required_field_candidate_ids"))
             edge_ids = _ids(paragraph.get("required_edge_ids"))
@@ -602,10 +642,14 @@ def build_method_content_trace_from_artifact_paths(
             # consumption, callback scope, or structural-exit credit.
             if paragraph_transactions and paragraph_id in invalid_transaction_ids:
                 state = "rendered_invalid"
-            elif not accepted:
-                state = "blocked_representation"
             elif rendered_paragraphs and paragraph_id in rendered_paragraphs:
                 state = "rendered"
+            elif not accepted:
+                # Section checkpoint failure must not erase an independently
+                # valid sibling paragraph.  Only a paragraph with no valid
+                # transaction remains a representation block; the section
+                # itself is still fail-closed at the structural gate.
+                state = "blocked_representation"
             elif rendered_slots and set(slot_ids).intersection(rendered_slots):
                 state = "rendered"
             elif rendered_edges and set(edge_ids).intersection(rendered_edges):

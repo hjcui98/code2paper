@@ -1255,6 +1255,58 @@ def test_unresolved_payload_with_packages_is_coerced_to_rendered() -> None:
     assert r"\Delta t" in parsed.packages[0].latex
 
 
+def test_conflicting_repository_lane_is_downgraded_to_author_intent() -> None:
+    parsed = coerce_section_formalizer_response(
+        {
+            "outcome": "rendered",
+            "section_id": "MA-S1",
+            "packages": [
+                {
+                    "package_id": "fp:MA-S1:intent",
+                    "section_id": "MA-S1",
+                    "purpose": "State the author-proposed update.",
+                    "latex": r"h_t = f(h_{t-1}, x_t)",
+                    "prose_explanation": "The update is stated as an author-intent abstraction.",
+                    "authority_status": "author_intent",
+                    # Qwen sometimes copies the section lane even when it
+                    # explicitly declares that the package is author intent.
+                    "formula_lane": "repository_derived",
+                }
+            ],
+        },
+        section_id="MA-S1",
+    )
+    assert parsed is not None
+    package = parsed.packages[0]
+    assert package.formula_lane == "author_intent_academic"
+    assert package.review_status == "review_required"
+
+
+def test_conflicting_repository_lane_is_downgraded_to_partial() -> None:
+    parsed = coerce_section_formalizer_response(
+        {
+            "outcome": "rendered",
+            "section_id": "MA-S2",
+            "packages": [
+                {
+                    "package_id": "fp:MA-S2:partial",
+                    "section_id": "MA-S2",
+                    "purpose": "State the partially supported operation.",
+                    "latex": r"y = g(x)",
+                    "prose_explanation": "The operation is only partially supported by the evidence.",
+                    "authority_status": "partial",
+                    "formula_lane": "repository_derived",
+                }
+            ],
+        },
+        section_id="MA-S2",
+    )
+    assert parsed is not None
+    package = parsed.packages[0]
+    assert package.formula_lane == "hybrid_partial"
+    assert package.review_status == "review_required"
+
+
 def test_author_intent_schema_forbids_unresolved_outcome() -> None:
     schema = AuthorIntentSectionFormalizerResponseV1.model_json_schema()
     outcome = schema["properties"]["outcome"]

@@ -349,6 +349,36 @@ def test_fulfillment_loop_keeps_authoring_paths_after_blocked_resume() -> None:
             assert new_paths.get("writing_research_callback_artifacts_v1") == str(bundle_path)
 
 
+def test_resumed_writer_keeps_incumbent_method_unit_plan() -> None:
+    """Callback evidence may update; the MethodUnit plan stays frozen."""
+
+    from code2paper.agentic.writing_callback_fulfillment import (
+        _merge_resumed_writer_paths,
+    )
+
+    old_plan = "/tmp/authoring/old-method-section-plan.json"
+    new_plan = "/tmp/authoring/new-method-section-plan.json"
+    old_dossier = "/tmp/authoring/old-research-dossiers.json"
+    new_dossier = "/tmp/authoring/new-research-dossiers.json"
+    merged = _merge_resumed_writer_paths(
+        writer_paths={
+            "method_section_plan_v2": old_plan,
+            "research_mechanism_dossiers_v1": old_dossier,
+            "publication_writer_result_v1": "/tmp/writer/result.json",
+        },
+        authoring_paths={
+            "method_section_plan_v2": new_plan,
+            "research_mechanism_dossiers_v1": new_dossier,
+            "publication_candidate_method": "",
+        },
+    )
+
+    assert merged["method_section_plan_v2"] == old_plan
+    assert merged["research_mechanism_dossiers_v1"] == new_dossier
+    assert merged["publication_writer_result_v1"] == "/tmp/writer/result.json"
+    assert "publication_candidate_method" not in merged
+
+
 def test_fulfillment_loop_stops_with_no_open_local_requests() -> None:
     with workspace_tempdir() as tmpdir:
         tmp = Path(tmpdir)

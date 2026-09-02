@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "eligible": false,
+  "reasons": [
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-3",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:slot",
+    "rendered_invalid:1",
+    "required_target_coverage_incomplete",
+    "required_slot_coverage_incomplete",
+    "formula_packages_unconsumed:opfp:MA-S3:consumer2-1,opfp:MA-S4:1"
+  ],
+  "plan_digest": "sha256:19fea35d8b7e915ae73c57f280fc08b765de9635d1dac8baa3e45deb7a7fc109",
+  "trace_digest": "sha256:7843931ebe6e9ccfde27991bb3b17364b92d5b497eb7a947f286fbe68c01ea5b",
+  "assessment_digest": "sha256:e9ba675f82d0b5ef74eef1d0659f9e7216364c742ceedf19d76f8eedfdb089ab",
+  "candidate_digest": "sha256:ed3b7dc8324b172805dedff652365d4a460f3ec93ab6701618b298ba9b3bda94",
+  "required_paragraphs": 7,
+  "valid_required_paragraphs": 6,
+  "required_targets": 32,
+  "valid_targets": 31,
+  "required_slots": 11,
+  "witnessed_slots": 10,
+  "required_edges": 0,
+  "witnessed_edges": 0,
+  "invalid_paragraphs": 1,
+  "blocked_representation": 0,
+  "accepted_formula_packages": 4,
+  "consumed_formula_packages": 2,
+  "unresolved_required_formula_obligations": [],
+  "open_callback_requests": 7,
+  "scoped_callback_requests": 7,
+  "content_digest": "sha256:5cae3ece4719ff5533013587b1711fb65c79dcbd77d606370b39bfcac42d935d"
+}

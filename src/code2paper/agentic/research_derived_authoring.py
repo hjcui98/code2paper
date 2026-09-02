@@ -199,6 +199,189 @@ def _equations_by_id(equations: Any) -> dict[str, Any]:
     return {_text(_get(item, "equation_id")): item for item in values if _text(_get(item, "equation_id"))}
 
 
+def _fact_values(value: Any) -> tuple[str, ...]:
+    """Read ordered scalar values from a CodeFact object field."""
+
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() else ()
+    if value is None or isinstance(value, Mapping):
+        return ()
+    try:
+        return tuple(
+            _text(item) for item in value if _text(item)
+        )
+    except TypeError:
+        text = _text(value)
+        return (text,) if text else ()
+
+
+def _fact_source_order(fact: Any) -> tuple[str, int, int, str]:
+    """Return a stable source order without treating a span as prose."""
+
+    spans = _ids(
+        (*(_get(fact, "direct_span_ids", ()) or ()),
+         *(_get(fact, "relation_span_ids", ()) or ()))
+    )
+    for span in spans:
+        match = re.search(r":(\d+):(\d+)$", span)
+        if match:
+            return (
+                _text(_get(fact, "scope")),
+                int(match.group(1)),
+                int(match.group(2)),
+                _text(_get(fact, "fact_id")),
+            )
+    return (_text(_get(fact, "scope")), 10**9, 10**9, _text(_get(fact, "fact_id")))
+
+
+def _fact_shape_hints(fact: Any) -> tuple[str, ...]:
+    """Keep only explicit shape/type descriptors supplied by the fact."""
+
+    values: list[str] = []
+    for name in ("shape_or_type_hints", "shape_hints", "types", "type_hints"):
+        values.extend(_fact_values(_get(fact, name, ())))
+    # Older CodeFactV1 instances have no dedicated shape field.  Its semantic
+    # context is still authoritative, but only entries that explicitly carry
+    # a shape/type signal belong in the shape channel.
+    for value in _fact_values(_get(fact, "semantic_context", ())):
+        lower = value.casefold()
+        if (
+            "shape" in lower or "dtype" in lower or "dim" in lower
+            or re.search(r"\[[^\]]+\]", value)
+        ):
+            values.append(value)
+    return tuple(dict.fromkeys(value for value in values if value))
+
+
+def _fact_operation_parts(fact: Any) -> tuple[tuple[str, ...], str]:
+    """Split CodeFact object values while preserving ``result=`` exactly."""
+
+    values = _fact_values(_get(fact, "object", ()))
+    operands: list[str] = []
+    result = ""
+    for value in values:
+        if value.casefold().startswith("result=") and not result:
+            result = value.split("=", 1)[1].strip()
+            continue
+        operands.append(value)
+    predicate = _text(_get(fact, "predicate")).casefold()
+    if not result and predicate in {"return", "returns", "emits", "outputs", "writes_back"} and operands:
+        result = operands.pop()
+    return tuple(dict.fromkeys(operands)), result
+
+
+def compile_code_fact_operation_chain(
+    *,
+    facts: Any,
+    fact_ids: Iterable[str] = (),
+) -> dict[str, Any]:
+    """Compile validated CodeFacts into bounded, source-ordered operations.
+
+    This is intentionally a representation compiler, not a semantic guesser:
+    rejected facts and facts without an exact direct/relation span are not
+    promoted.  Operations are ordered inside each source ``scope``; separate
+    scopes remain separate chains unless a later graph/relation stage supplies
+    an explicit connection.
+    """
+
+    fact_by_id = _facts_by_id(facts)
+    requested = set(_ids(fact_ids))
+    selected = [
+        fact for fact_id, fact in fact_by_id.items()
+        if not requested or fact_id in requested
+    ]
+    selected.sort(key=_fact_source_order)
+    atoms: list[dict[str, Any]] = []
+    signatures: list[dict[str, Any]] = []
+    span_ids: list[str] = []
+    relation_evidence_ids: list[str] = []
+    shape_or_type_hints: list[str] = []
+    return_value_descriptors: list[str] = []
+    diagnostics: list[str] = []
+    scopes: list[str] = []
+    accepted_fact_ids: list[str] = []
+    for fact in selected:
+        fact_id = _text(_get(fact, "fact_id"))
+        status = _text(_get(fact, "validation_status")) or "supported"
+        spans = _ids(
+            (*(_get(fact, "direct_span_ids", ()) or ()),
+             *(_get(fact, "relation_span_ids", ()) or ()))
+        )
+        if status != "supported":
+            diagnostics.append(f"fact_not_supported:{fact_id}")
+            continue
+        if not spans:
+            diagnostics.append(f"fact_exact_span_missing:{fact_id}")
+            continue
+        predicate = _text(_get(fact, "predicate"))
+        operands, result = _fact_operation_parts(fact)
+        conditions = _ids(_get(fact, "conditions", ()))
+        scope = _text(_get(fact, "scope"))
+        shape_hints = _fact_shape_hints(fact)
+        relation_ids = _ids(_get(fact, "relation_evidence_ids", ()))
+        if not predicate and not operands and not result:
+            diagnostics.append(f"fact_operation_fields_missing:{fact_id}")
+            continue
+        atom = {
+            "atom_id": f"fact-operation:{fact_id}",
+            "operation_id": f"fact-operation:{fact_id}",
+            "fact_id": fact_id,
+            "subject": _text(_get(fact, "subject")),
+            "scope": scope,
+            "predicate": predicate,
+            "operands": list(operands),
+            "result": result,
+            "guard": conditions[0] if conditions else "",
+            "conditions": list(conditions),
+            "shape_or_type_hints": list(shape_hints),
+            "operation_descriptors": list(_fact_values(
+                _get(fact, "semantic_context", ())
+            )),
+            "relation_evidence_ids": list(relation_ids),
+            "span_ids": list(spans),
+            "source_span_id": spans[0],
+            "chain_scope": scope,
+        }
+        atoms.append(atom)
+        signatures.append({
+            "operation_id": atom["operation_id"],
+            "fact_id": fact_id,
+            "predicate": predicate,
+            "operands": list(operands),
+            "result": result,
+            "conditions": list(conditions),
+            "guard": atom["guard"],
+            "shape_or_type_hints": list(shape_hints),
+            "scope": scope,
+            "source_span_id": spans[0],
+        })
+        shape_or_type_hints.extend(
+            value for value in shape_hints if value not in shape_or_type_hints
+        )
+        if predicate.casefold() in {"return", "returns", "emits", "outputs", "writes_back"}:
+            if result and result not in return_value_descriptors:
+                return_value_descriptors.append(result)
+        accepted_fact_ids.append(fact_id)
+        if scope and scope not in scopes:
+            scopes.append(scope)
+        span_ids.extend(spans)
+        relation_evidence_ids.extend(relation_ids)
+    if requested:
+        for fact_id in sorted(requested - set(fact_by_id)):
+            diagnostics.append(f"fact_missing:{fact_id}")
+    return {
+        "operation_atoms": tuple(atoms),
+        "formalizable_signatures": tuple(signatures),
+        "fact_ids": tuple(accepted_fact_ids),
+        "exact_span_ids": tuple(dict.fromkeys(span_ids)),
+        "relation_evidence_ids": tuple(dict.fromkeys(relation_evidence_ids)),
+        "shape_or_type_hints": tuple(dict.fromkeys(shape_or_type_hints)),
+        "return_value_descriptors": tuple(dict.fromkeys(return_value_descriptors)),
+        "scopes": tuple(scopes),
+        "diagnostics": tuple(dict.fromkeys(diagnostics)),
+    }
+
+
 def _graph_parts(graph: Any) -> tuple[dict[str, Any], dict[str, Any], tuple[Any, ...]]:
     nodes = {
         _text(_get(item, "node_id")): item
@@ -337,9 +520,15 @@ class ResearchMechanismDossierV1(BaseModel):
     data_flow_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
     control_flow_relation_ids: tuple[str, ...] = Field(default_factory=tuple)
     operation_atoms: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    formalizable_signatures: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     configuration_bindings: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     default_activation: Literal["active", "inactive", "conditional", "unknown"] = "unknown"
     active_path_conditions: tuple[str, ...] = Field(default_factory=tuple)
+    shape_or_type_hints: tuple[str, ...] = Field(default_factory=tuple)
+    return_value_descriptors: tuple[str, ...] = Field(default_factory=tuple)
+    evidence_readiness: Literal["code_ready", "intent_ready", "blocked"] = "blocked"
+    readiness_failures: tuple[str, ...] = Field(default_factory=tuple)
+    code_required: bool = False
     unresolved_relations: tuple[str, ...] = Field(default_factory=tuple)
     exact_span_ids: tuple[str, ...] = Field(default_factory=tuple)
     exact_excerpts: tuple[str, ...] = Field(default_factory=tuple)
@@ -355,7 +544,7 @@ class ResearchMechanismDossierV1(BaseModel):
             "facet_ids", "entry_symbol_ids", "ordered_operation_node_ids",
             "relation_ids", "call_path_relation_ids", "data_flow_relation_ids",
             "control_flow_relation_ids", "active_path_conditions",
-            "unresolved_relations", "exact_span_ids", "fact_ids",
+            "readiness_failures", "unresolved_relations", "exact_span_ids", "fact_ids",
             "equation_ids", "contradiction_ids",
         ):
             values = getattr(self, name)
@@ -371,6 +560,12 @@ class ResearchMechanismDossierV1(BaseModel):
             raise ValueError("control-flow relations must be in relation_ids")
         if any(not str(key).strip() or not str(value).strip() for key, value in self.source_digests.items()):
             raise ValueError("dossier source digests require non-empty keys and values")
+        if self.evidence_readiness == "code_ready" and self.readiness_failures:
+            raise ValueError("code-ready dossier cannot carry readiness failures")
+        if self.evidence_readiness == "code_ready" and not self.code_required:
+            raise ValueError("code-ready dossier must require code evidence")
+        if self.code_required and self.evidence_readiness == "intent_ready" and not self.author_statements:
+            raise ValueError("code-required intent-ready dossier needs an author statement")
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest(payload))
         return self
@@ -445,11 +640,16 @@ class PublicationAuthoringPacketV2(BaseModel):
     section_id: str
     paragraph_id: str
     rhetorical_goal: str = ""
+    # This is a Writer-facing organization bound.  It is deliberately kept
+    # separate from the closed target/evidence ids so a model can control
+    # paragraph density without being asked to reconstruct the transaction.
+    expected_sentence_range: tuple[int, int] = (1, 4)
     ordered_targets: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     dossier_summary: dict[str, Any] = Field(default_factory=dict)
     material_conditions: tuple[str, ...] = Field(default_factory=tuple)
     configuration_state: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     formula_packages: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    method_unit: dict[str, Any] = Field(default_factory=dict)
     closed_target_ids: tuple[str, ...] = Field(default_factory=tuple)
     preceding_paragraph_id: str = ""
     following_paragraph_id: str = ""
@@ -459,6 +659,12 @@ class PublicationAuthoringPacketV2(BaseModel):
     def _closed(self) -> "PublicationAuthoringPacketV2":
         if not self.section_id.strip() or not self.paragraph_id.strip():
             raise ValueError("authoring packet requires section and paragraph ids")
+        if (
+            len(self.expected_sentence_range) != 2
+            or self.expected_sentence_range[0] < 1
+            or self.expected_sentence_range[1] < self.expected_sentence_range[0]
+        ):
+            raise ValueError("authoring packet sentence range must be increasing")
         target_ids = tuple(_text(item.get("target_id")) for item in self.ordered_targets)
         target_ids = tuple(item for item in target_ids if item)
         if len(target_ids) != len(set(target_ids)):
@@ -502,7 +708,7 @@ def _candidate_surface_mode(record: DerivationRecordV1) -> SurfaceModeV1:
     if record.authority_status == "repository_supported":
         return "repository_statement"
     if record.authority_status == "intent_code_mismatch":
-        return "mismatch_statement" if record.contradiction_ids else "omit_and_review"
+        return "mismatch_statement" if record.contradiction_ids else "author_specification"
     if record.authority_status == "author_intent":
         return "author_specification"
     if record.claim_strength == "conditional_analysis" and record.assumptions:
@@ -549,7 +755,9 @@ def build_research_mechanism_dossiers(
     *,
     plan: Any,
     facets: Iterable[Any] = (),
+    facet_alignments: Iterable[Any] = (),
     field_candidates: Iterable[Any] = (),
+    argument_briefs: Any | None = None,
     behavior_graph: Any | None = None,
     facts: Any | None = None,
     claims: Any | None = None,
@@ -557,14 +765,44 @@ def build_research_mechanism_dossiers(
     configurations: Any | None = None,
     evidence_packets: Any | None = None,
     implementation_scope: Any | None = None,
+    require_nonempty: bool = False,
 ) -> tuple[ResearchMechanismDossierV1, ...]:
-    """Build one minimal connected dossier for each mechanism-heavy paragraph."""
+    """Build one minimal connected dossier for each mechanism-heavy paragraph.
+
+    Facet alignments are the only bridge from the intent-first authoring lane
+    into this compiler.  Their exact spans, field bindings, and operation
+    atoms seed the same graph walk as ordinary field candidates.  In the
+    production path ``require_nonempty`` makes an empty mechanism dossier a
+    hard error; legacy callers keep the historical permissive behavior.
+    """
 
     equation_by_id = _equations_by_id(equations)
     facet_by_id = _facets_by_id(facets)
     candidate_items = tuple(field_candidates)
     candidate_by_id = _field_candidates_by_id(candidate_items)
+    brief_values = tuple(
+        _get(argument_briefs, "briefs", argument_briefs)
+        if argument_briefs is not None else ()
+    )
+    brief_by_id = {
+        _text(_get(item, "brief_id")): item
+        for item in brief_values
+        if _text(_get(item, "brief_id"))
+    }
+    alignment_items = tuple(facet_alignments)
+    alignment_by_facet_id = {
+        _text(_get(item, "facet_id")): item
+        for item in alignment_items
+        if _text(_get(item, "facet_id"))
+    }
     fact_by_id = _facts_by_id(facts)
+    fact_ids_by_span: dict[str, set[str]] = defaultdict(set)
+    for fact_id, fact in fact_by_id.items():
+        for span_id in _ids(
+            (*(_get(fact, "direct_span_ids", ()) or ()),
+             *(_get(fact, "relation_span_ids", ()) or ()))
+        ):
+            fact_ids_by_span[span_id].add(fact_id)
     claim_by_id = _claims_by_id(claims)
     graph_nodes, graph_relations, unresolved = _graph_parts(behavior_graph)
     config_values = tuple(_get(configurations, "claims", configurations if isinstance(configurations, (list, tuple)) else ()) or ())
@@ -574,6 +812,22 @@ def build_research_mechanism_dossiers(
         _ids(_get(implementation_scope, "target_core_symbol_ids", ()))
         + _ids(_get(implementation_scope, "target_dependency_symbol_ids", ()))
     )
+    # A paragraph is not always represented by a facet.  In particular, the
+    # Architect can split a method unit into a formula/output paragraph while
+    # retaining the authoritative claim/equation bindings only on the
+    # argument unit.  Build this index before compiling paragraphs so that the
+    # Research dossier has one deterministic evidence entry point for both
+    # facet-led and unit-led plans.  These are identity bindings only; no
+    # operation is inferred from the unit's prose fields.
+    argument_unit_by_id = {
+        _text(_get(unit, "argument_unit_id")): unit
+        for unit in (_get(plan, "argument_units", ()) or ())
+        if _text(_get(unit, "argument_unit_id"))
+    }
+    method_unit_by_paragraph: dict[str, list[Any]] = defaultdict(list)
+    for method_unit in (_get(plan, "method_units", ()) or ()):
+        for paragraph_id in _ids(_get(method_unit, "paragraph_ids", ())):
+            method_unit_by_paragraph[paragraph_id].append(method_unit)
     source_digests = {
         key: digest
         for key, value in (
@@ -584,6 +838,7 @@ def build_research_mechanism_dossiers(
             ("configurations", configurations),
             ("evidence_packets", evidence_packets),
             ("implementation_scope", implementation_scope),
+            ("facet_alignments", alignment_items),
         )
         if (digest := _source_digest(value))
     }
@@ -612,15 +867,126 @@ def build_research_mechanism_dossiers(
         facet_ids = tuple(
             facet_id for facet_id in facet_ids if facet_id not in non_target_facet_ids
         )
-        if not facet_ids and not formula_ids and not _get(paragraph, "required_field_candidate_ids", ()):
-            continue
         fact_ids: set[str] = set()
         claim_ids: set[str] = set()
         equation_ids: set[str] = set()
         span_ids: set[str] = set()
+        paragraph_argument_units = [
+            argument_unit_by_id[unit_id]
+            for unit_id in _ids(_get(paragraph, "argument_unit_ids", ()))
+            if unit_id in argument_unit_by_id
+        ]
+        paragraph_method_units = method_unit_by_paragraph.get(paragraph_id, ())
+        # A MethodUnit is the closed paragraph-sidecar authority.  When one
+        # exists, consuming the coarse argument-unit rows as well duplicates
+        # every fact in the unit across every split paragraph and lets a
+        # facet inherit evidence for unrelated operations.  Use the exact
+        # MethodUnit only.  The argument-unit fallback is intentionally
+        # limited to a formula-only paragraph whose equation binding selects
+        # one unambiguous unit; ordinary facet paragraphs must remain
+        # evidence-local.
+        if paragraph_method_units:
+            paragraph_unit_records = list(paragraph_method_units)
+        else:
+            formula_only = bool(formula_ids) and not facet_ids and not _get(
+                paragraph, "required_field_candidate_ids", ()
+            )
+            formula_tokens = {
+                value.removeprefix("formula:").removeprefix("equation:")
+                for value in formula_ids
+                if value.strip()
+            }
+            equation_matched_units = [
+                unit for unit in paragraph_argument_units
+                if formula_tokens.intersection({
+                    value.removeprefix("equation:")
+                    for value in _ids(_get(unit, "equation_ids", ()))
+                })
+            ]
+            if formula_only and len(equation_matched_units) == 1:
+                paragraph_unit_records = equation_matched_units
+            elif formula_only and len(paragraph_argument_units) == 1:
+                paragraph_unit_records = paragraph_argument_units
+            else:
+                paragraph_unit_records = []
+        unit_binding_present = False
+        unit_fact_ids: set[str] = set()
+        unit_claim_ids: set[str] = set()
+        unit_equation_ids: set[str] = set()
+        unit_span_ids: set[str] = set()
+        for unit in paragraph_unit_records:
+            bound_fact_ids = set(_ids(_get(unit, "fact_ids", ())))
+            bound_claim_ids = set(_ids(_get(unit, "claim_ids", ())))
+            bound_equation_ids = set(_ids(_get(unit, "equation_ids", ())))
+            bound_span_ids = {
+                value for value in _ids(
+                    (*(_get(unit, "evidence_spans", ()) or ()),
+                     *(_get(unit, "source_artifact_ids", ()) or ()))
+                )
+                if value.startswith("span:")
+            }
+            if bound_fact_ids or bound_claim_ids or bound_equation_ids or bound_span_ids:
+                unit_binding_present = True
+            unit_fact_ids.update(bound_fact_ids)
+            unit_claim_ids.update(bound_claim_ids)
+            unit_equation_ids.update(bound_equation_ids)
+            unit_span_ids.update(bound_span_ids)
+        # Argument-unit bindings are closed identifiers, not a semantic
+        # shortcut.  The normal fact/claim/equation expansion below still
+        # requires the referenced objects to exist and to pass the same
+        # operation-chain checks as facet evidence.
+        if unit_binding_present:
+            fact_ids.update(unit_fact_ids)
+            claim_ids.update(unit_claim_ids)
+            equation_ids.update(unit_equation_ids)
+            span_ids.update(unit_span_ids)
+        if (
+            not facet_ids
+            and not formula_ids
+            and not _get(paragraph, "required_field_candidate_ids", ())
+            and not unit_binding_present
+        ):
+            continue
         exact_excerpts: list[str] = []
         candidate_symbols: set[str] = set()
+        alignment_operation_atoms: list[dict[str, Any]] = []
+        alignment_conditions: list[str] = []
+        alignment_statuses: list[str] = []
+        alignment_unresolved = False
         contradiction_ids: set[str] = set()
+
+        def collect_alignment_excerpt(excerpt: Any) -> None:
+            excerpt_text = _text(_get(excerpt, "exact_excerpt") or _get(excerpt, "text"))
+            if excerpt_text:
+                exact_excerpts.append(excerpt_text)
+            span_id = _text(_get(excerpt, "span_id") or _get(excerpt, "source_span_id"))
+            if span_id:
+                span_ids.add(span_id)
+            candidate_symbols.update(_ids(
+                (_get(excerpt, "symbol_id"), _get(excerpt, "symbol"))
+            ))
+            excerpt_fact_ids = _ids(_get(excerpt, "fact_ids", ()))
+            excerpt_claim_ids = _ids(_get(excerpt, "claim_ids", ()))
+            excerpt_equation_ids = _ids(_get(excerpt, "equation_ids", ()))
+            fact_ids.update(excerpt_fact_ids)
+            claim_ids.update(excerpt_claim_ids)
+            equation_ids.update(excerpt_equation_ids)
+            for atom in _get(excerpt, "operation_atoms", ()) or ():
+                atom_row = (
+                    {"operation": _text(atom), "predicate": "aligned_operation"}
+                    if isinstance(atom, str)
+                    else _dump(atom)
+                )
+                if atom_row and span_id:
+                    atom_row.setdefault("source_span_id", span_id)
+                if atom_row and excerpt_text:
+                    atom_row.setdefault("exact_excerpt", excerpt_text)
+                if atom_row:
+                    alignment_operation_atoms.append(atom_row)
+                    candidate_symbols.update(_ids(
+                        (_get(atom, "symbol_id"), _get(atom, "symbol"))
+                    ))
+
         for candidate in relevant_candidates:
             fact_ids.update(_ids(_get(candidate, "bound_fact_ids", ())))
             claim_ids.update(_ids(_get(candidate, "bound_claim_ids", ())))
@@ -633,6 +999,58 @@ def build_research_mechanism_dossiers(
             # Semantic fields and author statements describe intent; they are
             # not copied into the frozen source-excerpt channel.
             contradiction_ids.update(_ids(_get(facet, "contradiction_ids", ())))
+            # A frozen brief clause is an upstream deterministic binding.  It
+            # is narrower than the brief-level union: use only the clause
+            # whose id is carried by this facet, and only its closed evidence
+            # handles.  Unlicensed clauses deliberately contribute nothing.
+            brief = brief_by_id.get(_text(_get(facet, "brief_id")))
+            facet_clause_id = _text(_get(facet, "clause_id"))
+            if brief is not None and facet_clause_id:
+                for clause in _get(brief, "clauses", ()) or ():
+                    if _text(_get(clause, "clause_id")) != facet_clause_id:
+                        continue
+                    clause_license = _text(_get(clause, "license"))
+                    if clause_license in {"positively_licensed", "partially_licensed"}:
+                        claim_ids.update(_ids(_get(clause, "bound_claim_ids", ())))
+                        span_ids.update(_ids(_get(clause, "bound_span_ids", ())))
+                        equation_ids.update(_ids(_get(clause, "bound_equation_ids", ())))
+                    break
+            alignment = alignment_by_facet_id.get(facet_id)
+            if alignment is None:
+                continue
+            alignment_status = _text(_get(alignment, "status"))
+            if alignment_status:
+                alignment_statuses.append(alignment_status)
+            alignment_unresolved = alignment_unresolved or alignment_status in {
+                "mismatch", "unresolved"
+            }
+            alignment_span_ids = set(_ids(_get(alignment, "bound_span_ids", ())))
+            alignment_fact_ids = set(_ids(_get(alignment, "bound_fact_ids", ())))
+            alignment_claim_ids = set(_ids(_get(alignment, "bound_claim_ids", ())))
+            alignment_equation_ids = set(_ids(_get(alignment, "bound_equation_ids", ())))
+            for binding in _get(alignment, "field_bindings", ()) or ():
+                binding_status = _text(_get(binding, "status"))
+                if binding_status:
+                    alignment_statuses.append(binding_status)
+                alignment_unresolved = alignment_unresolved or binding_status in {
+                    "mismatch", "unresolved"
+                }
+                alignment_fact_ids.update(_ids(_get(binding, "bound_fact_ids", ())))
+                alignment_claim_ids.update(_ids(_get(binding, "bound_claim_ids", ())))
+                alignment_span_ids.update(_ids(_get(binding, "bound_span_ids", ())))
+                alignment_equation_ids.update(_ids(_get(binding, "bound_equation_ids", ())))
+                alignment_conditions.extend(_ids(_get(binding, "active_path_conditions", ())))
+                for excerpt in _get(binding, "exact_excerpts", ()) or ():
+                    collect_alignment_excerpt(excerpt)
+            fact_ids.update(alignment_fact_ids)
+            claim_ids.update(alignment_claim_ids)
+            equation_ids.update(alignment_equation_ids)
+            span_ids.update(alignment_span_ids)
+            alignment_unresolved = alignment_unresolved or (
+                _text(_get(alignment, "status")) in {"mismatch", "unresolved"}
+            )
+            for excerpt in _get(alignment, "exact_excerpts", ()) or ():
+                collect_alignment_excerpt(excerpt)
         for fact_id in tuple(fact_ids):
             fact = fact_by_id.get(fact_id)
             span_ids.update(_ids(_get(fact, "direct_span_ids", ())) + _ids(_get(fact, "relation_span_ids", ())))
@@ -646,6 +1064,13 @@ def build_research_mechanism_dossiers(
             fact_ids.update(_ids(_get(claim, "fact_ids", ())))
             span_ids.update(_ids(_get(claim, "span_ids", ())))
             contradiction_ids.update(_ids(_get(claim, "contradiction_ids", ())))
+        # The live aligner may return a validated exact source span while
+        # omitting internal CodeFact ids.  Recover the binding by exact span
+        # identity only; this is a representation repair, not semantic
+        # matching.  A span shared by several facts keeps all of them and the
+        # normal CodeFact compiler still applies validation/status gates.
+        for span_id in tuple(span_ids):
+            fact_ids.update(fact_ids_by_span.get(span_id, ()))
         for formula_id in formula_ids:
             formula_key = formula_id
             if formula_key.startswith("formula:"):
@@ -682,6 +1107,33 @@ def build_research_mechanism_dossiers(
                         symbol = _text(_get(node, "symbol_id"))
                         if symbol:
                             candidate_symbols.add(symbol)
+        # An empty requested set means "compile all facts" for the standalone
+        # compiler API.  A paragraph dossier must never use that default:
+        # without an exact facet/claim/span binding it has no code evidence.
+        fact_chain = (
+            compile_code_fact_operation_chain(
+                facts=facts,
+                fact_ids=fact_ids,
+            )
+            if fact_ids else {
+                "operation_atoms": (),
+                "formalizable_signatures": (),
+                "fact_ids": (),
+                "exact_span_ids": (),
+                "relation_evidence_ids": (),
+                "shape_or_type_hints": (),
+                "return_value_descriptors": (),
+                "scopes": (),
+                "diagnostics": (),
+            }
+        )
+        span_ids.update(fact_chain["exact_span_ids"])
+        relation_ids_from_facts = tuple(fact_chain["relation_evidence_ids"])
+        for fact_id in fact_chain["fact_ids"]:
+            fact = fact_by_id.get(fact_id)
+            fact_subject = _text(_get(fact, "subject"))
+            if fact_subject:
+                candidate_symbols.add(fact_subject)
         # Filter the graph before path search.  Removing an evaluation or
         # configuration node after BFS could leave a dossier with a relation
         # path that is no longer connected, or silently use that node as a
@@ -729,12 +1181,52 @@ def build_research_mechanism_dossiers(
             and _relation_endpoint(eligible_relations[relation_id], "target", eligible_nodes)
             in selected_node_set
         )
-        if (
-            not selected_node_ids and (fact_ids or claim_ids or equation_ids)
-        ) or set(seed_ids) - selected_node_set:
+        fact_chain_diagnostics = list(fact_chain["diagnostics"])
+        fact_chain_ready = bool(
+            fact_chain["fact_ids"]
+            and fact_chain["operation_atoms"]
+            and fact_chain["formalizable_signatures"]
+            and not fact_chain_diagnostics
+        )
+        if not selected_node_ids and (fact_ids or claim_ids or equation_ids):
+            # A behavior graph is optional at this boundary.  A complete
+            # CodeFact operation chain is an equivalent deterministic source;
+            # do not report a missing graph when it already closes the facts.
+            if fact_chain_ready:
+                unresolved_ids = []
+            elif fact_ids and graph_nodes:
+                unresolved_ids = [
+                    "missing_connected_behavior_subgraph",
+                    "missing_fact_operation_chain",
+                ]
+            else:
+                unresolved_ids = [
+                    "missing_fact_operation_chain"
+                    if fact_ids else "missing_connected_behavior_subgraph"
+                ]
+        elif set(seed_ids) - selected_node_set:
             unresolved_ids = ["missing_connected_behavior_subgraph"]
         else:
             unresolved_ids = []
+        if fact_chain_ready:
+            # A complete source-ordered CodeFact chain is an equivalent
+            # deterministic research source.  The optional behavior graph
+            # may expose only a partial symbol neighbourhood (or none at
+            # all), which must not demote an otherwise closed fact dossier.
+            # Preserve genuine unresolved relation rows, but remove only the
+            # synthetic graph-connectivity diagnostics emitted by this
+            # paragraph's seed search.
+            unresolved_ids = [
+                item for item in unresolved_ids
+                if item not in {
+                    "missing_connected_behavior_subgraph",
+                    "missing_fact_operation_chain",
+                }
+            ]
+        if alignment_unresolved and not fact_chain_ready:
+            unresolved_ids.append("facet_alignment:" + ",".join(
+                facet_ids[:1]
+            ))
         operation_nodes = [
             eligible_nodes[item] for item in selected_node_ids if item in eligible_nodes
         ]
@@ -760,15 +1252,39 @@ def build_research_mechanism_dossiers(
             _text(_get(node, "source_span_id")),
             _text(_get(node, "node_id")),
         ))
-        relation_ids = tuple(_text(_get(item, "relation_id")) for item in selected_relations if _text(_get(item, "relation_id")))
+        relation_ids = tuple(dict.fromkeys((
+            *(
+                _text(_get(item, "relation_id"))
+                for item in selected_relations
+                if _text(_get(item, "relation_id"))
+            ),
+            *relation_ids_from_facts,
+        )))
         relation_by_id = {
             _text(_get(item, "relation_id")): item
             for item in selected_relations
             if _text(_get(item, "relation_id"))
         }
-        call_ids = tuple(item for item in relation_ids if _text(_get(relation_by_id[item], "kind")).upper() in _CALL_RELATIONS)
-        data_ids = tuple(item for item in relation_ids if _text(_get(relation_by_id[item], "kind")).upper() in _DATA_RELATIONS)
-        control_ids = tuple(item for item in relation_ids if _text(_get(relation_by_id[item], "kind")).upper() in _CONTROL_RELATIONS)
+        # Fact-level relation evidence may be represented only by its stable
+        # id in the CodeFact artifact.  It is still retained in the dossier,
+        # but it cannot be classified as a call/data/control edge without the
+        # relation row itself.  Never turn that representation gap into a
+        # compiler KeyError.
+        call_ids = tuple(
+            item for item in relation_ids
+            if item in relation_by_id
+            and _text(_get(relation_by_id[item], "kind")).upper() in _CALL_RELATIONS
+        )
+        data_ids = tuple(
+            item for item in relation_ids
+            if item in relation_by_id
+            and _text(_get(relation_by_id[item], "kind")).upper() in _DATA_RELATIONS
+        )
+        control_ids = tuple(
+            item for item in relation_ids
+            if item in relation_by_id
+            and _text(_get(relation_by_id[item], "kind")).upper() in _CONTROL_RELATIONS
+        )
         unresolved_ids.extend(
             _text(_get(item, "relation_id"))
             for item in unresolved
@@ -797,6 +1313,7 @@ def build_research_mechanism_dossiers(
             for node in operation_nodes
             if _text(_get(node, "guard"))
         )
+        active_conditions.extend(alignment_conditions)
         activation = "unknown"
         if configuration_bindings:
             active_values = [item.get("active") for item in configuration_bindings]
@@ -823,6 +1340,136 @@ def build_research_mechanism_dossiers(
             for facet_id in facet_ids
             if _text(_get(facet_by_id.get(facet_id), "exact_source_quote"))
         ))
+        operation_atoms = [
+            _dump(node) for node in operation_nodes
+        ]
+        operation_atoms.extend(fact_chain["operation_atoms"])
+        operation_atoms.extend(alignment_operation_atoms)
+        # Do not let duplicate alignment excerpts inflate the operation
+        # contract.  The first exact atom wins, preserving source order.
+        unique_operation_atoms: list[dict[str, Any]] = []
+        seen_operation_atoms: set[str] = set()
+        for atom in operation_atoms:
+            atom_key = _text(
+                atom.get("operation_id")
+                or atom.get("source_span_id")
+                or atom.get("node_id")
+                or atom.get("predicate")
+            )
+            atom_key = atom_key or _digest(atom)
+            if atom_key in seen_operation_atoms:
+                continue
+            seen_operation_atoms.add(atom_key)
+            unique_operation_atoms.append(atom)
+        shape_or_type_hints: list[str] = list(fact_chain.get("shape_or_type_hints", ()))
+        return_value_descriptors: list[str] = list(fact_chain.get("return_value_descriptors", ()))
+        formalizable_signatures: list[dict[str, Any]] = [
+            dict(item) for item in fact_chain["formalizable_signatures"]
+        ]
+        for atom in unique_operation_atoms:
+            predicate = _text(
+                atom.get("predicate") or atom.get("operation")
+                or atom.get("operation_id")
+            )
+            operands = _ids(atom.get("operands", ()))
+            result = _text(
+                atom.get("result") or atom.get("output")
+                or atom.get("return_value")
+            )
+            atom_conditions = tuple(dict.fromkeys(
+                _ids(atom.get("conditions", ()))
+                + _ids((atom.get("guard"),))
+            ))
+            atom_shapes = _ids(
+                atom.get("shape_or_type_hints")
+                or atom.get("shape_hints")
+                or atom.get("types")
+                or ()
+            )
+            shape_or_type_hints.extend(
+                item for item in atom_shapes if item not in shape_or_type_hints
+            )
+            if predicate.casefold() in {
+                "return", "returns", "emits", "outputs", "writes_back"
+            } or any(
+                key in atom for key in ("return_value", "returns", "output")
+            ):
+                return_descriptor = result or _text(
+                    atom.get("returns") or atom.get("output")
+                )
+                if return_descriptor and return_descriptor not in return_value_descriptors:
+                    return_value_descriptors.append(return_descriptor)
+            if predicate or operands or result:
+                formalizable_signatures.append({
+                    "predicate": predicate,
+                    "operands": list(operands),
+                    "result": result,
+                    "conditions": list(atom_conditions),
+                    "shape_or_type_hints": list(atom_shapes),
+                    "source_span_id": _text(
+                        atom.get("source_span_id") or atom.get("span_id")
+                    ),
+                })
+        mechanism_bound = bool(
+            selected_node_ids
+            or unique_operation_atoms
+            or span_ids
+            or author_statements
+            or unit_binding_present
+        )
+        code_required = bool(
+            fact_chain["fact_ids"]
+            or equation_ids
+            or (span_ids and not author_statements)
+            or selected_node_ids
+        )
+        readiness_failures: list[str] = []
+        readiness_failures.extend(fact_chain_diagnostics)
+        if not fact_chain_ready:
+            readiness_failures.extend(
+                item for item in unresolved_ids
+                if item not in readiness_failures
+            )
+        # A complete source-ordered CodeFact chain is sufficient for the
+        # operation/signature contract.  Keep unresolved graph relations on
+        # the dossier for audit and callback routing, but do not make an
+        # optional graph edge a prerequisite for a closed fact chain.
+        if alignment_unresolved and not fact_chain_ready:
+            readiness_failures.append(
+                "facet_alignment_unresolved:" + ",".join(
+                    dict.fromkeys(facet_ids)
+                )
+            )
+        if code_required and not fact_chain["fact_ids"]:
+            readiness_failures.append("supported_code_fact_missing")
+        if code_required and not span_ids:
+            readiness_failures.append("exact_source_span_missing")
+        if code_required and not unique_operation_atoms:
+            readiness_failures.append("operation_chain_missing")
+        if code_required and not formalizable_signatures:
+            readiness_failures.append("formalizable_signature_missing")
+        readiness_failures = list(dict.fromkeys(
+            value for value in readiness_failures if _text(value)
+        ))
+        if (
+            code_required
+            and fact_chain["fact_ids"]
+            and span_ids
+            and unique_operation_atoms
+            and formalizable_signatures
+            and not readiness_failures
+        ):
+            evidence_readiness: Literal["code_ready", "intent_ready", "blocked"] = "code_ready"
+            readiness_failures = []
+        elif author_statements:
+            evidence_readiness = "intent_ready"
+        else:
+            evidence_readiness = "blocked"
+        if require_nonempty and (facet_ids or formula_ids or relevant_candidates) and not mechanism_bound:
+            raise ValueError(
+                "research_dossier_empty_mechanism_unit:"
+                f"{section_id}:{paragraph_id}"
+            )
         dossier_identity = {
             "section_id": section_id,
             "paragraph_id": paragraph_id,
@@ -844,10 +1491,16 @@ def build_research_mechanism_dossiers(
             call_path_relation_ids=call_ids,
             data_flow_relation_ids=data_ids,
             control_flow_relation_ids=control_ids,
-            operation_atoms=tuple(_dump(node) for node in operation_nodes),
+            operation_atoms=tuple(unique_operation_atoms),
+            formalizable_signatures=tuple(formalizable_signatures),
             configuration_bindings=tuple(configuration_bindings),
             default_activation=activation,
             active_path_conditions=tuple(dict.fromkeys(active_conditions)),
+            shape_or_type_hints=tuple(dict.fromkeys(shape_or_type_hints)),
+            return_value_descriptors=tuple(dict.fromkeys(return_value_descriptors)),
+            evidence_readiness=evidence_readiness,
+            readiness_failures=tuple(readiness_failures),
+            code_required=code_required,
             unresolved_relations=tuple(dict.fromkeys(unresolved_ids)),
             exact_span_ids=tuple(dict.fromkeys(
                 (*span_ids, *(_text(_get(node, "source_span_id")) for node in operation_nodes if _text(_get(node, "source_span_id"))))
@@ -1007,7 +1660,14 @@ def compile_derivation_records(
                     or _ids(_get(binding, "bound_claim_ids", ()))
                     or _ids(_get(binding, "bound_span_ids", ()))
                 )
-                if status == "entailed" and has_evidence and dossier.ordered_operation_node_ids:
+                fact_chain_ready = (
+                    dossier.evidence_readiness == "code_ready"
+                    and bool(dossier.fact_ids)
+                    and bool(dossier.formalizable_signatures)
+                )
+                if status == "entailed" and has_evidence and (
+                    dossier.ordered_operation_node_ids or fact_chain_ready
+                ):
                     kind: DerivationKindV1 = "static_derived" if dossier.relation_ids else "direct"
                     authority = "repository_supported"
                 elif status == "partial" and has_evidence:
@@ -1185,6 +1845,12 @@ def build_publication_authoring_packets(
     derivations_by_key: dict[tuple[str, str], list[DerivationRecordV1]] = defaultdict(list)
     for record in derivation_items:
         derivations_by_key[(record.facet_id, record.field_name.casefold())].append(record)
+    method_unit_by_paragraph: dict[str, dict[str, Any]] = {}
+    for method_unit in (_get(plan, "method_units", ()) or ()):
+        method_unit_payload = _dump(method_unit)
+        for paragraph_id in _ids(method_unit_payload.get("paragraph_ids", ())):
+            method_unit_by_paragraph.setdefault(paragraph_id, method_unit_payload)
+
     packets_by_section: dict[str, tuple[PublicationAuthoringPacketV2, ...]] = {}
     for section in _get(plan, "sections", ()) or ():
         section_id = _text(_get(section, "section_id"))
@@ -1206,6 +1872,12 @@ def build_publication_authoring_packets(
             ))
             edge_ids = set(_ids(_get(paragraph, "required_edge_ids", ())))
             formula_ids = set(_ids(_get(paragraph, "formula_obligation_ids", ())))
+            witness_contract = _get(paragraph, "witness_contract", {}) or {}
+            contract_by_target_id = {
+                _text(_get(item, "target_id")): dict(_dump(item))
+                for item in (_get(witness_contract, "targets", ()) or ())
+                if _text(_get(item, "target_id"))
+            }
             ordered_targets: list[dict[str, Any]] = []
             for target_id in target_ids:
                 candidate = candidate_by_id.get(target_id)
@@ -1237,10 +1909,40 @@ def build_publication_authoring_packets(
                         "formula" if target_id in formula_ids else
                         "target"
                     )
-                    ordered_targets.append({
+                    target_contract = contract_by_target_id.get(target_id, {})
+                    target_row: dict[str, Any] = {
                         "target_id": target_id,
                         "target_kind": target_kind,
-                    })
+                    }
+                    # Keep the Writer's organization surface useful when a
+                    # target is not a publication field candidate.  The
+                    # private id remains in ``closed_target_ids`` and is
+                    # removed by the LLM projection; only the Architect's
+                    # semantic/authority contract crosses the prose boundary.
+                    for source_key, output_key in (
+                        ("semantic_atom", "semantic_atom"),
+                        ("paper_role", "paper_role"),
+                        ("authority_lane", "authority_lane"),
+                        ("surface_mode", "surface_mode"),
+                        ("render_policy", "render_policy"),
+                        ("claim_strength", "claim_strength"),
+                    ):
+                        value = target_contract.get(source_key)
+                        if isinstance(value, str):
+                            value = value.strip()
+                        if value not in (None, "", (), []):
+                            target_row[output_key] = value
+                    required_conditions = target_contract.get("required_conditions")
+                    if required_conditions:
+                        target_row["conditions"] = list(
+                            _ids(required_conditions)
+                        )
+                    required_polarity = _text(
+                        target_contract.get("required_polarity")
+                    )
+                    if required_polarity and required_polarity != "unknown":
+                        target_row["polarity"] = required_polarity
+                    ordered_targets.append(target_row)
             dossier = next(
                 (
                     item for item in dossier_items
@@ -1269,6 +1971,14 @@ def build_publication_authoring_packets(
                     "contradiction_ids": list(dossier.contradiction_ids),
                     "source_digests": dict(dossier.source_digests),
                     "unresolved_relations": list(dossier.unresolved_relations),
+                    "evidence_readiness": dossier.evidence_readiness,
+                    "readiness_failures": list(dossier.readiness_failures),
+                    "code_required": dossier.code_required,
+                    "formalizable_signatures": [
+                        dict(item) for item in dossier.formalizable_signatures
+                    ],
+                    "shape_or_type_hints": list(dossier.shape_or_type_hints),
+                    "return_value_descriptors": list(dossier.return_value_descriptors),
                 }
                 conditions = dossier.active_path_conditions
                 configuration_state = dossier.configuration_bindings
@@ -1289,11 +1999,19 @@ def build_publication_authoring_packets(
                 section_id=section_id,
                 paragraph_id=paragraph_id,
                 rhetorical_goal=_text(_get(paragraph, "paragraph_role")),
+                expected_sentence_range=tuple(
+                    int(value)
+                    for value in (
+                        _get(paragraph, "expected_sentence_range", (1, 4))
+                        or (1, 4)
+                    )
+                ),
                 ordered_targets=tuple(ordered_targets),
                 dossier_summary=dossier_summary,
                 material_conditions=conditions,
                 configuration_state=configuration_state,
                 formula_packages=tuple(formula_packages),
+                method_unit=dict(method_unit_by_paragraph.get(paragraph_id, {})),
                 closed_target_ids=target_ids,
                 preceding_paragraph_id=paragraph_ids[index - 1] if index else "",
                 following_paragraph_id=(
@@ -1349,6 +2067,7 @@ __all__ = [
     "build_research_derived_callback_requests",
     "build_research_mechanism_dossiers",
     "build_publication_authoring_packets",
+    "compile_code_fact_operation_chain",
     "compile_derivation_records",
     "merge_derivations_into_field_candidates",
     "validate_candidate_authority",

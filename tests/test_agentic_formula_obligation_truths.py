@@ -46,6 +46,20 @@ def test_formula_obligation_unresolved_without_package() -> None:
     assert truths[0].review_question
 
 
+def test_synthetic_not_applicable_obligation_has_not_applicable_terminal_state() -> None:
+    truths = build_formula_obligation_truths(
+        section_id="MA-S1",
+        obligation_ids=("formula:section:MA-S1:none",),
+        packages=(),
+        disposition=None,
+        formula_not_applicable=True,
+    )
+
+    assert truths[0].outcome == "not_applicable"
+    assert truths[0].terminal_disposition == "not_applicable"
+    assert truths[0].expectation == "none"
+
+
 def test_section_result_carries_obligation_truths() -> None:
     package = SectionFormulaPackageV1(
         package_id="fp:MA-S1:1",

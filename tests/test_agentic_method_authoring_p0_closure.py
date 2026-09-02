@@ -24,8 +24,10 @@ from code2paper.agentic.method_argument_facet_aligner import (
 )
 from code2paper.agentic.publication_transaction_contract import (
     assess_paragraph_transaction,
+    bind_paragraph_witnesses,
     required_anchors_from_plan_row,
 )
+from code2paper.agentic.method_architect import _reader_facing_slot_semantic_atom
 from code2paper.agentic.research_models import ImplementationScopeV1
 
 
@@ -354,6 +356,265 @@ def test_paragraph_condition_polarity_mutation_is_rejected() -> None:
 
     assert not assessment.valid
     assert "condition_or_polarity_mismatch:field:field:normalize:condition" in assessment.semantic_failures
+
+
+def test_binder_recovers_code_normalization_from_reader_facing_anchor() -> None:
+    slot = SimpleNamespace(
+        role="transformation",
+        predicate="normalizes",
+        operands=(
+            "torch.nn.functional.normalize",
+            "positional_encoding",
+            "p=2",
+            "dim=2",
+            "result=positional_encoding",
+        ),
+        produced_entities=(),
+        conditions=(),
+    )
+    semantic_atom = _reader_facing_slot_semantic_atom(slot)
+    transaction = {
+        "paragraph_id": "paragraph:normalization",
+        "paragraph_markdown": (
+            "The sinusoidal positional encoding is computed from passage positions "
+            "and then subjected to L2 normalization along the embedding dimension."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:normalization"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:normalization",
+            "semantic_atom": semantic_atom,
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:normalization"]
+    assert len(bound["witnesses"]) == 1
+
+
+def test_binder_recovers_residual_attention_update_from_reader_facing_anchor() -> None:
+    slot = SimpleNamespace(
+        role="transformation",
+        predicate="computes_formula",
+        operands=(
+            "src",
+            "result=src + dropout1(shared_out + dedicated_out)",
+        ),
+        produced_entities=(),
+        conditions=(),
+    )
+    semantic_atom = _reader_facing_slot_semantic_atom(slot)
+    assert "attention" in semantic_atom
+    assert "dropout" in semantic_atom
+    assert "residual" in semantic_atom
+
+    transaction = {
+        "paragraph_id": "paragraph:attention:update",
+        "paragraph_markdown": (
+            "The two attention outputs are summed, passed through dropout, "
+            "and added to the residual connection."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:attention:update"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:attention:update",
+            "semantic_atom": semantic_atom,
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:attention:update"]
+    assert len(bound["witnesses"]) == 1
+
+
+def test_binder_recovers_attention_return_without_source_variable_names() -> None:
+    slot = SimpleNamespace(
+        role="output",
+        predicate="returns",
+        operands=("src", "shared_attn_weights"),
+        produced_entities=(),
+        conditions=(),
+    )
+    semantic_atom = _reader_facing_slot_semantic_atom(slot)
+    assert semantic_atom == "return attention weights"
+    transaction = {
+        "paragraph_id": "paragraph:attention:return",
+        "paragraph_markdown": (
+            "When requested, the module returns the shared attention weights "
+            "alongside the updated representation."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:attention:return"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:attention:return",
+            "semantic_atom": semantic_atom,
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:attention:return"]
+    assert len(bound["witnesses"]) == 1
+
+
+def test_binder_recovers_legacy_residual_slot_anchor() -> None:
+    """Frozen plans may still contain the pre-reader-facing source atom."""
+
+    transaction = {
+        "paragraph_id": "paragraph:legacy:residual",
+        "paragraph_markdown": (
+            "The two attention outputs are combined, passed through dropout, "
+            "and added through a residual connection."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:legacy:residual"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:legacy:residual",
+            "semantic_atom": "combines src first dropout shared out dedicated",
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:legacy:residual"]
+    assert len(bound["witnesses"]) == 1
+
+
+def test_binder_semantic_fallback_does_not_prefer_code_excerpt_over_reader_text() -> None:
+    transaction = {
+        "paragraph_id": "paragraph:legacy:attention-facet",
+        "paragraph_markdown": (
+            "The hybrid attention mechanism combines a shared full attention "
+            "module with a dedicated masked attention module. "
+            "The dedicated masked attention is activated when the configuration "
+            "flag for dedicated attention is set (`self.cfg.use_dedicated_attention`)."
+        ),
+        "rendered_from_facet_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_facet_ids": ["facet:attention"],
+        "witness_contract": {"targets": [{
+            "target_kind": "facet",
+            "target_id": "facet:attention",
+            "semantic_atom": (
+                "dedicated masked attention attend multi head that restricts "
+                "passage from same document"
+            ),
+            "allowed_exact_excerpts": ["if self.cfg.use_dedicated_attention:"],
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_from_facet_ids"] == ["facet:attention"]
+    assert bound["witnesses"][0]["exact_text"].startswith(
+        "The hybrid attention mechanism"
+    )
+
+
+def test_binder_prefers_specific_raw_slot_over_sibling_derived_anchor() -> None:
+    """A frozen config slot must not be lost to a sibling hybrid facet sentence."""
+
+    transaction = {
+        "paragraph_id": "MA-S3:p3",
+        "paragraph_markdown": (
+            "The hybrid attention mechanism combines a shared full attention "
+            "module with a dedicated masked attention module. The dedicated "
+            "masked attention is active when `self.cfg.use_dedicated_attention`."
+        ),
+        "rendered_slot_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_publication_slot_ids": ["slot:dedicated-attention"],
+        "witness_contract": {"targets": [{
+            "target_kind": "slot",
+            "target_id": "slot:dedicated-attention",
+            "semantic_atom": "enable use dedicated attention attend",
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_slot_ids"] == ["slot:dedicated-attention"]
+    assert "use_dedicated_attention" in bound["witnesses"][0]["exact_text"]
+
+
+def test_binder_splits_prose_around_formula_before_semantic_recovery() -> None:
+    transaction = {
+        "paragraph_id": "paragraph:formula:boundary",
+        "paragraph_markdown": (
+            "The hybrid attention mechanism combines global and local pathways "
+            "$$\n"
+            "y = x + z\n"
+            "$$ and exposes attention weights for analysis."
+        ),
+        "rendered_from_facet_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_facet_ids": ["facet:hybrid"],
+        "witness_contract": {"targets": [{
+            "target_kind": "facet",
+            "target_id": "facet:hybrid",
+            "semantic_atom": "hybrid attention combines global local pathways",
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_from_facet_ids"] == ["facet:hybrid"]
+    assert bound["witnesses"][0]["exact_text"].startswith(
+        "The hybrid attention mechanism"
+    )
+
+
+def test_binder_does_not_use_display_math_for_an_omitted_mechanism_facet() -> None:
+    transaction = {
+        "paragraph_id": "paragraph:ranking",
+        "paragraph_markdown": (
+            "The inference procedure computes similarity scores and sorts the "
+            "passages in descending order. $$\n"
+            "scores = \\operatorname{sort}(similarities)\n$$"
+        ),
+        "rendered_from_facet_ids": [],
+        "witnesses": [],
+    }
+    plan_row = {
+        "required_facet_ids": ["facet:ranking"],
+        "witness_contract": {"targets": [{
+            "target_kind": "facet",
+            "target_id": "facet:ranking",
+            "semantic_atom": (
+                "inference scoring compute similarity and sort descending"
+            ),
+        }]},
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+
+    assert bound["rendered_from_facet_ids"] == ["facet:ranking"]
+    assert len(bound["witnesses"]) == 1
+    assert "inference procedure" in bound["witnesses"][0]["exact_text"]
 
 
 def test_formula_package_without_unique_consumer_is_not_accepted() -> None:

@@ -15,6 +15,7 @@ from code2paper.agentic.method_argument_models import (
     MethodCompletenessItemV1,
     MethodCompletenessMatrixV1,
     MethodSectionPlanV2,
+    MethodUnitV2,
     MoveAuthorityProofV1,
     ObligationMoveAssignmentV1,
     ReferenceMethodAgendaV1,
@@ -61,6 +62,7 @@ class MethodArchitect:
         publication_field_candidates: tuple[Any, ...] | list[Any] = (),
         argument_facets: tuple[Any, ...] | list[Any] = (),
         facet_alignments: tuple[Any, ...] | list[Any] = (),
+        facts: Any | None = None,
         unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
     ) -> MethodSectionPlanV2:
         return build_method_section_plan(
@@ -76,6 +78,7 @@ class MethodArchitect:
             publication_field_candidates=publication_field_candidates,
             argument_facets=argument_facets,
             facet_alignments=facet_alignments,
+            facts=facts,
             unit_frames=unit_frames,
         )
 
@@ -94,6 +97,7 @@ def build_method_section_plan(
     publication_field_candidates: tuple[Any, ...] | list[Any] = (),
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    facts: Any | None = None,
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> MethodSectionPlanV2:
     plan, _trace = build_method_section_plan_with_trace(
@@ -109,6 +113,7 @@ def build_method_section_plan(
         publication_field_candidates=publication_field_candidates,
         argument_facets=argument_facets,
         facet_alignments=facet_alignments,
+        facts=facts,
         unit_frames=unit_frames,
     )
     return plan
@@ -132,6 +137,7 @@ def build_method_section_plan_with_trace(
     publication_field_candidates: tuple[Any, ...] | list[Any] = (),
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    facts: Any | None = None,
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
     """Create argument units and section graphs from authorized artifacts.
@@ -314,18 +320,19 @@ def build_method_section_plan_with_trace(
                 for config in config_items
                 if config.active and _configuration_binds_unit(config, selected)
             )
-            # Compiler stage groups may omit obligation ids even though their
-            # selected claims carry exact coverage.  Preserve that closed
-            # claim-to-obligation edge so story-spine and proposition binding
-            # do not silently lose repository-backed concept cards.
-            effective_obligation_ids = tuple(dict.fromkeys((
-                *obligation_ids,
-                *(
-                    obligation_id
-                    for selected_claim in selected
-                    for obligation_id in selected_claim.covers_obligation_ids
-                ),
-            )))
+            # The compiler-authored stage membership is the owner of a
+            # selected claim set.  A callback claim can conservatively cover
+            # several obligations, but that does not make every covered
+            # obligation a member of this stage.  Expanding the unit with
+            # every such edge turns one stage into a cross-document
+            # container and later makes every attached brief/facet appear to
+            # belong to the same paragraph.  Keep singleton claim coverage as
+            # a compatibility edge when the group omitted it; retain the
+            # declared stage coverage for multi-obligation claims.
+            effective_obligation_ids = _closed_group_obligation_ids(
+                obligation_ids,
+                selected,
+            )
             unresolved = _unresolved_for_obligations(effective_obligation_ids, matrix_by_id)
             lanes = ["executable_hard"]
             if equation_ids:
@@ -516,11 +523,25 @@ def build_method_section_plan_with_trace(
             )
         placed_keys: set[str] = set()
         for unit_index, unit in enumerate(units):
+            unit_claim_coverage = {
+                obligation_id
+                for claim_id in unit.claim_ids
+                for obligation_id in (
+                    getattr(claim_by_id.get(claim_id), "covers_obligation_ids", ())
+                    or ()
+                )
+                if str(obligation_id).strip()
+            }
             ordered_concepts = tuple(
                 card.concept_key
                 for card in cards
-                if set(obligation_by_card.get(card.concept_key, ())).intersection(
-                    unit.source_obligation_ids
+                if (
+                    set(obligation_by_card.get(card.concept_key, ())).intersection(
+                        unit.source_obligation_ids
+                    )
+                    or set(obligation_by_card.get(card.concept_key, ())).intersection(
+                        unit_claim_coverage
+                    )
                 )
                 and card.concept_key not in placed_keys
             )
@@ -590,18 +611,35 @@ def build_method_section_plan_with_trace(
             graphs=graphs,
             prior_plan=prior_plan,
         )
+    if prior_plan is not None and prior_plan.method_units:
+        method_units, graphs, method_unit_trace = _preserve_incumbent_method_unit_surface(
+            prior_plan=prior_plan,
+            rebuilt_sections=list(graphs),
+        )
+        units = list(prior_plan.argument_units)
+        plan_id = prior_plan.plan_id
+    else:
+        method_units, graphs, method_unit_trace = _build_method_units_v2(
+            graphs,
+            units,
+            argument_facets=argument_facets,
+            facet_alignments=facet_alignments,
+            publication_field_candidates=publication_field_candidates,
+            facts=facts,
+            unit_frames=unit_frames,
+        )
+        plan_id = "method-plan:" + _digest({
+            "claims": claims.content_digest,
+            "completeness": completeness.content_digest if completeness else "",
+            "equations": equations.content_digest if equations else "",
+            "configurations": configurations.content_digest if configurations else "",
+            "publication_field_candidates": _digest([
+                item.model_dump(mode="json") if hasattr(item, "model_dump") else item
+                for item in publication_field_candidates
+            ]),
+            "story_spine": [node.story_node_id for node in story_spine],
+        })[7:]
     total_page_budget = page_budget or sum(graph.page_budget for graph in graphs)
-    plan_id = "method-plan:" + _digest({
-        "claims": claims.content_digest,
-        "completeness": completeness.content_digest if completeness else "",
-        "equations": equations.content_digest if equations else "",
-        "configurations": configurations.content_digest if configurations else "",
-        "publication_field_candidates": _digest([
-            item.model_dump(mode="json") if hasattr(item, "model_dump") else item
-            for item in publication_field_candidates
-        ]),
-        "story_spine": [node.story_node_id for node in story_spine],
-    })[7:]
     story_usage = _story_spine_usage_trace(story_spine, graphs, units)
     trace = {
         "schema_version": "1.0",
@@ -623,12 +661,14 @@ def build_method_section_plan_with_trace(
         },
         "sections": trace_rows,
         "story_spine": story_usage,
+        "method_units": method_unit_trace,
     }
     return MethodSectionPlanV2(
         plan_id=plan_id,
         method_name=method_name,
         sections=tuple(graphs),
         argument_units=tuple(units),
+        method_units=tuple(method_units),
         venue=venue,
         audience=audience,
         total_page_budget=round(total_page_budget, 3),
@@ -682,15 +722,9 @@ def _coalesce_remaining_claims_by_obligation(
         candidates: list[tuple[int, int]] = []
         if claim_obligations:
             for index, group in enumerate(mutable):
-                group_obligations = {
-                    str(item) for item in group[4] if str(item)
-                }
-                for selected_claim in group[3]:
-                    group_obligations.update(
-                        str(item)
-                        for item in selected_claim.covers_obligation_ids
-                        if str(item)
-                    )
+                group_obligations = set(_closed_group_obligation_ids(
+                    group[4], group[3],
+                ))
                 overlap = len(claim_obligations.intersection(group_obligations))
                 if overlap:
                     candidates.append((overlap, index))
@@ -699,10 +733,9 @@ def _coalesce_remaining_claims_by_obligation(
             continue
         _overlap, target = max(candidates, key=lambda item: (item[0], -item[1]))
         mutable[target][3].append(claim)
-        mutable[target][4].extend(
-            item for item in claim.covers_obligation_ids
-            if item not in mutable[target][4]
-        )
+        mutable[target][4] = list(_closed_group_obligation_ids(
+            mutable[target][4], mutable[target][3],
+        ))
     return (
         [
             (
@@ -716,6 +749,39 @@ def _coalesce_remaining_claims_by_obligation(
         ],
         unassigned,
     )
+
+
+def _closed_group_obligation_ids(
+    declared_obligation_ids: Any,
+    selected_claims: Any,
+) -> tuple[str, ...]:
+    """Return the obligations owned by one compiler stage.
+
+    ``covers_obligation_ids`` on an atomic claim is evidence coverage, not a
+    section-membership instruction.  In particular, callback claims often
+    repeat a broad set of possible obligations.  The semantic-stage group's
+    declared set is therefore authoritative whenever it exists.  Singleton
+    claim coverage is safe to add for legacy groups that omitted one exact
+    edge; a multi-obligation claim is only used as a fallback when the group
+    has no declaration at all.
+    """
+
+    declared = tuple(dict.fromkeys(
+        str(value).strip()
+        for value in (declared_obligation_ids or ())
+        if str(value).strip()
+    ))
+    result = list(declared)
+    claims = tuple(selected_claims or ())
+    for claim in claims:
+        covered = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (getattr(claim, "covers_obligation_ids", ()) or ())
+            if str(value).strip()
+        ))
+        if len(covered) == 1 or not declared:
+            result.extend(value for value in covered if value not in result)
+    return tuple(result)
 
 
 def _group_organization_key(group: Any, spine_order: dict[str, int]) -> tuple[int, int, str]:
@@ -773,16 +839,15 @@ def _realized_obligation_ids(
 ) -> set[str]:
     """Obligation ids already realized by claim-based argument units.
 
-    A row is realized when a claim group carries it or one of its claims
-    covers it; the Architect must not duplicate a supported story point as a
-    candidate shell.
+    A row is realized when the compiler stage explicitly owns it, or when a
+    legacy stage has one exact singleton claim edge.  A broad multi-obligation
+    claim must not make unrelated author rows disappear from the candidate
+    path.
     """
 
     realized: set[str] = set()
     for _group_id, _heading, _purpose, selected, obligation_ids in groups:
-        realized.update(str(item) for item in obligation_ids)
-        for claim in selected:
-            realized.update(str(item) for item in claim.covers_obligation_ids)
+        realized.update(_closed_group_obligation_ids(obligation_ids, selected))
     return realized
 
 
@@ -1127,6 +1192,1859 @@ def _planning_section_heading(
     return structural, tuple(dict.fromkeys(constraints))
 
 
+def _method_unit_texts(value: Any) -> tuple[str, ...]:
+    """Read only scalar semantic values from an authoring field."""
+
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() else ()
+    if value is None or isinstance(value, dict):
+        return ()
+    try:
+        return tuple(
+            str(item).strip()
+            for item in value
+            if str(item).strip() and not isinstance(item, (dict, list, tuple))
+        )
+    except TypeError:
+        text = str(value).strip()
+        return (text,) if text else ()
+
+
+_READER_SLOT_CODE_STOPWORDS = frozenset({
+    "self", "cfg", "torch", "nn", "functional", "module", "modules",
+    "forward", "call", "result",
+})
+
+_READER_SLOT_PREDICATE_PHRASES = {
+    "computes_formula": "compute formula",
+    "computes": "compute",
+    "calls": "uses",
+    "normalizes": "normalize",
+    "concatenates": "concatenate",
+    "reduces": "reduce",
+    "sorts_by": "sort",
+    "branches_on": "branch when",
+    "configured_by": "enables",
+    "loads_weights": "enable",
+    "returns": "return",
+    "emits": "emit",
+    "outputs": "output",
+    "writes_back": "write back",
+}
+
+_READER_SLOT_TERM_EXPANSIONS = {
+    "logsumexp": ("log", "sum", "exp"),
+    "pos_sim": ("positive", "similarity"),
+    "neg_sim": ("negative", "similarity"),
+    "neg_sims": ("negative", "similarities"),
+    "all_sims": ("all", "similarities"),
+    "dropout1": ("first", "dropout"),
+    "dropout2": ("second", "dropout"),
+    "top_k": ("top", "k"),
+    "mrr": ("mean", "reciprocal", "rank"),
+    # These aliases are semantic projections, not source facts.  They keep
+    # the harness anchor stable when a Writer changes number, tense, or the
+    # usual noun/verb form of an operation.
+    "positional": ("position",),
+    "positions": ("position",),
+    "normalizes": ("normalize",),
+    "normalization": ("normalize",),
+    "normalized": ("normalize",),
+    "retriever": ("retriever", "retrieve"),
+    "retrieves": ("retriever", "retrieve"),
+    "retrieval": ("retrieval", "retrieve"),
+    "reranker": ("reranker", "rank"),
+    "rerank": ("rerank", "rank"),
+    "reranking": ("rerank", "rank"),
+    "attention": ("attention", "attend"),
+    "attends": ("attention", "attend"),
+    "attending": ("attention", "attend"),
+    "embeddings": ("embedding",),
+    "documents": ("document",),
+    "passages": ("passage",),
+    "shared": ("shared",),
+    "dedicated": ("dedicated",),
+    "masked": ("masked",),
+    "encoding": ("encode",),
+}
+
+
+def _reader_facing_slot_terms(value: Any) -> tuple[str, ...]:
+    """Project a code-shaped value into short reader-level lexical terms.
+
+    This projection is only a Binder hint.  Fact/claim ids and authority
+    lanes remain on the sidecar, so shortening an identifier cannot create
+    repository authority.  Keeping the projection here, next to the frame
+    builder, also prevents the Writer from receiving a second source-derived
+    interpretation of the operation.
+    """
+
+    text = str(value or "").strip()
+    if not text:
+        return ()
+    text = re.sub(r"\bresult\s*=\s*", " ", text, flags=re.I)
+    terms: list[str] = []
+    for raw in re.findall(r"[A-Za-z_][A-Za-z0-9_.]*|[0-9]+", text):
+        # A qualified call is represented by its useful terminal name; the
+        # generic prefixes (torch, self.cfg, and similar) are not prose.
+        pieces = re.split(r"[._]+", raw)
+        for piece in pieces:
+            if not piece:
+                continue
+            for token in re.split(r"[_\-]+|(?<=[a-z0-9])(?=[A-Z])", piece):
+                token = token.casefold()
+                if not token or token in _READER_SLOT_CODE_STOPWORDS:
+                    continue
+                expansion = _READER_SLOT_TERM_EXPANSIONS.get(token)
+                candidates = expansion or (token,)
+                for candidate in candidates:
+                    if (
+                        candidate in _READER_SLOT_CODE_STOPWORDS
+                        or (len(candidate) < 3 and not candidate.isdigit())
+                    ):
+                        continue
+                    if candidate not in terms:
+                        terms.append(candidate)
+    return tuple(terms)
+
+
+def _reader_facing_slot_semantic_atom(slot: SemanticFlowSlotV1) -> str:
+    """Build a compact semantic anchor for one closed flow slot.
+
+    The old anchor serialized ``subject predicate operands``.  That was safe
+    as an identity string but almost never occurred in natural Method prose
+    (for example ``self.dropout2(src2)``).  The new anchor retains the
+    operation meaning, operands, result, and guard in reader-facing terms
+    while leaving exact source ids in ``allowed_anchor_ids``.
+    """
+
+    predicate = str(getattr(slot, "predicate", "") or "").strip().casefold()
+    operands = tuple(
+        str(value).strip()
+        for value in (getattr(slot, "operands", ()) or ())
+        if str(value).strip()
+    )
+    terms: list[str] = []
+    result_terms: list[str] = []
+    for value in operands:
+        target = result_terms if re.search(r"\bresult\s*=", value, flags=re.I) else terms
+        for term in _reader_facing_slot_terms(value):
+            if term not in target:
+                target.append(term)
+    for value in (getattr(slot, "produced_entities", ()) or ()):
+        for term in _reader_facing_slot_terms(value):
+            if term not in terms:
+                terms.append(term)
+    conditions: list[str] = []
+    for value in (getattr(slot, "conditions", ()) or ()):
+        for term in _reader_facing_slot_terms(value):
+            if term not in conditions:
+                conditions.append(term)
+
+    action = _READER_SLOT_PREDICATE_PHRASES.get(predicate, predicate.replace("_", " "))
+    compact_terms: tuple[str, ...] = ()
+    lowered_operands = " ".join(operands).casefold()
+    if predicate in {"return", "returns", "emits", "outputs"}:
+        # Return slots often carry implementation names such as ``src`` or
+        # ``shared_attn_weights``.  The reader-facing obligation is the
+        # returned artifact, not those local variable names.
+        if "weight" in lowered_operands and (
+            "attn" in lowered_operands or "attention" in lowered_operands
+        ):
+            compact_terms = ("attention", "weights")
+    if predicate == "computes_formula" and any("+" in value for value in operands):
+        action = (
+            "combines"
+            if any(
+                "shared" in value.casefold() and "dedicated" in value.casefold()
+                for value in operands
+            )
+            else "adds"
+        )
+        # A residual attention update is normally written with implementation
+        # names such as ``src``, ``shared_out`` and ``dropout1``.  Those names
+        # are useful in the sidecar, but they are not the reader-facing
+        # language used by Method prose.  Project this specific operation to
+        # the stable semantics that a sentence can actually state: attention
+        # outputs are combined, dropout is applied, and the result is added
+        # through a residual connection.  The source span/fact ids remain the
+        # authority; this is only the lexical Binder hint.
+        if (
+            "shared" in lowered_operands
+            and "dedicated" in lowered_operands
+            and "dropout" in lowered_operands
+            and re.search(r"\bsrc\s*\+", lowered_operands)
+        ):
+            compact_terms = ("attention", "dropout", "residual")
+    elif predicate == "computes_formula" and any(
+        "dropout1" in value.casefold() or "dropout2" in value.casefold()
+        for value in operands
+    ):
+        action = "applies dropout"
+        if any("dropout2" in value.casefold() for value in operands):
+            action = "applies second dropout"
+    elif predicate == "calls":
+        lowered = " ".join(terms)
+        if "retriever" in lowered or "retrieve" in lowered:
+            action = "retrieves"
+        elif "calculate" in lowered or "metric" in lowered:
+            action = "calculates"
+    elif predicate == "reduces" and any(term in terms for term in ("mean", "average")):
+        action = "averages"
+
+    # Keep the lexical anchor concise enough for a paraphrased sentence to
+    # cover it.  Result terms are placed last but are retained even when a
+    # source operation has many implementation operands.  The subject is
+    # deliberately not included: source component names (for example a
+    # project-specific class) are not reader-level operation evidence and
+    # would make a correct paraphrase fail merely because it omits that name.
+    selected_terms = list(compact_terms or terms[:8])
+    if not compact_terms:
+        selected_terms.extend(
+            term for term in result_terms[:6] if term not in selected_terms
+        )
+    parts = [action, *selected_terms]
+    if conditions:
+        parts.extend(("when", *conditions))
+    # Keep anchors bounded.  The target remains closed by the source ids; the
+    # lexical hint only needs enough independent terms for a unique sentence.
+    return " ".join(dict.fromkeys(part for part in parts if part))[:360]
+
+
+def _reader_facing_facet_semantic_atom(facet: Any, *, fallback: str = "") -> str:
+    """Make a short facet anchor from its semantic fields.
+
+    Facet fields are already authoring-level text, but formula goals and long
+    operation statements can span several sentences.  Preserve their
+    distinctive terms instead of asking the Binder to match the full source
+    statement as one opaque atom.
+    """
+
+    fields = getattr(facet, "semantic_fields", {}) or {}
+    if not isinstance(fields, dict):
+        return str(fallback or "").strip()
+    priority = (
+        "formula_goal", "operation", "transformation", "subject", "inputs",
+        "outputs", "conditions", "interface", "boundary", "guarantee",
+    )
+    selected: list[str] = []
+    for key in priority:
+        value = fields.get(key)
+        values = _method_unit_texts(value)
+        if not values:
+            continue
+        # The first sentence carries the operation label and the distinctive
+        # nouns for ordinary facets.  Formula goals need a later objective
+        # sentence too, so retain up to two sentences for that field.
+        text = " ".join(values)
+        sentences = [
+            item.strip() for item in re.split(r"(?<=[.!?])\s+", text)
+            if item.strip()
+        ]
+        keep = sentences[:2] if key == "formula_goal" else sentences[:1]
+        selected.extend(keep)
+        if selected:
+            break
+    if not selected:
+        selected = [str(fallback or "").strip()]
+    tokens = _reader_facing_slot_terms(" ".join(selected))
+    return " ".join(tokens[:24]) or str(fallback or "").strip()
+
+
+def _method_unit_alignment_projection(
+    facet_id: str,
+    alignment_by_id: dict[str, Any],
+) -> dict[str, Any]:
+    """Project one facet alignment into MethodUnit-owned handles."""
+
+    alignment = alignment_by_id.get(facet_id)
+    statuses: list[str] = []
+    span_ids: list[str] = []
+    fact_ids: list[str] = []
+    claim_ids: list[str] = []
+    equation_ids: list[str] = []
+    conditions: list[str] = []
+    operations: list[dict[str, Any]] = []
+    symbol_ids: list[str] = []
+    shape_hints: list[str] = []
+    return_values: list[str] = []
+    signatures: list[dict[str, Any]] = []
+
+    def add_ids(target: list[str], value: Any) -> None:
+        if isinstance(value, str):
+            values = (value,)
+        else:
+            try:
+                values = tuple(value or ())
+            except TypeError:
+                values = ()
+        for item in values:
+            text = str(item or "").strip()
+            if text and text not in target:
+                target.append(text)
+
+    def value_of(item: Any, key: str, default: Any = None) -> Any:
+        if isinstance(item, dict):
+            return item.get(key, default)
+        return getattr(item, key, default)
+
+    def record_operation(atom: dict[str, Any]) -> None:
+        add_ids(symbol_ids, (
+            value_of(atom, "symbol_id"), value_of(atom, "symbol"),
+            value_of(atom, "entry_symbol_id"),
+        ))
+        raw_shapes = (
+            *_method_unit_texts(value_of(atom, "shape_or_type_hints", ())),
+            *_method_unit_texts(value_of(atom, "shape_hints", ())),
+        )
+        add_ids(shape_hints, raw_shapes)
+        predicate = str(
+            value_of(atom, "predicate") or value_of(atom, "operation")
+            or value_of(atom, "operation_id") or ""
+        ).strip()
+        operands = _method_unit_texts(value_of(atom, "operands", ()))
+        result = str(
+            value_of(atom, "result") or value_of(atom, "output")
+            or value_of(atom, "return_value") or ""
+        ).strip()
+        if predicate.casefold() in {"return", "returns", "emits", "outputs", "writes_back"}:
+            if result and result not in return_values:
+                return_values.append(result)
+        if predicate or operands or result:
+            signatures.append({
+                "predicate": predicate,
+                "operands": list(dict.fromkeys(operands)),
+                "result": result,
+                "guard": str(value_of(atom, "guard") or "").strip(),
+                "shape_or_type_hints": list(dict.fromkeys(
+                    str(item).strip() for item in raw_shapes if str(item).strip()
+                )),
+                "source_span_id": str(
+                    value_of(atom, "source_span_id") or value_of(atom, "span_id") or ""
+                ).strip(),
+            })
+
+    def add_excerpt(excerpt: Any) -> None:
+        span_id = str(value_of(excerpt, "span_id", "") or "").strip()
+        exact = str(value_of(excerpt, "exact_excerpt", "") or "").strip()
+        add_ids(span_ids, (span_id,))
+        add_ids(fact_ids, value_of(excerpt, "fact_ids", ()))
+        add_ids(claim_ids, value_of(excerpt, "claim_ids", ()))
+        add_ids(equation_ids, value_of(excerpt, "equation_ids", ()))
+        raw_atoms = value_of(excerpt, "operation_atoms", ())
+        for atom_index, raw_atom in enumerate(raw_atoms or ()):
+            if isinstance(raw_atom, dict):
+                atom = dict(raw_atom)
+                atom.setdefault("source_span_id", span_id)
+                atom.setdefault("exact_excerpt", exact)
+            else:
+                atom_text = str(raw_atom or "").strip()
+                if not atom_text:
+                    continue
+                atom = {
+                    "operation_id": f"aligned-operation:{facet_id}:{len(operations) + 1}",
+                    "predicate": "aligned_operation",
+                    "description": atom_text,
+                    "source_span_id": span_id,
+                    "exact_excerpt": exact,
+                }
+            if atom not in operations:
+                operations.append(atom)
+                record_operation(atom)
+
+    if alignment is None:
+        return {
+            "statuses": (), "span_ids": (), "fact_ids": (), "claim_ids": (),
+            "equation_ids": (), "conditions": (), "operations": (),
+        }
+    add_ids(statuses, (value_of(alignment, "status", "") or ""))
+    for name, target in (
+        ("bound_span_ids", span_ids),
+        ("bound_fact_ids", fact_ids),
+        ("bound_claim_ids", claim_ids),
+        ("bound_equation_ids", equation_ids),
+    ):
+        add_ids(target, value_of(alignment, name, ()) or ())
+    for excerpt in (value_of(alignment, "exact_excerpts", ()) or ()):
+        add_excerpt(excerpt)
+    for binding in (value_of(alignment, "field_bindings", ()) or ()):
+        add_ids(statuses, (value_of(binding, "status", "") or ""))
+        for name, target in (
+            ("bound_span_ids", span_ids),
+            ("bound_fact_ids", fact_ids),
+            ("bound_claim_ids", claim_ids),
+            ("bound_equation_ids", equation_ids),
+            ("active_path_conditions", conditions),
+        ):
+            add_ids(target, value_of(binding, name, ()) or ())
+        for excerpt in (value_of(binding, "exact_excerpts", ()) or ()):
+            add_excerpt(excerpt)
+    for raw_atom in (value_of(alignment, "operation_atoms", ()) or ()):
+        atom = dict(raw_atom) if isinstance(raw_atom, dict) else {
+            "operation": str(raw_atom or "").strip()
+        }
+        if atom and atom not in operations:
+            operations.append(atom)
+            record_operation(atom)
+    for signature in (value_of(alignment, "formalizable_signatures", ()) or ()):
+        if isinstance(signature, dict) and signature not in signatures:
+            signatures.append(dict(signature))
+    add_ids(shape_hints, value_of(alignment, "shape_or_type_hints", ()) or ())
+    add_ids(return_values, value_of(alignment, "return_value_descriptors", ()) or ())
+    return {
+        "statuses": tuple(statuses),
+        "span_ids": tuple(span_ids),
+        "fact_ids": tuple(fact_ids),
+        "claim_ids": tuple(claim_ids),
+        "equation_ids": tuple(equation_ids),
+        "conditions": tuple(conditions),
+        "operations": tuple(operations),
+        "symbol_ids": tuple(symbol_ids),
+        "shape_hints": tuple(shape_hints),
+        "return_values": tuple(return_values),
+        "signatures": tuple(signatures),
+    }
+
+
+def _method_unit_semantic_values(
+    facets: list[Any],
+) -> dict[str, tuple[str, ...]]:
+    """Collect reader-level fields without inventing values."""
+
+    inputs: list[str] = []
+    outputs: list[str] = []
+    conditions: list[str] = []
+    formula_roles: list[str] = []
+    for facet in facets:
+        fields = getattr(facet, "semantic_fields", {}) or {}
+        if not isinstance(fields, dict):
+            continue
+        for key, value in fields.items():
+            key_text = str(key).casefold()
+            values = _method_unit_texts(value)
+            if "input" in key_text or "source" in key_text:
+                for item in values:
+                    if item not in inputs:
+                        inputs.append(item)
+            if "output" in key_text or "effect" in key_text:
+                for item in values:
+                    if item not in outputs:
+                        outputs.append(item)
+            if "condition" in key_text or "precondition" in key_text or "assumption" in key_text:
+                for item in values:
+                    if item not in conditions:
+                        conditions.append(item)
+            if "formula_role" in key_text or "formula_roles" in key_text:
+                for item in values:
+                    if item not in formula_roles:
+                        formula_roles.append(item)
+        text = " ".join(
+            str(value or "") for value in fields.values()
+            if isinstance(value, str)
+        ).casefold()
+        role_pairs = (
+            ("positional_encoding", "position"),
+            ("augmentation", "augment"),
+            ("attention", "attention"),
+            ("InfoNCE", "infonce"),
+            ("contrastive", "contrastive"),
+            ("ranking", "rank"),
+            ("similarity", "similarity"),
+            ("retrieval", "retriev"),
+        )
+        for label, needle in role_pairs:
+            if needle in text and label not in formula_roles:
+                formula_roles.append(label)
+    return {
+        "inputs": tuple(inputs),
+        "outputs": tuple(outputs),
+        "conditions": tuple(conditions),
+        "formula_roles": tuple(formula_roles),
+    }
+
+
+def _witness_surface_contract(
+    *,
+    alignment: Any | None = None,
+    projection: dict[str, Any] | None = None,
+    candidate: Any | None = None,
+    default_authority: str = "executable_hard",
+) -> tuple[str, str, str]:
+    """Return the one Writer-facing surface contract for a target.
+
+    ``bound_span_ids`` answer whether a target has evidence; they do not
+    answer whether the author's whole compound statement is supported by that
+    evidence.  The old contract used the former as an ``executable_hard``
+    switch, which let a partially aligned author sentence enter positive
+    repository prose.  Keep that distinction deterministic at the Architect
+    boundary so the Writer, Binder, and quality gates consume the same
+    classification.
+    """
+
+    if candidate is not None:
+        surface = str(
+            getattr(candidate, "surface_mode", "") or "omit_and_review"
+        ).strip() or "omit_and_review"
+        render = str(
+            getattr(candidate, "render_policy", "") or "deferred"
+        ).strip() or "deferred"
+        authority = str(
+            getattr(candidate, "authority_lane", "") or default_authority
+        ).strip() or default_authority
+        return surface, render, authority
+
+    alignment_status = str(
+        getattr(alignment, "status", "") or "unresolved"
+    ).strip().casefold()
+    projected = projection or {}
+    has_evidence = bool(
+        projected.get("span_ids")
+        or projected.get("fact_ids")
+        or projected.get("claim_ids")
+        or projected.get("equation_ids")
+    )
+    if alignment_status == "entailed" and has_evidence:
+        return "repository_statement", "required", default_authority
+    if alignment_status == "partial" and has_evidence:
+        return "author_specification", "optional", "author_attested"
+    if alignment_status == "mismatch":
+        return "mismatch_statement", "optional", "author_attested"
+    return "omit_and_review", "deferred", "author_attested"
+
+
+def _attach_method_unit_witness_contracts(
+    graphs: list[SectionArgumentGraphV1],
+    units: list[MethodArgumentUnitV1] | tuple[MethodArgumentUnitV1, ...],
+    *,
+    argument_facets: tuple[Any, ...] | list[Any],
+    facet_alignments: tuple[Any, ...] | list[Any],
+    publication_field_candidates: tuple[Any, ...] | list[Any],
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
+) -> list[SectionArgumentGraphV1]:
+    """Rebuild Binder contracts after MethodUnit paragraph compaction."""
+
+    facet_by_id = {
+        str(getattr(item, "facet_id", "") or ""): item
+        for item in argument_facets
+        if str(getattr(item, "facet_id", "") or "").strip()
+    }
+    alignment_by_id = {
+        str(getattr(item, "facet_id", "") or ""): item
+        for item in facet_alignments
+        if str(getattr(item, "facet_id", "") or "").strip()
+    }
+    candidates_by_id = {
+        str(getattr(item, "candidate_id", "") or ""): item
+        for item in publication_field_candidates
+        if str(getattr(item, "candidate_id", "") or "").strip()
+    }
+    candidates_by_facet: dict[str, list[Any]] = {}
+    for candidate in publication_field_candidates:
+        facet_id = str(getattr(candidate, "facet_id", "") or "").strip()
+        if facet_id:
+            candidates_by_facet.setdefault(facet_id, []).append(candidate)
+    units_by_id = {unit.argument_unit_id: unit for unit in units}
+    enriched: list[SectionArgumentGraphV1] = []
+    for graph in graphs:
+        section_units = [
+            units_by_id[item]
+            for item in graph.argument_unit_ids
+            if item in units_by_id
+        ]
+        section_paragraphs: list[SectionParagraphPlanV1] = []
+        for paragraph in graph.paragraphs:
+            targets: list[ParagraphWitnessTargetV1] = []
+            for facet_id in paragraph.required_facet_ids:
+                facet = facet_by_id.get(facet_id)
+                semantic_fields = getattr(facet, "semantic_fields", {}) or {}
+                semantic_atom = _reader_facing_facet_semantic_atom(
+                    facet,
+                    fallback=(
+                        " ".join(
+                            str(value).strip() for value in semantic_fields.values()
+                            if str(value).strip()
+                        )[:1200] if isinstance(semantic_fields, dict) else ""
+                    ),
+                )
+                alignment = alignment_by_id.get(facet_id)
+                alignment_projection = _method_unit_alignment_projection(
+                    facet_id, alignment_by_id,
+                )
+                surface_mode, render_policy, authority_lane = _witness_surface_contract(
+                    alignment=alignment,
+                    projection=alignment_projection,
+                )
+                candidates = candidates_by_facet.get(facet_id, [])
+                excerpts = tuple(dict.fromkeys(
+                    str(value).strip()
+                    for candidate in candidates
+                    for value in (getattr(candidate, "exact_excerpts", ()) or ())
+                    if str(value).strip()
+                )) or tuple(
+                    str(getattr(item, "exact_excerpt", "") or "").strip()
+                    for item in (getattr(alignment, "exact_excerpts", ()) or ())
+                    if str(getattr(item, "exact_excerpt", "") or "").strip()
+                )
+                targets.append(ParagraphWitnessTargetV1(
+                    target_id=facet_id,
+                    target_kind="facet",
+                    semantic_atom=semantic_atom or facet_id,
+                    paper_role=str(getattr(facet, "facet_kind", "mechanism") or "mechanism"),
+                    allowed_anchor_ids=tuple(dict.fromkeys([
+                        *[
+                            value
+                            for candidate in candidates
+                            for value in (getattr(candidate, "bound_span_ids", ()) or ())
+                        ],
+                        *alignment_projection["span_ids"],
+                    ])),
+                    allowed_exact_excerpts=tuple(dict.fromkeys(excerpts)),
+                    authority_lane=authority_lane,
+                    surface_mode=surface_mode,
+                    render_policy=render_policy,
+                ))
+            for candidate_id in paragraph.required_field_candidate_ids:
+                candidate = candidates_by_id.get(candidate_id)
+                if candidate is None:
+                    continue
+                targets.append(ParagraphWitnessTargetV1(
+                    target_id=candidate_id,
+                    target_kind="field",
+                    semantic_atom=str(getattr(candidate, "semantic_atom", "") or candidate_id),
+                    paper_role=str(getattr(candidate, "field_name", "mechanism") or "mechanism"),
+                    required_polarity=str(getattr(candidate, "polarity", "unknown") or "unknown"),
+                    required_conditions=tuple(getattr(candidate, "conditions", ()) or ()),
+                    allowed_anchor_ids=tuple(getattr(candidate, "bound_span_ids", ()) or ()),
+                    allowed_exact_excerpts=tuple(getattr(candidate, "exact_excerpts", ()) or ()),
+                    authority_lane=_witness_surface_contract(
+                        candidate=candidate,
+                    )[2],
+                    surface_mode=_witness_surface_contract(
+                        candidate=candidate,
+                    )[0],
+                    render_policy=_witness_surface_contract(
+                        candidate=candidate,
+                    )[1],
+                ))
+            frames = [
+                unit_frames.get(unit.argument_unit_id)
+                if unit_frames is not None
+                else unit.semantic_frame
+                for unit in section_units
+                if unit.argument_unit_id in paragraph.argument_unit_ids
+            ]
+            frames = [frame for frame in frames if frame is not None]
+            # A compact MethodUnit may own more than one argument unit.  The
+            # old first-frame lookup silently dropped publication slots owned
+            # by the later unit, leaving a required slot without a Binder
+            # contract.  Keep the lookup paragraph-scoped and merge all
+            # contributing frames deterministically.
+            slot_by_id = {
+                slot.slot_id: slot
+                for frame in frames
+                for slot in frame.slots
+            }
+            for slot_id in paragraph.required_publication_slot_ids:
+                slot = slot_by_id.get(slot_id)
+                if slot is None:
+                    continue
+                targets.append(ParagraphWitnessTargetV1(
+                    target_id=slot_id,
+                    target_kind="slot",
+                    semantic_atom=_reader_facing_slot_semantic_atom(slot) or slot_id,
+                    paper_role=str(slot.role),
+                    required_conditions=tuple(slot.conditions),
+                    allowed_anchor_ids=tuple((*slot.fact_ids, *slot.claim_ids)),
+                    authority_lane=slot.authority_lanes[0] if slot.authority_lanes else "executable_hard",
+                    surface_mode="repository_statement",
+                    render_policy="required",
+                ))
+            edge_by_id = {
+                edge.relation_id: edge
+                for frame in frames
+                for edge in frame.edges
+            }
+            for edge_id in paragraph.required_edge_ids:
+                edge = edge_by_id.get(edge_id)
+                if edge is None:
+                    continue
+                targets.append(ParagraphWitnessTargetV1(
+                    target_id=edge_id,
+                    target_kind="edge",
+                    semantic_atom=f"{edge.source_symbol} {edge.relation_type} {edge.target_symbol}",
+                    paper_role="data_flow",
+                    required_conditions=tuple(edge.conditions),
+                    allowed_anchor_ids=tuple(edge.direct_span_ids),
+                    authority_lane="executable_hard",
+                    surface_mode="repository_statement",
+                    render_policy="required",
+                ))
+            for obligation_id in paragraph.formula_obligation_ids:
+                targets.append(ParagraphWitnessTargetV1(
+                    target_id=obligation_id,
+                    target_kind="formula",
+                    semantic_atom="formal expression",
+                    paper_role="formula",
+                    allowed_anchor_ids=(obligation_id,),
+                    authority_lane="formal_derivation",
+                    surface_mode="repository_statement",
+                    render_policy="required",
+                ))
+            target_by_key: dict[tuple[str, str], ParagraphWitnessTargetV1] = {}
+            for target in targets:
+                target_by_key.setdefault((target.target_kind, target.target_id), target)
+            section_paragraphs.append(paragraph.model_copy(update={
+                "witness_contract": ParagraphWitnessContractV1(
+                    paragraph_id=paragraph.paragraph_id,
+                    rhetorical_goal=str(paragraph.paragraph_role),
+                    targets=tuple(target_by_key.values()),
+                ) if targets else None,
+            }))
+        enriched.append(graph.model_copy(update={"paragraphs": tuple(section_paragraphs)}))
+    return enriched
+
+
+def _closed_method_unit_slots(
+    *,
+    section_id: str,
+    paragraph_id: str,
+    original_order: Any,
+    support_slots: Any,
+    publication_slots: Any,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Close the paragraph slot contract before Pydantic validation.
+
+    Support/publication slots are contract members, not display hints.  The
+    plan therefore keeps every required id in the ordered sequence; any
+    future LLM compaction must happen on a separate reader projection.
+    """
+
+    def dedupe(values: Any) -> tuple[str, ...]:
+        if isinstance(values, str):
+            values = (values,)
+        try:
+            return tuple(dict.fromkeys(
+                str(value).strip() for value in (values or ()) if str(value).strip()
+            ))
+        except TypeError:
+            return ()
+
+    original = dedupe(original_order)
+    support = dedupe(support_slots)
+    publication = dedupe(publication_slots)
+    ordered = tuple(dict.fromkeys((*original, *support, *publication)))
+    required = set((*support, *publication))
+    missing = tuple(sorted(required - set(ordered)))
+    if missing:
+        raise ValueError(
+            "method_unit_slot_closure_failed:"
+            f"section={section_id}:paragraph={paragraph_id}:"
+            f"missing={','.join(missing)}"
+        )
+    return support, publication, ordered
+
+
+
+def _preserve_incumbent_method_unit_surface(
+    *,
+    prior_plan: MethodSectionPlanV2,
+    rebuilt_sections: list[SectionArgumentGraphV1],
+) -> tuple[tuple[MethodUnitV2, ...], list[SectionArgumentGraphV1], dict[str, Any]]:
+    """Keep freeze MethodUnits and their paragraph contracts.
+
+    Facet regrouping (groups of four) is a rebuild-only organization step.
+    A reused or callback-resumed plan already has reader paragraphs,
+    publication slots, and formula consumers; only frames/witness metadata
+    on the surrounding graph may be refreshed.
+    """
+
+    prior_by_id = {graph.section_id: graph for graph in prior_plan.sections}
+    preserved: list[SectionArgumentGraphV1] = []
+    for graph in rebuilt_sections:
+        prior = prior_by_id.get(graph.section_id)
+        if prior is None or not prior.paragraphs:
+            preserved.append(graph)
+            continue
+        preserved.append(graph.model_copy(update={
+            "paragraphs": prior.paragraphs,
+            "argument_unit_ids": prior.argument_unit_ids,
+        }))
+    rebuilt_ids = {graph.section_id for graph in preserved}
+    for prior in prior_plan.sections:
+        if prior.section_id not in rebuilt_ids:
+            preserved.append(prior)
+    preserved = _order_context_sections_before_mechanism(
+        preserved,
+        units=tuple(getattr(prior_plan, "argument_units", ()) or ()),
+        argument_facets=(),
+    )
+    return (
+        tuple(prior_plan.method_units),
+        preserved,
+        {
+            "enabled": True,
+            "preserved_existing_method_units": True,
+            "compaction_applied": False,
+            "method_unit_count": len(prior_plan.method_units),
+            "paragraph_count": sum(len(graph.paragraphs) for graph in preserved),
+        },
+    )
+
+
+_CONTEXT_RHETORICAL_MOVES = frozenset({
+    "problem_or_local_context",
+    "design_objective",
+    "intuition_or_rationale",
+})
+_TECHNICAL_FACET_KINDS = frozenset({
+    "mechanism", "formula", "interface", "constraint", "guarantee",
+})
+
+
+def _unit_is_context_only(unit: Any) -> bool:
+    """Whether an argument unit is a problem/motivation/design-intent owner."""
+
+    role = str(getattr(unit, "section_role", "") or "").casefold()
+    if role in {"motivation", "context", "problem"}:
+        return True
+    moves = {
+        str(item or "").strip()
+        for item in (getattr(unit, "allowed_expository_moves", ()) or ())
+        if str(item or "").strip()
+    }
+    if not moves:
+        return False
+    leftover = moves - _CONTEXT_RHETORICAL_MOVES - {"transition_to_next_section"}
+    return bool(moves & _CONTEXT_RHETORICAL_MOVES) and not leftover
+
+
+def _facet_is_context_rationale(facet: Any, *, section_units: list[Any]) -> bool:
+    """True for a bounded motivation/rationale/design-objective facet."""
+
+    kind = str(getattr(facet, "facet_kind", "") or "").casefold()
+    if kind == "motivation":
+        return True
+    fields = getattr(facet, "semantic_fields", {}) or {}
+    field_keys = " ".join(str(key) for key in fields).casefold() if isinstance(fields, dict) else ""
+    if any(
+        token in field_keys
+        for token in ("rationale", "design_objective", "motivation", "problem")
+    ):
+        return True
+    brief_id = str(getattr(facet, "brief_id", "") or "").strip()
+    if kind in _TECHNICAL_FACET_KINDS:
+        return False
+    for unit in section_units:
+        if not _unit_is_context_only(unit):
+            continue
+        unit_briefs = {
+            str(value).strip()
+            for value in (unit.brief_order or unit.brief_ids or ())
+            if str(value).strip()
+        }
+        if brief_id and brief_id in unit_briefs:
+            return True
+        if not brief_id:
+            return True
+    return False
+
+
+def _select_representative_context_facet(
+    section_facets: list[Any],
+    *,
+    selected_ids: set[str],
+    section_units: list[Any],
+) -> Any | None:
+    """Keep one reader-facing rationale facet; do not promote every optional."""
+
+    for facet in section_facets:
+        facet_id = str(getattr(facet, "facet_id", "") or "").strip()
+        if not facet_id or facet_id in selected_ids:
+            continue
+        if _facet_is_context_rationale(facet, section_units=section_units):
+            return facet
+    return None
+
+
+def _method_unit_expected_sentence_range(
+    *,
+    facets: list[Any],
+    argument_unit_ids: tuple[str, ...],
+) -> tuple[int, int]:
+    """Bounded sentence guidance from conceptual payload, not required-count."""
+
+    context = 0
+    mechanism = 0
+    for facet in facets:
+        kind = str(getattr(facet, "facet_kind", "") or "").casefold()
+        if kind == "motivation" or _facet_is_context_rationale(facet, section_units=[]):
+            context += 1
+        elif kind in _TECHNICAL_FACET_KINDS or bool(getattr(facet, "required", False)):
+            mechanism += 1
+    payload = context + mechanism + min(2, len(tuple(
+        item for item in argument_unit_ids if str(item).strip()
+    )))
+    if payload <= 0:
+        payload = max(1, len(facets) or 1)
+    low = 2 if context else 1
+    high = max(low + 1, min(6, payload + (1 if context else 0)))
+    return (low, high)
+
+
+def _section_is_pure_context(
+    graph: Any,
+    *,
+    units_by_id: dict[str, Any],
+    facets_by_id: dict[str, Any],
+) -> bool:
+    """Rhetorical context section: motivation/problem without mechanism payload."""
+
+    section_units = [
+        units_by_id[item]
+        for item in (getattr(graph, "argument_unit_ids", ()) or ())
+        if item in units_by_id
+    ]
+    moves = {
+        str(getattr(move, "move", "") or "").strip()
+        for move in (getattr(graph, "moves", ()) or ())
+        if str(getattr(move, "move", "") or "").strip()
+    }
+    for unit in section_units:
+        moves.update(
+            str(item).strip()
+            for item in (getattr(unit, "allowed_expository_moves", ()) or ())
+            if str(item).strip()
+        )
+        if str(getattr(unit, "section_role", "") or "").casefold() in {
+            "motivation", "context", "problem",
+        }:
+            moves.add("problem_or_local_context")
+    facet_ids = {
+        str(facet_id).strip()
+        for paragraph in (getattr(graph, "paragraphs", ()) or ())
+        for facet_id in (getattr(paragraph, "required_facet_ids", ()) or ())
+        if str(facet_id).strip()
+    }
+    kinds = {
+        str(getattr(facets_by_id[facet_id], "facet_kind", "") or "").casefold()
+        for facet_id in facet_ids
+        if facet_id in facets_by_id
+    }
+    has_technical_facet = bool(kinds & _TECHNICAL_FACET_KINDS)
+    has_context_facet = "motivation" in kinds
+    has_context_move = bool(moves & _CONTEXT_RHETORICAL_MOVES)
+    technical_moves = moves - _CONTEXT_RHETORICAL_MOVES - {"transition_to_next_section"}
+    if has_technical_facet or technical_moves:
+        return False
+    return bool(has_context_facet or has_context_move or any(
+        _unit_is_context_only(unit) for unit in section_units
+    ))
+
+
+def _order_context_sections_before_mechanism(
+    graphs: list[Any],
+    *,
+    units: list[Any] | tuple[Any, ...],
+    argument_facets: tuple[Any, ...] | list[Any],
+) -> list[Any]:
+    """Place a pure context section before mechanism when a reused plan inverts them."""
+
+    if len(graphs) < 2:
+        return graphs
+    units_by_id = {
+        str(getattr(unit, "argument_unit_id", "") or ""): unit
+        for unit in units
+        if str(getattr(unit, "argument_unit_id", "") or "").strip()
+    }
+    facets_by_id = {
+        str(getattr(facet, "facet_id", "") or ""): facet
+        for facet in argument_facets
+        if str(getattr(facet, "facet_id", "") or "").strip()
+    }
+    kinds = [
+        "context" if _section_is_pure_context(
+            graph, units_by_id=units_by_id, facets_by_id=facets_by_id,
+        ) else "other"
+        for graph in graphs
+    ]
+    if "context" not in kinds or "other" not in kinds:
+        return graphs
+    first_other = kinds.index("other")
+    if not any(
+        kind == "context" for kind in kinds[first_other + 1:]
+    ):
+        return graphs
+    context = [graph for graph, kind in zip(graphs, kinds) if kind == "context"]
+    rest = [graph for graph, kind in zip(graphs, kinds) if kind != "context"]
+    return [*context, *rest]
+
+
+def _build_method_units_v2(
+    graphs: list[SectionArgumentGraphV1],
+    units: list[MethodArgumentUnitV1] | tuple[MethodArgumentUnitV1, ...],
+    *,
+    argument_facets: tuple[Any, ...] | list[Any],
+    facet_alignments: tuple[Any, ...] | list[Any],
+    publication_field_candidates: tuple[Any, ...] | list[Any],
+    facts: Any | None = None,
+    unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
+) -> tuple[tuple[MethodUnitV2, ...], list[SectionArgumentGraphV1], dict[str, Any]]:
+    """Compile bounded reader units and compact paragraph transactions."""
+
+    if not argument_facets or not facet_alignments:
+        return (), graphs, {"enabled": False, "method_unit_count": 0}
+    facets = tuple(argument_facets)
+    fact_by_id = {
+        str(getattr(item, "fact_id", "") or ""): item
+        for item in (getattr(facts, "facts", ()) or ())
+        if str(getattr(item, "fact_id", "") or "").strip()
+    }
+    fact_ids_by_span: dict[str, list[str]] = {}
+    for fact_id, fact in fact_by_id.items():
+        for span_id in dict.fromkeys([
+            *(getattr(fact, "direct_span_ids", ()) or ()),
+            *(getattr(fact, "relation_span_ids", ()) or ()),
+        ]):
+            span_text = str(span_id or "").strip()
+            if span_text:
+                fact_ids_by_span.setdefault(span_text, []).append(fact_id)
+    compile_fact_chain = None
+    if fact_by_id:
+        from code2paper.agentic.research_derived_authoring import (
+            compile_code_fact_operation_chain,
+        )
+        compile_fact_chain = compile_code_fact_operation_chain
+    alignment_by_id = {
+        str(getattr(item, "facet_id", "") or ""): item
+        for item in facet_alignments
+        if str(getattr(item, "facet_id", "") or "").strip()
+    }
+    units_by_id = {unit.argument_unit_id: unit for unit in units}
+    compiled_units: list[MethodUnitV2] = []
+    compacted_graphs: list[SectionArgumentGraphV1] = []
+    trace_rows: list[dict[str, Any]] = []
+
+    for graph in graphs:
+        section_units = [
+            units_by_id[item]
+            for item in graph.argument_unit_ids
+            if item in units_by_id
+        ]
+        unit_briefs = {
+            str(brief_id).strip()
+            for unit in section_units
+            for brief_id in (unit.brief_order or unit.brief_ids)
+            if str(brief_id).strip()
+        }
+        # Once the current units carry a fresh brief projection, it is the
+        # only valid section ownership source.  Graph-level brief ids belong
+        # to the frozen plan and may describe a paragraph that has since been
+        # split or moved.  Keep the graph fallback only for legacy plans
+        # where no unit has any brief binding at all.
+        section_briefs = unit_briefs or {
+            str(value).strip()
+            for value in (
+                *getattr(graph, "primary_brief_ids", ()),
+                *getattr(graph, "supporting_brief_ids", ()),
+            )
+            if str(value).strip()
+        }
+        section_facet_values = [
+            facet for facet in facets
+            if (
+                str(getattr(facet, "brief_id", "") or "").strip() in section_briefs
+                or (
+                    not section_briefs and len(graphs) == 1
+                    and not str(getattr(facet, "brief_id", "") or "").strip()
+                )
+            )
+        ]
+        if not section_facet_values:
+            compacted_graphs.append(graph)
+            continue
+        selected = [
+            facet for facet in section_facet_values
+            if bool(getattr(facet, "required", False))
+            or str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+        ]
+        if not selected:
+            selected = [
+                facet for facet in section_facet_values
+                if str(getattr(facet, "facet_kind", "") or "") in {"mechanism", "formula"}
+            ][:1]
+        selected_ids = {str(getattr(facet, "facet_id", "") or "") for facet in selected}
+        if not any(
+            _facet_is_context_rationale(facet, section_units=section_units)
+            for facet in selected
+        ):
+            representative = _select_representative_context_facet(
+                section_facet_values,
+                selected_ids=selected_ids,
+                section_units=section_units,
+            )
+            if representative is not None:
+                selected.insert(0, representative)
+                selected_ids.add(
+                    str(getattr(representative, "facet_id", "") or "")
+                )
+        if not selected:
+            compacted_graphs.append(graph)
+            continue
+        # Preserve an already-bound facet when a frozen plan is replayed.  It
+        # is assigned to the group containing its exact argument unit below.
+        old_facet_ids = {
+            str(facet_id)
+            for paragraph in graph.paragraphs
+            for facet_id in paragraph.required_facet_ids
+            if str(facet_id).strip()
+        }
+        for facet in section_facet_values:
+            facet_id = str(getattr(facet, "facet_id", "") or "")
+            if facet_id in old_facet_ids and facet_id not in selected_ids:
+                selected.append(facet)
+                selected_ids.add(facet_id)
+        # Candidate prose needs a reader-sized mechanism paragraph, not one
+        # paragraph per facet.  The previous owner-first projection made a
+        # 7-paragraph EBCAR plan expand to 17 paragraphs because most briefs
+        # intentionally contain one facet.  That fragmentation caused the
+        # Writer to emit short caveat shells and made the paragraph/facet
+        # transaction impossible to close.  Keep the author-story order and
+        # compact adjacent facets into bounded groups of four.  Evidence
+        # ownership remains closed below through exact fact/span/slot
+        # bindings; grouping is only a Candidate organization projection.
+        groups = [
+            selected[index:index + 4]
+            for index in range(0, len(selected), 4)
+        ]
+        group_unit_ids: list[tuple[str, ...]] = []
+        group_brief_sets: list[set[str]] = []
+        for group in groups:
+            group_briefs = {
+                str(getattr(facet, "brief_id", "") or "")
+                for facet in group
+                if str(getattr(facet, "brief_id", "") or "").strip()
+            }
+            group_brief_sets.append(group_briefs)
+            group_units = [
+                unit.argument_unit_id for unit in section_units
+                if group_briefs.intersection(
+                    set(unit.brief_order or unit.brief_ids)
+                )
+            ]
+            if not group_units:
+                group_units = list(graph.argument_unit_ids)
+            # Keep the complete unit closure.  A paragraph may be compacted
+            # from several old rows, and limiting this list to two units can
+            # orphan the frame that owns a carried publication slot.
+            group_unit_ids.append(tuple(dict.fromkeys(group_units)))
+
+        formula_group_indexes = [
+            index for index, group in enumerate(groups)
+            if any(
+                str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+                or str(getattr(facet, "facet_kind", "") or "") == "formula"
+                for facet in group
+            )
+        ]
+        graph_formula_index = (
+            formula_group_indexes[-1]
+            if formula_group_indexes else len(groups) - 1
+        )
+        # A semantic unit may legitimately be split across two new reader
+        # paragraphs.  Do not therefore copy every old paragraph into every
+        # group sharing that unit: doing so duplicates facet/field/formula
+        # handles in the Binder sidecar and inflates the required-target
+        # denominator.  Assign each old row to its best matching group once,
+        # preferring exact facet overlap and then argument-unit overlap.  The
+        # stable group index is the final tie-break for deterministic replay.
+        old_rows_by_group: list[list[SectionParagraphPlanV1]] = [
+            [] for _ in groups
+        ]
+        group_unit_sets = [set(group_units) for group_units in group_unit_ids]
+        group_facet_sets = [
+            {
+                str(getattr(facet, "facet_id", "") or "").strip()
+                for facet in group
+                if str(getattr(facet, "facet_id", "") or "").strip()
+            }
+            for group in groups
+        ]
+
+        # A compact paragraph may contain rows from several argument units,
+        # while a selected component facet may have no argument unit of its
+        # own.  In that case the old row boundary is not an ownership proof:
+        # it can leave attention slots in the overview paragraph and leave
+        # the component paragraph with no slot at all.  Build one closed
+        # section-wide slot index and assign only reader-meaningful slots to
+        # the group whose facet semantics support them.  This is an
+        # organizational projection; fact/claim ids and their authority stay
+        # untouched.
+        section_slots: dict[str, SemanticFlowSlotV1] = {}
+        slot_owner_units: dict[str, list[str]] = {}
+        slot_owner_briefs: dict[str, set[str]] = {}
+        section_slot_order: list[str] = []
+        for unit in section_units:
+            frame = (
+                unit_frames.get(unit.argument_unit_id)
+                if unit_frames is not None
+                else unit.semantic_frame
+            )
+            for slot in (frame.slots if frame is not None else ()):
+                slot_id = str(slot.slot_id).strip()
+                if not slot_id:
+                    continue
+                if slot_id not in section_slots:
+                    section_slots[slot_id] = slot
+                    section_slot_order.append(slot_id)
+                slot_owner_units.setdefault(slot_id, []).append(unit.argument_unit_id)
+                slot_owner_briefs.setdefault(slot_id, set()).update(
+                    str(value).strip()
+                    for value in (unit.brief_order or unit.brief_ids or ())
+                    if str(value).strip()
+                )
+
+        def _facet_projection(facet: Any) -> dict[str, Any]:
+            projection = _method_unit_alignment_projection(
+                str(getattr(facet, "facet_id", "") or ""), alignment_by_id,
+            )
+            if not projection.get("fact_ids") and fact_ids_by_span:
+                recovered_fact_ids = tuple(dict.fromkeys(
+                    fact_id
+                    for span_id in projection.get("span_ids", ())
+                    for fact_id in fact_ids_by_span.get(str(span_id), ())
+                ))
+                if recovered_fact_ids:
+                    projection = {
+                        **projection,
+                        "fact_ids": recovered_fact_ids,
+                    }
+            return projection
+
+        group_evidence: list[dict[str, set[str]]] = []
+        for group in groups:
+            evidence = {
+                "fact_ids": set(),
+                "claim_ids": set(),
+                "span_ids": set(),
+            }
+            for facet in group:
+                projection = _facet_projection(facet)
+                for key in evidence:
+                    evidence[key].update(
+                        str(value).strip()
+                        for value in projection.get(key, ())
+                        if str(value).strip()
+                    )
+            group_evidence.append(evidence)
+
+        # These are intentionally broad semantic terms rather than
+        # project-specific vocabulary.  They prevent a generic word such as
+        # ``embedding`` from making two unrelated groups look distinct while
+        # retaining operation words (attention, position, ranking, and so on)
+        # that are useful for paragraph ownership.
+        semantic_noise = frozenset({
+            "the", "and", "or", "with", "from", "into", "then", "when",
+            "this", "that", "for", "each", "all", "only", "using", "its",
+            "their", "current", "same", "fixed", "updated", "positive",
+            "negative", "query", "passage", "passages", "document",
+            "documents", "embedding", "embeddings", "output", "outputs",
+            "input", "inputs", "model", "module", "modules", "formula",
+            "compute", "computes", "computed", "operation", "operations",
+        })
+
+        def _match_terms(value: Any) -> set[str]:
+            return set(_reader_facing_slot_terms(value))
+
+        group_facet_terms = [
+            [
+                _match_terms(_reader_facing_facet_semantic_atom(facet))
+                for facet in group
+            ]
+            for group in groups
+        ]
+        slot_group: dict[str, int] = {}
+        for slot_id in section_slot_order:
+            slot = section_slots[slot_id]
+            # The same fact can legitimately be present in two argument
+            # frames after claim projection.  Such a duplicate has no single
+            # paragraph owner until an exact evidence edge disambiguates it;
+            # keep it as support rather than making one copy a hard target.
+            if len(set(slot_owner_units.get(slot_id, ()))) > 1:
+                continue
+            # Subject names identify the component, but the component name
+            # alone must not bind a low-level slot.  Score the operation,
+            # operands, result and guard first; the subject is used only as a
+            # secondary signal for an otherwise tied operation.
+            content_text = " ".join((
+                str(getattr(slot, "predicate", "") or ""),
+                *(str(value) for value in (getattr(slot, "operands", ()) or ())),
+                *(str(value) for value in (getattr(slot, "produced_entities", ()) or ())),
+                *(str(value) for value in (getattr(slot, "conditions", ()) or ())),
+            ))
+            content_terms = _match_terms(content_text)
+            subject_terms = _match_terms(getattr(slot, "subject", ""))
+            content_terms -= semantic_noise
+            subject_terms -= semantic_noise
+            score_rows: list[tuple[int, int, int]] = []
+            for facet_terms in group_facet_terms:
+                overlaps = [
+                    len(content_terms.intersection(terms))
+                    for terms in facet_terms
+                ]
+                best = max(overlaps, default=0)
+                score_rows.append((
+                    best,
+                    sum(1 for value in overlaps if value > 0),
+                    sum(sorted(overlaps, reverse=True)[:3]),
+                ))
+            # A subject term can disambiguate two operation groups, but a
+            # subject-only match cannot create a hard slot.  Add at most one
+            # point to an existing content match.
+            for index, facet_terms in enumerate(group_facet_terms):
+                subject_overlap = max(
+                    (len(subject_terms.intersection(terms)) for terms in facet_terms),
+                    default=0,
+                )
+                if subject_overlap and score_rows[index][0]:
+                    best, count, total = score_rows[index]
+                    score_rows[index] = (best + 1, count, total + 1)
+
+            best_score = max(score_rows, default=(0, 0, 0))
+            if best_score[0] < 2:
+                continue
+            top_indexes = [
+                index for index, score in enumerate(score_rows)
+                if score == best_score
+            ]
+            owner_groups = [
+                index for index, group_briefs in enumerate(group_brief_sets)
+                if slot_owner_briefs.get(slot_id, set()).intersection(group_briefs)
+            ]
+            # A slot whose owning argument unit is not represented by any
+            # selected facet group is not safe to promote into a paragraph's
+            # publication contract.  Keep it as support unless a later
+            # exact fact/claim evidence pass can assign it unambiguously.
+            # This prevents an unrelated evaluation/reranking slot from
+            # becoming a hard target merely because generic words such as
+            # ``embedding`` or ``retrieval`` overlap with a high-level facet.
+            if not owner_groups:
+                continue
+            chosen: int | None = None
+            owner_scores = [
+                (score_rows[index], index)
+                for index in owner_groups
+            ]
+            owner_choice = (
+                max(owner_scores, key=lambda item: (item[0], -item[1]))
+                if owner_scores else None
+            )
+            # An operation that is shared by a high-level facet and several
+            # component facets belongs to the component group only when the
+            # component group has materially broader facet support.  This
+            # moves a combined shared/dedicated operation to the component
+            # paragraph without moving a generic positional operation away
+            # from its owning stage.
+            if owner_choice is not None:
+                chosen = owner_choice[1]
+                top = top_indexes[0]
+                if top != chosen:
+                    chosen_score = score_rows[chosen]
+                    top_score = score_rows[top]
+                    component_terms = content_terms.intersection({
+                        "shared", "dedicated", "masked", "global", "intra",
+                        "cross", "hybrid", "attention", "attend",
+                    })
+                    external_is_materially_stronger = (
+                        top_score[0] >= chosen_score[0] + 2
+                        or top_score[1] >= chosen_score[1] + 2
+                        or top_score[2] >= chosen_score[2] + 4
+                    )
+                    if (
+                        len(owner_groups) == 1
+                        and not len(component_terms) >= 2
+                        and top_score[0] <= chosen_score[0] + 2
+                    ):
+                        external_is_materially_stronger = False
+                    if external_is_materially_stronger:
+                        chosen = top
+            elif len(top_indexes) == 1:
+                chosen = top_indexes[0]
+            if chosen is None and len(top_indexes) == 1:
+                chosen = top_indexes[0]
+            if chosen is not None:
+                slot_group[slot_id] = chosen
+
+        # A slot aligned to a single group's exact evidence can be assigned
+        # even when its natural-language operation label is short.  Exact
+        # evidence is only a tie breaker here, never a replacement for the
+        # closed slot/fact binding.
+        for slot_id, slot in section_slots.items():
+            if slot_id in slot_group or len(set(slot_owner_units.get(slot_id, ()))) > 1:
+                continue
+            slot_facts = set(str(value) for value in (slot.fact_ids or ()))
+            slot_claims = set(str(value) for value in (slot.claim_ids or ()))
+            evidence_groups = [
+                index for index, evidence in enumerate(group_evidence)
+                if (
+                    slot_facts.intersection(evidence["fact_ids"])
+                    or slot_claims.intersection(evidence["claim_ids"])
+                )
+            ]
+            owner_groups = [
+                index for index, group_briefs in enumerate(group_brief_sets)
+                if slot_owner_briefs.get(slot_id, set()).intersection(group_briefs)
+            ]
+            if len(evidence_groups) == 1 and evidence_groups[0] in owner_groups:
+                slot_group[slot_id] = evidence_groups[0]
+        for paragraph in graph.paragraphs:
+            paragraph_units = set(paragraph.argument_unit_ids)
+            paragraph_facets = {
+                str(facet_id).strip()
+                for facet_id in paragraph.required_facet_ids
+                if str(facet_id).strip()
+            }
+            scores = [
+                (
+                    len(paragraph_facets.intersection(group_facet_sets[index])),
+                    len(paragraph_units.intersection(group_unit_sets[index])),
+                )
+                for index in range(len(groups))
+            ]
+            best_score = max(scores, default=(0, 0))
+            if best_score == (0, 0):
+                old_rows_by_group[0].append(paragraph)
+                continue
+            best_index = scores.index(best_score)
+            old_rows_by_group[best_index].append(paragraph)
+        # Replayed rows are not an ownership proof.  In particular, a frozen
+        # overview row may contain every unit in a section after an earlier
+        # lossy compaction.  Once the current facet->brief->unit edge has
+        # selected a group, do not append those stale unit ids back into the
+        # MethodUnit; doing so recreates the cross-stage evidence wall this
+        # rebuild is meant to remove.  The graph-level fallback above remains
+        # available only when no exact group unit could be found.
+        for slot_id, group_index in slot_group.items():
+            group_unit_ids[group_index] = tuple(dict.fromkeys((
+                *group_unit_ids[group_index],
+                *slot_owner_units.get(slot_id, ()),
+            )))
+        new_paragraphs: list[SectionParagraphPlanV1] = []
+        group_method_unit_ids: list[str] = []
+        all_group_facet_ids = set().union(*group_facet_sets) if group_facet_sets else set()
+        for group_index, group in enumerate(groups, start=1):
+            group_zero = group_index - 1
+            facet_ids = [
+                str(getattr(facet, "facet_id", "") or "")
+                for facet in group
+                if str(getattr(facet, "facet_id", "") or "").strip()
+            ]
+            for row in old_rows_by_group[group_zero]:
+                # Selected facets are already assigned to exactly one group.
+                # Carry only an identity that is absent from the current
+                # facet selection; otherwise a replayed old row can append a
+                # facet to a second paragraph after the new grouping has
+                # already closed it into another group.
+                facet_ids.extend(
+                    facet_id for facet_id in row.required_facet_ids
+                    if facet_id not in all_group_facet_ids
+                    and (
+                        not argument_facets
+                        or any(
+                            str(getattr(current_facet, "facet_id", "") or "") == facet_id
+                            and (
+                                bool(getattr(current_facet, "required", False))
+                                or str(getattr(current_facet, "formula_expectation", "none") or "none") != "none"
+                            )
+                            for current_facet in section_facet_values
+                        )
+                    )
+                )
+            facet_ids = list(dict.fromkeys(item for item in facet_ids if item))
+            field_ids = [
+                candidate_id
+                for row in old_rows_by_group[group_zero]
+                for candidate_id in row.required_field_candidate_ids
+            ]
+            field_ids = list(dict.fromkeys(field_ids))
+            group_owned_slot_ids = {
+                slot_id
+                for unit_id in group_unit_ids[group_zero]
+                for slot_id, owners in slot_owner_units.items()
+                if unit_id in owners
+            }
+            # A fresh facet projection has its own exact evidence-to-slot
+            # assignment.  Carrying the frozen row's complete slot list would
+            # put all 47 slots of a dense implementation unit back into every
+            # new facet paragraph, even when only one operation belongs there.
+            # Legacy plans without facets still need their old support
+            # closure, so keep that compatibility path explicit.
+            row_slots = []
+            if not argument_facets:
+                row_slots = [
+                    slot_id
+                    for row in old_rows_by_group[group_zero]
+                    for slot_id in row.ordered_semantic_slot_ids
+                    if slot_id in group_owned_slot_ids
+                ]
+            assigned_slots = [
+                slot_id for slot_id in section_slot_order
+                if slot_group.get(slot_id) == group_zero
+            ]
+            slots = list(dict.fromkeys((*row_slots, *assigned_slots)))
+            group_owned_edge_ids = {
+                edge.relation_id
+                for unit_id in group_unit_ids[group_zero]
+                for unit in section_units
+                if unit.argument_unit_id == unit_id
+                for frame in ((unit_frames.get(unit_id) if unit_frames is not None else unit.semantic_frame),)
+                if frame is not None
+                for edge in frame.edges
+            }
+            edges = [
+                edge_id
+                for row in old_rows_by_group[group_zero]
+                for edge_id in row.required_edge_ids
+                if edge_id in group_owned_edge_ids
+            ]
+            # Only uniquely owned semantic slots become hard publication
+            # targets.  Intermediate or ambiguous slots remain in the
+            # support/ordered closure and are still available to the Writer.
+            # This is the same compact-spine rule used by the base planner,
+            # now applied after cross-row ownership is resolved.
+            role_slots: dict[str, list[str]] = {
+                role: [] for role in ("input", "transformation", "condition", "output")
+            }
+            for slot_id in assigned_slots:
+                slot = section_slots.get(slot_id)
+                role = str(getattr(slot, "role", "")) if slot is not None else ""
+                if role in role_slots:
+                    role_slots[role].append(slot_id)
+            required_slot_list: list[str] = []
+            for role in ("input", "transformation", "condition", "output"):
+                values = role_slots[role]
+                if not values:
+                    continue
+                selected_values = list(values[:1])
+                if role == "transformation" and len(values) > 1:
+                    selected_values.append(values[-1])
+                required_slot_list.extend(selected_values)
+            pub_slots = tuple(dict.fromkeys(required_slot_list))
+            support_slots = []
+            if not argument_facets:
+                support_slots = [
+                    slot_id
+                    for row in old_rows_by_group[group_zero]
+                    for slot_id in row.support_slot_ids
+                ]
+            support_slots.extend(assigned_slots)
+            formula_ids = [
+                f"formula:facet:{getattr(facet, 'facet_id', '')}"
+                for facet in group
+                if str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+                and str(getattr(facet, "facet_id", "") or "").strip()
+            ]
+            if group_zero == graph_formula_index:
+                formula_ids.extend(
+                    obligation_id
+                    for obligation_id in graph.formula_obligation_ids
+                    if str(obligation_id).strip()
+                )
+            formula_ids = list(dict.fromkeys(formula_ids))
+            method_unit_id = f"method-unit:{graph.section_id}:{group_index}"
+            group_method_unit_ids.append(method_unit_id)
+            role = (
+                "formula" if formula_ids else
+                "construction" if group_zero == 0 else "step_sequence"
+            )
+            support_slot_ids, publication_slot_ids, ordered_slot_ids = (
+                _closed_method_unit_slots(
+                    section_id=graph.section_id,
+                    paragraph_id=f"paragraph:{graph.section_id}:method-unit-{group_index}",
+                    original_order=slots,
+                    support_slots=support_slots,
+                    publication_slots=pub_slots,
+                )
+            )
+            new_paragraphs.append(SectionParagraphPlanV1(
+                paragraph_id=f"paragraph:{graph.section_id}:method-unit-{group_index}",
+                paragraph_role=role,  # type: ignore[arg-type]
+                argument_unit_ids=group_unit_ids[group_zero],
+                required_facet_ids=tuple(facet_ids),
+                required_field_candidate_ids=tuple(dict.fromkeys(field_ids)),
+                support_slot_ids=support_slot_ids,
+                required_publication_slot_ids=publication_slot_ids,
+                ordered_semantic_slot_ids=ordered_slot_ids,
+                required_edge_ids=tuple(dict.fromkeys(edges)),
+                formula_obligation_ids=tuple(formula_ids),
+                expected_sentence_range=_method_unit_expected_sentence_range(
+                    facets=group,
+                    argument_unit_ids=group_unit_ids[group_zero],
+                ),
+                transition_from=(
+                    new_paragraphs[-1].paragraph_id if new_paragraphs else ""
+                ),
+            ))
+        compact_graph = graph.model_copy(update={"paragraphs": tuple(new_paragraphs)})
+        compacted_graphs.append(compact_graph)
+        for group_index, group in enumerate(groups, start=1):
+            group_zero = group_index - 1
+            projection_rows = []
+            for facet in group:
+                projection = _method_unit_alignment_projection(
+                    str(getattr(facet, "facet_id", "") or ""), alignment_by_id,
+                )
+                if not projection.get("fact_ids") and fact_ids_by_span:
+                    # The alignment contract may preserve an exact span while
+                    # omitting internal fact ids.  Restore only facts whose
+                    # frozen direct/relation span is exactly that span; do not
+                    # infer facts from facet prose or symbol similarity.
+                    recovered_fact_ids = tuple(dict.fromkeys(
+                        fact_id
+                        for span_id in projection.get("span_ids", ())
+                        for fact_id in fact_ids_by_span.get(str(span_id), ())
+                    ))
+                    if recovered_fact_ids:
+                        projection = {
+                            **projection,
+                            "fact_ids": recovered_fact_ids,
+                        }
+                projection_rows.append(projection)
+            semantic = _method_unit_semantic_values(group)
+            operations: list[dict[str, Any]] = []
+            entry_symbol_ids: list[str] = []
+            shape_hints: list[str] = []
+            return_values: list[str] = []
+            signatures: list[dict[str, Any]] = []
+            fact_span_ids: list[str] = []
+            for facet, projection in zip(group, projection_rows):
+                fact_chain = (
+                    compile_fact_chain(
+                        facts=tuple(
+                            fact_by_id[fact_id]
+                            for fact_id in projection.get("fact_ids", ())
+                            if fact_id in fact_by_id
+                        ),
+                    )
+                    if compile_fact_chain is not None and projection.get("fact_ids")
+                    else {}
+                )
+                operations.extend(fact_chain.get("operation_atoms", ()))
+                signatures.extend(
+                    dict(item)
+                    for item in fact_chain.get("formalizable_signatures", ())
+                    if dict(item) not in signatures
+                )
+                fact_span_ids.extend(
+                    span_id for span_id in fact_chain.get("exact_span_ids", ())
+                    if span_id not in fact_span_ids
+                )
+                operations.extend(projection["operations"])
+                entry_symbol_ids.extend(
+                    item for item in projection.get("symbol_ids", ())
+                    if item not in entry_symbol_ids
+                )
+                shape_hints.extend(
+                    item for item in projection.get("shape_hints", ())
+                    if item not in shape_hints
+                )
+                return_values.extend(
+                    item for item in projection.get("return_values", ())
+                    if item not in return_values
+                )
+                signatures.extend(
+                    item for item in projection.get("signatures", ())
+                    if item not in signatures
+                )
+                if not projection["operations"]:
+                    fields = getattr(facet, "semantic_fields", {}) or {}
+                    statement = ""
+                    if isinstance(fields, dict):
+                        for key in ("operation", "formula_goal", "purpose", "goal"):
+                            value = fields.get(key)
+                            if isinstance(value, str) and value.strip():
+                                statement = value.strip()
+                                break
+                    statement = statement or str(getattr(facet, "exact_source_quote", "") or "").strip()
+                    if statement:
+                        operations.append({
+                            "operation_id": f"intent-operation:{getattr(facet, 'facet_id', '')}",
+                            "predicate": "author_specification",
+                            "description": statement,
+                        })
+            unique_operations: list[dict[str, Any]] = []
+            seen_operation_shapes: set[tuple[Any, ...]] = set()
+            for operation in operations:
+                if not isinstance(operation, dict):
+                    continue
+                source_span = str(
+                    operation.get("source_span_id")
+                    or operation.get("span_id")
+                    or operation.get("exact_span_id")
+                    or ""
+                ).strip()
+                predicate = str(
+                    operation.get("predicate")
+                    or operation.get("operation")
+                    or ""
+                ).strip().casefold()
+                subject = str(operation.get("subject") or "").strip()
+                operands = operation.get("operands") or ()
+                if isinstance(operands, str):
+                    operands = (operands,)
+                try:
+                    operand_shape = tuple(str(item).strip() for item in operands)
+                except TypeError:
+                    operand_shape = (str(operands).strip(),)
+                result = str(
+                    operation.get("result")
+                    or operation.get("output")
+                    or operation.get("return_value")
+                    or ""
+                ).strip()
+                guard = str(operation.get("guard") or "").strip()
+                free_text = str(
+                    operation.get("description")
+                    or operation.get("statement")
+                    or ""
+                ).strip()
+                # The fact compiler and a facet alignment can describe the
+                # same source line with different ids/metadata.  Those are
+                # one reader operation, not two sentences.  Deduplicate by
+                # the closed source shape while retaining distinct guards,
+                # operands, and results.
+                operation_shape = (
+                    source_span,
+                    predicate,
+                    subject,
+                    operand_shape,
+                    result,
+                    guard,
+                    free_text if not source_span or predicate == "author_specification" else "",
+                )
+                if operation_shape in seen_operation_shapes:
+                    continue
+                seen_operation_shapes.add(operation_shape)
+                unique_operations.append(operation)
+            statuses = tuple(
+                status
+                for projection in projection_rows
+                for status in projection["statuses"]
+                if status
+            )
+            evidence_spans = tuple(dict.fromkeys(
+                [
+                    *(
+                        span_id
+                        for projection in projection_rows
+                        for span_id in projection["span_ids"]
+                    ),
+                    *fact_span_ids,
+                ]
+            ))
+            has_evidence = bool(evidence_spans or any(
+                projection["fact_ids"] or projection["claim_ids"]
+                for projection in projection_rows
+            ))
+            if (
+                statuses
+                and all(status == "entailed" for status in statuses)
+                and has_evidence
+                and signatures
+            ):
+                authority = "code_equivalent"
+            elif any(status == "mismatch" for status in statuses) or (
+                any(status == "partial" for status in statuses) and has_evidence
+            ):
+                authority = "mismatch_pending"
+            else:
+                authority = "intent_specification"
+            quotes = tuple(dict.fromkeys(
+                str(getattr(facet, "exact_source_quote", "") or "").strip()
+                for facet in group
+                if str(getattr(facet, "exact_source_quote", "") or "").strip()
+            ))
+            group_facet_ids = tuple(
+                str(getattr(facet, "facet_id", "") or "")
+                for facet in group
+                if str(getattr(facet, "facet_id", "") or "").strip()
+            )
+            argument_ids = group_unit_ids[group_zero]
+            paragraph_id = new_paragraphs[group_zero].paragraph_id
+            intent_statements = tuple(dict.fromkeys(
+                str(operation.get("description") or operation.get("statement") or "").strip()
+                for operation in unique_operations
+                if str(operation.get("predicate") or "").strip() == "author_specification"
+                and str(operation.get("description") or operation.get("statement") or "").strip()
+            ))
+            method_unit = MethodUnitV2(
+                method_unit_id=group_method_unit_ids[group_zero],
+                section_id=graph.section_id,
+                reader_question=graph.reader_question,
+                purpose=(
+                    str(getattr(group[0], "semantic_fields", {}).get("operation", "") or "").strip()
+                    if isinstance(getattr(group[0], "semantic_fields", {}), dict)
+                    else ""
+                ) or (quotes[0] if quotes else graph.reader_question),
+                inputs=semantic["inputs"],
+                ordered_operations=tuple(unique_operations),
+                outputs=semantic["outputs"],
+                entry_symbol_ids=tuple(dict.fromkeys(entry_symbol_ids)),
+                conditions=semantic["conditions"],
+                shape_or_type_hints=tuple(dict.fromkeys(shape_hints)),
+                return_value_descriptors=tuple(dict.fromkeys(return_values)),
+                formalizable_signatures=tuple(signatures),
+                formula_roles=semantic["formula_roles"],
+                evidence_spans=evidence_spans,
+                authority=authority,
+                intent_code_status=(
+                    ",".join(dict.fromkeys(statuses))
+                    or ("intent_specification" if quotes else "")
+                ),
+                author_statement=" ".join(quotes or intent_statements),
+                facet_ids=group_facet_ids,
+                fact_ids=tuple(dict.fromkeys(
+                    fact_id for projection in projection_rows for fact_id in projection["fact_ids"]
+                )),
+                claim_ids=tuple(dict.fromkeys(
+                    claim_id for projection in projection_rows for claim_id in projection["claim_ids"]
+                )),
+                equation_ids=tuple(dict.fromkeys(
+                    equation_id for projection in projection_rows for equation_id in projection["equation_ids"]
+                )),
+                paragraph_ids=(paragraph_id,),
+                argument_unit_ids=argument_ids,
+            )
+            compiled_units.append(method_unit)
+            trace_rows.append({
+                "method_unit_id": method_unit.method_unit_id,
+                "section_id": graph.section_id,
+                "paragraph_id": paragraph_id,
+                "facet_ids": list(group_facet_ids),
+                "evidence_spans": list(evidence_spans),
+                "authority": authority,
+                "intent_code_status": method_unit.intent_code_status,
+            })
+    compacted_graphs = _attach_method_unit_witness_contracts(
+        compacted_graphs,
+        units,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
+        unit_frames=unit_frames,
+    )
+    compacted_graphs = _order_context_sections_before_mechanism(
+        compacted_graphs,
+        units=units,
+        argument_facets=argument_facets,
+    )
+    return tuple(compiled_units), compacted_graphs, {
+        "enabled": True,
+        "method_unit_count": len(compiled_units),
+        "paragraph_count": sum(len(graph.paragraphs) for graph in compacted_graphs),
+        "units": trace_rows,
+    }
+
+
 def _enrich_section_content_contracts(
     graphs: list[SectionArgumentGraphV1],
     units: list[MethodArgumentUnitV1],
@@ -1212,22 +3130,14 @@ def _enrich_section_content_contracts(
                     primary_briefs.append(brief_id)
                 else:
                     supporting_briefs.append(brief_id)
-        # Replanning is allowed to run with a legacy/missing projection, but
-        # it must never erase an already-bound author story.  The persisted
-        # graph is the fallback authority until a fresh source projection is
-        # available; a source projection may only add/confirm identities.
+        # Replanning is allowed to run with a legacy/missing projection.  If a
+        # current brief artifact is available, however, it is the authority
+        # for section ownership.  Re-adding graph-level ids here would move
+        # every old brief back into the first paragraph after the units had
+        # already been refreshed.
         if not brief_by_id:
             primary_briefs.extend(graph.primary_brief_ids)
             supporting_briefs.extend(graph.supporting_brief_ids)
-        else:
-            primary_briefs.extend(
-                brief_id for brief_id in graph.primary_brief_ids
-                if brief_id not in primary_briefs
-            )
-            supporting_briefs.extend(
-                brief_id for brief_id in graph.supporting_brief_ids
-                if brief_id not in supporting_briefs and brief_id not in primary_briefs
-            )
         for key in section_card_keys:
             card = card_by_key.get(key)
             if card is None:
@@ -1275,11 +3185,9 @@ def _enrich_section_content_contracts(
                 story_ids.extend(card.realized_story_node_ids)
         if not story_spine:
             story_ids.extend(graph.story_node_ids)
-        else:
-            story_ids.extend(
-                story_id for story_id in graph.story_node_ids
-                if story_id not in story_ids
-            )
+        # With a fresh story spine, graph-level story ids are also stale
+        # organization state.  Only ids justified by current unit obligation
+        # edges or current concept-card bindings are retained.
         story_node_ids = tuple(dict.fromkeys(story_ids))
 
         required_equation_move = any(
@@ -2064,6 +3972,7 @@ def build_method_section_plan_with_product_readiness(
     publication_field_candidates: tuple[Any, ...] | list[Any] = (),
     argument_facets: tuple[Any, ...] | list[Any] = (),
     facet_alignments: tuple[Any, ...] | list[Any] = (),
+    facts: Any | None = None,
     unit_frames: dict[str, SemanticArgumentFrameV1] | None = None,
 ) -> tuple[MethodSectionPlanV2, MethodPlanProductReadinessV1, dict[str, Any]]:
     """Build the section plan together with its graded product readiness.
@@ -2096,6 +4005,7 @@ def build_method_section_plan_with_product_readiness(
         publication_field_candidates=publication_field_candidates,
         argument_facets=argument_facets,
         facet_alignments=facet_alignments,
+        facts=facts,
         unit_frames=unit_frames,
     )
     readiness = assess_plan_product_readiness(
@@ -3008,70 +4918,155 @@ def replan_moves_with_trace(
         for unit_id in section.argument_unit_ids
     }
     for unit in base_plan.argument_units:
+        base_claim_ids = tuple(dict.fromkeys(
+            str(claim_id).strip()
+            for claim_id in (unit.claim_ids or ())
+            if str(claim_id).strip() and str(claim_id).strip() in claim_by_id
+        ))
+        base_claim_id_set = set(base_claim_ids)
+        persisted_source_ids = {
+            str(obligation_id)
+            for obligation_id in getattr(unit, "source_obligation_ids", ())
+            if str(obligation_id).strip()
+        }
+        # Replanning is a source refresh, so a persisted membership from an
+        # earlier plan cannot outrank the current semantic-stage compiler.
+        # Replay only a complete stage whose ordered claims are still present
+        # in this unit.  This prevents a previously polluted unit (for
+        # example, one carrying every callback coverage edge) from exporting
+        # those old obligations to the new paragraph plan.  Claim coverage is
+        # interpreted through the same closed-group rule as the initial build.
+        replayed_source_ids: set[str] = set()
+        has_stage_groups = bool(getattr(claims, "semantic_stage_groups", ()))
+        stage_claim_ids: list[str] = []
+        for group in getattr(claims, "semantic_stage_groups", ()):
+            ordered_group_claim_ids = tuple(
+                str(claim_id).strip()
+                for claim_id in (getattr(group, "ordered_claim_ids", ()) or ())
+                if str(claim_id).strip() and str(claim_id).strip() in base_claim_id_set
+            )
+            if not ordered_group_claim_ids:
+                continue
+            selected_group_claims = [
+                claim_by_id[claim_id] for claim_id in ordered_group_claim_ids
+            ]
+            declared_group_obligations = tuple(dict.fromkeys(
+                str(obligation_id).strip()
+                for obligation_id in (
+                    getattr(group, "covers_obligation_ids", ()) or ()
+                )
+                if str(obligation_id).strip()
+            ))
+            closed_group_obligations = set(_closed_group_obligation_ids(
+                declared_group_obligations,
+                selected_group_claims,
+            ))
+            if set(ordered_group_claim_ids) == set(
+                getattr(group, "ordered_claim_ids", ()) or ()
+            ):
+                replayed_source_ids.update(closed_group_obligations)
+            primary_group_obligation = next(
+                (
+                    obligation_id for obligation_id in declared_group_obligations
+                    if "O-STAGE-" in obligation_id.upper()
+                ),
+                declared_group_obligations[0]
+                if declared_group_obligations else "",
+            )
+            # ``unit_source_obligation_ids`` is filled after this loop.  Use
+            # the persisted source only to choose the claim projection; the
+            # authoritative replayed set is assigned immediately below.
+            current_group_source = set(persisted_source_ids)
+            if primary_group_obligation and primary_group_obligation in current_group_source:
+                stage_claim_ids.extend(ordered_group_claim_ids)
+            elif closed_group_obligations.intersection(current_group_source):
+                for claim_id in ordered_group_claim_ids:
+                    claim = claim_by_id[claim_id]
+                    covered = {
+                        str(value).strip()
+                        for value in (claim.covers_obligation_ids or ())
+                        if str(value).strip()
+                    }
+                    if len(covered) == 1 or any(
+                        obligation_id in claim_id
+                        for obligation_id in current_group_source
+                    ):
+                        stage_claim_ids.append(claim_id)
+        if has_stage_groups:
+            replayed_source_ids = set(replayed_source_ids)
+        unit_source_obligation_ids[unit.argument_unit_id] = (
+            replayed_source_ids
+            if has_stage_groups and replayed_source_ids
+            else persisted_source_ids
+        )
+        source_ids_for_claim_projection = unit_source_obligation_ids[unit.argument_unit_id]
+        if has_stage_groups:
+            for claim_id in base_claim_ids:
+                claim = claim_by_id[claim_id]
+                covered = {
+                    str(value).strip()
+                    for value in (claim.covers_obligation_ids or ())
+                    if str(value).strip()
+                }
+                if not covered.intersection(source_ids_for_claim_projection):
+                    continue
+                if len(covered) == 1 or any(
+                    obligation_id in claim_id
+                    for obligation_id in source_ids_for_claim_projection
+                ):
+                    stage_claim_ids.append(claim_id)
+        effective_claim_ids = tuple(dict.fromkeys(
+            stage_claim_ids if has_stage_groups and stage_claim_ids else base_claim_ids
+        ))
         equation_ids = tuple(
             equation_by_claim[claim_id].equation_id
-            for claim_id in unit.claim_ids
+            for claim_id in effective_claim_ids
             if claim_id in equation_by_claim
         )
         configuration_ids = tuple(
             config.configuration_id
             for config in config_items
             if config.active and _configuration_binds_unit(config, [
-                claim_by_id[claim_id] for claim_id in unit.claim_ids if claim_id in claim_by_id
+                claim_by_id[claim_id]
+                for claim_id in effective_claim_ids
+                if claim_id in claim_by_id
             ])
         )
         unit_equation_ids[unit.argument_unit_id] = equation_ids
         unit_configuration_ids[unit.argument_unit_id] = configuration_ids
+        # Keep every downstream projection on the same refreshed claim set.
+        # In particular, ``place_obligation_assignments`` consumes this map;
+        # leaving it empty made the frame look populated while placement saw
+        # no claim authority at all.
+        unit_claim_ids[unit.argument_unit_id] = set(effective_claim_ids)
         unit_relation_ids[unit.argument_unit_id] = {
             relation_id
-            for claim_id in unit.claim_ids
+            for claim_id in effective_claim_ids
             for relation_id in (
                 getattr(claim_by_id.get(claim_id), "relation_evidence_ids", ()) or ()
             )
         }
         unit_fact_ids[unit.argument_unit_id] = {
             str(fact_id)
-            for claim_id in unit.claim_ids
+            for claim_id in effective_claim_ids
             for fact_id in (
                 getattr(claim_by_id.get(claim_id), "fact_ids", ()) or ()
             )
         }
-        unit_claim_ids[unit.argument_unit_id] = set(unit.claim_ids)
-        persisted_source_ids = {
-            str(obligation_id)
-            for obligation_id in getattr(unit, "source_obligation_ids", ())
-            if str(obligation_id).strip()
-        }
-        # Old frozen plans predate the persisted field.  Replay their exact
-        # compiler-authored semantic-stage membership: a group is bound only
-        # when its complete ordered claim set is present in the unit.  Atomic
-        # claim ``covers_obligation_ids`` is deliberately not used here
-        # because relation claims can cover several neighboring stages.
-        replayed_source_ids = {
-            str(obligation_id)
-            for group in getattr(claims, "semantic_stage_groups", ())
-            if set(getattr(group, "ordered_claim_ids", ()))
-            and set(getattr(group, "ordered_claim_ids", ())) <= set(unit.claim_ids)
-            for obligation_id in getattr(group, "covers_obligation_ids", ())
-            if str(obligation_id).strip()
-        }
-        unit_source_obligation_ids[unit.argument_unit_id] = (
-            persisted_source_ids or replayed_source_ids
-        )
         row_roles = tuple(dict.fromkeys(
             str(item.role) for item in matrix_rows
             if item.role and (
                 str(item.obligation_id) in unit_source_obligation_ids[unit.argument_unit_id]
                 or (
                     bool(item.claim_ids)
-                    and set(item.claim_ids) <= set(unit.claim_ids)
+                    and set(item.claim_ids) <= set(effective_claim_ids)
                 )
             )
         ))
         unit_roles[unit.argument_unit_id] = row_roles
         frame = build_semantic_argument_frame(
             argument_unit_id=unit.argument_unit_id,
-            claim_ids=unit.claim_ids,
+            claim_ids=effective_claim_ids,
             equation_ids=equation_ids,
             configuration_ids=configuration_ids,
             claim_by_id=claim_by_id,
@@ -3142,6 +5137,124 @@ def replan_moves_with_trace(
         ):
             moves = (*moves, "limitations_or_mismatch")
         unit_moves[unit.argument_unit_id] = tuple(dict.fromkeys(moves))
+
+    # Materialize the refreshed unit projection before rebuilding sections.
+    # The old implementation rebuilt paragraphs from ``base_plan`` and only
+    # attached the refreshed source obligations at the very end.  That made
+    # the paragraph planner, brief classifier, and MethodUnit compiler all
+    # observe different ownership state in one replay.
+    refreshed_briefs_by_unit: dict[str, tuple[str, ...]] = {}
+    if argument_briefs is not None:
+        briefs = tuple(getattr(argument_briefs, "briefs", ()) or ())
+        assigned_brief_ids: set[str] = set()
+        for unit in base_plan.argument_units:
+            source_ids = unit_source_obligation_ids.get(unit.argument_unit_id, set())
+            owned = []
+            for brief in briefs:
+                brief_id = str(getattr(brief, "brief_id", "") or "").strip()
+                if not brief_id or brief_id in assigned_brief_ids:
+                    continue
+                brief_obligations = {
+                    str(value).strip()
+                    for value in (getattr(brief, "obligation_ids", ()) or ())
+                    if str(value).strip()
+                }
+                if source_ids.intersection(brief_obligations):
+                    owned.append(brief_id)
+                    assigned_brief_ids.add(brief_id)
+            refreshed_briefs_by_unit[unit.argument_unit_id] = tuple(owned)
+
+    refreshed_concepts_by_unit: dict[str, tuple[str, ...]] = {}
+    if concept_cards is not None:
+        cards = tuple(getattr(concept_cards, "cards", ()) or ())
+        binding_by_key = {
+            str(getattr(binding, "concept_key", "") or "").strip(): tuple(
+                str(value).strip()
+                for value in (getattr(binding, "source_obligation_ids", ()) or ())
+                if str(value).strip()
+            )
+            for binding in (getattr(concept_cards, "bindings", ()) or ())
+            if str(getattr(binding, "concept_key", "") or "").strip()
+        }
+        assigned_concept_keys: set[str] = set()
+        for unit in base_plan.argument_units:
+            source_ids = unit_source_obligation_ids.get(unit.argument_unit_id, set())
+            owned = []
+            for card in cards:
+                concept_key = str(getattr(card, "concept_key", "") or "").strip()
+                if not concept_key or concept_key in assigned_concept_keys:
+                    continue
+                if source_ids.intersection(binding_by_key.get(concept_key, ())):
+                    owned.append(concept_key)
+                    assigned_concept_keys.add(concept_key)
+            refreshed_concepts_by_unit[unit.argument_unit_id] = tuple(owned)
+
+    refreshed_units: list[MethodArgumentUnitV1] = []
+    for unit in base_plan.argument_units:
+        update: dict[str, Any] = {
+            "claim_ids": tuple(effective_claim_ids),
+            "equation_ids": unit_equation_ids.get(unit.argument_unit_id, ()),
+            "configuration_ids": unit_configuration_ids.get(unit.argument_unit_id, ()),
+            "behavior_relation_ids": tuple(sorted(
+                unit_relation_ids.get(unit.argument_unit_id, set())
+            )),
+            "source_obligation_ids": tuple(sorted(
+                unit_source_obligation_ids.get(unit.argument_unit_id, set())
+            )),
+            "semantic_frame": unit_frames.get(unit.argument_unit_id),
+            "obligation_assignments": tuple(
+                item for item in assignments
+                if item.argument_unit_id == unit.argument_unit_id
+            ),
+            "unresolved_inputs": tuple(
+                f"{item.obligation_id}:{item.status}"
+                for item in unit_unresolved_assignments.get(unit.argument_unit_id, [])
+            ),
+        }
+        if argument_briefs is not None:
+            brief_ids = refreshed_briefs_by_unit.get(unit.argument_unit_id, ())
+            brief_by_id = {
+                str(getattr(brief, "brief_id", "") or "").strip(): brief
+                for brief in (getattr(argument_briefs, "briefs", ()) or ())
+                if str(getattr(brief, "brief_id", "") or "").strip()
+            }
+            update.update({
+                "brief_ids": brief_ids,
+                "verified_brief_ids": tuple(
+                    brief_id for brief_id in brief_ids
+                    if bool(getattr(brief_by_id.get(brief_id), "may_enter_verified", False))
+                ),
+                "caveated_brief_ids": tuple(
+                    brief_id for brief_id in brief_ids
+                    if not bool(getattr(brief_by_id.get(brief_id), "may_enter_verified", False))
+                ),
+                "brief_order": brief_ids,
+            })
+        if concept_cards is not None:
+            concept_keys = refreshed_concepts_by_unit.get(unit.argument_unit_id, ())
+            card_by_key = {
+                str(getattr(card, "concept_key", "") or "").strip(): card
+                for card in (getattr(concept_cards, "cards", ()) or ())
+                if str(getattr(card, "concept_key", "") or "").strip()
+            }
+            update.update({
+                "concept_card_ids": concept_keys,
+                "verified_concept_card_ids": tuple(
+                    key for key in concept_keys
+                    if bool(getattr(card_by_key.get(key), "may_enter_verified", False))
+                ),
+                "caveated_concept_card_ids": tuple(
+                    key for key in concept_keys
+                    if not bool(getattr(card_by_key.get(key), "may_enter_verified", False))
+                ),
+                "concept_card_order": concept_keys,
+            })
+        refreshed_units.append(unit.model_copy(update=update))
+
+    refreshed_unit_by_id = {
+        unit.argument_unit_id: unit for unit in refreshed_units
+    }
+    unit_by_id = refreshed_unit_by_id
 
     trace_rows: list[dict[str, Any]] = []
     section_data: list[dict[str, Any]] = []
@@ -3319,7 +5432,7 @@ def replan_moves_with_trace(
         ))
     rebuilt_sections = _enrich_section_content_contracts(
         rebuilt_sections,
-        list(base_plan.argument_units),
+        refreshed_units,
         story_spine=story_spine,
         concept_cards=concept_cards,
         argument_briefs=argument_briefs,
@@ -3329,49 +5442,95 @@ def replan_moves_with_trace(
         equations=equations,
         unit_frames=unit_frames,
     )
-    # A trace-backed replan is an upgrade of the frozen organization, not a
-    # lossy rebuild.  Fail closed if any existing story/brief/facet identity
-    # disappears under the same source inputs.  This catches the historical
-    # empty-projection bug before the Writer receives a degraded plan.
-    before_by_section = {
-        graph.section_id: {
-            "story_node_ids": set(graph.story_node_ids),
-            "primary_brief_ids": set(graph.primary_brief_ids),
-            "supporting_brief_ids": set(graph.supporting_brief_ids),
-            "facet_ids": {
-                facet_id
-                for paragraph in (graph.paragraphs or ())
-                for facet_id in paragraph.required_facet_ids
-            },
-        }
-        for graph in base_plan.sections
-    }
-    identity_regressions: list[str] = []
-    for graph in rebuilt_sections:
-        before = before_by_section.get(graph.section_id, {})
-        after = {
-            "story_node_ids": set(graph.story_node_ids),
-            "primary_brief_ids": set(graph.primary_brief_ids),
-            "supporting_brief_ids": set(graph.supporting_brief_ids),
-            "facet_ids": {
-                facet_id
-                for paragraph in (graph.paragraphs or ())
-                for facet_id in paragraph.required_facet_ids
-            },
-        }
-        for name in before:
-            removed = sorted(before[name] - after[name])
-            if removed:
-                identity_regressions.append(
-                    f"{graph.section_id}:{name}:{','.join(removed)}"
+    authoritative_facet_projection = bool(argument_facets or publication_field_candidates)
+    allowed_facet_ids_by_section: dict[str, set[str]] | None = None
+    allowed_field_ids_by_section: dict[str, set[str]] | None = None
+    allowed_formula_ids_by_section: dict[str, set[str]] | None = None
+    if authoritative_facet_projection:
+        facet_values = tuple(argument_facets or ())
+        allowed_facet_ids_by_section = {}
+        allowed_field_ids_by_section = {}
+        allowed_formula_ids_by_section = {}
+        for graph in rebuilt_sections:
+            section_units = [
+                refreshed_unit_by_id[unit_id]
+                for unit_id in graph.argument_unit_ids
+                if unit_id in refreshed_unit_by_id
+            ]
+            section_brief_ids = {
+                str(brief_id).strip()
+                for unit in section_units
+                for brief_id in (unit.brief_order or unit.brief_ids)
+                if str(brief_id).strip()
+            }
+            current_facet_ids = {
+                str(getattr(facet, "facet_id", "") or "").strip()
+                for facet in facet_values
+                if str(getattr(facet, "facet_id", "") or "").strip()
+                and (
+                    str(getattr(facet, "brief_id", "") or "").strip() in section_brief_ids
+                    or (
+                        not str(getattr(facet, "brief_id", "") or "").strip()
+                        and any(
+                            facet_id in {
+                                str(value).strip()
+                                for paragraph in graph.paragraphs
+                                for value in paragraph.required_facet_ids
+                            }
+                            for facet_id in (
+                                str(getattr(facet, "facet_id", "") or "").strip(),
+                            )
+                        )
+                    )
                 )
-    if identity_regressions:
-        raise ValueError(
-            "replan_identity_regression:" + ";".join(identity_regressions)
-        )
+            }
+            current_facet_ids.update(
+                str(value).strip()
+                for paragraph in graph.paragraphs
+                for value in paragraph.required_facet_ids
+                if str(value).strip()
+            )
+            allowed_facet_ids_by_section[graph.section_id] = current_facet_ids
+            allowed_field_ids_by_section[graph.section_id] = {
+                str(getattr(candidate, "candidate_id", "") or "").strip()
+                for candidate in (publication_field_candidates or ())
+                if str(getattr(candidate, "candidate_id", "") or "").strip()
+                and str(getattr(candidate, "facet_id", "") or "").strip()
+                in current_facet_ids
+            } | {
+                str(value).strip()
+                for paragraph in graph.paragraphs
+                for value in paragraph.required_field_candidate_ids
+                if str(value).strip()
+            }
+            allowed_formula_ids_by_section[graph.section_id] = {
+                str(value).strip()
+                for value in graph.formula_obligation_ids
+                if str(value).strip()
+            } | {
+                str(value).strip()
+                for paragraph in graph.paragraphs
+                for value in paragraph.formula_obligation_ids
+                if str(value).strip()
+            } | {
+                f"formula:facet:{facet_id}"
+                for facet_id in current_facet_ids
+                if any(
+                    str(getattr(facet, "facet_id", "") or "").strip() == facet_id
+                    and str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+                    for facet in facet_values
+                )
+            }
+    rebuilt_sections = _restore_prior_paragraph_identities(
+        prior_sections=base_plan.sections,
+        rebuilt_sections=rebuilt_sections,
+        allowed_facet_ids_by_section=allowed_facet_ids_by_section,
+        allowed_field_ids_by_section=allowed_field_ids_by_section,
+        allowed_formula_ids_by_section=allowed_formula_ids_by_section,
+    )
     proofs = resolve_move_authority_proofs(
         sections=tuple(rebuilt_sections),
-        units=base_plan.argument_units,
+        units=refreshed_units,
         unit_frames=unit_frames,
         unit_equation_ids=unit_equation_ids,
         unit_configuration_ids=unit_configuration_ids,
@@ -3401,8 +5560,128 @@ def replan_moves_with_trace(
                 for item in unit_unresolved_assignments.get(unit.argument_unit_id, [])
             ),
         })
-        for unit in base_plan.argument_units
+        for unit in refreshed_units
     )
+    if base_plan.method_units:
+        method_units, rebuilt_sections, method_unit_trace = (
+            _preserve_incumbent_method_unit_surface(
+                prior_plan=base_plan,
+                rebuilt_sections=list(rebuilt_sections),
+            )
+        )
+    else:
+        method_units, rebuilt_sections, method_unit_trace = _build_method_units_v2(
+            list(rebuilt_sections),
+            rebuilt_units,
+            argument_facets=argument_facets,
+            facet_alignments=facet_alignments,
+            publication_field_candidates=publication_field_candidates,
+            facts=facts,
+            unit_frames=unit_frames,
+        )
+    # Validate the finished projection, after MethodUnit compaction has had a
+    # chance to place hard facet targets.  A fresh source projection may move
+    # or retire identities from a stale frozen plan, so conservation is
+    # checked against the current authoritative set rather than against every
+    # historical id in ``base_plan``.
+    identity_regressions: list[str] = []
+    actual_story_ids = {
+        story_id
+        for graph in rebuilt_sections
+        for story_id in graph.story_node_ids
+    }
+    actual_brief_ids = {
+        brief_id
+        for graph in rebuilt_sections
+        for brief_id in (*graph.primary_brief_ids, *graph.supporting_brief_ids)
+    }
+    actual_facet_ids = {
+        facet_id
+        for graph in rebuilt_sections
+        for paragraph in (graph.paragraphs or ())
+        for facet_id in paragraph.required_facet_ids
+    }
+    if argument_briefs is not None or authoritative_facet_projection or story_spine:
+        expected_brief_ids = {
+            brief_id
+            for unit in rebuilt_units
+            for brief_id in (unit.brief_order or unit.brief_ids)
+            if str(brief_id).strip()
+        }
+        missing_briefs = sorted(expected_brief_ids - actual_brief_ids)
+        if missing_briefs:
+            identity_regressions.append(
+                f"current:brief_ids:{','.join(missing_briefs)}"
+            )
+        if authoritative_facet_projection:
+            expected_facet_ids = {
+                str(getattr(facet, "facet_id", "") or "").strip()
+                for facet in (argument_facets or ())
+                if str(getattr(facet, "facet_id", "") or "").strip()
+                and (
+                    bool(getattr(facet, "required", False))
+                    or str(getattr(facet, "formula_expectation", "none") or "none") != "none"
+                )
+                and str(getattr(facet, "brief_id", "") or "").strip()
+                in expected_brief_ids
+            }
+            missing_facets = sorted(expected_facet_ids - actual_facet_ids)
+            if missing_facets:
+                identity_regressions.append(
+                    f"current:facet_ids:{','.join(missing_facets)}"
+                )
+        if story_spine:
+            expected_story_ids = {
+                node.story_node_id
+                for node in story_spine
+                if any(
+                    set(node.linked_obligation_ids).intersection(
+                        set(unit.source_obligation_ids)
+                    )
+                    for unit in rebuilt_units
+                )
+            }
+            missing_stories = sorted(expected_story_ids - actual_story_ids)
+            if missing_stories:
+                identity_regressions.append(
+                    f"current:story_node_ids:{','.join(missing_stories)}"
+                )
+    else:
+        before_by_section = {
+            graph.section_id: {
+                "story_node_ids": set(graph.story_node_ids),
+                "primary_brief_ids": set(graph.primary_brief_ids),
+                "supporting_brief_ids": set(graph.supporting_brief_ids),
+                "facet_ids": {
+                    facet_id
+                    for paragraph in (graph.paragraphs or ())
+                    for facet_id in paragraph.required_facet_ids
+                },
+            }
+            for graph in base_plan.sections
+        }
+        for graph in rebuilt_sections:
+            before = before_by_section.get(graph.section_id, {})
+            after = {
+                "story_node_ids": set(graph.story_node_ids),
+                "primary_brief_ids": set(graph.primary_brief_ids),
+                "supporting_brief_ids": set(graph.supporting_brief_ids),
+                "facet_ids": {
+                    facet_id
+                    for paragraph in (graph.paragraphs or ())
+                    for facet_id in paragraph.required_facet_ids
+                },
+            }
+            for name in before:
+                removed = sorted(before[name] - after[name])
+                if removed:
+                    identity_regressions.append(
+                        f"{graph.section_id}:{name}:{','.join(removed)}"
+                    )
+    if identity_regressions:
+        raise ValueError(
+            "replan_identity_regression:" + ";".join(identity_regressions)
+        )
     unplaced_assignments = tuple(
         item for item in assignments if item.placement_state == "unplaced"
     )
@@ -3412,6 +5691,7 @@ def replan_moves_with_trace(
     plan = base_plan.model_copy(update={
         "sections": tuple(rebuilt_sections),
         "argument_units": rebuilt_units,
+        "method_units": tuple(method_units) if method_units else base_plan.method_units,
         "incomplete_sections": tuple(dict.fromkeys([
             *base_plan.incomplete_sections,
             *incomplete_extra,
@@ -3460,6 +5740,7 @@ def replan_moves_with_trace(
         "move_authority_proofs": [item.model_dump(mode="json") for item in proofs],
         "placement": placement_trace,
         "sections": trace_rows,
+        "method_units": method_unit_trace,
     }
     return plan, trace
 
@@ -3629,6 +5910,108 @@ def _rebuild_section(
         ),
         "paragraphs": paragraphs,
     })
+
+
+def _restore_prior_paragraph_identities(
+    *,
+    prior_sections: tuple[SectionArgumentGraphV1, ...] | list[SectionArgumentGraphV1],
+    rebuilt_sections: list[SectionArgumentGraphV1],
+    allowed_facet_ids_by_section: dict[str, set[str]] | None = None,
+    allowed_field_ids_by_section: dict[str, set[str]] | None = None,
+    allowed_formula_ids_by_section: dict[str, set[str]] | None = None,
+) -> list[SectionArgumentGraphV1]:
+    """Carry closed paragraph identities across a semantic replan.
+
+    Replanning may change paragraph boundaries when a frame is split into
+    smaller slot clusters.  That organizational change must not erase the
+    already-authorized facet/field/formula handles from the base plan: those
+    handles are the harness sidecar used by Binder and are not model-written
+    text.  Match by the exact argument-unit edge first, then attach to the
+    first rebuilt paragraph only when the old paragraph has no unit edge.
+    Slot and edge ids are intentionally not copied here; they are regenerated
+    from the fresh semantic frame and are validated by the paragraph closure.
+    """
+
+    rebuilt_by_section = {
+        graph.section_id: graph for graph in rebuilt_sections
+    }
+    for prior in prior_sections:
+        current = rebuilt_by_section.get(prior.section_id)
+        if current is None or not current.paragraphs:
+            continue
+        paragraphs = list(current.paragraphs)
+        for old_paragraph in prior.paragraphs:
+            old_facets = tuple(
+                value for value in old_paragraph.required_facet_ids
+                if str(value).strip()
+            )
+            old_fields = tuple(
+                value for value in old_paragraph.required_field_candidate_ids
+                if str(value).strip()
+            )
+            old_formulas = tuple(
+                value for value in old_paragraph.formula_obligation_ids
+                if str(value).strip()
+            )
+            if allowed_facet_ids_by_section is not None:
+                allowed = allowed_facet_ids_by_section.get(prior.section_id, set())
+                old_facets = tuple(value for value in old_facets if value in allowed)
+            if allowed_field_ids_by_section is not None:
+                allowed = allowed_field_ids_by_section.get(prior.section_id, set())
+                old_fields = tuple(value for value in old_fields if value in allowed)
+            if allowed_formula_ids_by_section is not None:
+                allowed = allowed_formula_ids_by_section.get(prior.section_id, set())
+                old_formulas = tuple(value for value in old_formulas if value in allowed)
+            if not (old_facets or old_fields or old_formulas):
+                continue
+            old_units = set(old_paragraph.argument_unit_ids)
+            matching_indexes = [
+                index for index, paragraph in enumerate(paragraphs)
+                if old_units.intersection(set(paragraph.argument_unit_ids))
+            ]
+            if matching_indexes:
+                old_facets_set = set(old_facets)
+                old_fields_set = set(old_fields)
+                old_formulas_set = set(old_formulas)
+                target_index = max(
+                    matching_indexes,
+                    key=lambda index: (
+                        len(old_facets_set.intersection(
+                            set(paragraphs[index].required_facet_ids)
+                        )),
+                        len(old_fields_set.intersection(
+                            set(paragraphs[index].required_field_candidate_ids)
+                        )),
+                        len(old_formulas_set.intersection(
+                            set(paragraphs[index].formula_obligation_ids)
+                        )),
+                        len(old_units.intersection(
+                            set(paragraphs[index].argument_unit_ids)
+                        )),
+                        -index,
+                    ),
+                )
+            else:
+                target_index = 0
+            target = paragraphs[target_index]
+            paragraphs[target_index] = target.model_copy(update={
+                "required_facet_ids": tuple(dict.fromkeys((
+                    *target.required_facet_ids, *old_facets,
+                ))),
+                "required_field_candidate_ids": tuple(dict.fromkeys((
+                    *target.required_field_candidate_ids, *old_fields,
+                ))),
+                "formula_obligation_ids": tuple(dict.fromkeys((
+                    *target.formula_obligation_ids, *old_formulas,
+                ))),
+            })
+        rebuilt_by_section[prior.section_id] = current.model_copy(update={
+            "paragraphs": tuple(paragraphs),
+        })
+    return [
+        rebuilt_by_section.get(graph.section_id, graph)
+        for graph in rebuilt_sections
+    ]
 
 
 def _build_section_paragraph_plans(
@@ -4030,6 +6413,15 @@ def _build_section_paragraph_plans(
         for facet_id in plan.required_facet_ids:
             facet = facet_by_id.get(facet_id)
             candidates = field_candidates_by_facet.get(facet_id, ())
+            alignment = alignment_by_facet_id.get(facet_id)
+            alignment_projection = _method_unit_alignment_projection(
+                facet_id,
+                alignment_by_facet_id,
+            )
+            surface_mode, render_policy, authority_lane = _witness_surface_contract(
+                alignment=alignment,
+                projection=alignment_projection,
+            )
             excerpts = tuple(dict.fromkeys(
                 str(value)
                 for candidate in candidates
@@ -4037,7 +6429,6 @@ def _build_section_paragraph_plans(
                 if str(value).strip()
             ))
             if not excerpts:
-                alignment = alignment_by_facet_id.get(facet_id)
                 excerpts = tuple(dict.fromkeys(
                     str(getattr(item, "exact_excerpt", "") or "")
                     for item in (getattr(alignment, "exact_excerpts", ()) or ())
@@ -4046,10 +6437,10 @@ def _build_section_paragraph_plans(
             targets.append(ParagraphWitnessTargetV1(
                 target_id=facet_id,
                 target_kind="facet",
-                semantic_atom=(
-                    " ".join(str(value) for value in (getattr(facet, "semantic_fields", {}) or {}).values())
-                    if facet is not None else facet_id
-                )[:1200],
+                semantic_atom=_reader_facing_facet_semantic_atom(
+                    facet,
+                    fallback=facet_id,
+                ) if facet is not None else facet_id,
                 paper_role=str(getattr(facet, "facet_kind", "mechanism") or "mechanism") if facet is not None else "mechanism",
                 allowed_anchor_ids=tuple(
                     span_id
@@ -4057,7 +6448,9 @@ def _build_section_paragraph_plans(
                     for span_id in (getattr(candidate, "bound_span_ids", ()) or ())
                 ),
                 allowed_exact_excerpts=excerpts,
-                authority_lane="executable_hard",
+                authority_lane=authority_lane,
+                surface_mode=surface_mode,
+                render_policy=render_policy,
             ))
         for candidate_id in plan.required_field_candidate_ids:
             candidate = next(
@@ -4076,7 +6469,15 @@ def _build_section_paragraph_plans(
                 required_conditions=tuple(getattr(candidate, "conditions", ()) or ()),
                 allowed_anchor_ids=tuple(getattr(candidate, "bound_span_ids", ()) or ()),
                 allowed_exact_excerpts=tuple(getattr(candidate, "exact_excerpts", ()) or ()),
-                authority_lane=str(getattr(candidate, "authority_lane", "executable_hard") or "executable_hard"),
+                authority_lane=_witness_surface_contract(
+                    candidate=candidate,
+                )[2],
+                surface_mode=_witness_surface_contract(
+                    candidate=candidate,
+                )[0],
+                render_policy=_witness_surface_contract(
+                    candidate=candidate,
+                )[1],
             ))
         for slot_id in plan.required_publication_slot_ids:
             slot = next(
@@ -4091,12 +6492,14 @@ def _build_section_paragraph_plans(
             targets.append(ParagraphWitnessTargetV1(
                 target_id=slot_id,
                 target_kind="slot",
-                semantic_atom=" ".join((slot.subject, slot.predicate, *slot.operands)).strip(),
+                semantic_atom=_reader_facing_slot_semantic_atom(slot) or slot_id,
                 paper_role=str(slot.role),
                 required_conditions=tuple(slot.conditions),
                 allowed_anchor_ids=tuple((*slot.fact_ids, *slot.claim_ids)),
                 allowed_exact_excerpts=(),
                 authority_lane=(slot.authority_lanes[0] if slot.authority_lanes else "executable_hard"),
+                surface_mode="repository_statement",
+                render_policy="required",
             ))
         for edge_id in plan.required_edge_ids:
             edge = next(
@@ -4115,6 +6518,8 @@ def _build_section_paragraph_plans(
                 required_conditions=tuple(edge.conditions),
                 allowed_anchor_ids=tuple(edge.direct_span_ids),
                 authority_lane="executable_hard",
+                surface_mode="repository_statement",
+                render_policy="required",
             ))
         for obligation_id in plan.formula_obligation_ids:
             targets.append(ParagraphWitnessTargetV1(
@@ -4124,6 +6529,8 @@ def _build_section_paragraph_plans(
                 paper_role="formula",
                 allowed_anchor_ids=(obligation_id,),
                 authority_lane="formal_derivation",
+                surface_mode="repository_statement",
+                render_policy="required",
             ))
         final_plans.append(plan.model_copy(update={
             "witness_contract": ParagraphWitnessContractV1(

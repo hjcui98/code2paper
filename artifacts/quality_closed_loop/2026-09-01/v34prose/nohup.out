@@ -1,0 +1,39 @@
+===== SERIAL START 2026-09-01T11:10:57+08:00 =====
+code_state_digest sha256:fbec291bb6234e199622867007dda04220856b1ce390496930b12ad5a3b5eb7f
+{"object":"list","data":[{"id":"qwen38-27b-nvfp4","object":"model","created":1788232257,"owned_by":"vllm","root":"/data1/users/cuihengjia/qwen3.8-modelopt","parent":null,"max_model_len":131072,"permission":[{"id":"modelperm-94430a650c781f2e","object":"model_permission","created":1788232257,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== START ebcar 2026-09-01T11:10:57+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-ebcar-v34-20260831 fresh=/tmp/c2p-v34prose-8006-ebcar-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE ebcar exit=2 2026-09-01T11:41:33+08:00 =====
+execution_record True
+exit_code 2 writer incomplete incomplete
+structural eligible False paras 6 / 7 slots 10 / 11 formula 4 / 4
+terminal writer writer_status:incomplete
+candidate_bytes 5274
+PROJECT_DONE name=ebcar exit=2
+===== START dyg 2026-09-01T11:41:33+08:00 frozen=/tmp/c2p-method-authoring-8006-direct-dyg-v33-20260831 fresh=/tmp/c2p-v34prose-8006-dyg-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE dyg exit=2 2026-09-01T12:08:10+08:00 =====
+execution_record True
+exit_code 2 writer incomplete incomplete
+structural eligible False paras 0 / 6 slots 15 / 17 formula 0 / 0
+terminal writer writer_status:incomplete
+candidate_bytes 5270
+PROJECT_DONE name=dyg exit=2
+===== START linearrag 2026-09-01T12:08:10+08:00 frozen=/tmp/c2p-method-authoring-8006-20260830-linearrag fresh=/tmp/c2p-v34prose-8006-linearrag-20260901 =====
+vllm:num_requests_running{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:num_requests_waiting{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+vllm:kv_cache_usage_perc{engine="0",model_name="qwen38-27b-nvfp4"} 0.0
+===== DONE linearrag exit=2 2026-09-01T12:37:33+08:00 =====
+execution_record True
+exit_code 2 writer incomplete incomplete
+structural eligible False paras 0 / 5 slots 9 / 16 formula 0 / 0
+terminal writer writer_status:incomplete
+candidate_bytes 4107
+PROJECT_DONE name=linearrag exit=2
+===== SERIAL COMPLETE 2026-09-01T12:37:33+08:00 =====

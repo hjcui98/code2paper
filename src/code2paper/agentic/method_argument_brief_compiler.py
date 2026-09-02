@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Protocol
+from typing import Any, Iterable, Mapping, Protocol
 
 from code2paper.agentic.equation_claims import EquationClaimSetV1, EquationClaimV1
 from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, AtomicClaimV3
@@ -496,6 +496,7 @@ def _collect_obligation_context(
     equations: EquationClaimSetV1 | None,
     configurations: ConfigurationClaimSetV1 | None,
     story_spine: Iterable[AuthorStoryNodeV1],
+    claim_ids_by_obligation: Mapping[str, tuple[str, ...]] | None = None,
 ) -> _ObligationCompileContext:
     completeness_by_id = {
         item.obligation_id: item.status for item in completeness.items
@@ -508,9 +509,18 @@ def _collect_obligation_context(
         item.obligation_id: item
         for item in (coverage.items if coverage else [])
     }
-    obligation_claims = tuple(
-        claim for claim in claims.claims if obligation_id in claim.covers_obligation_ids
-    )
+    if claim_ids_by_obligation is None:
+        obligation_claims = tuple(
+            claim for claim in claims.claims
+            if obligation_id in claim.covers_obligation_ids
+        )
+    else:
+        claim_by_id = {claim.claim_id: claim for claim in claims.claims}
+        obligation_claims = tuple(
+            claim_by_id[claim_id]
+            for claim_id in claim_ids_by_obligation.get(obligation_id, ())
+            if claim_id in claim_by_id
+        )
     claim_ids = {claim.claim_id for claim in obligation_claims}
     equation_items = tuple(
         equation
@@ -669,6 +679,104 @@ def _claim_fits_story_node(
     return True
 
 
+def _claim_id_mentions_obligation(claim_id: str, obligation_id: str) -> bool:
+    """Return whether a claim id carries an explicit obligation identity.
+
+    ``covers_obligation_ids`` is an evidence-coverage relation and may be
+    intentionally broad (especially for callback facts).  A claim id that
+    embeds the obligation, on the other hand, is a deterministic ownership
+    hint emitted by the claim compiler.  Keep this helper deliberately
+    lexical and exact: it must not infer ownership from claim prose.
+    """
+
+    claim_value = str(claim_id or "").strip()
+    obligation_value = str(obligation_id or "").strip()
+    if not claim_value or not obligation_value:
+        return False
+    return obligation_value in claim_value
+
+
+def _claim_ids_by_obligation_from_stage_groups(
+    claims: AtomicClaimSetV3,
+) -> dict[str, tuple[str, ...]]:
+    """Project semantic-stage claim membership onto obligation ids.
+
+    Stage groups are the planning authority for paragraph organization.  A
+    claim's multi-obligation evidence coverage must not make it a member of
+    every obligation it happens to support.  For each group, all ordered
+    claims belong to the group's primary ``O-STAGE-*`` obligation; secondary
+    obligations receive only claims whose stable id explicitly names that
+    obligation (or claims with a singleton coverage edge).  This preserves
+    legitimate shared evidence while preventing callback/technical facts
+    from leaking into sibling briefs.
+
+    The projection is used only when semantic groups exist.  Older callers
+    without that closed organization surface retain the historical direct
+    coverage behavior in ``_collect_obligation_context``.
+    """
+
+    claim_by_id = {claim.claim_id: claim for claim in claims.claims}
+    result: dict[str, list[str]] = {}
+    for group in (getattr(claims, "semantic_stage_groups", ()) or ()):
+        declared = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (getattr(group, "covers_obligation_ids", ()) or ())
+            if str(value).strip()
+        ))
+        ordered_claim_ids = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (getattr(group, "ordered_claim_ids", ()) or ())
+            if str(value).strip() and str(value).strip() in claim_by_id
+        ))
+        if not declared or not ordered_claim_ids:
+            continue
+        primary = next(
+            (
+                obligation_id for obligation_id in declared
+                if "O-STAGE-" in obligation_id.upper()
+            ),
+            declared[0],
+        )
+        for claim_id in ordered_claim_ids:
+            result.setdefault(primary, []).append(claim_id)
+        for obligation_id in declared:
+            if obligation_id == primary:
+                continue
+            for claim_id in ordered_claim_ids:
+                claim = claim_by_id[claim_id]
+                covered = tuple(
+                    str(value).strip()
+                    for value in (claim.covers_obligation_ids or ())
+                    if str(value).strip()
+                )
+                if (
+                    _claim_id_mentions_obligation(claim_id, obligation_id)
+                    or len(covered) == 1
+                ):
+                    result.setdefault(obligation_id, []).append(claim_id)
+
+    # Claims produced directly for an obligation may not be listed in the
+    # current semantic group (for example a late technical fact appended
+    # after the stage compiler ran).  Their explicit id edge is still a safe
+    # local ownership signal.  A broad callback claim has neither this edge
+    # nor singleton coverage, so it remains confined to the stage group that
+    # explicitly ordered it.
+    for claim in claims.claims:
+        covered = tuple(
+            str(value).strip()
+            for value in (claim.covers_obligation_ids or ())
+            if str(value).strip()
+        )
+        for obligation_id in covered:
+            if _claim_id_mentions_obligation(claim.claim_id, obligation_id) or len(covered) == 1:
+                result.setdefault(obligation_id, []).append(claim.claim_id)
+
+    return {
+        obligation_id: tuple(dict.fromkeys(values))
+        for obligation_id, values in result.items()
+    }
+
+
 def _compile_brief_for_node(
     node: AuthorStoryNodeV1,
     *,
@@ -747,6 +855,11 @@ def compile_method_argument_briefs(
     """Compile deterministic argument briefs without concept-card LLM calls."""
 
     spine = tuple(story_spine)
+    claim_ids_by_obligation = (
+        _claim_ids_by_obligation_from_stage_groups(claims)
+        if getattr(claims, "semantic_stage_groups", ())
+        else None
+    )
     obligation_ids = tuple(dict.fromkeys(
         obligation_id
         for item in completeness.items
@@ -762,6 +875,7 @@ def compile_method_argument_briefs(
             equations=equations,
             configurations=configurations,
             story_spine=spine,
+            claim_ids_by_obligation=claim_ids_by_obligation,
         )
         for obligation_id in obligation_ids
     }

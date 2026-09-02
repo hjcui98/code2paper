@@ -271,6 +271,134 @@ def test_deterministic_packages_carry_latex_symbols_and_explanation() -> None:
     ) == []
 
 
+def test_operation_evidence_pack_can_authorize_only_matching_signature() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        build_mechanism_equation_evidence_packs,
+        validate_section_formula_package,
+    )
+
+    packs = build_mechanism_equation_evidence_packs(
+        section_id="MA-S1",
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        allowed_equation_ids=set(),
+        dossiers=[{
+            "dossier_id": "dossier:operation",
+            "section_id": "MA-S1",
+            "fact_ids": ["fact:score"],
+            "exact_span_ids": ["span:model.py:1:2"],
+            "operation_atoms": [{
+                "node_id": "node:add",
+                "predicate": "COMPUTE",
+                "operands": ["w", "x"],
+                "result": "s",
+                "diagnostics": ["add"],
+                "source_span_id": "span:model.py:1:2",
+            }],
+            "unresolved_relations": [],
+        }],
+    )
+    assert len(packs) == 1
+    assert packs[0].pack_id.startswith("opack:")
+    assert packs[0].bound_equation_ids == ()
+    assert packs[0].operation_atoms[0]["operands"] == ["w", "x"]
+
+    package = SectionFormulaPackageV1(
+        package_id="package:operation",
+        section_id="MA-S1",
+        purpose="State the source addition.",
+        latex="s = w + x",
+        prose_explanation="The operation adds the two inputs.",
+        authority_status="code_verified",
+        bound_fact_ids=("fact:score",),
+    )
+    assert validate_section_formula_package(
+        package,
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        operation_evidence_packs=packs,
+    ) == []
+
+    unsupported = package.model_copy(update={"latex": "s = w / x"})
+    failures = validate_section_formula_package(
+        unsupported,
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        operation_evidence_packs=packs,
+    )
+    assert any("operation_signature_mismatch" in failure for failure in failures)
+
+    swapped_operands = package.model_copy(update={"latex": "s = u + v"})
+    failures = validate_section_formula_package(
+        swapped_operands,
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        operation_evidence_packs=packs,
+    )
+    assert any("operation_operand_binding_missing" in failure for failure in failures)
+
+
+def test_operation_evidence_requires_bound_conditions_and_shapes() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        build_mechanism_equation_evidence_packs,
+        validate_section_formula_package,
+    )
+
+    packs = build_mechanism_equation_evidence_packs(
+        section_id="MA-S1",
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        allowed_equation_ids=set(),
+        dossiers=[{
+            "dossier_id": "dossier:guarded-operation",
+            "section_id": "MA-S1",
+            "fact_ids": ["fact:score"],
+            "exact_span_ids": ["span:model.py:1:2"],
+            "operation_atoms": [{
+                "operation_id": "normalize",
+                "predicate": "NORMALIZE",
+                "operands": ["x"],
+                "result": "z",
+                "guard": "x.shape[0] > 0",
+                "shape_or_type_hints": ["x: [N, d]"],
+                "source_span_id": "span:model.py:1:2",
+            }],
+            "unresolved_relations": [],
+            "default_activation": "active",
+        }],
+    )
+    package = SectionFormulaPackageV1(
+        package_id="package:guarded-operation",
+        section_id="MA-S1",
+        purpose="State the guarded normalization.",
+        latex="z = x",
+        prose_explanation="The operation normalizes x when the leading dimension is nonempty.",
+        material_conditions=("x.shape[0] > 0", "x: [N, d]"),
+        authority_status="code_verified",
+        bound_fact_ids=("fact:score",),
+    )
+    assert validate_section_formula_package(
+        package,
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        operation_evidence_packs=packs,
+    ) == []
+
+    missing_guard = package.model_copy(update={
+        "prose_explanation": "The operation normalizes x.",
+        "material_conditions": (),
+    })
+    failures = validate_section_formula_package(
+        missing_guard,
+        equations=_guarded_equations(),
+        facts=_guarded_facts(),
+        operation_evidence_packs=packs,
+    )
+    assert any("operation_condition_missing" in failure for failure in failures)
+
+
 def test_formula_package_rejects_added_dimensions_and_undefined_symbols() -> None:
     from code2paper.agentic.formalization_agent import (
         SectionFormulaPackageV1,
@@ -873,6 +1001,33 @@ def test_author_intent_formula_rejects_code_shaped_expression() -> None:
         facts=_facts(),
     )
     assert any("code_shaped_formula" in failure for failure in failures)
+
+
+def test_formula_markdown_block_rejects_memo_wrapper() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        canonical_formula_markdown_block,
+        validate_section_formula_package,
+    )
+
+    latex = r"\Delta t = f(\tau)"
+    package = SectionFormulaPackageV1(
+        package_id="fp:memo",
+        section_id="MA-S3",
+        purpose="Define the timespan step.",
+        latex=latex,
+        markdown_block=f"### Notes\n$$\n{latex}\n$$\n- assumption list",
+        prose_explanation="The step depends on elapsed time.",
+        symbol_definitions=((r"\Delta t", "step"),),
+        authority_status="author_intent",
+        formula_lane="author_intent_academic",
+    )
+    assert package.markdown_block == canonical_formula_markdown_block(latex)
+    assert validate_section_formula_package(
+        package,
+        equations=_equations(),
+        facts=_facts(),
+    ) == []
 
 
 def test_hybrid_formula_lane_requires_explicit_assumptions() -> None:

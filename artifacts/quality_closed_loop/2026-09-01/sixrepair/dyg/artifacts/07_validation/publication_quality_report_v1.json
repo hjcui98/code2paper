@@ -1,0 +1,1203 @@
+{
+  "schema_version": "1.0",
+  "status": "blocked",
+  "plan_gate_passed": true,
+  "final_integrity_gate_passed": false,
+  "safety": {
+    "authorship_gate_passed": true,
+    "binding_gate_passed": true,
+    "unsupported_positive_claims": 2,
+    "source_integrity": true,
+    "final_text_validation_status": "failed",
+    "support_precision": 0.0,
+    "hard_gate_passed": false
+  },
+  "utility": {
+    "supported_unit_recall": 0.0,
+    "planned_required_propositions": 0,
+    "rendered_required_propositions": 0,
+    "validated_required_propositions": 0,
+    "deferred_required_propositions": 0,
+    "unresolved_required_propositions": 0,
+    "planned_proposition_recall": null,
+    "rendered_proposition_recall": null,
+    "validated_proposition_recall": null,
+    "proposition_metric_status": "not_applicable",
+    "candidate_caveated_propositions": 0,
+    "completeness_coverage": 0.0,
+    "argument_move_coverage": 0.083333,
+    "equation_coverage": 0.0,
+    "configuration_coverage": null,
+    "numeric_coverage": null,
+    "coverage_metric_status": {
+      "equation": "applicable",
+      "configuration": "not_applicable",
+      "numeric": "not_applicable",
+      "proposition": "not_applicable"
+    },
+    "reproducibility_detail_coverage": 0.0,
+    "coherence_score": 0.2,
+    "story_primary_coverage": 1.0,
+    "dataflow_continuity": 1.0,
+    "formula_obligation_coverage": 0.0,
+    "section_coherence": 0.2,
+    "qualifier_coverage": 1.0,
+    "information_density": 0.0,
+    "stage_coverage": 0.2,
+    "duplicate_information_rate": 0.0,
+    "terminology_notation_consistent": true,
+    "editable_section_rate": 0.2,
+    "paper_code_mismatch_preserved": true,
+    "content_role_status": {
+      "overview": "missing",
+      "representation": "missing",
+      "transformation": "missing",
+      "branch": "not_required",
+      "equation": "missing",
+      "objective": "missing",
+      "output": "missing"
+    },
+    "expert_pairwise_preference": null,
+    "author_edit_distance": null,
+    "utility_gate_passed": false
+  },
+  "coverage_matrix": [
+    {
+      "obligation_id": "O-METHOD-MAINLINE-01-3011c54d",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S1:unit-2"
+      ],
+      "planned_section_ids": [
+        "MA-S1"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-STAGE-01-06d7de36",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+        "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+        "claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S1:unit-2"
+      ],
+      "planned_section_ids": [
+        "MA-S1"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-STAGE-02-e02cd0f2",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+        "claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-2"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-STAGE-03-d47a86f4",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+        "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S5:unit-1"
+      ],
+      "planned_section_ids": [
+        "MA-S5"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-STAGE-04-a3a3e8ab",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "planned_section_ids": [
+        "MA-S4"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-88e55e54",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-3"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-01-377afc18",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-3"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-02-c39dd898",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+        "claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-3"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-03-2ae65141",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S4:unit-2"
+      ],
+      "planned_section_ids": [
+        "MA-S4"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-04-6d73cce5",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-3"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-05-8cd85daa",
+      "agenda_status": "supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041"
+      ],
+      "planned_argument_unit_ids": [
+        "MA-S3:unit-3"
+      ],
+      "planned_section_ids": [
+        "MA-S3"
+      ],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": true,
+      "coverage_status": "planned_but_not_rendered"
+    },
+    {
+      "obligation_id": "O-COMPONENT-06-e711d58d",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-COMPONENT-07-c430eb84",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-COMPONENT-08-48efa86a",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "executable_hard",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-01-42774719",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-02-780817ba",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-03-359984b4",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-ORGANIZATION-04-a52145c2",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "expository_bridge",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-01-106180a0",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-02-653d713f",
+      "agenda_status": "author_confirmation_required",
+      "authority_lane": "author_attested",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-03-117025ca",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-04-b41841c3",
+      "agenda_status": "partially_supported_by_repository",
+      "authority_lane": "author_attested",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    },
+    {
+      "obligation_id": "O-RATIONALE-CHECK-05-e1bbed89",
+      "agenda_status": "author_confirmation_required",
+      "authority_lane": "author_attested",
+      "claim_ids": [],
+      "planned_argument_unit_ids": [],
+      "planned_section_ids": [],
+      "used_claim_ids": [],
+      "final_span_ids": [],
+      "required_in_final": false,
+      "coverage_status": "sidecar"
+    }
+  ],
+  "issues": [
+    {
+      "issue_id": "safety-final-text-validation",
+      "axis": "epistemic_safety",
+      "scope": "document",
+      "code": "final_text_validation_failed",
+      "message": "Final sentence-to-evidence validation has not passed.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "safety-final-text-claim-0",
+      "axis": "epistemic_safety",
+      "scope": "claim",
+      "code": "final_text_claim_validation_failed",
+      "message": "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+      "section_id": "MA-S2",
+      "claim_id": "FAC1",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "safety-final-text-claim-1",
+      "axis": "epistemic_safety",
+      "scope": "claim",
+      "code": "final_text_claim_validation_failed",
+      "message": "Final claim FAC2 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+      "section_id": "MA-S2",
+      "claim_id": "FAC2",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:problem_or_local_context",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move problem_or_local_context was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:design_objective",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move design_objective was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:mechanism_overview",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move mechanism_overview was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:transition_to_next_section",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move transition_to_next_section was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:algorithm_or_data_flow",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move algorithm_or_data_flow was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:implementation_realization",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move implementation_realization was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:formal_objects_and_notation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move formal_objects_and_notation was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:equation_or_derivation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move equation_or_derivation was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S1:inference_and_output",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move inference_and_output was not proven by authored content.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:problem_or_local_context",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move problem_or_local_context was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:design_objective",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move design_objective was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:mechanism_overview",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move mechanism_overview was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:transition_to_next_section",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move transition_to_next_section was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:algorithm_or_data_flow",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move algorithm_or_data_flow was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:implementation_realization",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move implementation_realization was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:formal_objects_and_notation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move formal_objects_and_notation was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:equation_or_derivation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move equation_or_derivation was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S3:inference_and_output",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move inference_and_output was not proven by authored content.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:problem_or_local_context",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move problem_or_local_context was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:design_objective",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move design_objective was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:mechanism_overview",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move mechanism_overview was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:transition_to_next_section",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move transition_to_next_section was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:algorithm_or_data_flow",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move algorithm_or_data_flow was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:implementation_realization",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move implementation_realization was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S4:inference_and_output",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move inference_and_output was not proven by authored content.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:problem_or_local_context",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move problem_or_local_context was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:design_objective",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move design_objective was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:mechanism_overview",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move mechanism_overview was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:algorithm_or_data_flow",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move algorithm_or_data_flow was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:implementation_realization",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move implementation_realization was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:formal_objects_and_notation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move formal_objects_and_notation was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:equation_or_derivation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move equation_or_derivation was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move:MA-S5:inference_and_output",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "required_argument_move_missing",
+      "message": "Required rhetorical move inference_and_output was not proven by authored content.",
+      "section_id": "MA-S5",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move-unanchored:MA-S1:configuration_and_branches",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "move_unanchored",
+      "message": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move-unanchored:MA-S3:configuration_and_branches",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "move_unanchored",
+      "message": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move-unanchored:MA-S4:configuration_and_branches",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "move_unanchored",
+      "message": "Rhetorical move configuration_and_branches has no authorized anchor in this section; owner=Research.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "move-unanchored:MA-S4:equation_or_derivation",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "move_unanchored",
+      "message": "Rhetorical move equation_or_derivation has no authorized anchor in this section; owner=Formalizer.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "coherence",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "section_dependency_incomplete",
+      "message": "A section is missing an accepted dependency or authored section.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "research-request:req:MA-S1:unit-1:1",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "writing_research_request_open",
+      "message": "A Writer-requested authority artifact is still unresolved.",
+      "section_id": "MA-S1",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "research-request:req-ma-s3-mechanism-overview-01",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "writing_research_request_open",
+      "message": "A Writer-requested authority artifact is still unresolved.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "research-request:MA-S4:unit-1:rr-01",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "writing_research_request_open",
+      "message": "A Writer-requested authority artifact is still unresolved.",
+      "section_id": "MA-S4",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "research-request:research-derived:ed3685816b6333da",
+      "axis": "publication_utility",
+      "scope": "section",
+      "code": "writing_research_request_open",
+      "message": "A Writer-requested authority artifact is still unresolved.",
+      "section_id": "MA-S3",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:0",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S1:writer_output_incomplete",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:1",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S1:missing_required_briefs:brief:story:O-COMPONENT-06-e711d58d,brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-ORGANIZATION-01-42774719,brief:story:O-STAGE-01-06d7de36",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:2",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:3",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S3:writer_output_incomplete",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:4",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S3:missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-RATIONALE-CHECK-02-653d713f,brief:story:O-STAGE-02-e02cd0f2",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:5",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S4:writer_output_incomplete",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:6",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S4:missing_required_briefs:brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-08-48efa86a,brief:story:O-ORGANIZATION-04-a52145c2,brief:story:O-RATIONALE-CHECK-01-106180a0",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:7",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S5:writer_output_incomplete",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:8",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S5:invalid_writing_research_callback:formal_objects_and_notation@MA-S5/MA-S5:unit-1/executable_hard",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:9",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "MA-S5:missing_required_briefs:brief:story:O-COMPONENT-07-c430eb84,brief:story:O-STAGE-03-d47a86f4",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:10",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "formalization_required_obligation_unresolved:MA-S1:formula:facet:facet-9a1ed70668b9de25,formula:section:MA-S1:derivation",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:11",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "formalization_required_obligation_unresolved:MA-S3:formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:facet:facet-45205815214ce81d,formula:section:MA-S3:derivation",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "utility-failure:12",
+      "axis": "publication_utility",
+      "scope": "document",
+      "code": "publication_utility_failure",
+      "message": "formalization_required_obligation_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2,formula:facet:facet-e343d4bc111c5b77,formula:facet:facet-3f8317dd772533f4,formula:facet:facet-e36d367d850a8273,formula:section:MA-S5:derivation",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": ""
+    },
+    {
+      "issue_id": "supported-unit:O-METHOD-MAINLINE-01-3011c54d",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-METHOD-MAINLINE-01-3011c54d"
+    },
+    {
+      "issue_id": "supported-unit:O-STAGE-01-06d7de36",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-STAGE-01-06d7de36"
+    },
+    {
+      "issue_id": "supported-unit:O-STAGE-02-e02cd0f2",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-STAGE-02-e02cd0f2"
+    },
+    {
+      "issue_id": "supported-unit:O-STAGE-03-d47a86f4",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-STAGE-03-d47a86f4"
+    },
+    {
+      "issue_id": "supported-unit:O-STAGE-04-a3a3e8ab",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-STAGE-04-a3a3e8ab"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-01-88e55e54",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-01-88e55e54"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-01-377afc18",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-01-377afc18"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-02-c39dd898",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-02-c39dd898"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-03-2ae65141",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-03-2ae65141"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-04-6d73cce5",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-04-6d73cce5"
+    },
+    {
+      "issue_id": "supported-unit:O-COMPONENT-05-8cd85daa",
+      "axis": "publication_utility",
+      "scope": "stage",
+      "code": "supported_unit_missing_from_final",
+      "message": "A supported reference unit was not bound into final text.",
+      "section_id": "",
+      "claim_id": "",
+      "stage_id": "O-COMPONENT-05-8cd85daa"
+    }
+  ],
+  "candidate_warnings_by_severity": {
+    "critical": 3,
+    "major": 66,
+    "minor": 0
+  },
+  "content_chain": {
+    "content_units": {
+      "discovered": 17,
+      "field_bound": 17,
+      "planned": 17,
+      "rendered": 0,
+      "validated": 0
+    },
+    "condition_polarity": {
+      "planned_witness_slots": 56,
+      "rendered_witness_slots": 0,
+      "exact_coverage": 0.0
+    },
+    "ordered_slots": {
+      "planned": 56,
+      "rendered": 0,
+      "coverage": 0.0
+    },
+    "required_edges": {
+      "planned": 0,
+      "rendered": 0,
+      "coverage": null
+    },
+    "formula": {
+      "routed": 3,
+      "accepted_packages": 4,
+      "consumed_packages": 0,
+      "rendered_display_math": 0,
+      "obligation_coverage": 0.0
+    },
+    "paragraphs": {
+      "planned": 7,
+      "rendered": 1,
+      "wall": 2,
+      "duplicate_operation_rate": 0.0
+    },
+    "mismatch_preserved": true
+  },
+  "content_digest": "sha256:dcbb8f563fe3f618a0e280f250688fe6e90df7a0ab3d5ff378bbdba978a38e99"
+}

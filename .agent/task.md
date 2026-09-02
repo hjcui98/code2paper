@@ -1,5 +1,88 @@
 # Current task
 
+## Active Candidate-first Method quality repair (2026-09-01)
+
+The completed serial replay at
+`/tmp/c2p-v34p0p3-8006-{ebcar,dyg,linearrag}-20260901` is the current bound
+counterexample. All three runs ended `exit=2`; Candidate prose became cleaner and gained display
+math, but organization and formula academicization remain below the frozen v34/v33/08-30 outputs
+and the original paper Methods. This is not D5 and structural closure is not the objective of this
+repair.
+
+The user-visible objective is the Markdown body in `publication_candidate_method.md`: it should
+read like a coherent academic Method section, with the author's problem/motivation, ordered
+mechanism, useful paragraph development, paper notation, and clean section boundaries. Evidence
+gaps may remain warnings and Verified must remain fail-closed. Do not weaken, filter, or game a
+structural/evidence/formula metric to declare success.
+
+### Bound root causes to repair
+
+1. **Author rationale is dropped before Writer.**
+   `method_architect._build_method_units_v2` selects only required or formula-bearing facets. In
+   the frozen LinearRAG plan this retains the Tri-Graph mechanism but drops the optional rationale
+   unit containing the author statement “Avoid explicit relation extraction entirely.” V2 Writer
+   then receives no rationale brief and opens Motivation with mechanism detail. Preserve a bounded,
+   representative motivation/rationale/design-objective facet and its owning argument unit in the
+   MethodUnit projection. Do not promote every optional audit facet or create one paragraph per
+   facet.
+2. **Academic operation formulas are generated and then discarded.**
+   `publication_method_writer._run_section_formalizer` removes accepted LLM packages intersecting
+   operation obligations and unconditionally substitutes
+   `build_deterministic_operation_formula_packages`. The EBCAR MA-S4 trace contains an academic
+   loss formula, but Candidate receives Python-shaped assignment/function-call notation. A valid,
+   evidence-bound academic `repository_derived` package must take precedence; exact-operation
+   compilation is a fallback/audit representation, not a Candidate display formula. If no
+   academic package is valid, leave a typed review/unresolved result rather than publishing code as
+   math. Verified continues to accept only its existing code-verified repository lane.
+3. **Formula blocks can contain an entire Markdown memo.**
+   Formula validation currently checks that `markdown_block` contains display math, not that it is
+   exactly a display block. The DyG S5 package therefore inserts `###`, prose, Symbol Definitions,
+   bullets, and assumptions verbatim. Canonicalize representation to exactly
+   `$$\n<latex>\n$$` (or reject and repair it) for every package lane. Structured explanations,
+   symbols, and assumptions are Writer inputs, not placeholder replacement bytes.
+4. **V2 Writer packets bypass publication-language filtering.**
+   Field candidates pass through `_is_implementation_trace_text`, but MethodUnit
+   `ordered_operations` and target rows do not. Generic audit/debug/type-label branches and raw
+   code membership expressions therefore survive as ordinal/cardinal prose and
+   `(src_node_id, dst_node_id) in edge_memories`. Apply project-neutral filtering or safe
+   paper-language projection to every LLM-visible operation/target surface while retaining exact
+   audit sidecars. Preserve scientifically material transformations; do not hard-code these three
+   projects, paths, identifiers, or desired sentences.
+5. **The Writer may repair a truncated heading, but assembly overwrites it.**
+   Section assembly uses `section.heading or output.heading_text`, while the prompt and validators
+   authorize a coherent replacement only when the frozen heading is deterministically truncated.
+   Preserve a validated Writer/Rewrite replacement in that case; keep exact Architect headings for
+   all normal sections.
+6. **Reader order and paragraph budgets remain too compiler-shaped.**
+   Use semantic/rhetorical roles, not heading keywords or project identities, to place a pure
+   problem/motivation/context section before technical mechanism sections when a reused plan has
+   the reverse order. Preserve relative order otherwise. Derive a useful bounded sentence range
+   from conceptual payload (rationale plus mechanism facets/argument units), not merely the count
+   of required facets; this must recover developed Motivation/Framework prose without length-only
+   padding or repeated paraphrases.
+
+### Required implementation and verification
+
+- Add project-neutral synthetic regressions for: optional rationale surviving MethodUnit
+  compaction; academic operation formulas taking precedence over deterministic code notation;
+  display-only formula-block canonicalization; V2 operation/target publication filtering while a
+  scientific transformation is retained; coherent truncated-heading replacement surviving
+  assembly; and rhetorical context ordering/paragraph development.
+- Extend the focused quality tests around
+  `tests/test_v34prose_formula_and_leak_repair.py`,
+  `tests/test_v34like_candidate_plan_freeze.py`,
+  `tests/test_llm_section_writer.py`,
+  `tests/test_agentic_formalization_guards.py`,
+  `tests/test_agentic_publication_method_writer.py`, and
+  `tests/test_agentic_method_architect_product_readiness.py` as appropriate.
+- Run the focused tests, `python -m compileall -q src tests`, and `git diff --check`; record exact
+  commands, exit codes, summaries, code state, and deviations in `.agent/implementation.md`.
+- Do not start a new 8006 replay or real API/model job in this repair. First return the static
+  implementation for Codex read-only acceptance. A later live replay must use a fresh output root
+  and is evidence of prose quality only, never D5 by itself.
+- Preserve all unrelated dirty-tree changes. Do not reset, clean, checkout, commit, merge, edit
+  authority documents, or weaken Candidate/Verified separation.
+
 ## Active implementation handoff — attachment root-cause audit (2026-08-28)
 
 The user-requested implementation basis is the attached audit

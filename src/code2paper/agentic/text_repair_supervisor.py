@@ -239,17 +239,23 @@ def _missing_relation_hint(verdict: TextClaimEvidenceVerdict) -> str:
     parts: list[str] = []
     if "required_qualifier_missing" in verdict.deterministic_failures:
         if verdict.required_qualifiers:
+            from code2paper.agentic.method_proposition_provider import (
+                candidate_qualifier_phrase,
+            )
+
+            reader_phrases = [
+                candidate_qualifier_phrase(item) or item
+                for item in dict.fromkeys(verdict.required_qualifiers)
+            ]
             parts.append(
                 "required_qualifiers_missing: "
-                + "; ".join(dict.fromkeys(verdict.required_qualifiers))
+                + "; ".join(reader_phrases)
             )
             parts.append(
-                "qualifier_representation_rule: render each exact qualifier as "
-                "academic prose plus the exact predicate in ONE compact "
-                "parenthetical backtick binding, for example (when the chunk "
-                "identifiers match, `doc['chunk_id'] == query['chunk_id']`); "
-                "the backtick predicate must stay verbatim and is the "
-                "repository binding, not raw code narration"
+                "qualifier_representation_rule: render each qualifier as "
+                "academic prose from the supplied reader phrase; do not paste "
+                "self., self.cfg, self.config, or torch. identifiers into "
+                "Candidate sentences"
             )
         else:
             parts.append("required_qualifiers_missing: <validator listed no qualifier>")

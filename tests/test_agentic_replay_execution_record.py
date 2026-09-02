@@ -73,6 +73,40 @@ def test_execution_record_contains_command_exit_code_and_code_binding(
     assert record["runtime"]["end"]["running"] == 0
 
 
+def test_authoring_failure_marks_completed_failed_and_not_run_stages(
+    tmp_path: Path,
+) -> None:
+    module = _load_script()
+    fresh = tmp_path / "fresh-failure"
+    path = module._write_authoring_failure(
+        fresh=fresh,
+        terminal_stage="writer",
+        terminal_reason="writer_status:incomplete",
+        error_code="writer_boundary_failed",
+    )
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    assert payload["terminal_stage"] == "writer"
+    assert payload["downstream_stages"] == {
+        "research": "completed",
+        "formalizer": "completed",
+        "writer": "failed",
+    }
+
+    path = module._write_authoring_failure(
+        fresh=tmp_path / "research-failure",
+        terminal_stage="research",
+        terminal_reason="research_not_ready",
+        error_code="research_boundary_failed",
+    )
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    assert payload["downstream_stages"] == {
+        "research": "failed",
+        "formalizer": "not_run",
+        "writer": "not_run",
+    }
+
+
 def test_code_state_digest_is_deterministic_and_read_only(tmp_path: Path) -> None:
     module = _load_script()
     first = module._code_state_digest()
@@ -80,6 +114,57 @@ def test_code_state_digest_is_deterministic_and_read_only(tmp_path: Path) -> Non
     assert first == second
     assert first.startswith("sha256:")
     assert len(first) == len("sha256:") + 64
+
+
+def test_callback_transaction_rejects_structural_regression() -> None:
+    module = _load_script()
+    incumbent = {
+        "required_paragraphs": 7,
+        "valid_required_paragraphs": 5,
+        "invalid_paragraphs": 2,
+        "required_targets": 29,
+        "valid_targets": 25,
+        "required_slots": 9,
+        "witnessed_slots": 7,
+        "required_edges": 0,
+        "witnessed_edges": 0,
+        "accepted_formula_packages": 3,
+        "consumed_formula_packages": 0,
+        "blocked_representation": 0,
+        "invalid_witnesses": 1,
+    }
+    regressed = {**incumbent, "valid_required_paragraphs": 2,
+                 "valid_targets": 8, "witnessed_slots": 2,
+                 "invalid_paragraphs": 5, "blocked_representation": 4,
+                 "invalid_witnesses": 6}
+    committed, reason = module._callback_transaction_decision(incumbent, regressed)
+    assert committed is False
+    assert "coverage_regressed" in reason or "increased" in reason
+
+
+def test_callback_transaction_accepts_only_safe_gain() -> None:
+    module = _load_script()
+    incumbent = {
+        "required_paragraphs": 7,
+        "valid_required_paragraphs": 5,
+        "invalid_paragraphs": 2,
+        "required_targets": 29,
+        "valid_targets": 25,
+        "required_slots": 9,
+        "witnessed_slots": 7,
+        "required_edges": 0,
+        "witnessed_edges": 0,
+        "accepted_formula_packages": 3,
+        "consumed_formula_packages": 0,
+        "blocked_representation": 0,
+        "invalid_witnesses": 1,
+    }
+    improved = {**incumbent, "valid_required_paragraphs": 6,
+                "valid_targets": 27, "invalid_paragraphs": 1,
+                "invalid_witnesses": 0}
+    committed, reason = module._callback_transaction_decision(incumbent, improved)
+    assert committed is True
+    assert "gain" in reason or "reduced" in reason
 
 
 def test_replay_fails_closed_on_missing_frozen_artifacts(tmp_path: Path) -> None:
@@ -277,7 +362,75 @@ def test_callback_one_is_not_authorized_before_research_runtime(
         persist_authoring_rebuild_manifest=False,
     )
     telemetry: dict = {}
-    assert module._replay(frozen=frozen, fresh=fresh, arguments=args, telemetry=telemetry) == 0
+    assert module._replay(frozen=frozen, fresh=fresh, arguments=args, telemetry=telemetry) == 2
+    assert telemetry["callback_fulfillment"]["status"] == "not_authorized"
+    assert telemetry["callback_fulfillment"]["stopped_reason"] == "callback1_not_authorized"
+    # Structural authorization is a downstream gate; it must not rewrite the
+    # already-complete Writer transaction into an incomplete Writer state.
+    assert telemetry["writer_status"] == "success"
+
+
+def test_callback_one_requires_complete_writer_even_when_structure_is_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_script()
+    frozen = tmp_path / "frozen"
+    artifacts = frozen / "artifacts"
+    artifacts.mkdir(parents=True)
+    for name in module.RESEARCH_COPY_ARTIFACTS:
+        (artifacts / f"{name}.json").write_text("{}", encoding="utf-8")
+    fresh = tmp_path / "fresh"
+    profile = tmp_path / "profile.env"
+    profile.write_text("OPENAI_API_KEY=test-key\n", encoding="utf-8")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    monkeypatch.setattr(module, "_apply_live_profile", lambda _path: None)
+    import code2paper.llm.providers as providers
+    monkeypatch.setattr(providers, "load_llm_config_from_env", lambda: object())
+
+    def fake_writer(**_kwargs):
+        return SimpleNamespace(
+            status="incomplete",
+            blocked_reason="",
+            resumed_section_ids=(),
+        ), {}
+
+    import code2paper.agentic.publication_method_writer as writer_module
+    monkeypatch.setattr(writer_module, "run_publication_method_writer", fake_writer)
+    monkeypatch.setattr(
+        module, "_record_method_content_trace", lambda **_kwargs: "trace.json",
+    )
+    monkeypatch.setattr(module, "_record_product_authoring_state", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        module, "_record_authoring_structural_exit",
+        lambda *, fresh, paths, telemetry: {
+            "eligible": True,
+            "reasons": [],
+            "content_digest": "sha256:structural",
+        },
+    )
+    monkeypatch.setattr(module, "_candidate_digest_for_root", lambda _root: "sha256:candidate")
+
+    def fail_if_constructed(**_kwargs):
+        raise AssertionError("callback=1 must not construct Research for an incomplete Writer")
+
+    monkeypatch.setattr(module, "_build_replay_continuation_context", fail_if_constructed)
+    args = argparse.Namespace(
+        run_id="callback-one-writer-incomplete",
+        resume=[],
+        profile=str(profile),
+        frozen_root=str(frozen),
+        fresh_root=str(fresh),
+        repo=str(repo),
+        callback_rounds=1,
+        callback_tool_turns=1,
+        rebuild_authoring=False,
+        reuse_authoring_callbacks=False,
+        persist_authoring_rebuild_manifest=False,
+    )
+    telemetry: dict = {}
+    assert module._replay(frozen=frozen, fresh=fresh, arguments=args, telemetry=telemetry) == 2
     assert telemetry["callback_fulfillment"]["status"] == "not_authorized"
     assert telemetry["callback_fulfillment"]["stopped_reason"] == "callback1_not_authorized"
     assert telemetry["writer_status"] == "incomplete"

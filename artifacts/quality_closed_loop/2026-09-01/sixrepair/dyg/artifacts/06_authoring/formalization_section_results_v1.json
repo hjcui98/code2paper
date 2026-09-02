@@ -1,0 +1,3218 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [
+        {
+          "package_id": "pkg-MA-S1-01",
+          "section_id": "MA-S1",
+          "obligation_id": "",
+          "consumer_paragraph_id": "paragraph:MA-S1:method-unit-1",
+          "satisfied_obligation_ids": [
+            "formula:facet:facet-9a1ed70668b9de25",
+            "formula:section:MA-S1:derivation"
+          ],
+          "semantic_formula_digest": "sha256:ebd971aa08b8b558978be3e0ef565689e7335636bb697e319c170ca6a551ac06",
+          "purpose": "How interaction sequences are represented with heterogeneous features and aligned.",
+          "latex": "\\begin{aligned} \\mathbf{S}_{src} &= \\text{Pad}(\\mathbf{N}_{src}, \\mathbf{T}_{int}, \\mathbf{N}_{nbr}, \\mathbf{E}_{nbr}, \\mathbf{T}_{nbr}; p, L_{max}) \\\\ \\mathbf{S}_{dst} &= \\text{Pad}(\\mathbf{N}_{dst}, \\mathbf{T}_{int}, \\mathbf{N}_{nbr}, \\mathbf{E}_{nbr}, \\mathbf{T}_{nbr}; p, L_{max}) \\\\ \\mathbf{X}_{src} &= \\text{Stack}(\\mathbf{S}_{src}; \\text{dim}=2) \\in \\mathbb{R}^{B \\times L_{src} \\times (C \\times d_c)} \\\\ \\mathbf{X}_{dst} &= \\text{Stack}(\\mathbf{S}_{dst}; \\text{dim}=2) \\in \\mathbb{R}^{B \\times L_{dst} \\times (C \\times d_c)} \\end{aligned}",
+          "prose_explanation": "The method extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform length. These sequences are then stacked along a specific dimension to create a unified tensor representation that aligns heterogeneous features.",
+          "markdown_block": "$$\n\\begin{aligned} \\mathbf{S}_{src} &= \\text{Pad}(\\mathbf{N}_{src}, \\mathbf{T}_{int}, \\mathbf{N}_{nbr}, \\mathbf{E}_{nbr}, \\mathbf{T}_{nbr}; p, L_{max}) \\\\ \\mathbf{S}_{dst} &= \\text{Pad}(\\mathbf{N}_{dst}, \\mathbf{T}_{int}, \\mathbf{N}_{nbr}, \\mathbf{E}_{nbr}, \\mathbf{T}_{nbr}; p, L_{max}) \\\\ \\mathbf{X}_{src} &= \\text{Stack}(\\mathbf{S}_{src}; \\text{dim}=2) \\in \\mathbb{R}^{B \\times L_{src} \\times (C \\times d_c)} \\\\ \\mathbf{X}_{dst} &= \\text{Stack}(\\mathbf{S}_{dst}; \\text{dim}=2) \\in \\mathbb{R}^{B \\times L_{dst} \\times (C \\times d_c)} \\end{aligned}\n$$",
+          "symbol_definitions": [
+            [
+              "\\mathbf{N}_{src}",
+              "Source node IDs"
+            ],
+            [
+              "\\mathbf{N}_{dst}",
+              "Destination node IDs"
+            ],
+            [
+              "\\mathbf{T}_{int}",
+              "Interaction times"
+            ],
+            [
+              "\\mathbf{N}_{nbr}",
+              "Neighbor node IDs"
+            ],
+            [
+              "\\mathbf{E}_{nbr}",
+              "Edge IDs"
+            ],
+            [
+              "\\mathbf{T}_{nbr}",
+              "Neighbor interaction times"
+            ],
+            [
+              "p",
+              "Patch size"
+            ],
+            [
+              "L_{max}",
+              "Maximum input sequence length"
+            ],
+            [
+              "\\mathbf{S}_{src}",
+              "Padded source sequence"
+            ],
+            [
+              "\\mathbf{S}_{dst}",
+              "Padded destination sequence"
+            ],
+            [
+              "\\mathbf{X}_{src}",
+              "Stacked source tensor"
+            ],
+            [
+              "\\mathbf{X}_{dst}",
+              "Stacked destination tensor"
+            ],
+            [
+              "B",
+              "Batch size"
+            ],
+            [
+              "L_{src}",
+              "Source sequence length"
+            ],
+            [
+              "L_{dst}",
+              "Destination sequence length"
+            ],
+            [
+              "C",
+              "Number of channels"
+            ],
+            [
+              "d_c",
+              "Channel embedding dimension"
+            ]
+          ],
+          "symbol_table": [
+            {
+              "symbol": "\\mathbf{N}_{src}",
+              "meaning": "Source node IDs",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{N}_{dst}",
+              "meaning": "Destination node IDs",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{T}_{int}",
+              "meaning": "Interaction times",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{N}_{nbr}",
+              "meaning": "Neighbor node IDs",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{E}_{nbr}",
+              "meaning": "Edge IDs",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{T}_{nbr}",
+              "meaning": "Neighbor interaction times",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "p",
+              "meaning": "Patch size",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "L_{max}",
+              "meaning": "Maximum input sequence length",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{S}_{src}",
+              "meaning": "Padded source sequence",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{S}_{dst}",
+              "meaning": "Padded destination sequence",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{X}_{src}",
+              "meaning": "Stacked source tensor",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "\\mathbf{X}_{dst}",
+              "meaning": "Stacked destination tensor",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "B",
+              "meaning": "Batch size",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "L_{src}",
+              "meaning": "Source sequence length",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "L_{dst}",
+              "meaning": "Destination sequence length",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "C",
+              "meaning": "Number of channels",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "d_c",
+              "meaning": "Channel embedding dimension",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            }
+          ],
+          "material_conditions": [
+            "The input sequences must be padded to a maximum length L_max using a specified patch size p.",
+            "The heterogeneous features (node, edge, temporal, co-occurrence) are stacked along dimension 2 to form a unified tensor."
+          ],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [
+            "The exact internal structure of the 'Pad' operation is not fully specified in the provided facts, only its inputs and outputs.",
+            "The alignment relies on the assumption that all heterogeneous features can be meaningfully stacked into a single tensor."
+          ],
+          "review_question": "",
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:f5fc6f1692ca6bb6953d3796672ba2947d6bfaae5b4d8e5ae3cd70d39e777001"
+        }
+      ],
+      "disposition": null,
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:facet:facet-9a1ed70668b9de25",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-MA-S1-01",
+          "review_question": "",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:section:MA-S1:derivation",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-MA-S1-01",
+          "review_question": "",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-9a1ed70668b9de25",
+          "facet_ids": [
+            "facet-9a1ed70668b9de25"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals. Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs. Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve. Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan. Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise. For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor; for node classification, use a single encoder without co-occurrence encoding.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S1",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S1:method-unit-1",
+          "paragraph_ids": [
+            "paragraph:MA-S1:method-unit-1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals."
+          ],
+          "content_digest": "sha256:2aec45060164f3fd70164dafc96edcc028ef51204ef95a63ebb6bd7c090ebc3d"
+        },
+        {
+          "obligation_id": "formula:section:MA-S1:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S1",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S1:method-unit-1",
+          "paragraph_ids": [
+            "paragraph:MA-S1:method-unit-1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "slot:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:25257326dc3df514c35308afda04f861fb92a28eca19c78fb35e71d53b127936"
+        }
+      ],
+      "evidence_packs": [
+        {
+          "pack_id": "opack:c82ab9f2ce0cb4c0",
+          "section_id": "MA-S1",
+          "dossier_ids": [
+            "dossier:a04becc1d27b56fc"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=src_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=src_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "CALL",
+                "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+                "self.pad_sequences",
+                "node_ids=src_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=src_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length",
+                "attr:pad_sequences"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:130:132"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:130:132",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=dst_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "CALL",
+                "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+                "self.pad_sequences",
+                "node_ids=dst_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length",
+                "attr:pad_sequences"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:138:140"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:138:140",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "operation_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "fact_id": "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "src_padded_data",
+                "dim=2"
+              ],
+              "result": "src_padded_data",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "STACK",
+                "src_padded_data",
+                "torch.stack",
+                "src_padded_data",
+                "dim=2",
+                "qualified:torch.stack"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:211:211"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:211:211",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "dst_padded_data",
+                "dim=2"
+              ],
+              "result": "dst_padded_data",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "STACK",
+                "dst_padded_data",
+                "torch.stack",
+                "dim=2",
+                "qualified:torch.stack"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:212:212"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:212:212",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "COMPUTE",
+                "self.num_channels",
+                "self.channel_embedding_dim",
+                "mult"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:214:214"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:214:214",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "operation_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "fact_id": "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "COMPUTE",
+                "self.num_channels",
+                "self.channel_embedding_dim",
+                "mult"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:215:215"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:215:215",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "src_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "src_routing_weights",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "NORMALIZE",
+                "src_routing_weights",
+                "F.softmax",
+                "src_router_logits",
+                "dim=1",
+                "dtype=torch.float",
+                "method:softmax"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:240:240"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:240:240",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "dst_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "dst_routing_weights",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "NORMALIZE",
+                "dst_routing_weights",
+                "F.softmax",
+                "dst_router_logits",
+                "dim=1",
+                "dtype=torch.float",
+                "method:softmax"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:241:241"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:241:241",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "selects_top_k",
+              "operands": [
+                "torch.topk",
+                "dst_routing_weights",
+                "min(self.top_k, dst_seq_len)",
+                "dim=1"
+              ],
+              "result": "(dst_routing_weights, dst_selected_embeddings)",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1"
+              ],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "TOPK",
+                "(dst_routing_weights, dst_selected_embeddings)",
+                "torch.topk",
+                "dst_routing_weights",
+                "min(self.top_k, dst_seq_len)",
+                "dim=1",
+                "qualified:torch.topk"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:244:244"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:244:244",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "reduces",
+              "operands": [
+                "(src_padded_data * src_routing_weights_expand).sum",
+                "1"
+              ],
+              "result": "src_padded_data",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "REDUCE",
+                "src_padded_data",
+                "(src_padded_data * src_routing_weights_expand).sum",
+                "1",
+                "method:sum"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:256:256"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:256:256",
+              "chain_scope": "sym:6978572280d27264"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "subject": "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "scope": "sym:6978572280d27264",
+              "predicate": "returns",
+              "operands": [],
+              "result": "(src_node_embeddings, dst_node_embeddings)",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:6978572280d27264",
+                "RETURN",
+                "(src_node_embeddings, dst_node_embeddings)"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/DyGMamba.py:264:264"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:264:264",
+              "chain_scope": "sym:6978572280d27264"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=src_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=src_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:130:132"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=dst_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:138:140"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "fact_id": "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "src_padded_data",
+                "dim=2"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:211:211"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "dst_padded_data",
+                "dim=2"
+              ],
+              "result": "dst_padded_data",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:212:212"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:214:214"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "fact_id": "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:215:215"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "src_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "src_routing_weights",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:240:240"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "dst_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "dst_routing_weights",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:241:241"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "predicate": "selects_top_k",
+              "operands": [
+                "torch.topk",
+                "dst_routing_weights",
+                "min(self.top_k, dst_seq_len)",
+                "dim=1"
+              ],
+              "result": "(dst_routing_weights, dst_selected_embeddings)",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [
+                "dim=1"
+              ],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:244:244"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "predicate": "reduces",
+              "operands": [
+                "(src_padded_data * src_routing_weights_expand).sum",
+                "1"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:256:256"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "fact_id": "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "predicate": "returns",
+              "operands": [],
+              "result": "(src_node_embeddings, dst_node_embeddings)",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:6978572280d27264",
+              "source_span_id": "span:models/DyGMamba.py:264:264"
+            },
+            {
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=src_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=src_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:130:132"
+            },
+            {
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=dst_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:138:140"
+            },
+            {
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "src_padded_data",
+                "dim=2"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:211:211"
+            },
+            {
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "dst_padded_data",
+                "dim=2"
+              ],
+              "result": "dst_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:212:212"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:214:214"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:215:215"
+            },
+            {
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "src_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "src_routing_weights",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:240:240"
+            },
+            {
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "dst_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "dst_routing_weights",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:241:241"
+            },
+            {
+              "predicate": "selects_top_k",
+              "operands": [
+                "torch.topk",
+                "dst_routing_weights",
+                "min(self.top_k, dst_seq_len)",
+                "dim=1"
+              ],
+              "result": "(dst_routing_weights, dst_selected_embeddings)",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:244:244"
+            },
+            {
+              "predicate": "reduces",
+              "operands": [
+                "(src_padded_data * src_routing_weights_expand).sum",
+                "1"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:256:256"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "(src_node_embeddings, dst_node_embeddings)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:264:264"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/DyGMamba.py:130:132",
+            "span:models/DyGMamba.py:138:140",
+            "span:models/DyGMamba.py:211:211",
+            "span:models/DyGMamba.py:212:212",
+            "span:models/DyGMamba.py:214:214",
+            "span:models/DyGMamba.py:215:215",
+            "span:models/DyGMamba.py:240:240",
+            "span:models/DyGMamba.py:241:241",
+            "span:models/DyGMamba.py:244:244",
+            "span:models/DyGMamba.py:256:256",
+            "span:models/DyGMamba.py:264:264"
+          ],
+          "exact_excerpts": [
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "src_padded_data = torch.stack(src_padded_data, dim=2)",
+            "dst_padded_data = torch.stack(dst_padded_data, dim=2)",
+            "dst_padded_data = dst_padded_data.reshape(batch_size, dst_seq_len, self.num_channels * self.channel_embedding_dim)",
+            "src_routing_weights = F.softmax(src_router_logits, dim=1, dtype=torch.float)",
+            "dst_routing_weights = F.softmax(dst_router_logits, dim=1, dtype=torch.float)",
+            "dst_routing_weights, dst_selected_embeddings = torch.topk(dst_routing_weights, min(self.top_k, dst_seq_len), dim=1)",
+            "src_padded_data = (src_padded_data * src_routing_weights_expand).sum(1)",
+            "return src_node_embeddings, dst_node_embeddings",
+            "self.pad_sequences(node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)",
+            "self.pad_sequences(node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)",
+            "src_padded_data = src_padded_data.reshape(batch_size, src_seq_len, self.num_channels * self.channel_embedding_dim)",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "return out"
+          ],
+          "preconditions": [],
+          "shape_or_type_hints": [
+            "dim=2",
+            "self.channel_embedding_dim",
+            "dim=1",
+            "dtype=torch.float"
+          ],
+          "author_statements": [
+            "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals.",
+            "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+            "Encoding alignment: Project all encoding types to a common dimension and concatenate them."
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+            "fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+            "fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+            "fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:58aa4e1e2d98b32f73c29e57f6961182d1f374580a9fe2c2917d4267bb3ecbe8"
+        },
+        {
+          "pack_id": "opack:38d7489c6c9a0b7f",
+          "section_id": "MA-S1",
+          "dossier_ids": [
+            "dossier:a04becc1d27b56fc"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "BRANCH",
+                "self.time_mamba and dts != None",
+                "self.time_mamba and dts != None",
+                "if"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:497:525"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:497:525",
+              "chain_scope": "sym:c70e75db715f01dc"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=src_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=src_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:130:132"
+            },
+            {
+              "predicate": "calls",
+              "operands": [
+                "self.pad_sequences",
+                "node_ids=dst_node_ids",
+                "node_interact_times=node_interact_times",
+                "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+                "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+                "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+                "patch_size=self.patch_size",
+                "max_input_sequence_length=self.max_input_sequence_length"
+              ],
+              "result": "(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:138:140"
+            },
+            {
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "src_padded_data",
+                "dim=2"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:211:211"
+            },
+            {
+              "predicate": "stacks",
+              "operands": [
+                "torch.stack",
+                "dst_padded_data",
+                "dim=2"
+              ],
+              "result": "dst_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=2"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:212:212"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:214:214"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.num_channels",
+                "self.channel_embedding_dim"
+              ],
+              "result": "",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "self.channel_embedding_dim"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:215:215"
+            },
+            {
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "src_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "src_routing_weights",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:240:240"
+            },
+            {
+              "predicate": "normalizes",
+              "operands": [
+                "F.softmax",
+                "dst_router_logits",
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "result": "dst_routing_weights",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1",
+                "dtype=torch.float"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:241:241"
+            },
+            {
+              "predicate": "selects_top_k",
+              "operands": [
+                "torch.topk",
+                "dst_routing_weights",
+                "min(self.top_k, dst_seq_len)",
+                "dim=1"
+              ],
+              "result": "(dst_routing_weights, dst_selected_embeddings)",
+              "conditions": [],
+              "shape_or_type_hints": [
+                "dim=1"
+              ],
+              "source_span_id": "span:models/DyGMamba.py:244:244"
+            },
+            {
+              "predicate": "reduces",
+              "operands": [
+                "(src_padded_data * src_routing_weights_expand).sum",
+                "1"
+              ],
+              "result": "src_padded_data",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:256:256"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "(src_node_embeddings, dst_node_embeddings)",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/DyGMamba.py:264:264"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "exact_excerpts": [
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "src_padded_data = torch.stack(src_padded_data, dim=2)",
+            "dst_padded_data = torch.stack(dst_padded_data, dim=2)",
+            "dst_padded_data = dst_padded_data.reshape(batch_size, dst_seq_len, self.num_channels * self.channel_embedding_dim)",
+            "src_routing_weights = F.softmax(src_router_logits, dim=1, dtype=torch.float)",
+            "dst_routing_weights = F.softmax(dst_router_logits, dim=1, dtype=torch.float)",
+            "dst_routing_weights, dst_selected_embeddings = torch.topk(dst_routing_weights, min(self.top_k, dst_seq_len), dim=1)",
+            "src_padded_data = (src_padded_data * src_routing_weights_expand).sum(1)",
+            "return src_node_embeddings, dst_node_embeddings",
+            "self.pad_sequences(node_ids=src_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=src_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=src_nodes_edge_ids_list, nodes_neighbor_times_list=src_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)",
+            "self.pad_sequences(node_ids=dst_node_ids, node_interact_times=node_interact_times, nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list,\n                            nodes_edge_ids_list=dst_nodes_edge_ids_list, nodes_neighbor_times_list=dst_nodes_neighbor_times_list,\n                            patch_size=self.patch_size, max_input_sequence_length=self.max_input_sequence_length)",
+            "src_padded_data = src_padded_data.reshape(batch_size, src_seq_len, self.num_channels * self.channel_embedding_dim)",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "return out"
+          ],
+          "preconditions": [],
+          "shape_or_type_hints": [
+            "dim=2",
+            "self.channel_embedding_dim",
+            "dim=1",
+            "dtype=torch.float"
+          ],
+          "author_statements": [
+            "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals.",
+            "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+            "Encoding alignment: Project all encoding types to a common dimension and concatenate them."
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:ccd5ea24bdba6d857fc604ac83917724342bfe11a1f239153c6d8dc4f9ecd9da"
+        }
+      ],
+      "required_formula_failures": [
+        "formula:facet:facet-9a1ed70668b9de25",
+        "formula:section:MA-S1:derivation"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [
+        "duplicate_obligation_consumers:pkg-MA-S1-02"
+      ],
+      "content_digest": "sha256:bb293787ffa2fbfe6f0d5a5866ee95c9bc69249010c6c1274a07d07d05dc1e08"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S2:none",
+          "outcome": "not_applicable",
+          "terminal_disposition": "failed",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:7ff5efd96a9f28bddb16771a82463ace20125e34825620d1efe48f95cad91d5b"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [
+        {
+          "package_id": "pkg-ma-s3-formula-01",
+          "section_id": "MA-S3",
+          "obligation_id": "formula:facet:facet-e3de4791afd3b462",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-1",
+          "satisfied_obligation_ids": [
+            "formula:facet:facet-e3de4791afd3b462"
+          ],
+          "semantic_formula_digest": "sha256:2d31416a0a5cce686f1d0536a78fd949602872294750da30078944df4a9bb978",
+          "purpose": "To provide the mathematical foundation for the timespan-aware forgetting and robust selective reviewing described in the section.",
+          "latex": "\\Delta t = f_{\\text{time}}(\\tau), \\quad A = A_0, \\quad B = B_{\\text{spec}}, \\quad C = C_{\\text{spec}}",
+          "prose_explanation": "This package formalizes the author's intent to make the SSM's forgetting mechanism temporally aware. By linking $\\Delta t$ to the timespan $\\tau$, the model can forget older states more aggressively. The stable initialization of $A$ ensures that the system does not diverge, while the spectral norm constraints on $B$ and $C$ provide a robust mechanism for selective attention to historical data.",
+          "markdown_block": "$$\n\\Delta t = f_{\\text{time}}(\\tau), \\quad A = A_0, \\quad B = B_{\\text{spec}}, \\quad C = C_{\\text{spec}}\n$$",
+          "symbol_definitions": [
+            [
+              "$\\Delta t$",
+              "Discrete-time step of the SSM, now a function of timespan"
+            ],
+            [
+              "$\\tau$",
+              "Elapsed timespan from the historical state to the prediction time"
+            ],
+            [
+              "$f_{\\text{time}}$",
+              "Function mapping timespan to discrete-time step"
+            ],
+            [
+              "$A_0$",
+              "Stable initialization of the continuous-time matrix $A$"
+            ],
+            [
+              "$B_{\\text{spec}}$",
+              "Input matrix $B$ with spectral norm constraints"
+            ],
+            [
+              "$C_{\\text{spec}}$",
+              "Output matrix $C$ with spectral norm constraints"
+            ]
+          ],
+          "symbol_table": [
+            {
+              "symbol": "$\\Delta t$",
+              "meaning": "Discrete-time step of the SSM, now a function of timespan",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "$\\tau$",
+              "meaning": "Elapsed timespan from the historical state to the prediction time",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "$f_{\\text{time}}$",
+              "meaning": "Function mapping timespan to discrete-time step",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "$A_0$",
+              "meaning": "Stable initialization of the continuous-time matrix $A$",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "$B_{\\text{spec}}$",
+              "meaning": "Input matrix $B$ with spectral norm constraints",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            },
+            {
+              "symbol": "$C_{\\text{spec}}$",
+              "meaning": "Output matrix $C$ with spectral norm constraints",
+              "fact_ids": [],
+              "source_artifact_ids": [],
+              "conditions": []
+            }
+          ],
+          "material_conditions": [],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [],
+          "review_question": "Does the specific functional form of $f_{\\text{time}}(\\tau)$ and the exact spectral norm bounds for $B$ and $C$ align with the implementation details in the repository?",
+          "bound_fact_ids": [],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:2c16e9bbff56cae8cca777381b3fe65b8c0d3fc1b25fa8981d478dd2b8d294ce"
+        },
+        {
+          "package_id": "pkg-ma-s3-author-intent",
+          "section_id": "MA-S3",
+          "obligation_id": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "satisfied_obligation_ids": [
+            "formula:facet:facet-0564bcda9bc954d9",
+            "formula:facet:facet-45205815214ce81d"
+          ],
+          "semantic_formula_digest": "sha256:622c98bb71bbf467329dd93f7ccb89036a2f4e114251a3aa14c9eea95d4e2dc8",
+          "purpose": "author_intent_academic",
+          "latex": "\\begin{aligned} \\Delta t_i &= \\sigma\\left( w_{\\Delta t} \\cdot \\phi(\\tau_i) \\right), \\quad \\tau_i = t_{\\text{pred}} - t_i \\\\ A &= \\text{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\text{Re}(\\lambda_j) < 0 \\forall j \\\\ B_i &= \\frac{B_i^{\\text{raw}}}{\\|B_i^{\\text{raw}}\\|_2}, \\quad C_i = \\frac{C_i^{\\text{raw}}}{\\|C_i^{\\text{raw}}\\|_2} \\end{aligned}",
+          "prose_explanation": "This package formalizes the author's intent to decouple the SSM's forgetting mechanism from the input sequence length by tying $\\Delta t$ to the absolute timespan $\\tau_i$. The diagonal initialization of $A$ with negative real parts ensures that the state $h_i$ decays exponentially over time, with the decay rate modulated by $\\Delta t_i$. The spectral norm redefinition of $B$ and $C$ acts as a robustness constraint, ensuring that the selective mechanism (which determines how much of the input is written to the state and how much of the state is read out) is invariant to the scale of the projected features, thereby enabling stable and robust selective reviewing.",
+          "markdown_block": "$$\n\\begin{aligned} \\Delta t_i &= \\sigma\\left( w_{\\Delta t} \\cdot \\phi(\\tau_i) \\right), \\quad \\tau_i = t_{\\text{pred}} - t_i \\\\ A &= \\text{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\text{Re}(\\lambda_j) < 0 \\forall j \\\\ B_i &= \\frac{B_i^{\\text{raw}}}{\\|B_i^{\\text{raw}}\\|_2}, \\quad C_i = \\frac{C_i^{\\text{raw}}}{\\|C_i^{\\text{raw}}\\|_2} \\end{aligned}\n$$",
+          "symbol_definitions": [],
+          "symbol_table": [],
+          "material_conditions": [],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [],
+          "review_question": "Does the specific choice of the trainable cosine-based function $\\phi(\\tau_i)$ and the positive activation $\\sigma$ align with the intended timespan-informed forgetting curve, and is the spectral norm normalization of $B$ and $C$ applied to the raw projected features or the final selective parameters?",
+          "bound_fact_ids": [],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:18105f3aec6904727e3c756f480374aabf25da5a6ca0ee4af995d15ba67db412"
+        }
+      ],
+      "disposition": null,
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:facet:facet-e3de4791afd3b462",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s3-formula-01",
+          "review_question": "Does the specific functional form of $f_{\\text{time}}(\\tau)$ and the exact spectral norm bounds for $B$ and $C$ align with the implementation details in the repository?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-0564bcda9bc954d9",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s3-author-intent",
+          "review_question": "Does the specific choice of the trainable cosine-based function $\\phi(\\tau_i)$ and the positive activation $\\sigma$ align with the intended timespan-informed forgetting curve, and is the spectral norm normalization of $B$ and $C$ applied to the raw projected features or the final selective parameters?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-45205815214ce81d",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s3-author-intent",
+          "review_question": "Does the specific choice of the trainable cosine-based function $\\phi(\\tau_i)$ and the positive activation $\\sigma$ align with the intended timespan-informed forgetting curve, and is the spectral norm normalization of $B$ and $C$ applied to the raw projected features or the final selective parameters?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "outcome": "unresolved",
+          "terminal_disposition": "failed",
+          "package_id": "",
+          "review_question": "Which repository evidence binds this section formula obligation?",
+          "reason": "",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-e3de4791afd3b462",
+          "facet_ids": [
+            "facet-e3de4791afd3b462"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-1",
+          "paragraph_ids": [
+            "paragraph:MA-S3:method-unit-1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+            "slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+            "slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+            "slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+            "slot:fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+            "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+            "slot:fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+            "slot:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+            "slot:fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+            "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+            "slot:fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+            "slot:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+            "slot:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+            "slot:fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+            "slot:fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+            "slot:fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+            "slot:fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay."
+          ],
+          "content_digest": "sha256:91100325368cb8f243d0990d450427fbf32b277ec3dd1f02593747fcec59fd76"
+        },
+        {
+          "obligation_id": "formula:facet:facet-0564bcda9bc954d9",
+          "facet_ids": [
+            "facet-0564bcda9bc954d9"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S3:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing."
+          ],
+          "content_digest": "sha256:beda1415bcd8daddfd29b0fa006dd6bde9b32caec701b7d2acff7322c0de95e0"
+        },
+        {
+          "obligation_id": "formula:facet:facet-45205815214ce81d",
+          "facet_ids": [
+            "facet-45205815214ce81d"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S3:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues."
+          ],
+          "content_digest": "sha256:d94a553605d610d7aa529aa1804f22452642a54922526e830b7587afc30efd10"
+        },
+        {
+          "obligation_id": "formula:section:MA-S3:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S3",
+          "mechanism_key": "mechanism:co-occurrence frequency encoding: capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S3:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:27bcbebf9599d2cd4c9c8d90a465e1c0a46e66b927d40d67b0c2324ce890d8c3"
+        }
+      ],
+      "evidence_packs": [
+        {
+          "pack_id": "opack:fa6d94abdd99b70a",
+          "section_id": "MA-S3",
+          "dossier_ids": [
+            "dossier:3c4a41067128afe8"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "BRANCH",
+                "self.time_mamba and dts != None",
+                "self.time_mamba and dts != None",
+                "if"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:497:525"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:497:525",
+              "chain_scope": "sym:c70e75db715f01dc"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "exact_excerpts": [
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "return out"
+          ],
+          "preconditions": [],
+          "shape_or_type_hints": [],
+          "author_statements": [
+            "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+            "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+            "Node encoding: Use raw node features;",
+            "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function."
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:ed1b72d6a84fd017709661fe0e5fe4d813b9f236a58bbd7b1434fb57dfe36eb2"
+        }
+      ],
+      "required_formula_failures": [
+        "formula:facet:facet-e3de4791afd3b462",
+        "formula:facet:facet-0564bcda9bc954d9",
+        "formula:facet:facet-45205815214ce81d",
+        "formula:section:MA-S3:derivation"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:237b25d171988b709abf33e5daf3bf503edf7d3c76f2ef1816ff4b32397c189c"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "not_applicable",
+        "review_question": "Does this section need a core mechanism formula, and which repository evidence would bind it?",
+        "review_note": "No formula-worthy mechanism facet or equation is bound to this section.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:section:MA-S4:none",
+          "outcome": "not_applicable",
+          "terminal_disposition": "failed",
+          "package_id": "",
+          "review_question": "",
+          "reason": "section marked formula_not_applicable",
+          "expectation": "none",
+          "blocking": false
+        }
+      ],
+      "formula_obligations": [],
+      "evidence_packs": [
+        {
+          "pack_id": "opack:d2aa1d0391d6304a",
+          "section_id": "MA-S4",
+          "dossier_ids": [
+            "dossier:4905e01b82ed2b0e"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "BRANCH",
+                "self.time_mamba and dts != None",
+                "self.time_mamba and dts != None",
+                "if"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:497:525"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:497:525",
+              "chain_scope": "sym:c70e75db715f01dc"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "exact_excerpts": [
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "return out"
+          ],
+          "preconditions": [],
+          "shape_or_type_hints": [],
+          "author_statements": [
+            "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+            "Edge encoding: Use raw edge features;",
+            "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification.",
+            "Directly couple the SSM step size Δt to the irregular timespans between interactions."
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:a4bae85e57353e51c0cf0d958de617964e5f67e1d35add6f08c70043c270ef5d"
+        }
+      ],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:718e656c1800ae72761d1a06ceff20fc2ac4fa6034124ef63c40c9adad7fcd30"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [
+        {
+          "package_id": "pkg-ma-s5-author-intent",
+          "section_id": "MA-S5",
+          "obligation_id": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "satisfied_obligation_ids": [
+            "formula:facet:facet-3f8317dd772533f4",
+            "formula:facet:facet-e36d367d850a8273",
+            "formula:section:MA-S5:derivation"
+          ],
+          "semantic_formula_digest": "sha256:422183e6a12f3908e8e8371e6de64e4e15e4650481eab3b07832201568c12267",
+          "purpose": "author_intent_academic",
+          "latex": "\\begin{aligned}\n& \\text{Input-dependent B/C:} \\quad B_t = W_B x_t, \\quad C_t = W_C x_t \\\\\n& \\text{Spectral Norm Constraints:} \\quad \\|W_B\\|_2 \\le 1, \\quad \\|W_C\\|_2 \\le 1\n\\end{aligned}",
+          "prose_explanation": "The section describes how the DyG-Mamba SSM core uses input-dependent B and C matrices with spectral norm constraints to achieve timespan-aware forgetting and noise-robust reviewing. The formula package captures the core mechanism by defining the input-dependent B and C matrices and the spectral norm constraints on their weight matrices.",
+          "markdown_block": "$$\n\\begin{aligned}\n& \\text{Input-dependent B/C:} \\quad B_t = W_B x_t, \\quad C_t = W_C x_t \\\\\n& \\text{Spectral Norm Constraints:} \\quad \\|W_B\\|_2 \\le 1, \\quad \\|W_C\\|_2 \\le 1\n\\end{aligned}\n$$",
+          "symbol_definitions": [],
+          "symbol_table": [],
+          "material_conditions": [],
+          "assumptions": [],
+          "authority_status": "author_intent",
+          "formula_lane": "author_intent_academic",
+          "bound_facet_ids": [],
+          "review_status": "review_required",
+          "risks": [],
+          "review_question": "Does the repository implementation explicitly enforce the spectral norm constraints \\|W_B\\|_2 \\le 1 and \\|W_C\\|_2 \\le 1 during training or inference? If not, how are these constraints approximated or relaxed in the code?",
+          "bound_fact_ids": [],
+          "bound_equation_ids": [],
+          "content_digest": "sha256:193e86d56e1347a8b64a9385556749e266927b0fb9198d89deed69b459ef28f8"
+        }
+      ],
+      "disposition": null,
+      "obligation_truths": [
+        {
+          "obligation_id": "formula:facet:facet-85dd07572b8a77e2",
+          "outcome": "unresolved",
+          "terminal_disposition": "failed",
+          "package_id": "",
+          "review_question": "Which repository evidence binds this section formula obligation?",
+          "reason": "",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-e343d4bc111c5b77",
+          "outcome": "unresolved",
+          "terminal_disposition": "failed",
+          "package_id": "",
+          "review_question": "Which repository evidence binds this section formula obligation?",
+          "reason": "",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-3f8317dd772533f4",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s5-author-intent",
+          "review_question": "Does the repository implementation explicitly enforce the spectral norm constraints \\|W_B\\|_2 \\le 1 and \\|W_C\\|_2 \\le 1 during training or inference? If not, how are these constraints approximated or relaxed in the code?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:facet:facet-e36d367d850a8273",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s5-author-intent",
+          "review_question": "Does the repository implementation explicitly enforce the spectral norm constraints \\|W_B\\|_2 \\le 1 and \\|W_C\\|_2 \\le 1 during training or inference? If not, how are these constraints approximated or relaxed in the code?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        },
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "outcome": "rendered",
+          "terminal_disposition": "review_required",
+          "package_id": "pkg-ma-s5-author-intent",
+          "review_question": "Does the repository implementation explicitly enforce the spectral norm constraints \\|W_B\\|_2 \\le 1 and \\|W_C\\|_2 \\le 1 during training or inference? If not, how are these constraints approximated or relaxed in the code?",
+          "reason": "formula package is not code-accepted",
+          "expectation": "required",
+          "blocking": true
+        }
+      ],
+      "formula_obligations": [
+        {
+          "obligation_id": "formula:facet:facet-85dd07572b8a77e2",
+          "facet_ids": [
+            "facet-85dd07572b8a77e2"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "while maintaining stability through spectral norm constraints.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-1",
+          "paragraph_ids": [
+            "paragraph:MA-S5:method-unit-1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "while maintaining stability through spectral norm constraints."
+          ],
+          "content_digest": "sha256:5847eabdf4176b21026de99055139c0ef0de2c8ffad6ec9bf4f1d72148ee59b6"
+        },
+        {
+          "obligation_id": "formula:facet:facet-e343d4bc111c5b77",
+          "facet_ids": [
+            "facet-e343d4bc111c5b77"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-1",
+          "paragraph_ids": [
+            "paragraph:MA-S5:method-unit-1"
+          ],
+          "ordered_semantic_slot_ids": [
+            "slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)"
+          ],
+          "content_digest": "sha256:b31a711dc070aab1c50f00bde15ec0029046941d418c08530ec7d78b17a8766a"
+        },
+        {
+          "obligation_id": "formula:facet:facet-3f8317dd772533f4",
+          "facet_ids": [
+            "facet-3f8317dd772533f4"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S5:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing."
+          ],
+          "content_digest": "sha256:5ea98c31d9c8737ef03041da162894618d4ccaa5bf2efd14808d346a6317132d"
+        },
+        {
+          "obligation_id": "formula:facet:facet-e36d367d850a8273",
+          "facet_ids": [
+            "facet-e36d367d850a8273"
+          ],
+          "expectation": "required",
+          "mathematical_goal": "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1.",
+          "authority_requirements": [
+            "repository_derived_or_explicit_author_intent"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S5:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "author_intent_academic",
+          "exact_source_quotes": [
+            "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1."
+          ],
+          "content_digest": "sha256:c1970f4bdbee25929c4bb4bbe47c68866c04bf2019beeaf680e1c07d2acbe869"
+        },
+        {
+          "obligation_id": "formula:section:MA-S5:derivation",
+          "facet_ids": [],
+          "expectation": "required",
+          "mathematical_goal": "Resolve the planned formula obligation.",
+          "authority_requirements": [
+            "closed_repository_evidence"
+          ],
+          "section_id": "MA-S5",
+          "mechanism_key": "",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "paragraph_ids": [
+            "paragraph:MA-S5:method-unit-2"
+          ],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "preconditions": [],
+          "formula_lane": "repository_derived",
+          "exact_source_quotes": [],
+          "content_digest": "sha256:445a936a1433d82ae4b6909e5572c6510e13d8a31b303b156af3af89497472ac"
+        }
+      ],
+      "evidence_packs": [
+        {
+          "pack_id": "opack:bf744db13b440781",
+          "section_id": "MA-S5",
+          "dossier_ids": [
+            "dossier:25482285292498b7"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.in_proj.weight",
+                "rearrange(hidden_states, 'b l d -> d (b l)')"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "COMPUTE",
+                "self.in_proj.weight",
+                "rearrange(hidden_states, 'b l d -> d (b l)')",
+                "matmul"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:471:471"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:471:471",
+              "chain_scope": "sym:c70e75db715f01dc"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "computes_formula",
+              "operands": [
+                "xz",
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "result": "xz",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "COMPUTE",
+                "xz",
+                "xz",
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')",
+                "add"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:476:476"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:476:476",
+              "chain_scope": "sym:c70e75db715f01dc"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "BRANCH",
+                "self.time_mamba and dts != None",
+                "self.time_mamba and dts != None",
+                "if"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:497:525"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:497:525",
+              "chain_scope": "sym:c70e75db715f01dc"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "returns",
+              "operands": [],
+              "result": "out",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "RETURN",
+                "out"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:551:551"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:551:551",
+              "chain_scope": "sym:c70e75db715f01dc"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "predicate": "computes_formula",
+              "operands": [
+                "self.in_proj.weight",
+                "rearrange(hidden_states, 'b l d -> d (b l)')"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:471:471"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "predicate": "computes_formula",
+              "operands": [
+                "xz",
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "result": "xz",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:476:476"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "predicate": "returns",
+              "operands": [],
+              "result": "out",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:551:551"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.in_proj.weight",
+                "rearrange(hidden_states, 'b l d -> d (b l)')"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:471:471"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "xz",
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "result": "xz",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:476:476"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "out",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:551:551"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "x",
+                "weight"
+              ],
+              "result": "x",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:330:330"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "hidden_states",
+                "input_tensor"
+              ],
+              "result": "hidden_states",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:335:335"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "hidden_states",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:337:337"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/mamba_simple.py:471:471",
+            "span:models/mamba_simple.py:476:476",
+            "span:models/mamba_simple.py:497:525",
+            "span:models/mamba_simple.py:551:551"
+          ],
+          "exact_excerpts": [
+            "hidden_states = hidden_states + input_tensor",
+            "x=x*weight",
+            "return hidden_states",
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "return out"
+          ],
+          "preconditions": [
+            "self.time_mamba and dts != None"
+          ],
+          "shape_or_type_hints": [
+            "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+          ],
+          "author_statements": [
+            "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed",
+            "while maintaining stability through spectral norm constraints.",
+            "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)"
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+            "fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+            "fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:06ab75ab9467b5a6ec85da733a9e4801f7afa37c8a8a522f5cd93727dc9ae94c"
+        },
+        {
+          "pack_id": "opack:c5732564cf2784bb",
+          "section_id": "MA-S5",
+          "dossier_ids": [
+            "dossier:25482285292498b7"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+              "subject": "FilterLayer.forward",
+              "scope": "sym:d07c0ab78c286647",
+              "predicate": "computes_formula",
+              "operands": [
+                "x",
+                "weight"
+              ],
+              "result": "x",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:d07c0ab78c286647",
+                "COMPUTE",
+                "x",
+                "x",
+                "weight",
+                "mult"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/FreeDyG.py:330:330"
+              ],
+              "source_span_id": "span:models/FreeDyG.py:330:330",
+              "chain_scope": "sym:d07c0ab78c286647"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+              "subject": "FilterLayer.forward",
+              "scope": "sym:d07c0ab78c286647",
+              "predicate": "computes_formula",
+              "operands": [
+                "hidden_states",
+                "input_tensor"
+              ],
+              "result": "hidden_states",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:d07c0ab78c286647",
+                "COMPUTE",
+                "hidden_states",
+                "hidden_states",
+                "input_tensor",
+                "add"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/FreeDyG.py:335:335"
+              ],
+              "source_span_id": "span:models/FreeDyG.py:335:335",
+              "chain_scope": "sym:d07c0ab78c286647"
+            },
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+              "subject": "FilterLayer.forward",
+              "scope": "sym:d07c0ab78c286647",
+              "predicate": "returns",
+              "operands": [],
+              "result": "hidden_states",
+              "guard": "",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:d07c0ab78c286647",
+                "RETURN",
+                "hidden_states"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/FreeDyG.py:337:337"
+              ],
+              "source_span_id": "span:models/FreeDyG.py:337:337",
+              "chain_scope": "sym:d07c0ab78c286647"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+              "predicate": "computes_formula",
+              "operands": [
+                "x",
+                "weight"
+              ],
+              "result": "x",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:d07c0ab78c286647",
+              "source_span_id": "span:models/FreeDyG.py:330:330"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+              "predicate": "computes_formula",
+              "operands": [
+                "hidden_states",
+                "input_tensor"
+              ],
+              "result": "hidden_states",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:d07c0ab78c286647",
+              "source_span_id": "span:models/FreeDyG.py:335:335"
+            },
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+              "fact_id": "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+              "predicate": "returns",
+              "operands": [],
+              "result": "hidden_states",
+              "conditions": [],
+              "guard": "",
+              "shape_or_type_hints": [],
+              "scope": "sym:d07c0ab78c286647",
+              "source_span_id": "span:models/FreeDyG.py:337:337"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "self.in_proj.weight",
+                "rearrange(hidden_states, 'b l d -> d (b l)')"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:471:471"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "xz",
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "result": "xz",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [
+                "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:476:476"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "out",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:551:551"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "x",
+                "weight"
+              ],
+              "result": "x",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:330:330"
+            },
+            {
+              "predicate": "computes_formula",
+              "operands": [
+                "hidden_states",
+                "input_tensor"
+              ],
+              "result": "hidden_states",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:335:335"
+            },
+            {
+              "predicate": "returns",
+              "operands": [],
+              "result": "hidden_states",
+              "conditions": [],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/FreeDyG.py:337:337"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/FreeDyG.py:330:330",
+            "span:models/FreeDyG.py:335:335",
+            "span:models/FreeDyG.py:337:337"
+          ],
+          "exact_excerpts": [
+            "hidden_states = hidden_states + input_tensor",
+            "x=x*weight",
+            "return hidden_states",
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "return out"
+          ],
+          "preconditions": [
+            "self.time_mamba and dts != None"
+          ],
+          "shape_or_type_hints": [
+            "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+          ],
+          "author_statements": [
+            "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed",
+            "while maintaining stability through spectral norm constraints.",
+            "DyG-Mamba SSM core: Continuous state space model with redefined Δt (timespan-dependent step size), A (stable diagonal initialization)"
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+            "fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+            "fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:9aa32392387801a63e00118cf6dbdf046e3faa02e67be8ac197393cddea309f2"
+        },
+        {
+          "pack_id": "opack:cd2865a51198eb46",
+          "section_id": "MA-S5",
+          "dossier_ids": [
+            "dossier:6ee0c7de4d7a7ed6"
+          ],
+          "ordered_operation_node_ids": [],
+          "call_path_relation_ids": [],
+          "data_flow_relation_ids": [],
+          "configuration_bindings": [],
+          "default_activation": "unknown",
+          "unresolved_relations": [],
+          "operation_atoms": [
+            {
+              "atom_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "subject": "MambaTimeDelta.forward",
+              "scope": "sym:c70e75db715f01dc",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "guard": "self.time_mamba and dts != None",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "operation_descriptors": [
+                "sym:c70e75db715f01dc",
+                "BRANCH",
+                "self.time_mamba and dts != None",
+                "self.time_mamba and dts != None",
+                "if"
+              ],
+              "relation_evidence_ids": [],
+              "span_ids": [
+                "span:models/mamba_simple.py:497:525"
+              ],
+              "source_span_id": "span:models/mamba_simple.py:497:525",
+              "chain_scope": "sym:c70e75db715f01dc"
+            }
+          ],
+          "formalizable_signatures": [
+            {
+              "operation_id": "fact-operation:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "fact_id": "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "guard": "self.time_mamba and dts != None",
+              "shape_or_type_hints": [],
+              "scope": "sym:c70e75db715f01dc",
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            },
+            {
+              "predicate": "branches_on",
+              "operands": [
+                "self.time_mamba and dts != None"
+              ],
+              "result": "",
+              "conditions": [
+                "self.time_mamba and dts != None"
+              ],
+              "shape_or_type_hints": [],
+              "source_span_id": "span:models/mamba_simple.py:497:525"
+            }
+          ],
+          "exact_span_ids": [
+            "span:models/mamba_simple.py:497:525"
+          ],
+          "exact_excerpts": [
+            "if self.time_mamba and dts != None:\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        elif self.no_selective:\n            dts = torch.ones(hidden_states.shape, device=hidden_states.device)\n            dts_xz = rearrange(\n                self.in_proj.weight @ rearrange(dts, \"b l d -> d (b l)\"),\n                \"d (b l) -> b d l\",\n                l=seqlen,\n            ) # [B, d_inner * 2, L]\n            if self.in_proj.bias is not None:\n                dts_xz = dts_xz + rearrange(self.in_proj.bias.to(dtype=dts_xz.dtype), \"d -> d 1\")\n            dts_x, dts_z = dts_xz.chunk(2, dim=1)\n            dts_x_dbl = self.x_proj(rearrange(dts_x, \"b d l -> (b l) d\"))\n            dt, B, C = torch.split(dts_x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1)\n        else:\n            # We're careful here about the layout, to avoid extra transposes.\n            # We want dt to have d as the slowest moving dimension\n            # and L as the fastest moving dimension, since those are what the ssm_scan kernel expects.\n            x_dbl = self.x_proj(rearrange(x, \"b d l -> (b l) d\"))  # (bl d) # [BL, dt_rank + d_state * 2]\n            dt, B, C = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=-1) # [BL, dt_rank], [BL, dt_state], [BL, dt_state]",
+            "xz = xz + rearrange(self.in_proj.bias.to(dtype=xz.dtype), \"d -> d 1\")",
+            "self.in_proj.weight @ rearrange(hidden_states, \"b l d -> d (b l)\"),",
+            "return out"
+          ],
+          "preconditions": [],
+          "shape_or_type_hints": [],
+          "author_statements": [
+            "and B/C (input-dependent with spectral norm constraints) to implement timespan-aware forgetting and noise-robust reviewing.",
+            "Make B and C input-dependent and enforce ∥W_B∥₂ ≤ 1, ∥W_C∥₂ ≤ 1."
+          ],
+          "unsupported_fields": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd"
+          ],
+          "bound_equation_ids": [],
+          "connected": true,
+          "content_digest": "sha256:7c6f346435ba14e50cb7f748504cff3d28ed4b1096114059e6ebf10a95550683"
+        }
+      ],
+      "required_formula_failures": [
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:facet:facet-e343d4bc111c5b77",
+        "formula:facet:facet-3f8317dd772533f4",
+        "formula:facet:facet-e36d367d850a8273",
+        "formula:section:MA-S5:derivation"
+      ],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:80119a808831e7136af87c79302b175d0c600268b899ea4ea61b0881364fc6e7"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "section_id": "MA-S1",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 2,
+          "accepted_package_count": 2,
+          "response_ref": "sha256:49456f401ec297873e56b1edd1f59b8cccfab339a9d40841f0f3a63c45d95480",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"bound_equation_ids\": [],\n      \"bound_fact_ids\": [\n        \"fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117\",\n        \"fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7\",\n        \"fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62\",\n        \"fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd",
+          "consumer_paragraph_id": "paragraph:MA-S1:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-9a1ed70668b9de25",
+            "formula:section:MA-S1:derivation"
+          ]
+        }
+      ],
+      "operation_evidence_lane": true,
+      "deterministic_fallback": false,
+      "operation_deterministic_fallback": false,
+      "operation_audit_package_ids": [],
+      "formula_consumer": true,
+      "consumer_route_map": {
+        "formula:facet:facet-9a1ed70668b9de25": "paragraph:MA-S1:method-unit-1",
+        "formula:section:MA-S1:derivation": "paragraph:MA-S1:method-unit-1"
+      },
+      "consumer_route_ambiguous": [],
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-9a1ed70668b9de25",
+        "formula:section:MA-S1:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "author_intent_lane": true,
+      "operation_evidence_lane": false,
+      "deterministic_fallback": true,
+      "formula_consumer": false,
+      "consumer_route_map": {},
+      "consumer_route_ambiguous": [],
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "declined_empty",
+          "outcome": "unresolved",
+          "review_question": "The supplied operation evidence pack authorizes only a branch guard (`self.time_mamba and dts != None`) and does not provide the specific mathematical expressions for the timespan-informed Δt function, the initialization of A for stable decay, or the spectral norm redefinition of B/C. Without these core equations or detailed operation atoms defining the transformations, the required formula cannot be formally derived from the repository evidence alone.",
+          "response_ref": "sha256:ae339b381967c0b1798aa404ce209fbd1f19ae1004fb7acf8cd3742bcb999c73",
+          "guard_failures": [
+            "formalizer_unresolved"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"unresolved\",\n  \"review_question\": \"The supplied operation evidence pack authorizes only a branch guard (`self.time_mamba and dts != None`) and does not provide the specific mathematical expressions for the timespan-informed Δt function, the initialization of A for stable decay, or the spectral norm redefinition of B/C. Without these core equations or detailed operation atoms defini",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-e3de4791afd3b462"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "declined_empty",
+          "outcome": "unresolved",
+          "review_question": "The supplied evidence pack contains only a branch guard (`self.time_mamba and dts != None`) and does not provide the core equations for timespan-informed Δt, the initialization of A with negative real-part eigenvalues, or the redefinition of B/C with spectral norm. Please provide the specific code spans or equation definitions that implement these mathematical operations to allow for a repository-derived formalization.",
+          "response_ref": "sha256:7758c81142ccb81bd21e15bd662120bcb57c193082e106c11b6b917a5bcc8d27",
+          "guard_failures": [
+            "formalizer_unresolved"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"unresolved\",\n  \"review_question\": \"The supplied evidence pack contains only a branch guard (`self.time_mamba and dts != None`) and does not provide the core equations for timespan-informed Δt, the initialization of A with negative real-part eigenvalues, or the redefinition of B/C with spectral norm. Please provide the specific code spans or equation definitions that implement these",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-0564bcda9bc954d9",
+            "formula:facet:facet-45205815214ce81d",
+            "formula:section:MA-S3:derivation"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 1,
+          "response_ref": "sha256:e739e09b0ea874049535da029605d1c45b8a4c68803faa41feb13705ecc4e6fe",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S3:method-unit-1\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\Delta t = f_{\\\\text{time}}(\\\\tau), \\\\quad A = A_0, \\\\quad B = B_{\\\\text{spec}}, \\\\quad C = C_{\\\\text{spec}}\",\n      \"markdown_block\": \"### Timespan-Informed SSM Dynamics\\n\\nTo re",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-e3de4791afd3b462"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 1,
+          "response_ref": "sha256:ca2ec07c3a03588a6a2ede38d8cd211bb8da1fd221ec907f8812740f8ae332c8",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S3:method-unit-2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned} \\\\Delta t_i &= \\\\sigma\\\\left( w_{\\\\Delta t} \\\\cdot \\\\phi(\\\\tau_i) \\\\right), \\\\quad \\\\tau_i = t_{\\\\text{pred}} - t_i \\\\\\\\ A &= \\\\text{diag}(\\\\lambda_1, \\\\dots, \\\\la",
+          "consumer_paragraph_id": "paragraph:MA-S3:method-unit-2",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-0564bcda9bc954d9",
+            "formula:facet:facet-45205815214ce81d",
+            "formula:section:MA-S3:derivation"
+          ]
+        }
+      ],
+      "operation_evidence_lane": true,
+      "deterministic_fallback": false,
+      "operation_deterministic_fallback": false,
+      "operation_audit_package_ids": [],
+      "formula_consumer": true,
+      "consumer_route_map": {
+        "formula:facet:facet-e3de4791afd3b462": "paragraph:MA-S3:method-unit-1",
+        "formula:facet:facet-0564bcda9bc954d9": "paragraph:MA-S3:method-unit-2",
+        "formula:facet:facet-45205815214ce81d": "paragraph:MA-S3:method-unit-2",
+        "formula:section:MA-S3:derivation": "paragraph:MA-S3:method-unit-2"
+      },
+      "consumer_route_ambiguous": [],
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-e3de4791afd3b462",
+        "formula:facet:facet-0564bcda9bc954d9",
+        "formula:facet:facet-45205815214ce81d",
+        "formula:section:MA-S3:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S4",
+      "core_equation_ids": [],
+      "call_traces": [],
+      "operation_evidence_lane": true,
+      "deterministic_fallback": true,
+      "operation_deterministic_fallback": false,
+      "operation_audit_package_ids": [],
+      "formula_consumer": false,
+      "consumer_route_map": {},
+      "consumer_route_ambiguous": [],
+      "required_formula_obligation_ids": [],
+      "preferred_formula_obligation_ids": []
+    },
+    {
+      "section_id": "MA-S5",
+      "core_equation_ids": [],
+      "call_traces": [
+        {
+          "attempt": 1,
+          "status": "declined_empty",
+          "outcome": "unresolved",
+          "review_question": "The supplied operation evidence packs do not contain code facts authorizing the specific SSM core equations for redefined Δt (timespan-dependent step size) or A (stable diagonal initialization). The available facts only document the input projection (matmul), bias addition, and a branch condition. The author's statement regarding 'spectral norm constraints' and 'stable diagonal initialization' is not backed by corresponding code operations in the provided packs. Please provide code facts that explicitly show the computation of Δt from timespans and the initialization/constraint of matrix A.",
+          "response_ref": "sha256:937e834aaaf25420ec6292ca209e60b22e235add9142501ef03b82968fda72b3",
+          "guard_failures": [
+            "formalizer_unresolved"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"unresolved\",\n  \"review_question\": \"The supplied operation evidence packs do not contain code facts authorizing the specific SSM core equations for redefined Δt (timespan-dependent step size) or A (stable diagonal initialization). The available facts only document the input projection (matmul), bias addition, and a branch condition. The author's statement regarding 'spectral norm co",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-85dd07572b8a77e2",
+            "formula:facet:facet-e343d4bc111c5b77"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "declined_empty",
+          "outcome": "unresolved",
+          "review_question": "The supplied operation evidence packs do not contain code facts authorizing the spectral norm constraints ∥W_B∥₂ ≤ 1 and ∥W_C∥₂ ≤ 1, nor the specific input-dependent generation of B and C via W_B and W_C. The available facts only document the branching logic for time_mamba and the projection of hidden states, but lack the specific weight initialization or norm enforcement operations required to satisfy the formula obligations for facet-3f8317dd772533f4 and facet-e36d367d850a8273. Please provide code facts demonstrating the spectral norm constraints on W_B and W_C.",
+          "response_ref": "sha256:aa5c7034877b831b44ab6d447e916656fff0a6d471a21ca5f3b7a5a5df4e79ed",
+          "guard_failures": [
+            "formalizer_unresolved"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"unresolved\",\n  \"review_question\": \"The supplied operation evidence packs do not contain code facts authorizing the spectral norm constraints ∥W_B∥₂ ≤ 1 and ∥W_C∥₂ ≤ 1, nor the specific input-dependent generation of B and C via W_B and W_C. The available facts only document the branching logic for time_mamba and the projection of hidden states, but lack the specific weight initializ",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-3f8317dd772533f4",
+            "formula:facet:facet-e36d367d850a8273",
+            "formula:section:MA-S5:derivation"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:ddde8513136ede385f9b54be10b95758dcac564119dc7eed01186c0195f44d48",
+          "guard_failures": [
+            "pkg-ma-s5-ssm-core:code_shaped_formula:python_tuple_assignment"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:method-unit-1\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n&\\\\text{Continuous SSM:} \\\\quad \\\\dot{h}(t) = A h(t) + B(t) x(t), \\\\quad y(t) = C(t) h(t) \\\\\\\\\\n&\\\\text{Discretization:} \\\\quad h_{k+1} = \\\\bar{A} h_k + \\\\bar{B} ",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-85dd07572b8a77e2",
+            "formula:facet:facet-e343d4bc111c5b77"
+          ]
+        },
+        {
+          "attempt": 2,
+          "status": "guards_failed",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 0,
+          "response_ref": "sha256:1b8e4556def2eed5fc40e8d85fae72dad8b4b31827953cba495e64b23c54f5c6",
+          "guard_failures": [
+            "pkg-ma-s5-ssm-core:code_shaped_formula:python_tuple_assignment"
+          ],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:method-unit-1\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"The DyG-Mamba SSM core is defined by the continuous state space model:\\n\\\\begin{equation}\\n\\\\dot{h}(t) = A h(t) + B(t) x(t), \\\\quad y(t) = C(t) h(t)\\n\\\\end{equation}\\nwhere $A \\\\in",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-1",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-85dd07572b8a77e2",
+            "formula:facet:facet-e343d4bc111c5b77"
+          ]
+        },
+        {
+          "attempt": 1,
+          "status": "accepted",
+          "outcome": "rendered",
+          "proposed_package_count": 1,
+          "accepted_package_count": 1,
+          "response_ref": "sha256:d09a37fc64a1fdb832c580f01e5a6fb0e2a56f2b7e83838429ab5e60f047805b",
+          "guard_failures": [],
+          "finish_reason": "structured_complete",
+          "completion_tokens": 0,
+          "max_output_tokens": 8192,
+          "raw_preview": "{\n  \"outcome\": \"rendered\",\n  \"packages\": [\n    {\n      \"authority_status\": \"author_intent\",\n      \"consumer_paragraph_id\": \"paragraph:MA-S5:method-unit-2\",\n      \"formula_lane\": \"author_intent_academic\",\n      \"latex\": \"\\\\begin{aligned}\\n& \\\\text{Input-dependent B/C:} \\\\quad B_t = W_B x_t, \\\\quad C_t = W_C x_t \\\\\\\\\\n& \\\\text{Spectral Norm Constraints:} \\\\quad \\\\|W_B\\\\|_2 \\\\le 1, \\\\quad \\\\|W_C\\\\|_2",
+          "consumer_paragraph_id": "paragraph:MA-S5:method-unit-2",
+          "consumer_obligation_ids": [
+            "formula:facet:facet-3f8317dd772533f4",
+            "formula:facet:facet-e36d367d850a8273",
+            "formula:section:MA-S5:derivation"
+          ]
+        }
+      ],
+      "operation_evidence_lane": true,
+      "deterministic_fallback": false,
+      "operation_deterministic_fallback": false,
+      "operation_audit_package_ids": [],
+      "formula_consumer": true,
+      "consumer_route_map": {
+        "formula:facet:facet-85dd07572b8a77e2": "paragraph:MA-S5:method-unit-1",
+        "formula:facet:facet-e343d4bc111c5b77": "paragraph:MA-S5:method-unit-1",
+        "formula:facet:facet-3f8317dd772533f4": "paragraph:MA-S5:method-unit-2",
+        "formula:facet:facet-e36d367d850a8273": "paragraph:MA-S5:method-unit-2",
+        "formula:section:MA-S5:derivation": "paragraph:MA-S5:method-unit-2"
+      },
+      "consumer_route_ambiguous": [],
+      "required_formula_obligation_ids": [
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:facet:facet-e343d4bc111c5b77",
+        "formula:facet:facet-3f8317dd772533f4",
+        "formula:facet:facet-e36d367d850a8273",
+        "formula:section:MA-S5:derivation"
+      ],
+      "preferred_formula_obligation_ids": []
+    }
+  ]
+}
