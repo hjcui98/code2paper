@@ -607,7 +607,13 @@ def run_publication_method_writer(
     if (
         rebuild_architect_plan
         or not any(unit.semantic_frame is not None for unit in plan.argument_units)
-        or bool(argument_facets and facet_alignments and not plan.method_units)
+        # A reused frozen plan can already contain semantic frames and
+        # MethodUnits.  Fresh facet/alignment artifacts still need to refresh
+        # the reader surface (rationale selection, paragraph grouping, and
+        # context-before-mechanism order); otherwise the replay silently
+        # preserves the old MethodUnit payload and the Writer never sees the
+        # repaired authoring surface.
+        or bool(argument_facets and facet_alignments)
     ):
         # The tracked matrix consumes the prebuilt frozen plan as the
         # planning authority.  The Architect must still be a real, traceable
@@ -2849,6 +2855,7 @@ def run_publication_method_writer(
             for raw_request in build_research_derived_callback_requests(
                 plan=plan,
                 dossiers=research_dossiers,
+                facets=argument_facets,
             ):
                 request = WritingResearchRequestV1.model_validate(raw_request)
                 callback_key = (
@@ -3807,6 +3814,8 @@ def run_publication_method_writer(
         paths=paths,
         plan=plan,
         writer=writer,
+        writer_inputs=tuple(writer_inputs),
+        formula_results=tuple(section_formula_results),
         section_outputs=tuple(output_by_section.values()),
         quality=quality,
         status=status,
@@ -4224,7 +4233,52 @@ def _writer_visible_formula_packages(result: Any) -> tuple[dict[str, Any], ...]:
             "risks": list(item.risks),
             "review_question": item.review_question,
         })
-    return tuple(visible)
+    # Canonicalize the Writer surface by consumer/obligation.  The Formalizer
+    # may return alternate representations of one mechanism after a bounded
+    # retry; exposing all of them invites the Writer to print duplicate
+    # equations.  Distinct obligations in the same paragraph remain distinct.
+    grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    for package in visible:
+        obligation_ids = tuple(sorted(dict.fromkeys(
+            str(value).strip()
+            for value in (
+                package.get("satisfied_obligation_ids") or
+                ((package.get("obligation_id"),) if package.get("obligation_id") else ())
+            )
+            if str(value).strip()
+        )))
+        digest = str(package.get("semantic_formula_digest") or "").strip()
+        if not digest:
+            digest = _digest_json({
+                "latex": " ".join(str(package.get("latex") or "").split()),
+                "purpose": " ".join(str(package.get("purpose") or "").split()),
+            })
+        key = (
+            str(package.get("consumer_paragraph_id") or "").strip(),
+            obligation_ids or (digest,),
+        )
+        grouped.setdefault(key, []).append(package)
+
+    def package_rank(package: Mapping[str, Any]) -> tuple[int, int, int, str]:
+        authority = str(package.get("authority_status") or "")
+        lane = str(package.get("formula_lane") or "")
+        review = str(package.get("review_status") or "")
+        return (
+            2 if authority == "code_verified" and lane == "repository_derived" else 1,
+            1 if review == "accepted" else 0,
+            1 if lane in {"repository_derived", "author_intent_academic", "hybrid_partial"} else 0,
+            str(package.get("package_id") or ""),
+        )
+
+    canonical: list[dict[str, Any]] = []
+    for packages in grouped.values():
+        canonical.append(max(packages, key=package_rank))
+    canonical.sort(key=lambda item: (
+        str(item.get("consumer_paragraph_id") or ""),
+        tuple(item.get("satisfied_obligation_ids") or ()),
+        str(item.get("package_id") or ""),
+    ))
+    return tuple(canonical)
 
 
 def _writer_visible_formula_obligations(result: Any) -> tuple[dict[str, Any], ...]:
@@ -5674,6 +5728,34 @@ def _run_section_formalizer(
                 if item.expectation == "preferred"
             ],
         })
+    for section_trace in section_call_traces:
+        call_rows = tuple(section_trace.get("call_traces") or ())
+        if call_rows:
+            section_trace["claim_context_chars"] = max(
+                int(row.get("claim_context_chars", 0) or 0)
+                for row in call_rows
+                if isinstance(row, Mapping)
+            )
+            section_trace["exact_source_excerpt_chars"] = max(
+                int(row.get("exact_source_excerpt_chars", 0) or 0)
+                for row in call_rows
+                if isinstance(row, Mapping)
+            )
+            section_trace["connected_operation_count"] = max(
+                int(row.get("connected_operation_count", 0) or 0)
+                for row in call_rows
+                if isinstance(row, Mapping)
+            )
+            section_trace["academic_package_generated"] = any(
+                bool(row.get("academic_package_generated"))
+                for row in call_rows
+                if isinstance(row, Mapping)
+            )
+        else:
+            section_trace.setdefault("claim_context_chars", 0)
+            section_trace.setdefault("exact_source_excerpt_chars", 0)
+            section_trace.setdefault("connected_operation_count", 0)
+            section_trace.setdefault("academic_package_generated", False)
     payload = {
         "schema_version": "1.0",
         "sections": [item.model_dump(mode="json") for item in results],
@@ -5834,6 +5916,176 @@ def _invoke_section_formalizer_llm(
         }
         for item in core
     ]
+
+    def _context_value(value: Any, limit: int = 900) -> str:
+        text = " ".join(str(value or "").split()).strip()
+        if len(text) <= limit:
+            return text
+        clipped = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:-")
+        return (clipped or text[:limit]).rstrip() + "…"
+
+    def _pack_value(pack: Any, name: str, default: Any = ()) -> Any:
+        if isinstance(pack, Mapping):
+            return pack.get(name, default)
+        return getattr(pack, name, default)
+
+    def _semantic_author_claims() -> list[str]:
+        claims: list[str] = []
+        preferred_keys = (
+            "claim", "reader_statement", "author_statement", "purpose",
+            "operation", "mechanism", "transformation", "mathematical_goal",
+            "formula_goal", "goal",
+        )
+        for facet in author_facets:
+            quote = _context_value(getattr(facet, "exact_source_quote", ""), 1200)
+            if quote:
+                claims.append(quote)
+            fields = getattr(facet, "semantic_fields", {}) or {}
+            if isinstance(fields, Mapping):
+                for key in preferred_keys:
+                    value = fields.get(key)
+                    if isinstance(value, (list, tuple, set)):
+                        values = value
+                    else:
+                        values = (value,)
+                    for item in values:
+                        text = _context_value(item, 700)
+                        if text:
+                            claims.append(f"{key}: {text}")
+        for pack in evidence_packs:
+            for statement in _pack_value(pack, "author_statements", ()) or ():
+                text = _context_value(statement, 900)
+                if text:
+                    claims.append(text)
+        return list(dict.fromkeys(claims))
+
+    def _claim_centered_context() -> tuple[dict[str, Any], dict[str, Any]]:
+        consumer_ids = tuple(dict.fromkeys(
+            str(
+                getattr(item, "consumer_paragraph_id", "")
+                or (
+                    item.paragraph_ids[0]
+                    if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                    else ""
+                )
+            ).strip()
+            for item in formula_obligations
+            if str(
+                getattr(item, "consumer_paragraph_id", "")
+                or (
+                    item.paragraph_ids[0]
+                    if len(tuple(getattr(item, "paragraph_ids", ()) or ())) == 1
+                    else ""
+                )
+            ).strip()
+        ))
+        paragraph_id = consumer_ids[0] if len(consumer_ids) == 1 else ""
+        paragraph_role = ""
+        paragraphs = tuple(getattr(graph, "paragraphs", ()) or ())
+        for paragraph in paragraphs:
+            if str(getattr(paragraph, "paragraph_id", "") or "").strip() == paragraph_id:
+                paragraph_role = str(getattr(paragraph, "paragraph_role", "") or "")
+                break
+        goals: list[str] = []
+        for obligation in formula_obligations:
+            goal = _context_value(getattr(obligation, "mathematical_goal", ""), 1000)
+            if goal:
+                goals.append(goal)
+        for facet in author_facets:
+            fields = getattr(facet, "semantic_fields", {}) or {}
+            if not isinstance(fields, Mapping):
+                continue
+            for key in ("formula_goal", "mathematical_goal", "goal", "operation", "mechanism"):
+                value = fields.get(key)
+                values = value if isinstance(value, (list, tuple, set)) else (value,)
+                goals.extend(
+                    _context_value(item, 800)
+                    for item in values
+                    if _context_value(item, 800)
+                )
+        goals.extend(
+            _context_value(item.get("paper_statement"), 900)
+            for item in reader_points
+            if isinstance(item, Mapping) and _context_value(item.get("paper_statement"), 900)
+        )
+        excerpts: list[str] = []
+        connected_operations: list[dict[str, Any]] = []
+        preconditions: list[str] = []
+        shapes: list[str] = []
+        for pack in evidence_packs:
+            if not bool(_pack_value(pack, "connected", False)):
+                continue
+            for excerpt in _pack_value(pack, "exact_excerpts", ()) or ():
+                text = _context_value(excerpt, 1800)
+                if text:
+                    excerpts.append(text)
+            for operation in _pack_value(pack, "operation_atoms", ()) or ():
+                if isinstance(operation, Mapping):
+                    connected_operations.append(dict(operation))
+            for signature in _pack_value(pack, "formalizable_signatures", ()) or ():
+                if isinstance(signature, Mapping):
+                    connected_operations.append(dict(signature))
+            preconditions.extend(
+                _context_value(item, 500)
+                for item in (_pack_value(pack, "preconditions", ()) or ())
+                if _context_value(item, 500)
+            )
+            shapes.extend(
+                _context_value(item, 500)
+                for item in (_pack_value(pack, "shape_or_type_hints", ()) or ())
+                if _context_value(item, 500)
+            )
+        # Alignment excerpts are a secondary exact-source channel.  Include
+        # them only after connected dossier excerpts so code remains primary.
+        excerpts.extend(
+            _context_value(
+                item.get("exact_excerpt")
+                or item.get("excerpt")
+                or item.get("text")
+                or item.get("source_text"),
+                1800,
+            )
+            for item in exact_excerpts
+            if isinstance(item, Mapping)
+            and _context_value(
+                item.get("exact_excerpt")
+                or item.get("excerpt")
+                or item.get("text")
+                or item.get("source_text"),
+                1800,
+            )
+        )
+        context = {
+            "section_id": str(getattr(graph, "section_id", "") or ""),
+            "paragraph_id": paragraph_id,
+            "scientific_goal": {
+                "heading": _context_value(getattr(graph, "heading", ""), 360),
+                "paragraph_role": _context_value(paragraph_role, 180),
+                "reader_question": _context_value(getattr(graph, "reader_question", ""), 900),
+                "author_claim": list(dict.fromkeys(_semantic_author_claims())),
+                "mathematical_goal": list(dict.fromkeys(goals)),
+            },
+            "implementation": {
+                "exact_excerpts": list(dict.fromkeys(excerpts)),
+                "connected_operations": connected_operations,
+                "preconditions": list(dict.fromkeys(preconditions)),
+                "shapes": list(dict.fromkeys(shapes)),
+            },
+            # Equation atoms are an auxiliary hint.  The exact source excerpt
+            # and claim goal remain the primary specification for the package.
+            "existing_equation_atoms": equation_rows,
+        }
+        serialized_chars = len(json.dumps(context, ensure_ascii=False, sort_keys=True))
+        excerpt_chars = sum(len(item) for item in context["implementation"]["exact_excerpts"])
+        trace = {
+            "claim_context_chars": serialized_chars,
+            "exact_source_excerpt_chars": excerpt_chars,
+            "connected_operation_count": len(connected_operations),
+            "academic_package_generated": False,
+        }
+        return context, trace
+
+    claim_centered_context, claim_context_trace = _claim_centered_context()
     accepted: list[Any] = []
     guard_log: list[list[str]] = []
     self_trace_rows: list[dict[str, Any]] = []
@@ -6163,6 +6415,21 @@ def _invoke_section_formalizer_llm(
             "property the code facts cannot license."
         )
     )
+    claim_centered_contract = (
+        " Claim-centered formalization contract: start from the scientific goal, "
+        "author claim, and mathematical goal in claim_centered_context. Treat the "
+        "connected exact source excerpts as the primary implementation specification; "
+        "connected_operations and existing_equation_atoms are auxiliary evidence, not "
+        "a script to translate literally. Reconstruct one compact mechanism formula "
+        "that explains the reader question and the code-supported data flow. You may "
+        "choose clear paper symbols when each symbol is grounded in the excerpt and "
+        "define them in symbol_definitions. Do not emit Python function syntax, keyword "
+        "arguments such as dim=0 or descending=True, tuple assignments, internal IDs, "
+        "or raw source names when a reader-facing symbol is clearer. Prefer the "
+        "narrowest formulation supported by the excerpt; if the evidence is incomplete, "
+        "use an author_intent/partial or hybrid_partial package with the ambiguity in "
+        "review_question rather than refusing to formalize or inventing a guarantee."
+    )
     lane_name = "author_intent_academic" if author_intent_lane else "repository_derived"
     author_intent_retry_instruction = (
         " Previous attempt returned outcome=unresolved with no packages. "
@@ -6197,6 +6464,7 @@ def _invoke_section_formalizer_llm(
                 must_emit_prefix
                 + f"section {graph.section_id}. The section answers: "
                 f"{graph.reader_question}. "
+                + claim_centered_contract
                 + lane_contract
                 + (
                     ""
@@ -6216,6 +6484,7 @@ def _invoke_section_formalizer_llm(
                 "section_id": graph.section_id,
                 "reader_question": graph.reader_question,
                 "reader_propositions": reader_propositions,
+                "claim_centered_context": claim_centered_context,
                 "formula_constraints": list(formula_constraints),
                 "formula_obligations": obligation_rows,
                 "closed_satisfied_obligation_ids": [
@@ -6290,6 +6559,7 @@ def _invoke_section_formalizer_llm(
                 "response_ref": response_ref,
                 "guard_failures": [],
                 **_formalizer_observability(response, config=formalizer_config),
+                **claim_context_trace,
             })
             continue
         parsed_raw, _error = try_parse_structured_response(
@@ -6317,6 +6587,7 @@ def _invoke_section_formalizer_llm(
                 "response_ref": response_ref,
                 "guard_failures": [],
                 **_formalizer_observability(response, config=formalizer_config),
+                **claim_context_trace,
             })
             continue
         obligation_failures = validate_section_formalizer_response(
@@ -6334,6 +6605,7 @@ def _invoke_section_formalizer_llm(
                 "response_ref": response_ref,
                 "guard_failures": obligation_failures,
                 **_formalizer_observability(response, config=formalizer_config),
+                **claim_context_trace,
             })
             continue
         if parsed.outcome == "unresolved" and parsed.packages:
@@ -6353,6 +6625,7 @@ def _invoke_section_formalizer_llm(
                 "response_ref": response_ref,
                 "guard_failures": [empty_code],
                 **_formalizer_observability(response, config=formalizer_config),
+                **claim_context_trace,
             })
             if must_emit_author_package and attempt == 1:
                 continue
@@ -6367,6 +6640,7 @@ def _invoke_section_formalizer_llm(
                 "response_ref": response_ref,
                 "guard_failures": [],
                 **_formalizer_observability(response, config=formalizer_config),
+                **claim_context_trace,
             })
             if must_emit_author_package and attempt == 1:
                 continue
@@ -6439,6 +6713,10 @@ def _invoke_section_formalizer_llm(
             "response_ref": response_ref,
             "guard_failures": failures,
             **_formalizer_observability(response, config=formalizer_config),
+            **{
+                **claim_context_trace,
+                "academic_package_generated": bool(accepted),
+            },
         })
         if not failures and parsed.packages:
             break
@@ -7690,6 +7968,10 @@ def _concept_callback_prototype_payload(
     search_terms = directed_search_terms_from_texts(
         *missing_parts,
         *[str(getattr(card, "method_subject", "") or "") for card in eligible],
+        *[str(getattr(card, "operation", "") or "") for card in eligible],
+        *[str(part) for card in eligible for part in (getattr(card, "inputs", ()) or ())],
+        *[str(part) for card in eligible for part in (getattr(card, "outputs", ()) or ())],
+        *[str(part) for card in eligible for part in (getattr(card, "conditions", ()) or ())],
         *[str(part) for card in eligible for part in (getattr(card, "known_parts", ()) or ())],
     )
     return {
@@ -7815,7 +8097,17 @@ def _brief_callback_prototype_payload(
         evidence_refs.extend(refs)
     if not bindings:
         return {}
-    search_terms = directed_search_terms_from_texts(*missing_parts)
+    search_terms = directed_search_terms_from_texts(
+        *missing_parts,
+        *(
+            str(getattr(brief, "author_statement", "") or "")
+            for brief in eligible
+        ),
+        *(
+            str(getattr(getattr(brief, "mechanism_draft", None), "text", "") or "")
+            for brief in eligible
+        ),
+    )
     return {
         "brief_binding": bindings,
         "target_brief_ids": list(dict.fromkeys(target_brief_ids)),
@@ -12947,6 +13239,16 @@ def _writer_section_inputs(
         formula_placeholders_required = bool(
             paragraph_transactions_enabled and section_formula_packages
         )
+        canonical_formula_package_ids = tuple(dict.fromkeys(
+            str(package.get("package_id") or "").strip()
+            for package in section_formula_packages
+            if isinstance(package, Mapping)
+            and str(package.get("package_id") or "").strip()
+        ))
+        formula_generation_policy = (
+            "consume_only" if canonical_formula_package_ids
+            else "prose_only_or_request_formalizer"
+        )
         # Validation constraints carry the exact canonical tokens the reverse
         # validator enforces.  They are a validation-only channel: the Writer
         # renders operations from ``argument_flow`` and never treats these
@@ -13356,6 +13658,8 @@ def _writer_section_inputs(
                 "authoring_packets_v2": authoring_packets_v2,
                 "paragraph_transaction_required": paragraph_transactions_enabled,
                 "formula_placeholders_required": formula_placeholders_required,
+                "formula_generation_policy": formula_generation_policy,
+                "canonical_formula_package_ids": list(canonical_formula_package_ids),
                 "validation_constraints": validation_constraints,
                 "reader_facing_claims": reader_facing_claims,
                 "section_candidate_points": section_candidate_points,
@@ -13536,6 +13840,18 @@ def _writer_section_inputs(
                         "source anchor. "
                         )
                         if section_paragraphs else ""
+                    )
+                    + (
+                        "Formula generation policy is consume_only: each canonical formula "
+                        "package is rendered exactly once through its placeholder; do not "
+                        "write, paraphrase, or add a second inline/display equation for "
+                        "that mechanism. Explain the symbols in prose around the supplied "
+                        "placeholder. "
+                        if formula_generation_policy == "consume_only"
+                        else "Formula generation policy is prose_only_or_request_formalizer: "
+                        "do not invent or emit an equation when no canonical package is "
+                        "supplied; state the mechanism in academic prose and leave any "
+                        "formula gap for the typed Formalizer/review route. "
                     )
                     + "The prose itself must not contain harness or audit vocabulary such as "
                     "audit, callback, sidecar, pending, unverified, validation status, "
@@ -16208,6 +16524,8 @@ def _write_method_generation_trace(
     paths: Mapping[str, str],
     plan: MethodSectionPlanV2,
     writer: Any,
+    writer_inputs: tuple[Any, ...] = (),
+    formula_results: tuple[Any, ...] = (),
     section_outputs: tuple[Any, ...],
     quality: Any,
     status: str,
@@ -16309,6 +16627,51 @@ def _write_method_generation_trace(
         for output in section_outputs
         for paragraph in (getattr(output, "paragraphs", ()) or ())
     )
+    eligible_formula_count = 0
+    canonical_formula_consumers: set[str] = set()
+    canonical_formula_count = 0
+    for formula_result in formula_results or ():
+        raw_packages = tuple(getattr(formula_result, "packages", ()) or ())
+        eligible_formula_count += sum(
+            1
+            for package in raw_packages
+            if (
+                (
+                    str(getattr(package, "authority_status", "") or "") == "code_verified"
+                    and str(getattr(package, "formula_lane", "") or "") == "repository_derived"
+                    and str(getattr(package, "review_status", "") or "") == "accepted"
+                )
+                or (
+                    str(getattr(package, "authority_status", "") or "") in {"author_intent", "partial"}
+                    and str(getattr(package, "formula_lane", "") or "") in {"author_intent_academic", "hybrid_partial"}
+                )
+            )
+            and bool(str(getattr(package, "latex", "") or "").strip())
+            and not is_bare_binary_expression(str(getattr(package, "latex", "") or "").strip())
+        )
+        canonical_packages = _writer_visible_formula_packages(formula_result)
+        canonical_formula_count += len(canonical_packages)
+        canonical_formula_consumers.update(
+            str(package.get("consumer_paragraph_id") or "").strip()
+            for package in canonical_packages
+            if str(package.get("consumer_paragraph_id") or "").strip()
+        )
+    publication_trace_fields_removed = 0
+    for writer_input in writer_inputs or ():
+        payload = getattr(writer_input, "prompt_payload", {}) or {}
+        for packet in payload.get("authoring_packets_v2") or ():
+            if not isinstance(packet, Mapping):
+                continue
+            method_unit = packet.get("method_unit")
+            if isinstance(method_unit, Mapping):
+                for operation in method_unit.get("ordered_operations") or ():
+                    if isinstance(operation, Mapping):
+                        publication_trace_fields_removed += sum(
+                            1 for key in (
+                                "source_span_id", "span_id", "exact_span_id",
+                                "operation_id", "node_id", "fact_id", "relation_id",
+                            ) if key in operation
+                        )
     stage_events = [
         {
             "stage": "architect",
@@ -16372,6 +16735,14 @@ def _write_method_generation_trace(
             "equation_coverage": getattr(quality, "equation_coverage", None),
             "config_coverage": getattr(quality, "configuration_coverage", None),
             "publication_utility": getattr(quality, "publication_utility", None),
+        },
+        "writer_surface_diagnostics": {
+            "canonical_formula_consumers": len(canonical_formula_consumers),
+            "canonical_formula_count": canonical_formula_count,
+            "duplicate_formula_suppressed": max(
+                0, eligible_formula_count - canonical_formula_count
+            ),
+            "publication_trace_fields_removed": publication_trace_fields_removed,
         },
         "stop_policy": {
             "no_gain_repairs": int(getattr(aggregate, "writer_repair_no_progress_stops", 0) or 0)

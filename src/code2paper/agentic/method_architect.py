@@ -611,22 +611,39 @@ def build_method_section_plan_with_trace(
             graphs=graphs,
             prior_plan=prior_plan,
         )
+    # A prior plan is an identity/stability hint, not the authority for the
+    # current reader surface.  In particular, ``--reuse-derived-authoring``
+    # supplies fresh facets/alignments while retaining a frozen plan.  Always
+    # run the current MethodUnit compiler first so rationale selection,
+    # paragraph grouping, sentence budgets, and context ordering can refresh.
+    rebuilt_method_units, rebuilt_graphs, rebuilt_trace = _build_method_units_v2(
+        graphs,
+        units,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
+        facts=facts,
+        unit_frames=unit_frames,
+    )
     if prior_plan is not None and prior_plan.method_units:
-        method_units, graphs, method_unit_trace = _preserve_incumbent_method_unit_surface(
+        method_units, graphs, method_unit_trace = _refresh_incumbent_method_unit_surface(
             prior_plan=prior_plan,
-            rebuilt_sections=list(graphs),
+            rebuilt_method_units=rebuilt_method_units,
+            rebuilt_sections=list(rebuilt_graphs),
+            units=units,
+            argument_facets=argument_facets,
         )
-        units = list(prior_plan.argument_units)
+        if method_unit_trace.get("fallback_to_prior_surface"):
+            # Legacy plans without enough derived fields cannot be rebuilt.
+            # Keep their closed MethodUnit/paragraph bindings as a narrowly
+            # scoped compatibility fallback, including the matching units.
+            units = list(prior_plan.argument_units)
         plan_id = prior_plan.plan_id
     else:
-        method_units, graphs, method_unit_trace = _build_method_units_v2(
-            graphs,
-            units,
-            argument_facets=argument_facets,
-            facet_alignments=facet_alignments,
-            publication_field_candidates=publication_field_candidates,
-            facts=facts,
-            unit_frames=unit_frames,
+        method_units, graphs, method_unit_trace = (
+            rebuilt_method_units,
+            rebuilt_graphs,
+            rebuilt_trace,
         )
         plan_id = "method-plan:" + _digest({
             "claims": claims.content_digest,
@@ -1949,6 +1966,8 @@ def _preserve_incumbent_method_unit_surface(
     *,
     prior_plan: MethodSectionPlanV2,
     rebuilt_sections: list[SectionArgumentGraphV1],
+    units: list[MethodArgumentUnitV1] | tuple[MethodArgumentUnitV1, ...] | None = None,
+    argument_facets: tuple[Any, ...] | list[Any] = (),
 ) -> tuple[tuple[MethodUnitV2, ...], list[SectionArgumentGraphV1], dict[str, Any]]:
     """Keep freeze MethodUnits and their paragraph contracts.
 
@@ -1975,20 +1994,271 @@ def _preserve_incumbent_method_unit_surface(
             preserved.append(prior)
     preserved = _order_context_sections_before_mechanism(
         preserved,
-        units=tuple(getattr(prior_plan, "argument_units", ()) or ()),
-        argument_facets=(),
+        units=tuple(units or getattr(prior_plan, "argument_units", ()) or ()),
+        argument_facets=argument_facets,
     )
     return (
         tuple(prior_plan.method_units),
         preserved,
         {
             "enabled": True,
+            "reuse_mode": "fallback_prior_surface",
+            "reader_surface_mode": "fallback_prior",
             "preserved_existing_method_units": True,
             "compaction_applied": False,
             "method_unit_count": len(prior_plan.method_units),
             "paragraph_count": sum(len(graph.paragraphs) for graph in preserved),
+            "prior_method_units": len(prior_plan.method_units),
+            "rebuilt_method_units": 0,
+            "refreshed_method_units": 0,
+            "preserved_identity_count": len(prior_plan.method_units),
+            "preserved_surface_count": sum(len(graph.paragraphs) for graph in preserved),
+            "rationale_facets_selected": 0,
+            "context_reorder_applied": False,
+            "fallback_to_prior_surface": True,
         },
     )
+
+
+def _method_unit_surface_keys(unit: Any) -> tuple[tuple[Any, ...], ...]:
+    """Return semantic, non-positional keys for matching a refreshed unit.
+
+    MethodUnit grouping can change when a new rationale facet is selected, so
+    paragraph/index position is deliberately not part of the primary match.
+    Argument-unit ownership is the strongest stable reader identity; facet and
+    formula bindings provide a useful fallback for legacy units that lack it.
+    """
+
+    section_id = str(getattr(unit, "section_id", "") or "").strip()
+    argument_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(unit, "argument_unit_ids", ()) or ())
+        if str(value).strip()
+    ))
+    facet_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(unit, "facet_ids", ()) or ())
+        if str(value).strip()
+    ))
+    formula_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(unit, "equation_ids", ()) or ())
+        if str(value).strip()
+    ))
+    keys: list[tuple[Any, ...]] = []
+    if argument_ids:
+        keys.append((section_id, "arguments", argument_ids, formula_ids))
+        keys.append((section_id, "arguments", argument_ids))
+    if facet_ids:
+        keys.append((section_id, "facets", facet_ids))
+    evidence_spans = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(unit, "evidence_spans", ()) or ())
+        if str(value).strip()
+    ))
+    if evidence_spans:
+        keys.append((section_id, "evidence", evidence_spans))
+    return tuple(dict.fromkeys(keys))
+
+
+def _paragraph_surface_keys(paragraph: Any) -> tuple[tuple[Any, ...], ...]:
+    """Return semantic keys for paragraph identity compatibility only."""
+
+    argument_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(paragraph, "argument_unit_ids", ()) or ())
+        if str(value).strip()
+    ))
+    formula_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(paragraph, "formula_obligation_ids", ()) or ())
+        if str(value).strip()
+    ))
+    facet_ids = tuple(sorted(
+        str(value).strip()
+        for value in (getattr(paragraph, "required_facet_ids", ()) or ())
+        if str(value).strip()
+    ))
+    keys: list[tuple[Any, ...]] = []
+    if argument_ids or formula_ids:
+        keys.append(("paragraph", argument_ids, formula_ids))
+    if argument_ids or facet_ids:
+        keys.append(("paragraph_facets", argument_ids, facet_ids))
+    return tuple(dict.fromkeys(keys))
+
+
+def _refresh_incumbent_method_unit_surface(
+    *,
+    prior_plan: MethodSectionPlanV2,
+    rebuilt_method_units: tuple[MethodUnitV2, ...],
+    rebuilt_sections: list[SectionArgumentGraphV1],
+    units: list[MethodArgumentUnitV1] | tuple[MethodArgumentUnitV1, ...] = (),
+    argument_facets: tuple[Any, ...] | list[Any] = (),
+) -> tuple[tuple[MethodUnitV2, ...], list[SectionArgumentGraphV1], dict[str, Any]]:
+    """Refresh reader-facing MethodUnits while retaining compatible IDs.
+
+    ``prior_plan`` contributes only stable identity hints.  Fresh MethodUnits
+    and paragraphs are authoritative for content, facet selection, operation
+    ordering, sentence budgets, and rhetorical order.  Existing IDs are
+    carried only when a semantic owner match is unique; no positional merge or
+    frozen paragraph contract is copied.
+    """
+
+    if not rebuilt_method_units:
+        method_units, sections, trace = _preserve_incumbent_method_unit_surface(
+            prior_plan=prior_plan,
+            rebuilt_sections=rebuilt_sections,
+            units=units,
+            argument_facets=argument_facets,
+        )
+        trace = {
+            **trace,
+            "rebuilt_method_units": 0,
+            "fallback_to_prior_surface": True,
+        }
+        return method_units, sections, trace
+
+    prior_units = tuple(getattr(prior_plan, "method_units", ()) or ())
+    prior_by_key: dict[tuple[Any, ...], list[MethodUnitV2]] = {}
+    for prior in prior_units:
+        for key in _method_unit_surface_keys(prior):
+            prior_by_key.setdefault(key, []).append(prior)
+
+    refreshed_units: list[MethodUnitV2] = []
+    used_prior_ids: set[str] = set()
+    preserved_identity_count = 0
+    for rebuilt in rebuilt_method_units:
+        matches: list[MethodUnitV2] = []
+        for key in _method_unit_surface_keys(rebuilt):
+            candidates = [
+                item for item in prior_by_key.get(key, ())
+                if item.method_unit_id not in used_prior_ids
+            ]
+            if len(candidates) == 1:
+                matches = candidates
+                break
+        if matches:
+            prior = matches[0]
+            rebuilt = rebuilt.model_copy(update={
+                "method_unit_id": prior.method_unit_id,
+            })
+            used_prior_ids.add(prior.method_unit_id)
+            preserved_identity_count += 1
+        refreshed_units.append(rebuilt)
+
+    # Paragraph IDs are matched by argument/formula semantics only when the
+    # match is unique.  Fresh paragraph fields remain untouched, including the
+    # newly selected rationale facets and expected sentence range.
+    prior_paragraphs_by_section: dict[str, list[Any]] = {}
+    for graph in getattr(prior_plan, "sections", ()) or ():
+        prior_paragraphs_by_section[graph.section_id] = list(graph.paragraphs or ())
+    paragraph_id_map: dict[str, str] = {}
+    refreshed_graphs: list[SectionArgumentGraphV1] = []
+    preserved_paragraph_identity_count = 0
+    for graph in rebuilt_sections:
+        candidates_by_key: dict[tuple[Any, ...], list[Any]] = {}
+        for prior in prior_paragraphs_by_section.get(graph.section_id, ()):
+            for key in _paragraph_surface_keys(prior):
+                candidates_by_key.setdefault(key, []).append(prior)
+        used_ids: set[str] = set()
+        paragraphs: list[SectionParagraphPlanV1] = []
+        local_map: dict[str, str] = {}
+        for paragraph in graph.paragraphs or ():
+            matches: list[Any] = []
+            for key in _paragraph_surface_keys(paragraph):
+                candidates = [
+                    item for item in candidates_by_key.get(key, ())
+                    if item.paragraph_id not in used_ids
+                ]
+                if len(candidates) == 1:
+                    matches = candidates
+                    break
+            paragraph_id = paragraph.paragraph_id
+            if matches:
+                paragraph_id = matches[0].paragraph_id
+                used_ids.add(paragraph_id)
+                local_map[paragraph.paragraph_id] = paragraph_id
+                preserved_paragraph_identity_count += 1
+            if paragraph_id != paragraph.paragraph_id:
+                witness = paragraph.witness_contract
+                if witness is not None:
+                    witness = witness.model_copy(update={"paragraph_id": paragraph_id})
+                paragraph = paragraph.model_copy(update={
+                    "paragraph_id": paragraph_id,
+                    "witness_contract": witness,
+                })
+            paragraphs.append(paragraph)
+        # Transitions are references, so update them after all local IDs are
+        # known.  This does not alter any semantic slot/facet contract.
+        normalized_paragraphs: list[SectionParagraphPlanV1] = []
+        for paragraph in paragraphs:
+            updates: dict[str, Any] = {}
+            if paragraph.transition_from:
+                updates["transition_from"] = local_map.get(
+                    paragraph.transition_from, paragraph.transition_from
+                )
+            if paragraph.transition_to:
+                updates["transition_to"] = local_map.get(
+                    paragraph.transition_to, paragraph.transition_to
+                )
+            normalized_paragraphs.append(
+                paragraph.model_copy(update=updates) if updates else paragraph
+            )
+        paragraph_id_map.update(local_map)
+        refreshed_graphs.append(graph.model_copy(update={
+            "paragraphs": tuple(normalized_paragraphs),
+        }))
+
+    refreshed_method_units: list[MethodUnitV2] = []
+    for unit in refreshed_units:
+        mapped_paragraph_ids = tuple(dict.fromkeys(
+            paragraph_id_map.get(value, value)
+            for value in (unit.paragraph_ids or ())
+            if str(value).strip()
+        ))
+        refreshed_method_units.append(
+            unit.model_copy(update={"paragraph_ids": mapped_paragraph_ids})
+            if mapped_paragraph_ids != tuple(unit.paragraph_ids)
+            else unit
+        )
+
+    ordered_graphs = _order_context_sections_before_mechanism(
+        refreshed_graphs,
+        units=tuple(units or getattr(prior_plan, "argument_units", ()) or ()),
+        argument_facets=argument_facets,
+    )
+    selected_facet_ids = {
+        str(facet_id).strip()
+        for unit in refreshed_method_units
+        for facet_id in (getattr(unit, "facet_ids", ()) or ())
+        if str(facet_id).strip()
+    }
+    section_units = list(units or getattr(prior_plan, "argument_units", ()) or ())
+    rationale_facets_selected = sum(
+        1
+        for facet in argument_facets
+        if str(getattr(facet, "facet_id", "") or "").strip() in selected_facet_ids
+        and _facet_is_context_rationale(facet, section_units=section_units)
+    )
+    return tuple(refreshed_method_units), ordered_graphs, {
+        "enabled": True,
+        "reuse_mode": "refresh_reader_surface",
+        "reader_surface_mode": "rebuilt",
+        "preserved_existing_method_units": False,
+        "compaction_applied": True,
+        "method_unit_count": len(refreshed_method_units),
+        "paragraph_count": sum(len(graph.paragraphs) for graph in ordered_graphs),
+        "prior_method_units": len(prior_units),
+        "rebuilt_method_units": len(rebuilt_method_units),
+        "refreshed_method_units": len(refreshed_method_units),
+        "preserved_identity_count": preserved_identity_count,
+        "preserved_surface_count": 0,
+        "preserved_paragraph_identity_count": preserved_paragraph_identity_count,
+        "rationale_facets_selected": rationale_facets_selected,
+        "context_reorder_applied": [graph.section_id for graph in refreshed_graphs]
+        != [graph.section_id for graph in ordered_graphs],
+        "fallback_to_prior_surface": False,
+    }
 
 
 _CONTEXT_RHETORICAL_MOVES = frozenset({
@@ -2192,7 +2462,13 @@ def _build_method_units_v2(
     """Compile bounded reader units and compact paragraph transactions."""
 
     if not argument_facets or not facet_alignments:
-        return (), graphs, {"enabled": False, "method_unit_count": 0}
+        return (), graphs, {
+            "enabled": False,
+            "reader_surface_mode": "rebuilt",
+            "method_unit_count": 0,
+            "rationale_facets_selected": 0,
+            "context_reorder_applied": False,
+        }
     facets = tuple(argument_facets)
     fact_by_id = {
         str(getattr(item, "fact_id", "") or ""): item
@@ -3037,10 +3313,25 @@ def _build_method_units_v2(
         units=units,
         argument_facets=argument_facets,
     )
+    selected_facet_ids = {
+        str(facet_id).strip()
+        for unit in compiled_units
+        for facet_id in (getattr(unit, "facet_ids", ()) or ())
+        if str(facet_id).strip()
+    }
     return tuple(compiled_units), compacted_graphs, {
         "enabled": True,
+        "reader_surface_mode": "rebuilt",
         "method_unit_count": len(compiled_units),
         "paragraph_count": sum(len(graph.paragraphs) for graph in compacted_graphs),
+        "rationale_facets_selected": sum(
+            1
+            for facet in facets
+            if str(getattr(facet, "facet_id", "") or "").strip() in selected_facet_ids
+            and _facet_is_context_rationale(facet, section_units=list(units))
+        ),
+        "context_reorder_applied": [graph.section_id for graph in graphs]
+        != [graph.section_id for graph in compacted_graphs],
         "units": trace_rows,
     }
 
@@ -5521,13 +5812,19 @@ def replan_moves_with_trace(
                     for facet in facet_values
                 )
             }
-    rebuilt_sections = _restore_prior_paragraph_identities(
-        prior_sections=base_plan.sections,
-        rebuilt_sections=rebuilt_sections,
-        allowed_facet_ids_by_section=allowed_facet_ids_by_section,
-        allowed_field_ids_by_section=allowed_field_ids_by_section,
-        allowed_formula_ids_by_section=allowed_formula_ids_by_section,
-    )
+    if not base_plan.method_units or not (argument_facets or facet_alignments):
+        # Legacy plans without a fresh derived-authoring surface still need
+        # their closed target handles carried forward.  When fresh facets or
+        # alignments are present, however, do not merge incumbent paragraph
+        # contracts into the rebuilt graph: the refresh pass below matches
+        # identity semantically and leaves the new reader surface authoritative.
+        rebuilt_sections = _restore_prior_paragraph_identities(
+            prior_sections=base_plan.sections,
+            rebuilt_sections=rebuilt_sections,
+            allowed_facet_ids_by_section=allowed_facet_ids_by_section,
+            allowed_field_ids_by_section=allowed_field_ids_by_section,
+            allowed_formula_ids_by_section=allowed_formula_ids_by_section,
+        )
     proofs = resolve_move_authority_proofs(
         sections=tuple(rebuilt_sections),
         units=refreshed_units,
@@ -5562,22 +5859,30 @@ def replan_moves_with_trace(
         })
         for unit in refreshed_units
     )
+    rebuilt_method_units, rebuilt_sections, rebuilt_trace = _build_method_units_v2(
+        list(rebuilt_sections),
+        rebuilt_units,
+        argument_facets=argument_facets,
+        facet_alignments=facet_alignments,
+        publication_field_candidates=publication_field_candidates,
+        facts=facts,
+        unit_frames=unit_frames,
+    )
     if base_plan.method_units:
         method_units, rebuilt_sections, method_unit_trace = (
-            _preserve_incumbent_method_unit_surface(
+            _refresh_incumbent_method_unit_surface(
                 prior_plan=base_plan,
+                rebuilt_method_units=rebuilt_method_units,
                 rebuilt_sections=list(rebuilt_sections),
+                units=rebuilt_units,
+                argument_facets=argument_facets,
             )
         )
     else:
-        method_units, rebuilt_sections, method_unit_trace = _build_method_units_v2(
-            list(rebuilt_sections),
-            rebuilt_units,
-            argument_facets=argument_facets,
-            facet_alignments=facet_alignments,
-            publication_field_candidates=publication_field_candidates,
-            facts=facts,
-            unit_frames=unit_frames,
+        method_units, rebuilt_sections, method_unit_trace = (
+            rebuilt_method_units,
+            rebuilt_sections,
+            rebuilt_trace,
         )
     # Validate the finished projection, after MethodUnit compaction has had a
     # chance to place hard facet targets.  A fresh source projection may move

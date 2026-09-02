@@ -8,7 +8,10 @@ from types import SimpleNamespace
 from code2paper.agentic.callback_semantic_contract import (
     evaluate_authoring_structural_exit,
 )
-from code2paper.agentic.method_architect import _preserve_incumbent_method_unit_surface
+from code2paper.agentic.method_architect import (
+    _preserve_incumbent_method_unit_surface,
+    _refresh_incumbent_method_unit_surface,
+)
 from code2paper.agentic.method_argument_models import (
     MethodArgumentUnitV1,
     MethodSectionPlanV2,
@@ -194,6 +197,73 @@ def test_preserve_incumbent_method_units_keeps_paragraph_contracts() -> None:
     assert len(sections[0].paragraphs) == 1
     assert sections[0].paragraphs[0].required_publication_slot_ids == ()
     assert sections[0].paragraphs[0].formula_obligation_ids == ("formula:1",)
+
+
+def test_refresh_incumbent_method_units_rebuilds_reader_surface() -> None:
+    prior_unit = MethodArgumentUnitV1(
+        argument_unit_id="MA-S3:unit-1",
+        section_role="mechanism",
+        research_question="How is the mechanism organized?",
+        claim_ids=(),
+        authority_lanes=("author_attested",),
+    )
+    prior = SimpleNamespace(
+        method_units=(MethodUnitV2(
+            method_unit_id="method-unit:MA-S3:old",
+            section_id="MA-S3",
+            reader_question="How is the mechanism organized?",
+            purpose="old mechanism surface",
+            author_statement="The mechanism combines two stages.",
+            facet_ids=("facet:mechanism",),
+            paragraph_ids=("paragraph:MA-S3:old",),
+            argument_unit_ids=("MA-S3:unit-1",),
+        ),),
+        sections=(SectionArgumentGraphV1(
+            section_id="MA-S3",
+            heading="Mechanism",
+            reader_question="How is the mechanism organized?",
+            argument_unit_ids=("MA-S3:unit-1",),
+            paragraphs=(SectionParagraphPlanV1(
+                paragraph_id="paragraph:MA-S3:old",
+                argument_unit_ids=("MA-S3:unit-1",),
+                required_facet_ids=("facet:mechanism",),
+            ),),
+        ),),
+        argument_units=(prior_unit,),
+    )
+    rebuilt = MethodUnitV2(
+        method_unit_id="method-unit:MA-S3:fresh",
+        section_id="MA-S3",
+        reader_question="How is the mechanism organized?",
+        purpose="reader rationale before mechanism",
+        author_statement="The rationale is to avoid a redundant relation-extraction stage.",
+        facet_ids=("facet:rationale",),
+        paragraph_ids=("paragraph:MA-S3:fresh",),
+        argument_unit_ids=("MA-S3:unit-1",),
+    )
+    rebuilt_graph = SectionArgumentGraphV1(
+        section_id="MA-S3",
+        heading="Mechanism",
+        reader_question="How is the mechanism organized?",
+        argument_unit_ids=("MA-S3:unit-1",),
+        paragraphs=(SectionParagraphPlanV1(
+            paragraph_id="paragraph:MA-S3:fresh",
+            argument_unit_ids=("MA-S3:unit-1",),
+            required_facet_ids=("facet:rationale",),
+        ),),
+    )
+    method_units, sections, trace = _refresh_incumbent_method_unit_surface(
+        prior_plan=prior,
+        rebuilt_method_units=(rebuilt,),
+        rebuilt_sections=[rebuilt_graph],
+        units=(prior_unit,),
+    )
+    assert method_units[0].method_unit_id == "method-unit:MA-S3:old"
+    assert method_units[0].facet_ids == ("facet:rationale",)
+    assert sections[0].paragraphs[0].required_facet_ids == ("facet:rationale",)
+    assert trace["fallback_to_prior_surface"] is False
+    assert trace["reader_surface_mode"] == "rebuilt"
+    assert trace["preserved_surface_count"] == 0
 
 
 def test_structural_exit_consumes_unique_inline_latex_without_rendered_row() -> None:

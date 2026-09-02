@@ -649,11 +649,49 @@ class PublicationAuthoringPacketV2(BaseModel):
     material_conditions: tuple[str, ...] = Field(default_factory=tuple)
     configuration_state: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
     formula_packages: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    # Formula text is a closed transaction input.  When a package is present
+    # the Writer may consume its placeholder, but it may not author a second
+    # equation for the same mechanism.  Empty packets explicitly stay prose
+    # only (or return to the Formalizer owner for a typed gap).
+    formula_generation_policy: Literal[
+        "consume_only", "prose_only_or_request_formalizer"
+    ] = "prose_only_or_request_formalizer"
+    canonical_formula_package_ids: tuple[str, ...] = Field(default_factory=tuple)
     method_unit: dict[str, Any] = Field(default_factory=dict)
     closed_target_ids: tuple[str, ...] = Field(default_factory=tuple)
     preceding_paragraph_id: str = ""
     following_paragraph_id: str = ""
     content_digest: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _infer_formula_policy_for_legacy_packets(cls, value: Any) -> Any:
+        """Backfill the policy fields when loading pre-policy artifacts.
+
+        Frozen replay artifacts predating the consume-only contract do not
+        carry either field.  Infer the safe value from their already-closed
+        package list so loading those packets remains compatible without
+        weakening the post-validation contradiction checks below.
+        """
+
+        if not isinstance(value, Mapping):
+            return value
+        row = dict(value)
+        packages = tuple(
+            item for item in (row.get("formula_packages") or ())
+            if isinstance(item, Mapping)
+        )
+        if "formula_generation_policy" not in row:
+            row["formula_generation_policy"] = (
+                "consume_only" if packages else "prose_only_or_request_formalizer"
+            )
+        if "canonical_formula_package_ids" not in row:
+            row["canonical_formula_package_ids"] = tuple(
+                _text(item.get("package_id"))
+                for item in packages
+                if _text(item.get("package_id"))
+            )
+        return row
 
     @model_validator(mode="after")
     def _closed(self) -> "PublicationAuthoringPacketV2":
@@ -679,6 +717,25 @@ class PublicationAuthoringPacketV2(BaseModel):
                 raise ValueError(
                     "authoring packet formula package escapes its consumer paragraph"
                 )
+        package_ids = tuple(
+            _text(package.get("package_id"))
+            for package in self.formula_packages
+            if _text(package.get("package_id"))
+        )
+        if len(package_ids) != len(set(package_ids)):
+            raise ValueError("authoring packet contains duplicate formula packages")
+        if set(self.canonical_formula_package_ids) - set(package_ids):
+            raise ValueError(
+                "authoring packet canonical formula id is outside its package set"
+            )
+        if self.formula_packages and self.formula_generation_policy != "consume_only":
+            raise ValueError(
+                "authoring packet with formula packages must use consume_only policy"
+            )
+        if not self.formula_packages and self.formula_generation_policy == "consume_only":
+            raise ValueError(
+                "consume_only formula policy requires a formula package"
+            )
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest(payload))
         return self
@@ -1518,6 +1575,7 @@ def build_research_derived_callback_requests(
     *,
     plan: Any,
     dossiers: Iterable[ResearchMechanismDossierV1],
+    facets: Iterable[Any] = (),
 ) -> tuple[dict[str, Any], ...]:
     """Create bounded research callbacks for dossier links that remain open.
 
@@ -1529,6 +1587,128 @@ def build_research_derived_callback_requests(
     """
 
     requests: list[dict[str, Any]] = []
+    facet_by_id = {
+        _text(_get(facet, "facet_id")): facet
+        for facet in facets
+        if _text(_get(facet, "facet_id"))
+    }
+
+    def _semantic_query_texts(
+        dossier: ResearchMechanismDossierV1,
+    ) -> tuple[str, ...]:
+        """Collect reader/scientific vocabulary, never binding ids.
+
+        Unresolved relation labels identify the gap for the ledger, but they
+        are not useful repository queries.  Search terms instead come from the
+        paragraph goal, author statements, facet semantic fields, and the
+        source operation's scientific operands/results.
+        """
+
+        values: list[str] = [
+            _text(dossier.author_question),
+            *(_text(item) for item in dossier.author_statements),
+        ]
+        for facet_id in dossier.facet_ids:
+            facet = facet_by_id.get(_text(facet_id))
+            if facet is None:
+                continue
+            quote = _text(_get(facet, "exact_source_quote"))
+            if quote:
+                values.append(quote)
+            fields = _get(facet, "semantic_fields", {}) or {}
+            if isinstance(fields, Mapping):
+                values.extend(
+                    _text(value)
+                    for value in fields.values()
+                    if _text(value)
+                )
+        for atom in dossier.operation_atoms:
+            if not isinstance(atom, Mapping):
+                continue
+            # ``source_span_id``, operation ids, relation ids, and node ids are
+            # binding metadata.  Subject/operands/result and descriptors are
+            # the bounded scientific/data-flow vocabulary we want to search.
+            for name in (
+                "subject", "predicate", "operands", "result", "output",
+                "return_value", "operation_descriptors", "shape_or_type_hints",
+            ):
+                value = atom.get(name)
+                if isinstance(value, (list, tuple, set)):
+                    values.extend(_text(item) for item in value if _text(item))
+                elif _text(value):
+                    values.append(_text(value))
+        values.extend(_text(item) for item in dossier.shape_or_type_hints)
+        values.extend(_text(item) for item in dossier.return_value_descriptors)
+        # Entry symbols are allowed only when they are actual symbols, not
+        # source-span/node/relation handles.
+        values.extend(
+            _text(item)
+            for item in dossier.entry_symbol_ids
+            if not re.match(r"^(?:span|node|relation|dossier|paragraph|facet|brief|claim|formula|obligation)[:_-]", _text(item), re.I)
+        )
+        return tuple(dict.fromkeys(value for value in values if value))
+
+    def _reader_missing_parts(
+        dossier: ResearchMechanismDossierV1,
+        unresolved: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        """Describe the open gap in reader language while keeping ids typed.
+
+        ``missing_parts`` is consumed by the callback supervisor as search
+        context.  Binding handles such as ``facet_alignment:<id>`` belong in
+        the request's target/ledger fields, not in that reader-facing text.
+        Generic diagnostic labels (for example
+        ``missing_connected_behavior_subgraph``) remain because they describe
+        the kind of gap without naming a project object.
+        """
+
+        values: list[str] = []
+        if dossier.author_question:
+            values.append(_text(dossier.author_question))
+        values.extend(
+            _text(item) for item in dossier.author_statements if _text(item)
+        )
+        for facet_id in dossier.facet_ids:
+            facet = facet_by_id.get(_text(facet_id))
+            if facet is None:
+                continue
+            fields = _get(facet, "semantic_fields", {}) or {}
+            if isinstance(fields, Mapping):
+                for key in (
+                    "rationale", "design_objective", "motivation", "operation",
+                    "mechanism", "formula_goal", "mathematical_goal", "purpose",
+                ):
+                    value = fields.get(key)
+                    if isinstance(value, (list, tuple, set)):
+                        values.extend(_text(item) for item in value if _text(item))
+                    elif _text(value):
+                        values.append(_text(value))
+            quote = _text(_get(facet, "exact_source_quote"))
+            if quote:
+                values.append(quote)
+        for atom in dossier.operation_atoms:
+            if not isinstance(atom, Mapping):
+                continue
+            descriptors = atom.get("operation_descriptors") or ()
+            if isinstance(descriptors, (list, tuple, set)):
+                values.extend(_text(item) for item in descriptors if _text(item))
+            elif _text(descriptors):
+                values.append(_text(descriptors))
+        for item in unresolved:
+            label = _text(item)
+            if not label:
+                continue
+            if re.match(
+                r"^(?:span|node|relation|rel|dossier|request|target|facet|brief|"
+                r"paragraph|claim|formula|obligation|method[-_]?unit)"
+                r"[-_:][A-Za-z0-9:_-]+$",
+                label,
+                re.I,
+            ) or label.casefold().startswith("facet_alignment:"):
+                continue
+            values.append(label)
+        return tuple(dict.fromkeys(value for value in values if value))[:12]
+
     seen: set[tuple[str, str, str]] = set()
     for dossier in dossiers:
         unresolved = tuple(
@@ -1563,20 +1743,17 @@ def build_research_derived_callback_requests(
             continue
         seen.add(key)
 
-        terms: list[str] = list(dossier.entry_symbol_ids)
-        for atom in dossier.operation_atoms:
-            terms.extend(
-                _text(atom.get(name))
-                for name in ("symbol_id", "operation", "source_span_id")
-                if _text(atom.get(name))
-            )
-        terms = list(dict.fromkeys(item for item in terms if item))[:16]
-        unresolved_text = ", ".join(unresolved[:6])
+        semantic_texts = _semantic_query_texts(dossier)
+        from code2paper.agentic.writer_research_router import (
+            directed_search_terms_from_texts,
+        )
+
+        terms = list(directed_search_terms_from_texts(*semantic_texts, limit=16))
         scope_text = ", ".join(terms[:8])
         question = (
-            f"Which bounded repository trace resolves {unresolved_text} for "
-            f"paragraph {dossier.paragraph_id}"
-            + (f" near {scope_text}" if scope_text else "")
+            f"Which bounded repository trace resolves the missing implementation "
+            f"for the reader goal {dossier.author_question or 'this mechanism'}"
+            + (f" using {scope_text}" if scope_text else "")
             + "?"
         )
         identity = {
@@ -1602,7 +1779,7 @@ def build_research_derived_callback_requests(
             ),
             "priority": "high",
             "status": "open",
-            "missing_parts": unresolved,
+            "missing_parts": _reader_missing_parts(dossier, unresolved),
             "baseline_span_ids": tuple(dossier.exact_span_ids),
             "target_story_node_ids": tuple(dossier.ordered_operation_node_ids),
             "target_formula_obligation_ids": _ids(
@@ -1995,6 +2172,23 @@ def build_publication_authoring_packets(
                 if not consumer_id and not package_obligation_ids.intersection(formula_ids):
                     continue
                 formula_packages.append(package_payload)
+            # A paragraph owns one canonical package per package id.  Preserve
+            # source order for distinct obligations, but never hand duplicate
+            # representations of the same package to the Writer.
+            canonical_formula_packages: list[dict[str, Any]] = []
+            seen_formula_package_ids: set[str] = set()
+            for package in formula_packages:
+                package_id = _text(package.get("package_id"))
+                if package_id and package_id in seen_formula_package_ids:
+                    continue
+                if package_id:
+                    seen_formula_package_ids.add(package_id)
+                canonical_formula_packages.append(package)
+            formula_packages = canonical_formula_packages
+            formula_policy = (
+                "consume_only" if formula_packages
+                else "prose_only_or_request_formalizer"
+            )
             section_packets.append(PublicationAuthoringPacketV2(
                 section_id=section_id,
                 paragraph_id=paragraph_id,
@@ -2011,6 +2205,12 @@ def build_publication_authoring_packets(
                 material_conditions=conditions,
                 configuration_state=configuration_state,
                 formula_packages=tuple(formula_packages),
+                formula_generation_policy=formula_policy,
+                canonical_formula_package_ids=tuple(
+                    _text(item.get("package_id"))
+                    for item in formula_packages
+                    if _text(item.get("package_id"))
+                ),
                 method_unit=dict(method_unit_by_paragraph.get(paragraph_id, {})),
                 closed_target_ids=target_ids,
                 preceding_paragraph_id=paragraph_ids[index - 1] if index else "",

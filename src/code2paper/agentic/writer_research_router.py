@@ -45,6 +45,19 @@ _QUEUE_LANE_LABELS: dict[str, str] = {
 }
 
 _SEARCH_TERM_RE = re.compile(r"[A-Za-zΔδ][A-Za-z0-9_Δδ-]*")
+# Internal identity handles are useful for binding sidecars but are not
+# meaningful repository queries.  Keep this filter generic: project-specific
+# names must never be added here.
+_INTERNAL_ID_RE = re.compile(
+    r"^(?:(?:facet|brief|paragraph|claim|formula|obligation|method[-_]?unit)"
+    r"[-_:][A-Za-z0-9:_-]+|ma[-_]?s\d+(?:[-_:][A-Za-z0-9:_-]+)?)$",
+    re.IGNORECASE,
+)
+_INTERNAL_ID_IN_TEXT_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?:(?:facet|brief|paragraph|claim|formula|obligation|method[-_]?unit)"
+    r"[-_:][A-Za-z0-9:_-]+|ma[-_]?s\d+(?:[-_:][A-Za-z0-9:_-]+)?)(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
 _SEARCH_TERM_STOP = frozenset({
     "a", "an", "and", "are", "as", "at", "be", "by", "can", "do", "for",
     "from", "had", "has", "have", "how", "in", "into", "is", "it", "its",
@@ -93,6 +106,12 @@ def _search_term_rank(token: str) -> int:
     return 0
 
 
+def _is_internal_research_identifier(token: str) -> bool:
+    """Whether ``token`` is a binding/audit id rather than query vocabulary."""
+
+    return bool(_INTERNAL_ID_RE.fullmatch(str(token or "").strip()))
+
+
 def directed_search_terms_from_texts(*texts: Any, limit: int = 16) -> tuple[str, ...]:
     """Extract directed repository search terms from closed-set author text.
 
@@ -106,10 +125,16 @@ def directed_search_terms_from_texts(*texts: Any, limit: int = 16) -> tuple[str,
     seen: set[str] = set()
     order = 0
     for text in _iter_search_term_texts(texts):
-        for match in _SEARCH_TERM_RE.findall(text):
+        # Remove complete ids before tokenization so both ``facet-abc`` and
+        # colon-scoped forms such as ``facet:abc`` cannot leak their hash
+        # suffix as a seemingly useful search term.
+        sanitized_text = _INTERNAL_ID_IN_TEXT_RE.sub(" ", text)
+        for match in _SEARCH_TERM_RE.findall(sanitized_text):
             token = str(match).strip()
             key = token.casefold()
             if key in seen or key in _SEARCH_TERM_STOP:
+                continue
+            if _is_internal_research_identifier(token):
                 continue
             if len(token) < 3 and not (
                 any(character in token for character in "Δδ")
@@ -547,6 +572,7 @@ __all__ = [
     "build_review_candidates_from_requests",
     "directed_callback_question",
     "directed_search_terms_from_texts",
+    "_is_internal_research_identifier",
     "execute_open_requests_for_routes",
     "execute_writing_research_route",
     "fill_writing_research_search_terms",

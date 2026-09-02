@@ -15,6 +15,10 @@ from code2paper.agentic.publication_method_writer import (
 from code2paper.agentic.publication_quality import _phrase_present
 from code2paper.authoring.writer_skill import PublicationMethodWriterSkillV1
 from code2paper.llm.section_writer import _is_implementation_trace_text
+from code2paper.llm.section_writer import (
+    normalize_publication_heading,
+    project_operation_to_reader_surface,
+)
 
 
 def test_normalize_preserves_display_math_delimiters() -> None:
@@ -164,6 +168,26 @@ def test_membership_and_type_label_rows_are_implementation_traces() -> None:
     assert not _is_implementation_trace_text(
         "personalized PageRank over the passage-entity subgraph"
     )
+
+
+def test_reader_operation_projection_drops_plumbing_and_keeps_science() -> None:
+    projected = project_operation_to_reader_surface({
+        "predicate": "updates",
+        "description": "propagates query relevance through the entity graph",
+        "subject": "edge_memories",
+        "operands": ["src_node_id", "dst_node_id", "attention mask"],
+        "result": "entity activation",
+    })
+    assert projected is not None
+    assert projected["operation"] == "propagates query relevance through the entity graph"
+    assert "edge_memories" not in str(projected)
+    assert "src_node_id" not in str(projected)
+    assert "attention mask" in str(projected)
+
+
+def test_publication_heading_normalization_strips_only_structural_colon() -> None:
+    assert normalize_publication_heading("## Training objective:") == "Training objective"
+    assert normalize_publication_heading("A: B") == "A: B"
 
 
 def test_assembled_heading_keeps_coherent_writer_repair_of_truncated_plan() -> None:

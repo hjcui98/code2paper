@@ -299,6 +299,166 @@ def _strip_implementation_trace_values(value: Any) -> Any:
     return value
 
 
+# These patterns intentionally describe *shapes* of implementation plumbing,
+# rather than project names.  The Writer still receives scientific symbols
+# (for example ``A``, ``B``, ``\u0394t``, attention masks, and sequence lengths),
+# while qualified Python names, storage keys, and audit identifiers stay on the
+# harness side of the publication boundary.
+_READER_INTERNAL_IDENTIFIER_RE = re.compile(
+    r"(?i)^(?:[a-z][a-z0-9]*:){1,}[a-z0-9_.:-]+$|"
+    r"^(?:[a-z][a-z0-9]*[._:-]){1,}[a-z][a-z0-9_.:-]*$"
+)
+_READER_STORAGE_IDENTIFIER_RE = re.compile(
+    r"(?i)(?:^|[_ .-])(?:cache|caches|memory|memories|buffer|buffers|"
+    r"storage|stores|lookup|lookups|mapping|dict|dictionary|metadata|"
+    r"artifact|artifacts|debug|logger|loggers)(?:$|[_ .-])"
+)
+_READER_ID_IDENTIFIER_RE = re.compile(
+    r"(?i)(?:^|[_ .-])(?:id|ids|key|keys|index|indices|span|claim|facet|"
+    r"paragraph|obligation|request)(?:$|[_ .-])"
+)
+_READER_PYTHON_SYNTAX_RE = re.compile(
+    r"(?i)(?:\bself\s*\.|\b(?:torch|numpy|np|nn|tensorflow|tf|math)\s*\.\w*\s*\(|"
+    r"\b(?:logsumexp|argsort|sort|stack|cat|concat|concatenate|reshape|view|"
+    r"normalize|softmax|pad|split|topk|gather|scatter|einsum|matmul|mean|sum)\s*\([^)]{0,180}\)|"
+    r"\b(?:dim|axis|dtype|device|keepdim|descending|largest|training)\s*=)"
+)
+
+
+def _project_reader_value(value: Any, *, limit: int = 360) -> Any:
+    """Project an operation value into a bounded reader-facing representation.
+
+    This is deliberately conservative for strings that have the shape of
+    source plumbing.  It is not an allow-list of repository identifiers: a
+    normal phrase or scientific symbol remains available, while internal IDs,
+    tuple membership, qualified calls, and storage/index keys are omitted.
+    Lists are projected element-wise so one implementation operand cannot
+    poison an otherwise useful operation.
+    """
+
+    if isinstance(value, Mapping):
+        projected = {
+            str(key): _project_reader_value(item, limit=limit)
+            for key, item in value.items()
+        }
+        return {
+            key: item for key, item in projected.items()
+            if item not in (None, "", [], (), {})
+        }
+    if isinstance(value, (list, tuple, set)):
+        items = [
+            _project_reader_value(item, limit=limit)
+            for item in value
+        ]
+        items = [item for item in items if item not in (None, "", [], (), {})]
+        return items
+    if value is None or isinstance(value, (int, float, bool)):
+        return value
+    text = " ".join(str(value).split()).strip()
+    if not text:
+        return ""
+    if _is_implementation_trace_text(text):
+        return ""
+    if _READER_PYTHON_SYNTAX_RE.search(text):
+        return ""
+    # A tuple/membership row is a lookup implementation detail unless an
+    # upstream semantic statement already described the scientific operation.
+    if re.search(r"\([^)]{0,180}\)\s+(?:in|not\s+in)\s+[A-Za-z_]\w*", text):
+        return ""
+    if re.search(r"\b[A-Za-z_]\w*\s+(?:not\s+)?in\s+[A-Za-z_]\w*", text) and (
+        _READER_STORAGE_IDENTIFIER_RE.search(text)
+        or _READER_ID_IDENTIFIER_RE.search(text)
+    ):
+        return ""
+    if _READER_INTERNAL_IDENTIFIER_RE.fullmatch(text):
+        return ""
+    if _READER_STORAGE_IDENTIFIER_RE.search(text) and re.fullmatch(
+        r"[A-Za-z0-9_.:-]+", text
+    ):
+        return ""
+    if _READER_STORAGE_IDENTIFIER_RE.search(text) and re.search(
+        r"(?i)\b(?:in|from|via|using|within|inside)\s+[A-Za-z0-9_.:-]+$",
+        text,
+    ):
+        return ""
+    if _READER_ID_IDENTIFIER_RE.search(text) and re.fullmatch(
+        r"[A-Za-z0-9_.:-]+", text
+    ):
+        return ""
+    # Internal snake-case names are retained only when they are clearly a
+    # reader term (e.g. ``sequence_length``); identifier-bearing names are
+    # not useful grammatical subjects in a paper Method.
+    if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", text):
+        lowered = text.casefold()
+        if "_" in text and (
+            lowered.endswith(("_id", "_ids", "_key", "_keys", "_index", "_indices"))
+            or any(
+                marker in lowered.split("_")
+                for marker in ("cache", "memory", "buffer", "storage", "metadata", "debug")
+            )
+        ):
+            return ""
+    return text[:limit].rstrip() if len(text) > limit else text
+
+
+def _project_operation_to_reader_surface(value: Mapping[str, Any] | Any) -> dict[str, Any] | None:
+    """Compile one raw operation row into the Writer's semantic surface.
+
+    The private operation row may contain source spans and implementation
+    operands.  Only semantic prose, safe predicates, scientific values, and
+    bounded conditions cross into the Writer packet.  Returning ``None`` for
+    a plumbing-only row is preferable to teaching the model to narrate it.
+    """
+
+    row = dict(value) if isinstance(value, Mapping) else {}
+    semantic = ""
+    for key in (
+        "reader_facing_claim", "semantic_atom", "description", "statement",
+        "operation",
+    ):
+        projected = _project_reader_value(row.get(key))
+        if isinstance(projected, str) and projected.strip():
+            semantic = projected.strip()
+            break
+    predicate = _project_reader_value(row.get("predicate"), limit=120)
+    if not isinstance(predicate, str) or not predicate.strip():
+        predicate = ""
+    projected: dict[str, Any] = {}
+    if semantic:
+        projected["operation"] = semantic
+    if predicate:
+        projected["predicate"] = predicate
+    for source_key, output_key in (
+        ("subject", "subject"),
+        ("operands", "operands"),
+        ("result", "result"),
+        ("output", "output"),
+        ("return_value", "return_value"),
+        ("guard", "guard"),
+        ("conditions", "conditions"),
+        ("iteration_context", "iteration_context"),
+        ("shape_or_type_hints", "shape_or_type_hints"),
+    ):
+        value = _project_reader_value(row.get(source_key))
+        if value not in (None, "", [], (), {}):
+            projected[output_key] = value
+    # A predicate alone is not scientific content: retain it only when a
+    # semantic statement or at least one reader-facing value accompanies it.
+    content_keys = {
+        "operation", "subject", "operands", "result", "output",
+        "return_value", "conditions", "shape_or_type_hints",
+    }
+    if not any(projected.get(key) not in (None, "", [], (), {}) for key in content_keys):
+        return None
+    return projected
+
+
+# Publicly named aliases make the projection contract reusable by diagnostics
+# and focused tests without exposing the lower-level implementation regexes.
+project_reader_value = _project_reader_value
+project_operation_to_reader_surface = _project_operation_to_reader_surface
+
+
 def _compact_semantic_gist(fields: Mapping[str, Any] | None) -> str:
     """One-line facet gist from semantic fields (no author quote)."""
 
@@ -436,6 +596,13 @@ def _compact_authoring_packet_for_llm(packet: Mapping[str, Any]) -> dict[str, An
         "publication_field_candidates": field_candidates,
         "typed_field_deferred": deferred_fields,
         "formula_packages": formula_packages,
+        "formula_generation_policy": packet.get(
+            "formula_generation_policy",
+            "consume_only" if formula_packages else "prose_only_or_request_formalizer",
+        ),
+        "canonical_formula_package_ids": list(
+            packet.get("canonical_formula_package_ids") or ()
+        ),
         "brief_ids": list(packet.get("brief_ids") or ()),
     }
 
@@ -566,41 +733,24 @@ def _compact_authoring_packets_v2_for_llm(
     def compact_operation(value: Any) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
         predicate = str(row.get("predicate") or "").strip().casefold()
-        if _is_implementation_trace_text(
-            predicate,
-            row.get("operands"),
-            row.get("result"),
-            row.get("description"),
-            row.get("statement"),
-        ):
+        if predicate == "author_specification":
             return {}
-        compact = {
-            key: row[key]
-            for key in (
-                "predicate", "operands", "result", "guard", "conditions",
-                "iteration_context", "shape_or_type_hints", "description",
-                "statement",
-            )
-            if key in row
-        }
-        for key in ("guard", "conditions", "description", "statement"):
+        compact = _project_operation_to_reader_surface(row)
+        if not compact:
+            return {}
+        # Keep the operation surface deliberately small.  ``operation`` is a
+        # semantic claim when available; the remaining fields are bounded
+        # operands/conditions that let the Writer connect adjacent steps.
+        if "operation" in compact:
+            compact["operation"] = bounded_text(compact["operation"], 360)
+        for key in ("subject", "result", "output", "return_value", "guard", "iteration_context"):
+            if key in compact:
+                compact[key] = bounded_text(compact[key], 240)
+        for key in ("operands", "conditions", "shape_or_type_hints"):
             if key in compact:
                 compact[key] = _strip_implementation_trace_values(compact[key])
                 if compact[key] in ("", [], ()):
                     compact.pop(key, None)
-        for key in ("description", "statement"):
-            if key in compact:
-                compact[key] = bounded_text(
-                    compact[key],
-                    240 if predicate == "author_specification" else 360,
-                )
-        if predicate == "author_specification":
-            # Do not expose both alternate copies of a long author sentence;
-            # one bounded intent hint is sufficient for organization.
-            if compact.get("description"):
-                compact.pop("statement", None)
-            elif compact.get("statement"):
-                compact["statement"] = bounded_text(compact["statement"], 240)
         return compact
 
     def compact_config(value: Any) -> dict[str, Any]:
@@ -881,6 +1031,15 @@ def _compact_authoring_packets_v2_for_llm(
                 for item in (row.get("formula_packages") or ())
                 if isinstance(item, Mapping)
             ],
+            "formula_generation_policy": row.get(
+                "formula_generation_policy",
+                "consume_only"
+                if row.get("formula_packages")
+                else "prose_only_or_request_formalizer",
+            ),
+            "canonical_formula_package_ids": list(
+                row.get("canonical_formula_package_ids") or ()
+            ),
             "preceding_paragraph_id": row.get("preceding_paragraph_id", ""),
             "following_paragraph_id": row.get("following_paragraph_id", ""),
         }
@@ -3102,6 +3261,20 @@ def _recover_exact_formula_block_representation(
     )
 
 
+def normalize_publication_heading(text: Any) -> str:
+    """Normalize a structural publication heading without touching body text.
+
+    A trailing colon is a common truncation artifact in generated H2/H3
+    headings.  Strip only that structural suffix; colons in the paragraph body
+    and in inline prose remain untouched.
+    """
+
+    value = " ".join(str(text or "").split()).strip()
+    if value.startswith("#"):
+        value = value.lstrip("#").strip()
+    return value.rstrip(":").rstrip()
+
+
 def _assembled_section_heading(
     section: WriterSectionInput,
     output: PublicationMethodSectionOutputV1,
@@ -3119,21 +3292,21 @@ def _assembled_section_heading(
             text = text.lstrip("#").strip()
         return text
 
-    planned = _clean(section.heading)
-    written = _clean(getattr(output, "heading_text", ""))
+    planned = normalize_publication_heading(_clean(section.heading))
+    written = normalize_publication_heading(_clean(getattr(output, "heading_text", "")))
     if not written:
         markdown = str(getattr(output, "section_markdown", "") or "")
         first = next((line.strip() for line in markdown.splitlines() if line.strip()), "")
         if first.startswith("#"):
-            written = _clean(first)
+            written = normalize_publication_heading(_clean(first))
     if (
         planned
         and written
         and heading_is_truncated(planned)
         and heading_replacement_is_coherent(written, planned_heading=planned)
     ):
-        return written
-    return planned or written
+        return normalize_publication_heading(written)
+    return normalize_publication_heading(planned or written)
 
 
 def _normalize_publication_paragraph_transaction(
@@ -4695,6 +4868,9 @@ __all__ = [
     "WriterSectionResult",
     "default_section_system_prompt",
     "dynamic_writer_cumulative_budget",
+    "project_reader_value",
+    "project_operation_to_reader_surface",
+    "normalize_publication_heading",
     "write_method_by_sections",
     "write_publication_method_by_sections",
 ]
